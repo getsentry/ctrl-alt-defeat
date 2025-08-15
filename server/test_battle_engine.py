@@ -13,6 +13,7 @@ from battle_engine import (
     ITEM_CATALOG,
     ACTION_CODES
 )
+from event_system import Event, EventType
 
 class TestGameDesignCompliance:
     """Test that battle engine exactly matches the Game Design Document"""
@@ -306,7 +307,9 @@ class TestGameDesignCompliance:
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
         enemy = Player(id=2, quota=25, max_quota=25, cpu=10.0)
         
-        sim._trigger_battle_start([em], player, enemy)
+        # Set up handlers and trigger battle start
+        sim._setup_item_handlers([em], player, enemy)
+        sim.event_manager.emit(Event(EventType.BATTLE_START, None, None))
         assert player.buffs.get("block", 0) == 5
 
 class TestBattleSimulation:

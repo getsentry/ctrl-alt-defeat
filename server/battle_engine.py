@@ -1,6 +1,7 @@
 """
 Battle Engine Final - Exactly matches Game Design Document
 Every mechanic verified against the spec
+Event-driven system with priority queue for timers
 """
 
 from dataclasses import dataclass, field
@@ -9,6 +10,8 @@ from enum import Enum
 import random
 from copy import deepcopy
 import uuid
+
+from event_system import EventManager, EventType, Event
 
 # Compact action codes for minimal payload (Section 10.2)
 ACTION_CODES = {
@@ -238,6 +241,7 @@ class BattleSimulator:
         self.tick_rate = 0.1  # Section 10.1: 10 ticks/second
         self.current_time = 0.0
         self.actions = []
+        self.event_manager = EventManager()
         
     def simulate_battle(self, 
                        p1_items: List[PlacedItem], 
@@ -261,6 +265,7 @@ class BattleSimulator:
         # Reset state
         self.current_time = 0.0
         self.actions = []
+        self.event_manager.clear()
         
         # Apply tier scaling (Section 5.3)
         self._apply_tier_scaling(p1_items)
@@ -274,11 +279,12 @@ class BattleSimulator:
         self._apply_infrastructure(p1_items, player1)
         self._apply_infrastructure(p2_items, player2)
         
-        # Trigger battle start effects
-        self._trigger_battle_start(p1_items, player1, player2)
-        self._trigger_battle_start(p2_items, player2, player1)
+        # Set up event handlers for items
+        self._setup_item_handlers(p1_items, player1, player2)
+        self._setup_item_handlers(p2_items, player2, player1)
         
-        # Log battle start
+        # Emit battle start event
+        self.event_manager.emit(Event(EventType.BATTLE_START, None, None))
         self.actions.append({"t": 0, "a": ACTION_CODES["START"]})
         
         # Main battle loop (Section 6.2)
@@ -287,9 +293,9 @@ class BattleSimulator:
             player1.cpu = min(player1.max_cpu, player1.cpu + player1.cpu_regen * self.tick_rate)
             player2.cpu = min(player2.max_cpu, player2.cpu + player2.cpu_regen * self.tick_rate)
             
-            # Update and activate items (Section 1.3)
-            self._update_player_items(p1_items, player1, player2)
-            self._update_player_items(p2_items, player2, player1)
+            # Process timer events efficiently with heap
+            self.event_manager.current_time = self.current_time
+            self.event_manager.process_timers(self.current_time)
             
             # Apply DOT effects (Section 3.2 - Memory Leaked/Poison)
             self._apply_dot_effects(player1)
@@ -430,22 +436,108 @@ class BattleSimulator:
                 # Global speed boost handled in update loop
                 pass
     
-    def _trigger_battle_start(self, items: List[PlacedItem], owner: Player, enemy: Player):
-        """Trigger ON_BATTLE_START effects"""
+    def _setup_item_handlers(self, items: List[PlacedItem], owner: Player, enemy: Player):
+        """Set up event handlers for items based on their trigger types"""
         for item in items:
-            if item.spec.trigger_type != TriggerType.ON_BATTLE_START:
-                continue
+            if item.spec.trigger_type == TriggerType.ON_BATTLE_START:
+                # Subscribe to battle start - fires immediately
+                def handle_battle_start(event, item=item, owner=owner):
+                    if item.spec.name == "Error Monitoring":
+                        owner.buffs["block"] = owner.buffs.get("block", 0) + 5
+                        self.actions.append({
+                            "t": self.current_time,
+                            "a": ACTION_CODES["BUFF"],
+                            "p": owner.id,
+                            "i": item.uid,
+                            "v": 5
+                        })
+                
+                self.event_manager.subscribe(EventType.BATTLE_START, handle_battle_start)
             
-            if item.spec.name == "Error Monitoring":
-                # +5 Block at battle start (Section 2.2)
-                owner.buffs["block"] = owner.buffs.get("block", 0) + 5
+            elif item.spec.trigger_type == TriggerType.ON_TIMER:
+                # Schedule first activation using timer heap
+                self._schedule_timer_item(item, owner, enemy)
+            
+            elif item.spec.trigger_type == TriggerType.ON_LOW_HEALTH:
+                # Subscribe to health events - fires immediately when health drops
+                def handle_low_health(event, item=item, owner=owner):
+                    if event.target != owner:
+                        return
+                    # Check condition: only activate if still below 30%
+                    if owner.quota / owner.max_quota >= 0.3:
+                        return
+                    if item.current_cooldown > 0:
+                        return
+                    
+                    if item.spec.name == "Alerting System":
+                        cpu_cost = item.spec.cpu_cost
+                        if owner.cpu >= cpu_cost:
+                            heal = min(5, owner.max_quota - owner.quota)
+                            owner.quota += heal
+                            owner.cpu -= cpu_cost
+                            item.current_cooldown = item.spec.cooldown
+                            self.actions.append({
+                                "t": self.current_time,
+                                "a": ACTION_CODES["HEAL"],
+                                "p": owner.id,
+                                "i": item.uid,
+                                "v": heal
+                            })
+                
+                self.event_manager.subscribe(EventType.HEALTH_LOW, handle_low_health)
+            
+            elif item.spec.trigger_type == TriggerType.ON_DAMAGED:
+                # Subscribe to damage events - fires immediately when damaged
+                def handle_damage(event, item=item, owner=owner):
+                    if event.target != owner:
+                        return
+                    
+                    if item.spec.name == "Session Replay":
+                        # Reflect 30% damage immediately
+                        reflect_damage = int(event.data["damage"] * 0.3)
+                        event.source.quota -= reflect_damage
+                        self.actions.append({
+                            "t": self.current_time,
+                            "a": ACTION_CODES["REFLECT"],
+                            "p": event.source.id,
+                            "v": reflect_damage
+                        })
+                
+                self.event_manager.subscribe(EventType.DAMAGE_TAKEN, handle_damage)
+    
+    def _schedule_timer_item(self, item: PlacedItem, owner: Player, enemy: Player):
+        """Schedule timer-based item activation using priority queue"""
+        # Apply speed modifiers
+        speed = item.speed_mult
+        
+        # Calculate next activation time
+        cooldown_adjusted = item.spec.cooldown / speed
+        next_time = self.current_time + cooldown_adjusted
+        
+        def activate():
+            # Check CPU availability
+            cpu_cost = max(1, item.spec.cpu_cost - item.cpu_discount)
+            
+            if owner.cpu >= cpu_cost:
+                self._activate_item(item, owner, enemy)
+                owner.cpu -= cpu_cost
+                item.current_cooldown = item.spec.cooldown
+                
+                # Schedule next activation
+                self._schedule_timer_item(item, owner, enemy)
+            else:
+                # CPU throttled
                 self.actions.append({
-                    "t": 0,
-                    "a": ACTION_CODES["BUFF"],
+                    "t": self.current_time,
+                    "a": ACTION_CODES["CPU_FAIL"],
                     "p": owner.id,
-                    "i": item.uid,
-                    "v": 5
+                    "i": item.uid
                 })
+                # Retry in a moment
+                retry_time = self.current_time + 0.5
+                self.event_manager.schedule_timer(retry_time, item.uid, activate)
+        
+        self.event_manager.schedule_timer(next_time, item.uid, activate)
     
     def _update_player_items(self, items: List[PlacedItem], owner: Player, enemy: Player):
         """Update items following Section 1.3 activation flow"""
@@ -606,6 +698,9 @@ class BattleSimulator:
                     "v": blocked
                 })
         
+        # Store old health for threshold detection
+        old_quota = target.quota
+        
         # Apply damage
         target.quota -= damage
         
@@ -618,16 +713,17 @@ class BattleSimulator:
             "v": damage
         })
         
-        # Session Replay: Reflect 30% damage (Section 2.2)
-        if "session_replay" in target.buffs:
-            reflect_damage = int(damage * 0.3)
-            attacker.quota -= reflect_damage
-            self.actions.append({
-                "t": self.current_time,
-                "a": ACTION_CODES["REFLECT"],
-                "p": attacker.id,
-                "v": reflect_damage
-            })
+        # Emit damage event for reactive items (Session Replay, etc)
+        self.event_manager.emit(Event(
+            EventType.DAMAGE_TAKEN,
+            attacker,
+            target,
+            {"damage": damage, "item_id": item_id}
+        ))
+        
+        # Check for low health trigger
+        if old_quota / target.max_quota >= 0.3 and target.quota / target.max_quota < 0.3:
+            self.event_manager.emit(Event(EventType.HEALTH_LOW, None, target))
     
     def _apply_dot_effects(self, player: Player):
         """Apply DOT effects (Section 3.2)"""
