@@ -1,200 +1,639 @@
 """
-Item effects system - Items can have multiple effects with different triggers
+Improved item effects system with proper separation of concerns
+Triggers determine WHEN effects happen
+Effects determine WHAT happens
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from typing import List, Optional, Protocol
+from abc import ABC, abstractmethod
 from enum import Enum
 
-class TriggerType(Enum):
-    """When an effect triggers"""
-    ON_BATTLE_START = "on_battle_start"
-    ON_TIMER = "on_timer"  
-    ON_DAMAGED = "on_damaged"  # When this item's owner takes damage
-    ON_DEAL_DAMAGE = "on_deal_damage"  # When this item deals damage
-    ON_ALLY_DEATH = "on_ally_death"  # When an ally item dies (if items can die)
-    ON_ENEMY_DEATH = "on_enemy_death"  # When an enemy item dies
-    PASSIVE = "passive"  # Always active (like +max CPU)
+# ============= EFFECTS (What happens) =============
 
-class EffectType(Enum):
-    """What the effect does"""
-    DAMAGE = "damage"  # Deal damage to enemy
-    HEAL = "heal"  # Heal owner
-    BLOCK = "block"  # Add block/shield
-    BUFF = "buff"  # Apply buff to owner/allies
-    DEBUFF = "debuff"  # Apply debuff to enemies
-    MODIFY_STAT = "modify_stat"  # Change max CPU, CPU regen, etc
-    REFLECT = "reflect"  # Reflect damage back
-    STUN = "stun"  # Prevent activation
-    CLEANSE = "cleanse"  # Remove debuffs
-    RESURRECT = "resurrect"  # Bring back defeated items (if applicable)
+class Effect(ABC):
+    """Base class for all effects"""
+    @abstractmethod
+    def apply(self, source, target, battle_state):
+        """Apply this effect"""
+        pass
 
 @dataclass
-class ItemEffect:
-    """A single effect that an item can have"""
-    trigger: TriggerType
-    effect_type: EffectType
+class AttackEffect(Effect):
+    """Deal damage to target"""
+    min_damage: int
+    max_damage: int
+    accuracy: float = 0.85
+    crit_chance: float = 0.05
+    special: Optional[str] = None  # "bypass_block", "crash", etc
     
-    # Effect parameters
-    value: float = 0  # Damage amount, heal amount, buff value, etc
-    value_min: Optional[float] = None  # For random ranges
-    value_max: Optional[float] = None
+    def apply(self, source, target, battle_state):
+        # Battle system will implement damage dealing
+        return {
+            "type": "attack",
+            "min_damage": self.min_damage,
+            "max_damage": self.max_damage,
+            "accuracy": self.accuracy,
+            "crit_chance": self.crit_chance,
+            "special": self.special
+        }
+
+@dataclass
+class HealEffect(Effect):
+    """Heal the target"""
+    min_heal: int
+    max_heal: int
+    target_type: str = "self"  # "self", "lowest_ally", "all_allies"
     
-    # Trigger parameters
-    cooldown: float = 0.0  # For ON_TIMER triggers
-    cpu_cost: int = 0  # CPU/stamina cost to activate
-    accuracy: float = 1.0  # Chance to hit (for damage effects)
-    crit_chance: float = 0.05  # Chance for critical hit
+    def apply(self, source, target, battle_state):
+        return {
+            "type": "heal",
+            "min_heal": self.min_heal,
+            "max_heal": self.max_heal,
+            "target_type": self.target_type
+        }
+
+@dataclass
+class BlockEffect(Effect):
+    """Add block/shield to target"""
+    block_amount: int
+    target_type: str = "self"
     
-    # Conditional parameters
-    health_threshold: Optional[float] = None  # Only trigger below X% health
-    target: str = "enemy"  # "enemy", "self", "all_allies", "all_enemies", "lowest_health_ally"
+    def apply(self, source, target, battle_state):
+        return {
+            "type": "block",
+            "amount": self.block_amount,
+            "target_type": self.target_type
+        }
+
+@dataclass
+class BuffEffect(Effect):
+    """Apply a buff"""
+    buff_name: str  # "speed", "damage", "accuracy", etc
+    value: float
+    duration: Optional[float] = None  # None = permanent
+    target_type: str = "self"
     
-    # Special parameters
-    special: Optional[str] = None  # Special behavior like "stacking", "bypass_block"
-    duration: float = 0  # For buffs/debuffs
+    def apply(self, source, target, battle_state):
+        return {
+            "type": "buff",
+            "buff_name": self.buff_name,
+            "value": self.value,
+            "duration": self.duration,
+            "target_type": self.target_type
+        }
+
+@dataclass
+class DebuffEffect(Effect):
+    """Apply a debuff to enemies"""
+    debuff_name: str  # "slow", "vulnerable", "poison", etc
+    value: float
+    duration: float
+    accuracy: float = 1.0
+    target_type: str = "enemy"
+    
+    def apply(self, source, target, battle_state):
+        return {
+            "type": "debuff",
+            "debuff_name": self.debuff_name,
+            "value": self.value,
+            "duration": self.duration,
+            "accuracy": self.accuracy,
+            "target_type": self.target_type
+        }
+
+@dataclass
+class StunEffect(Effect):
+    """Prevent target from acting"""
+    stun_duration: float
+    accuracy: float = 0.5
+    target_type: str = "enemy"
+    
+    def apply(self, source, target, battle_state):
+        return {
+            "type": "stun",
+            "duration": self.stun_duration,
+            "accuracy": self.accuracy,
+            "target_type": self.target_type
+        }
+
+@dataclass
+class ReflectEffect(Effect):
+    """Reflect damage back to attacker"""
+    reflect_percent: float  # 0.3 = 30% reflect
+    
+    def apply(self, source, target, battle_state):
+        return {
+            "type": "reflect",
+            "percent": self.reflect_percent
+        }
+
+@dataclass
+class StatModEffect(Effect):
+    """Modify a stat (passive effect)"""
+    stat_name: str  # "max_cpu", "cpu_regen", "max_health"
+    value: float
+    
+    def apply(self, source, target, battle_state):
+        return {
+            "type": "stat_mod",
+            "stat": self.stat_name,
+            "value": self.value
+        }
+
+@dataclass
+class ConsumeEffect(Effect):
+    """Consume the item (remove it from battle)"""
+    
+    def apply(self, source, target, battle_state):
+        return {
+            "type": "consume",
+            "item_id": source.uid if hasattr(source, 'uid') else None
+        }
+
+# ============= TRIGGERS (When effects happen) =============
+
+class Trigger(ABC):
+    """Base class for all triggers"""
+    def __init__(self, effects: List[Effect] = None):
+        self.effects = effects or []
+    
+    @abstractmethod
+    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+        """Check if this trigger should activate"""
+        pass
+    
+    @abstractmethod
+    def get_cpu_cost(self) -> int:
+        """Get CPU cost for this trigger"""
+        pass
+
+@dataclass
+class TimerTrigger(Trigger):
+    """Activates on a timer"""
+    cooldown: float
+    cpu_cost: int
+    effects: List[Effect] = field(default_factory=list)
     
     # Runtime state
     current_cooldown: float = 0.0
-    stacks: int = 0  # For stacking effects like Memory Leak
+    
+    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+        if event_type != "timer_tick":
+            return False
+        return self.current_cooldown <= 0
+    
+    def get_cpu_cost(self) -> int:
+        return self.cpu_cost
+
+@dataclass
+class BattleStartTrigger(Trigger):
+    """Activates once at battle start"""
+    effects: List[Effect] = field(default_factory=list)
+    
+    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+        return event_type == "battle_start"
+    
+    def get_cpu_cost(self) -> int:
+        return 0  # Battle start effects are usually free
+
+@dataclass
+class DamageTakenTrigger(Trigger):
+    """Activates when owner takes damage"""
+    threshold: Optional[float] = None  # Only activate below X% health
+    cooldown: float = 0.0  # Optional cooldown
+    cpu_cost: int = 0
+    effects: List[Effect] = field(default_factory=list)
+    
+    # Runtime state
+    current_cooldown: float = 0.0
+    
+    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+        if event_type != "damage_taken":
+            return False
+        if self.current_cooldown > 0:
+            return False
+        if self.threshold:
+            # Check if health is below threshold
+            health_percent = target.quota / target.max_quota
+            return health_percent < self.threshold
+        return True
+    
+    def get_cpu_cost(self) -> int:
+        return self.cpu_cost
+
+@dataclass
+class DamageDealtTrigger(Trigger):
+    """Activates when this item deals damage"""
+    chance: float = 1.0  # Chance to trigger
+    effects: List[Effect] = field(default_factory=list)
+    
+    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+        if event_type != "damage_dealt":
+            return False
+        import random
+        return random.random() < self.chance
+    
+    def get_cpu_cost(self) -> int:
+        return 0  # On-hit effects are usually free
+
+@dataclass
+class PassiveTrigger(Trigger):
+    """Always active (for stat modifications)"""
+    effects: List[Effect] = field(default_factory=list)
+    
+    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+        return event_type == "passive_apply"
+    
+    def get_cpu_cost(self) -> int:
+        return 0  # Passives don't cost CPU
+
+@dataclass
+class KillTrigger(Trigger):
+    """Activates when this item gets a kill"""
+    effects: List[Effect] = field(default_factory=list)
+    
+    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+        return event_type == "enemy_killed"
+    
+    def get_cpu_cost(self) -> int:
+        return 0  # Kill effects are usually free
+
+# ============= ITEM SPECIFICATION =============
 
 @dataclass
 class ItemSpec:
-    """Complete specification for an item with multiple effects"""
+    """Complete specification for an item"""
     id: str
     name: str
     category: str  # "problem", "defense", "infrastructure"
     
-    # Item can have multiple effects
-    effects: List[ItemEffect] = field(default_factory=list)
+    # List of triggers, each with their own effects
+    triggers: List[Trigger] = field(default_factory=list)
     
     # Item properties
-    tier: int = 1  # 1-3
-    rarity: str = "common"  # common/uncommon/rare/epic/legendary
+    tier: int = 1
+    rarity: str = "common"
     
-    # Adjacency bonuses this item provides
-    adjacency_bonus: Optional[Dict[str, float]] = None  # e.g. {"accuracy": 0.1}
+    # Adjacency bonuses this item provides to neighbors
+    adjacency_bonus: Optional[dict] = None
 
-# Example items with multiple effects
-EXAMPLE_ITEMS = {
-    "null_pointer": ItemSpec(
+# ============= EXAMPLE ITEMS =============
+
+def create_example_items():
+    """Create example items with the new system"""
+    
+    null_pointer = ItemSpec(
         id="null_pointer",
         name="Null Pointer Exception",
         category="problem",
-        effects=[
-            ItemEffect(
-                trigger=TriggerType.ON_TIMER,
-                effect_type=EffectType.DAMAGE,
-                value_min=4,
-                value_max=8,
+        triggers=[
+            TimerTrigger(
                 cooldown=2.5,
                 cpu_cost=3,
-                accuracy=0.85,
-                special="crash"  # 20% chance to crash for 15 damage on crit
+                effects=[
+                    AttackEffect(
+                        min_damage=4,
+                        max_damage=8,
+                        accuracy=0.85,
+                        crit_chance=0.05,
+                        special="crash"  # 20% to deal 15 damage on crit
+                    )
+                ]
             )
         ],
         rarity="common"
-    ),
+    )
     
-    "error_monitoring": ItemSpec(
+    error_monitoring = ItemSpec(
         id="error_monitoring",
         name="Error Monitoring",
         category="defense",
-        effects=[
-            ItemEffect(
-                trigger=TriggerType.ON_BATTLE_START,
-                effect_type=EffectType.BLOCK,
-                value=5,
-                target="self"
+        triggers=[
+            BattleStartTrigger(
+                effects=[
+                    BlockEffect(block_amount=5, target_type="self")
+                ]
             ),
-            ItemEffect(
-                trigger=TriggerType.PASSIVE,
-                effect_type=EffectType.BUFF,
-                special="adjacent_accuracy",  # Adjacent problems gain +10% accuracy
-                value=0.1
+            PassiveTrigger(
+                effects=[
+                    BuffEffect(
+                        buff_name="adjacent_accuracy",
+                        value=0.1,
+                        target_type="adjacent_problems"
+                    )
+                ]
             )
         ],
         rarity="common"
-    ),
+    )
     
-    "session_replay": ItemSpec(
+    session_replay = ItemSpec(
         id="session_replay",
         name="Session Replay",
         category="defense",
-        effects=[
-            ItemEffect(
-                trigger=TriggerType.ON_DAMAGED,
-                effect_type=EffectType.REFLECT,
-                value=0.3,  # Reflect 30% of damage
+        triggers=[
+            DamageTakenTrigger(
+                threshold=None,  # Always triggers
                 cpu_cost=0,
-                target="attacker"
+                effects=[
+                    ReflectEffect(reflect_percent=0.3)
+                ]
             ),
-            ItemEffect(
-                trigger=TriggerType.ON_TIMER,
-                effect_type=EffectType.DAMAGE,
-                value=3,  # Can also replay recorded attacks
+            TimerTrigger(
                 cooldown=5.0,
                 cpu_cost=2,
-                special="replay_last_attack"
-            )
-        ],
-        rarity="uncommon"
-    ),
-    
-    "hybrid_weapon": ItemSpec(
-        id="hybrid_weapon",
-        name="Hybrid Attacker",
-        category="problem",
-        effects=[
-            # Main attack
-            ItemEffect(
-                trigger=TriggerType.ON_TIMER,
-                effect_type=EffectType.DAMAGE,
-                value_min=5,
-                value_max=10,
-                cooldown=3.0,
-                cpu_cost=4,
-                accuracy=0.9
-            ),
-            # Bonus damage on battle start
-            ItemEffect(
-                trigger=TriggerType.ON_BATTLE_START,
-                effect_type=EffectType.DAMAGE,
-                value=8,
-                cpu_cost=0,
-                accuracy=1.0
-            ),
-            # Heal when low health
-            ItemEffect(
-                trigger=TriggerType.ON_DAMAGED,
-                effect_type=EffectType.HEAL,
-                value=3,
-                health_threshold=0.3,  # Only when below 30% health
-                cpu_cost=2,
-                target="self"
-            )
-        ],
-        rarity="epic"
-    ),
-    
-    "load_balancer": ItemSpec(
-        id="load_balancer",
-        name="Load Balancer",
-        category="infrastructure",
-        effects=[
-            ItemEffect(
-                trigger=TriggerType.PASSIVE,
-                effect_type=EffectType.MODIFY_STAT,
-                special="max_cpu",
-                value=5
-            ),
-            ItemEffect(
-                trigger=TriggerType.PASSIVE,
-                effect_type=EffectType.BUFF,
-                special="distribute_cpu_cost",  # Reduce CPU cost of adjacent items
-                value=1
+                effects=[
+                    AttackEffect(
+                        min_damage=3,
+                        max_damage=3,
+                        accuracy=1.0,
+                        special="replay"  # Replays last recorded attack
+                    )
+                ]
             )
         ],
         rarity="uncommon"
     )
-}
+    
+    alerting_system = ItemSpec(
+        id="alerting_system",
+        name="Alerting System",
+        category="defense",
+        triggers=[
+            DamageTakenTrigger(
+                threshold=0.3,  # Only when below 30% health
+                cooldown=8.0,
+                cpu_cost=3,
+                effects=[
+                    HealEffect(min_heal=5, max_heal=5, target_type="self"),
+                    BlockEffect(block_amount=3, target_type="self")
+                ]
+            )
+        ],
+        rarity="rare"
+    )
+    
+    memory_leak = ItemSpec(
+        id="memory_leak",
+        name="Memory Leak",
+        category="problem",
+        triggers=[
+            TimerTrigger(
+                cooldown=3.0,
+                cpu_cost=2,
+                effects=[
+                    AttackEffect(
+                        min_damage=2,
+                        max_damage=4,
+                        accuracy=0.95,
+                        special="stacking"  # Damage increases each hit
+                    ),
+                    DebuffEffect(
+                        debuff_name="memory_leaked",
+                        value=1,
+                        duration=5.0,
+                        accuracy=1.0
+                    )
+                ]
+            )
+        ],
+        rarity="uncommon"
+    )
+    
+    hybrid_assassin = ItemSpec(
+        id="hybrid_assassin",
+        name="Hybrid Assassin",
+        category="problem",
+        triggers=[
+            # Opening burst
+            BattleStartTrigger(
+                effects=[
+                    AttackEffect(min_damage=10, max_damage=15, accuracy=1.0)
+                ]
+            ),
+            # Regular attacks
+            TimerTrigger(
+                cooldown=2.0,
+                cpu_cost=4,
+                effects=[
+                    AttackEffect(min_damage=5, max_damage=8, accuracy=0.9),
+                    StunEffect(stun_duration=0.5, accuracy=0.2)
+                ]
+            ),
+            # Execute on low health enemies
+            DamageDealtTrigger(
+                chance=1.0,
+                effects=[
+                    AttackEffect(
+                        min_damage=20,
+                        max_damage=20,
+                        accuracy=1.0,
+                        special="execute_low_health"  # Only if target < 20% HP
+                    )
+                ]
+            )
+        ],
+        rarity="legendary"
+    )
+    
+    load_balancer = ItemSpec(
+        id="load_balancer",
+        name="Load Balancer",
+        category="infrastructure",
+        triggers=[
+            PassiveTrigger(
+                effects=[
+                    StatModEffect(stat_name="max_cpu", value=5),
+                    BuffEffect(
+                        buff_name="cpu_cost_reduction",
+                        value=1,
+                        target_type="adjacent"
+                    )
+                ]
+            )
+        ],
+        rarity="uncommon"
+    )
+    
+    race_condition = ItemSpec(
+        id="race_condition",
+        name="Race Condition",
+        category="problem",
+        triggers=[
+            TimerTrigger(
+                cooldown=2.0,
+                cpu_cost=4,
+                effects=[
+                    AttackEffect(
+                        min_damage=6,
+                        max_damage=10,
+                        accuracy=0.70,
+                        crit_chance=0.05,
+                        special="double_strike"  # If faster than opponent
+                    )
+                ]
+            )
+        ],
+        rarity="rare"
+    )
+    
+    sql_injection = ItemSpec(
+        id="sql_injection",
+        name="SQL Injection",
+        category="problem",
+        triggers=[
+            TimerTrigger(
+                cooldown=4.0,
+                cpu_cost=5,
+                effects=[
+                    AttackEffect(
+                        min_damage=8,
+                        max_damage=12,
+                        accuracy=0.80,
+                        crit_chance=0.05,
+                        special="bypass_block"  # Bypasses 50% of blocks
+                    )
+                ]
+            )
+        ],
+        rarity="rare"
+    )
+    
+    redis_cache = ItemSpec(
+        id="redis_cache",
+        name="Redis Cache",
+        category="infrastructure",
+        triggers=[
+            PassiveTrigger(
+                effects=[
+                    StatModEffect(stat_name="cpu_regen", value=3)  # +3 stamina regen
+                ]
+            )
+        ],
+        rarity="common"
+    )
+    
+    database = ItemSpec(
+        id="database",
+        name="Database",
+        category="infrastructure",
+        triggers=[
+            PassiveTrigger(
+                effects=[
+                    StatModEffect(stat_name="max_cpu", value=8)  # +8 max stamina
+                ]
+            )
+        ],
+        rarity="uncommon"
+    )
+    
+    cdn = ItemSpec(
+        id="cdn",
+        name="CDN",
+        category="infrastructure",
+        triggers=[
+            PassiveTrigger(
+                effects=[
+                    BuffEffect(
+                        buff_name="global_speed",
+                        value=0.15,  # 15% faster activation
+                        target_type="all"
+                    )
+                ]
+            )
+        ],
+        rarity="rare"
+    )
+    
+    performance_monitoring = ItemSpec(
+        id="performance_monitoring",
+        name="Performance Monitoring",
+        category="defense",
+        triggers=[
+            TimerTrigger(
+                cooldown=10.0,
+                cpu_cost=2,
+                effects=[
+                    BuffEffect(
+                        buff_name="speed",
+                        value=0.2,  # +20% speed to all
+                        target_type="all"
+                    )
+                ]
+            )
+        ],
+        rarity="uncommon"
+    )
+    
+    # Example consumable items (potions)
+    health_potion = ItemSpec(
+        id="health_potion",
+        name="Health Potion",
+        category="defense",
+        triggers=[
+            DamageTakenTrigger(
+                threshold=0.5,  # Activate when below 50% health
+                cooldown=0.0,  # One-time use
+                cpu_cost=0,  # Free to use
+                effects=[
+                    HealEffect(min_heal=15, max_heal=20, target_type="self"),
+                    ConsumeEffect()  # Remove item after use
+                ]
+            )
+        ],
+        rarity="common"
+    )
+    
+    emergency_repair = ItemSpec(
+        id="emergency_repair",
+        name="Emergency Repair",
+        category="defense",
+        triggers=[
+            DamageTakenTrigger(
+                threshold=0.2,  # Activate when below 20% health (emergency!)
+                cooldown=0.0,
+                cpu_cost=0,
+                effects=[
+                    HealEffect(min_heal=30, max_heal=35, target_type="self"),
+                    BlockEffect(block_amount=10, target_type="self"),
+                    ConsumeEffect()  # Remove item after use
+                ]
+            )
+        ],
+        rarity="rare"
+    )
+    
+    cpu_booster = ItemSpec(
+        id="cpu_booster",
+        name="CPU Booster",
+        category="infrastructure",
+        triggers=[
+            BattleStartTrigger(
+                effects=[
+                    StatModEffect(stat_name="max_cpu", value=10),  # +10 max CPU for battle
+                    ConsumeEffect()  # Remove item after use
+                ]
+            )
+        ],
+        rarity="uncommon"
+    )
+    
+    return {
+        "null_pointer": null_pointer,
+        "error_monitoring": error_monitoring,
+        "session_replay": session_replay,
+        "alerting_system": alerting_system,
+        "memory_leak": memory_leak,
+        "hybrid_assassin": hybrid_assassin,
+        "load_balancer": load_balancer,
+        "race_condition": race_condition,
+        "sql_injection": sql_injection,
+        "redis_cache": redis_cache,
+        "database": database,
+        "cdn": cdn,
+        "performance_monitoring": performance_monitoring,
+        "health_potion": health_potion,
+        "emergency_repair": emergency_repair,
+        "cpu_booster": cpu_booster
+    }

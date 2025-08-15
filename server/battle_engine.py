@@ -12,6 +12,13 @@ from copy import deepcopy
 import uuid
 
 from event_system import EventManager, EventType, Event, EventData
+from item_effects import (
+    ItemSpec, Trigger, Effect,
+    AttackEffect, HealEffect, BlockEffect, BuffEffect, DebuffEffect, 
+    StunEffect, ReflectEffect, StatModEffect, ConsumeEffect,
+    TimerTrigger, BattleStartTrigger, DamageTakenTrigger, DamageDealtTrigger,
+    PassiveTrigger, KillTrigger, create_example_items
+)
 
 # Compact action codes for minimal payload (Section 10.2)
 ACTION_CODES = {
@@ -30,41 +37,7 @@ ACTION_CODES = {
     "DEATH": "x",       # Player defeated
 }
 
-class TriggerType(Enum):
-    """From Section 2 - Item trigger conditions"""
-    ON_BATTLE_START = "on_battle_start"
-    ON_TIMER = "on_timer"  
-    ON_DAMAGED = "on_damaged"
-    ON_LOW_HEALTH = "on_low_health"  # < 30% per Section 2.2
-    PASSIVE = "passive"
-
-@dataclass
-class ItemSpec:
-    """Item specification from Game Design Document Section 2"""
-    id: str
-    name: str
-    category: str  # "problem", "defense", "infrastructure"
-    
-    # Combat stats (Section 2.1)
-    min_damage: int = 0
-    max_damage: int = 0
-    cooldown: float = 3.0
-    cpu_cost: int = 3  # Stamina from doc
-    accuracy: float = 0.85
-    crit_chance: float = 0.05  # Section 7.2: Base 5%
-    
-    # Activation
-    trigger_type: TriggerType = TriggerType.ON_TIMER
-    
-    # Special effects from Section 2
-    special_effect: Optional[str] = None
-    special_value: float = 0
-    
-    # Tier system (Section 5.3)
-    tier: int = 1  # 1-3
-    
-    # Rarity for shop costs (Section 5.2)
-    rarity: str = "common"  # common/uncommon/rare/epic/legendary
+# PlacedItem will reference the new ItemSpec from item_effects.py
 
 @dataclass  
 class PlacedItem:
@@ -105,133 +78,8 @@ class Player:
     # Session Replay special tracking
     recorded_attacks: List[Dict] = field(default_factory=list)
 
-# Define all items from Section 2
-ITEM_CATALOG = {
-    # Section 2.1: Problems/Bugs (Weapons)
-    "null_pointer": ItemSpec(
-        id="null_pointer",
-        name="Null Pointer Exception",
-        category="problem",
-        min_damage=4, max_damage=8,
-        cooldown=2.5, cpu_cost=3,
-        accuracy=0.85, crit_chance=0.05,
-        trigger_type=TriggerType.ON_TIMER,
-        special_effect="crash",  # 20% chance on crit for instant 15 damage
-        rarity="common"
-    ),
-    "memory_leak": ItemSpec(
-        id="memory_leak",
-        name="Memory Leak",
-        category="problem", 
-        min_damage=2, max_damage=4,
-        cooldown=3.0, cpu_cost=2,
-        accuracy=0.95, crit_chance=0.05,
-        trigger_type=TriggerType.ON_TIMER,
-        special_effect="stacking",  # +1 damage each activation
-        rarity="uncommon"
-    ),
-    "race_condition": ItemSpec(
-        id="race_condition",
-        name="Race Condition",
-        category="problem",
-        min_damage=6, max_damage=10,
-        cooldown=2.0, cpu_cost=4,
-        accuracy=0.70, crit_chance=0.05,
-        trigger_type=TriggerType.ON_TIMER,
-        special_effect="double_strike",  # If faster than opponent
-        rarity="rare"
-    ),
-    "sql_injection": ItemSpec(
-        id="sql_injection",
-        name="SQL Injection", 
-        category="problem",
-        min_damage=8, max_damage=12,
-        cooldown=4.0, cpu_cost=5,
-        accuracy=0.80, crit_chance=0.05,
-        trigger_type=TriggerType.ON_TIMER,
-        special_effect="bypass_block",  # Bypasses 50% of blocks
-        rarity="rare"
-    ),
-    
-    # Section 2.2: Sentry Products (Defensive)
-    "error_monitoring": ItemSpec(
-        id="error_monitoring",
-        name="Error Monitoring",
-        category="defense",
-        trigger_type=TriggerType.ON_BATTLE_START,
-        special_effect="block",
-        special_value=5,  # +5 Block at battle start
-        rarity="common"
-    ),
-    "session_replay": ItemSpec(
-        id="session_replay",
-        name="Session Replay",
-        category="defense",
-        trigger_type=TriggerType.ON_DAMAGED,
-        cpu_cost=0,  # No stamina cost
-        special_effect="reflect",
-        special_value=0.3,  # Reflects 30% damage
-        rarity="uncommon"
-    ),
-    "performance_monitoring": ItemSpec(
-        id="performance_monitoring",
-        name="Performance Monitoring",
-        category="defense",
-        cooldown=10.0, cpu_cost=2,
-        trigger_type=TriggerType.ON_TIMER,
-        special_effect="speed_buff",
-        special_value=0.2,  # +20% speed to all
-        rarity="uncommon"
-    ),
-    "alerting_system": ItemSpec(
-        id="alerting_system",
-        name="Alerting System",
-        category="defense",
-        cooldown=8.0, cpu_cost=3,
-        trigger_type=TriggerType.ON_LOW_HEALTH,
-        special_effect="heal",
-        special_value=5,  # Heals 5 HP when < 30%
-        rarity="rare"
-    ),
-    
-    # Section 2.3: Infrastructure (Support)
-    "load_balancer": ItemSpec(
-        id="load_balancer",
-        name="Load Balancer",
-        category="infrastructure",
-        trigger_type=TriggerType.PASSIVE,
-        special_effect="max_cpu",
-        special_value=5,  # +5 max stamina
-        rarity="uncommon"
-    ),
-    "redis_cache": ItemSpec(
-        id="redis_cache",
-        name="Redis Cache",
-        category="infrastructure",
-        trigger_type=TriggerType.PASSIVE,
-        special_effect="cpu_regen",
-        special_value=3,  # +3 stamina regen
-        rarity="common"
-    ),
-    "database": ItemSpec(
-        id="database",
-        name="Database",
-        category="infrastructure",
-        trigger_type=TriggerType.PASSIVE,
-        special_effect="max_cpu",
-        special_value=8,  # +8 max stamina
-        rarity="uncommon"
-    ),
-    "cdn": ItemSpec(
-        id="cdn",
-        name="CDN",
-        category="infrastructure",
-        trigger_type=TriggerType.PASSIVE,
-        special_effect="global_speed",
-        special_value=0.15,  # 15% faster activation
-        rarity="rare"
-    ),
-}
+# Use the new items from item_effects.py
+ITEM_CATALOG = create_example_items()
 
 class BattleSimulator:
     """Simulates battles per Game Design Document specifications"""
@@ -242,6 +90,7 @@ class BattleSimulator:
         self.current_time = 0.0
         self.actions = []
         self.event_manager = EventManager()
+        self.consumed_items = set()  # Track consumed item UIDs
         
     def simulate_battle(self, 
                        p1_items: List[PlacedItem], 
@@ -266,6 +115,7 @@ class BattleSimulator:
         self.current_time = 0.0
         self.actions = []
         self.event_manager.clear()
+        self.consumed_items = set()
         
         # Apply tier scaling (Section 5.3)
         self._apply_tier_scaling(p1_items)
@@ -316,13 +166,16 @@ class BattleSimulator:
                 # Apply to all items
                 for item in p1_items + p2_items:
                     if item.spec.category == "problem":
-                        # Add flat damage, not multiply
-                        # Store original values if not yet stored
-                        if not hasattr(item, '_original_min_damage'):
-                            item._original_min_damage = item.spec.min_damage
-                            item._original_max_damage = item.spec.max_damage
-                        item.spec.min_damage = item._original_min_damage + fatigue_bonus
-                        item.spec.max_damage = item._original_max_damage + fatigue_bonus
+                        # Apply fatigue to all attack effects in all triggers
+                        for trigger in item.spec.triggers:
+                            for effect in trigger.effects:
+                                if hasattr(effect, 'min_damage'):  # Check if it's an attack effect
+                                    # Store original values if not yet stored
+                                    if not hasattr(effect, '_original_min_damage'):
+                                        effect._original_min_damage = effect.min_damage
+                                        effect._original_max_damage = effect.max_damage
+                                    effect.min_damage = effect._original_min_damage + fatigue_bonus
+                                    effect.max_damage = effect._original_max_damage + fatigue_bonus
             
             self.current_time += self.tick_rate
         
@@ -355,18 +208,28 @@ class BattleSimulator:
     def _apply_tier_scaling(self, items: List[PlacedItem]):
         """Apply tier multipliers (Section 5.3)"""
         for item in items:
+            multiplier = 1.0
             if item.spec.tier == 2:
-                # Tier 2: 1.5x stats
-                item.spec.min_damage = int(item.spec.min_damage * 1.5)
-                item.spec.max_damage = int(item.spec.max_damage * 1.5)
+                multiplier = 1.5
             elif item.spec.tier == 3:
-                # Tier 3: 2.2x stats
-                item.spec.min_damage = int(item.spec.min_damage * 2.2)
-                item.spec.max_damage = int(item.spec.max_damage * 2.2)
+                multiplier = 2.2
+            
+            if multiplier > 1.0:
+                # Scale all attack effects in all triggers
+                for trigger in item.spec.triggers:
+                    for effect in trigger.effects:
+                        if isinstance(effect, AttackEffect):
+                            effect.min_damage = int(effect.min_damage * multiplier)
+                            effect.max_damage = int(effect.max_damage * multiplier)
+                        elif isinstance(effect, HealEffect):
+                            effect.min_heal = int(effect.min_heal * multiplier)
+                            effect.max_heal = int(effect.max_heal * multiplier)
     
     def _calculate_adjacency(self, items: List[PlacedItem]):
         """Calculate adjacency bonuses (Section 4.2 & 4.3)"""
         for item in items:
+            if item.uid in self.consumed_items:
+                continue  # Skip consumed items
             adjacent = self._get_adjacent_items(item, items)
             
             # Count categories
@@ -388,7 +251,10 @@ class BattleSimulator:
             if item.spec.category == "problem":
                 for adj in adjacent:
                     if adj.spec.name == "Performance Monitoring":
-                        item.spec.cooldown = max(0.5, item.spec.cooldown - 0.5)
+                        # Reduce cooldown for all timer triggers
+                        for trigger in item.spec.triggers:
+                            if isinstance(trigger, TimerTrigger):
+                                trigger.cooldown = max(0.5, trigger.cooldown - 0.5)
             
             # Full Stack: Problem + Defense + Infrastructure = 30% faster (Section 4.3)
             if problems >= 1 and defenses >= 1 and infrastructure >= 1:
@@ -396,8 +262,11 @@ class BattleSimulator:
             
             # CDN: Adjacent items gain First Strike (Section 2.3)
             for adj in adjacent:
-                if adj.spec.name == "CDN" and item.spec.trigger_type == TriggerType.ON_TIMER:
-                    item.current_cooldown = -0.1  # Will activate immediately
+                if adj.spec.name == "CDN":
+                    # Set initial cooldown for timer triggers to activate immediately
+                    for trigger in item.spec.triggers:
+                        if isinstance(trigger, TimerTrigger):
+                            trigger.current_cooldown = -0.1  # Will activate immediately
             
             # Load Balancer: Distributes stamina cost (Section 2.3)
             if any(adj.spec.name == "Load Balancer" for adj in adjacent):
@@ -412,6 +281,8 @@ class BattleSimulator:
         for other in all_items:
             if other.uid == item.uid:
                 continue
+            if other.uid in self.consumed_items:
+                continue  # Skip consumed items
             # Must be in same container (Section 4.2)
             if other.container_id != item.container_id:
                 continue
@@ -426,108 +297,86 @@ class BattleSimulator:
             if item.spec.category != "infrastructure":
                 continue
             
-            if item.spec.name == "Load Balancer":
-                player.max_cpu += 5
-            elif item.spec.name == "Redis Cache":
-                player.cpu_regen += 3
-            elif item.spec.name == "Database":
-                player.max_cpu += 8
-            elif item.spec.name == "CDN":
-                # Global speed boost handled in update loop
-                pass
+            # Apply passive effects immediately
+            for trigger in item.spec.triggers:
+                if isinstance(trigger, PassiveTrigger):
+                    for effect in trigger.effects:
+                        if isinstance(effect, StatModEffect):
+                            if effect.stat_name == "max_cpu":
+                                player.max_cpu += effect.value
+                            elif effect.stat_name == "cpu_regen":
+                                player.cpu_regen += effect.value
     
     def _setup_item_handlers(self, items: List[PlacedItem], owner: Player, enemy: Player):
-        """Set up event handlers for items based on their trigger types"""
+        """Set up event handlers for items based on their triggers"""
         for item in items:
-            if item.spec.trigger_type == TriggerType.ON_BATTLE_START:
-                # Subscribe to battle start - fires immediately
-                def handle_battle_start(event, item=item, owner=owner):
-                    if item.spec.name == "Error Monitoring":
-                        owner.buffs["block"] = owner.buffs.get("block", 0) + 5
-                        self.actions.append({
-                            "t": self.current_time,
-                            "a": ACTION_CODES["BUFF"],
-                            "p": owner.id,
-                            "i": item.uid,
-                            "v": 5
-                        })
+            if item.uid in self.consumed_items:
+                continue  # Skip consumed items
+            # Each item can have multiple triggers with multiple effects
+            for trigger in item.spec.triggers:
+                if isinstance(trigger, BattleStartTrigger):
+                    # Subscribe to battle start - fires immediately
+                    def handle_battle_start(event, trigger=trigger, item=item, owner=owner):
+                        self._apply_effects(trigger.effects, item, owner, enemy)
+                    
+                    self.event_manager.subscribe(EventType.BATTLE_START, handle_battle_start)
                 
-                self.event_manager.subscribe(EventType.BATTLE_START, handle_battle_start)
-            
-            elif item.spec.trigger_type == TriggerType.ON_TIMER:
-                # Schedule first activation using timer heap
-                self._schedule_timer_item(item, owner, enemy)
-            
-            elif item.spec.trigger_type == TriggerType.ON_LOW_HEALTH:
-                # Subscribe to damage events and check health threshold
-                def handle_damage_for_health_trigger(event, item=item, owner=owner):
-                    if event.target != owner:
-                        return
-                    
-                    # Check if health is now below threshold (30% for Alerting System)
-                    health_percent = owner.quota / owner.max_quota
-                    if health_percent >= 0.3:  # Not low enough
-                        return
-                    
-                    # Check cooldown
-                    if item.current_cooldown > 0:
-                        return
-                    
-                    if item.spec.name == "Alerting System":
-                        cpu_cost = item.spec.cpu_cost
+                elif isinstance(trigger, TimerTrigger):
+                    # Create unique ID for this trigger-timer combination
+                    trigger_index = item.spec.triggers.index(trigger)
+                    trigger_uid = f"{item.uid}_trigger_{trigger_index}"
+                    # Schedule first activation using timer heap
+                    self._schedule_timer_trigger(trigger, item, owner, enemy, trigger_uid)
+                
+                elif isinstance(trigger, DamageTakenTrigger):
+                    # Subscribe to damage events - check threshold if needed
+                    def handle_damage_taken(event, trigger=trigger, item=item, owner=owner):
+                        if event.target != owner:
+                            return
+                        
+                        # Skip if item is consumed
+                        if item.uid in self.consumed_items:
+                            return
+                        
+                        # Check if trigger should activate
+                        if not trigger.should_activate("damage_taken", owner, owner, None):
+                            return
+                        
+                        # Check CPU cost
+                        cpu_cost = trigger.get_cpu_cost()
                         if owner.cpu >= cpu_cost:
-                            heal = min(5, owner.max_quota - owner.quota)
-                            owner.quota += heal
+                            self._apply_effects(trigger.effects, item, owner, enemy)
                             owner.cpu -= cpu_cost
-                            item.current_cooldown = item.spec.cooldown
-                            self.actions.append({
-                                "t": self.current_time,
-                                "a": ACTION_CODES["HEAL"],
-                                "p": owner.id,
-                                "i": item.uid,
-                                "v": heal
-                            })
-                
-                self.event_manager.subscribe(EventType.DAMAGE_TAKEN, handle_damage_for_health_trigger)
-            
-            elif item.spec.trigger_type == TriggerType.ON_DAMAGED:
-                # Subscribe to damage events - fires immediately when damaged
-                def handle_damage(event, item=item, owner=owner):
-                    if event.target != owner:
-                        return
+                            trigger.current_cooldown = trigger.cooldown
                     
-                    if item.spec.name == "Session Replay":
-                        # Reflect 30% damage immediately
-                        if event.data.damage:
-                            reflect_damage = int(event.data.damage * 0.3)
-                            event.source.quota -= reflect_damage
-                            self.actions.append({
-                                "t": self.current_time,
-                                "a": ACTION_CODES["REFLECT"],
-                                "p": event.source.id,
-                                "v": reflect_damage
-                            })
+                    self.event_manager.subscribe(EventType.DAMAGE_TAKEN, handle_damage_taken)
                 
-                self.event_manager.subscribe(EventType.DAMAGE_TAKEN, handle_damage)
+                elif isinstance(trigger, PassiveTrigger):
+                    # Apply passive effects immediately
+                    self._apply_effects(trigger.effects, item, owner, enemy)
     
-    def _schedule_timer_item(self, item: PlacedItem, owner: Player, enemy: Player):
-        """Schedule timer-based item activation using priority queue"""
+    def _schedule_timer_trigger(self, trigger: TimerTrigger, item: PlacedItem, owner: Player, enemy: Player, trigger_uid: str):
+        """Schedule timer-based trigger activation using priority queue"""
         # Apply speed modifiers
         speed = item.speed_mult
         
         # Calculate next activation time
-        cooldown_adjusted = item.spec.cooldown / speed
+        cooldown_adjusted = trigger.cooldown / speed
         next_time = self.current_time + cooldown_adjusted
         
         def activate():
+            # Skip if item is consumed
+            if item.uid in self.consumed_items:
+                return
+            
             # Check CPU availability
-            cpu_cost = max(1, item.spec.cpu_cost - item.cpu_discount)
+            cpu_cost = max(1, trigger.get_cpu_cost() - item.cpu_discount)
             
             if owner.cpu >= cpu_cost:
-                # Have enough CPU - activate the item
-                self._activate_item(item, owner, enemy)
+                # Have enough CPU - apply the effects
+                self._apply_effects(trigger.effects, item, owner, enemy)
                 owner.cpu -= cpu_cost
-                item.current_cooldown = item.spec.cooldown
+                trigger.current_cooldown = trigger.cooldown
             else:
                 # Not enough CPU - log throttle but don't activate
                 self.actions.append({
@@ -537,151 +386,128 @@ class BattleSimulator:
                     "i": item.uid
                 })
             
-            # Always schedule next activation at regular cooldown
+            # Always schedule next activation at regular cooldown (unless consumed)
             # This keeps the item on its normal schedule regardless of CPU
-            self._schedule_timer_item(item, owner, enemy)
+            if item.uid not in self.consumed_items:
+                self._schedule_timer_trigger(trigger, item, owner, enemy, trigger_uid)
         
-        self.event_manager.schedule_timer(next_time, item.uid, activate)
+        self.event_manager.schedule_timer(next_time, trigger_uid, activate)
     
-    def _update_player_items(self, items: List[PlacedItem], owner: Player, enemy: Player):
-        """Update items following Section 1.3 activation flow"""
-        for item in items:
-            # Check trigger conditions
-            if item.spec.trigger_type == TriggerType.ON_TIMER:
-                # Apply speed modifiers
-                speed = item.speed_mult
-                
-                # CDN gives 15% speed to all (Section 2.3)
-                if any(i.spec.name == "CDN" for i in items):
-                    speed *= 1.15
-                
-                # Optimized buff (Section 3.1)
-                if "optimized" in owner.buffs:
-                    speed *= 1 + (owner.buffs["optimized"] * 0.02)
-                
-                # Throttled debuff (Section 3.2)
-                if "throttled" in owner.debuffs:
-                    speed *= 1 - (owner.debuffs["throttled"] * 0.02)
-                
-                # Update cooldown
-                item.current_cooldown -= self.tick_rate * speed
-                
-                if item.current_cooldown <= 0:
-                    # Check CPU availability (Section 1.2)
-                    cpu_cost = max(1, item.spec.cpu_cost - item.cpu_discount)
-                    
-                    # Redis Cache: First activation free (Section 2.3)
-                    if "first_free" in owner.buffs and owner.buffs["first_free"] > 0:
-                        cpu_cost = 0
-                        owner.buffs["first_free"] -= 1
-                    
-                    if owner.cpu >= cpu_cost:
-                        self._activate_item(item, owner, enemy)
-                        owner.cpu -= cpu_cost
-                        item.current_cooldown = item.spec.cooldown
-                    else:
-                        # CPU throttled (Section 1.2)
-                        self.actions.append({
-                            "t": self.current_time,
-                            "a": ACTION_CODES["CPU_FAIL"],
-                            "p": owner.id,
-                            "i": item.uid
-                        })
+    def _apply_effects(self, effects: List[Effect], item: PlacedItem, owner: Player, enemy: Player):
+        """Apply a list of effects from a trigger"""
+        for effect in effects:
+            # Pass item as source for ConsumeEffect to work
+            result = effect.apply(item, enemy, self)
             
-            elif item.spec.trigger_type == TriggerType.ON_LOW_HEALTH:
-                # Trigger when < 30% health (Section 2.2)
-                if owner.quota < owner.max_quota * 0.3:
-                    if item.spec.name == "Alerting System" and item.current_cooldown <= 0:
-                        heal = min(5, owner.max_quota - owner.quota)
-                        owner.quota += heal
-                        item.current_cooldown = item.spec.cooldown
-                        self.actions.append({
-                            "t": self.current_time,
-                            "a": ACTION_CODES["HEAL"],
-                            "p": owner.id,
-                            "i": item.uid,
-                            "v": heal
-                        })
-    
-    def _activate_item(self, item: PlacedItem, owner: Player, enemy: Player):
-        """Activate item following Section 1.3 flow"""
-        if item.spec.category == "problem":
-            # Step 3: Roll accuracy check (Section 1.3)
-            accuracy = item.spec.accuracy + item.accuracy_bonus
-            
-            # Rate Limited debuff (Section 3.2)
-            if "rate_limited" in owner.debuffs:
-                accuracy -= owner.debuffs["rate_limited"] * 0.05
-            
-            if random.random() > accuracy:
-                # Miss
+            if isinstance(effect, AttackEffect):
+                # Handle attack effect
+                self._process_attack(result, item, owner, enemy)
+            elif isinstance(effect, HealEffect):
+                # Handle heal effect
+                heal = random.randint(result["min_heal"], result["max_heal"])
+                owner.quota = min(owner.max_quota, owner.quota + heal)
                 self.actions.append({
                     "t": self.current_time,
-                    "a": ACTION_CODES["MISS"],
-                    "p": owner.id,
-                    "i": item.uid
-                })
-                return
-            
-            # Calculate damage
-            damage = random.randint(item.spec.min_damage, item.spec.max_damage)
-            damage = int(damage * item.damage_mult)
-            
-            # Monitored buff (Section 3.1)
-            if "monitored" in owner.buffs:
-                damage += owner.buffs["monitored"]
-            
-            # Check crit (Section 7.2)
-            is_crit = random.random() < item.spec.crit_chance
-            if is_crit:
-                damage *= 2
-                
-                # Null Pointer special: 20% chance to crash on crit (Section 2.1)
-                if item.spec.name == "Null Pointer Exception" and random.random() < 0.2:
-                    damage = 15  # Instant 15 damage
-                
-                self.actions.append({
-                    "t": self.current_time,
-                    "a": ACTION_CODES["CRIT"],
+                    "a": ACTION_CODES["HEAL"],
                     "p": owner.id,
                     "i": item.uid,
-                    "v": damage
+                    "v": heal
                 })
-            
-            # Special effects
-            if item.spec.name == "Memory Leak":
-                # Damage increases by +1 each activation (Section 2.1)
-                item.memory_leak_stacks += 1
-                damage += item.memory_leak_stacks
-            
-            elif item.spec.name == "SQL Injection":
-                # Bypasses 50% of blocks (Section 2.1)
-                if "block" in enemy.buffs:
-                    enemy.buffs["block"] = int(enemy.buffs["block"] * 0.5)
-            
-            # Deal damage
-            self._deal_damage(enemy, damage, owner, item.uid)
-            
-            # Session Replay: Record attack (Section 2.2)
-            if any(i.spec.name == "Session Replay" for i in enemy.buffs):
-                enemy.recorded_attacks.append({
-                    "damage": damage,
-                    "time": self.current_time
+            elif isinstance(effect, BlockEffect):
+                # Handle block effect
+                owner.buffs["block"] = owner.buffs.get("block", 0) + result["amount"]
+                self.actions.append({
+                    "t": self.current_time,
+                    "a": ACTION_CODES["BLOCK"],
+                    "p": owner.id,
+                    "i": item.uid,
+                    "v": result["amount"]
                 })
-                if len(enemy.recorded_attacks) > 3:
-                    enemy.recorded_attacks.pop(0)
-        
-        elif item.spec.category == "defense":
-            if item.spec.name == "Performance Monitoring":
-                # +20% speed buff to all items (Section 2.2)
-                owner.buffs["optimized"] = owner.buffs.get("optimized", 0) + 10  # 10 stacks = 20%
+            elif isinstance(effect, BuffEffect):
+                # Handle buff effect
+                owner.buffs[result["buff_name"]] = owner.buffs.get(result["buff_name"], 0) + result["value"]
                 self.actions.append({
                     "t": self.current_time,
                     "a": ACTION_CODES["BUFF"],
                     "p": owner.id,
                     "i": item.uid,
-                    "v": 10
+                    "v": result["value"]
                 })
+            elif isinstance(effect, DebuffEffect):
+                # Handle debuff effect
+                if random.random() < result["accuracy"]:
+                    enemy.debuffs[result["debuff_name"]] = enemy.debuffs.get(result["debuff_name"], 0) + result["value"]
+                    self.actions.append({
+                        "t": self.current_time,
+                        "a": ACTION_CODES["DEBUFF"],
+                        "p": enemy.id,
+                        "i": item.uid,
+                        "v": result["value"]
+                    })
+            elif isinstance(effect, ReflectEffect):
+                # Reflect is handled in damage events
+                owner.buffs["reflect"] = result["percent"]
+            elif isinstance(effect, StatModEffect):
+                # Handle stat modification
+                if result["stat"] == "max_cpu":
+                    owner.max_cpu += result["value"]
+                elif result["stat"] == "cpu_regen":
+                    owner.cpu_regen += result["value"]
+            elif isinstance(effect, ConsumeEffect):
+                # Mark item for removal and emit event
+                self._consume_item(item, owner)
+    
+    def _process_attack(self, attack_data: dict, item: PlacedItem, owner: Player, enemy: Player):
+        """Process an attack effect"""
+        # Check accuracy
+        accuracy = attack_data["accuracy"] + item.accuracy_bonus
+        if "rate_limited" in owner.debuffs:
+            accuracy -= owner.debuffs["rate_limited"] * 0.05
+        
+        if random.random() > accuracy:
+            # Miss
+            self.actions.append({
+                "t": self.current_time,
+                "a": ACTION_CODES["MISS"],
+                "p": owner.id,
+                "i": item.uid
+            })
+            return
+        
+        # Calculate damage
+        damage = random.randint(attack_data["min_damage"], attack_data["max_damage"])
+        damage = int(damage * item.damage_mult)
+        
+        # Check crit
+        is_crit = random.random() < attack_data["crit_chance"]
+        if is_crit:
+            damage *= 2
+            
+            # Special crit effects
+            if attack_data.get("special") == "crash" and random.random() < 0.2:
+                damage = 15  # Instant 15 damage
+            
+            self.actions.append({
+                "t": self.current_time,
+                "a": ACTION_CODES["CRIT"],
+                "p": owner.id,
+                "i": item.uid,
+                "v": damage
+            })
+        
+        # Handle special attack types
+        if attack_data.get("special") == "stacking":
+            # Memory leak stacking damage
+            item.memory_leak_stacks += 1
+            damage += item.memory_leak_stacks
+        elif attack_data.get("special") == "bypass_block":
+            # SQL injection bypasses blocks
+            if "block" in enemy.buffs:
+                enemy.buffs["block"] = int(enemy.buffs["block"] * 0.5)
+        
+        # Deal damage
+        self._deal_damage(enemy, damage, owner, item.uid)
+    
     
     def _deal_damage(self, target: Player, damage: int, attacker: Player, item_id: str):
         """Deal damage following Section 7.3"""
@@ -740,3 +566,32 @@ class BattleSimulator:
                     "p": player.id,
                     "v": damage
                 })
+    
+    def _consume_item(self, item: PlacedItem, owner: Player):
+        """Consume an item (remove it from battle)"""
+        if item.uid in self.consumed_items:
+            return  # Already consumed
+        
+        # Mark as consumed
+        self.consumed_items.add(item.uid)
+        
+        # Log the consumption
+        self.actions.append({
+            "t": self.current_time,
+            "a": "consume",
+            "p": owner.id,
+            "i": item.uid
+        })
+        
+        # Emit event so adjacency can be recalculated
+        self.event_manager.emit(Event(
+            EventType.ITEM_CONSUMED,
+            owner,
+            None,
+            EventData(item_id=item.uid)
+        ))
+        
+        # Cancel any scheduled timers for this item
+        for trigger_index in range(len(item.spec.triggers)):
+            trigger_uid = f"{item.uid}_trigger_{trigger_index}"
+            self.event_manager.cancel_timer(trigger_uid)

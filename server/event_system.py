@@ -21,6 +21,7 @@ class EventType(Enum):
     PLAYER_DEATH = "player_death"  # A player died (check target to see which one)
     TIMER_TICK = "timer_tick"
     ITEM_ACTIVATED = "item_activated"
+    ITEM_CONSUMED = "item_consumed"  # Item removed from battle (potions, etc)
     BUFF_APPLIED = "buff_applied"
     DEBUFF_APPLIED = "debuff_applied"
     CPU_EXHAUSTED = "cpu_exhausted"

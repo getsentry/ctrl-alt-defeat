@@ -7,13 +7,12 @@ from copy import deepcopy
 from battle_engine import (
     BattleSimulator,
     PlacedItem,
-    ItemSpec,
     Player,
-    TriggerType,
     ITEM_CATALOG,
     ACTION_CODES
 )
 from event_system import Event, EventType
+from item_effects import ItemSpec, TimerTrigger, BattleStartTrigger, DamageTakenTrigger
 
 class TestGameDesignCompliance:
     """Test that battle engine exactly matches the Game Design Document"""
@@ -52,79 +51,110 @@ class TestGameDesignCompliance:
         # Test Null Pointer (Section 2.1)
         np = ITEM_CATALOG["null_pointer"]
         assert np.name == "Null Pointer Exception"
-        assert np.min_damage == 4
-        assert np.max_damage == 8
-        assert np.cooldown == 2.5
-        assert np.cpu_cost == 3
-        assert np.accuracy == 0.85
-        assert np.special_effect == "crash"
+        # Check it has a timer trigger with attack effect
+        assert len(np.triggers) == 1
+        assert isinstance(np.triggers[0], TimerTrigger)
+        assert np.triggers[0].cooldown == 2.5
+        assert np.triggers[0].cpu_cost == 3
+        # Check attack effect
+        attack_effect = np.triggers[0].effects[0]
+        assert attack_effect.min_damage == 4
+        assert attack_effect.max_damage == 8
+        assert attack_effect.accuracy == 0.85
+        assert attack_effect.special == "crash"
         
         # Test Memory Leak (Section 2.1)
         ml = ITEM_CATALOG["memory_leak"]
-        assert ml.min_damage == 2
-        assert ml.max_damage == 4
-        assert ml.cooldown == 3.0
-        assert ml.cpu_cost == 2
-        assert ml.accuracy == 0.95
-        assert ml.special_effect == "stacking"
+        assert len(ml.triggers) == 1
+        assert isinstance(ml.triggers[0], TimerTrigger)
+        assert ml.triggers[0].cooldown == 3.0
+        assert ml.triggers[0].cpu_cost == 2
+        attack_effect = ml.triggers[0].effects[0]
+        assert attack_effect.min_damage == 2
+        assert attack_effect.max_damage == 4
+        assert attack_effect.accuracy == 0.95
+        assert attack_effect.special == "stacking"
         
         # Test Error Monitoring (Section 2.2)
         em = ITEM_CATALOG["error_monitoring"]
-        assert em.trigger_type == TriggerType.ON_BATTLE_START
-        assert em.special_effect == "block"
-        assert em.special_value == 5
+        # Should have battle start trigger and passive trigger
+        assert len(em.triggers) == 2
+        assert isinstance(em.triggers[0], BattleStartTrigger)
+        block_effect = em.triggers[0].effects[0]
+        assert block_effect.block_amount == 5
         
         # Test Session Replay (Section 2.2)
         sr = ITEM_CATALOG["session_replay"]
-        assert sr.trigger_type == TriggerType.ON_DAMAGED
-        assert sr.cpu_cost == 0  # No stamina cost
-        assert sr.special_value == 0.3  # 30% reflect
+        # Should have damage taken trigger and timer trigger
+        assert len(sr.triggers) == 2
+        assert isinstance(sr.triggers[0], DamageTakenTrigger)
+        assert sr.triggers[0].cpu_cost == 0  # No stamina cost
+        reflect_effect = sr.triggers[0].effects[0]
+        assert reflect_effect.reflect_percent == 0.3  # 30% reflect
         
         # Test Infrastructure (Section 2.3)
         lb = ITEM_CATALOG["load_balancer"]
-        assert lb.special_effect == "max_cpu"
-        assert lb.special_value == 5
-        
-        redis = ITEM_CATALOG["redis_cache"]
-        assert redis.special_effect == "cpu_regen"
-        assert redis.special_value == 3
+        # Should have passive trigger with stat mod effect
+        assert len(lb.triggers) == 1
+        stat_effect = lb.triggers[0].effects[0]
+        assert stat_effect.stat_name == "max_cpu"
+        assert stat_effect.value == 5
     
     def test_tier_scaling(self):
         """Test Section 5.3: Tier multipliers"""
         sim = BattleSimulator()
+        from item_effects import AttackEffect
         
         # Create tier 1 item
         item_t1 = PlacedItem(
-            spec=ItemSpec(id="test", name="Test", category="problem",
-                         min_damage=10, max_damage=20, tier=1),
+            spec=ItemSpec(
+                id="test1", name="Test1", category="problem", tier=1,
+                triggers=[TimerTrigger(
+                    cooldown=2.0, cpu_cost=3,
+                    effects=[AttackEffect(min_damage=10, max_damage=20)]
+                )]
+            ),
             position=(0, 0)
         )
         
         # Create tier 2 item (1.5x)
         item_t2 = PlacedItem(
-            spec=ItemSpec(id="test", name="Test", category="problem",
-                         min_damage=10, max_damage=20, tier=2),
+            spec=ItemSpec(
+                id="test2", name="Test2", category="problem", tier=2,
+                triggers=[TimerTrigger(
+                    cooldown=2.0, cpu_cost=3,
+                    effects=[AttackEffect(min_damage=10, max_damage=20)]
+                )]
+            ),
             position=(0, 0)
         )
         
         # Create tier 3 item (2.2x)
         item_t3 = PlacedItem(
-            spec=ItemSpec(id="test", name="Test", category="problem",
-                         min_damage=10, max_damage=20, tier=3),
+            spec=ItemSpec(
+                id="test3", name="Test3", category="problem", tier=3,
+                triggers=[TimerTrigger(
+                    cooldown=2.0, cpu_cost=3,
+                    effects=[AttackEffect(min_damage=10, max_damage=20)]
+                )]
+            ),
             position=(0, 0)
         )
         
         items = [item_t1, item_t2, item_t3]
         sim._apply_tier_scaling(items)
         
-        assert item_t1.spec.min_damage == 10  # No change
-        assert item_t1.spec.max_damage == 20
+        # Check tier 1 - no change
+        assert item_t1.spec.triggers[0].effects[0].min_damage == 10
+        assert item_t1.spec.triggers[0].effects[0].max_damage == 20
         
-        assert item_t2.spec.min_damage == 15  # 1.5x
-        assert item_t2.spec.max_damage == 30
+        # Check tier 2 - 1.5x
+        assert item_t2.spec.triggers[0].effects[0].min_damage == 15
+        assert item_t2.spec.triggers[0].effects[0].max_damage == 30
         
-        assert item_t3.spec.min_damage == 22  # 2.2x
-        assert item_t3.spec.max_damage == 44
+        # Check tier 3 - 2.2x
+        assert item_t3.spec.triggers[0].effects[0].min_damage == 22
+        assert item_t3.spec.triggers[0].effects[0].max_damage == 44
     
     def test_battle_duration(self):
         """Test Section 6.2: Battle max duration 60s"""
@@ -164,7 +194,9 @@ class TestGameDesignCompliance:
     def test_critical_hits(self):
         """Test Section 7.2: Base 5% crit chance, 2x damage"""
         item = ITEM_CATALOG["null_pointer"]
-        assert item.crit_chance == 0.05  # 5% base
+        # Check attack effect has crit chance
+        attack_effect = item.triggers[0].effects[0]
+        assert attack_effect.crit_chance == 0.05  # 5% base
         
         # Critical hits should deal 2x damage (tested in simulation)
     
@@ -259,9 +291,15 @@ class TestGameDesignCompliance:
         sim = BattleSimulator()
         
         # Create item with high CPU cost
+        from item_effects import AttackEffect
         item = PlacedItem(
-            spec=ItemSpec(id="test", name="Test", category="problem",
-                         cpu_cost=20, cooldown=1.0),  # More than max CPU
+            spec=ItemSpec(
+                id="test", name="Test", category="problem",
+                triggers=[TimerTrigger(
+                    cooldown=1.0, cpu_cost=20,  # More than max CPU
+                    effects=[AttackEffect(min_damage=5, max_damage=10)]
+                )]
+            ),
             position=(0, 0)
         )
         
@@ -343,10 +381,15 @@ class TestBattleSimulation:
         sim = BattleSimulator()
         
         # Create overpowered item
+        from item_effects import AttackEffect
         op_item = PlacedItem(
-            spec=ItemSpec(id="op", name="OP", category="problem",
-                         min_damage=100, max_damage=100, cooldown=0.1,
-                         cpu_cost=1, accuracy=1.0),
+            spec=ItemSpec(
+                id="op", name="OP", category="problem",
+                triggers=[TimerTrigger(
+                    cooldown=0.1, cpu_cost=1,
+                    effects=[AttackEffect(min_damage=100, max_damage=100, accuracy=1.0)]
+                )]
+            ),
             position=(0, 0)
         )
         
