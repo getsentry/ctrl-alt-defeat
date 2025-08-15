@@ -5,7 +5,7 @@ Tests for the event-driven battle system
 import pytest
 from dataclasses import dataclass
 from event_system import (
-    EventManager, EventType, Event, TimerEvent, ItemEventHandler
+    EventManager, EventType, Event, EventData, TimerEvent, ItemEventHandler
 )
 
 class TestEventManager:
@@ -17,16 +17,16 @@ class TestEventManager:
         results = []
         
         def handler(event):
-            results.append(event.data["value"])
-            return event.data["value"] * 2
+            results.append(event.data.damage)
+            return event.data.damage * 2
         
         manager.subscribe(EventType.DAMAGE_DEALT, handler)
         
         event = Event(
             event_type=EventType.DAMAGE_DEALT,
-            source="attacker",
-            target="defender",
-            data={"value": 10}
+            source=None,
+            target=None,
+            data=EventData(damage=10)
         )
         
         returned = manager.emit(event)
@@ -59,20 +59,20 @@ class TestEventManager:
         results = []
         
         def handler(event):
-            results.append(event.data["value"])
+            results.append(event.data.damage)
         
-        # Only handle events where value > 5
-        condition = lambda e: e.data.get("value", 0) > 5
+        # Only handle events where damage > 5
+        condition = lambda e: e.data.damage and e.data.damage > 5
         
         manager.subscribe(EventType.DAMAGE_DEALT, handler, condition)
         
         # This should not trigger
-        event1 = Event(EventType.DAMAGE_DEALT, None, None, {"value": 3})
+        event1 = Event(EventType.DAMAGE_DEALT, None, None, EventData(damage=3))
         manager.emit(event1)
         assert results == []
         
         # This should trigger
-        event2 = Event(EventType.DAMAGE_DEALT, None, None, {"value": 10})
+        event2 = Event(EventType.DAMAGE_DEALT, None, None, EventData(damage=10))
         manager.emit(event2)
         assert results == [10]
     
@@ -146,8 +146,8 @@ class TestEventManager:
         """Test that events are recorded in history"""
         manager = EventManager()
         
-        event1 = Event(EventType.BATTLE_START, "player1", "player2")
-        event2 = Event(EventType.DAMAGE_DEALT, "item1", "player2", {"damage": 10})
+        event1 = Event(EventType.BATTLE_START, None, None)
+        event2 = Event(EventType.DAMAGE_DEALT, None, None, EventData(damage=10))
         
         manager.current_time = 0.0
         manager.emit(event1)
@@ -158,7 +158,7 @@ class TestEventManager:
         assert len(manager.event_history) == 2
         assert manager.event_history[0].timestamp == 0.0
         assert manager.event_history[1].timestamp == 1.5
-        assert manager.event_history[1].data["damage"] == 10
+        assert manager.event_history[1].data.damage == 10
     
     def test_clear(self):
         """Test clearing all events and timers"""
@@ -317,8 +317,8 @@ class TestIntegration:
         
         # Reflect damage handler (like Session Replay)
         def reflect_damage(event):
-            if event.target == player2:
-                damage = event.data.get("damage", 0)
+            if event.target == player2 and event.data.damage:
+                damage = event.data.damage
                 reflect = int(damage * 0.3)
                 actions.append(f"reflect_{reflect}")
                 
@@ -328,7 +328,7 @@ class TestIntegration:
                     EventType.DAMAGE_DEALT,
                     player2,
                     player1,
-                    {"damage": reflect, "type": "reflect"}
+                    EventData(damage=reflect)
                 ))
         
         # Subscribe to damage events
@@ -340,7 +340,7 @@ class TestIntegration:
             EventType.DAMAGE_DEALT,
             player1,
             player2,
-            {"damage": 20}
+            EventData(damage=20)
         ))
         
         # Should have reflected 6 damage

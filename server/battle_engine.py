@@ -11,7 +11,7 @@ import random
 from copy import deepcopy
 import uuid
 
-from event_system import EventManager, EventType, Event
+from event_system import EventManager, EventType, Event, EventData
 
 # Compact action codes for minimal payload (Section 10.2)
 ACTION_CODES = {
@@ -494,14 +494,15 @@ class BattleSimulator:
                     
                     if item.spec.name == "Session Replay":
                         # Reflect 30% damage immediately
-                        reflect_damage = int(event.data["damage"] * 0.3)
-                        event.source.quota -= reflect_damage
-                        self.actions.append({
-                            "t": self.current_time,
-                            "a": ACTION_CODES["REFLECT"],
-                            "p": event.source.id,
-                            "v": reflect_damage
-                        })
+                        if event.data.damage:
+                            reflect_damage = int(event.data.damage * 0.3)
+                            event.source.quota -= reflect_damage
+                            self.actions.append({
+                                "t": self.current_time,
+                                "a": ACTION_CODES["REFLECT"],
+                                "p": event.source.id,
+                                "v": reflect_damage
+                            })
                 
                 self.event_manager.subscribe(EventType.DAMAGE_TAKEN, handle_damage)
     
@@ -718,12 +719,12 @@ class BattleSimulator:
             EventType.DAMAGE_TAKEN,
             attacker,
             target,
-            {"damage": damage, "item_id": item_id}
+            EventData(damage=damage, item_id=item_id, previous_health=old_quota, current_health=target.quota)
         ))
         
         # Check for low health trigger
         if old_quota / target.max_quota >= 0.3 and target.quota / target.max_quota < 0.3:
-            self.event_manager.emit(Event(EventType.HEALTH_LOW, None, target))
+            self.event_manager.emit(Event(EventType.HEALTH_LOW, None, target, EventData(current_health=target.quota)))
     
     def _apply_dot_effects(self, player: Player):
         """Apply DOT effects (Section 3.2)"""

@@ -4,9 +4,13 @@ Handles immediate triggers and timer-based events efficiently
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Callable, Any, Optional
+from typing import List, Dict, Callable, Optional, Union, TYPE_CHECKING
 from enum import Enum
 import heapq
+
+# Avoid circular imports
+if TYPE_CHECKING:
+    from battle_engine import Player, PlacedItem
 
 class EventType(Enum):
     """All possible events in the battle system"""
@@ -16,8 +20,7 @@ class EventType(Enum):
     DAMAGE_TAKEN = "damage_taken"
     HEALTH_LOW = "health_low"  # < 30% health
     HEALTH_CRITICAL = "health_critical"  # < 10% health
-    ALLY_DEATH = "ally_death"
-    ENEMY_DEATH = "enemy_death"
+    PLAYER_DEATH = "player_death"  # A player died (check target to see which one)
     TIMER_TICK = "timer_tick"
     ITEM_ACTIVATED = "item_activated"
     BUFF_APPLIED = "buff_applied"
@@ -26,12 +29,23 @@ class EventType(Enum):
     CPU_REGENERATED = "cpu_regenerated"
 
 @dataclass
+class EventData:
+    """Type-safe event data"""
+    damage: Optional[int] = None
+    heal: Optional[int] = None
+    item_id: Optional[str] = None
+    buff_name: Optional[str] = None
+    buff_value: Optional[int] = None
+    previous_health: Optional[int] = None
+    current_health: Optional[int] = None
+
+@dataclass
 class Event:
     """Represents a single event in the battle"""
     event_type: EventType
-    source: Any  # The entity that triggered the event
-    target: Any  # The entity affected by the event
-    data: Dict[str, Any] = field(default_factory=dict)  # Additional event data
+    source: Optional[Union['Player', 'PlacedItem']]  # The entity that triggered the event
+    target: Optional[Union['Player', 'PlacedItem']]  # The entity affected by the event
+    data: EventData = field(default_factory=EventData)  # Type-safe event data
     timestamp: float = 0.0
 
 @dataclass
@@ -88,7 +102,7 @@ class EventManager:
         if callback in self.listeners[event_type]:
             self.listeners[event_type].remove(callback)
     
-    def emit(self, event: Event) -> List[Any]:
+    def emit(self, event: Event) -> List[Optional[Dict]]:
         """
         Emit an event and trigger all listeners
         
@@ -119,7 +133,7 @@ class EventManager:
         heapq.heapify(self.timer_queue)
         return len(original_queue) != len(self.timer_queue)
     
-    def process_timers(self, current_time: float) -> List[Any]:
+    def process_timers(self, current_time: float) -> List[Optional[Dict]]:
         """
         Process all timer events up to current time
         
@@ -245,7 +259,7 @@ class ItemEventHandler:
             self._schedule_next_activation()
             return result
     
-    def _activate(self, context: Dict[str, Any] = None):
+    def _activate(self, context: Optional[Dict[str, Union[str, int]]] = None):
         """Actually activate the item"""
         # This will be implemented by the battle system
         return {
