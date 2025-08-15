@@ -281,10 +281,52 @@ Special items that provide periodic effects or triggered abilities.
   - Legendary: 18-25g
   - Godly: 30+g
 
-### 5.3 Item Evolution
-- **Combining**: Combine 3 of the same item to create an upgraded version
-- **Upgraded Items**: Have higher base stats and effects
-- **Star Items**: Enhanced versions with bonus effects
+### 5.3 Recipe System (Item Combining)
+- **How it Works**: Place recipe items adjacent to each other in your server rack
+- **Combination Timing**: Items combine automatically during the next shop phase
+- **Orange Glow**: Adjacent combinable items show an orange glowing connection
+- **Lock Items**: Right-click items to prevent them from combining
+- **Two Ways to Get Combined Items**:
+  - Combine the required items (cheaper but requires finding components)
+  - Buy directly from shop if lucky (more expensive but immediate)
+- **Catalyst Items**: Some recipes use a catalyst that remains after combination
+
+### 5.4 Example Sentry-Themed Recipes
+
+#### Weapon Recipes
+- **Stack Overflow** (Epic): Memory Leak + Buffer Overflow
+- **Kernel Panic** (Legendary): Null Pointer + Race Condition + Segfault
+- **DDoS Attack** (Epic): Flood Attack + Bot Swarm
+- **Zero Day Exploit** (Godly): SQL Injection + XSS Attack + Buffer Overflow
+
+#### Shield Recipes  
+- **Full Stack Monitoring** (Rare): Error Monitoring + Performance Monitoring
+- **Enterprise Firewall** (Epic): Firewall + Load Balancer
+- **Chaos Engineering Shield** (Legendary): Error Shield + Crash Report + Debug Mode
+
+#### Infrastructure Recipes
+- **Kubernetes Cluster** (Epic): Docker Container + Load Balancer + Auto-Scaler
+- **CDN Network** (Rare): Cache Server + Edge Node
+- **Observability Platform** (Legendary): Logging + Metrics + Tracing
+- **CI/CD Pipeline** (Epic): Test Suite + Deploy Script + Version Control
+
+#### Pet Recipes (Sentry Mascots)
+- **Debug Duck Pro** (Rare): Debug Duck + Stack Trace
+- **Error Hound Elite** (Epic): Sentry Dog + Alert System
+- **Chaos Monkey** (Legendary): Test Monkey + Random Failure Generator
+- **AI Assistant Plus** (Godly): AI Assistant + Machine Learning Model
+
+#### Potion/Consumable Recipes
+- **Emergency Hotfix** (Rare): Quick Fix + Deploy Script
+- **Full Recovery** (Epic): Health Check + Backup System
+- **CPU Overclock** (Rare): CPU Booster + Energy Drink
+- **Memory Cleaner** (Epic): Garbage Collector + Memory Optimizer
+
+#### Special Combinations
+- **Sentry Suite** (Godly): Error Monitoring + Performance Monitoring + Session Replay + Profiling
+- **DevOps Toolkit** (Legendary): CI/CD Pipeline + Kubernetes Cluster + Monitoring
+- **Bug Apocalypse** (Godly): 4 different bug types combined
+- **Perfect Infrastructure** (Godly): Load Balancer + CDN + Kubernetes + Firewall
 
 ## 6. Battle Phases
 
