@@ -274,8 +274,7 @@ class ItemSpec:
     triggers: List[Trigger] = field(default_factory=list)
     
     # Item properties
-    tier: int = 1
-    rarity: str = "common"
+    rarity: str = "common"  # common, uncommon, rare, epic, legendary, godly
     
     # Adjacency bonuses this item provides to neighbors
     adjacency_bonus: Optional[dict] = None

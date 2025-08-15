@@ -129,10 +129,6 @@ class BattleSimulator:
         self.event_manager.clear()
         self.consumed_items = set()
         
-        # Apply tier scaling (Section 5.3)
-        self._apply_tier_scaling(p1_items)
-        self._apply_tier_scaling(p2_items)
-        
         # Calculate adjacency (Section 4.2 & 4.3)
         self._calculate_adjacency(p1_items)
         self._calculate_adjacency(p2_items)
@@ -217,26 +213,6 @@ class BattleSimulator:
             return 100
         else:
             return 150
-    
-    def _apply_tier_scaling(self, items: List[PlacedItem]):
-        """Apply tier multipliers (Section 5.3)"""
-        for item in items:
-            multiplier = 1.0
-            if item.spec.tier == 2:
-                multiplier = 1.5
-            elif item.spec.tier == 3:
-                multiplier = 2.2
-            
-            if multiplier > 1.0:
-                # Scale all attack effects in all triggers
-                for trigger in item.spec.triggers:
-                    for effect in trigger.effects:
-                        if isinstance(effect, AttackEffect):
-                            effect.min_damage = int(effect.min_damage * multiplier)
-                            effect.max_damage = int(effect.max_damage * multiplier)
-                        elif isinstance(effect, HealEffect):
-                            effect.min_heal = int(effect.min_heal * multiplier)
-                            effect.max_heal = int(effect.max_heal * multiplier)
     
     def _calculate_adjacency(self, items: List[PlacedItem]):
         """Calculate adjacency bonuses (Section 4.2 & 4.3)"""

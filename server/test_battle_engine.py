@@ -100,62 +100,6 @@ class TestGameDesignCompliance:
         assert stat_effect.stat_name == "max_cpu"
         assert stat_effect.value == 5
     
-    def test_tier_scaling(self):
-        """Test Section 5.3: Tier multipliers"""
-        sim = BattleSimulator()
-        from item_effects import AttackEffect
-        
-        # Create tier 1 item
-        item_t1 = PlacedItem(
-            spec=ItemSpec(
-                id="test1", name="Test1", category="problem", tier=1,
-                triggers=[TimerTrigger(
-                    cooldown=2.0, cpu_cost=3,
-                    effects=[AttackEffect(min_damage=10, max_damage=20)]
-                )]
-            ),
-            position=(0, 0)
-        )
-        
-        # Create tier 2 item (1.5x)
-        item_t2 = PlacedItem(
-            spec=ItemSpec(
-                id="test2", name="Test2", category="problem", tier=2,
-                triggers=[TimerTrigger(
-                    cooldown=2.0, cpu_cost=3,
-                    effects=[AttackEffect(min_damage=10, max_damage=20)]
-                )]
-            ),
-            position=(0, 0)
-        )
-        
-        # Create tier 3 item (2.2x)
-        item_t3 = PlacedItem(
-            spec=ItemSpec(
-                id="test3", name="Test3", category="problem", tier=3,
-                triggers=[TimerTrigger(
-                    cooldown=2.0, cpu_cost=3,
-                    effects=[AttackEffect(min_damage=10, max_damage=20)]
-                )]
-            ),
-            position=(0, 0)
-        )
-        
-        items = [item_t1, item_t2, item_t3]
-        sim._apply_tier_scaling(items)
-        
-        # Check tier 1 - no change
-        assert item_t1.spec.triggers[0].effects[0].min_damage == 10
-        assert item_t1.spec.triggers[0].effects[0].max_damage == 20
-        
-        # Check tier 2 - 1.5x
-        assert item_t2.spec.triggers[0].effects[0].min_damage == 15
-        assert item_t2.spec.triggers[0].effects[0].max_damage == 30
-        
-        # Check tier 3 - 2.2x
-        assert item_t3.spec.triggers[0].effects[0].min_damage == 22
-        assert item_t3.spec.triggers[0].effects[0].max_damage == 44
-    
     def test_battle_duration(self):
         """Test Section 6.2: Battle max duration 60s"""
         sim = BattleSimulator()
