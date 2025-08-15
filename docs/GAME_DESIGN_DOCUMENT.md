@@ -282,9 +282,8 @@ Special items that provide periodic effects or triggered abilities.
   - Godly: 30+g
 
 ### 5.3 Item Evolution
-- **Tier 1**: Base stats
-- **Tier 2**: 1.5x stats (combine 3 tier 1)
-- **Tier 3**: 2.2x stats (combine 3 tier 2)
+- **Combining**: Combine 3 of the same item to create an upgraded version
+- **Upgraded Items**: Have higher base stats and effects
 - **Star Items**: Enhanced versions with bonus effects
 
 ## 6. Battle Phases
