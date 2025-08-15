@@ -18,7 +18,9 @@ class ShieldBlockEffect(Effect):
     
     def apply(self, source, target, battle_state):
         """Check if shield blocks and apply effects"""
-        if random.random() < self.block_chance:
+        # Use battle_state's RNG if available, otherwise fall back to random
+        rng = getattr(battle_state, 'rng', random)
+        if rng.random() < self.block_chance:
             return {
                 "type": "shield_block",
                 "blocked": True,

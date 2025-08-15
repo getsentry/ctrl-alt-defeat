@@ -10,6 +10,7 @@ from enum import Enum
 import random
 from copy import deepcopy
 import uuid
+import time
 
 from event_system import EventManager, EventType, Event, EventData
 from item_effects import (
@@ -91,13 +92,17 @@ ITEM_CATALOG = create_example_items()
 class BattleSimulator:
     """Simulates battles per Game Design Document specifications"""
     
-    def __init__(self):
+    def __init__(self, seed: Optional[int] = None):
         self.max_duration = 60.0  # Section 6.2
         self.tick_rate = 0.1  # Section 10.1: 10 ticks/second
         self.current_time = 0.0
         self.actions = []
         self.event_manager = EventManager()
         self.consumed_items = set()  # Track consumed item UIDs
+        
+        # Initialize RNG with seed for deterministic battles
+        self.seed = seed if seed is not None else int(time.time() * 1000000) % 2147483647
+        self.rng = random.Random(self.seed)
         
     def simulate_battle(self, 
                        p1_items: List[PlacedItem], 
@@ -194,7 +199,8 @@ class BattleSimulator:
             "duration": round(self.current_time, 1),
             "player1_quota": max(0, player1.quota),
             "player2_quota": max(0, player2.quota),
-            "actions": self.actions
+            "actions": self.actions,
+            "seed": self.seed  # Include seed for replay/debugging
         }
     
     def _get_round_quota(self, round_num: int) -> int:
@@ -452,7 +458,7 @@ class BattleSimulator:
                 self._process_attack(result, item, owner, enemy)
             elif isinstance(effect, HealEffect):
                 # Handle heal effect
-                heal = random.randint(result["min_heal"], result["max_heal"])
+                heal = self.rng.randint(result["min_heal"], result["max_heal"])
                 owner.quota = min(owner.max_quota, owner.quota + heal)
                 self.actions.append({
                     "t": self.current_time,
@@ -483,7 +489,7 @@ class BattleSimulator:
                 })
             elif isinstance(effect, DebuffEffect):
                 # Handle debuff effect
-                if random.random() < result["accuracy"]:
+                if self.rng.random() < result["accuracy"]:
                     enemy.debuffs[result["debuff_name"]] = enemy.debuffs.get(result["debuff_name"], 0) + result["value"]
                     self.actions.append({
                         "t": self.current_time,
@@ -512,7 +518,7 @@ class BattleSimulator:
         if "rate_limited" in owner.debuffs:
             accuracy -= owner.debuffs["rate_limited"] * 0.05
         
-        if random.random() > accuracy:
+        if self.rng.random() > accuracy:
             # Miss
             self.actions.append({
                 "t": self.current_time,
@@ -523,16 +529,16 @@ class BattleSimulator:
             return
         
         # Calculate damage
-        damage = random.randint(attack_data["min_damage"], attack_data["max_damage"])
+        damage = self.rng.randint(attack_data["min_damage"], attack_data["max_damage"])
         damage = int(damage * item.damage_mult)
         
         # Check crit
-        is_crit = random.random() < attack_data["crit_chance"]
+        is_crit = self.rng.random() < attack_data["crit_chance"]
         if is_crit:
             damage *= 2
             
             # Special crit effects
-            if attack_data.get("special") == "crash" and random.random() < 0.2:
+            if attack_data.get("special") == "crash" and self.rng.random() < 0.2:
                 damage = 15  # Instant 15 damage
             
             self.actions.append({

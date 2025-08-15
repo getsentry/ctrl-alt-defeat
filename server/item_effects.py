@@ -232,7 +232,9 @@ class DamageDealtTrigger(Trigger):
         if event_type != "damage_dealt":
             return False
         import random
-        return random.random() < self.chance
+        # Use battle_state's RNG if available, otherwise fall back to random
+        rng = getattr(battle_state, 'rng', random)
+        return rng.random() < self.chance
     
     def get_cpu_cost(self) -> int:
         return 0  # On-hit effects are usually free
