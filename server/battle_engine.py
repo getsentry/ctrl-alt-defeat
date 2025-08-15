@@ -520,23 +520,22 @@ class BattleSimulator:
             cpu_cost = max(1, item.spec.cpu_cost - item.cpu_discount)
             
             if owner.cpu >= cpu_cost:
+                # Have enough CPU - activate the item
                 self._activate_item(item, owner, enemy)
                 owner.cpu -= cpu_cost
                 item.current_cooldown = item.spec.cooldown
-                
-                # Schedule next activation
-                self._schedule_timer_item(item, owner, enemy)
             else:
-                # CPU throttled
+                # Not enough CPU - log throttle but don't activate
                 self.actions.append({
                     "t": self.current_time,
                     "a": ACTION_CODES["CPU_FAIL"],
                     "p": owner.id,
                     "i": item.uid
                 })
-                # Retry in a moment
-                retry_time = self.current_time + 0.5
-                self.event_manager.schedule_timer(retry_time, item.uid, activate)
+            
+            # Always schedule next activation at regular cooldown
+            # This keeps the item on its normal schedule regardless of CPU
+            self._schedule_timer_item(item, owner, enemy)
         
         self.event_manager.schedule_timer(next_time, item.uid, activate)
     

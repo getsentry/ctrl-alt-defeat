@@ -1,0 +1,159 @@
+"""
+Test timer item behavior with CPU throttling
+"""
+
+import pytest
+from copy import deepcopy
+from battle_engine import (
+    BattleSimulator,
+    PlacedItem,
+    ItemSpec,
+    Player,
+    TriggerType,
+    ACTION_CODES
+)
+
+class TestTimerScheduling:
+    """Test that timer items maintain schedule even when CPU throttled"""
+    
+    def test_timer_maintains_schedule_when_throttled(self):
+        """Timer items should stay on schedule even if CPU isn't available"""
+        sim = BattleSimulator()
+        
+        # Create a high CPU cost item with 1 second cooldown
+        item = PlacedItem(
+            spec=ItemSpec(
+                id="test",
+                name="Test Item",
+                category="problem",
+                min_damage=10,
+                max_damage=10,
+                cooldown=1.0,  # 1 second cooldown
+                cpu_cost=15,   # More than max CPU (10)
+                accuracy=1.0,
+                trigger_type=TriggerType.ON_TIMER
+            ),
+            position=(0, 0)
+        )
+        
+        # Run battle for 5 seconds
+        result = sim.simulate_battle([item], [], round_number=1)
+        
+        # Count CPU_FAIL actions
+        cpu_fails = [a for a in result["actions"] if a["a"] == ACTION_CODES["CPU_FAIL"]]
+        
+        # With 1 second cooldown over 5 seconds, should attempt ~5 times
+        # All should fail due to insufficient CPU
+        assert len(cpu_fails) >= 4  # At least 4 attempts
+        
+        # Check timing - failures should be ~1 second apart
+        if len(cpu_fails) >= 2:
+            time_diff = cpu_fails[1]["t"] - cpu_fails[0]["t"]
+            assert 0.9 <= time_diff <= 1.1  # Within 10% of expected cooldown
+    
+    def test_timer_activates_when_cpu_available(self):
+        """Timer items should activate when CPU regenerates enough"""
+        sim = BattleSimulator()
+        
+        # Create item that costs 7 CPU with 1 second cooldown
+        # This will sometimes succeed and sometimes fail
+        item = PlacedItem(
+            spec=ItemSpec(
+                id="test",
+                name="Test Item",
+                category="problem",
+                min_damage=5,
+                max_damage=5,
+                cooldown=1.0,  # 1 second cooldown
+                cpu_cost=7,    # More than half of max CPU
+                accuracy=1.0,
+                trigger_type=TriggerType.ON_TIMER
+            ),
+            position=(0, 0)
+        )
+        
+        # With 2 CPU/sec regen and 7 CPU cost:
+        # - First activation at 0s should succeed (start with 10 CPU)
+        # - Second attempt at 1s: have 5 CPU (10 - 7 + 2*1), should fail
+        # - Third attempt at 2s: have 7 CPU (5 + 2*1), should succeed
+        # - Fourth attempt at 3s: have 2 CPU (7 - 7 + 2*1), should fail
+        
+        result = sim.simulate_battle([item], [], round_number=1)
+        
+        # Check for mix of successes and failures
+        damages = [a for a in result["actions"] if a["a"] == ACTION_CODES["DAMAGE"]]
+        cpu_fails = [a for a in result["actions"] if a["a"] == ACTION_CODES["CPU_FAIL"]]
+        
+        # Should have some successes and some failures
+        assert len(damages) > 0
+        assert len(cpu_fails) > 0
+        
+        # Verify timing is maintained (all events ~1 second apart)
+        all_item_events = sorted(
+            [a for a in result["actions"] if "i" in a and a.get("i") == item.uid],
+            key=lambda x: x["t"]
+        )
+        
+        if len(all_item_events) >= 2:
+            for i in range(1, len(all_item_events)):
+                time_diff = all_item_events[i]["t"] - all_item_events[i-1]["t"]
+                # Should be close to 1 second cooldown
+                assert 0.8 <= time_diff <= 1.2, f"Time diff {time_diff} not close to 1.0"
+    
+    def test_multiple_items_maintain_independent_schedules(self):
+        """Multiple timer items should maintain independent schedules"""
+        sim = BattleSimulator()
+        
+        # Create two items with different cooldowns
+        item1 = PlacedItem(
+            spec=ItemSpec(
+                id="item1",
+                name="Fast Item",
+                category="problem",
+                min_damage=5,
+                max_damage=5,
+                cooldown=1.0,  # 1 second
+                cpu_cost=3,
+                accuracy=1.0,
+                trigger_type=TriggerType.ON_TIMER
+            ),
+            position=(0, 0),
+            uid="item1"
+        )
+        
+        item2 = PlacedItem(
+            spec=ItemSpec(
+                id="item2",
+                name="Slow Item",
+                category="problem",
+                min_damage=10,
+                max_damage=10,
+                cooldown=3.0,  # 3 seconds
+                cpu_cost=4,
+                accuracy=1.0,
+                trigger_type=TriggerType.ON_TIMER
+            ),
+            position=(1, 0),
+            uid="item2"
+        )
+        
+        result = sim.simulate_battle([item1, item2], [], round_number=1)
+        
+        # Get all events for each item
+        item1_events = [a for a in result["actions"] if a.get("i") == "item1"]
+        item2_events = [a for a in result["actions"] if a.get("i") == "item2"]
+        
+        # Item1 (1s cooldown) should have ~3x more events than item2 (3s cooldown)
+        # Over 6 seconds: item1 ~6 events, item2 ~2 events
+        ratio = len(item1_events) / max(1, len(item2_events))
+        assert 2.0 <= ratio <= 4.0, f"Event ratio {ratio} not in expected range"
+        
+        # Verify each maintains its schedule
+        for events, expected_cooldown in [(item1_events, 1.0), (item2_events, 3.0)]:
+            sorted_events = sorted(events, key=lambda x: x["t"])
+            if len(sorted_events) >= 2:
+                time_diff = sorted_events[1]["t"] - sorted_events[0]["t"]
+                assert abs(time_diff - expected_cooldown) <= 0.2
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
