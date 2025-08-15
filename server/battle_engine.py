@@ -12,6 +12,15 @@ from copy import deepcopy
 import uuid
 import time
 
+# Import grid system for multi-square items
+try:
+    from grid_system import ItemShape, Rotation, SHAPES
+except ImportError:
+    # Fallback if grid_system isn't available yet
+    ItemShape = None
+    Rotation = None
+    SHAPES = None
+
 from event_system import EventManager, EventType, Event, EventData
 from item_effects import (
     ItemSpec, Trigger, Effect,
@@ -51,9 +60,13 @@ ACTION_CODES = {
 class PlacedItem:
     """An item placed in the server room/rack (Section 4)"""
     spec: ItemSpec
-    position: Tuple[int, int]  # Grid position
+    position: Tuple[int, int]  # Grid position (top-left for multi-square items)
     container_id: Optional[str] = None  # Which rack it's in (if any)
     uid: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
+    
+    # Multi-square item support
+    shape: Optional[Any] = None  # ItemShape when grid_system is available
+    rotation: Optional[Any] = None  # Rotation when grid_system is available
     
     # Battle state
     current_cooldown: float = 0.0
@@ -64,6 +77,16 @@ class PlacedItem:
     accuracy_bonus: float = 0.0
     speed_mult: float = 1.0
     cpu_discount: int = 0
+    
+    def get_occupied_squares(self) -> List[Tuple[int, int]]:
+        """Get all grid squares this item occupies"""
+        if self.shape and self.rotation is not None:
+            rotated_shape = self.shape.rotate(self.rotation)
+            return [(self.position[0] + dx, self.position[1] + dy) 
+                    for dx, dy in rotated_shape.squares]
+        else:
+            # Default to single square if grid system not available
+            return [self.position]
 
 @dataclass
 class Player:
