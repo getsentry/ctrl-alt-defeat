@@ -18,8 +18,6 @@ class EventType(Enum):
     BATTLE_END = "battle_end"
     DAMAGE_DEALT = "damage_dealt"
     DAMAGE_TAKEN = "damage_taken"
-    HEALTH_LOW = "health_low"  # < 30% health
-    HEALTH_CRITICAL = "health_critical"  # < 10% health
     PLAYER_DEATH = "player_death"  # A player died (check target to see which one)
     TIMER_TICK = "timer_tick"
     ITEM_ACTIVATED = "item_activated"

@@ -459,13 +459,17 @@ class BattleSimulator:
                 self._schedule_timer_item(item, owner, enemy)
             
             elif item.spec.trigger_type == TriggerType.ON_LOW_HEALTH:
-                # Subscribe to health events - fires immediately when health drops
-                def handle_low_health(event, item=item, owner=owner):
+                # Subscribe to damage events and check health threshold
+                def handle_damage_for_health_trigger(event, item=item, owner=owner):
                     if event.target != owner:
                         return
-                    # Check condition: only activate if still below 30%
-                    if owner.quota / owner.max_quota >= 0.3:
+                    
+                    # Check if health is now below threshold (30% for Alerting System)
+                    health_percent = owner.quota / owner.max_quota
+                    if health_percent >= 0.3:  # Not low enough
                         return
+                    
+                    # Check cooldown
                     if item.current_cooldown > 0:
                         return
                     
@@ -484,7 +488,7 @@ class BattleSimulator:
                                 "v": heal
                             })
                 
-                self.event_manager.subscribe(EventType.HEALTH_LOW, handle_low_health)
+                self.event_manager.subscribe(EventType.DAMAGE_TAKEN, handle_damage_for_health_trigger)
             
             elif item.spec.trigger_type == TriggerType.ON_DAMAGED:
                 # Subscribe to damage events - fires immediately when damaged
@@ -713,17 +717,14 @@ class BattleSimulator:
             "v": damage
         })
         
-        # Emit damage event for reactive items (Session Replay, etc)
+        # Emit damage event for reactive items (Session Replay, health potions, etc)
+        # Items will check their own thresholds
         self.event_manager.emit(Event(
             EventType.DAMAGE_TAKEN,
             attacker,
             target,
             EventData(damage=damage, item_id=item_id, previous_health=old_quota, current_health=target.quota)
         ))
-        
-        # Check for low health trigger
-        if old_quota / target.max_quota >= 0.3 and target.quota / target.max_quota < 0.3:
-            self.event_manager.emit(Event(EventType.HEALTH_LOW, None, target, EventData(current_health=target.quota)))
     
     def _apply_dot_effects(self, player: Player):
         """Apply DOT effects (Section 3.2)"""

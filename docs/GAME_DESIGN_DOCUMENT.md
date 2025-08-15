@@ -37,23 +37,42 @@ A Sentry-themed autobattler where players manage a "server rack" (backpack) fill
 
 ## 2. Item Categories & Mechanics
 
-### 2.1 Problems/Bugs (Weapons)
-Attack items that damage the opponent's health directly.
+Items can have multiple effects with different triggers. Each effect specifies when it activates (trigger) and what it does (effect type).
+
+### 2.1 Effect Triggers
+- **ON_TIMER**: Activates on a cooldown timer
+- **ON_BATTLE_START**: Activates once at battle start
+- **ON_DAMAGED**: Activates when the owner takes damage
+- **ON_DEAL_DAMAGE**: Activates when this item deals damage
+- **PASSIVE**: Always active (e.g., stat modifiers)
+
+### 2.2 Effect Types
+- **DAMAGE**: Deal damage to enemies
+- **HEAL**: Restore health
+- **BLOCK**: Add shield/armor
+- **BUFF/DEBUFF**: Apply status effects
+- **MODIFY_STAT**: Change max CPU, CPU regen, etc.
+- **REFLECT**: Return damage to attacker
+
+### 2.3 Problems/Bugs (Weapons)
+Attack items that primarily damage the opponent's health.
 
 #### Examples:
 - **Null Pointer Exception**
-  - Damage: 4-8
-  - Cooldown: 2.5s
-  - Stamina: 3
-  - Accuracy: 85%
-  - Special: 20% chance to "crash" (instant 15 damage) on crit
+  - Effect 1 (ON_TIMER):
+    - Damage: 4-8
+    - Cooldown: 2.5s
+    - CPU Cost: 3
+    - Accuracy: 85%
+    - Special: 20% chance to "crash" (instant 15 damage) on crit
 
 - **Memory Leak**
-  - Damage: 2-4
-  - Cooldown: 3s
-  - Stamina: 2
-  - Accuracy: 95%
-  - Special: Damage increases by +1 each activation (stacks)
+  - Effect 1 (ON_TIMER):
+    - Damage: 2-4
+    - Cooldown: 3s
+    - CPU Cost: 2
+    - Accuracy: 95%
+    - Special: Damage increases by +1 each activation (stacks)
 
 - **Race Condition**
   - Damage: 6-10
@@ -69,20 +88,19 @@ Attack items that damage the opponent's health directly.
   - Accuracy: 80%
   - Special: Bypasses 50% of blocks/shields
 
-### 2.2 Sentry Products (Defensive Items)
-Items that protect, heal, or provide defensive buffs.
+### 2.4 Sentry Products (Defensive Items)
+Items that protect, heal, or provide defensive buffs. Can have multiple effects.
 
 #### Examples:
 - **Error Monitoring**
-  - Effect: +5 Block at battle start
-  - Cooldown: Passive
-  - Special: Adjacent problems gain +10% accuracy
+  - Effect 1 (ON_BATTLE_START): +5 Block
+  - Effect 2 (PASSIVE): Adjacent problems gain +10% accuracy
 
 - **Session Replay**
-  - Effect: Reflects 30% of damage taken
-  - Cooldown: When damaged
-  - Stamina: 0
-  - Special: Records last 3 attacks, can "replay" them
+  - Effect 1 (ON_DAMAGED): Reflects 30% of damage taken
+  - Effect 2 (ON_TIMER): Can replay recorded attacks for 3 damage
+    - Cooldown: 5s
+    - CPU Cost: 2
 
 - **Performance Monitoring**
   - Effect: +20% speed buff to all items
@@ -91,10 +109,11 @@ Items that protect, heal, or provide defensive buffs.
   - Special: Reduces cooldowns by 0.5s when adjacent to problems
 
 - **Alerting System**
-  - Effect: Heals 5 HP
-  - Cooldown: 8s
-  - Stamina: 3
-  - Trigger: When health < 30%
+  - Effect 1 (ON_DAMAGED): 
+    - Heals 5 HP when health drops below 30%
+    - Cooldown: 8s
+    - CPU Cost: 3
+    - Note: Checks threshold after damage, won't activate if already healed above 30%
 
 ### 2.3 Infrastructure (Support Items)
 Items that provide stamina, modify other items, or provide utility.

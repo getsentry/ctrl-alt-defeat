@@ -181,7 +181,7 @@ class TestHealthTriggers:
     """Test health-based triggers work correctly"""
     
     def test_health_threshold_triggers(self):
-        """Test that health triggers fire at correct thresholds"""
+        """Test that items can check health thresholds on damage events"""
         manager = EventManager()
         
         @dataclass
@@ -193,31 +193,30 @@ class TestHealthTriggers:
         player = MockPlayer(quota=100, max_quota=100)
         triggered = []
         
-        # Subscribe to low health
-        def on_low_health(event):
-            triggered.append(("low", event.target.quota))
+        # Subscribe to damage events and check threshold
+        def on_damage_check_health(event):
+            if event.target and hasattr(event.target, 'quota'):
+                health_percent = event.target.quota / event.target.max_quota
+                if health_percent < 0.3:
+                    triggered.append(("low", event.target.quota))
         
-        manager.subscribe(
-            EventType.HEALTH_LOW,
-            on_low_health,
-            condition=lambda e: e.target.quota / e.target.max_quota < 0.3
-        )
+        manager.subscribe(EventType.DAMAGE_TAKEN, on_damage_check_health)
         
         # Damage player to 50 HP (50%) - should not trigger
         player.quota = 50
-        manager.emit(Event(EventType.HEALTH_LOW, None, player))
+        manager.emit(Event(EventType.DAMAGE_TAKEN, None, player, EventData(damage=50, current_health=50)))
         assert triggered == []
         
         # Damage to 29 HP (29%) - should trigger
         player.quota = 29
-        manager.emit(Event(EventType.HEALTH_LOW, None, player))
+        manager.emit(Event(EventType.DAMAGE_TAKEN, None, player, EventData(damage=21, current_health=29)))
         assert triggered == [("low", 29)]
         
-        # If health is restored above threshold, should not trigger again
+        # If health is restored above threshold, damage event won't trigger
         player.quota = 40
         triggered.clear()
-        manager.emit(Event(EventType.HEALTH_LOW, None, player))
-        assert triggered == []
+        manager.emit(Event(EventType.DAMAGE_TAKEN, None, player, EventData(damage=0, current_health=40)))
+        assert triggered == []  # Above threshold, doesn't activate
     
     def test_multiple_health_items(self):
         """Test multiple health items with first one healing above threshold"""
@@ -233,27 +232,29 @@ class TestHealthTriggers:
         activations = []
         
         def heal_potion1(event):
-            # First potion heals to 35%
-            if event.target.quota / event.target.max_quota < 0.3:
-                event.target.quota = 35
-                activations.append("potion1")
-                return "healed"
+            # First potion checks threshold and heals to 35%
+            if event.target and hasattr(event.target, 'quota'):
+                if event.target.quota / event.target.max_quota < 0.3:
+                    event.target.quota = 35
+                    activations.append("potion1")
+                    return "healed"
         
         def heal_potion2(event):
-            # Second potion only activates if still < 30%
-            if event.target.quota / event.target.max_quota < 0.3:
-                event.target.quota += 10
-                activations.append("potion2")
-                return "healed"
+            # Second potion checks threshold - won't activate if above 30%
+            if event.target and hasattr(event.target, 'quota'):
+                if event.target.quota / event.target.max_quota < 0.3:
+                    event.target.quota += 10
+                    activations.append("potion2")
+                    return "healed"
         
-        # Both potions subscribe
-        manager.subscribe(EventType.HEALTH_LOW, heal_potion1)
-        manager.subscribe(EventType.HEALTH_LOW, heal_potion2)
+        # Both potions subscribe to damage events
+        manager.subscribe(EventType.DAMAGE_TAKEN, heal_potion1)
+        manager.subscribe(EventType.DAMAGE_TAKEN, heal_potion2)
         
-        # Emit health low event
-        manager.emit(Event(EventType.HEALTH_LOW, None, player))
+        # Emit damage event that brings health low
+        manager.emit(Event(EventType.DAMAGE_TAKEN, None, player, EventData(damage=75, current_health=25)))
         
-        # Only first potion should activate
+        # Only first potion should activate (heals above threshold)
         assert activations == ["potion1"]
         assert player.quota == 35
 
