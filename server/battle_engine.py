@@ -20,6 +20,13 @@ from item_effects import (
     PassiveTrigger, KillTrigger, create_example_items
 )
 
+# Import shield effect if available
+try:
+    from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+except ImportError:
+    OnAttackedTrigger = None
+    ShieldBlockEffect = None
+
 # Compact action codes for minimal payload (Section 10.2)
 ACTION_CODES = {
     "START": "s",       # Battle start
@@ -354,6 +361,47 @@ class BattleSimulator:
                 elif isinstance(trigger, PassiveTrigger):
                     # Apply passive effects immediately
                     self._apply_effects(trigger.effects, item, owner, enemy)
+                
+                elif OnAttackedTrigger and isinstance(trigger, OnAttackedTrigger):
+                    # Subscribe to ON_ATTACKED events for shields
+                    def handle_on_attacked(event, trigger=trigger, item=item, owner=owner):
+                        if event.target != owner:
+                            return
+                        
+                        # Skip if item is consumed
+                        if item.uid in self.consumed_items:
+                            return
+                        
+                        # Check CPU cost (shields are usually free)
+                        cpu_cost = trigger.get_cpu_cost()
+                        if owner.cpu >= cpu_cost:
+                            # Process shield effects
+                            blocked_damage = 0
+                            for effect in trigger.effects:
+                                if ShieldBlockEffect and isinstance(effect, ShieldBlockEffect):
+                                    result = effect.apply(item, event.source, self)
+                                    if result.get("blocked"):
+                                        # Shield activated!
+                                        blocked_damage = min(result["block_amount"], event.data.pending_damage)
+                                        
+                                        # Log the block
+                                        self.actions.append({
+                                            "t": self.current_time,
+                                            "a": ACTION_CODES["BLOCK"],
+                                            "p": owner.id,
+                                            "i": item.uid,
+                                            "v": blocked_damage
+                                        })
+                                        
+                                        # Apply counter effects if any
+                                        if result.get("cpu_steal") and event.source:
+                                            event.source.cpu -= result["cpu_steal"]
+                                        
+                                        # Return blocked amount to reduce damage
+                                        return {"blocked": blocked_damage}
+                            owner.cpu -= cpu_cost
+                    
+                    self.event_manager.subscribe(EventType.ON_ATTACKED, handle_on_attacked)
     
     def _schedule_timer_trigger(self, trigger: TimerTrigger, item: PlacedItem, owner: Player, enemy: Player, trigger_uid: str):
         """Schedule timer-based trigger activation using priority queue"""
@@ -511,7 +559,26 @@ class BattleSimulator:
     
     def _deal_damage(self, target: Player, damage: int, attacker: Player, item_id: str):
         """Deal damage following Section 7.3"""
-        # Check block (Section 7.3)
+        # Emit ON_ATTACKED event for shields to process
+        # This happens BEFORE damage is dealt
+        attack_event = Event(
+            EventType.ON_ATTACKED,
+            attacker,
+            target,
+            EventData(pending_damage=damage, attacker_item_id=item_id)
+        )
+        block_results = self.event_manager.emit(attack_event)
+        
+        # Process shield blocks
+        total_blocked = 0
+        for result in block_results:
+            if result and result.get("blocked"):
+                total_blocked += result["blocked"]
+        
+        # Reduce damage by shield blocks
+        damage = max(0, damage - total_blocked)
+        
+        # Check buff-based block (Section 7.3)
         if "block" in target.buffs and target.buffs["block"] > 0:
             blocked = min(damage, target.buffs["block"])
             damage -= blocked

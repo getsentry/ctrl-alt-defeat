@@ -23,7 +23,7 @@ A Sentry-themed autobattler where players manage a "server rack" (backpack) fill
 - **CPU Pool**: Increases with infrastructure items
 - **CPU Usage**: Each item activation consumes CPU cycles
 - **CPU Regeneration**: 2 cycles/second base rate
-- **Throttling**: When CPU hits 0, items skip activations
+- **Throttling**: When CPU hits 0, items skip activations but maintain schedule
 
 ### 1.3 Item Activation Flow
 ```
@@ -40,100 +40,178 @@ A Sentry-themed autobattler where players manage a "server rack" (backpack) fill
 Items can have multiple effects with different triggers. Each effect specifies when it activates (trigger) and what it does (effect type).
 
 ### 2.1 Effect Triggers
-- **ON_TIMER**: Activates on a cooldown timer
+- **ON_TIMER**: Activates on a cooldown timer (like weapons)
 - **ON_BATTLE_START**: Activates once at battle start
+- **ON_ATTACKED**: Activates when owner is attacked (% chance)
 - **ON_DAMAGED**: Activates when the owner takes damage
 - **ON_DEAL_DAMAGE**: Activates when this item deals damage
+- **ON_HIT**: Activates when an attack successfully hits
+- **ON_KILL**: Activates when getting a kill
+- **ON_HEALTH_THRESHOLD**: Activates at specific health %
 - **PASSIVE**: Always active (e.g., stat modifiers)
 
 ### 2.2 Effect Types
 - **DAMAGE**: Deal damage to enemies
 - **HEAL**: Restore health
-- **BLOCK**: Add shield/armor
+- **BLOCK**: Prevent damage
 - **BUFF/DEBUFF**: Apply status effects
 - **MODIFY_STAT**: Change max CPU, CPU regen, etc.
 - **REFLECT**: Return damage to attacker
+- **CONSUME**: Remove item from battle after use
+- **STEAL**: Take buffs from enemy
+- **CLEANSE**: Remove debuffs
 
-### 2.3 Problems/Bugs (Weapons)
-Attack items that primarily damage the opponent's health.
+### 2.3 Weapons (Problems/Bugs)
+Attack items that deal damage. All weapons:
+- Activate on timer when CPU is available
+- Can have "on hit" effects that trigger after successful attacks
+- Can gain damage/effects from buffs
+
+#### Weapon Types:
+- **Melee**: Standard attacks, often with on-hit effects
+- **Ranged**: May have different accuracy/crit mechanics
 
 #### Examples:
-- **Null Pointer Exception**
-  - Effect 1 (ON_TIMER):
-    - Damage: 4-8
-    - Cooldown: 2.5s
-    - CPU Cost: 3
-    - Accuracy: 85%
-    - Special: 20% chance to "crash" (instant 15 damage) on crit
+- **Null Pointer Exception** (Common Melee)
+  - Damage: 4-8
+  - Cooldown: 2.5s
+  - CPU Cost: 3
+  - Accuracy: 85%
+  - On Crit: 20% chance to "crash" for 15 damage
 
-- **Memory Leak**
-  - Effect 1 (ON_TIMER):
-    - Damage: 2-4
-    - Cooldown: 3s
-    - CPU Cost: 2
-    - Accuracy: 95%
-    - Special: Damage increases by +1 each activation (stacks)
+- **Memory Leak** (Uncommon Melee)
+  - Damage: 2-4 (increases by +1 each activation)
+  - Cooldown: 3.0s
+  - CPU Cost: 2
+  - Accuracy: 95%
+  - On Hit: Apply "memory_leaked" debuff
 
-- **Race Condition**
-  - Damage: 6-10
-  - Cooldown: 2s
-  - Stamina: 4
-  - Accuracy: 70%
-  - Special: Double strike if faster than opponent
-
-- **SQL Injection**
+- **SQL Injection** (Rare Ranged)
   - Damage: 8-12
-  - Cooldown: 4s
-  - Stamina: 5
-  - Accuracy: 80%
-  - Special: Bypasses 50% of blocks/shields
+  - Cooldown: 4.0s
+  - CPU Cost: 5
+  - Special: Bypasses 50% of shields
 
-### 2.4 Sentry Products (Defensive Items)
-Items that protect, heal, or provide defensive buffs. Can have multiple effects.
-
-#### Examples:
-- **Error Monitoring**
-  - Effect 1 (ON_BATTLE_START): +5 Block
-  - Effect 2 (PASSIVE): Adjacent problems gain +10% accuracy
-
-- **Session Replay**
-  - Effect 1 (ON_DAMAGED): Reflects 30% of damage taken
-  - Effect 2 (ON_TIMER): Can replay recorded attacks for 3 damage
-    - Cooldown: 5s
-    - CPU Cost: 2
-
-- **Performance Monitoring**
-  - Effect: +20% speed buff to all items
-  - Cooldown: 10s
-  - Stamina: 2
-  - Special: Reduces cooldowns by 0.5s when adjacent to problems
-
-- **Alerting System**
-  - Effect 1 (ON_DAMAGED): 
-    - Heals 5 HP when health drops below 30%
-    - Cooldown: 8s
-    - CPU Cost: 3
-    - Note: Checks threshold after damage, won't activate if already healed above 30%
-
-### 2.3 Infrastructure (Support Items)
-Items that provide stamina, modify other items, or provide utility.
+### 2.4 Shields (Monitoring/Defense)
+Defensive items that have a chance to block attacks. Shield mechanics:
+- **30% base chance** to activate when attacked
+- Block a specific amount of damage (7-14 typically)
+- Can remove attacker's CPU (0.3-0.7)
+- May have additional effects when blocking
 
 #### Examples:
-- **Load Balancer**
-  - Effect: +5 max stamina
-  - Special: Distributes stamina cost across adjacent items
+- **Error Monitoring** (Common Shield)
+  - 30% chance to activate on attack
+  - Blocks 8 damage
+  - Removes 0.5 CPU from attacker
+  - Passive: Adjacent problems gain +10% accuracy
 
-- **Redis Cache**
-  - Effect: +3 stamina regeneration
-  - Special: First activation of adjacent items is free each battle
+- **Session Replay** (Uncommon Shield)
+  - 30% chance to activate on attack
+  - Blocks 10 damage
+  - Reflects 30% of blocked damage back
+  - Records last 3 attacks for replay
 
-- **Database**
-  - Effect: +8 max stamina
-  - Special: Stores "damage stacks" for adjacent problems
+- **Firewall** (Rare Shield)
+  - 30% chance to activate on attack
+  - Blocks 12 damage
+  - On Block: Apply "throttled" debuff to attacker
+  - Passive: +2 block to adjacent shields
 
-- **CDN**
-  - Effect: All items activate 15% faster
-  - Special: Adjacent items gain "First Strike" (activate at 0s)
+### 2.5 Accessories (Infrastructure/Support)
+Items providing passive bonuses, periodic effects, or conditional triggers.
+
+#### Trigger Types:
+- Start of battle effects
+- Periodic triggers (every X seconds)
+- Conditional triggers (health %, resource thresholds)
+- Shop interaction effects
+
+#### Examples:
+- **Load Balancer** (Uncommon Accessory)
+  - Passive: +5 max CPU
+  - Every 5s: Redistribute 1 CPU to lowest item
+
+- **Redis Cache** (Common Accessory)
+  - Passive: +3 CPU regeneration
+  - Start of battle: First activation of adjacent items is free
+
+- **CDN** (Rare Accessory)
+  - All items activate 15% faster
+  - Adjacent items gain "First Strike" at battle start
+
+- **Kubernetes Cluster** (Legendary Accessory)
+  - Every 3s: Spawn a temporary "Pod" that attacks for 3 damage
+  - Passive: +2 max pods per infrastructure item
+
+### 2.6 Consumables (Potions/One-Time Items)
+Items that are consumed after triggering once.
+
+#### Trigger Conditions:
+- Health drops below X%
+- Battle start
+- After X seconds
+- On specific event
+
+#### Examples:
+- **Health Potion** (Common)
+  - Trigger: Health < 50%
+  - Effect: Heal 15-20 HP
+  - Consumed after use
+
+- **Emergency Repair** (Rare)
+  - Trigger: Health < 20%
+  - Effect: Heal 30 HP + 10 Block
+  - Consumed after use
+
+- **CPU Booster** (Uncommon)
+  - Trigger: Battle start
+  - Effect: +10 max CPU for battle
+  - Consumed after use
+
+- **Bug Bomb** (Epic)
+  - Trigger: After 5 seconds
+  - Effect: Deal 25 damage, spawn 3 mini-bugs
+  - Consumed after use
+
+### 2.7 Food Items (Resource Regeneration)
+Items that provide healing and resource regeneration. Food mechanics:
+- Trigger 10% faster for each adjacent food of different type
+- Provide healing, CPU regen, or buff generation
+
+#### Examples:
+- **Coffee** (Common Food)
+  - Every 5s: Regenerate 2 CPU
+  - Adjacent items gain +5% speed
+
+- **Energy Drink** (Uncommon Food)
+  - Every 4s: Regenerate 3 CPU + 1 Heat
+  - If overheated: Cleanse 2 debuffs
+
+- **Server Room Snacks** (Rare Food)
+  - Every 6s: Heal 4 HP
+  - Random buff to adjacent item
+
+### 2.8 Pets (Automated Helpers)
+Special items that provide periodic effects or triggered abilities.
+
+#### Pet Mechanics:
+- Activate every X seconds or on specific conditions
+- Speed increased by 15% per adjacent pet
+- Can have evolution/growth mechanics
+
+#### Examples:
+- **Debugger Duck** (Rare Pet)
+  - Every 3s: Remove 1 bug from enemy
+  - Gains +1 damage per bug removed
+
+- **Sentry Dog** (Epic Pet)
+  - Every 4s: Bark for 3 damage + 1 Intimidate
+  - On enemy kill: Howl (all pets attack immediately)
+
+- **AI Assistant** (Legendary Pet)
+  - Every 2s: Copy effect of random adjacent item
+  - Learns patterns: -0.1s cooldown per activation
 
 ## 3. Buffs & Debuffs
 
@@ -143,6 +221,8 @@ Items that provide stamina, modify other items, or provide utility.
 - **Monitored** (Empower): +1 damage per stack
 - **Load Balanced**: Damage distributed across multiple hits
 - **Encrypted** (Shield): Blocks next X damage
+- **Overclocked**: +50% speed but costs double CPU
+- **Regenerating**: Heal 1 HP per second per stack
 
 ### 3.2 Debuffs  
 - **Throttled** (Cold): Items trigger 2% slower per stack
@@ -150,59 +230,62 @@ Items that provide stamina, modify other items, or provide utility.
 - **Rate Limited** (Blind): -5% accuracy per stack
 - **Crashed** (Stun): Cannot activate for X seconds
 - **Corrupted**: Next healing effect damages instead
+- **Lagged**: Delays next X activations by 0.5s
+- **Vulnerable**: Take +2 damage from all sources
 
 ## 4. Item Placement & Adjacency
 
 ### 4.1 Grid System
-- **Main Server Room**: 7x9 grid (63 slots) - your data center floor
-- **Server Racks** (Items that provide storage):
-  - **Mini Rack**: 2x2 item, provides 3x4 internal storage (Cost: 8g)
-  - **Standard Rack**: 2x3 item, provides 4x5 internal storage (Cost: 15g)
-  - **Enterprise Rack**: 3x3 item, provides 5x6 internal storage (Cost: 25g)
+- **Main Server Room**: 7x9 grid (63 slots)
+- **Server Racks** (Storage containers):
+  - **Mini Rack**: 2x2 item, provides 3x4 internal storage
+  - **Standard Rack**: 2x3 item, provides 4x5 internal storage
+  - **Enterprise Rack**: 3x3 item, provides 5x6 internal storage
 - **Item Shapes**: Various sizes (1x1, 2x1, 2x2, 1x3, etc.)
 - **Rotation**: Items can be rotated before placement
 
 ### 4.2 Adjacency Rules
-- Items touching orthogonally are "adjacent" (within same space)
+- Items touching orthogonally are "adjacent"
 - Diagonal touching doesn't count
-- Some items have "directional" effects (e.g., points at specific side)
 - Items inside a rack can be adjacent to each other
-- Items inside a rack are NOT adjacent to items outside (rack walls block adjacency)
+- Items inside a rack are NOT adjacent to items outside
 
-### 4.3 Synergy Examples
+### 4.3 Synergies
 - **Bug Swarm**: 3+ problems adjacent = all gain +20% damage
-- **Full Stack**: Problem + Defense + Infrastructure touching = all activate 30% faster
+- **Shield Wall**: 3+ shields adjacent = +10% block chance each
+- **Full Stack**: Problem + Defense + Infrastructure = 30% faster
 - **Monitoring Suite**: 3+ Sentry products = +10 HP at battle start
-- **Chaos Engineering**: Alternating problems/defenses = both gain +15% effectiveness
+- **Food Court**: Different food types adjacent = +10% trigger speed
+- **Pet Paradise**: Pets gain +1 effect power per adjacent pet
 
 ## 5. Economy & Progression
 
 ### 5.1 Gold System
 - **Starting Gold**: 10
-- **Gold Per Round** (fixed amounts):
+- **Gold Per Round**:
   - Rounds 1-3: 12g
   - Rounds 4-6: 14g
   - Rounds 7-9: 16g
   - Rounds 10-12: 18g
   - Rounds 13+: 20g
-- **No win/loss bonus** - gold is fixed per round
-- **Gold Generation Items**: Some items (like "Bitcoin Miner") generate extra gold
-- **Selling Items**: 50% of purchase price (rounded down)
+- **Selling Items**: 50% of purchase price
 
 ### 5.2 Shop System
 - **Slots**: 5 items per refresh
 - **Reroll Cost**: 2 gold
 - **Item Costs**:
-  - Common: 3g
-  - Uncommon: 5g
-  - Rare: 8g
-  - Epic: 12g
-  - Legendary: 20g
+  - Common: 3-4g
+  - Uncommon: 5-7g
+  - Rare: 8-11g
+  - Epic: 12-16g
+  - Legendary: 18-25g
+  - Godly: 30+g
 
-### 5.3 Item Tiers
+### 5.3 Item Evolution
 - **Tier 1**: Base stats
 - **Tier 2**: 1.5x stats (combine 3 tier 1)
 - **Tier 3**: 2.2x stats (combine 3 tier 2)
+- **Star Items**: Enhanced versions with bonus effects
 
 ## 6. Battle Phases
 
@@ -210,12 +293,12 @@ Items that provide stamina, modify other items, or provide utility.
 1. View shop
 2. Buy/sell items
 3. Arrange inventory
-4. View opponent's last build (in ranked)
+4. View opponent's last build
 
 ### 6.2 Battle Phase (60 seconds max)
-1. Items activate based on cooldowns
-2. Stamina management occurs automatically
-3. Battle ends when a player reaches 0 HP or time expires
+1. Items activate based on triggers
+2. CPU management occurs automatically
+3. Battle ends when a player reaches 0 HP
 4. If time expires, player with more HP wins
 
 ## 7. Special Mechanics
@@ -227,88 +310,55 @@ Items that provide stamina, modify other items, or provide utility.
 ### 7.2 Critical Hits
 - Base 5% chance
 - Deals 2x damage
-- Some items modify crit chance/damage
+- Can trigger special effects
 
-### 7.3 Block vs Damage
-- Block reduces incoming damage 1:1
-- Some damage types bypass block
-- Block doesn't carry over between attacks
+### 7.3 Shield Blocking
+- Shields have 30% base chance to block
+- Block prevents X damage (varies by shield)
+- Can trigger counter-effects
+
+### 7.4 Item Consumption
+- Some items are consumed after use
+- Consumed items are removed from battle
+- Adjacency bonuses update when items are consumed
 
 ## 8. Classes/Heroes (Future)
 
 ### 8.1 The Debugger
 - **Passive**: Problems have +10% crit chance
-- **Special**: Can "breakpoint" an enemy item for 3s once per battle
+- **Special**: Can "breakpoint" an enemy item for 3s
 
 ### 8.2 The SRE
 - **Passive**: +2 stamina regeneration
 - **Special**: Infrastructure items cost 1 less gold
 
 ### 8.3 The Security Engineer
-- **Passive**: Defensive items activate 20% faster
+- **Passive**: Shields have +10% block chance
 - **Special**: Start battle with 5 block
 
-## 9. Leaderboards & Progression
+### 8.4 The Data Scientist
+- **Passive**: Pets activate 20% faster
+- **Special**: Can "analyze" shop for better items
 
-### 9.1 Leaderboard System
-- **Global Leaderboard**: All players
-- **Weekly Leaderboard**: Resets each week
-- **Friends Leaderboard**: Compare with friends
-- **Metrics Displayed**:
-  - Total Wins
-  - Win Rate (%)
-  - Current Win Streak
-  - Best Win Streak
-  - Average Round Reached
-  - Total Games Played
+## 9. Technical Implementation
 
-### 9.2 Time-Based Leaderboards
-- **Daily**: Top performers each day
-- **Weekly**: Best stats for the week
-- **Monthly**: Long-term consistency
-- **All-Time**: Career totals
+### 9.1 Architecture
+- **Client**: Godot 4 web export
+- **Server**: Python FastAPI
+- **Battle Simulation**: Server-side, deterministic
 
-### 9.3 Player Progression
-- Account level (based on games played)
-- Item unlock system (start with basic set)
-- Achievement system
-- No ranked mode initially - pure leaderboard competition
+### 9.2 Event System
+- Event-driven architecture for triggers
+- Priority queue for timer-based events
+- Immediate evaluation for reactive triggers
 
-## 10. Technical Implementation Notes
+### 9.3 Item Effect System
+- Separation of triggers (WHEN) and effects (WHAT)
+- Items can have multiple triggers
+- Each trigger can have multiple effects
+- Proper type safety with no Any types
 
-### 10.1 Client-Server Architecture
-- **Client**: Manages inventory locally, sends final state
-- **Server**: Validates builds, simulates battles, returns replay
-- **Battle Simulation**: Deterministic, tick-based (10 ticks/second)
-
-### 10.2 Battle Replay Format
-```json
-{
-  "events": [
-    {
-      "timestamp": 0.0,
-      "type": "item_activate",
-      "item_id": "null_pointer_1",
-      "target": "player_2",
-      "damage": 6,
-      "stamina_cost": 3
-    }
-  ],
-  "winner": "player_1",
-  "final_healths": {
-    "player_1": 15,
-    "player_2": 0
-  }
-}
-```
-
-## 11. Monetization (Optional for Hackweek)
-- **Battle Pass**: Cosmetic server rack skins
-- **Item Skins**: Visual variants of items
-- **Emotes**: For battle victories
-- **No Pay-to-Win**: All gameplay items earnable through play
-
-## 12. Sentry-Specific Theming
+## 10. Sentry-Specific Theming
 
 ### Visual Style
 - Server racks instead of backpacks
