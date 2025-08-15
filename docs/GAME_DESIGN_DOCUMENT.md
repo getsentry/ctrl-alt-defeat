@@ -176,21 +176,28 @@ Items that are consumed after triggering once.
 
 ### 2.7 Food Items (Resource Regeneration)
 Items that provide healing and resource regeneration. Food mechanics:
-- Trigger 10% faster for each adjacent food of different type
+- **Trigger 10% faster for each adjacent food of DIFFERENT type**
+- Each unique food type adjacent gives the speed bonus
+- Multi-square foods have more adjacency slots for bonuses
 - Provide healing, CPU regen, or buff generation
 
 #### Examples:
-- **Coffee** (Common Food)
+- **Coffee** (Common Food) - 1x1
   - Every 5s: Regenerate 2 CPU
   - Adjacent items gain +5% speed
 
-- **Energy Drink** (Uncommon Food)
+- **Energy Drink** (Uncommon Food) - 1x2
   - Every 4s: Regenerate 3 CPU + 1 Heat
   - If overheated: Cleanse 2 debuffs
+  - Larger size = more adjacency slots
 
-- **Server Room Snacks** (Rare Food)
-  - Every 6s: Heal 4 HP
-  - Random buff to adjacent item
+- **Server Room Pizza** (Rare Food) - 2x2
+  - Every 6s: Heal 4 HP to all units
+  - Takes 4 grid squares (more adjacency!)
+  
+- **Debug Donuts** (Epic Food) - L-shaped (3 squares)
+  - Every 4s: Heal 3 HP + 1 CPU
+  - Irregular shape for strategic placement
 
 ### 2.8 Pets (Automated Helpers)
 Special items that provide periodic effects or triggered abilities.
@@ -241,22 +248,46 @@ Special items that provide periodic effects or triggered abilities.
   - **Mini Rack**: 2x2 item, provides 3x4 internal storage
   - **Standard Rack**: 2x3 item, provides 4x5 internal storage
   - **Enterprise Rack**: 3x3 item, provides 5x6 internal storage
-- **Item Shapes**: Various sizes (1x1, 2x1, 2x2, 1x3, etc.)
+- **Item Shapes**: 
+  - Simple: 1x1, 2x1, 1x2, 2x2, 3x1, 1x3
+  - Complex: L-shapes, T-shapes, irregular patterns
+  - Large items can take 3-6+ squares
 - **Rotation**: Items can be rotated before placement
 
-### 4.2 Adjacency Rules
-- Items touching orthogonally are "adjacent"
-- Diagonal touching doesn't count
-- Items inside a rack can be adjacent to each other
-- Items inside a rack are NOT adjacent to items outside
+### 4.2 Multi-Square Items
+- **Items can occupy multiple grid squares** (e.g., a "Server Blade" might be 1x3)
+- **Each square of the item counts for adjacency** - a 1x3 item has more adjacent slots than a 1x1
+- **Example**: A 2x2 item has 12 adjacent slots (all orthogonally adjacent squares)
+- **Strategic placement**: Larger items provide more adjacency opportunities
 
-### 4.3 Synergies
+#### Multi-Square Item Examples:
+- **Server Blade** (1x3): Long horizontal server component
+- **Rack Mount** (2x2): Square equipment taking 4 spaces
+- **L-Shaped Cable** (3 squares in L): Fits around corners
+- **Database Cluster** (2x3): Large 6-square infrastructure
+- **Pizza Slice** (3 squares triangular): Irregular food shape
+- **Monitor Array** (T-shape, 4 squares): Central monitoring system
+
+### 4.3 Adjacency Rules
+- **Orthogonal only**: Items touching horizontally or vertically are "adjacent"
+- **No diagonals**: Diagonal touching doesn't count
+- **Multi-square adjacency**: ALL squares of an item check for adjacency
+- **Container rules**:
+  - Items inside a rack can be adjacent to each other
+  - Items inside a rack are NOT adjacent to items outside
+
+### 4.4 Synergies
 - **Bug Swarm**: 3+ problems adjacent = all gain +20% damage
+  - Multi-square problems count as one item but have more adjacency
 - **Shield Wall**: 3+ shields adjacent = +10% block chance each
+  - Large shields provide better coverage
 - **Full Stack**: Problem + Defense + Infrastructure = 30% faster
+  - Each category only needs one item regardless of size
 - **Monitoring Suite**: 3+ Sentry products = +10 HP at battle start
-- **Food Court**: Different food types adjacent = +10% trigger speed
+- **Food Court**: Different food types adjacent = +10% trigger speed per unique type
+  - Large foods can touch more different food types
 - **Pet Paradise**: Pets gain +1 effect power per adjacent pet
+  - Multi-square pets still count as one pet
 
 ## 5. Economy & Progression
 
