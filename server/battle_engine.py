@@ -311,8 +311,12 @@ class BattleSimulator:
                 for item in p1_items + p2_items:
                     if item.spec.category == "problem":
                         # Add flat damage, not multiply
-                        item.spec.min_damage = ITEM_CATALOG[item.spec.id].min_damage + fatigue_bonus
-                        item.spec.max_damage = ITEM_CATALOG[item.spec.id].max_damage + fatigue_bonus
+                        # Store original values if not yet stored
+                        if not hasattr(item, '_original_min_damage'):
+                            item._original_min_damage = item.spec.min_damage
+                            item._original_max_damage = item.spec.max_damage
+                        item.spec.min_damage = item._original_min_damage + fatigue_bonus
+                        item.spec.max_damage = item._original_max_damage + fatigue_bonus
             
             self.current_time += self.tick_rate
         

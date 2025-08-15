@@ -41,7 +41,7 @@ class TestGameDesignCompliance:
         
         # Starting CPU is 10
         assert player.max_cpu == 10
-        assert player.cpu == 0  # Starts empty, will fill
+        assert player.cpu == 10.0  # Starts full per battle_engine initialization
         
         # CPU regeneration is 2/second
         assert player.cpu_regen == 2.0
@@ -170,8 +170,8 @@ class TestGameDesignCompliance:
     def test_block_mechanics(self):
         """Test Section 7.3: Block reduces damage 1:1"""
         sim = BattleSimulator()
-        player = Player(id=1, quota=100, max_quota=100)
-        attacker = Player(id=2, quota=100, max_quota=100)
+        player = Player(id=1, quota=100, max_quota=100, cpu=10.0)
+        attacker = Player(id=2, quota=100, max_quota=100, cpu=10.0)
         
         # Give player 10 block
         player.buffs["block"] = 10
@@ -273,22 +273,22 @@ class TestGameDesignCompliance:
     def test_infrastructure_effects(self):
         """Test Section 2.3: Infrastructure passive effects"""
         sim = BattleSimulator()
-        player = Player(id=1, quota=25, max_quota=25)
+        player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
         
         # Test Load Balancer
-        lb = PlacedItem(spec=deepcopy(ITEM_CATALOG["load_balancer"], position=(0, 0))
+        lb = PlacedItem(spec=deepcopy(ITEM_CATALOG["load_balancer"]), position=(0, 0))
         sim._apply_infrastructure([lb], player)
         assert player.max_cpu == 15  # 10 base + 5
         
         # Test Redis Cache
-        player2 = Player(id=1, quota=25, max_quota=25)
-        redis = PlacedItem(spec=deepcopy(ITEM_CATALOG["redis_cache"], position=(0, 0))
+        player2 = Player(id=1, quota=25, max_quota=25, cpu=10.0)
+        redis = PlacedItem(spec=deepcopy(ITEM_CATALOG["redis_cache"]), position=(0, 0))
         sim._apply_infrastructure([redis], player2)
         assert player2.cpu_regen == 5.0  # 2 base + 3
         
         # Test Database
-        player3 = Player(id=1, quota=25, max_quota=25)
-        db = PlacedItem(spec=deepcopy(ITEM_CATALOG["database"], position=(0, 0))
+        player3 = Player(id=1, quota=25, max_quota=25, cpu=10.0)
+        db = PlacedItem(spec=deepcopy(ITEM_CATALOG["database"]), position=(0, 0))
         sim._apply_infrastructure([db], player3)
         assert player3.max_cpu == 18  # 10 base + 8
     
@@ -302,9 +302,9 @@ class TestGameDesignCompliance:
         # After activation would increment
         
         # Error Monitoring gives block at battle start
-        em = PlacedItem(spec=deepcopy(ITEM_CATALOG["error_monitoring"], position=(0, 0))
-        player = Player(id=1, quota=25, max_quota=25)
-        enemy = Player(id=2, quota=25, max_quota=25)
+        em = PlacedItem(spec=deepcopy(ITEM_CATALOG["error_monitoring"]), position=(0, 0))
+        player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
+        enemy = Player(id=2, quota=25, max_quota=25, cpu=10.0)
         
         sim._trigger_battle_start([em], player, enemy)
         assert player.buffs.get("block", 0) == 5
@@ -386,4 +386,4 @@ class TestBattleSimulation:
         assert np.accuracy_bonus == 0.1  # +10%
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"]
+    pytest.main([__file__, "-v"])
