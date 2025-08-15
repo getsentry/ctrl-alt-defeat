@@ -1,0 +1,123 @@
+{
+  "items": [
+    {
+      "id": "error_monitoring",
+      "name": "Error Monitor",
+      "type": "ERROR_MONITORING",
+      "rarity": "COMMON",
+      "base_damage": 5,
+      "base_health": 10,
+      "base_speed": 1.0,
+      "ability": "Deals 2 damage when enemy misses an attack",
+      "adjacency": "+2 damage to adjacent items"
+    },
+    {
+      "id": "session_replay",
+      "name": "Session Replay",
+      "type": "SESSION_REPLAY", 
+      "rarity": "UNCOMMON",
+      "base_damage": 3,
+      "base_health": 15,
+      "base_speed": 0.9,
+      "ability": "Mirrors 50% of damage taken back to attacker",
+      "adjacency": "+20% reflect damage to adjacent items"
+    },
+    {
+      "id": "performance_monitor",
+      "name": "Performance Monitor",
+      "type": "PERFORMANCE",
+      "rarity": "COMMON",
+      "base_damage": 4,
+      "base_health": 8,
+      "base_speed": 1.3,
+      "ability": "Gains +1 speed for each successful hit (max 5)",
+      "adjacency": "+0.2 speed to adjacent items"
+    },
+    {
+      "id": "profiler",
+      "name": "Profiler",
+      "type": "PROFILING",
+      "rarity": "RARE",
+      "base_damage": 8,
+      "base_health": 12,
+      "base_speed": 1.0,
+      "ability": "30% chance for critical hit (2x damage)",
+      "adjacency": "+10% crit chance to adjacent items"
+    },
+    {
+      "id": "cron_monitor",
+      "name": "Cron Monitor",
+      "type": "CRON_MONITORING",
+      "rarity": "UNCOMMON",
+      "base_damage": 6,
+      "base_health": 14,
+      "base_speed": 0.8,
+      "ability": "Triggers 3 damage pulse every 3 seconds",
+      "adjacency": "Reduces pulse cooldown by 0.5s for adjacent items"
+    },
+    {
+      "id": "release_health",
+      "name": "Release Health",
+      "type": "RELEASE_HEALTH",
+      "rarity": "UNCOMMON",
+      "base_damage": 2,
+      "base_health": 20,
+      "base_speed": 1.0,
+      "ability": "Heals 5 HP when any item is deployed",
+      "adjacency": "+3 HP to adjacent items at battle start"
+    },
+    {
+      "id": "issue_tracker",
+      "name": "Issue Tracker",
+      "type": "ISSUE_TRACKER",
+      "rarity": "RARE",
+      "base_damage": 7,
+      "base_health": 11,
+      "base_speed": 1.1,
+      "ability": "Stacks +1 damage for each error detected (enemy miss/fail)",
+      "adjacency": "Share 25% of stacked damage with adjacent items"
+    },
+    {
+      "id": "distributed_tracing",
+      "name": "Distributed Tracing",
+      "type": "DISTRIBUTED_TRACING",
+      "rarity": "EPIC",
+      "base_damage": 10,
+      "base_health": 16,
+      "base_speed": 1.2,
+      "ability": "Links damage between all tracing items (share 30% damage)",
+      "adjacency": "Creates damage chain with adjacent items"
+    },
+    {
+      "id": "code_coverage",
+      "name": "Code Coverage",
+      "type": "CODE_COVERAGE",
+      "rarity": "RARE",
+      "base_damage": 6,
+      "base_health": 18,
+      "base_speed": 0.9,
+      "ability": "Gains stats based on inventory coverage (items placed)",
+      "adjacency": "+1 damage and +2 health per adjacent item"
+    }
+  ],
+  "tier_multipliers": {
+    "tier_1": 1.0,
+    "tier_2": 1.5,
+    "tier_3": 2.2
+  },
+  "merge_rules": {
+    "same_type_same_tier": "upgrade_tier",
+    "special_combos": [
+      {
+        "items": ["error_monitoring", "session_replay"],
+        "result": "omniscient_debugging",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "items": ["performance_monitor", "profiler"],
+        "result": "optimization_suite",
+        "rarity": "EPIC"
+      }
+    ]
+  }
+}

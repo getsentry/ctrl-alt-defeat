@@ -1,0 +1,293 @@
+{
+  "item_categories": {
+    "problems": {
+      "name": "Problems & Bugs",
+      "description": "Attack items that deal damage",
+      "color": "#FF4444"
+    },
+    "defenses": {
+      "name": "Sentry Products",
+      "description": "Defense items that protect and monitor",
+      "color": "#44FF44"
+    },
+    "infrastructure": {
+      "name": "Infrastructure",
+      "description": "Support items that buff and enhance",
+      "color": "#4444FF"
+    }
+  },
+  "items": [
+    {
+      "id": "null_pointer",
+      "name": "Null Pointer Exception",
+      "category": "problems",
+      "type": "ATTACK",
+      "rarity": "COMMON",
+      "base_damage": 8,
+      "base_health": 5,
+      "base_speed": 1.2,
+      "ability": "20% chance to crash (instant kill) low health targets",
+      "adjacency": "+2 damage to adjacent problems",
+      "flavor": "The classic nightmare of every developer"
+    },
+    {
+      "id": "memory_leak",
+      "name": "Memory Leak",
+      "category": "problems",
+      "type": "ATTACK",
+      "rarity": "UNCOMMON",
+      "base_damage": 4,
+      "base_health": 8,
+      "base_speed": 0.8,
+      "ability": "Damage increases by +1 each turn (stacking)",
+      "adjacency": "Spreads leak effect to adjacent problems",
+      "flavor": "Slowly consuming all available resources"
+    },
+    {
+      "id": "race_condition",
+      "name": "Race Condition",
+      "category": "problems",
+      "type": "ATTACK",
+      "rarity": "RARE",
+      "base_damage": 10,
+      "base_health": 6,
+      "base_speed": 2.0,
+      "ability": "Attacks twice if faster than target",
+      "adjacency": "+0.3 speed to adjacent items",
+      "flavor": "Unpredictable and hard to reproduce"
+    },
+    {
+      "id": "infinite_loop",
+      "name": "Infinite Loop",
+      "category": "problems",
+      "type": "ATTACK",
+      "rarity": "EPIC",
+      "base_damage": 6,
+      "base_health": 12,
+      "base_speed": 1.0,
+      "ability": "Locks target for 2 seconds preventing actions",
+      "adjacency": "Adjacent problems gain stun chance",
+      "flavor": "while(true) { attack(); }"
+    },
+    {
+      "id": "sql_injection",
+      "name": "SQL Injection",
+      "category": "problems",
+      "type": "ATTACK",
+      "rarity": "RARE",
+      "base_damage": 12,
+      "base_health": 4,
+      "base_speed": 1.1,
+      "ability": "Bypasses 50% of armor/defense",
+      "adjacency": "Adjacent attacks gain 20% penetration",
+      "flavor": "'; DROP TABLE defenses;--"
+    },
+    {
+      "id": "error_monitoring",
+      "name": "Error Monitoring",
+      "category": "defenses",
+      "type": "DEFENSE",
+      "rarity": "COMMON",
+      "base_damage": 2,
+      "base_health": 15,
+      "base_armor": 3,
+      "base_speed": 1.0,
+      "ability": "Catches and neutralizes error attacks (reduces damage by 30%)",
+      "adjacency": "+2 armor to adjacent defenses",
+      "flavor": "Sentry's first line of defense"
+    },
+    {
+      "id": "session_replay",
+      "name": "Session Replay",
+      "category": "defenses",
+      "type": "DEFENSE",
+      "rarity": "UNCOMMON",
+      "base_damage": 3,
+      "base_health": 18,
+      "base_armor": 5,
+      "base_speed": 0.9,
+      "ability": "Records and reflects 40% of damage back",
+      "adjacency": "Adjacent items gain 15% reflection",
+      "flavor": "See exactly what went wrong"
+    },
+    {
+      "id": "performance_monitoring",
+      "name": "Performance Monitoring",
+      "category": "defenses",
+      "type": "DEFENSE",
+      "rarity": "UNCOMMON",
+      "base_damage": 4,
+      "base_health": 12,
+      "base_armor": 2,
+      "base_speed": 1.4,
+      "ability": "Detects slow attacks and dodges them (20% evasion)",
+      "adjacency": "+0.2 speed to adjacent items",
+      "flavor": "Keeping your app running fast"
+    },
+    {
+      "id": "profiling",
+      "name": "Code Profiling",
+      "category": "defenses",
+      "type": "DEFENSE",
+      "rarity": "RARE",
+      "base_damage": 6,
+      "base_health": 14,
+      "base_armor": 4,
+      "base_speed": 1.0,
+      "ability": "Analyzes attackers, reducing their damage by 25%",
+      "adjacency": "Adjacent defenses gain vulnerability detection",
+      "flavor": "Finding bottlenecks before they happen"
+    },
+    {
+      "id": "alerting",
+      "name": "Smart Alerting",
+      "category": "defenses",
+      "type": "DEFENSE",
+      "rarity": "UNCOMMON",
+      "base_damage": 1,
+      "base_health": 20,
+      "base_armor": 6,
+      "base_speed": 1.2,
+      "ability": "Warns allies of incoming attacks (+10% dodge to all)",
+      "adjacency": "Adjacent items gain +3 armor when attacked",
+      "flavor": "Get notified before it's too late"
+    },
+    {
+      "id": "distributed_tracing",
+      "name": "Distributed Tracing",
+      "category": "defenses",
+      "type": "DEFENSE",
+      "rarity": "EPIC",
+      "base_damage": 5,
+      "base_health": 16,
+      "base_armor": 5,
+      "base_speed": 1.1,
+      "ability": "Links all defenses, sharing 30% of damage taken",
+      "adjacency": "Creates defense network with adjacent items",
+      "flavor": "Following problems across services"
+    },
+    {
+      "id": "load_balancer",
+      "name": "Load Balancer",
+      "category": "infrastructure",
+      "type": "SUPPORT",
+      "rarity": "UNCOMMON",
+      "base_damage": 0,
+      "base_health": 25,
+      "base_armor": 8,
+      "base_speed": 1.0,
+      "ability": "Distributes damage across adjacent items",
+      "adjacency": "Adjacent items share 20% of damage taken",
+      "flavor": "Spreading the load evenly"
+    },
+    {
+      "id": "redis_cache",
+      "name": "Redis Cache",
+      "category": "infrastructure",
+      "type": "SUPPORT",
+      "rarity": "COMMON",
+      "base_damage": 0,
+      "base_health": 10,
+      "base_armor": 2,
+      "base_speed": 2.0,
+      "ability": "First attack each turn is instant (no cooldown)",
+      "adjacency": "+0.5 speed to adjacent items",
+      "flavor": "Lightning fast response times"
+    },
+    {
+      "id": "kubernetes_cluster",
+      "name": "Kubernetes Cluster",
+      "category": "infrastructure",
+      "type": "SUPPORT",
+      "rarity": "RARE",
+      "base_damage": 0,
+      "base_health": 30,
+      "base_armor": 10,
+      "base_speed": 0.8,
+      "ability": "Respawns destroyed adjacent items at 30% health",
+      "adjacency": "Adjacent items gain +5 health regeneration",
+      "flavor": "Self-healing infrastructure"
+    },
+    {
+      "id": "cdn",
+      "name": "CDN",
+      "category": "infrastructure",
+      "type": "SUPPORT",
+      "rarity": "UNCOMMON",
+      "base_damage": 0,
+      "base_health": 15,
+      "base_armor": 5,
+      "base_speed": 1.5,
+      "ability": "Reduces cooldowns of adjacent items by 25%",
+      "adjacency": "Adjacent items attack 25% faster",
+      "flavor": "Content delivered at the edge"
+    },
+    {
+      "id": "database",
+      "name": "PostgreSQL Database",
+      "category": "infrastructure",
+      "type": "SUPPORT",
+      "rarity": "COMMON",
+      "base_damage": 0,
+      "base_health": 20,
+      "base_armor": 7,
+      "base_speed": 0.7,
+      "ability": "Stores damage stacks for adjacent problems (+1 per kill)",
+      "adjacency": "Adjacent problems gain +3 base damage",
+      "flavor": "The reliable data store"
+    }
+  ],
+  "tier_system": {
+    "merge_same": "Combine 3 identical items to upgrade tier",
+    "tier_multipliers": {
+      "tier_1": 1.0,
+      "tier_2": 1.6,
+      "tier_3": 2.5
+    }
+  },
+  "special_combinations": [
+    {
+      "items": ["error_monitoring", "session_replay"],
+      "result": "full_stack_observability",
+      "name": "Full Stack Observability",
+      "rarity": "LEGENDARY",
+      "description": "Complete visibility into your application"
+    },
+    {
+      "items": ["null_pointer", "memory_leak"],
+      "result": "critical_bug",
+      "name": "Critical System Failure",
+      "rarity": "EPIC",
+      "description": "A bug so severe it crashes everything"
+    },
+    {
+      "items": ["load_balancer", "kubernetes_cluster"],
+      "result": "cloud_infrastructure",
+      "name": "Cloud Native Infrastructure",
+      "rarity": "LEGENDARY",
+      "description": "Infinitely scalable and self-healing"
+    }
+  ],
+  "synergies": [
+    {
+      "name": "Bug Swarm",
+      "requirement": "3+ problem items",
+      "effect": "All problems gain +20% damage"
+    },
+    {
+      "name": "Sentry Shield",
+      "requirement": "3+ defense items",
+      "effect": "All defenses gain +5 armor"
+    },
+    {
+      "name": "Infrastructure as Code",
+      "requirement": "3+ infrastructure items",
+      "effect": "All items gain +10 health"
+    },
+    {
+      "name": "Chaos Engineering",
+      "requirement": "2 problems + 2 defenses",
+      "effect": "Problems test defenses, both gain +15% stats"
+    }
+  ]
+}
