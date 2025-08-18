@@ -6,17 +6,28 @@ A Sentry-themed autobattler where players manage a "server rack" (backpack) fill
 
 ## 1. Battle System
 
-### 1.1 Player Quota (Health)
-- **Starting Quota**: 25 requests
-- **Quota Scaling**: Increases each round
-  - Round 1-3: 25 quota
-  - Round 4-6: 35 quota
-  - Round 7-9: 50 quota
-  - Round 10-12: 75 quota
-  - Round 13-15: 100 quota
-  - Round 16+: 150 quota
-- **Win Condition**: Exhaust opponent's quota (reduce to 0)
-- **Loss Penalty**: Lose 10-20 quota based on remaining enemy quota
+### 1.1 Player Health (Infrastructure Integrity)
+- **Health Progression by Round**:
+  - Round 1: 25
+  - Round 2: 35
+  - Round 3: 45
+  - Round 4: 55
+  - Round 5: 70
+  - Round 6: 85
+  - Round 7: 100
+  - Round 8: 115
+  - Round 9: 130
+  - Round 10: 150
+  - Round 11: 170
+  - Round 12: 190
+  - Round 13: 210
+  - Round 14: 230
+  - Round 15: 260
+  - Round 16: 290
+  - Round 17: 320
+  - Round 18: 350
+- **Win Condition**: Reduce opponent's health to 0
+- **Loss Penalty**: Lose health based on remaining enemy health
 
 ### 1.2 CPU Cycles (Stamina)
 - **Starting CPU**: 10 cycles/second
