@@ -1,0 +1,91 @@
+{
+    "items": {
+        "bug_tracker": {
+            "name": "Bug Tracker",
+            "description": "Finds and eliminates bugs",
+            "icon": "res://assets/sprites/items/bug_icon.png",
+            "width": 2,
+            "height": 1,
+            "max_stack_size": 1,
+            "attack": 3,
+            "defense": 1,
+            "cost": 3
+        },
+        "memory_guard": {
+            "name": "Memory Guard",
+            "description": "Prevents memory leaks",
+            "icon": "res://assets/sprites/items/shield_icon.png",
+            "width": 2,
+            "height": 2,
+            "max_stack_size": 1,
+            "attack": 1,
+            "defense": 5,
+            "cost": 5
+        },
+        "error_shield": {
+            "name": "Error Shield",
+            "description": "Blocks incoming errors",
+            "icon": "res://assets/sprites/items/shield_icon.png",
+            "width": 1,
+            "height": 2,
+            "max_stack_size": 1,
+            "attack": 0,
+            "defense": 4,
+            "cost": 4
+        },
+        "load_balancer": {
+            "name": "Load Balancer",
+            "description": "Distributes damage evenly",
+            "icon": "res://assets/sprites/items/infrastructure_icon.png",
+            "width": 3,
+            "height": 2,
+            "max_stack_size": 1,
+            "attack": 2,
+            "defense": 3,
+            "special": "distribute",
+            "cost": 6
+        },
+        "coffee": {
+            "name": "Coffee",
+            "description": "Quick energy boost",
+            "icon": "res://assets/sprites/items/coffee_icon.png",
+            "width": 1,
+            "height": 1,
+            "max_stack_size": 3,
+            "heal": 2,
+            "cost": 2
+        },
+        "monitor": {
+            "name": "Monitor",
+            "description": "Observes and reports issues",
+            "icon": "res://assets/sprites/items/monitor_icon.png",
+            "width": 2,
+            "height": 3,
+            "max_stack_size": 1,
+            "attack": 4,
+            "defense": 2,
+            "cost": 8
+        },
+        "firewall": {
+            "name": "Firewall",
+            "description": "Blocks all incoming attacks",
+            "icon": "res://assets/sprites/items/firewall_icon.png",
+            "width": 4,
+            "height": 1,
+            "max_stack_size": 1,
+            "defense": 8,
+            "cost": 7
+        },
+        "debugger": {
+            "name": "Debugger",
+            "description": "Doubles damage against bugs",
+            "icon": "res://assets/sprites/items/debugger_icon.png",
+            "width": 1,
+            "height": 1,
+            "max_stack_size": 1,
+            "attack": 2,
+            "special": "double_vs_bugs",
+            "cost": 3
+        }
+    }
+}

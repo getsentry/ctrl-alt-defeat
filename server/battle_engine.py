@@ -158,7 +158,6 @@ class BattleSimulator:
         p1_items: List[PlacedItem],
         p2_items: List[PlacedItem],
         round_number: int = 1,
-        validate_placement: bool = True,
         p1_containers: List[ServerContainer] = None,
         p2_containers: List[ServerContainer] = None,
     ) -> Dict:
@@ -177,16 +176,15 @@ class BattleSimulator:
         p1_items = deepcopy(p1_items)
         p2_items = deepcopy(p2_items)
 
-        # Validate placement if requested
-        if validate_placement:
-            if not self._validate_placement_with_containers(p1_items, p1_containers):
-                raise ValueError(
-                    "Invalid placement for player 1 items - items overlap or are outside containers"
-                )
-            if not self._validate_placement_with_containers(p2_items, p2_containers):
-                raise ValueError(
-                    "Invalid placement for player 2 items - items overlap or are outside containers"
-                )
+        # ALWAYS validate placement - items MUST be on servers
+        if not self._validate_placement_with_containers(p1_items, p1_containers):
+            raise ValueError(
+                "Invalid placement for player 1 items - items overlap or are outside containers"
+            )
+        if not self._validate_placement_with_containers(p2_items, p2_containers):
+            raise ValueError(
+                "Invalid placement for player 2 items - items overlap or are outside containers"
+            )
 
         # Reset state
         self.current_time = 0.0

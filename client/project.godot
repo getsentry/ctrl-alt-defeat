@@ -6,7 +6,7 @@
 
 config/name="Sentry Autobattler"
 config/description="Backpack Battles-style autobattler with Sentry product themes"
-run/main_scene="res://scenes/MainMenu.tscn"
+run/main_scene="res://scenes/UnifiedGridUI.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -16,6 +16,10 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep_width"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gloot/plugin.cfg")
 
 [rendering]
 
