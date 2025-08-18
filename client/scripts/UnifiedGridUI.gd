@@ -394,8 +394,6 @@ func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Diction
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				_start_dragging_from_shop(shop_item, item_data, event.position)
-			else:
-				_stop_dragging()
 
 func _start_dragging_from_shop(shop_item: Panel, item_data: Dictionary, local_pos: Vector2):
 	if item_data.type == "server":
@@ -408,7 +406,8 @@ func _start_dragging_from_shop(shop_item: Panel, item_data: Dictionary, local_po
 	add_child(dragging_object)
 
 	drag_offset = local_pos
-	original_parent = null
+	original_parent = shop_item  # Remember it came from shop
+	original_position = Vector2.ZERO  # Not applicable for shop items
 
 	gold_preview_label.text = "-%d gold" % item_data.cost
 	gold_preview_label.visible = true
@@ -467,8 +466,6 @@ func _on_item_input(event: InputEvent, item: Panel):
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				_start_dragging_item(item, event.position)
-			else:
-				_stop_dragging()
 
 func _start_dragging_item(item: Panel, local_pos: Vector2):
 	# Clear from grid
@@ -509,27 +506,38 @@ func _stop_dragging():
 		placed = _try_place_item(dragging_object)
 
 	if not placed:
+		# Return to original position based on where it came from
 		if original_parent:
-			if dragging_object.has_meta("is_item") and original_grid_pos.x >= 0:
-				# Restore to grid
-				var item_data = dragging_object.get_meta("item_data")
-				for dy in range(item_data.height):
-					for dx in range(item_data.width):
-						if original_grid_pos.y + dy < ROOM_HEIGHT and original_grid_pos.x + dx < ROOM_WIDTH:
-							item_grid[original_grid_pos.y + dy][original_grid_pos.x + dx] = dragging_object
+			if original_parent.has_meta("shop_item"):
+				# Item was from shop - just delete the preview
+				dragging_object.queue_free()
+			elif original_parent == server_room_container:
+				# Item was on grid - restore it
+				if original_grid_pos.x >= 0:
+					var item_data = dragging_object.get_meta("item_data")
+					for dy in range(item_data.height):
+						for dx in range(item_data.width):
+							if original_grid_pos.y + dy < ROOM_HEIGHT and original_grid_pos.x + dx < ROOM_WIDTH:
+								item_grid[original_grid_pos.y + dy][original_grid_pos.x + dx] = dragging_object
+					dragging_object.position = original_position
+					if dragging_object.get_parent() != server_room_container:
+						dragging_object.get_parent().remove_child(dragging_object)
+						server_room_container.add_child(dragging_object)
+			elif original_parent == storage_container:
+				# Item was in storage - restore it
 				dragging_object.position = original_position
-				if dragging_object.get_parent() != server_room_container:
+				if dragging_object.get_parent() != storage_container:
 					dragging_object.get_parent().remove_child(dragging_object)
-					server_room_container.add_child(dragging_object)
-			else:
-				dragging_object.position = original_position
+					storage_container.add_child(dragging_object)
 		else:
+			# No original parent (shouldn't happen) - delete it
 			dragging_object.queue_free()
 
 	gold_preview_label.visible = false
 	hover_preview.visible = false
 	dragging_object = null
 	original_grid_pos = Vector2i(-1, -1)
+	original_parent = null
 
 func _try_place_server(server_preview: Control) -> bool:
 	var mouse_pos = server_room_container.get_local_mouse_position()
@@ -544,8 +552,8 @@ func _try_place_server(server_preview: Control) -> bool:
 		# Check if pattern fits
 		var pattern = server_data.pattern
 		if _can_place_server_pattern(grid_x, grid_y, pattern):
-			# Pay for it
-			if not original_parent:
+			# Pay for it if from shop
+			if original_parent and original_parent.has_meta("shop_item"):
 				if current_gold < server_data.cost:
 					print("Not enough gold!")
 					return false
@@ -558,7 +566,7 @@ func _try_place_server(server_preview: Control) -> bool:
 			# Remove preview
 			server_preview.queue_free()
 
-			if not original_parent:
+			if original_parent and original_parent.has_meta("shop_item"):
 				servers.append({"data": server_data, "pos": Vector2i(grid_x, grid_y)})
 
 			return true
@@ -618,7 +626,7 @@ func _try_place_item(item: Panel) -> bool:
 
 		if _can_place_item_on_grid(grid_x, grid_y, item_data.width, item_data.height):
 			# Pay if from shop
-			if not original_parent:
+			if original_parent and original_parent.has_meta("shop_item"):
 				if current_gold < item_data.cost:
 					print("Not enough gold!")
 					return false
@@ -640,7 +648,7 @@ func _try_place_item(item: Panel) -> bool:
 
 			item.set_meta("grid_pos", Vector2i(grid_x, grid_y))
 
-			if not original_parent:
+			if original_parent and original_parent.has_meta("shop_item"):
 				items.append(item)
 
 			return true
@@ -651,7 +659,7 @@ func _try_place_item(item: Panel) -> bool:
 	   storage_mouse.y >= 0 and storage_mouse.y < storage_container.size.y:
 
 		# Pay if from shop
-		if not original_parent:
+		if original_parent and original_parent.has_meta("shop_item"):
 			if current_gold < item_data.cost:
 				print("Not enough gold!")
 				return false
@@ -669,7 +677,7 @@ func _try_place_item(item: Panel) -> bool:
 		if item.has_meta("grid_pos"):
 			item.remove_meta("grid_pos")
 
-		if not original_parent:
+		if original_parent and original_parent.has_meta("shop_item"):
 			items.append(item)
 
 		return true
@@ -692,6 +700,12 @@ func _can_place_item_on_grid(x: int, y: int, width: int, height: int) -> bool:
 	return true
 
 func _input(event):
+	# Handle mouse release globally to drop items
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+			_stop_dragging()
+
+	# Handle dragging motion
 	if dragging_object and event is InputEventMouseMotion:
 		dragging_object.global_position = get_global_mouse_position() - drag_offset
 

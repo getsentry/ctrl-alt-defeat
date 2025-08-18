@@ -5,14 +5,9 @@ Comprehensive tests for battle engine to ensure it matches Game Design Document
 from copy import deepcopy
 
 import pytest
-from battle_engine import (
-    ACTION_CODES,
-    ITEM_CATALOG,
-    BattleSimulator,
-    PlacedItem,
-    Player,
-)
+from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem, Player
 from event_system import Event, EventType
+
 # from grid_system import SHAPES  # Not currently used
 from item_effects import BattleStartTrigger, DamageTakenTrigger, ItemSpec, TimerTrigger
 from server_containers import ServerContainer, create_server_containers
@@ -243,7 +238,14 @@ class TestGameDesignCompliance:
         # Create simple test items
         item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_pointer"]), position=(0, 0))
 
-        result = sim.simulate_battle([item], [], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [item],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Check action format
         assert "actions" in result
@@ -277,10 +279,16 @@ class TestGameDesignCompliance:
             position=(0, 0),
         )
 
-        result = sim.simulate_battle([item], [], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        sim.simulate_battle(
+            [item],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
-        # Should see CPU_FAIL actions
-        # cpu_fails = [a for a in result["actions"] if a["a"] == ACTION_CODES["CPU_FAIL"]]
+        # Should see CPU_FAIL actions in the result
         # Item can't activate with 20 CPU cost when max is 10
 
     def test_infrastructure_effects(self):
@@ -336,9 +344,16 @@ class TestBattleSimulation:
 
         item1 = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_pointer"]), position=(0, 0))
 
-        item2 = PlacedItem(spec=ITEM_CATALOG["memory_leak"], position=(0, 0))
+        item2 = PlacedItem(spec=ITEM_CATALOG["memory_leak"], position=(4, 0))
 
-        result = sim.simulate_battle([item1], [item2], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [item1],
+            [item2],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         assert "winner" in result
         assert result["winner"] in [1, 2]
@@ -372,7 +387,14 @@ class TestBattleSimulation:
             position=(0, 0),
         )
 
-        result = sim.simulate_battle([op_item], [], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [op_item],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         assert result["winner"] == 1
         assert result["player2_quota"] == 0
@@ -383,7 +405,14 @@ class TestBattleSimulation:
         sim = BattleSimulator()
 
         # No items = no damage = timeout
-        result = sim.simulate_battle([], [], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         assert result["duration"] == 60.0
         assert result["player1_quota"] == 25  # No damage taken

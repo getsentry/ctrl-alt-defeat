@@ -245,26 +245,31 @@ class PlacementValidator:
     def __init__(self, main_grid_size: Tuple[int, int] = (7, 9)):
         self.main_grid_size = main_grid_size
         self.containers: List[ServerContainer] = []
-        self.available_squares: Set[Tuple[int, int]] = set()
-        self.occupied_squares: Set[Tuple[int, int]] = set()
+        self.available_squares: Set[
+            Tuple[int, int]
+        ] = set()  # Squares available for items
+        self.container_squares: Set[
+            Tuple[int, int]
+        ] = set()  # Squares occupied by containers
+        self.item_squares: Set[Tuple[int, int]] = set()  # Squares occupied by items
 
     def add_container(self, container: ServerContainer) -> bool:
         """Add a container and update available squares"""
         # Check if container can be placed in main grid
-        container_squares = set(container.get_occupied_squares())
+        container_occupied = set(container.get_occupied_squares())
 
-        # Verify all squares are in bounds and not occupied
-        for x, y in container_squares:
+        # Verify all squares are in bounds and not occupied by another container
+        for x, y in container_occupied:
             if x < 0 or x >= self.main_grid_size[0]:
                 return False
             if y < 0 or y >= self.main_grid_size[1]:
                 return False
-            if (x, y) in self.occupied_squares:
+            if (x, y) in self.container_squares:
                 return False  # Already occupied by another container
 
         # Place container
         self.containers.append(container)
-        self.occupied_squares.update(container_squares)
+        self.container_squares.update(container_occupied)
 
         # Add internal squares as available
         internal_squares = container.get_internal_squares()
@@ -277,12 +282,21 @@ class PlacementValidator:
     ) -> bool:
         """Check if an item can be placed at the given position"""
         # Get squares the item would occupy
-        if item_shape and item_rotation is not None:
-            rotated_shape = item_shape.rotate(item_rotation)
-            item_squares = [
-                (item_position[0] + dx, item_position[1] + dy)
-                for dx, dy in rotated_shape.squares
-            ]
+        if item_shape:
+            if item_rotation is None and Rotation:
+                item_rotation = Rotation.NONE
+            if item_rotation is not None:
+                rotated_shape = item_shape.rotate(item_rotation)
+                item_squares = [
+                    (item_position[0] + dx, item_position[1] + dy)
+                    for dx, dy in rotated_shape.squares
+                ]
+            else:
+                # Fallback if rotation not available
+                item_squares = [
+                    (item_position[0] + dx, item_position[1] + dy)
+                    for dx, dy in item_shape.squares
+                ]
         else:
             item_squares = [item_position]
 
@@ -292,7 +306,7 @@ class PlacementValidator:
             if (x, y) not in self.available_squares:
                 return False
             # Must not be already occupied by another item
-            if (x, y) in self.occupied_squares:
+            if (x, y) in self.item_squares:
                 return False
 
         return True
@@ -305,16 +319,25 @@ class PlacementValidator:
             return False
 
         # Mark squares as occupied
-        if item_shape and item_rotation is not None:
-            rotated_shape = item_shape.rotate(item_rotation)
-            item_squares = [
-                (item_position[0] + dx, item_position[1] + dy)
-                for dx, dy in rotated_shape.squares
-            ]
+        if item_shape:
+            if item_rotation is None and Rotation:
+                item_rotation = Rotation.NONE
+            if item_rotation is not None:
+                rotated_shape = item_shape.rotate(item_rotation)
+                item_squares = [
+                    (item_position[0] + dx, item_position[1] + dy)
+                    for dx, dy in rotated_shape.squares
+                ]
+            else:
+                # Fallback if rotation not available
+                item_squares = [
+                    (item_position[0] + dx, item_position[1] + dy)
+                    for dx, dy in item_shape.squares
+                ]
         else:
             item_squares = [item_position]
 
-        self.occupied_squares.update(item_squares)
+        self.item_squares.update(item_squares)
         return True
 
     def get_container_at_position(
@@ -331,23 +354,34 @@ class PlacementValidator:
     ) -> List[ServerContainer]:
         """Get all containers that an item overlaps with"""
         # Get squares the item occupies
-        if item_shape and item_rotation is not None:
-            rotated_shape = item_shape.rotate(item_rotation)
-            item_squares = [
-                (item_position[0] + dx, item_position[1] + dy)
-                for dx, dy in rotated_shape.squares
-            ]
+        if item_shape:
+            if item_rotation is None and Rotation:
+                item_rotation = Rotation.NONE
+            if item_rotation is not None:
+                rotated_shape = item_shape.rotate(item_rotation)
+                item_squares = [
+                    (item_position[0] + dx, item_position[1] + dy)
+                    for dx, dy in rotated_shape.squares
+                ]
+            else:
+                # Fallback if rotation not available
+                item_squares = [
+                    (item_position[0] + dx, item_position[1] + dy)
+                    for dx, dy in item_shape.squares
+                ]
         else:
             item_squares = [item_position]
 
         # Find all containers that provide any of these squares
-        containers = set()
+        containers = []
+        seen_uids = set()
         for x, y in item_squares:
             container = self.get_container_at_position((x, y))
-            if container:
-                containers.add(container)
+            if container and container.uid not in seen_uids:
+                containers.append(container)
+                seen_uids.add(container.uid)
 
-        return list(containers)
+        return containers
 
 
 if __name__ == "__main__":

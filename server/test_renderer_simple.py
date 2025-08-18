@@ -7,6 +7,7 @@ from battle_engine import BattleSimulator, PlacedItem
 from battle_renderer import ASCIIBattleRenderer, BattleState
 from grid_system import SHAPES
 from item_effects import create_example_items
+from server_containers import ServerContainer, create_server_containers
 
 # Create simple test items
 items = create_example_items()
@@ -20,16 +21,41 @@ p1_items = [
 p2_items = [
     PlacedItem(
         spec=items["error_monitoring"],
-        position=(0, 0),
+        position=(4, 0),
         uid="p2_item1",
         shape=SHAPES["1x1"],
     )
 ]
 
-# Run battle without validation
+# Create containers for both players
+containers = create_server_containers()
+
+# Player 1 gets a mini rack at (0,0)
+p1_container = ServerContainer(
+    spec=containers["mini_rack"]["spec"],
+    position=(0, 0),
+    uid="p1_test_rack",
+    internal_grid_size=containers["mini_rack"]["internal_size"],
+    shape=containers["mini_rack"]["external_shape"],
+)
+
+# Player 2 gets a mini rack at (4,0)
+p2_container = ServerContainer(
+    spec=containers["mini_rack"]["spec"],
+    position=(4, 0),
+    uid="p2_test_rack",
+    internal_grid_size=containers["mini_rack"]["internal_size"],
+    shape=containers["mini_rack"]["external_shape"],
+)
+
+# Run battle with containers
 sim = BattleSimulator(seed=12345)
 result = sim.simulate_battle(
-    p1_items, p2_items, round_number=1, validate_placement=False
+    p1_items,
+    p2_items,
+    round_number=1,
+    p1_containers=[p1_container],
+    p2_containers=[p2_container],
 )
 
 # Add starting HP
