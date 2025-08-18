@@ -14,10 +14,14 @@ config/icon="res://icon.svg"
 
 window/size/viewport_width=1600
 window/size/viewport_height=900
-window/size/window_width_override=1600
-window/size/window_height_override=900
+window/size/initial_position_type=2
+window/size/initial_screen=0
+window/size/resizable=true
+window/size/borderless=false
+window/size/always_on_top=false
+window/size/transparent=false
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep_width"
+window/stretch/aspect="expand"
 
 [editor_plugins]
 

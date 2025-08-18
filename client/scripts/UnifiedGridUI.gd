@@ -148,6 +148,12 @@ var item_types = {
 
 func _ready():
 	print("UnifiedGridUI starting...")
+
+	# Set window size if not in headless mode
+	if OS.has_feature("standalone"):
+		DisplayServer.window_set_size(Vector2i(1600, 900))
+		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))  # Center better
+
 	_initialize_grids()
 	_setup_ui()
 	if not hide_shop:
