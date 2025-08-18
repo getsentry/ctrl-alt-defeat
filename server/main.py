@@ -71,6 +71,7 @@ class GameSession(BaseModel):
     losses: int = 0
     last_battle_result: Optional[Dict] = None
     current_shop: List[Optional[Dict]] = []  # Shop can have empty slots
+    game_seed: Optional[int] = None  # Master seed for all RNG in this game session
 
 
 # In-memory storage (replace with Redis/DB for production)
@@ -89,16 +90,21 @@ def create_placed_item(item_def: ItemDefinition) -> PlacedItem:
 
 
 @app.post("/session/start")
-async def start_session() -> Dict[str, Any]:
+async def start_session(game_seed: Optional[int] = None) -> Dict[str, Any]:
     """Start a new game session"""
     player_id = str(uuid.uuid4())
+    
+    # Use provided seed or generate one
+    if game_seed is None:
+        game_seed = random.randint(0, 2**31 - 1)
 
     session = GameSession(
         player_id=player_id,
         round=1,
         gold=12,
         lives=5,
-        current_shop=generate_shop_items(1),
+        current_shop=generate_shop_items(1, seed=game_seed),
+        game_seed=game_seed,  # Store master seed for all RNG
     )
 
     sessions[player_id] = session
@@ -165,7 +171,9 @@ async def refresh_shop(request: ShopRefreshRequest) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail="Not enough gold")
         session.gold -= 1
 
-    session.current_shop = generate_shop_items(session.round)
+    # Use game seed + round + some offset for deterministic shops
+    shop_seed = (session.game_seed + session.round * 1000) if session.game_seed else None
+    session.current_shop = generate_shop_items(session.round, seed=shop_seed)
 
     return {"shop": session.current_shop, "gold": session.gold}
 
@@ -200,13 +208,13 @@ def get_rarity_weights(round_number: int) -> Dict[str, float]:
     return rarity_table.get(round_number, rarity_table[1])
 
 
-def pick_rarity(weights: Dict[str, float]) -> str:
+def pick_rarity(weights: Dict[str, float], rng=random) -> str:
     """Pick a rarity based on weights"""
     total = sum(weights.values())
     if total == 0:
         return "common"
 
-    roll = random.uniform(0, total)
+    roll = rng.uniform(0, total)
     cumulative = 0
 
     for rarity, weight in weights.items():
@@ -217,8 +225,16 @@ def pick_rarity(weights: Dict[str, float]) -> str:
     return "common"  # Fallback
 
 
-def generate_shop_items(round_number: int) -> List[Optional[Dict]]:
+def generate_shop_items(
+    round_number: int, seed: Optional[int] = None
+) -> List[Optional[Dict]]:
     """Generate random shop items based on round and rarity"""
+    # Use deterministic RNG if seed provided
+    if seed is not None:
+        rng = random.Random(seed)
+    else:
+        rng = random
+
     shop_size = 5  # Always 5 slots
     items = []
 
@@ -243,9 +259,9 @@ def generate_shop_items(round_number: int) -> List[Optional[Dict]]:
     weights = get_rarity_weights(round_number)
 
     for i in range(shop_size):
-        if random.random() < 0.85:  # 85% chance of item (15% empty)
+        if rng.random() < 0.85:  # 85% chance of item (15% empty)
             # Step 1: Pick rarity
-            rarity = pick_rarity(weights)
+            rarity = pick_rarity(weights, rng)
 
             # Step 2: Pick item from that rarity
             rarity_items = items_by_rarity.get(rarity, [])
@@ -254,7 +270,7 @@ def generate_shop_items(round_number: int) -> List[Optional[Dict]]:
                 rarity_items = items_by_rarity.get("common", [])
 
             if rarity_items:
-                item_type, item_spec = random.choice(rarity_items)
+                item_type, item_spec = rng.choice(rarity_items)
 
                 # Extract damage values from attack effects if present
                 min_dmg = 0
@@ -334,8 +350,16 @@ async def simulate_battle(request: BattleRequest) -> Dict[str, Any]:
     else:
         opponent_items = generate_ai_items(request.round_number)
 
-    # Simulate battle (use seed if provided for deterministic testing)
-    simulator = BattleSimulator(seed=request.seed)
+    # Simulate battle - use request seed or derive from game seed
+    if request.seed is not None:
+        battle_seed = request.seed  # Explicit seed for testing
+    elif session.game_seed is not None:
+        # Derive battle seed from game seed + round + battle count
+        battle_seed = session.game_seed + request.round_number * 10000 + (session.wins + session.losses)
+    else:
+        battle_seed = None
+    
+    simulator = BattleSimulator(seed=battle_seed)
     battle_result = simulator.simulate_battle(
         player_items,
         opponent_items,
@@ -375,7 +399,9 @@ async def simulate_battle(request: BattleRequest) -> Dict[str, Any]:
 
     session.gold += gold_reward
     session.last_battle_result = battle_result
-    session.current_shop = generate_shop_items(session.round)
+    # Use game seed + round + some offset for deterministic shops
+    shop_seed = (session.game_seed + session.round * 1000) if session.game_seed else None
+    session.current_shop = generate_shop_items(session.round, seed=shop_seed)
 
     # Store battle in history
     battle_record = {

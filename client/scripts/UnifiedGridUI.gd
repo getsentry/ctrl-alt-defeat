@@ -235,7 +235,7 @@ func _place_starting_containers():
 		servers.append(server_data)
 
 		# Create visual representation
-		var server_visual = _create_server(container_type)
+		var server_visual = _create_server_preview(container_type)
 		server_visual.position = Vector2(x_pos * (CELL_SIZE + CELL_SPACING),
 										 y_pos * (CELL_SIZE + CELL_SPACING))
 		server_room_container.add_child(server_visual)
