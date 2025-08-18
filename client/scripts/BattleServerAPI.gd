@@ -34,11 +34,19 @@ func start_session() -> Dictionary:
 
 	var initial_shop = _generate_mock_shop(1)
 
+	# Starting containers - server will eventually provide these
+	var starting_containers = [
+		{"type": "cube_2x2", "position": Vector2i(1, 3)},
+		{"type": "cube_2x2", "position": Vector2i(4, 3)},
+		{"type": "cube_2x2", "position": Vector2i(7, 3)}
+	]
+
 	var response = {
 		"player_id": mock_session_id,
 		"round": 1,
 		"gold": 10,
 		"current_shop": initial_shop,
+		"starting_containers": starting_containers,
 		"item_catalog": _get_item_catalog()
 	}
 

@@ -194,7 +194,7 @@ Items that provide healing and resource regeneration. Food mechanics:
 - **Server Room Pizza** (Rare Food) - 2x2
   - Every 6s: Heal 4 HP to all units
   - Takes 4 grid squares (more adjacency!)
-  
+
 - **Debug Donuts** (Epic Food) - L-shaped (3 squares)
   - Every 4s: Heal 3 HP + 1 CPU
   - Irregular shape for strategic placement
@@ -231,7 +231,7 @@ Special items that provide periodic effects or triggered abilities.
 - **Overclocked**: +50% speed but costs double CPU
 - **Regenerating**: Heal 1 HP per second per stack
 
-### 3.2 Debuffs  
+### 3.2 Debuffs
 - **Throttled** (Cold): Items trigger 2% slower per stack
 - **Memory Leaked** (Poison): 1 damage every 2 seconds
 - **Rate Limited** (Blind): -5% accuracy per stack
@@ -248,7 +248,7 @@ Special items that provide periodic effects or triggered abilities.
   - **Mini Rack**: 2x2 item, provides 3x4 internal storage
   - **Standard Rack**: 2x3 item, provides 4x5 internal storage
   - **Enterprise Rack**: 3x3 item, provides 5x6 internal storage
-- **Item Shapes**: 
+- **Item Shapes**:
   - Simple: 1x1, 2x1, 1x2, 2x2, 3x1, 1x3
   - Complex: L-shapes, T-shapes, irregular patterns
   - Large items can take 3-6+ squares
@@ -292,18 +292,21 @@ Special items that provide periodic effects or triggered abilities.
 ## 5. Economy & Progression
 
 ### 5.1 Gold System
-- **Starting Gold**: 10
 - **Gold Per Round**:
-  - Rounds 1-3: 12g
-  - Rounds 4-6: 14g
-  - Rounds 7-9: 16g
-  - Rounds 10-12: 18g
-  - Rounds 13+: 20g
+  - Round 1: 12g
+  - Rounds 2-4: 9g
+  - Rounds 5-6: 10g
+  - Round 7: 11g
+  - Round 8: 21g
+  - Rounds 9-10: 12g
+  - Rounds 11-12: 13g
+  - Rounds 13-14: 14g
+  - Round 15+: 15g
 - **Selling Items**: 50% of purchase price
 
 ### 5.2 Shop System
 - **Slots**: 5 items per refresh
-- **Reroll Cost**: 2 gold
+- **Reroll Cost**: 1 gold
 - **Item Costs**:
   - Common: 3-4g
   - Uncommon: 5-7g
@@ -330,7 +333,7 @@ Special items that provide periodic effects or triggered abilities.
 - **DDoS Attack** (Epic): Flood Attack + Bot Swarm
 - **Zero Day Exploit** (Godly): SQL Injection + XSS Attack + Buffer Overflow
 
-#### Shield Recipes  
+#### Shield Recipes
 - **Full Stack Monitoring** (Rare): Error Monitoring + Performance Monitoring
 - **Enterprise Firewall** (Epic): Firewall + Load Balancer
 - **Chaos Engineering Shield** (Legendary): Error Shield + Crash Report + Debug Mode

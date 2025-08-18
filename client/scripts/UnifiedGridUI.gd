@@ -161,14 +161,21 @@ func _ready():
 	current_round = GameStateManager.current_round
 	current_health = GameStateManager.player_health
 
-	# Load saved inventory if exists
-	var saved_inventory = GameStateManager.get_inventory_state()
-	if saved_inventory.has("servers") and saved_inventory.servers.size() > 0:
-		# TODO: Load saved inventory state
-		pass
-
+	# Initialize UI first
 	_initialize_grids()
 	_setup_ui()
+
+	# Then load saved inventory if it exists
+	var saved_inventory = GameStateManager.get_inventory_state()
+	if saved_inventory.has("servers") and saved_inventory.servers.size() > 0:
+		# Wait for next frame to ensure UI is ready
+		await get_tree().process_frame
+		_load_saved_inventory(saved_inventory)
+	elif GameStateManager.current_round == 1:
+		# First round - give player starting containers
+		await get_tree().process_frame
+		_place_starting_containers()
+
 	if not hide_shop:
 		_load_shop_from_state()
 
@@ -184,6 +191,55 @@ func configure(settings: Dictionary):
 	_setup_ui()
 	if not hide_shop:
 		_generate_shop()
+
+func _place_starting_containers():
+	# Give player 3 starting 2x2 containers
+	print("Placing starting containers for new game")
+
+	# Use the cube_2x2 server type
+	var container_type = server_types["cube_2x2"]
+
+	# Place 3 containers in a row, starting from position (1, 3)
+	for i in range(3):
+		var x_pos = 1 + (i * 3)  # Space them out with 1 cell gap
+		var y_pos = 3  # Middle of the grid vertically
+
+		# Create the server data
+		var server_data = {
+			"data": container_type.duplicate(),
+			"pos": Vector2i(x_pos, y_pos)
+		}
+
+		# Place the server pattern on the grid
+		_place_server_pattern(x_pos, y_pos, container_type)
+
+		# Track the server
+		servers.append(server_data)
+
+		# Create visual representation
+		var server_visual = _create_server(container_type)
+		server_visual.position = Vector2(x_pos * (CELL_SIZE + CELL_SPACING),
+										 y_pos * (CELL_SIZE + CELL_SPACING))
+		server_room_container.add_child(server_visual)
+		server_visual.set_meta("grid_pos", Vector2i(x_pos, y_pos))
+		server_visual.set_meta("server_data", container_type)
+		server_visuals.append(server_visual)
+
+	print("Placed 3 starting containers")
+
+	# Save this initial state
+	var initial_state = get_inventory_state()
+	GameStateManager.save_inventory_state(initial_state.items, initial_state.servers)
+
+func _load_saved_inventory(saved_data: Dictionary):
+	# Wrapper to load saved inventory from GameStateManager
+	if saved_data.has("items") and saved_data.has("servers"):
+		print("Loading saved inventory with %d servers and %d items" % [
+			saved_data.servers.size(),
+			saved_data.items.size()
+		])
+		load_inventory_state(saved_data)
+		_update_stats()
 
 func load_inventory_state(inventory_data: Dictionary):
 	# Load servers and items from saved state
@@ -795,10 +851,10 @@ func _try_place_server(server_preview: Control) -> bool:
 		if _can_place_server_pattern(grid_x, grid_y, pattern):
 			# Pay for it if from shop
 			if original_parent and original_parent.has_meta("shop_item"):
-				if current_gold < server_data.cost:
+				if GameStateManager.gold < server_data.cost:
 					print("Not enough gold!")
 					return false
-				current_gold -= server_data.cost
+				GameStateManager.gold -= server_data.cost
 				_update_stats()
 
 			# Place server cells
@@ -901,10 +957,10 @@ func _try_place_item(item: Panel) -> bool:
 		if _can_place_item_on_grid(grid_x, grid_y, item_data.width, item_data.height):
 			# Pay if from shop
 			if original_parent and original_parent.has_meta("shop_item"):
-				if current_gold < item_data.cost:
+				if GameStateManager.gold < item_data.cost:
 					print("Not enough gold!")
 					return false
-				current_gold -= item_data.cost
+				GameStateManager.gold -= item_data.cost
 				_update_stats()
 
 			# Place item
@@ -934,10 +990,10 @@ func _try_place_item(item: Panel) -> bool:
 
 		# Pay if from shop
 		if original_parent and original_parent.has_meta("shop_item"):
-			if current_gold < item_data.cost:
+			if GameStateManager.gold < item_data.cost:
 				print("Not enough gold!")
 				return false
-			current_gold -= item_data.cost
+			GameStateManager.gold -= item_data.cost
 			_update_stats()
 
 		if item.get_parent() != storage_container:
@@ -1125,7 +1181,17 @@ func _try_move_server(server: Control) -> bool:
 func _on_ready_for_battle():
 	# Save current inventory state
 	var inventory_state = get_inventory_state()
-	GameStateManager.save_inventory_state(items, servers)
+
+	# Make sure we're passing the actual inventory data, not the raw objects
+	var items_data = []
+	for item in items:
+		if item.has_meta("grid_pos") and item.has_meta("item_data"):
+			items_data.append({
+				"data": item.get_meta("item_data"),
+				"grid_pos": item.get_meta("grid_pos")
+			})
+
+	GameStateManager.save_inventory_state(items_data, servers)
 
 	# Submit battle to server
 	var battle_result = await BattleServerAPI.submit_battle(inventory_state)

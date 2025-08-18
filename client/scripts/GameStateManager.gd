@@ -7,11 +7,13 @@ var player_name: String = "Player"
 
 # Game progression
 var current_round: int = 1
-var player_health: int = 100  # Player's health across rounds
-var max_player_health: int = 100
-var gold: int = 10
+var player_lives: int = 5  # Player has 5 lives/tries
+var battle_health: int = 25  # Health for the current battle
+var gold: int = 12  # Start with 12 gold
 var wins: int = 0
 var losses: int = 0
+var game_over: bool = false
+var victory: bool = false
 
 # Inventory state
 var current_inventory: Dictionary = {}  # Stores placed items and servers
@@ -38,11 +40,13 @@ func start_new_game():
 	# Reset all game state
 	player_id = ""
 	current_round = 1
-	player_health = 100
-	max_player_health = 100
-	gold = 10
+	player_lives = 5
+	battle_health = 25
+	gold = 12  # Starting gold
 	wins = 0
 	losses = 0
+	game_over = false
+	victory = false
 	current_inventory.clear()
 	server_containers.clear()
 	current_shop.clear()
@@ -63,6 +67,9 @@ func get_inventory_state() -> Dictionary:
 	return current_inventory
 
 func update_after_battle(result: Dictionary):
+	# Store the COMPLETE battle result for PostBattle screen
+	last_battle_result = result
+
 	# Update state based on battle results
 	if result.has("session_update"):
 		var update = result.session_update
@@ -74,19 +81,26 @@ func update_after_battle(result: Dictionary):
 			wins = update.wins
 		if update.has("losses"):
 			losses = update.losses
+		if update.has("lives"):
+			player_lives = update.lives
+		if update.has("game_over"):
+			game_over = update.game_over
+		if update.has("victory"):
+			victory = update.victory
 
 	# Store battle data for replay
 	if result.has("battle_result"):
-		last_battle_result = result.battle_result
 		if result.battle_result.has("actions"):
 			last_battle_events = result.battle_result.actions
 
-	# Update player health based on result
-	if result.has("health_lost"):
-		player_health = max(0, player_health - result.health_lost)
+	# Update battle health for next round
+	battle_health = get_round_quota()
 
 func is_game_over() -> bool:
-	return player_health <= 0
+	return game_over or player_lives <= 0
+
+func is_victory() -> bool:
+	return victory
 
 func get_round_quota() -> int:
 	# Get quota (enemy health) based on round number

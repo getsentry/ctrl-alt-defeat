@@ -1,7 +1,10 @@
 extends Control
 
+# Preload the BattleEventProcessor class since class_name might not be available yet
+const BattleEventProcessor = preload("res://scripts/BattleEventProcessor.gd")
+
 # Event processor for battle replay
-var event_processor: BattleEventProcessor
+var event_processor
 
 # Battle state
 var player_data: Dictionary = {}
@@ -599,5 +602,4 @@ func _show_item_activation(item_id: String, player: int):
 
 func _go_to_post_battle():
 	# Go to post-battle results screen
-	# For now, just go back to shop
-	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")
+	get_tree().change_scene_to_file("res://scenes/PostBattleScreen.tscn")

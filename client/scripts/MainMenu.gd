@@ -97,6 +97,10 @@ func _on_start_game():
 	GameStateManager.gold = session_data.gold
 	GameStateManager.current_shop = session_data.current_shop
 
+	# Store starting containers if provided (server will send these)
+	if session_data.has("starting_containers"):
+		GameStateManager.starting_containers = session_data.starting_containers
+
 	# Go to shop/inventory screen
 	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")
 
