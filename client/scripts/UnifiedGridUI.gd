@@ -382,12 +382,13 @@ func _create_controls():
 		battle_btn.pressed.connect(_on_start_battle)
 		add_child(battle_btn)
 
-	var help = Label.new()
-	help.text = "Drag servers to create grid → Place items on any grid cells → Items can span servers"
-	help.position = Vector2(300, 605)
-	help.add_theme_font_size_override("font_size", 12)
-	help.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
-	add_child(help)
+	if not read_only_mode and not hide_shop:
+		var help = Label.new()
+		help.text = "Drag servers to create grid → Place items on any grid cells → Items can span servers"
+		help.position = Vector2(300, 605)
+		help.add_theme_font_size_override("font_size", 12)
+		help.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+		add_child(help)
 
 func _generate_shop():
 	for child in shop_container.get_children():

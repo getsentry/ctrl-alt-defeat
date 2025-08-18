@@ -161,6 +161,7 @@ func _create_player_stats():
 	player_health_label.text = "100/100"
 	player_health_label.position = Vector2(65, 48)
 	player_health_label.add_theme_font_size_override("font_size", 12)
+	player_health_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))  # Match bar color
 	player_stats_panel.add_child(player_health_label)
 
 	# Stamina (CPU)
@@ -181,6 +182,7 @@ func _create_player_stats():
 	player_stamina_label.text = "10/10"
 	player_stamina_label.position = Vector2(70, 93)
 	player_stamina_label.add_theme_font_size_override("font_size", 12)
+	player_stamina_label.add_theme_color_override("font_color", Color(0.3, 0.6, 1.0))  # Match bar color
 	player_stats_panel.add_child(player_stamina_label)
 
 	# Buffs - removed to save space in smaller panel
@@ -224,6 +226,7 @@ func _create_enemy_stats():
 	enemy_health_label.text = "100/100"
 	enemy_health_label.position = Vector2(65, 48)
 	enemy_health_label.add_theme_font_size_override("font_size", 12)
+	enemy_health_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))  # Match bar color
 	enemy_stats_panel.add_child(enemy_health_label)
 
 	# Stamina (CPU)
@@ -244,6 +247,7 @@ func _create_enemy_stats():
 	enemy_stamina_label.text = "10/10"
 	enemy_stamina_label.position = Vector2(70, 93)
 	enemy_stamina_label.add_theme_font_size_override("font_size", 12)
+	enemy_stamina_label.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3))  # Match bar color
 	enemy_stats_panel.add_child(enemy_stamina_label)
 
 	# Buffs - removed to save space in smaller panel
@@ -345,14 +349,14 @@ func _update_stats_display():
 	player_health_label.text = "%d/%d" % [player_data.health, player_data.max_health]
 
 	player_stamina_bar.value = (player_data.stamina / player_data.max_stamina) * 100
-	player_stamina_label.text = "%.1f/%.1f" % [player_data.stamina, player_data.max_stamina]
+	player_stamina_label.text = "%.0f/%.0f" % [player_data.stamina, player_data.max_stamina]
 
 	# Update enemy stats
 	enemy_health_bar.value = (enemy_data.health / float(enemy_data.max_health)) * 100
 	enemy_health_label.text = "%d/%d" % [enemy_data.health, enemy_data.max_health]
 
 	enemy_stamina_bar.value = (enemy_data.stamina / enemy_data.max_stamina) * 100
-	enemy_stamina_label.text = "%.1f/%.1f" % [enemy_data.stamina, enemy_data.max_stamina]
+	enemy_stamina_label.text = "%.0f/%.0f" % [enemy_data.stamina, enemy_data.max_stamina]
 
 	# Buffs removed from display to save space
 
