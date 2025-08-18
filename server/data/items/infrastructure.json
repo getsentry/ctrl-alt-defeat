@@ -1,0 +1,130 @@
+{
+  "category": "infrastructure",
+  "items": {
+    "health_check": {
+      "name": "Health Check",
+      "description": "Regular system health monitoring",
+      "category": "infrastructure",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 3,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 3,
+              "max_heal": 5
+            }
+          ]
+        }
+      ]
+    },
+    "auto_scaler": {
+      "name": "Auto Scaler",
+      "description": "Automatically adjusts resources based on load",
+      "category": "infrastructure",
+      "shape": "2x1",
+      "rarity": "uncommon",
+      "cost": 5,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_cpu",
+              "value": 5
+            },
+            {
+              "type": "stat_mod",
+              "stat": "cpu_regen",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "load_balancer_module": {
+      "name": "Load Balancer Module",
+      "description": "Distributes work across systems",
+      "category": "infrastructure",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "buff",
+              "target": "adjacent",
+              "stat": "speed",
+              "value": 0.15
+            }
+          ]
+        }
+      ]
+    },
+    "backup_system": {
+      "name": "Backup System",
+      "description": "Restores health when critically damaged",
+      "category": "infrastructure",
+      "shape": "2x2",
+      "rarity": "epic",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "damage_taken",
+          "threshold": 0.3,
+          "cooldown": 0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 20,
+              "max_heal": 30
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ]
+    },
+    "quantum_processor": {
+      "name": "Quantum Processor",
+      "description": "Revolutionary processing power",
+      "category": "infrastructure",
+      "shape": "1x1",
+      "rarity": "legendary",
+      "cost": 15,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_cpu",
+              "value": 10
+            },
+            {
+              "type": "stat_mod",
+              "stat": "cpu_regen",
+              "value": 3
+            },
+            {
+              "type": "buff",
+              "target": "all_friendly",
+              "stat": "cpu_cost",
+              "value": -0.2
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -6,16 +6,9 @@ from copy import deepcopy
 
 import pytest
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem, Player
-from event_system import Event, EventType
 
 # from grid_system import SHAPES  # Not currently used
-from item_effects import (
-    BattleStartTrigger,
-    DamageTakenTrigger,
-    ItemSpec,
-    PassiveTrigger,
-    TimerTrigger,
-)
+from item_effects import ItemSpec, PassiveTrigger, TimerTrigger
 from server_containers import ServerContainer, create_server_containers
 
 

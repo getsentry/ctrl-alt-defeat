@@ -2,9 +2,7 @@
 Test ConsumeEffect and item consumption mechanics
 """
 
-import pytest
 from battle_engine import BattleSimulator, PlacedItem, Player
-from event_system import EventType
 from item_effects import (
     AttackEffect,
     BattleStartTrigger,

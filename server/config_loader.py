@@ -55,18 +55,37 @@ class ConfigLoader:
 
     def load_items(self, filename: str = "items.json"):
         """Load item configurations from JSON"""
-        filepath = self.data_dir / filename
-        if not filepath.exists():
-            print(f"Warning: {filepath} not found")
-            return {}
-
-        with open(filepath, "r") as f:
-            data = json.load(f)
-
         items = {}
-        for category_name, category_items in data.get("items", {}).items():
-            for item_id, config in category_items.items():
-                items[item_id] = self._create_item_spec(item_id, config)
+
+        # Try to load from split category files first
+        items_dir = self.data_dir / "items"
+        if items_dir.exists() and items_dir.is_dir():
+            for category_file in items_dir.glob("*.json"):
+                try:
+                    with open(category_file, "r") as f:
+                        category_data = json.load(f)
+
+                    # Handle both formats: {"items": {...}} and {"category": "...", "items": {...}}
+                    category_items = category_data.get("items", {})
+                    for item_id, config in category_items.items():
+                        items[item_id] = self._create_item_spec(item_id, config)
+
+                    print(
+                        f"Loaded {len(category_items)} items from {category_file.name}"
+                    )
+                except Exception as e:
+                    print(f"Warning: Failed to load {category_file}: {e}")
+
+        # Fallback to single items.json file
+        if not items:
+            filepath = self.data_dir / filename
+            if filepath.exists():
+                with open(filepath, "r") as f:
+                    data = json.load(f)
+
+                for category_name, category_items in data.get("items", {}).items():
+                    for item_id, config in category_items.items():
+                        items[item_id] = self._create_item_spec(item_id, config)
 
         self.items = items
         return items

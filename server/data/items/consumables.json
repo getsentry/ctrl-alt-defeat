@@ -1,0 +1,84 @@
+{
+  "category": "consumables",
+  "items": {
+    "health_potion": {
+      "name": "Health Potion",
+      "description": "Restores health when damaged",
+      "category": "defense",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 2,
+      "triggers": [
+        {
+          "type": "damage_taken",
+          "threshold": 0.5,
+          "cooldown": 0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 10,
+              "max_heal": 15
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ]
+    },
+    "cpu_booster": {
+      "name": "CPU Booster",
+      "description": "Temporary CPU boost",
+      "category": "infrastructure",
+      "shape": "1x1",
+      "rarity": "uncommon",
+      "cost": 3,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_cpu",
+              "value": 10
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ]
+    },
+    "emergency_patch": {
+      "name": "Emergency Patch",
+      "description": "Quick fix for critical issues",
+      "category": "defense",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "damage_taken",
+          "threshold": 0.2,
+          "cooldown": 0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 25,
+              "max_heal": 35
+            },
+            {
+              "type": "block",
+              "value": 10
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

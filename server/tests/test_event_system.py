@@ -4,7 +4,6 @@ Tests for the event-driven battle system
 
 from dataclasses import dataclass
 
-import pytest
 from event_system import (
     Event,
     EventData,

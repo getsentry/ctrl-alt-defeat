@@ -1,0 +1,124 @@
+{
+  "category": "defenses",
+  "items": {
+    "error_monitoring": {
+      "name": "Error Monitoring Shield",
+      "description": "Detects and blocks incoming errors",
+      "category": "defense",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 3,
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.3,
+              "block_amount": 8,
+              "cpu_steal": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    "firewall": {
+      "name": "Firewall",
+      "description": "First line of defense against attacks",
+      "category": "defense",
+      "shape": "1x2",
+      "rarity": "uncommon",
+      "cost": 5,
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.3,
+              "block_amount": 10,
+              "cpu_steal": 0.7
+            }
+          ]
+        }
+      ]
+    },
+    "rate_limiter": {
+      "name": "Rate Limiter",
+      "description": "Slows down incoming attacks",
+      "category": "defense",
+      "shape": "2x1",
+      "rarity": "rare",
+      "cost": 6,
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.2,
+              "block_amount": 5
+            },
+            {
+              "type": "debuff",
+              "target": "attacker",
+              "stat": "speed",
+              "value": -0.2,
+              "duration": 3
+            }
+          ]
+        }
+      ]
+    },
+    "encryption_layer": {
+      "name": "Encryption Layer",
+      "description": "Makes data unreadable to attackers",
+      "category": "defense",
+      "shape": "2x2",
+      "rarity": "epic",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "damage_reduction",
+              "value": 0.25
+            }
+          ]
+        },
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.4,
+              "block_amount": 12
+            }
+          ]
+        }
+      ]
+    },
+    "quantum_firewall": {
+      "name": "Quantum Firewall",
+      "description": "Next-gen defense using quantum encryption",
+      "category": "defense",
+      "shape": "1x1",
+      "rarity": "legendary",
+      "cost": 12,
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.5,
+              "block_amount": 15,
+              "reflect_damage": 5
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

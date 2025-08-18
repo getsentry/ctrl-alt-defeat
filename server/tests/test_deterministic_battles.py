@@ -3,9 +3,7 @@ Test deterministic battle system with seeded RNG
 Same seed + same items = same result every time
 """
 
-from copy import deepcopy
 
-import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect

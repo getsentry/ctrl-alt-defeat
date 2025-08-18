@@ -3,9 +3,7 @@ Test full battle scenarios with realistic item loadouts
 These tests simulate complete battles between two players with different strategies
 """
 
-from copy import deepcopy
 
-import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import (
     AttackEffect,

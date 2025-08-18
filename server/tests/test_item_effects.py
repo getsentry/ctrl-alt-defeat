@@ -4,7 +4,6 @@ Tests for the improved item effects system
 
 from dataclasses import dataclass
 
-import pytest
 from item_effects import (
     AttackEffect,
     BattleStartTrigger,
@@ -119,12 +118,12 @@ class TestTriggers:
 
         # Should activate when cooldown is 0
         trigger.current_cooldown = 0.0
-        assert trigger.should_activate("timer_tick", None, None, None) == True
+        assert trigger.should_activate("timer_tick", None, None, None) is True
         assert trigger.get_cpu_cost() == 3
 
         # Should not activate when on cooldown
         trigger.current_cooldown = 1.0
-        assert trigger.should_activate("timer_tick", None, None, None) == False
+        assert trigger.should_activate("timer_tick", None, None, None) is False
 
         # Should not activate for wrong event type
         trigger.current_cooldown = 0.0
@@ -134,8 +133,8 @@ class TestTriggers:
         """Test battle start trigger"""
         trigger = BattleStartTrigger(effects=[BlockEffect(block_amount=5)])
 
-        assert trigger.should_activate("battle_start", None, None, None) == True
-        assert trigger.should_activate("timer_tick", None, None, None) == False
+        assert trigger.should_activate("battle_start", None, None, None) is True
+        assert trigger.should_activate("timer_tick", None, None, None) is False
         assert trigger.get_cpu_cost() == 0  # Battle start is free
 
     def test_damage_taken_trigger_no_threshold(self):
@@ -148,11 +147,11 @@ class TestTriggers:
         )
 
         # Should always activate when damaged
-        assert trigger.should_activate("damage_taken", None, None, None) == True
+        assert trigger.should_activate("damage_taken", None, None, None) is True
         assert trigger.get_cpu_cost() == 2
 
         # Should not activate for wrong event
-        assert trigger.should_activate("timer_tick", None, None, None) == False
+        assert trigger.should_activate("timer_tick", None, None, None) is False
 
     def test_damage_taken_trigger_with_threshold(self):
         """Test damage taken trigger with health threshold"""
@@ -166,16 +165,16 @@ class TestTriggers:
         )
 
         # Should activate when below threshold
-        assert trigger.should_activate("damage_taken", None, player, None) == True
+        assert trigger.should_activate("damage_taken", None, player, None) is True
 
         # Should not activate when above threshold
         player.quota = 40  # 40% health
-        assert trigger.should_activate("damage_taken", None, player, None) == False
+        assert trigger.should_activate("damage_taken", None, player, None) is False
 
         # Should not activate when on cooldown
         player.quota = 25
         trigger.current_cooldown = 5.0
-        assert trigger.should_activate("damage_taken", None, player, None) == False
+        assert trigger.should_activate("damage_taken", None, player, None) is False
 
     def test_damage_dealt_trigger(self):
         """Test damage dealt trigger with chance"""
@@ -201,8 +200,8 @@ class TestTriggers:
         """Test passive trigger"""
         trigger = PassiveTrigger(effects=[StatModEffect(stat_name="max_cpu", value=5)])
 
-        assert trigger.should_activate("passive_apply", None, None, None) == True
-        assert trigger.should_activate("timer_tick", None, None, None) == False
+        assert trigger.should_activate("passive_apply", None, None, None) is True
+        assert trigger.should_activate("timer_tick", None, None, None) is False
         assert trigger.get_cpu_cost() == 0  # Passives are free
 
     def test_kill_trigger(self):
@@ -211,8 +210,8 @@ class TestTriggers:
             effects=[BuffEffect(buff_name="damage", value=2, duration=5.0)]
         )
 
-        assert trigger.should_activate("enemy_killed", None, None, None) == True
-        assert trigger.should_activate("damage_dealt", None, None, None) == False
+        assert trigger.should_activate("enemy_killed", None, None, None) is True
+        assert trigger.should_activate("damage_dealt", None, None, None) is False
         assert trigger.get_cpu_cost() == 0  # Kill effects are free
 
 

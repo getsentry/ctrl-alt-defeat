@@ -2,9 +2,7 @@
 Test timer item behavior with CPU throttling
 """
 
-from copy import deepcopy
 
-import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 

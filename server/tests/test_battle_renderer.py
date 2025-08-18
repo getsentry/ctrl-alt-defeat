@@ -5,7 +5,6 @@ Test the ASCII battle renderer
 import json
 import tempfile
 
-import pytest
 from battle_engine import BattleSimulator, PlacedItem
 from battle_renderer import ASCIIBattleRenderer, BattleState
 from item_effects import AttackEffect, HealEffect, ItemSpec, TimerTrigger

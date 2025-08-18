@@ -3,7 +3,6 @@ Test shield blocking mechanics
 Shields should have 30% chance to block attacks and can have additional effects
 """
 
-import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
