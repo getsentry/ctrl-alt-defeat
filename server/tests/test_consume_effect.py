@@ -15,6 +15,7 @@ from item_effects import (
     StatModEffect,
     TimerTrigger,
 )
+
 from .test_utils import get_test_containers
 
 
@@ -158,7 +159,7 @@ class TestConsumeEffect:
                     )
                 ],
             ),
-            position=(1, 1),
+            position=(0, 0),  # Within container
             uid="p1",
         )
 
@@ -177,7 +178,7 @@ class TestConsumeEffect:
                     )
                 ],
             ),
-            position=(2, 1),  # Adjacent to problem1
+            position=(1, 0),  # Adjacent to problem1
             uid="p2",
         )
 
@@ -196,7 +197,7 @@ class TestConsumeEffect:
                     )
                 ],
             ),
-            position=(1, 2),  # Adjacent to problem1
+            position=(0, 1),  # Adjacent to problem1 (below it)
             uid="p3",
         )
 

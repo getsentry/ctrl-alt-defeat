@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://enhanced-game"]
+[gd_scene load_steps=2 format=3 uid="uid://byhqln35hntw"]
 
-[ext_resource type="Script" path="res://scripts/EnhancedGameUI.gd" id="1_enhanced"]
+[ext_resource type="Script" uid="uid://5lqes1fwluf8" path="res://scripts/EnhancedGameUI.gd" id="1_enhanced"]
 
 [node name="EnhancedGame" type="Control"]
 anchors_preset = 15

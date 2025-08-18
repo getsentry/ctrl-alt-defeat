@@ -1,13 +1,19 @@
 ; Engine configuration file.
 ; It's best edited using the editor UI and not directly,
-; since the properties are organized in sections here.
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
 
 [application]
 
 config/name="Sentry Autobattler"
 config/description="Backpack Battles-style autobattler with Sentry product themes"
 run/main_scene="res://scenes/UnifiedGridUI.tscn"
-config/features=PackedStringArray("4.3", "GL Compatibility")
+config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [display]
@@ -15,20 +21,15 @@ config/icon="res://icon.svg"
 window/size/viewport_width=1600
 window/size/viewport_height=900
 window/size/initial_position_type=2
-window/size/initial_screen=0
-window/size/resizable=true
-window/size/borderless=false
-window/size/always_on_top=false
-window/size/transparent=false
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gloot/plugin.cfg")
+enabled=PackedStringArray()
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-textures/canvas_textures/default_texture_filter=0

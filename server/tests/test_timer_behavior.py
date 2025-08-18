@@ -7,6 +7,7 @@ from copy import deepcopy
 import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
+
 from .test_utils import get_test_containers
 
 
@@ -38,9 +39,13 @@ class TestTimerScheduling:
 
         # Run battle for 5 seconds
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle([item], [], round_number=1,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            [item],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Count CPU_FAIL actions
         cpu_fails = [a for a in result["actions"] if a["a"] == ACTION_CODES["CPU_FAIL"]]
@@ -85,9 +90,13 @@ class TestTimerScheduling:
         # - Fourth attempt at 3s: have 2 CPU (7 - 7 + 2*1), should fail
 
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle([item], [], round_number=1,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            [item],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Check for mix of successes and failures
         damages = [a for a in result["actions"] if a["a"] == ACTION_CODES["DAMAGE"]]
@@ -155,9 +164,13 @@ class TestTimerScheduling:
         )
 
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle([item1, item2], [], round_number=1,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            [item1, item2],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Get all events for each item
         item1_events = [a for a in result["actions"] if a.get("i") == "item1"]

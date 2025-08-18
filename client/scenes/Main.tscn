@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://bmvbhg3nnf8kx"]
 
-[ext_resource type="Script" path="res://scripts/Main.gd" id="1_awq5k"]
-[ext_resource type="Script" path="res://scripts/GameManager.gd" id="2_5uvkc"]
-[ext_resource type="Script" path="res://scripts/ServerAPI.gd" id="3_fh6ty"]
+[ext_resource type="Script" uid="uid://conw0brw7hdls" path="res://scripts/Main.gd" id="1_awq5k"]
+[ext_resource type="Script" uid="uid://cfj1yctgj62ym" path="res://scripts/GameManager.gd" id="2_5uvkc"]
+[ext_resource type="Script" uid="uid://6y1ne4o3g2fn" path="res://scripts/ServerAPI.gd" id="3_fh6ty"]
 
 [node name="Main" type="Control"]
 layout_mode = 3

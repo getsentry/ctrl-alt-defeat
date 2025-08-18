@@ -7,6 +7,7 @@ import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+
 from .test_utils import get_test_containers
 
 
@@ -61,9 +62,13 @@ class TestShieldBlocking:
 
         # Run battle
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle([shield], [attacker], round_number=1,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            [shield],
+            [attacker],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Check that damage was blocked
         block_actions = [
@@ -135,9 +140,13 @@ class TestShieldBlocking:
 
         for _ in range(10):
             p1_containers, p2_containers = get_test_containers()
-            result = sim.simulate_battle(shields[:1], [attacker], round_number=1,
-                                        p1_containers=p1_containers,
-                                        p2_containers=p2_containers)
+            result = sim.simulate_battle(
+                shields[:1],
+                [attacker],
+                round_number=1,
+                p1_containers=p1_containers,
+                p2_containers=p2_containers,
+            )
 
             damage_actions = [
                 a for a in result["actions"] if a.get("a") == ACTION_CODES["DAMAGE"]
@@ -208,9 +217,13 @@ class TestShieldBlocking:
         )
 
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle([shield], [attacker], round_number=1,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            [shield],
+            [attacker],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # After first attack, attacker should have less CPU
         # This might cause subsequent attacks to fail
@@ -279,9 +292,13 @@ class TestShieldBlocking:
         )
 
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle([shield1, shield2], [attacker], round_number=1,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            [shield1, shield2],
+            [attacker],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Both shields should block (5 + 7 = 12 total)
         block_actions = [
@@ -322,9 +339,13 @@ class TestShieldBlocking:
 
         # No attacker - shield should never activate
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle([shield], [], round_number=1,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            [shield],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Should have no block actions
         block_actions = [

@@ -319,7 +319,22 @@ class ItemSpec:
 
 
 def create_example_items():
-    """Create example items with the new system"""
+    """Create example items from JSON configuration or fallback to hardcoded"""
+    try:
+        from config_loader import create_items_from_config
+
+        items = create_items_from_config()
+        if items:
+            return items
+    except (ImportError, FileNotFoundError):
+        pass
+
+    # Fallback to hardcoded version
+    return create_example_items_hardcoded()
+
+
+def create_example_items_hardcoded():
+    """Create example items with the new system (hardcoded fallback)"""
 
     null_pointer = ItemSpec(
         id="null_pointer",

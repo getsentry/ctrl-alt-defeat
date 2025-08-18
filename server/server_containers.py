@@ -55,82 +55,48 @@ class ServerContainer:
 
 
 def create_server_containers():
-    """Create different types of server containers with their item specs"""
+    """Create server containers from JSON configuration"""
+    try:
+        from config_loader import create_server_containers_from_config
+
+        containers = create_server_containers_from_config()
+        if containers:
+            return containers
+    except (ImportError, FileNotFoundError):
+        pass
+
+    # Fallback to hardcoded version
+    return create_server_containers_hardcoded()
+
+
+def create_server_containers_hardcoded():
+    """Create different types of server containers with their item specs (hardcoded fallback)"""
 
     if not ItemSpec:
         return {}
 
-    # Mini Server Rack - 2x2 external, provides 3x4 internal
-    mini_rack_spec = ItemSpec(
-        id="mini_rack",
-        name="Mini Server Rack",
+    # Standard VM - 2x2 (4 slots)
+    standard_vm_spec = ItemSpec(
+        id="standard_vm",
+        name="Standard VM",
         category="infrastructure",
         shape=SHAPES["2x2"] if SHAPES else None,
-        triggers=[
-            PassiveTrigger(
-                effects=[
-                    StatModEffect(stat_name="max_cpu", value=3),
-                    BuffEffect(
-                        buff_name="rack_cooling",
-                        value=0.05,  # Items inside are 5% faster
-                        target_type="contained",
-                    ),
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
+        triggers=[],  # No special effects
         rarity="common",
     )
 
-    # Standard Server Rack - 2x3 external, provides 4x5 internal
-    standard_rack_spec = ItemSpec(
-        id="standard_rack",
-        name="Standard Server Rack",
+    # Edge Node - 2x1 (2 slots horizontal)
+    edge_node_spec = ItemSpec(
+        id="edge_node",
+        name="Edge Node",
         category="infrastructure",
-        shape=SHAPES["2x3"] if SHAPES else None,
+        shape=ItemShape([(0, 0), (1, 0)], "2x1") if ItemShape else None,
         triggers=[
             PassiveTrigger(
                 effects=[
-                    StatModEffect(stat_name="max_cpu", value=5),
-                    StatModEffect(stat_name="cpu_regen", value=1),
                     BuffEffect(
-                        buff_name="rack_efficiency",
-                        value=0.1,  # Items inside are 10% faster
-                        target_type="contained",
-                    ),
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
-        rarity="uncommon",
-    )
-
-    # Enterprise Server Rack - 3x3 external, provides 5x6 internal
-    enterprise_rack_spec = ItemSpec(
-        id="enterprise_rack",
-        name="Enterprise Server Rack",
-        category="infrastructure",
-        shape=ItemShape(
-            [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2), (2, 2)],
-            "3x3",
-        )
-        if ItemShape
-        else None,
-        triggers=[
-            PassiveTrigger(
-                effects=[
-                    StatModEffect(stat_name="max_cpu", value=8),
-                    StatModEffect(stat_name="cpu_regen", value=2),
-                    BuffEffect(
-                        buff_name="enterprise_power",
-                        value=0.15,  # Items inside are 15% faster
-                        target_type="contained",
-                    ),
-                    BuffEffect(
-                        buff_name="enterprise_accuracy",
-                        value=0.1,  # Items inside have +10% accuracy
+                        buff_name="edge_speed",
+                        value=0.1,  # Modules inside execute 10% faster
                         target_type="contained",
                     ),
                 ]
@@ -141,48 +107,58 @@ def create_server_containers():
         rarity="rare",
     )
 
-    # Blade Server Chassis - 1x4 external, provides 3x4 internal (vertical orientation)
-    blade_chassis_spec = ItemSpec(
-        id="blade_chassis",
-        name="Blade Server Chassis",
+    # Memory Cache - 3x1 (3 slots horizontal)
+    memory_cache_spec = ItemSpec(
+        id="memory_cache",
+        name="Memory Cache",
         category="infrastructure",
-        shape=ItemShape([(0, 0), (0, 1), (0, 2), (0, 3)], "1x4") if ItemShape else None,
+        shape=ItemShape([(0, 0), (1, 0), (2, 0)], "3x1") if ItemShape else None,
         triggers=[
             PassiveTrigger(
                 effects=[
-                    StatModEffect(stat_name="max_cpu", value=6),
-                    BuffEffect(
-                        buff_name="blade_density",
-                        value=0.2,  # Items inside attack 20% faster
-                        target_type="contained",
-                    ),
+                    StatModEffect(stat_name="max_cpu", value=1),  # Gain 1 maximum CPU
                 ]
             )
         ]
         if PassiveTrigger
         else [],
-        rarity="uncommon",
+        rarity="epic",
     )
 
-    # Quantum Server - 2x2 external, provides 6x6 internal (space-bending technology!)
-    quantum_server_spec = ItemSpec(
-        id="quantum_server",
-        name="Quantum Server",
+    # Load Balancer - 1x1 (1 slot)
+    load_balancer_spec = ItemSpec(
+        id="load_balancer",
+        name="Load Balancer",
+        category="infrastructure",
+        shape=ItemShape([(0, 0)], "1x1") if ItemShape else None,
+        triggers=[
+            # BattleStartTrigger would be needed for "Start of battle: Gain 15 Block"
+            # For now using PassiveTrigger as placeholder
+            PassiveTrigger(
+                effects=[
+                    StatModEffect(stat_name="block", value=15),  # Start with 15 Block
+                ]
+            )
+        ]
+        if PassiveTrigger
+        else [],
+        rarity="godly",
+    )
+
+    # Patch Registry - 2x2 (4 slots)
+    patch_registry_spec = ItemSpec(
+        id="patch_registry",
+        name="Patch Registry",
         category="infrastructure",
         shape=SHAPES["2x2"] if SHAPES else None,
         triggers=[
+            # Complex trigger for "First Patch deployed: Random buff / 4 Patches deployed: Clear 8 errors"
+            # Placeholder for now
             PassiveTrigger(
                 effects=[
-                    StatModEffect(stat_name="max_cpu", value=15),
-                    StatModEffect(stat_name="cpu_regen", value=3),
                     BuffEffect(
-                        buff_name="quantum_entanglement",
-                        value=0.25,  # Items inside are 25% faster
-                        target_type="contained",
-                    ),
-                    BuffEffect(
-                        buff_name="quantum_superposition",
-                        value=0.15,  # Items have 15% chance to activate twice
+                        buff_name="patch_efficiency",
+                        value=0.1,  # Placeholder effect
                         target_type="contained",
                     ),
                 ]
@@ -193,47 +169,127 @@ def create_server_containers():
         rarity="legendary",
     )
 
+    # Container Orchestrator - 3x2 (6 slots)
+    container_orchestrator_spec = ItemSpec(
+        id="container_orchestrator",
+        name="Container Orchestrator",
+        category="infrastructure",
+        shape=ItemShape(
+            [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)],
+            "3x2",
+        )
+        if ItemShape
+        else None,
+        triggers=[
+            # "Start of battle: gain 7 Block for each Basic module inside"
+            # Placeholder for now
+            PassiveTrigger(
+                effects=[
+                    StatModEffect(stat_name="block", value=7),  # Placeholder
+                ]
+            )
+        ]
+        if PassiveTrigger
+        else [],
+        rarity="epic",
+    )
+
+    # Serverless Function - 2x2 (4 slots)
+    serverless_function_spec = ItemSpec(
+        id="serverless_function",
+        name="Serverless Function",
+        category="infrastructure",
+        shape=SHAPES["2x2"] if SHAPES else None,
+        triggers=[
+            # "Deploy phase: If has 2+ Legendary modules, generate free API credits"
+            # Placeholder for now
+            PassiveTrigger(
+                effects=[
+                    BuffEffect(
+                        buff_name="api_efficiency",
+                        value=0.15,  # Placeholder
+                        target_type="contained",
+                    ),
+                ]
+            )
+        ]
+        if PassiveTrigger
+        else [],
+        rarity="epic",
+    )
+
+    # Chaos Experiment - Variable shape (for now using 2x2)
+    chaos_experiment_spec = ItemSpec(
+        id="chaos_experiment",
+        name="Chaos Experiment",
+        category="infrastructure",
+        shape=SHAPES["2x2"]
+        if SHAPES
+        else None,  # Variable shape - using 2x2 as placeholder
+        triggers=[
+            # "Game started: Replace with random infrastructure and modules"
+            # This would require special handling
+            PassiveTrigger(
+                effects=[
+                    BuffEffect(
+                        buff_name="chaos",
+                        value=0.2,  # Placeholder
+                        target_type="contained",
+                    ),
+                ]
+            )
+        ]
+        if PassiveTrigger
+        else [],
+        rarity="unique",
+    )
+
     return {
-        "mini_rack": {
-            "spec": mini_rack_spec,
-            "internal_size": (3, 4),
+        "standard_vm": {
+            "spec": standard_vm_spec,
+            "internal_size": (2, 2),  # Same as external
             "external_shape": SHAPES["2x2"] if SHAPES else None,
         },
-        "standard_rack": {
-            "spec": standard_rack_spec,
-            "internal_size": (4, 5),
-            "external_shape": SHAPES["2x3"] if SHAPES else None,
+        "edge_node": {
+            "spec": edge_node_spec,
+            "internal_size": (2, 1),  # Same as external
+            "external_shape": ItemShape([(0, 0), (1, 0)], "2x1") if ItemShape else None,
         },
-        "enterprise_rack": {
-            "spec": enterprise_rack_spec,
-            "internal_size": (5, 6),
+        "memory_cache": {
+            "spec": memory_cache_spec,
+            "internal_size": (3, 1),  # Same as external
+            "external_shape": ItemShape([(0, 0), (1, 0), (2, 0)], "3x1")
+            if ItemShape
+            else None,
+        },
+        "load_balancer": {
+            "spec": load_balancer_spec,
+            "internal_size": (1, 1),  # Same as external
+            "external_shape": ItemShape([(0, 0)], "1x1") if ItemShape else None,
+        },
+        "patch_registry": {
+            "spec": patch_registry_spec,
+            "internal_size": (2, 2),  # Same as external
+            "external_shape": SHAPES["2x2"] if SHAPES else None,
+        },
+        "container_orchestrator": {
+            "spec": container_orchestrator_spec,
+            "internal_size": (3, 2),  # Same as external
             "external_shape": ItemShape(
-                [
-                    (0, 0),
-                    (1, 0),
-                    (2, 0),
-                    (0, 1),
-                    (1, 1),
-                    (2, 1),
-                    (0, 2),
-                    (1, 2),
-                    (2, 2),
-                ],
-                "3x3",
+                [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)],
+                "3x2",
             )
             if ItemShape
             else None,
         },
-        "blade_chassis": {
-            "spec": blade_chassis_spec,
-            "internal_size": (3, 4),
-            "external_shape": ItemShape([(0, 0), (0, 1), (0, 2), (0, 3)], "1x4")
-            if ItemShape
-            else None,
+        "serverless_function": {
+            "spec": serverless_function_spec,
+            "internal_size": (2, 2),  # Same as external
+            "external_shape": SHAPES["2x2"] if SHAPES else None,
         },
-        "quantum_server": {
-            "spec": quantum_server_spec,
-            "internal_size": (6, 6),
+        "chaos_experiment": {
+            "spec": chaos_experiment_spec,
+            "internal_size": (2, 2),  # Variable - using 2x2 as placeholder
             "external_shape": SHAPES["2x2"] if SHAPES else None,
         },
     }
@@ -394,38 +450,38 @@ if __name__ == "__main__":
     # Create a validator
     validator = PlacementValidator()
 
-    # Add a mini rack at position (1, 1)
-    mini_rack = ServerContainer(
-        spec=containers["mini_rack"]["spec"],
+    # Add a standard VM at position (1, 1)
+    standard_vm = ServerContainer(
+        spec=containers["standard_vm"]["spec"],
         position=(1, 1),
-        uid="rack1",
-        internal_grid_size=containers["mini_rack"]["internal_size"],
-        shape=containers["mini_rack"]["external_shape"],
+        uid="vm1",
+        internal_grid_size=containers["standard_vm"]["internal_size"],
+        shape=containers["standard_vm"]["external_shape"],
     )
 
-    if validator.add_container(mini_rack):
-        print(f"Added mini rack at {mini_rack.position}")
-        print(f"  Occupies main grid squares: {mini_rack.get_occupied_squares()}")
-        print(f"  Provides internal squares: {mini_rack.get_internal_squares()}")
+    if validator.add_container(standard_vm):
+        print(f"Added standard VM at {standard_vm.position}")
+        print(f"  Occupies main grid squares: {standard_vm.get_occupied_squares()}")
+        print(f"  Provides internal squares: {standard_vm.get_internal_squares()}")
 
     # Try to place an item
     if validator.validate_item_placement((1, 1), SHAPES["1x1"] if SHAPES else None):
-        print("\nCan place 1x1 item at (1, 1) - inside the rack!")
+        print("\nCan place 1x1 item at (1, 1) - inside the VM!")
 
     if not validator.validate_item_placement((0, 0), SHAPES["1x1"] if SHAPES else None):
         print("Cannot place 1x1 item at (0, 0) - no container there!")
 
-    # Add a standard rack
-    standard_rack = ServerContainer(
-        spec=containers["standard_rack"]["spec"],
+    # Add an edge node
+    edge_node = ServerContainer(
+        spec=containers["edge_node"]["spec"],
         position=(4, 2),
-        uid="rack2",
-        internal_grid_size=containers["standard_rack"]["internal_size"],
-        shape=containers["standard_rack"]["external_shape"],
+        uid="edge1",
+        internal_grid_size=containers["edge_node"]["internal_size"],
+        shape=containers["edge_node"]["external_shape"],
     )
 
-    if validator.add_container(standard_rack):
-        print(f"\nAdded standard rack at {standard_rack.position}")
+    if validator.add_container(edge_node):
+        print(f"\nAdded edge node at {edge_node.position}")
         print(
-            f"  Provides {len(standard_rack.get_internal_squares())} internal squares"
+            f"  Provides {len(edge_node.get_internal_squares())} internal squares (horizontal 2x1)"
         )

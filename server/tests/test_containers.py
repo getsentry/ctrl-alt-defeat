@@ -20,20 +20,20 @@ class TestServerContainers:
         validator = PlacementValidator(main_grid_size=(7, 9))
         containers = create_server_containers()
 
-        # Create a mini rack at position (1, 1)
-        mini_rack = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
+        # Create a standard VM at position (1, 1)
+        standard_vm = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
             position=(1, 1),
-            uid="rack1",
-            internal_grid_size=containers["mini_rack"]["internal_size"],
-            shape=containers["mini_rack"]["external_shape"],
+            uid="vm1",
+            internal_grid_size=containers["standard_vm"]["internal_size"],
+            shape=containers["standard_vm"]["external_shape"],
         )
 
         # Should be able to place it
-        assert validator.add_container(mini_rack)
+        assert validator.add_container(standard_vm)
 
-        # Should provide internal squares (mini rack is 2x2)
-        internal_squares = mini_rack.get_internal_squares()
+        # Should provide internal squares (standard VM is 2x2)
+        internal_squares = standard_vm.get_internal_squares()
         assert len(internal_squares) == 4  # 2x2 = 4 squares
 
         # Check that (1,1) is available (top-left of rack's internal space)
@@ -44,35 +44,35 @@ class TestServerContainers:
         validator = PlacementValidator()
         containers = create_server_containers()
 
-        # Place first rack
-        rack1 = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
+        # Place first VM
+        vm1 = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
             position=(1, 1),
-            uid="rack1",
-            internal_grid_size=(3, 4),
+            uid="vm1",
+            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
-        assert validator.add_container(rack1)
+        assert validator.add_container(vm1)
 
-        # Try to place overlapping rack
-        rack2 = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
-            position=(2, 2),  # This would overlap with rack1
-            uid="rack2",
-            internal_grid_size=(3, 4),
+        # Try to place overlapping VM
+        vm2 = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
+            position=(2, 2),  # This would overlap with vm1
+            uid="vm2",
+            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
-        assert not validator.add_container(rack2)  # Should fail
+        assert not validator.add_container(vm2)  # Should fail
 
-        # Try non-overlapping rack
-        rack3 = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
+        # Try non-overlapping VM
+        vm3 = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
             position=(4, 1),  # No overlap
-            uid="rack3",
-            internal_grid_size=(3, 4),
+            uid="vm3",
+            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
-        assert validator.add_container(rack3)  # Should succeed
+        assert validator.add_container(vm3)  # Should succeed
 
     def test_item_must_be_on_server(self):
         """Test that items must be placed on server-provided squares"""
@@ -86,14 +86,14 @@ class TestServerContainers:
 
         # Add a container
         containers = create_server_containers()
-        rack = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
+        vm = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
             position=(1, 1),
-            uid="rack1",
-            internal_grid_size=(3, 4),
+            uid="vm1",
+            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
-        validator.add_container(rack)
+        validator.add_container(vm)
 
         # Now we have available squares
         assert len(validator.available_squares) > 0
@@ -113,15 +113,15 @@ class TestServerContainers:
         validator = PlacementValidator()
         containers = create_server_containers()
 
-        # Add a large rack
-        rack = ServerContainer(
-            spec=containers["standard_rack"]["spec"],
+        # Add a container orchestrator
+        container = ServerContainer(
+            spec=containers["container_orchestrator"]["spec"],
             position=(1, 1),
-            uid="rack1",
-            internal_grid_size=(4, 5),
-            shape=SHAPES["2x3"],
+            uid="container1",
+            internal_grid_size=(3, 2),
+            shape=containers["container_orchestrator"]["external_shape"],
         )
-        validator.add_container(rack)
+        validator.add_container(container)
 
         # Place first item
         assert validator.place_item((1, 1), SHAPES["1x1"])
@@ -137,15 +137,15 @@ class TestServerContainers:
         validator = PlacementValidator()
         containers = create_server_containers()
 
-        # Add a large rack
-        rack = ServerContainer(
-            spec=containers["enterprise_rack"]["spec"],
+        # Add a container orchestrator (3x2, 6 slots)
+        container = ServerContainer(
+            spec=containers["container_orchestrator"]["spec"],
             position=(1, 1),
-            uid="rack1",
-            internal_grid_size=(5, 6),
-            shape=containers["enterprise_rack"]["external_shape"],
+            uid="container1",
+            internal_grid_size=(3, 2),
+            shape=containers["container_orchestrator"]["external_shape"],
         )
-        validator.add_container(rack)
+        validator.add_container(container)
 
         # Place a 2x2 item
         assert validator.validate_item_placement((1, 1), SHAPES["2x2"])
@@ -157,38 +157,36 @@ class TestServerContainers:
         )  # Would overlap
 
         # Place non-overlapping item
-        # Enterprise rack is at (1,1) and is 3x3, so it covers (1,1) to (3,3)
+        # Container orchestrator is at (1,1) and is 3x2, so it covers (1,1) to (3,2)
         # Item at (1,1) occupies (1,1), (2,1), (1,2), (2,2)
-        # So we can place at (1,3) which would occupy (1,3), (2,3), (1,4), (2,4)
-        # But wait, the rack only goes to (3,3), so that won't work
-        # Let's just check that a 1x1 can be placed somewhere non-overlapping
-        assert validator.validate_item_placement((3, 3), SHAPES["1x1"])
+        # So we can place at (3,1) which is still inside the container
+        assert validator.validate_item_placement((3, 1), SHAPES["1x1"])
 
     def test_item_spanning_containers(self):
         """Test that items can span multiple containers"""
         validator = PlacementValidator()
         containers = create_server_containers()
 
-        # Place two adjacent racks
-        rack1 = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
+        # Place two adjacent VMs
+        vm1 = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
             position=(0, 0),
-            uid="rack1",
-            internal_grid_size=(3, 4),
+            uid="vm1",
+            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
-        rack2 = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
-            position=(2, 0),  # Adjacent to rack1
-            uid="rack2",
-            internal_grid_size=(3, 4),
+        vm2 = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
+            position=(2, 0),  # Adjacent to vm1
+            uid="vm2",
+            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
 
-        validator.add_container(rack1)
-        validator.add_container(rack2)
+        validator.add_container(vm1)
+        validator.add_container(vm2)
 
-        # Place a 3x1 item that spans both racks
+        # Place a 3x1 item that spans both VMs
         # This item would occupy squares from both containers
         assert validator.validate_item_placement((1, 0), SHAPES["3x1"])
 
@@ -203,25 +201,25 @@ class TestServerContainers:
         containers = create_server_containers()
 
         # Create a container
-        rack = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
+        vm1 = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
             position=(1, 1),
-            uid="p1_rack",
-            internal_grid_size=(3, 4),
+            uid="p1_vm",
+            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
 
-        # Create items placed in the rack
+        # Create items placed in the VM
         p1_items = [
             PlacedItem(
                 spec=items["null_pointer"],
-                position=(1, 1),  # Inside rack
+                position=(1, 1),  # Inside VM
                 uid="item1",
                 shape=SHAPES["1x1"],
             ),
             PlacedItem(
                 spec=items["memory_leak"],
-                position=(2, 1),  # Inside rack
+                position=(2, 1),  # Inside VM
                 uid="item2",
                 shape=SHAPES["1x1"],
             ),
@@ -230,7 +228,7 @@ class TestServerContainers:
         p2_items = [
             PlacedItem(
                 spec=items["error_monitoring"],
-                position=(1, 1),  # Would need its own rack
+                position=(1, 1),  # Would need its own VM
                 uid="item3",
                 shape=SHAPES["1x1"],
             )
@@ -238,11 +236,11 @@ class TestServerContainers:
 
         # Should pass validation with containers
         # (In real usage, p2 would also need a container)
-        rack2 = ServerContainer(
-            spec=containers["mini_rack"]["spec"],
+        vm2 = ServerContainer(
+            spec=containers["standard_vm"]["spec"],
             position=(1, 1),
-            uid="p2_rack",
-            internal_grid_size=(3, 4),
+            uid="p2_vm",
+            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
 
@@ -251,8 +249,8 @@ class TestServerContainers:
             p1_items,
             p2_items,
             round_number=1,
-            p1_containers=[rack],
-            p2_containers=[rack2],
+            p1_containers=[vm1],
+            p2_containers=[vm2],
         )
 
         assert result["winner"] in [1, 2]

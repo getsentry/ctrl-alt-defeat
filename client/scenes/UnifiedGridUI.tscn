@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://unified-grid-ui"]
+[gd_scene load_steps=2 format=3 uid="uid://b6i7wck4p6ind"]
 
-[ext_resource type="Script" path="res://scripts/UnifiedGridUI.gd" id="1_unified"]
+[ext_resource type="Script" uid="uid://deiipntkpk0rq" path="res://scripts/UnifiedGridUI.gd" id="1_unified"]
 
 [node name="UnifiedGridUI" type="Control"]
 anchors_preset = 15

@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://visual-game"]
+[gd_scene load_steps=2 format=3 uid="uid://dv2y6rb0ull70"]
 
-[ext_resource type="Script" path="res://scripts/VisualGameUI.gd" id="1_visual"]
+[ext_resource type="Script" uid="uid://drnwew6tubhqw" path="res://scripts/VisualGameUI.gd" id="1_visual"]
 
 [node name="VisualGame" type="Control"]
 anchors_preset = 15

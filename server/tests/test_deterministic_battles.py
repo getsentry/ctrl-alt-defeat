@@ -9,6 +9,7 @@ import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+
 from .test_utils import get_test_containers
 
 
@@ -134,9 +135,12 @@ class TestDeterministicBattles:
         for seed in [100, 200, 300, 400, 500]:
             sim = BattleSimulator(seed=seed)
             p1_containers, p2_containers = get_test_containers()
+            # Create P2 item at correct position
+            p2_rng_item = deepcopy(rng_item)
+            p2_rng_item.position = (4, 0)  # P2 container position
             result = sim.simulate_battle(
                 [deepcopy(rng_item)],
-                [deepcopy(rng_item)],
+                [p2_rng_item],
                 round_number=1,
                 p1_containers=p1_containers,
                 p2_containers=p2_containers,

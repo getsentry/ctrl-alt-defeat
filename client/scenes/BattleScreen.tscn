@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://b7t4s8m6l2n3x"]
 
-[ext_resource type="Script" path="res://scripts/BattleScreen.gd" id="1_wqk2m"]
+[ext_resource type="Script" uid="uid://dbhmc7xinja7j" path="res://scripts/BattleScreen.gd" id="1_wqk2m"]
 
 [node name="BattleScreen" type="Control"]
 layout_mode = 3

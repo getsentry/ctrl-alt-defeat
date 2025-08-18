@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""
+Test that JSON configuration system works correctly
+"""
+
+from battle_engine import BattleSimulator, PlacedItem
+from config_loader import ConfigLoader
+from server_containers import ServerContainer
+
+
+def test_json_config():
+    """Test that we can load and use items from JSON"""
+
+    print("Testing JSON Configuration System")
+    print("=" * 50)
+
+    # Load configurations
+    loader = ConfigLoader()
+    loader.load_all()
+
+    print(f"\n✅ Loaded {len(loader.containers)} containers from JSON")
+    print(f"✅ Loaded {len(loader.items)} items from JSON")
+
+    # Test that we can create a battle with JSON-loaded items
+    sim = BattleSimulator(seed=12345)
+
+    # Get some items from JSON config
+    null_pointer = loader.get_item("null_pointer")
+    memory_leak = loader.get_item("memory_leak")
+    firewall = loader.get_item("firewall")
+    health_check = loader.get_item("health_check")
+
+    # Get containers from JSON config
+    standard_vm = loader.get_container("standard_vm")
+    edge_node = loader.get_container("edge_node")
+
+    # Create container instances
+    p1_container = ServerContainer(
+        spec=standard_vm["spec"],
+        position=(0, 0),
+        uid="p1_vm",
+        internal_grid_size=standard_vm["internal_size"],
+        shape=standard_vm["external_shape"],
+    )
+
+    p2_container = ServerContainer(
+        spec=edge_node["spec"],
+        position=(4, 0),
+        uid="p2_edge",
+        internal_grid_size=edge_node["internal_size"],
+        shape=edge_node["external_shape"],
+    )
+
+    # Create items
+    p1_items = [
+        PlacedItem(spec=null_pointer, position=(0, 0), uid="p1_null"),
+        PlacedItem(spec=memory_leak, position=(1, 0), uid="p1_leak"),
+    ]
+
+    p2_items = [
+        PlacedItem(spec=firewall, position=(4, 0), uid="p2_firewall"),
+        PlacedItem(spec=health_check, position=(5, 0), uid="p2_health"),
+    ]
+
+    # Run battle
+    print("\n🎮 Running test battle with JSON-loaded items...")
+    result = sim.simulate_battle(
+        p1_items,
+        p2_items,
+        round_number=1,
+        p1_containers=[p1_container],
+        p2_containers=[p2_container],
+    )
+
+    print(f"✅ Battle completed! Winner: Player {result['winner']}")
+    print(f"   Duration: {result['duration']:.1f}s")
+    print(f"   Total actions: {len(result['actions'])}")
+
+    # Test some specific items
+    print("\n📋 Testing specific items from JSON:")
+
+    # Test a problem item
+    ddos = loader.get_item("ddos_attack")
+    if ddos:
+        print(f"✅ DDoS Attack: {ddos.name} ({ddos.rarity})")
+        print(f"   Shape: {ddos.shape.name if ddos.shape else 'None'}")
+        print(f"   Triggers: {len(ddos.triggers)}")
+
+    # Test a defense item
+    quantum_fw = loader.get_item("quantum_firewall")
+    if quantum_fw:
+        print(f"✅ Quantum Firewall: {quantum_fw.name} ({quantum_fw.rarity})")
+        print(f"   Category: {quantum_fw.category}")
+        print(f"   Triggers: {len(quantum_fw.triggers)}")
+
+    # Test a container
+    orchestrator = loader.get_container("container_orchestrator")
+    if orchestrator:
+        print(f"\n✅ Container Orchestrator: {orchestrator['spec'].name}")
+        print(f"   Internal size: {orchestrator['internal_size']}")
+        print(f"   Cost: {orchestrator.get('cost', 'N/A')}")
+
+    print("\n" + "=" * 50)
+    print("✨ JSON Configuration System Test Complete!")
+    print("\nThe system successfully:")
+    print("  • Loaded items and containers from JSON files")
+    print("  • Created battle-ready items from configurations")
+    print("  • Ran a complete battle simulation")
+    print("\nYou can now easily add/modify items by editing:")
+    print("  • data/items.json")
+    print("  • data/containers.json")
+
+
+if __name__ == "__main__":
+    test_json_config()

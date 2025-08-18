@@ -7,7 +7,6 @@ from copy import deepcopy
 
 import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
-from .test_utils import get_test_containers, get_large_test_containers
 from item_effects import (
     AttackEffect,
     BattleStartTrigger,
@@ -24,6 +23,8 @@ from item_effects import (
     create_example_items,
 )
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+
+from .test_utils import get_large_test_containers, get_test_containers
 
 
 class TestFullBattleScenarios:
@@ -173,7 +174,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(4, 1),
+                position=(5, 0),
                 uid="p2_counter",
             ),
         ]
@@ -181,9 +182,13 @@ class TestFullBattleScenarios:
         # Run battle with fixed seed for consistency
         sim = BattleSimulator(seed=12345)
         p1_containers, p2_containers = get_large_test_containers()
-        result = sim.simulate_battle(p1_items, p2_items, round_number=5,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            p1_items,
+            p2_items,
+            round_number=5,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Battle should complete
         assert result["winner"] in [1, 2]
@@ -224,7 +229,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(1, 1),  # Center
+                position=(0, 0),  # Top-left of P1 container
                 uid="p1_bug1",
             ),
             PlacedItem(
@@ -242,7 +247,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(0, 1),  # Left of center
+                position=(1, 0),  # Adjacent (right)
                 uid="p1_bug2",
             ),
             PlacedItem(
@@ -260,7 +265,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(1, 2),  # Within P1 container
+                position=(0, 1),  # Adjacent (below)
                 uid="p1_bug3",
             ),
         ]
@@ -282,7 +287,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(3, 0),  # P2 area
+                position=(4, 0),  # P2 container top-left
                 uid="p2_problem",
             ),
             PlacedItem(
@@ -298,7 +303,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(4, 0),  # Adjacent
+                position=(5, 0),  # Adjacent in P2
                 uid="p2_defense",
             ),
             PlacedItem(
@@ -312,16 +317,20 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(3, 1),  # Adjacent
+                position=(4, 1),  # Adjacent in P2
                 uid="p2_infra",
             ),
         ]
 
         sim = BattleSimulator(seed=54321)
         p1_containers, p2_containers = get_large_test_containers()
-        result = sim.simulate_battle(p1_items, p2_items, round_number=3,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            p1_items,
+            p2_items,
+            round_number=3,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Battle should complete
         assert result["winner"] in [1, 2]
@@ -453,9 +462,13 @@ class TestFullBattleScenarios:
 
         sim = BattleSimulator(seed=99999)
         p1_containers, p2_containers = get_large_test_containers()
-        result = sim.simulate_battle(p1_items, p2_items, round_number=7,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            p1_items,
+            p2_items,
+            round_number=7,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Check that consumables were used
         consume_actions = [a for a in result["actions"] if a.get("a") == "consume"]
@@ -531,7 +544,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(3, 0),
+                position=(4, 0),  # P2 container position
                 uid="p2_legendary",
             )
         ]
@@ -539,9 +552,13 @@ class TestFullBattleScenarios:
         # Late game round (round 15) - 100 health each
         sim = BattleSimulator(seed=111111)
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle(p1_items, p2_items, round_number=15,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            p1_items,
+            p2_items,
+            round_number=15,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Battle should take longer with higher health
         assert result["winner"] in [1, 2]
@@ -651,9 +668,13 @@ class TestFullBattleScenarios:
 
         sim = BattleSimulator(seed=222222)
         p1_containers, p2_containers = get_test_containers()
-        result = sim.simulate_battle(p1_items, p2_items, round_number=1,
-                                    p1_containers=p1_containers,
-                                    p2_containers=p2_containers)
+        result = sim.simulate_battle(
+            p1_items,
+            p2_items,
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Battle should end despite healing (fatigue or timeout)
         assert result["winner"] in [1, 2]

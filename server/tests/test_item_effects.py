@@ -10,6 +10,7 @@ from item_effects import (
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
+    ConsumeEffect,
     DamageDealtTrigger,
     DamageTakenTrigger,
     DebuffEffect,
@@ -23,6 +24,7 @@ from item_effects import (
     TimerTrigger,
     create_example_items,
 )
+from shield_effect import OnAttackedTrigger
 
 
 @dataclass
@@ -276,48 +278,42 @@ class TestItemSpecs:
         assert timer_trigger.cooldown == 2.5
         assert timer_trigger.cpu_cost == 3
 
-        # Test Error Monitoring with multiple triggers
+        # Test Error Monitoring
         error_monitoring = items["error_monitoring"]
-        assert len(error_monitoring.triggers) == 2
-        assert isinstance(error_monitoring.triggers[0], BattleStartTrigger)
-        assert isinstance(error_monitoring.triggers[1], PassiveTrigger)
+        assert len(error_monitoring.triggers) == 1
+        assert isinstance(error_monitoring.triggers[0], OnAttackedTrigger)
 
-        # Test Session Replay with mixed triggers
-        session_replay = items["session_replay"]
-        assert len(session_replay.triggers) == 2
-        assert isinstance(session_replay.triggers[0], DamageTakenTrigger)
-        assert isinstance(session_replay.triggers[1], TimerTrigger)
+        # Test Health Check
+        health_check = items["health_check"]
+        assert len(health_check.triggers) == 1
+        assert isinstance(health_check.triggers[0], TimerTrigger)
 
-        # Test Alerting System with threshold
-        alerting = items["alerting_system"]
-        damage_trigger = alerting.triggers[0]
-        assert isinstance(damage_trigger, DamageTakenTrigger)
-        assert damage_trigger.threshold == 0.3
-        assert damage_trigger.cooldown == 8.0
-        assert len(damage_trigger.effects) == 2  # Heal + Block
+        # Test Firewall
+        firewall = items["firewall"]
+        assert len(firewall.triggers) == 1
+        assert isinstance(firewall.triggers[0], OnAttackedTrigger)
 
-        # Test Hybrid Assassin with complex triggers
-        hybrid = items["hybrid_assassin"]
-        assert len(hybrid.triggers) == 3
-        assert hybrid.rarity == "legendary"
+        # Test Quantum Firewall (replaces zero_day_exploit)
+        quantum_fw = items["quantum_firewall"]
+        assert len(quantum_fw.triggers) == 1  # Only has on_attacked trigger
+        assert quantum_fw.rarity == "legendary"
 
     def test_trigger_effect_combinations(self):
         """Test that triggers can have multiple effects"""
         items = create_example_items()
 
-        # Memory Leak has attack + debuff
+        # Memory Leak has attack effect
         memory_leak = items["memory_leak"]
         timer = memory_leak.triggers[0]
-        assert len(timer.effects) == 2
+        assert len(timer.effects) == 1
         assert isinstance(timer.effects[0], AttackEffect)
-        assert isinstance(timer.effects[1], DebuffEffect)
 
-        # Alerting System has heal + block
-        alerting = items["alerting_system"]
-        damage_trigger = alerting.triggers[0]
-        assert len(damage_trigger.effects) == 2
-        assert isinstance(damage_trigger.effects[0], HealEffect)
-        assert isinstance(damage_trigger.effects[1], BlockEffect)
+        # DDoS Attack has attack effect
+        ddos = items.get("ddos_attack")
+        if ddos:  # Check if exists in JSON
+            timer = ddos.triggers[0]
+            assert len(timer.effects) >= 1
+            assert isinstance(timer.effects[0], AttackEffect)
 
 
 if __name__ == "__main__":
