@@ -41,22 +41,6 @@ func _setup_ui():
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Title
-	var title = Label.new()
-	title.text = "BATTLE IN PROGRESS"
-	title.position = Vector2(540, 10)
-	title.add_theme_font_size_override("font_size", 24)
-	title.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-	add_child(title)
-
-	# Timer
-	time_label = Label.new()
-	time_label.text = "0.0s"
-	time_label.position = Vector2(600, 40)
-	time_label.add_theme_font_size_override("font_size", 18)
-	time_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.3))
-	add_child(time_label)
-
 	# Player inventory (left side)
 	_create_player_inventory()
 
@@ -78,8 +62,8 @@ func _setup_ui():
 func _create_player_inventory():
 	var inventory_scene = preload("res://scenes/UnifiedGridUI.tscn")
 	player_inventory = inventory_scene.instantiate()
-	player_inventory.position = Vector2(50, 100)
-	player_inventory.scale = Vector2(0.5, 0.5)  # Scale down for battle view
+	player_inventory.position = Vector2(20, 20)  # Move to top left
+	player_inventory.scale = Vector2(0.65, 0.65)  # Larger scale for better visibility
 
 	# Configure as read-only
 	player_inventory.configure({
@@ -90,19 +74,11 @@ func _create_player_inventory():
 
 	add_child(player_inventory)
 
-	# Add label
-	var label = Label.new()
-	label.text = "Your Forces"
-	label.position = Vector2(200, 80)
-	label.add_theme_font_size_override("font_size", 16)
-	label.add_theme_color_override("font_color", Color(0.3, 0.8, 1.0))
-	add_child(label)
-
 func _create_enemy_inventory():
 	var inventory_scene = preload("res://scenes/UnifiedGridUI.tscn")
 	enemy_inventory = inventory_scene.instantiate()
-	enemy_inventory.position = Vector2(700, 100)  # Position on right side
-	enemy_inventory.scale = Vector2(0.5, 0.5)  # Scale down for battle view
+	enemy_inventory.position = Vector2(750, 20)  # Position on right side, at top
+	enemy_inventory.scale = Vector2(0.65, 0.65)  # Larger scale for better visibility
 
 	# Configure as read-only
 	enemy_inventory.configure({
@@ -111,21 +87,20 @@ func _create_enemy_inventory():
 		"hide_storage": true
 	})
 
-	# Don't mirror the whole inventory - it inverts text
 	add_child(enemy_inventory)
 
-	# Add label
-	var label = Label.new()
-	label.text = "Enemy Forces"
-	label.position = Vector2(850, 80)
-	label.add_theme_font_size_override("font_size", 16)
-	label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-	add_child(label)
-
 func _create_player_stats():
+	# Timer in center middle
+	time_label = Label.new()
+	time_label.text = "0.0s"
+	time_label.position = Vector2(780, 420)  # Center between health bars
+	time_label.add_theme_font_size_override("font_size", 24)
+	time_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.5))
+	add_child(time_label)
+
 	player_stats_panel = Panel.new()
-	player_stats_panel.position = Vector2(400, 450)  # Bottom center-left
-	player_stats_panel.size = Vector2(180, 120)
+	player_stats_panel.position = Vector2(500, 460)  # Bottom center-left
+	player_stats_panel.size = Vector2(180, 100)
 
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.1, 0.15, 0.2, 0.9)
@@ -189,8 +164,8 @@ func _create_player_stats():
 
 func _create_enemy_stats():
 	enemy_stats_panel = Panel.new()
-	enemy_stats_panel.position = Vector2(600, 450)  # Bottom center-right
-	enemy_stats_panel.size = Vector2(180, 120)
+	enemy_stats_panel.position = Vector2(900, 460)  # Bottom center-right
+	enemy_stats_panel.size = Vector2(180, 100)
 
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.2, 0.1, 0.1, 0.9)
@@ -254,8 +229,8 @@ func _create_enemy_stats():
 
 func _create_battle_log():
 	var log_panel = Panel.new()
-	log_panel.position = Vector2(100, 600)  # Bottom of screen
-	log_panel.size = Vector2(1080, 100)  # Wide and short
+	log_panel.position = Vector2(200, 580)  # Bottom of screen
+	log_panel.size = Vector2(1200, 80)  # Wide and short
 
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.05, 0.05, 0.08, 0.9)
@@ -272,25 +247,25 @@ func _create_battle_log():
 	log_panel.add_child(log_title)
 
 	battle_log_container = RichTextLabel.new()
-	battle_log_container.position = Vector2(10, 25)
-	battle_log_container.size = Vector2(1060, 65)
+	battle_log_container.position = Vector2(10, 20)
+	battle_log_container.size = Vector2(1180, 50)
 	battle_log_container.bbcode_enabled = true
 	battle_log_container.scroll_following = true
-	battle_log_container.add_theme_font_size_override("normal_font_size", 11)
+	battle_log_container.add_theme_font_size_override("normal_font_size", 10)
 	log_panel.add_child(battle_log_container)
 
 func _create_control_buttons():
 	var start_btn = Button.new()
 	start_btn.text = "Start Battle"
-	start_btn.position = Vector2(480, 580)
+	start_btn.position = Vector2(720, 460)
 	start_btn.size = Vector2(120, 30)
 	start_btn.pressed.connect(_on_start_battle)
 	add_child(start_btn)
 
 	var back_btn = Button.new()
 	back_btn.text = "Back to Inventory"
-	back_btn.position = Vector2(620, 580)
-	back_btn.size = Vector2(140, 30)
+	back_btn.position = Vector2(720, 500)
+	back_btn.size = Vector2(120, 30)
 	back_btn.pressed.connect(_on_back_to_inventory)
 	add_child(back_btn)
 
@@ -404,15 +379,15 @@ func _show_attack_animation(from_player: bool):
 	effect.color = Color(1.0, 1.0, 0.0, 0.8) if from_player else Color(1.0, 0.3, 0.3, 0.8)
 
 	if from_player:
-		effect.position = Vector2(350, 300)  # Adjusted for new layout
+		effect.position = Vector2(400, 250)  # Adjusted for new inventory positions
 	else:
-		effect.position = Vector2(930, 300)  # Adjusted for new layout
+		effect.position = Vector2(1000, 250)  # Adjusted for new inventory positions
 
 	add_child(effect)
 
 	# Animate the effect
 	var tween = create_tween()
-	var target_pos = Vector2(640, 300)  # Center between inventories
+	var target_pos = Vector2(800, 250)  # Center between inventories
 	tween.tween_property(effect, "position", target_pos, 0.3)
 	tween.tween_property(effect, "modulate:a", 0.0, 0.2)
 	tween.tween_callback(effect.queue_free)

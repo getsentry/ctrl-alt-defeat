@@ -264,25 +264,27 @@ func _setup_ui():
 	print("UI setup complete")
 
 func _create_header():
-	var header = ColorRect.new()
-	header.color = Color(0.05, 0.05, 0.08, 1.0)
-	header.position = Vector2(0, 0)
-	header.size = Vector2(1280, 70)
-	add_child(header)
+	# Only show header in normal mode, not in battle/read-only
+	if not read_only_mode:
+		var header = ColorRect.new()
+		header.color = Color(0.05, 0.05, 0.08, 1.0)
+		header.position = Vector2(0, 0)
+		header.size = Vector2(1280, 70)
+		add_child(header)
 
-	var title = Label.new()
-	title.text = "SENTRY DATA CENTER"
-	title.position = Vector2(480, 10)
-	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0))
-	add_child(title)
+		var title = Label.new()
+		title.text = "SENTRY DATA CENTER"
+		title.position = Vector2(480, 10)
+		title.add_theme_font_size_override("font_size", 28)
+		title.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0))
+		add_child(title)
 
-	stats_label = Label.new()
-	stats_label.text = _get_stats_text()
-	stats_label.position = Vector2(460, 40)
-	stats_label.add_theme_font_size_override("font_size", 16)
-	stats_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
-	add_child(stats_label)
+		stats_label = Label.new()
+		stats_label.text = _get_stats_text()
+		stats_label.position = Vector2(460, 40)
+		stats_label.add_theme_font_size_override("font_size", 16)
+		stats_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
+		add_child(stats_label)
 
 func _create_shop_panel():
 	if hide_shop:
@@ -312,7 +314,9 @@ func _create_shop_panel():
 func _create_server_room():
 	# Server Room Background
 	var room_bg = Panel.new()
-	room_bg.position = Vector2(280, 90)
+	# Position higher if in read-only mode (no header)
+	var y_pos = 90 if not read_only_mode else 10
+	room_bg.position = Vector2(280, y_pos)
 	room_bg.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING) + 20,
 						   ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING) + 20)
 	var room_style = StyleBoxFlat.new()
@@ -323,16 +327,18 @@ func _create_server_room():
 	room_bg.add_theme_stylebox_override("panel", room_style)
 	add_child(room_bg)
 
-	var room_title = Label.new()
-	room_title.text = "SERVER ROOM"
-	room_title.position = Vector2(550, 100)
-	room_title.add_theme_font_size_override("font_size", 18)
-	room_title.add_theme_color_override("font_color", Color(0.9, 1.0, 0.9))
-	add_child(room_title)
+	if not read_only_mode:
+		var room_title = Label.new()
+		room_title.text = "SERVER ROOM"
+		room_title.position = Vector2(550, 100)
+		room_title.add_theme_font_size_override("font_size", 18)
+		room_title.add_theme_color_override("font_color", Color(0.9, 1.0, 0.9))
+		add_child(room_title)
 
 	# Container for the room
 	server_room_container = Control.new()
-	server_room_container.position = Vector2(290, 130)
+	var container_y = 130 if not read_only_mode else 50
+	server_room_container.position = Vector2(290, container_y)
 	server_room_container.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 										 ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 	add_child(server_room_container)
