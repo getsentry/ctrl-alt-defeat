@@ -1,0 +1,7 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield/Defense icon - blue protective style -->
+  <rect fill="#151a2a" width="64" height="64" rx="8"/>
+  <path d="M32 10 L46 18 L46 35 Q46 50 32 54 Q18 50 18 35 L18 18 Z"
+        fill="#3366cc" stroke="#5588ff" stroke-width="2"/>
+  <circle cx="32" cy="32" r="8" fill="#4477dd"/>
+</svg>

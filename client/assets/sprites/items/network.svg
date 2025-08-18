@@ -1,0 +1,10 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Network/Load Balancer - connected nodes -->
+  <rect fill="#151a20" width="64" height="64" rx="8"/>
+  <circle cx="32" cy="20" r="6" fill="#4488cc" stroke="#66aaff" stroke-width="2"/>
+  <circle cx="16" cy="44" r="6" fill="#4488cc" stroke="#66aaff" stroke-width="2"/>
+  <circle cx="48" cy="44" r="6" fill="#4488cc" stroke="#66aaff" stroke-width="2"/>
+  <line x1="32" y1="26" x2="16" y2="38" stroke="#66aaff" stroke-width="2"/>
+  <line x1="32" y1="26" x2="48" y2="38" stroke="#66aaff" stroke-width="2"/>
+  <line x1="22" y1="44" x2="42" y2="44" stroke="#66aaff" stroke-width="2"/>
+</svg>

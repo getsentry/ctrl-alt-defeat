@@ -1,0 +1,11 @@
+<svg width="120" height="40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Button background -->
+  <defs>
+    <linearGradient id="btnGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#404060;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#202040;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="40" fill="url(#btnGrad)" stroke="#5060a0" stroke-width="2" rx="6"/>
+  <rect x="2" y="2" width="116" height="2" fill="#606080" opacity="0.3" rx="2"/>
+</svg>

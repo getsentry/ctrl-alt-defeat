@@ -1,0 +1,8 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Memory Leak - purple dripping effect -->
+  <rect fill="#1a1525" width="64" height="64" rx="8"/>
+  <rect x="16" y="12" width="32" height="20" fill="#6633aa" stroke="#8855cc" stroke-width="2" rx="3"/>
+  <path d="M20,32 Q22,40 20,48 M28,32 Q30,42 28,50 M36,32 Q38,40 36,48 M44,32 Q42,44 44,52"
+        stroke="#aa66ff" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <text x="32" y="26" text-anchor="middle" fill="white" font-size="10" font-weight="bold">RAM</text>
+</svg>

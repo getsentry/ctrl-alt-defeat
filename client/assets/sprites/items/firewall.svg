@@ -1,0 +1,8 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Firewall - flame wall effect -->
+  <rect fill="#251515" width="64" height="64" rx="8"/>
+  <rect x="12" y="28" width="40" height="24" fill="#883322" stroke="#aa4433" stroke-width="2"/>
+  <path d="M16,28 Q18,20 20,28 M24,28 Q26,18 28,28 M32,28 Q34,20 36,28 M40,28 Q42,18 44,28 M48,28 Q50,20 52,28"
+        fill="#ff6633" stroke="#ff8855" stroke-width="2"/>
+  <rect x="12" y="40" width="40" height="4" fill="#666666" stroke="#888888" stroke-width="1"/>
+</svg>

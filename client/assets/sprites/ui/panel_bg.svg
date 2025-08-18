@@ -1,0 +1,13 @@
+<svg width="320" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Panel background with tech pattern -->
+  <defs>
+    <pattern id="grid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill="#0a0a0f"/>
+      <rect width="1" height="20" fill="#151520" opacity="0.5"/>
+      <rect width="20" height="1" fill="#151520" opacity="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="320" height="600" fill="url(#grid)" rx="12"/>
+  <rect width="320" height="600" fill="#0a0a12" opacity="0.7" rx="12"/>
+  <rect width="320" height="600" fill="none" stroke="#303050" stroke-width="3" rx="12" opacity="0.8"/>
+</svg>

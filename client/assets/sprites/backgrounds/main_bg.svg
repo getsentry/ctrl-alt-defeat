@@ -1,0 +1,24 @@
+<svg width="1280" height="720" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main game background with tech theme -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0515;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0f0a20;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#050a15;stop-opacity:1" />
+    </linearGradient>
+    <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="1" fill="#202040" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bgGrad)"/>
+  <rect width="1280" height="720" fill="url(#dots)"/>
+  <!-- Subtle grid lines -->
+  <g opacity="0.1">
+    <line x1="320" y1="0" x2="320" y2="720" stroke="#303050" stroke-width="1"/>
+    <line x1="640" y1="0" x2="640" y2="720" stroke="#303050" stroke-width="1"/>
+    <line x1="960" y1="0" x2="960" y2="720" stroke="#303050" stroke-width="1"/>
+    <line x1="0" y1="180" x2="1280" y2="180" stroke="#303050" stroke-width="1"/>
+    <line x1="0" y1="360" x2="1280" y2="360" stroke="#303050" stroke-width="1"/>
+    <line x1="0" y1="540" x2="1280" y2="540" stroke="#303050" stroke-width="1"/>
+  </g>
+</svg>

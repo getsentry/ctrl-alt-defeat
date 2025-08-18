@@ -1,0 +1,9 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gear/Infrastructure icon - green tech style -->
+  <rect fill="#152a15" width="64" height="64" rx="8"/>
+  <g transform="translate(32,32)">
+    <path d="M-3,-16 L3,-16 L4,-12 L8,-14 L12,-10 L10,-6 L14,-4 L16,-3 L16,3 L14,4 L10,6 L12,10 L8,14 L4,12 L3,16 L-3,16 L-4,12 L-8,14 L-12,10 L-10,6 L-14,4 L-16,3 L-16,-3 L-14,-4 L-10,-6 L-12,-10 L-8,-14 L-4,-12 Z"
+          fill="#33aa33" stroke="#55dd55" stroke-width="2"/>
+    <circle r="8" fill="#44bb44"/>
+  </g>
+</svg>

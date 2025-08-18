@@ -1,0 +1,9 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Coffee cup - brown energy item -->
+  <rect fill="#1a1510" width="64" height="64" rx="8"/>
+  <path d="M16,24 L20,48 L44,48 L48,24 Z" fill="#664422" stroke="#886633" stroke-width="2"/>
+  <ellipse cx="32" cy="24" rx="16" ry="4" fill="#442211" stroke="#886633" stroke-width="2"/>
+  <path d="M44,32 Q52,32 52,40 Q52,48 44,48" fill="none" stroke="#886633" stroke-width="2"/>
+  <path d="M24,16 Q24,12 26,12 M32,16 Q32,10 34,10 M40,16 Q40,12 42,12"
+        stroke="#ccaa88" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

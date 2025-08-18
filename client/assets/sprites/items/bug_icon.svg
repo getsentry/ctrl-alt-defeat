@@ -1,0 +1,6 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bug/Problem icon - red warning style -->
+  <rect fill="#2a1515" width="64" height="64" rx="8"/>
+  <polygon points="32,12 48,44 16,44" fill="#cc3333" stroke="#ff5555" stroke-width="2"/>
+  <text x="32" y="38" text-anchor="middle" fill="white" font-size="24" font-weight="bold">!</text>
+</svg>
