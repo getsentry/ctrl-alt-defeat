@@ -39,6 +39,8 @@ var original_parent = null
 var original_grid_pos = Vector2i(-1, -1)
 var hover_preview: Panel = null
 var valid_placement = false
+var last_rotation_time: float = 0.0
+const ROTATION_COOLDOWN: float = 0.3  # Seconds between rotations (increased for less sensitivity)
 
 # UI References
 var server_room_container: Control
@@ -895,11 +897,17 @@ func _input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			_stop_dragging()
-		# Handle rotation with mouse wheel
-		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_rotate_dragging_item(true)  # Clockwise
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_rotate_dragging_item(false)  # Counter-clockwise
+		# Handle rotation with mouse wheel - only on initial press, with cooldown
+		elif (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+			# Only process if pressed (not released) and cooldown has passed
+			if event.pressed:
+				var current_time = Time.get_ticks_msec() / 1000.0
+				if current_time - last_rotation_time >= ROTATION_COOLDOWN:
+					if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+						_rotate_dragging_item(true)  # Clockwise
+					else:
+						_rotate_dragging_item(false)  # Counter-clockwise
+					last_rotation_time = current_time
 
 	# Handle dragging motion
 	if dragging_object and event is InputEventMouseMotion:
@@ -1060,6 +1068,10 @@ func _rotate_dragging_item(clockwise: bool):
 		return
 
 	if read_only_mode:
+		return
+
+	# Additional check to prevent rotation spam
+	if not dragging_object.visible:
 		return
 
 	var item_data = dragging_object.get_meta("item_data")
