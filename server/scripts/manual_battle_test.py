@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 # Start a session
 response = requests.post("http://localhost:8000/session/start")
@@ -15,15 +16,15 @@ inventory = {
     "items": [
         {"id": "1", "item_type": "null_pointer", "position": [0, 0], "tier": 1},
         {"id": "2", "item_type": "error_monitoring", "position": [1, 0], "tier": 1},
-        {"id": "3", "item_type": "redis_cache", "position": [0, 1], "tier": 1}
+        {"id": "3", "item_type": "redis_cache", "position": [0, 1], "tier": 1},
     ],
-    "grid_size": 6
+    "grid_size": 6,
 }
 
 battle_request = {
     "player_id": player_id,
     "inventory": inventory,
-    "opponent_id": None  # Fight AI
+    "opponent_id": None,  # Fight AI
 }
 
 print("\nSimulating battle...")
@@ -40,5 +41,5 @@ print(f"Events recorded: {len(result['battle_result']['events'])}")
 
 # Print first few events
 print("\nFirst 5 battle events:")
-for event in result['battle_result']['events'][:5]:
+for event in result["battle_result"]["events"][:5]:
     print(f"  {event['timestamp']:.1f}s: {event['description']}")

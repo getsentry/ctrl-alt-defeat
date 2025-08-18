@@ -20,6 +20,7 @@ var active_grid: Array = []  # Tracks which cells have server grids
 var item_grid: Array = []    # Tracks items placed on the grid
 var grid_cells: Array = []   # Visual grid cell references
 var servers: Array = []       # Server objects (for tracking)
+var server_visuals: Array = [] # Visual server representations (for dragging)
 var items: Array = []         # Item objects
 
 # Shop
@@ -461,6 +462,55 @@ func _create_item(item_data: Dictionary) -> Panel:
 
 	return item
 
+func _on_server_input(event: InputEvent, server: Control):
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_start_dragging_server(server, event.position)
+
+func _start_dragging_server(server: Control, local_pos: Vector2):
+	# Check if server is empty
+	var server_data = server.get_meta("server_data")
+	var grid_pos = server.get_meta("grid_pos")
+	var pattern = server_data.pattern
+
+	# Check if any items are on this server
+	for py in range(pattern.size()):
+		for px in range(pattern[py].size()):
+			if pattern[py][px] == 1:
+				var gx = grid_pos.x + px
+				var gy = grid_pos.y + py
+				if item_grid[gy][gx] != null:
+					print("Cannot move server with items on it!")
+					return
+
+	# Clear the grid cells
+	for py in range(pattern.size()):
+		for px in range(pattern[py].size()):
+			if pattern[py][px] == 1:
+				var gx = grid_pos.x + px
+				var gy = grid_pos.y + py
+				active_grid[gy][gx] = false
+				if grid_cells[gy][gx]:
+					grid_cells[gy][gx].queue_free()
+					grid_cells[gy][gx] = null
+
+	# Start dragging
+	dragging_object = server
+	drag_offset = local_pos
+	original_position = server.position
+	original_parent = server_room_container
+	original_grid_pos = grid_pos
+	server.modulate.a = 0.7
+
+	if server.get_parent() != self:
+		var global_pos = server.global_position
+		server.get_parent().remove_child(server)
+		add_child(server)
+		server.global_position = global_pos
+
+	hover_preview.visible = true
+
 func _on_item_input(event: InputEvent, item: Panel):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
@@ -502,6 +552,8 @@ func _stop_dragging():
 
 	if dragging_object.has_meta("is_server"):
 		placed = _try_place_server(dragging_object)
+	elif dragging_object.has_meta("is_placed_server"):
+		placed = _try_move_server(dragging_object)
 	elif dragging_object.has_meta("is_item"):
 		placed = _try_place_item(dragging_object)
 
@@ -587,6 +639,36 @@ func _can_place_server_pattern(x: int, y: int, pattern: Array) -> bool:
 
 func _place_server_pattern(x: int, y: int, server_data: Dictionary):
 	var pattern = server_data.pattern
+
+	# Create a visual representation for the entire server (for dragging)
+	var server_visual = Control.new()
+	server_visual.position = Vector2(x * (CELL_SIZE + CELL_SPACING),
+									 y * (CELL_SIZE + CELL_SPACING))
+	server_visual.set_meta("server_data", server_data)
+	server_visual.set_meta("grid_pos", Vector2i(x, y))
+	server_visual.set_meta("is_placed_server", true)
+	server_visual.gui_input.connect(_on_server_input.bind(server_visual))
+
+	# Calculate server size
+	var width = pattern[0].size()
+	var height = pattern.size()
+	server_visual.size = Vector2(width * (CELL_SIZE + CELL_SPACING) - CELL_SPACING,
+								 height * (CELL_SIZE + CELL_SPACING) - CELL_SPACING)
+
+	# Add thick border to show server bounds
+	var server_panel = Panel.new()
+	server_panel.position = Vector2.ZERO
+	server_panel.size = server_visual.size
+	server_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var server_style = StyleBoxFlat.new()
+	server_style.bg_color = Color(0, 0, 0, 0)  # Transparent background
+	server_style.border_color = server_data.color
+	server_style.border_color.a = 0.8
+	server_style.set_border_width_all(3)  # Thick border
+	server_panel.add_theme_stylebox_override("panel", server_style)
+	server_visual.add_child(server_panel)
+
 	for py in range(pattern.size()):
 		for px in range(pattern[py].size()):
 			if pattern[py][px] == 1:
@@ -611,6 +693,9 @@ func _place_server_pattern(x: int, y: int, server_data: Dictionary):
 
 				grid_container.add_child(cell)
 				grid_cells[gy][gx] = cell
+
+	server_room_container.add_child(server_visual)
+	server_visuals.append(server_visual)
 
 func _try_place_item(item: Panel) -> bool:
 	var item_data = item.get_meta("item_data")
@@ -743,6 +828,21 @@ func _update_hover_preview():
 			hover_preview.size = Vector2(width * (CELL_SIZE + CELL_SPACING) - CELL_SPACING,
 										 height * (CELL_SIZE + CELL_SPACING) - CELL_SPACING)
 
+		elif dragging_object.has_meta("is_placed_server"):
+			var server_data = dragging_object.get_meta("server_data")
+			var pattern = server_data.pattern
+
+			valid_placement = _can_place_server_pattern(grid_x, grid_y, pattern)
+
+			# Show preview for pattern
+			var width = pattern[0].size()
+			var height = pattern.size()
+			hover_preview.position = server_room_container.global_position + \
+									 Vector2(grid_x * (CELL_SIZE + CELL_SPACING),
+											grid_y * (CELL_SIZE + CELL_SPACING))
+			hover_preview.size = Vector2(width * (CELL_SIZE + CELL_SPACING) - CELL_SPACING,
+										 height * (CELL_SIZE + CELL_SPACING) - CELL_SPACING)
+
 		elif dragging_object.has_meta("is_item"):
 			var item_data = dragging_object.get_meta("item_data")
 
@@ -778,6 +878,44 @@ func _on_refresh_shop():
 		current_gold -= 2
 		_update_stats()
 		_generate_shop()
+
+func _try_move_server(server: Control) -> bool:
+	var mouse_pos = server_room_container.get_local_mouse_position()
+
+	if mouse_pos.x >= 0 and mouse_pos.x < server_room_container.size.x and \
+	   mouse_pos.y >= 0 and mouse_pos.y < server_room_container.size.y:
+
+		var server_data = server.get_meta("server_data")
+		var grid_x = int((mouse_pos.x + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
+		var grid_y = int((mouse_pos.y + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
+
+		# Check if pattern fits at new location
+		var pattern = server_data.pattern
+		if _can_place_server_pattern(grid_x, grid_y, pattern):
+			# Place server at new location
+			_place_server_pattern(grid_x, grid_y, server_data)
+
+			# Update server entry in list
+			for s in servers:
+				if s.pos == original_grid_pos:
+					s.pos = Vector2i(grid_x, grid_y)
+					break
+
+			# Remove old visual
+			server.queue_free()
+
+			return true
+		else:
+			# Restore at original position
+			var orig_data = server.get_meta("server_data")
+			_place_server_pattern(original_grid_pos.x, original_grid_pos.y, orig_data)
+			server.position = original_position
+			if server.get_parent() != server_room_container:
+				server.get_parent().remove_child(server)
+				server_room_container.add_child(server)
+			return true
+
+	return false
 
 func _on_start_battle():
 	var active_items = 0

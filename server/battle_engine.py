@@ -1,5 +1,4 @@
 """
-Battle Engine Final - Exactly matches Game Design Document
 Every mechanic verified against the spec
 Event-driven system with priority queue for timers
 """
