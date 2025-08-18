@@ -10,6 +10,7 @@ from battle_engine import BattleSimulator, PlacedItem
 from battle_renderer import ASCIIBattleRenderer, BattleState
 from item_effects import AttackEffect, HealEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+from test_utils import get_test_containers
 
 
 class TestBattleRenderer:
@@ -76,7 +77,14 @@ class TestBattleRenderer:
 
         # Run battle
         sim = BattleSimulator(seed=99999)
-        result = sim.simulate_battle(p1_items, p2_items, round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            p1_items,
+            p2_items,
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Add starting HP
         result["player1_quota_start"] = 25
@@ -163,7 +171,14 @@ class TestBattleRenderer:
         ]
 
         sim = BattleSimulator(seed=12345)
-        result = sim.simulate_battle(p1_items, p2_items, round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            p1_items,
+            p2_items,
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Save to file
         battle_data = {
@@ -346,7 +361,16 @@ def demo_battle_replay():
     # Run the battle
     print("\nSimulating battle...")
     sim = BattleSimulator(seed=54321)
-    result = sim.simulate_battle(p1_items, p2_items, round_number=3)
+    from test_utils import get_test_containers
+
+    p1_containers, p2_containers = get_test_containers()
+    result = sim.simulate_battle(
+        p1_items,
+        p2_items,
+        round_number=3,
+        p1_containers=p1_containers,
+        p2_containers=p2_containers,
+    )
 
     # Add starting HP
     result["player1_quota_start"] = 35  # Round 3 has 35 HP

@@ -9,6 +9,7 @@ import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+from test_utils import get_test_containers
 
 
 class TestDeterministicBattles:
@@ -67,14 +68,24 @@ class TestDeterministicBattles:
 
         # Run battle with seed 12345
         sim1 = BattleSimulator(seed=12345)
+        p1_containers, p2_containers = get_test_containers()
         result1 = sim1.simulate_battle(
-            [deepcopy(attacker)], [deepcopy(defender)], round_number=1
+            [deepcopy(attacker)],
+            [deepcopy(defender)],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
         )
 
         # Run again with same seed
         sim2 = BattleSimulator(seed=12345)
+        p1_containers, p2_containers = get_test_containers()
         result2 = sim2.simulate_battle(
-            [deepcopy(attacker)], [deepcopy(defender)], round_number=1
+            [deepcopy(attacker)],
+            [deepcopy(defender)],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
         )
 
         # Results should be identical
@@ -122,8 +133,13 @@ class TestDeterministicBattles:
         results = []
         for seed in [100, 200, 300, 400, 500]:
             sim = BattleSimulator(seed=seed)
+            p1_containers, p2_containers = get_test_containers()
             result = sim.simulate_battle(
-                [deepcopy(rng_item)], [deepcopy(rng_item)], round_number=1
+                [deepcopy(rng_item)],
+                [deepcopy(rng_item)],
+                round_number=1,
+                p1_containers=p1_containers,
+                p2_containers=p2_containers,
             )
             results.append(result)
 
@@ -185,8 +201,13 @@ class TestDeterministicBattles:
         results = []
         for _ in range(3):
             sim = BattleSimulator(seed=seed)
+            p1_containers, p2_containers = get_test_containers()
             result = sim.simulate_battle(
-                [deepcopy(shield)], [deepcopy(attacker)], round_number=1
+                [deepcopy(shield)],
+                [deepcopy(attacker)],
+                round_number=1,
+                p1_containers=p1_containers,
+                p2_containers=p2_containers,
             )
             results.append(result)
 
@@ -312,13 +333,23 @@ class TestDeterministicBattles:
         # Run battle with same seed twice
         seed = 999999
         sim1 = BattleSimulator(seed=seed)
+        p1_containers, p2_containers = get_test_containers()
         result1 = sim1.simulate_battle(
-            deepcopy(p1_items), deepcopy(p2_items), round_number=1
+            deepcopy(p1_items),
+            deepcopy(p2_items),
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
         )
 
         sim2 = BattleSimulator(seed=seed)
+        p1_containers, p2_containers = get_test_containers()
         result2 = sim2.simulate_battle(
-            deepcopy(p1_items), deepcopy(p2_items), round_number=1
+            deepcopy(p1_items),
+            deepcopy(p2_items),
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
         )
 
         # Everything should match
@@ -353,7 +384,14 @@ class TestDeterministicBattles:
             position=(0, 0),
         )
 
-        result = sim.simulate_battle([item], [], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [item],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
         assert "seed" in result
         assert result["seed"] == 77777
 

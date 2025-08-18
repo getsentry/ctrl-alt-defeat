@@ -35,8 +35,8 @@ cd client 2>/dev/null || cd /Users/wedamija/code/autobattler/client
 # Check essential files
 FILES_TO_CHECK=(
     "project.godot"
-    "scenes/SimpleTest.tscn"
-    "scripts/SimpleTestUI.gd"
+    "scenes/UnifiedGridUI.tscn"
+    "scripts/UnifiedGridUI.gd"
     "assets/sprites/items/bug_icon.png"
 )
 
@@ -55,7 +55,7 @@ echo ""
 echo "3. Testing Godot project loading..."
 ((TOTAL_TESTS++))
 OUTPUT=$(godot --headless --quit 2>&1)
-if echo "$OUTPUT" | grep -q "SimpleTestUI starting"; then
+if echo "$OUTPUT" | grep -q "UnifiedGridUI starting"; then
     echo -e "${GREEN}✓${NC} Project loads successfully"
     echo "  - UI initialized"
     echo "  - Shop generated"
@@ -79,7 +79,7 @@ fi
 
 echo ""
 echo "5. Testing game functionality..."
-echo "Testing with SimpleTestUI scene..."
+echo "Testing with UnifiedGridUI scene..."
 
 # Create a test script
 cat > test_runner.gd << 'EOF'
@@ -89,7 +89,7 @@ func _init():
     print("Running game functionality tests...")
 
     # Load and test the scene
-    var scene = load("res://scenes/SimpleTest.tscn")
+    var scene = load("res://scenes/UnifiedGridUI.tscn")
     if scene:
         var instance = scene.instantiate()
         root.add_child(instance)
@@ -101,8 +101,8 @@ func _init():
 
         # Test buying an item
         if instance.shop_items.size() > 0:
-            var item = instance.shop_items[0]
-            if instance.current_gold >= item.cost:
+            var item_data = instance.shop_items[0].get_meta("item_data")
+            if instance.current_gold >= item_data.cost:
                 print("- Can afford first item: YES")
             else:
                 print("- Can afford first item: NO")

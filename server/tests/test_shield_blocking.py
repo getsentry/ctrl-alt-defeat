@@ -7,6 +7,7 @@ import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+from test_utils import get_test_containers
 
 
 class TestShieldBlocking:

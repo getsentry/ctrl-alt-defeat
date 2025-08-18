@@ -755,7 +755,14 @@ class TestFullBattleScenarios:
         ]
 
         sim = BattleSimulator(seed=333333)
-        result = sim.simulate_battle(p1_items, p2_items, round_number=5)
+        p1_containers, p2_containers = get_large_test_containers()
+        result = sim.simulate_battle(
+            p1_items,
+            p2_items,
+            round_number=5,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Check CPU throttling
         cpu_fails = [a for a in result["actions"] if a["a"] == ACTION_CODES["CPU_FAIL"]]

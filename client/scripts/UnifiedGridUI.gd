@@ -26,6 +26,11 @@ var items: Array = []         # Item objects
 # Shop
 var shop_items: Array = []
 
+# Mode settings
+var read_only_mode: bool = false
+var hide_shop: bool = false
+var hide_storage: bool = false
+
 # Drag and drop
 var dragging_object = null
 var drag_offset = Vector2.ZERO
@@ -145,7 +150,62 @@ func _ready():
 	print("UnifiedGridUI starting...")
 	_initialize_grids()
 	_setup_ui()
-	_generate_shop()
+	if not hide_shop:
+		_generate_shop()
+
+func configure(settings: Dictionary):
+	read_only_mode = settings.get("read_only", false)
+	hide_shop = settings.get("hide_shop", false)
+	hide_storage = settings.get("hide_storage", false)
+
+	# Reload UI with new settings
+	for child in get_children():
+		child.queue_free()
+
+	_setup_ui()
+	if not hide_shop:
+		_generate_shop()
+
+func load_inventory_state(inventory_data: Dictionary):
+	# Load servers and items from saved state
+	if inventory_data.has("servers"):
+		for server_data in inventory_data.servers:
+			_place_server_pattern(server_data.pos.x, server_data.pos.y, server_data.data)
+			servers.append(server_data)
+
+	if inventory_data.has("items"):
+		for item_info in inventory_data.items:
+			var item = _create_item(item_info.data)
+			var grid_pos = item_info.grid_pos
+
+			# Place on grid
+			item.position = Vector2(grid_pos.x * (CELL_SIZE + CELL_SPACING),
+									grid_pos.y * (CELL_SIZE + CELL_SPACING))
+			server_room_container.add_child(item)
+
+			# Mark grid cells
+			for dy in range(item_info.data.height):
+				for dx in range(item_info.data.width):
+					item_grid[grid_pos.y + dy][grid_pos.x + dx] = item
+
+			item.set_meta("grid_pos", grid_pos)
+			items.append(item)
+
+func get_inventory_state() -> Dictionary:
+	var state = {
+		"servers": servers.duplicate(),
+		"items": []
+	}
+
+	# Save item positions
+	for item in items:
+		if item.has_meta("grid_pos"):
+			state.items.append({
+				"data": item.get_meta("item_data"),
+				"grid_pos": item.get_meta("grid_pos")
+			})
+
+	return state
 
 func _initialize_grids():
 	active_grid = []
@@ -219,6 +279,9 @@ func _create_header():
 	add_child(stats_label)
 
 func _create_shop_panel():
+	if hide_shop:
+		return
+
 	var shop_bg = Panel.new()
 	shop_bg.position = Vector2(20, 90)
 	shop_bg.size = Vector2(240, 500)
@@ -276,6 +339,9 @@ func _create_server_room():
 	server_room_container.add_child(grid_container)
 
 func _create_storage_area():
+	if hide_storage:
+		return
+
 	var storage_bg = Panel.new()
 	storage_bg.position = Vector2(280, 480)
 	storage_bg.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING) + 20, 100)
@@ -300,19 +366,21 @@ func _create_storage_area():
 	add_child(storage_container)
 
 func _create_controls():
-	var refresh_btn = Button.new()
-	refresh_btn.text = "Refresh (2g)"
-	refresh_btn.position = Vector2(50, 600)
-	refresh_btn.size = Vector2(100, 30)
-	refresh_btn.pressed.connect(_on_refresh_shop)
-	add_child(refresh_btn)
+	if not read_only_mode:
+		if not hide_shop:
+			var refresh_btn = Button.new()
+			refresh_btn.text = "Refresh (2g)"
+			refresh_btn.position = Vector2(50, 600)
+			refresh_btn.size = Vector2(100, 30)
+			refresh_btn.pressed.connect(_on_refresh_shop)
+			add_child(refresh_btn)
 
-	var battle_btn = Button.new()
-	battle_btn.text = "Battle"
-	battle_btn.position = Vector2(1100, 600)
-	battle_btn.size = Vector2(100, 30)
-	battle_btn.pressed.connect(_on_start_battle)
-	add_child(battle_btn)
+		var battle_btn = Button.new()
+		battle_btn.text = "Battle"
+		battle_btn.position = Vector2(1100, 600)
+		battle_btn.size = Vector2(100, 30)
+		battle_btn.pressed.connect(_on_start_battle)
+		add_child(battle_btn)
 
 	var help = Label.new()
 	help.text = "Drag servers to create grid → Place items on any grid cells → Items can span servers"
@@ -391,6 +459,8 @@ func _generate_shop():
 	print("Shop generated with %d items" % shop_items.size())
 
 func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Dictionary):
+	if read_only_mode:
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
@@ -441,28 +511,49 @@ func _create_server_preview(server_data: Dictionary) -> Control:
 
 func _create_item(item_data: Dictionary) -> Panel:
 	var item = Panel.new()
-	item.size = Vector2(item_data.width * (CELL_SIZE + CELL_SPACING) - CELL_SPACING,
-					   item_data.height * (CELL_SIZE + CELL_SPACING) - CELL_SPACING)
+	# Store original dimensions for rotation
+	var rotated_data = item_data.duplicate()
+	rotated_data["original_width"] = item_data.get("original_width", item_data.width)
+	rotated_data["original_height"] = item_data.get("original_height", item_data.height)
+	rotated_data["rotation"] = item_data.get("rotation", 0)  # 0, 90, 180, 270
+
+	# Apply rotation to dimensions
+	if rotated_data.rotation == 90 or rotated_data.rotation == 270:
+		rotated_data.width = rotated_data.original_height
+		rotated_data.height = rotated_data.original_width
+
+	item.size = Vector2(rotated_data.width * (CELL_SIZE + CELL_SPACING) - CELL_SPACING,
+					   rotated_data.height * (CELL_SIZE + CELL_SPACING) - CELL_SPACING)
 
 	var item_style = StyleBoxFlat.new()
-	item_style.bg_color = item_data.color
+	item_style.bg_color = rotated_data.color
 	item_style.set_corner_radius_all(3)
 	item.add_theme_stylebox_override("panel", item_style)
 
 	var label = Label.new()
-	label.text = item_data.name
+	label.text = rotated_data.name
 	label.position = Vector2(3, 3)
 	label.add_theme_font_size_override("font_size", 10)
 	label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	# Rotate label with item
+	label.rotation_degrees = rotated_data.rotation
+	if rotated_data.rotation == 90:
+		label.position = Vector2(item.size.x - 15, 3)
+	elif rotated_data.rotation == 180:
+		label.position = Vector2(item.size.x - 3, item.size.y - 15)
+	elif rotated_data.rotation == 270:
+		label.position = Vector2(15, item.size.y - 3)
 	item.add_child(label)
 
-	item.set_meta("item_data", item_data)
+	item.set_meta("item_data", rotated_data)
 	item.set_meta("is_item", true)
 	item.gui_input.connect(_on_item_input.bind(item))
 
 	return item
 
 func _on_server_input(event: InputEvent, server: Control):
+	if read_only_mode:
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
@@ -512,6 +603,8 @@ func _start_dragging_server(server: Control, local_pos: Vector2):
 	hover_preview.visible = true
 
 func _on_item_input(event: InputEvent, item: Panel):
+	if read_only_mode:
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
@@ -789,6 +882,11 @@ func _input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			_stop_dragging()
+		# Handle rotation with mouse wheel
+		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_rotate_dragging_item(true)  # Clockwise
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_rotate_dragging_item(false)  # Counter-clockwise
 
 	# Handle dragging motion
 	if dragging_object and event is InputEventMouseMotion:
@@ -918,6 +1016,14 @@ func _try_move_server(server: Control) -> bool:
 	return false
 
 func _on_start_battle():
+	# Save current inventory state
+	var inventory_state = get_inventory_state()
+
+	# Store in a global or pass to battle scene
+	# For now, we'll just switch to battle scene
+	get_tree().change_scene_to_file("res://scenes/BattleScreen.tscn")
+
+	# Old simulation code (can be removed once battle is fully integrated)
 	var active_items = 0
 	var total_attack = 0
 	var total_defense = 0
@@ -936,18 +1042,53 @@ func _on_start_battle():
 	print("Battle: %d servers, %d active items" % [servers.size(), active_items])
 	print("Stats: ATK %d, DEF %d" % [total_attack, total_defense])
 
-	var win_chance = 0.3 + (total_attack * 0.05) + (total_defense * 0.03) + (servers.size() * 0.02)
-	win_chance = min(win_chance, 0.95)
+func _rotate_dragging_item(clockwise: bool):
+	if not dragging_object or not dragging_object.has_meta("is_item"):
+		return
 
-	if randf() < win_chance:
-		print("Victory!")
-		current_gold += 5 + current_round
-		current_round += 1
+	if read_only_mode:
+		return
+
+	var item_data = dragging_object.get_meta("item_data")
+	var current_rotation = item_data.get("rotation", 0)
+
+	# Calculate new rotation
+	if clockwise:
+		current_rotation = (current_rotation + 90) % 360
 	else:
-		print("Defeat!")
-		current_health -= 10
+		current_rotation = (current_rotation - 90 + 360) % 360
 
-	_update_stats()
+	item_data.rotation = current_rotation
 
-	if current_health <= 0:
-		print("GAME OVER! Survived %d rounds" % current_round)
+	# Swap width and height if needed
+	if current_rotation == 90 or current_rotation == 270:
+		item_data.width = item_data.original_height
+		item_data.height = item_data.original_width
+	else:
+		item_data.width = item_data.original_width
+		item_data.height = item_data.original_height
+
+	# Update item size
+	dragging_object.size = Vector2(item_data.width * (CELL_SIZE + CELL_SPACING) - CELL_SPACING,
+								   item_data.height * (CELL_SIZE + CELL_SPACING) - CELL_SPACING)
+
+	# Update label rotation
+	for child in dragging_object.get_children():
+		if child is Label:
+			child.rotation_degrees = current_rotation
+			# Adjust label position based on rotation
+			if current_rotation == 0:
+				child.position = Vector2(3, 3)
+			elif current_rotation == 90:
+				child.position = Vector2(dragging_object.size.x - 15, 3)
+			elif current_rotation == 180:
+				child.position = Vector2(dragging_object.size.x - 3, dragging_object.size.y - 15)
+			elif current_rotation == 270:
+				child.position = Vector2(15, dragging_object.size.y - 3)
+
+	dragging_object.set_meta("item_data", item_data)
+
+	# Update hover preview
+	_update_hover_preview()
+
+	print("Rotated item to %d degrees" % current_rotation)

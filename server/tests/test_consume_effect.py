@@ -15,6 +15,7 @@ from item_effects import (
     StatModEffect,
     TimerTrigger,
 )
+from test_utils import get_test_containers
 
 
 class TestConsumeEffect:
@@ -66,7 +67,14 @@ class TestConsumeEffect:
         )
 
         # Run battle
-        result = sim.simulate_battle([potion], [attacker], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [potion],
+            [attacker],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Check that potion was consumed
         consume_actions = [a for a in result["actions"] if a.get("a") == "consume"]
@@ -111,7 +119,14 @@ class TestConsumeEffect:
             uid="consumable1",
         )
 
-        result = sim.simulate_battle([consumable], [], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [consumable],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Check that item was consumed at battle start
         consume_actions = [a for a in result["actions"] if a.get("a") == "consume"]
@@ -197,7 +212,18 @@ class TestConsumeEffect:
         assert problem3.damage_mult == 1.0  # No bonus (only adjacent to 1 problem)
 
         # Run battle
-        result = sim.simulate_battle(items, [], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        # Need a larger container for 3 items
+        from test_utils import get_large_test_containers
+
+        p1_containers, p2_containers = get_large_test_containers()
+        result = sim.simulate_battle(
+            items,
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Problem3 should be consumed
         assert "p3" in sim.consumed_items
@@ -269,7 +295,14 @@ class TestConsumeEffect:
             uid="attacker1",
         )
 
-        result = sim.simulate_battle([potion1, potion2], [attacker], round_number=1)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [potion1, potion2],
+            [attacker],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
         # Both potions should be consumed
         consume_actions = [a for a in result["actions"] if a.get("a") == "consume"]

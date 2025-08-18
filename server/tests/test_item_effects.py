@@ -237,13 +237,11 @@ class TestItemSpecs:
                 ),
                 KillTrigger(effects=[HealEffect(min_heal=3, max_heal=5)]),
             ],
-            tier=2,
             rarity="rare",
         )
 
         assert len(item.triggers) == 3
         assert item.category == "problem"
-        assert item.tier == 2
         assert item.rarity == "rare"
 
         # Test first trigger (battle start)
