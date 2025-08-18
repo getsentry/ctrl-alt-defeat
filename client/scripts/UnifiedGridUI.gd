@@ -193,16 +193,34 @@ func configure(settings: Dictionary):
 		_generate_shop()
 
 func _place_starting_containers():
-	# Give player 3 starting 2x2 containers
 	print("Placing starting containers for new game")
 
-	# Use the cube_2x2 server type
-	var container_type = server_types["cube_2x2"]
+	# Check if server provided starting containers
+	var containers_to_place = []
+	if GameStateManager.starting_containers.size() > 0:
+		containers_to_place = GameStateManager.starting_containers
+		print("Using server-provided starting containers: %d" % containers_to_place.size())
+	else:
+		# Default starting containers
+		containers_to_place = [
+			{"type": "cube_2x2", "position": Vector2i(1, 3)},
+			{"type": "cube_2x2", "position": Vector2i(4, 3)},
+			{"type": "cube_2x2", "position": Vector2i(7, 3)}
+		]
+		print("Using default starting containers")
 
-	# Place 3 containers in a row, starting from position (1, 3)
-	for i in range(3):
-		var x_pos = 1 + (i * 3)  # Space them out with 1 cell gap
-		var y_pos = 3  # Middle of the grid vertically
+	# Place each container
+	for container_info in containers_to_place:
+		var container_type_key = container_info.get("type", "cube_2x2")
+		var position = container_info.get("position", Vector2i(1, 3))
+
+		if not server_types.has(container_type_key):
+			print("Warning: Unknown container type '%s', using cube_2x2" % container_type_key)
+			container_type_key = "cube_2x2"
+
+		var container_type = server_types[container_type_key]
+		var x_pos = position.x
+		var y_pos = position.y
 
 		# Create the server data
 		var server_data = {
@@ -225,7 +243,7 @@ func _place_starting_containers():
 		server_visual.set_meta("server_data", container_type)
 		server_visuals.append(server_visual)
 
-	print("Placed 3 starting containers")
+	print("Placed %d starting containers" % containers_to_place.size())
 
 	# Save this initial state
 	var initial_state = get_inventory_state()

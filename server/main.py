@@ -50,6 +50,7 @@ class BattleRequest(BaseModel):
     inventory: InventorySubmission
     round_number: int
     opponent_id: Optional[str] = None  # None = fight AI
+    seed: Optional[int] = None  # For deterministic testing
 
 
 class ShopRefreshRequest(BaseModel):
@@ -333,8 +334,8 @@ async def simulate_battle(request: BattleRequest) -> Dict[str, Any]:
     else:
         opponent_items = generate_ai_items(request.round_number)
 
-    # Simulate battle
-    simulator = BattleSimulator()
+    # Simulate battle (use seed if provided for deterministic testing)
+    simulator = BattleSimulator(seed=request.seed)
     battle_result = simulator.simulate_battle(
         player_items,
         opponent_items,

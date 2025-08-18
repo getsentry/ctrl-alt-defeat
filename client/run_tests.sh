@@ -1,24 +1,18 @@
 #!/bin/bash
 
-echo "================================"
-echo "   UNIFIED GRID UI TESTS"
-echo "================================"
-
-# Run Godot tests
-godot --headless --script tests/test_unified_grid_ui.gd --quit 2>&1 | grep -v "^Godot Engine"
-
-# Check if UI loads
+echo "Running Autobattler Tests..."
 echo ""
-echo "Testing UI Loading..."
-OUTPUT=$(godot --headless --quit 2>&1)
-if echo "$OUTPUT" | grep -q "UnifiedGridUI starting"; then
-    echo "✅ UI loads successfully"
+
+# Run the test runner scene which will execute all tests
+godot --headless scenes/TestRunner.tscn --quit
+
+# Check exit code
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "✅ All tests passed!"
+    exit 0
 else
-    echo "❌ UI failed to load"
+    echo ""
+    echo "❌ Some tests failed!"
     exit 1
 fi
-
-echo ""
-echo "================================"
-echo "        TESTS COMPLETE"
-echo "================================"
