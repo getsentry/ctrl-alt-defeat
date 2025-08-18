@@ -18,6 +18,7 @@ var victory: bool = false
 # Inventory state
 var current_inventory: Dictionary = {}  # Stores placed items and servers
 var server_containers: Array = []  # Server rack configurations
+var starting_containers: Array = []  # Starting containers for new games
 
 # Shop state
 var current_shop: Array = []
@@ -49,6 +50,7 @@ func start_new_game():
 	victory = false
 	current_inventory.clear()
 	server_containers.clear()
+	starting_containers.clear()
 	current_shop.clear()
 	shop_rerolls = 0
 	last_battle_result.clear()
