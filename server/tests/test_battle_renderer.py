@@ -16,7 +16,7 @@ from .test_utils import get_test_containers
 class TestBattleRenderer:
     """Test ASCII battle rendering functionality"""
 
-    def test_render_simple_battle(self):
+    def test_render_simple_battle_with_mock_input(self):
         """Test rendering a simple battle"""
         # Create test items
         p1_items = [
@@ -93,9 +93,32 @@ class TestBattleRenderer:
         # Create renderer
         renderer = ASCIIBattleRenderer()
 
-        # Test that rendering doesn't crash (can't test visual output easily)
-        # In real usage, this would display the battle
-        # renderer.render_battle(result, p1_items, p2_items, real_time=False)
+        # Test that rendering doesn't crash
+        # Mock input to avoid hanging in step-by-step mode
+        import io
+        import sys
+        import unittest.mock
+
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+
+        with unittest.mock.patch("builtins.input", return_value="q"):
+            renderer.render_battle(
+                result,
+                p1_items,
+                p2_items,
+                real_time=False,  # Step mode
+                p1_containers=p1_containers,
+                p2_containers=p2_containers,
+            )
+
+        output = sys.stdout.getvalue()
+        sys.stdout = old_stdout
+
+        # Verify output contains expected elements
+        assert "BATTLE REPLAY" in output
+        assert "Player 1:" in output
+        assert "Player 2:" in output
 
         # Just verify the renderer can process actions
         state = BattleState(

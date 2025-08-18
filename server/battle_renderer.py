@@ -549,19 +549,19 @@ if __name__ == "__main__":
 
     # Create containers for both players
     p1_container = ServerContainer(
-        spec=containers["mini_rack"]["spec"],
+        spec=containers["standard_vm"]["spec"],
         position=(0, 0),
         uid="p1_rack",
-        internal_grid_size=containers["mini_rack"]["internal_size"],
-        shape=containers["mini_rack"]["external_shape"],
+        internal_grid_size=containers["standard_vm"]["internal_size"],
+        shape=containers["standard_vm"]["external_shape"],
     )
 
     p2_container = ServerContainer(
-        spec=containers["mini_rack"]["spec"],
+        spec=containers["standard_vm"]["spec"],
         position=(4, 0),
         uid="p2_rack",
-        internal_grid_size=containers["mini_rack"]["internal_size"],
-        shape=containers["mini_rack"]["external_shape"],
+        internal_grid_size=containers["standard_vm"]["internal_size"],
+        shape=containers["standard_vm"]["external_shape"],
     )
 
     # Create simple test items - placed ON the containers
@@ -613,7 +613,6 @@ if __name__ == "__main__":
         p1_items,
         p2_items,
         round_number=1,
-        validate_placement=True,  # Enable validation
         p1_containers=[p1_container],
         p2_containers=[p2_container],
     )

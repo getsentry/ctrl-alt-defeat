@@ -1,7 +1,7 @@
 extends Control
 
-# Game state
-var current_gold: int = 50
+# Game state (now pulled from GameStateManager)
+var current_gold: int = 10
 var current_round: int = 1
 var current_health: int = 100
 
@@ -156,10 +156,21 @@ func _ready():
 		DisplayServer.window_set_size(Vector2i(1600, 900))
 		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))  # Center better
 
+	# Load game state from GameStateManager
+	current_gold = GameStateManager.gold
+	current_round = GameStateManager.current_round
+	current_health = GameStateManager.player_health
+
+	# Load saved inventory if exists
+	var saved_inventory = GameStateManager.get_inventory_state()
+	if saved_inventory.has("servers") and saved_inventory.servers.size() > 0:
+		# TODO: Load saved inventory state
+		pass
+
 	_initialize_grids()
 	_setup_ui()
 	if not hide_shop:
-		_generate_shop()
+		_load_shop_from_state()
 
 func configure(settings: Dictionary):
 	read_only_mode = settings.get("read_only", false)
@@ -390,10 +401,11 @@ func _create_controls():
 			add_child(refresh_btn)
 
 		var battle_btn = Button.new()
-		battle_btn.text = "Battle"
-		battle_btn.position = Vector2(1100, 600)
-		battle_btn.size = Vector2(100, 30)
-		battle_btn.pressed.connect(_on_start_battle)
+		battle_btn.text = "Ready for Battle!"
+		battle_btn.position = Vector2(1050, 600)
+		battle_btn.size = Vector2(150, 40)
+		battle_btn.add_theme_font_size_override("font_size", 16)
+		battle_btn.pressed.connect(_on_ready_for_battle)
 		add_child(battle_btn)
 
 	if not read_only_mode and not hide_shop:
@@ -403,6 +415,75 @@ func _create_controls():
 		help.add_theme_font_size_override("font_size", 12)
 		help.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
 		add_child(help)
+
+func _load_shop_from_state():
+	# Load shop from GameStateManager
+	if GameStateManager.current_shop.size() > 0:
+		_display_shop_items(GameStateManager.current_shop)
+	else:
+		_generate_shop()
+
+func _display_shop_items(shop_data: Array):
+	# Clear existing shop
+	for child in shop_container.get_children():
+		child.queue_free()
+	shop_items.clear()
+
+	# Display shop items from server data
+	for i in range(shop_data.size()):
+		if shop_data[i] == null:
+			continue  # Empty slot
+
+		var item_data = shop_data[i]
+		var shop_item = _create_shop_item_from_data(item_data)
+		shop_item.position = Vector2(10, 10 + i * 85)
+		shop_container.add_child(shop_item)
+		shop_items.append(shop_item)
+
+func _create_shop_item_from_data(data: Dictionary) -> Control:
+	var container = Control.new()
+	container.custom_minimum_size = Vector2(150, 75)
+
+	# Item visual
+	var item_visual = ColorRect.new()
+	item_visual.size = Vector2(40, 40)
+	item_visual.position = Vector2(5, 5)
+	item_visual.color = _get_color_for_category(data.get("category", "problem"))
+	container.add_child(item_visual)
+
+	# Name label
+	var name_label = Label.new()
+	name_label.text = data.get("name", "Unknown")
+	name_label.position = Vector2(50, 5)
+	name_label.add_theme_font_size_override("font_size", 12)
+	container.add_child(name_label)
+
+	# Cost label
+	var cost_label = Label.new()
+	cost_label.text = "%dg" % data.get("cost", 5)
+	cost_label.position = Vector2(50, 25)
+	cost_label.add_theme_font_size_override("font_size", 14)
+	cost_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	container.add_child(cost_label)
+
+	# Store data for purchasing
+	container.set_meta("item_data", data)
+	container.set_meta("cost", data.get("cost", 5))
+
+	return container
+
+func _get_color_for_category(category: String) -> Color:
+	match category:
+		"problem":
+			return Color(0.9, 0.3, 0.3)
+		"defense":
+			return Color(0.3, 0.6, 0.9)
+		"infrastructure":
+			return Color(0.3, 0.9, 0.6)
+		"consumable":
+			return Color(0.9, 0.6, 0.3)
+		_:
+			return Color(0.5, 0.5, 0.5)
 
 func _generate_shop():
 	for child in shop_container.get_children():
@@ -987,7 +1068,12 @@ func _update_hover_preview():
 		hover_preview.visible = false
 
 func _get_stats_text() -> String:
-	return "Gold: %d | Round: %d | Health: %d" % [current_gold, current_round, current_health]
+	return "Gold: %d | Round: %d | Health: %d/%d" % [
+		GameStateManager.gold,
+		GameStateManager.current_round,
+		GameStateManager.player_health,
+		GameStateManager.max_player_health
+	]
 
 func _update_stats():
 	stats_label.text = _get_stats_text()
@@ -1036,12 +1122,18 @@ func _try_move_server(server: Control) -> bool:
 
 	return false
 
-func _on_start_battle():
+func _on_ready_for_battle():
 	# Save current inventory state
 	var inventory_state = get_inventory_state()
+	GameStateManager.save_inventory_state(items, servers)
 
-	# Store in a global or pass to battle scene
-	# For now, we'll just switch to battle scene
+	# Submit battle to server
+	var battle_result = await BattleServerAPI.submit_battle(inventory_state)
+
+	# Update game state with results
+	GameStateManager.update_after_battle(battle_result)
+
+	# Go to battle visualization screen
 	get_tree().change_scene_to_file("res://scenes/BattleScreen.tscn")
 
 	# Old simulation code (can be removed once battle is fully integrated)

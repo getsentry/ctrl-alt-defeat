@@ -1,11 +1,15 @@
 extends Control
 
+# Event processor for battle replay
+var event_processor: BattleEventProcessor
+
 # Battle state
 var player_data: Dictionary = {}
 var enemy_data: Dictionary = {}
 var battle_log: Array = []
 var current_time: float = 0.0
 var battle_active: bool = false
+var max_battle_duration: float = 20.0  # 20 second battles max
 
 # UI References
 var player_inventory: Control
@@ -31,8 +35,23 @@ var attack_particles: Array = []
 
 func _ready():
 	print("BattleScreen starting...")
+
+	# Create event processor
+	event_processor = BattleEventProcessor.new()
+	add_child(event_processor)
+	_connect_event_signals()
+
 	_setup_ui()
-	_load_mock_battle_data()
+
+	# Load battle data from GameStateManager
+	if GameStateManager.last_battle_events.size() > 0:
+		_load_battle_from_state()
+	else:
+		_load_mock_battle_data()
+
+	# Start battle playback automatically
+	await get_tree().create_timer(0.5).timeout
+	_start_battle_playback()
 
 func _setup_ui():
 	# Background
@@ -335,26 +354,67 @@ func _update_stats_display():
 
 	# Buffs removed from display to save space
 
+func _connect_event_signals():
+	# Connect all event processor signals
+	event_processor.battle_started.connect(_on_battle_started)
+	event_processor.damage_dealt.connect(_on_damage_dealt)
+	event_processor.healing_done.connect(_on_healing_done)
+	event_processor.block_activated.connect(_on_block_activated)
+	event_processor.item_activated.connect(_on_item_activated)
+	event_processor.player_died.connect(_on_player_died)
+	event_processor.battle_ended.connect(_on_battle_ended)
+
+func _load_battle_from_state():
+	# Load battle data from GameStateManager
+	var battle_result = GameStateManager.last_battle_result
+	event_processor.load_battle_events(battle_result)
+
+	# Load inventories
+	var saved_inventory = GameStateManager.get_inventory_state()
+	if saved_inventory.has("items"):
+		player_inventory.load_inventory_state(saved_inventory)
+
+	# TODO: Load enemy inventory from server data
+	_load_mock_enemy_inventory()
+
+func _start_battle_playback():
+	print("Starting battle playback...")
+	battle_active = true
+	current_time = 0.0
+
+	# Initialize player stats
+	var quota = GameStateManager.get_round_quota()
+	player_data = {
+		"health": quota,
+		"max_health": quota,
+		"stamina": 10.0,
+		"max_stamina": 10.0,
+		"buffs": []
+	}
+
+	enemy_data = {
+		"health": quota,
+		"max_health": quota,
+		"stamina": 10.0,
+		"max_stamina": 10.0,
+		"buffs": []
+	}
+
+	_update_stats_display()
+
+	# Start event playback
+	event_processor.start_playback(GameStateManager.battle_speed)
+
 func _process(delta):
-	if battle_active:
-		current_time += delta
-		time_label.text = "%.1fs" % current_time
+	if battle_active and event_processor.is_playing:
+		current_time = event_processor.get_current_time()
+		time_label.text = "%.1fs / %.1fs" % [current_time, max_battle_duration]
 
-		# Regenerate stamina
-		player_data.stamina = min(player_data.stamina + delta * 2, player_data.max_stamina)
-		enemy_data.stamina = min(enemy_data.stamina + delta * 2, enemy_data.max_stamina)
-
-		# Simulate some attacks for demo
-		if fmod(current_time, 2.5) < delta:
-			_simulate_attack(true)  # Player attacks
-		if fmod(current_time, 3.0) < delta:
-			_simulate_attack(false)  # Enemy attacks
+		# Update progress bar if we add one
+		var progress = event_processor.get_progress()
+		# TODO: Update progress bar
 
 		_update_stats_display()
-
-		# Check for battle end
-		if player_data.health <= 0 or enemy_data.health <= 0 or current_time >= 60:
-			_end_battle()
 
 func _simulate_attack(is_player: bool):
 	if is_player:
@@ -412,4 +472,132 @@ func _end_battle():
 		_add_to_log("[color=yellow]TIME OUT! Battle ended.[/color]")
 
 func _on_back_to_inventory():
+	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")
+
+# Event handler functions for battle events
+func _on_battle_started():
+	_add_to_log("[color=green]Battle Started![/color]")
+
+func _on_damage_dealt(player: int, amount: int, remaining_hp: int):
+	if player == 1:
+		player_data.health = remaining_hp
+		_add_to_log("[color=red]You[/color] take [color=yellow]%d[/color] damage!" % amount)
+	else:
+		enemy_data.health = remaining_hp
+		_add_to_log("[color=aqua]You[/color] deal [color=yellow]%d[/color] damage!" % amount)
+
+	_show_damage_number(player, amount)
+	_update_stats_display()
+
+func _on_healing_done(player: int, amount: int, remaining_hp: int):
+	if player == 1:
+		player_data.health = remaining_hp
+		_add_to_log("[color=aqua]You[/color] heal for [color=green]%d[/color]" % amount)
+	else:
+		enemy_data.health = remaining_hp
+		_add_to_log("[color=red]Enemy[/color] heals for [color=green]%d[/color]" % amount)
+
+	_show_heal_effect(player, amount)
+	_update_stats_display()
+
+func _on_block_activated(player: int, amount: int):
+	var who = "You" if player == 1 else "Enemy"
+	_add_to_log("[color=cyan]%s[/color] blocks [color=yellow]%d[/color] damage!" % [who, amount])
+	_show_block_effect(player)
+
+func _on_item_activated(item_id: String, player: int):
+	# Show item activation visual
+	_show_item_activation(item_id, player)
+
+func _on_player_died(player: int):
+	if player == 1:
+		_add_to_log("[color=red]You have been defeated![/color]")
+	else:
+		_add_to_log("[color=green]Enemy destroyed![/color]")
+
+func _on_battle_ended(winner: int):
+	battle_active = false
+
+	if winner == 1:
+		_add_to_log("[color=green]VICTORY![/color]")
+	else:
+		_add_to_log("[color=red]DEFEAT![/color]")
+
+	# Wait a moment then go to post-battle screen
+	await get_tree().create_timer(2.0).timeout
+	_go_to_post_battle()
+
+func _load_mock_enemy_inventory():
+	# Create mock enemy inventory
+	var enemy_inventory_data = {
+		"servers": [
+			{"data": {"name": "Tower 1x4", "pattern": [[1],[1],[1],[1]], "color": Color(0.35, 0.45, 0.4, 0.3)}, "pos": Vector2i(3, 1)},
+		],
+		"items": [
+			{"data": {"name": "CPU", "width": 1, "height": 1, "color": Color(0.9, 0.3, 0.3)}, "grid_pos": Vector2i(3, 1)},
+		]
+	}
+	enemy_inventory.load_inventory_state(enemy_inventory_data)
+
+func _show_damage_number(player: int, amount: int):
+	var label = Label.new()
+	label.text = "-%d" % amount
+	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+
+	if player == 1:
+		label.position = Vector2(590, 500)
+	else:
+		label.position = Vector2(990, 500)
+
+	add_child(label)
+
+	# Animate floating up and fading
+	var tween = create_tween()
+	tween.parallel().tween_property(label, "position:y", label.position.y - 50, 1.0)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.0)
+	tween.tween_callback(label.queue_free)
+
+func _show_heal_effect(player: int, amount: int):
+	var label = Label.new()
+	label.text = "+%d" % amount
+	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
+
+	if player == 1:
+		label.position = Vector2(590, 500)
+	else:
+		label.position = Vector2(990, 500)
+
+	add_child(label)
+
+	var tween = create_tween()
+	tween.parallel().tween_property(label, "position:y", label.position.y - 50, 1.0)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.0)
+	tween.tween_callback(label.queue_free)
+
+func _show_block_effect(player: int):
+	var effect = ColorRect.new()
+	effect.size = Vector2(60, 60)
+	effect.color = Color(0.3, 0.6, 1.0, 0.6)
+
+	if player == 1:
+		effect.position = Vector2(570, 480)
+	else:
+		effect.position = Vector2(970, 480)
+
+	add_child(effect)
+
+	var tween = create_tween()
+	tween.tween_property(effect, "scale", Vector2(1.5, 1.5), 0.3)
+	tween.tween_property(effect, "modulate:a", 0.0, 0.2)
+	tween.tween_callback(effect.queue_free)
+
+func _show_item_activation(item_id: String, player: int):
+	# Visual feedback for item activation
+	pass
+
+func _go_to_post_battle():
+	# Go to post-battle results screen
+	# For now, just go back to shop
 	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")

@@ -12,9 +12,14 @@ config_version=5
 
 config/name="Sentry Autobattler"
 config/description="Backpack Battles-style autobattler with Sentry product themes"
-run/main_scene="res://scenes/UnifiedGridUI.tscn"
+run/main_scene="res://scenes/MainMenu.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[autoload]
+
+GameStateManager="*res://scripts/GameStateManager.gd"
+BattleServerAPI="*res://scripts/BattleServerAPI.gd"
 
 [display]
 
