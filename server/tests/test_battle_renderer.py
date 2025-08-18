@@ -10,7 +10,7 @@ from battle_engine import BattleSimulator, PlacedItem
 from battle_renderer import ASCIIBattleRenderer, BattleState
 from item_effects import AttackEffect, HealEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
-from test_utils import get_test_containers
+from .test_utils import get_test_containers
 
 
 class TestBattleRenderer:
@@ -54,7 +54,7 @@ class TestBattleRenderer:
                         )
                     ],
                 ),
-                position=(0, 0),
+                position=(4, 0),  # P2 container position
                 uid="p2_shield",
             ),
             PlacedItem(
@@ -70,7 +70,7 @@ class TestBattleRenderer:
                         )
                     ],
                 ),
-                position=(1, 0),
+                position=(5, 0),  # P2 container position
                 uid="p2_heal",
             ),
         ]
@@ -165,7 +165,7 @@ class TestBattleRenderer:
                         )
                     ],
                 ),
-                position=(0, 0),
+                position=(4, 0),  # P2 container position
                 uid="item2",
             )
         ]
@@ -361,7 +361,7 @@ def demo_battle_replay():
     # Run the battle
     print("\nSimulating battle...")
     sim = BattleSimulator(seed=54321)
-    from test_utils import get_test_containers
+    from .test_utils import get_test_containers
 
     p1_containers, p2_containers = get_test_containers()
     result = sim.simulate_battle(

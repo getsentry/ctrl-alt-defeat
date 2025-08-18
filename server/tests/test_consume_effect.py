@@ -15,7 +15,7 @@ from item_effects import (
     StatModEffect,
     TimerTrigger,
 )
-from test_utils import get_test_containers
+from .test_utils import get_test_containers
 
 
 class TestConsumeEffect:
@@ -62,7 +62,7 @@ class TestConsumeEffect:
                     )
                 ],
             ),
-            position=(0, 0),
+            position=(4, 0),  # P2 container position
             uid="attacker1",
         )
 
@@ -214,7 +214,7 @@ class TestConsumeEffect:
         # Run battle
         p1_containers, p2_containers = get_test_containers()
         # Need a larger container for 3 items
-        from test_utils import get_large_test_containers
+        from .test_utils import get_large_test_containers
 
         p1_containers, p2_containers = get_large_test_containers()
         result = sim.simulate_battle(
@@ -291,7 +291,7 @@ class TestConsumeEffect:
                     )
                 ],
             ),
-            position=(0, 0),
+            position=(4, 0),  # P2 container position
             uid="attacker1",
         )
 

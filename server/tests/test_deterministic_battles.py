@@ -9,7 +9,7 @@ import pytest
 from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
-from test_utils import get_test_containers
+from .test_utils import get_test_containers
 
 
 class TestDeterministicBattles:
@@ -62,7 +62,7 @@ class TestDeterministicBattles:
                     )
                 ],
             ),
-            position=(0, 0),
+            position=(4, 0),  # P2 container position
             uid="defender1",
         )
 
@@ -192,7 +192,7 @@ class TestDeterministicBattles:
                     )
                 ],
             ),
-            position=(0, 0),
+            position=(4, 0),  # P2 container position
             uid="attacker1",
         )
 
@@ -302,7 +302,7 @@ class TestDeterministicBattles:
                         )
                     ],
                 ),
-                position=(0, 0),
+                position=(4, 0),  # P2 container position
                 uid="p2_1",
             ),
             PlacedItem(
@@ -325,7 +325,7 @@ class TestDeterministicBattles:
                         )
                     ],
                 ),
-                position=(1, 0),
+                position=(5, 0),  # P2 container position
                 uid="p2_2",
             ),
         ]

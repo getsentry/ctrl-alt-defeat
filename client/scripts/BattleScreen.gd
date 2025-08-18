@@ -20,13 +20,11 @@ var player_health_bar: ProgressBar
 var player_stamina_bar: ProgressBar
 var player_health_label: Label
 var player_stamina_label: Label
-var player_buffs_container: HBoxContainer
 
 var enemy_health_bar: ProgressBar
 var enemy_stamina_bar: ProgressBar
 var enemy_health_label: Label
 var enemy_stamina_label: Label
-var enemy_buffs_container: HBoxContainer
 
 # Battle effects
 var attack_particles: Array = []
@@ -80,8 +78,8 @@ func _setup_ui():
 func _create_player_inventory():
 	var inventory_scene = preload("res://scenes/UnifiedGridUI.tscn")
 	player_inventory = inventory_scene.instantiate()
-	player_inventory.position = Vector2(10, 80)
-	player_inventory.scale = Vector2(0.6, 0.6)  # Scale down for battle view
+	player_inventory.position = Vector2(50, 100)
+	player_inventory.scale = Vector2(0.5, 0.5)  # Scale down for battle view
 
 	# Configure as read-only
 	player_inventory.configure({
@@ -95,7 +93,7 @@ func _create_player_inventory():
 	# Add label
 	var label = Label.new()
 	label.text = "Your Forces"
-	label.position = Vector2(150, 60)
+	label.position = Vector2(200, 80)
 	label.add_theme_font_size_override("font_size", 16)
 	label.add_theme_color_override("font_color", Color(0.3, 0.8, 1.0))
 	add_child(label)
@@ -103,8 +101,8 @@ func _create_player_inventory():
 func _create_enemy_inventory():
 	var inventory_scene = preload("res://scenes/UnifiedGridUI.tscn")
 	enemy_inventory = inventory_scene.instantiate()
-	enemy_inventory.position = Vector2(780, 80)
-	enemy_inventory.scale = Vector2(0.6, 0.6)  # Scale down for battle view
+	enemy_inventory.position = Vector2(700, 100)  # Position on right side
+	enemy_inventory.scale = Vector2(0.5, 0.5)  # Scale down for battle view
 
 	# Configure as read-only
 	enemy_inventory.configure({
@@ -113,24 +111,21 @@ func _create_enemy_inventory():
 		"hide_storage": true
 	})
 
-	# Mirror for enemy side
-	enemy_inventory.scale.x *= -1
-	enemy_inventory.position.x += 350  # Adjust position for mirroring
-
+	# Don't mirror the whole inventory - it inverts text
 	add_child(enemy_inventory)
 
 	# Add label
 	var label = Label.new()
 	label.text = "Enemy Forces"
-	label.position = Vector2(920, 60)
+	label.position = Vector2(850, 80)
 	label.add_theme_font_size_override("font_size", 16)
 	label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 	add_child(label)
 
 func _create_player_stats():
 	player_stats_panel = Panel.new()
-	player_stats_panel.position = Vector2(440, 120)
-	player_stats_panel.size = Vector2(180, 150)
+	player_stats_panel.position = Vector2(400, 450)  # Bottom center-left
+	player_stats_panel.size = Vector2(180, 120)
 
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.1, 0.15, 0.2, 0.9)
@@ -188,21 +183,12 @@ func _create_player_stats():
 	player_stamina_label.add_theme_font_size_override("font_size", 12)
 	player_stats_panel.add_child(player_stamina_label)
 
-	# Buffs
-	var buffs_title = Label.new()
-	buffs_title.text = "Buffs:"
-	buffs_title.position = Vector2(10, 120)
-	buffs_title.add_theme_font_size_override("font_size", 12)
-	player_stats_panel.add_child(buffs_title)
-
-	player_buffs_container = HBoxContainer.new()
-	player_buffs_container.position = Vector2(50, 120)
-	player_stats_panel.add_child(player_buffs_container)
+	# Buffs - removed to save space in smaller panel
 
 func _create_enemy_stats():
 	enemy_stats_panel = Panel.new()
-	enemy_stats_panel.position = Vector2(660, 120)
-	enemy_stats_panel.size = Vector2(180, 150)
+	enemy_stats_panel.position = Vector2(600, 450)  # Bottom center-right
+	enemy_stats_panel.size = Vector2(180, 120)
 
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.2, 0.1, 0.1, 0.9)
@@ -260,21 +246,12 @@ func _create_enemy_stats():
 	enemy_stamina_label.add_theme_font_size_override("font_size", 12)
 	enemy_stats_panel.add_child(enemy_stamina_label)
 
-	# Buffs
-	var buffs_title = Label.new()
-	buffs_title.text = "Buffs:"
-	buffs_title.position = Vector2(10, 120)
-	buffs_title.add_theme_font_size_override("font_size", 12)
-	enemy_stats_panel.add_child(buffs_title)
-
-	enemy_buffs_container = HBoxContainer.new()
-	enemy_buffs_container.position = Vector2(50, 120)
-	enemy_stats_panel.add_child(enemy_buffs_container)
+	# Buffs - removed to save space in smaller panel
 
 func _create_battle_log():
 	var log_panel = Panel.new()
-	log_panel.position = Vector2(440, 300)
-	log_panel.size = Vector2(400, 200)
+	log_panel.position = Vector2(100, 600)  # Bottom of screen
+	log_panel.size = Vector2(1080, 100)  # Wide and short
 
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.05, 0.05, 0.08, 0.9)
@@ -291,24 +268,25 @@ func _create_battle_log():
 	log_panel.add_child(log_title)
 
 	battle_log_container = RichTextLabel.new()
-	battle_log_container.position = Vector2(10, 30)
-	battle_log_container.size = Vector2(380, 160)
+	battle_log_container.position = Vector2(10, 25)
+	battle_log_container.size = Vector2(1060, 65)
 	battle_log_container.bbcode_enabled = true
 	battle_log_container.scroll_following = true
+	battle_log_container.add_theme_font_size_override("normal_font_size", 11)
 	log_panel.add_child(battle_log_container)
 
 func _create_control_buttons():
 	var start_btn = Button.new()
 	start_btn.text = "Start Battle"
-	start_btn.position = Vector2(500, 520)
+	start_btn.position = Vector2(480, 580)
 	start_btn.size = Vector2(120, 30)
 	start_btn.pressed.connect(_on_start_battle)
 	add_child(start_btn)
 
 	var back_btn = Button.new()
 	back_btn.text = "Back to Inventory"
-	back_btn.position = Vector2(660, 520)
-	back_btn.size = Vector2(120, 30)
+	back_btn.position = Vector2(620, 580)
+	back_btn.size = Vector2(140, 30)
 	back_btn.pressed.connect(_on_back_to_inventory)
 	add_child(back_btn)
 
@@ -376,22 +354,7 @@ func _update_stats_display():
 	enemy_stamina_bar.value = (enemy_data.stamina / enemy_data.max_stamina) * 100
 	enemy_stamina_label.text = "%.1f/%.1f" % [enemy_data.stamina, enemy_data.max_stamina]
 
-	# Update buffs
-	for child in player_buffs_container.get_children():
-		child.queue_free()
-	for buff in player_data.buffs:
-		var buff_label = Label.new()
-		buff_label.text = buff
-		buff_label.add_theme_font_size_override("font_size", 10)
-		player_buffs_container.add_child(buff_label)
-
-	for child in enemy_buffs_container.get_children():
-		child.queue_free()
-	for buff in enemy_data.buffs:
-		var buff_label = Label.new()
-		buff_label.text = buff
-		buff_label.add_theme_font_size_override("font_size", 10)
-		enemy_buffs_container.add_child(buff_label)
+	# Buffs removed from display to save space
 
 func _process(delta):
 	if battle_active:
@@ -437,15 +400,15 @@ func _show_attack_animation(from_player: bool):
 	effect.color = Color(1.0, 1.0, 0.0, 0.8) if from_player else Color(1.0, 0.3, 0.3, 0.8)
 
 	if from_player:
-		effect.position = Vector2(420, 180)
+		effect.position = Vector2(350, 300)  # Adjusted for new layout
 	else:
-		effect.position = Vector2(840, 180)
+		effect.position = Vector2(930, 300)  # Adjusted for new layout
 
 	add_child(effect)
 
 	# Animate the effect
 	var tween = create_tween()
-	var target_pos = Vector2(640, 180)
+	var target_pos = Vector2(640, 300)  # Center between inventories
 	tween.tween_property(effect, "position", target_pos, 0.3)
 	tween.tween_property(effect, "modulate:a", 0.0, 0.2)
 	tween.tween_callback(effect.queue_free)
