@@ -76,16 +76,23 @@ class InventoryGrid:
     def get_item_at(self, position: Tuple[int, int]) -> Optional[Dict]:
         """Get the item at a specific position"""
         for item in self.items:
+            # Convert position to tuple if it's a list (from database)
+            item_pos = item.get("position")
+            if item_pos is None:
+                continue
+            if isinstance(item_pos, list):
+                item_pos = tuple(item_pos)
+
             # Check if this is a multi-square item
             if "shape" in item:
                 # Multi-square item
-                base_x, base_y = item["position"]
+                base_x, base_y = item_pos
                 for dx, dy in item["shape"]:
                     if (base_x + dx, base_y + dy) == position:
                         return item
             else:
                 # Single square item
-                if item["position"] == position:
+                if item_pos == position:
                     return item
         return None
 
@@ -113,8 +120,12 @@ class InventoryGrid:
                     f"Position {square} is not on a server container"
                 )
 
-            if self.get_item_at(square) is not None:
-                raise InvalidPlacementError(f"Position {square} is already occupied")
+            existing_item = self.get_item_at(square)
+            if existing_item is not None:
+                item_id = existing_item.get("id", "unknown")
+                raise InvalidPlacementError(
+                    f"Position {square} is already occupied by item {item_id}"
+                )
 
         # Place the item
         item["position"] = position

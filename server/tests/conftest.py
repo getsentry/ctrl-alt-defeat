@@ -16,6 +16,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Set TEST_MODE environment variable for all tests
 os.environ["TEST_MODE"] = "true"
 
+# Skip migration checks in tests for performance
+os.environ["SKIP_MIGRATION_CHECK"] = "true"
+
 # Configure test database if not already set
 # Use a separate database specifically for server tests
 if "DB_NAME" not in os.environ:

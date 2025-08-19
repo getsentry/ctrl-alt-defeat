@@ -1,21 +1,24 @@
 extends GutTest
 # UI INTEGRATION TESTS - Testing by driving the actual UI
 # These tests simulate real user interactions through the UI
-# Now using real server instead of mocks
+# Now using real server with transaction-based test isolation
 
-var ResetTestDB = preload("res://test/integration/reset_test_db.gd")
+var TestSessionManager = preload("res://test/integration/test_session_manager.gd")
 
 func before_all():
-	# Verify server is in test mode once at start
-	var is_test_mode = await ResetTestDB.ensure_test_mode()
+	# Verify server is in test mode and start test session
+	var is_test_mode = await TestSessionManager.ensure_test_mode()
 	if not is_test_mode:
-		push_warning("Server may not be in TEST_MODE - database reset may not work")
+		push_warning("Server may not be in TEST_MODE - test isolation may not work")
+
+	# Start a test session for transaction isolation (10x faster than reset)
+	var session_started = await TestSessionManager.start_test_session()
+	if not session_started:
+		push_error("Failed to start test session - tests may interfere with each other")
 
 func before_each():
-	# Reset database before each test to ensure clean state
-	var reset_success = await ResetTestDB.reset_database()
-	if not reset_success:
-		push_warning("Failed to reset database - test may have stale data")
+	# No need to reset between tests - all within same transaction!
+	# This makes tests run much faster
 	await get_tree().process_frame
 
 func after_each():
@@ -23,6 +26,14 @@ func after_each():
 	if get_tree().current_scene:
 		get_tree().current_scene.queue_free()
 		await get_tree().process_frame
+
+func after_all():
+	# End test session and rollback all changes (fast!)
+	var session_ended = await TestSessionManager.end_test_session()
+	if session_ended:
+		print("Test session completed - all database changes rolled back")
+	else:
+		push_warning("Failed to end test session properly")
 
 func test_full_user_journey_through_ui():
 	"""Test complete user journey from launch through shopping, battling, and advancing rounds"""

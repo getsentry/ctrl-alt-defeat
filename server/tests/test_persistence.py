@@ -2,7 +2,7 @@
 Test database persistence for game sessions
 """
 
-import os
+import random
 
 import pytest
 import pytest_asyncio
@@ -20,8 +20,7 @@ class TestSessionPersistence:
         await manager.initialize()
         yield manager
         # Cleanup after test
-        if not manager.use_fallback:
-            await db_manager.close()
+        await db_manager.close()
 
     @pytest.mark.asyncio
     async def test_create_session(self, session_manager_instance):
@@ -114,13 +113,18 @@ class TestSessionPersistence:
         """Test listing all sessions"""
         manager = session_manager_instance
 
+        # Use unique IDs to avoid conflicts from previous runs
+        import time
+
+        suffix = str(int(time.time() * 1000))[-6:]
+
         # Create multiple sessions
-        player_ids = [f"test_list_{i}" for i in range(3)]
+        player_ids = [f"test_list_{i}_{suffix}" for i in range(3)]
         for pid in player_ids:
             await manager.create_session(pid)
 
         # List sessions
-        all_sessions = await manager.list_sessions()
+        all_sessions = await manager.list_active_sessions()
 
         # Check all test sessions are in the list
         for pid in player_ids:
@@ -134,7 +138,10 @@ class TestSessionPersistence:
     async def test_session_with_complex_data(self, session_manager_instance):
         """Test session with inventory and shop data"""
         manager = session_manager_instance
-        player_id = "test_complex"
+        import time
+
+        suffix = str(int(time.time() * 1000))[-6:]
+        player_id = f"test_complex_{suffix}"
 
         # Create session with complex data
         session = await manager.create_session(player_id)
@@ -171,7 +178,9 @@ class TestSessionPersistence:
     async def test_battle_history(self, session_manager_instance):
         """Test saving and retrieving battle history"""
         manager = session_manager_instance
-        player_id = "test_battles"
+        player_id = "test_battles_" + str(
+            random.randint(1000, 9999)
+        )  # Unique ID to avoid conflicts
 
         # Create session
         await manager.create_session(player_id)
@@ -189,43 +198,22 @@ class TestSessionPersistence:
         # Get history
         history = await manager.get_battle_history(player_id, limit=5)
 
-        if not manager.use_fallback:
-            assert len(history) == 3
-            # Should be sorted by most recent first
-            assert history[0]["round_number"] == 3
+        assert len(history) == 3
+        # Should be sorted by most recent first
+        assert history[0]["round_number"] == 3
 
-        # Cleanup
+        # Cleanup - delete session and battle history
         await manager.delete_session(player_id)
+        # Also clean up battle history
+        from database import db_manager
+        from models import BattleHistoryDB
+        from sqlalchemy import delete
 
-    @pytest.mark.asyncio
-    async def test_fallback_mode(self):
-        """Test that fallback to in-memory storage works"""
-        # Create manager with intentionally bad database URL
-        old_url = os.environ.get("DATABASE_URL")
-        os.environ["DATABASE_URL"] = "postgresql://bad:bad@nohost:5432/nodb"
-
-        manager = SessionManager()
-        await manager.initialize()
-
-        # Should be using fallback
-        assert manager.use_fallback
-
-        # Test basic operations still work
-        player_id = "test_fallback"
-        session = await manager.create_session(player_id)
-        assert session is not None
-
-        retrieved = await manager.get_session(player_id)
-        assert retrieved is not None
-
-        deleted = await manager.delete_session(player_id)
-        assert deleted
-
-        # Restore environment
-        if old_url:
-            os.environ["DATABASE_URL"] = old_url
-        else:
-            del os.environ["DATABASE_URL"]
+        async with db_manager.get_session() as db:
+            await db.execute(
+                delete(BattleHistoryDB).where(BattleHistoryDB.player1_id == player_id)
+            )
+            await db.commit()
 
 
 if __name__ == "__main__":

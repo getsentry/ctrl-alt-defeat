@@ -64,7 +64,7 @@ class TestBattleWithSession:
             "player_id": player_id,
             "round_number": 1,
             "seed": 42,
-            "test_ai_difficulty": "easy",
+            "test_ai_difficulty": 1,  # Easy AI (1)
         }
 
         response = client.post("/battle/simulate", json=battle_request)
@@ -118,7 +118,7 @@ class TestBattleWithSession:
             "player_id": player_id,
             "round_number": 1,
             "seed": 42,
-            "test_ai_difficulty": "easy",
+            "test_ai_difficulty": 1,  # Easy AI (1)
         }
 
         response = client.post("/battle/simulate", json=battle_request)

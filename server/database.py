@@ -26,8 +26,9 @@ def get_database_url(
         PostgreSQL connection URL
     """
     # Start with environment variable or default
+    # Use postgres user with no password for local Docker PostgreSQL
     base_url = os.environ.get(
-        "DATABASE_URL", "postgresql://user:password@localhost:5432/autobattler"
+        "DATABASE_URL", "postgresql://postgres:@localhost:5432/autobattler"
     )
 
     # If no overrides, return base URL
@@ -100,15 +101,34 @@ class DatabaseManager:
         if self._initialized:
             return
 
+        # First, try to create the database if it doesn't exist
+        await self._ensure_database_exists()
+
         try:
-            # Create async engine with connection pooling
+            # Create async engine with connection pooling and fast timeout
+            # Use NullPool for testing to avoid connection pool issues with TestClient
+            import os
+
+            from sqlalchemy.pool import AsyncAdaptedQueuePool, NullPool
+
+            poolclass = (
+                NullPool
+                if os.environ.get("TEST_MODE") == "true"
+                else AsyncAdaptedQueuePool
+            )
+
             self.engine = create_async_engine(
                 self.async_database_url,
                 echo=False,  # Set to True for SQL logging
-                pool_size=5,
-                max_overflow=10,
-                pool_pre_ping=True,  # Verify connections before using
-                pool_recycle=3600,  # Recycle connections after 1 hour
+                poolclass=poolclass,
+                pool_pre_ping=True
+                if poolclass == AsyncAdaptedQueuePool
+                else False,  # Verify connections before using
+                connect_args={
+                    "server_settings": {"jit": "off"},
+                    "timeout": 2,  # Connection timeout in seconds
+                    "command_timeout": 5,  # Command timeout in seconds
+                },
             )
 
             # Create async session factory first (needed for migrations)
@@ -173,8 +193,74 @@ class DatabaseManager:
             except Exception:
                 await session.rollback()
                 raise
-            finally:
-                await session.close()
+
+    async def _ensure_database_exists(self):
+        """Create the database if it doesn't exist"""
+        from urllib.parse import urlparse
+
+        import asyncpg
+
+        parsed = urlparse(self.database_url)
+        db_name = parsed.path.lstrip("/")
+
+        # Connect to postgres database to create our target database
+        admin_url = self.database_url.replace(f"/{db_name}", "/postgres")
+        if admin_url.startswith("postgresql://"):
+            admin_url = admin_url.replace("postgresql://", "")
+            # Parse connection details
+            if "@" in admin_url:
+                auth, netloc = admin_url.split("@", 1)
+                if ":" in auth:
+                    user, password = auth.split(":", 1)
+                else:
+                    user = auth
+                    password = ""
+            else:
+                user = "postgres"
+                password = ""
+                netloc = admin_url
+
+            if "/" in netloc:
+                host_port, _ = netloc.split("/", 1)
+            else:
+                host_port = netloc
+
+            if ":" in host_port:
+                host, port = host_port.split(":", 1)
+                port = int(port)
+            else:
+                host = host_port
+                port = 5432
+
+            try:
+                # Try to create the database
+                conn = await asyncpg.connect(
+                    host=host,
+                    port=port,
+                    user=user,
+                    password=password if password else None,
+                    database="postgres",
+                    timeout=2,
+                )
+
+                # Check if database exists
+                exists = await conn.fetchval(
+                    "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)",
+                    db_name,
+                )
+
+                if not exists:
+                    # Create the database
+                    await conn.execute(f'CREATE DATABASE "{db_name}"')
+                    print(f"Created database: {db_name}")
+
+                await conn.close()
+            except asyncpg.DuplicateDatabaseError:
+                # Database already exists, that's fine
+                pass
+            except Exception as e:
+                print(f"Could not ensure database exists: {e}")
+                # Continue anyway - the main connection will fail if there's a real problem
 
     async def health_check(self) -> bool:
         """Check if database is accessible"""
@@ -190,6 +276,10 @@ class DatabaseManager:
         """Check if migrations need to be run and apply them"""
         import os
         import subprocess
+
+        # Skip migration check in tests for performance
+        if os.environ.get("SKIP_MIGRATION_CHECK") == "true":
+            return
 
         # Set environment variables for alembic
         env = os.environ.copy()
