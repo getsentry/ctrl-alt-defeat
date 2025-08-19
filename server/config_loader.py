@@ -35,10 +35,17 @@ class ConfigLoader:
         """Load all configurations"""
         self.load_containers()
         self.load_items()
+        # Add containers to items catalog with special markers
+        for container_id, container_info in self.containers.items():
+            # Add to items with a special marker to indicate it's a container
+            self.items[container_id] = container_info["spec"]
 
     def load_containers(self, filename: str = "containers.json"):
         """Load container configurations from JSON"""
-        filepath = self.data_dir / filename
+        # Look for containers in items directory first, then data directory
+        filepath = self.data_dir / "items" / filename
+        if not filepath.exists():
+            filepath = self.data_dir / filename
         if not filepath.exists():
             print(f"Warning: {filepath} not found")
             return {}
@@ -53,39 +60,37 @@ class ConfigLoader:
         self.containers = containers
         return containers
 
-    def load_items(self, filename: str = "items.json"):
-        """Load item configurations from JSON"""
+    def load_items(self):
+        """Load item configurations from split JSON files"""
         items = {}
 
-        # Try to load from split category files first
+        # Load from split category files in data/items/
         items_dir = self.data_dir / "items"
-        if items_dir.exists() and items_dir.is_dir():
-            for category_file in items_dir.glob("*.json"):
-                try:
-                    with open(category_file, "r") as f:
-                        category_data = json.load(f)
+        if not items_dir.exists() or not items_dir.is_dir():
+            print(f"Warning: Items directory not found at {items_dir}")
+            self.items = items
+            return items
 
-                    # Handle both formats: {"items": {...}} and {"category": "...", "items": {...}}
-                    category_items = category_data.get("items", {})
-                    for item_id, config in category_items.items():
-                        items[item_id] = self._create_item_spec(item_id, config)
+        for category_file in items_dir.glob("*.json"):
+            try:
+                with open(category_file, "r") as f:
+                    category_data = json.load(f)
 
-                    print(
-                        f"Loaded {len(category_items)} items from {category_file.name}"
-                    )
-                except Exception as e:
-                    print(f"Warning: Failed to load {category_file}: {e}")
+                # Skip containers file - handled separately by load_containers
+                if category_file.name == "containers.json":
+                    continue
 
-        # Fallback to single items.json file
+                # Handle both formats: {"items": {...}} and {"category": "...", "items": {...}}
+                category_items = category_data.get("items", {})
+                for item_id, config in category_items.items():
+                    items[item_id] = self._create_item_spec(item_id, config)
+
+                print(f"Loaded {len(category_items)} items from {category_file.name}")
+            except Exception as e:
+                print(f"Warning: Failed to load {category_file}: {e}")
+
         if not items:
-            filepath = self.data_dir / filename
-            if filepath.exists():
-                with open(filepath, "r") as f:
-                    data = json.load(f)
-
-                for category_name, category_items in data.get("items", {}).items():
-                    for item_id, config in category_items.items():
-                        items[item_id] = self._create_item_spec(item_id, config)
+            print("Warning: No items loaded from any files")
 
         self.items = items
         return items
@@ -290,9 +295,9 @@ def create_server_containers_from_config():
 
 
 def create_items_from_config():
-    """Create items from configuration"""
+    """Create items from configuration (includes containers)"""
     if not config_loader.items:
-        config_loader.load_items()
+        config_loader.load_all()  # Load all to include containers
     return config_loader.items
 
 

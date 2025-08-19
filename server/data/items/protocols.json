@@ -1,0 +1,290 @@
+{
+  "category": "protocols",
+  "items": {
+    "api_token": {
+      "name": "API Token",
+      "description": "Every 3 seconds: Deal 3 damage",
+      "category": "protocol",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 3,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 3,
+              "max_damage": 3,
+              "accuracy": 0.90,
+              "crit_chance": 0.1
+            }
+          ]
+        }
+      ]
+    },
+    "bitcoin_wallet": {
+      "name": "Bitcoin Wallet",
+      "description": "Start of battle: Gain 3 gold (next shop)",
+      "category": "protocol",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 3,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "gold_gain",
+              "amount": 3
+            }
+          ]
+        }
+      ]
+    },
+    "captcha_module": {
+      "name": "CAPTCHA Module",
+      "description": "Enemies have 20% miss chance",
+      "category": "protocol",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 3,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "enemy_debuff",
+              "debuff_name": "accuracy",
+              "value": -0.20
+            }
+          ]
+        }
+      ]
+    },
+    "script_compiler": {
+      "name": "Script Compiler - Alchemy",
+      "description": "Combine adjacent items for bonus effects",
+      "category": "protocol",
+      "shape": "2x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "adjacent_buff",
+              "buff_name": "damage",
+              "value": 0.15
+            }
+          ]
+        }
+      ]
+    },
+    "dark_web_access": {
+      "name": "Dark Web Access",
+      "description": "Shop items cost 1 less gold",
+      "category": "protocol",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "shop_discount",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "power_management_unit": {
+      "name": "Power Management Unit",
+      "description": "+2 CPU regeneration per second",
+      "category": "protocol",
+      "shape": "2x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "cpu_regen",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    "auto_scaler": {
+      "name": "Auto-Scaler",
+      "description": "Gain +1 damage for every 10 max health",
+      "category": "protocol",
+      "shape": "2x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "scaling_buff",
+              "buff_name": "damage",
+              "scale_stat": "max_health",
+              "scale_ratio": 0.1
+            }
+          ]
+        }
+      ]
+    },
+    "redundancy_protocol": {
+      "name": "Redundancy Protocol",
+      "description": "When you take damage, 25% chance to ignore it",
+      "category": "protocol",
+      "shape": "1x2",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "on_damage",
+          "effects": [
+            {
+              "type": "damage_immunity",
+              "chance": 0.25
+            }
+          ]
+        }
+      ]
+    },
+    "encryption_module": {
+      "name": "Encryption Module",
+      "description": "All attacks deal +2 damage but cost +1 CPU",
+      "category": "protocol",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "damage",
+              "value": 2
+            },
+            {
+              "type": "stat_mod",
+              "stat": "cpu_cost",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "machine_learning_core": {
+      "name": "Machine Learning Core",
+      "description": "Every attack has 10% chance to repeat",
+      "category": "protocol",
+      "shape": "2x2",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "on_attack",
+          "effects": [
+            {
+              "type": "multicast",
+              "chance": 0.10,
+              "count": 2
+            }
+          ]
+        }
+      ]
+    },
+    "crypto_mining_rig": {
+      "name": "Crypto Mining Rig",
+      "description": "Every 5 seconds: Gain 1 gold (for next shop)",
+      "category": "protocol",
+      "shape": "2x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 5.0,
+          "effects": [
+            {
+              "type": "gold_gain",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "transaction_log": {
+      "name": "Transaction Log",
+      "description": "Track all actions for +10% accuracy",
+      "category": "protocol",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "accuracy",
+              "value": 0.10
+            }
+          ]
+        }
+      ]
+    },
+    "premium_subscription": {
+      "name": "Premium Subscription",
+      "description": "Start of each round: Free shop refresh",
+      "category": "protocol",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "round_start",
+          "effects": [
+            {
+              "type": "free_refresh",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    "vampire_rootkit": {
+      "name": "Vampire Rootkit",
+      "description": "All damage dealt heals you for 30% of damage",
+      "category": "protocol",
+      "shape": "2x2",
+      "rarity": "legendary",
+      "cost": 20,
+      "triggers": [
+        {
+          "type": "on_damage_dealt",
+          "effects": [
+            {
+              "type": "lifesteal",
+              "value": 0.30
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

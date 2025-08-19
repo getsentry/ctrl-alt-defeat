@@ -1,0 +1,285 @@
+{
+  "category": "modules",
+  "items": {
+    "performance_module_chipped": {
+      "name": "Chipped Performance Module",
+      "description": "Optimizes code paths for critical strikes",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 1,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "crit_chance",
+              "value": 0.04
+            }
+          ]
+        }
+      ]
+    },
+    "performance_module_flawed": {
+      "name": "Flawed Performance Module",
+      "description": "Optimizes code paths for critical strikes",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "uncommon",
+      "cost": 2,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "crit_chance",
+              "value": 0.08
+            }
+          ]
+        }
+      ]
+    },
+    "performance_module_regular": {
+      "name": "Performance Module",
+      "description": "Optimizes code paths for critical strikes",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "crit_chance",
+              "value": 0.12
+            }
+          ]
+        }
+      ]
+    },
+    "performance_module_flawless": {
+      "name": "Flawless Performance Module",
+      "description": "Optimizes code paths for critical strikes",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "epic",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "crit_chance",
+              "value": 0.16
+            }
+          ]
+        }
+      ]
+    },
+    "performance_module_perfect": {
+      "name": "Perfect Performance Module",
+      "description": "Optimizes code paths for critical strikes",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "legendary",
+      "cost": 16,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "crit_chance",
+              "value": 0.20
+            }
+          ]
+        }
+      ]
+    },
+    "memory_module_chipped": {
+      "name": "Chipped Memory Module",
+      "description": "Additional RAM for enhanced capabilities",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 1,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_memory",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "memory_module_flawed": {
+      "name": "Flawed Memory Module",
+      "description": "Additional RAM for enhanced capabilities",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "uncommon",
+      "cost": 2,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_memory",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    "memory_module_regular": {
+      "name": "Memory Module",
+      "description": "Additional RAM for enhanced capabilities",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_memory",
+              "value": 3
+            }
+          ]
+        }
+      ]
+    },
+    "processing_module_chipped": {
+      "name": "Chipped Processing Module",
+      "description": "Accelerates CPU recovery",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 1,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "cpu_regen",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "processing_module_regular": {
+      "name": "Processing Module",
+      "description": "Accelerates CPU recovery",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "cpu_regen",
+              "value": 3
+            }
+          ]
+        }
+      ]
+    },
+    "efficiency_module_chipped": {
+      "name": "Chipped Efficiency Module",
+      "description": "Streamlines execution for faster attacks",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 1,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "attack_speed",
+              "value": 0.10
+            }
+          ]
+        }
+      ]
+    },
+    "efficiency_module_regular": {
+      "name": "Efficiency Module",
+      "description": "Streamlines execution for faster attacks",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "attack_speed",
+              "value": 0.30
+            }
+          ]
+        }
+      ]
+    },
+    "security_module_chipped": {
+      "name": "Chipped Security Module",
+      "description": "Hardens defenses against attacks",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 1,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "damage_reduction",
+              "value": 0.04
+            }
+          ]
+        }
+      ]
+    },
+    "security_module_regular": {
+      "name": "Security Module",
+      "description": "Hardens defenses against attacks",
+      "category": "module",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "damage_reduction",
+              "value": 0.12
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

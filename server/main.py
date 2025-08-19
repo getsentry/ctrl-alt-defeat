@@ -20,6 +20,9 @@ from pydantic import BaseModel
 # Test mode allows seeds and special AI configurations for testing
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
 
+# Database URL for future PostgreSQL integration
+DATABASE_URL = os.environ.get("DATABASE_URL", None)
+
 app = FastAPI(title="Sentry Autobattler Server")
 
 app.add_middleware(
@@ -77,7 +80,8 @@ class GameSession(BaseModel):
     losses: int = 0
     last_battle_result: Optional[Dict] = None
     current_shop: List[Optional[Dict]] = []  # Shop can have empty slots
-    game_seed: Optional[int] = None  # Master seed for all RNG in this game session
+    game_seed: int  # Master seed for all RNG in this game session (always set)
+    shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
 
     # Inventory fields
     inventory_grid: List[Dict] = []  # Items placed on the grid
@@ -87,8 +91,15 @@ class GameSession(BaseModel):
 
 
 # In-memory storage (replace with Redis/DB for production)
+# TODO: When DATABASE_URL is available, migrate to PostgreSQL storage
 sessions: Dict[str, GameSession] = {}
 battle_history: List[Dict] = []
+
+# Future: Initialize database connection when DATABASE_URL is available
+# if DATABASE_URL:
+#     import databases
+#     database = databases.Database(DATABASE_URL)
+#     # Database initialization would go here
 
 
 @app.post("/session/start")
@@ -102,7 +113,7 @@ async def start_session(game_seed: Optional[int] = None) -> Dict[str, Any]:
             status_code=403, detail="Custom seeds only allowed in test mode"
         )
 
-    # Use provided seed or generate one
+    # Always have a seed - use provided or generate one
     if game_seed is None:
         game_seed = random.randint(0, 2**31 - 1)
 
@@ -173,7 +184,7 @@ async def start_session(game_seed: Optional[int] = None) -> Dict[str, Any]:
 
     return {
         "player_id": player_id,
-        "session": session.dict(),
+        "session": session.model_dump(),
         "item_catalog": item_catalog_simple,
     }
 
@@ -200,10 +211,12 @@ async def refresh_shop(request: ShopRefreshRequest) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail="Not enough gold")
         session.gold -= 1
 
-    # Use game seed + round + some offset for deterministic shops
-    shop_seed = (
-        (session.game_seed + session.round * 1000) if session.game_seed else None
-    )
+    # Increment refresh counter for this round
+    session.shop_refresh_count += 1
+
+    # Use game seed + round + refresh count for deterministic but varying shops
+    shop_seed = session.game_seed + session.round * 1000 + session.shop_refresh_count
+
     session.current_shop = generate_shop_items(session.round, seed=shop_seed)
 
     return {"shop": session.current_shop, "gold": session.gold}
@@ -283,26 +296,80 @@ def generate_shop_items(
         # Map uncommon to rare for our table
         if rarity == "uncommon":
             rarity = "rare"
+        elif rarity == "unique":
+            rarity = "godly"  # Unique items are very rare
         if rarity in items_by_rarity:
             items_by_rarity[rarity].append((item_type, item_spec))
+
+    # Shuffle each rarity list with the seed for better distribution
+    if seed is not None:
+        for rarity in items_by_rarity:
+            rng.shuffle(items_by_rarity[rarity])
 
     # Get rarity weights for this round
     weights = get_rarity_weights(round_number)
 
+    # Track recently used items to avoid too many duplicates
+    used_item_types = []
+
     for i in range(shop_size):
-        if rng.random() < 0.85:  # 85% chance of item (15% empty)
-            # Step 1: Pick rarity
-            rarity = pick_rarity(weights, rng)
+        # Always generate an item - no empty slots
+        # Step 1: Pick rarity
+        rarity = pick_rarity(weights, rng)
 
-            # Step 2: Pick item from that rarity
-            rarity_items = items_by_rarity.get(rarity, [])
-            if not rarity_items:
-                # Fallback to common if no items of that rarity
-                rarity_items = items_by_rarity.get("common", [])
+        # Step 2: Pick item from that rarity
+        rarity_items = items_by_rarity.get(rarity, [])
+        if not rarity_items:
+            # Fallback to common if no items of that rarity
+            rarity_items = items_by_rarity.get("common", [])
 
-            if rarity_items:
-                item_type, item_spec = rng.choice(rarity_items)
+        if rarity_items:
+            # Try to avoid duplicates by filtering out recently used items
+            available_items = [
+                (it, spec) for it, spec in rarity_items if it not in used_item_types
+            ]
 
+            # If all items of this rarity were used, allow duplicates
+            if not available_items:
+                available_items = rarity_items
+
+            # Use a more distributed selection by adding item index to seed
+            item_index = rng.randint(0, len(available_items) - 1)
+            item_type, item_spec = available_items[item_index]
+
+            # Track this item type (but allow some duplicates after 3 different items)
+            used_item_types.append(item_type)
+            if len(used_item_types) > 3:
+                used_item_types.pop(0)
+
+            # Check if it's a container (containers have internal_size in their catalog)
+            from server_containers import create_server_containers
+
+            containers_catalog = create_server_containers()
+            is_container = item_type in containers_catalog
+            if is_container:
+                # Get container info for internal size
+                container_info = containers_catalog.get(item_type, {})
+                internal_size = container_info.get("internal_size", (2, 2))
+
+                item_info = {
+                    "id": str(uuid.uuid4()),
+                    "item_type": item_type,
+                    "name": item_spec.name,
+                    "category": "container",  # Mark as container category for UI
+                    "rarity": item_spec.rarity,
+                    "cost": get_shop_cost(item_spec.rarity, 1),
+                    "is_container": True,
+                    "internal_width": internal_size[0],
+                    "internal_height": internal_size[1],
+                    "min_damage": 0,
+                    "max_damage": 0,
+                    "cooldown": 0,
+                    "cpu_cost": 0,
+                    "special_effect": "",
+                }
+            else:
+                # Regular item
                 # Extract damage values from attack effects if present
                 min_dmg = 0
                 max_dmg = 0
@@ -331,6 +398,7 @@ def generate_shop_items(
                     "category": item_spec.category,
                     "rarity": item_spec.rarity,
                     "cost": get_shop_cost(item_spec.rarity, 1),
+                    "is_container": False,
                     "min_damage": min_dmg,
                     "max_damage": max_dmg,
                     "cooldown": cooldown,
@@ -338,11 +406,7 @@ def generate_shop_items(
                     "special_effect": special,
                 }
 
-                items.append(item_info)
-            else:
-                items.append(None)
-        else:
-            items.append(None)
+            items.append(item_info)
 
     return items
 
@@ -401,15 +465,13 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     # Simulate battle - use request seed or derive from game seed
     if request.seed is not None:
         battle_seed = request.seed  # Explicit seed for testing
-    elif session.game_seed is not None:
+    else:
         # Derive battle seed from game seed + round + battle count
         battle_seed = (
             session.game_seed
             + request.round_number * 10000
             + (session.wins + session.losses)
         )
-    else:
-        battle_seed = None
 
     # Get containers from session for player
     from server_containers import ServerContainer, create_server_containers
@@ -497,6 +559,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     if battle_result["winner"] == 1:  # Player won
         session.wins += 1
         session.round += 1  # Advance to next round
+        session.shop_refresh_count = 0  # Reset refresh counter for new round
         gold_reward = get_round_gold(session.round)  # Gold for new round
     else:
         session.losses += 1
@@ -505,10 +568,10 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
 
     session.gold += gold_reward
     session.last_battle_result = battle_result
-    # Use game seed + round + some offset for deterministic shops
-    shop_seed = (
-        (session.game_seed + session.round * 1000) if session.game_seed else None
-    )
+
+    # Generate new shop for the round (first shop = refresh count 0)
+    shop_seed = session.game_seed + session.round * 1000 + session.shop_refresh_count
+
     session.current_shop = generate_shop_items(session.round, seed=shop_seed)
 
     # Store battle in history
@@ -709,6 +772,22 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
     cost = item["cost"]
     if session.gold < cost:
         raise HTTPException(status_code=400, detail="Not enough gold")
+
+    # Check if it's a container
+    is_container = item.get("is_container", False)
+
+    if is_container:
+        # Containers can't be placed in storage, only on the main grid
+        if request.placement == "storage":
+            raise HTTPException(
+                status_code=400, detail="Containers cannot be placed in storage"
+            )
+
+        # Containers need special handling - they become part of the server infrastructure
+        # For now, return an error since container placement needs more work
+        raise HTTPException(
+            status_code=501, detail="Container placement not yet implemented"
+        )
 
     # Create inventory manager from session state
     manager = InventoryManager()

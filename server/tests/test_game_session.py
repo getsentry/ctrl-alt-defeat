@@ -127,6 +127,7 @@ class TestGameSessionInventory:
             lives=5,
             wins=0,
             losses=0,
+            game_seed=12345,  # Always need a seed now
             inventory_grid=manager.get_state()["grid"],
             inventory_storage=manager.get_state()["storage"],
             placed_items=[],
@@ -149,6 +150,7 @@ class TestGameSessionInventory:
             lives=5,
             wins=0,
             losses=0,
+            game_seed=12345,  # Always need a seed now
             inventory_grid=manager.get_state()["grid"],
             inventory_storage=manager.get_state()["storage"],
             placed_items=[],
@@ -156,7 +158,7 @@ class TestGameSessionInventory:
         )
 
         # Convert to dict (for API response)
-        session_dict = session.dict()
+        session_dict = session.model_dump()
 
         assert "inventory_grid" in session_dict
         assert "inventory_storage" in session_dict

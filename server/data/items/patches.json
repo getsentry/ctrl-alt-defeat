@@ -1,0 +1,132 @@
+{
+  "category": "patches",
+  "items": {
+    "emergency_hotfix": {
+      "name": "Emergency Hotfix",
+      "description": "Start of battle: Heal 5 errors",
+      "category": "patch",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "heal",
+              "amount": 5
+            }
+          ]
+        }
+      ]
+    },
+    "memory_injection": {
+      "name": "Memory Injection",
+      "description": "Start of battle: +10 Max Memory for this battle",
+      "category": "patch",
+      "shape": "1x1",
+      "rarity": "epic",
+      "cost": 12,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "max_memory",
+              "value": 10,
+              "duration": -1
+            }
+          ]
+        }
+      ]
+    },
+    "security_hardening": {
+      "name": "Security Hardening",
+      "description": "Start of battle: Gain 15% damage reduction",
+      "category": "patch",
+      "shape": "1x1",
+      "rarity": "epic",
+      "cost": 12,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "damage_reduction",
+              "value": 0.15,
+              "duration": -1
+            }
+          ]
+        }
+      ]
+    },
+    "virus_payload": {
+      "name": "Virus Payload",
+      "description": "Start of battle: Enemy takes 2 damage per second",
+      "category": "patch",
+      "shape": "1x1",
+      "rarity": "epic",
+      "cost": 12,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "debuff",
+              "debuff_name": "virus",
+              "value": 2,
+              "duration": -1,
+              "target": "enemy"
+            }
+          ]
+        }
+      ]
+    },
+    "performance_boost": {
+      "name": "Performance Boost",
+      "description": "Start of battle: +50% attack speed for 10 seconds",
+      "category": "patch",
+      "shape": "1x2",
+      "rarity": "legendary",
+      "cost": 20,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "attack_speed",
+              "value": 0.5,
+              "duration": 10
+            }
+          ]
+        }
+      ]
+    },
+    "system_restore": {
+      "name": "System Restore",
+      "description": "Start of battle: Clear all debuffs and heal 20 errors",
+      "category": "patch",
+      "shape": "2x2",
+      "rarity": "godly",
+      "cost": 25,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "cleanse",
+              "target": "self"
+            },
+            {
+              "type": "heal",
+              "amount": 20
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

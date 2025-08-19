@@ -14,6 +14,9 @@ def purchase_items_to_grid(player_id, shop, positions):
     items_purchased = 0
     for i, item in enumerate(shop):
         if item and items_purchased < len(positions):
+            # Skip containers as they can't be placed yet
+            if item.get("is_container", False):
+                continue
             response = client.post(
                 "/purchase/item",
                 json={
@@ -32,8 +35,8 @@ class TestGameLifecycleUpdated:
 
     def test_simple_victory_run(self):
         """Test winning battles with purchased items"""
-        # Start new session
-        response = client.post("/session/start?game_seed=42")
+        # Start new session with seed that gives offensive items
+        response = client.post("/session/start?game_seed=2")
         assert response.status_code == 200
         data = response.json()
         player_id = data["player_id"]

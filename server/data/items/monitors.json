@@ -1,0 +1,101 @@
+{
+  "category": "monitors",
+  "items": {
+    "basic_firewall": {
+      "name": "Basic Firewall",
+      "description": "Start of battle: Gain 5 Block",
+      "category": "monitor",
+      "shape": "2x1",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "block",
+              "value": 5,
+              "duration": -1
+            }
+          ]
+        }
+      ]
+    },
+    "cryogenic_shield": {
+      "name": "Cryogenic Shield",
+      "description": "Start of battle: Gain 10 Block",
+      "category": "monitor",
+      "shape": "2x1",
+      "rarity": "epic",
+      "cost": 12,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "block",
+              "value": 10,
+              "duration": -1
+            }
+          ]
+        }
+      ]
+    },
+    "sanctified_firewall": {
+      "name": "Sanctified Firewall",
+      "description": "Start of battle: Gain 15 Block and 2 Regeneration",
+      "category": "monitor",
+      "shape": "2x2",
+      "rarity": "legendary",
+      "cost": 20,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "block",
+              "value": 15,
+              "duration": -1
+            },
+            {
+              "type": "buff",
+              "buff_name": "regeneration",
+              "value": 2,
+              "duration": -1
+            }
+          ]
+        }
+      ]
+    },
+    "corrupted_kernel": {
+      "name": "Corrupted Kernel",
+      "description": "Start of battle: Gain 20 Block but take 1 damage per second",
+      "category": "monitor",
+      "shape": "2x2",
+      "rarity": "godly",
+      "cost": 25,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "block",
+              "value": 20,
+              "duration": -1
+            },
+            {
+              "type": "debuff",
+              "debuff_name": "corruption",
+              "value": 1,
+              "duration": -1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
