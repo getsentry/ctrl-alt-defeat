@@ -19,6 +19,7 @@ func _setup_ui():
 
 	# Title
 	var title = Label.new()
+	title.name = "TitleLabel"
 	title.text = "SENTRY AUTOBATTLER"
 	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", Color(0.3, 0.8, 1.0))
@@ -43,6 +44,7 @@ func _setup_ui():
 
 	# Start Game button
 	var start_btn = Button.new()
+	start_btn.name = "NewGameButton"
 	start_btn.text = "START NEW GAME"
 	start_btn.custom_minimum_size = Vector2(400, 60)
 	start_btn.add_theme_font_size_override("font_size", 24)
@@ -51,6 +53,7 @@ func _setup_ui():
 
 	# Continue button (disabled if no save)
 	var continue_btn = Button.new()
+	continue_btn.name = "ContinueButton"
 	continue_btn.text = "CONTINUE"
 	continue_btn.custom_minimum_size = Vector2(400, 60)
 	continue_btn.add_theme_font_size_override("font_size", 24)
@@ -59,6 +62,7 @@ func _setup_ui():
 
 	# Settings button
 	var settings_btn = Button.new()
+	settings_btn.name = "SettingsButton"
 	settings_btn.text = "SETTINGS"
 	settings_btn.custom_minimum_size = Vector2(400, 60)
 	settings_btn.add_theme_font_size_override("font_size", 24)
@@ -67,6 +71,7 @@ func _setup_ui():
 
 	# Exit button
 	var exit_btn = Button.new()
+	exit_btn.name = "QuitButton"
 	exit_btn.text = "EXIT"
 	exit_btn.custom_minimum_size = Vector2(400, 60)
 	exit_btn.add_theme_font_size_override("font_size", 24)
@@ -75,6 +80,7 @@ func _setup_ui():
 
 	# Version label
 	var version_label = Label.new()
+	version_label.name = "VersionLabel"
 	version_label.text = "v0.1.0 - Alpha"
 	version_label.add_theme_font_size_override("font_size", 14)
 	version_label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.5))

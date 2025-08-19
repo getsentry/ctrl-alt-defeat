@@ -10,11 +10,34 @@ if ! command -v godot &> /dev/null; then
     exit 1
 fi
 
-# Run tests in headless mode
-godot --headless --script res://test/run_all_tests.gd
+# Run unit tests
+echo ""
+echo "Running Unit Tests..."
+echo "--------------------"
+godot --headless --script addons/gut/gut_cmdln.gd \
+    -gdir=res://test/unit \
+    -gexit \
+    -glog=1
 
-# Capture exit code
-EXIT_CODE=$?
+UNIT_EXIT_CODE=$?
+
+# Run integration tests
+echo ""
+echo "Running Integration Tests..."
+echo "---------------------------"
+godot --headless --script addons/gut/gut_cmdln.gd \
+    -gdir=res://test/integration \
+    -gexit \
+    -glog=1
+
+INTEGRATION_EXIT_CODE=$?
+
+# Determine overall exit code
+if [ $UNIT_EXIT_CODE -ne 0 ] || [ $INTEGRATION_EXIT_CODE -ne 0 ]; then
+    EXIT_CODE=1
+else
+    EXIT_CODE=0
+fi
 
 echo ""
 echo "=============================="

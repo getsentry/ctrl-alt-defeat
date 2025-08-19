@@ -273,7 +273,9 @@ func load_inventory_state(inventory_data: Dictionary):
 	# Load servers and items from saved state
 	if inventory_data.has("servers"):
 		for server_data in inventory_data.servers:
-			_place_server_pattern(server_data.pos.x, server_data.pos.y, server_data.data)
+			# Handle both "pos" and "position" formats
+			var pos = server_data.get("pos", server_data.get("position", Vector2i.ZERO))
+			_place_server_pattern(pos.x, pos.y, server_data.data)
 			servers.append(server_data)
 
 	if inventory_data.has("items"):

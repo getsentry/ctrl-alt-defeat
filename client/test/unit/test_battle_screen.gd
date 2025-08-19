@@ -95,7 +95,7 @@ func test_grid_display():
 		if "Grid" in child.name or child is GridContainer:
 			grid_count += 1
 
-	assert_ge(grid_count, 1, "Should have at least one grid display")
+	assert_gte(grid_count, 1, "Should have at least one grid display")
 
 func test_battle_loads_from_game_state():
 	# Battle should load data from GameStateManager
@@ -213,7 +213,7 @@ func test_responsive_layout():
 	# Main elements should still be visible
 	var visible_elements = 0
 	for child in battle_screen.get_children():
-		if child.visible:
+		if child is Control and child.visible:
 			visible_elements += 1
 
 	assert_gt(visible_elements, 0, "Elements should be visible at smaller size")

@@ -45,7 +45,7 @@ func test_starting_containers_placed():
 				container_count += 1
 
 	# Each 2x2 container = 4 cells, 3 containers = 12 cells
-	assert_ge(container_count, 8, "Should have at least 8 active grid cells from containers")
+	assert_gte(container_count, 8, "Should have at least 8 active grid cells from containers")
 
 func test_shop_panel_exists():
 	var shop_panel = ui.shop_container
@@ -156,7 +156,7 @@ func test_shop_item_display():
 
 	# Check shop items were created
 	var shop_items_count = ui.shop_container.get_child_count()
-	assert_ge(shop_items_count, 2, "Should display at least 2 shop items")
+	assert_gte(shop_items_count, 2, "Should display at least 2 shop items")
 
 func test_gold_check_on_purchase():
 	# Test that items can't be bought without gold
