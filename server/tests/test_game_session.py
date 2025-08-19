@@ -15,7 +15,9 @@ class TestGameSessionInventory:
 
     def test_session_creation_with_inventory(self):
         """Test that new sessions include inventory state"""
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -40,7 +42,9 @@ class TestGameSessionInventory:
     def test_inventory_persistence(self):
         """Test that inventory persists across requests"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -63,7 +67,7 @@ class TestGameSessionInventory:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
-                "placement": "storage",
+                "to_storage": True,
             },
         )
 
@@ -85,7 +89,9 @@ class TestGameSessionInventory:
 
     def test_inventory_grid_initialization(self):
         """Test that inventory grid is properly initialized"""
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
 
         session = data["session"]
@@ -103,7 +109,9 @@ class TestGameSessionInventory:
 
     def test_placed_items_tracking(self):
         """Test that placed items are tracked separately"""
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         # player_id = data["player_id"]  # Will be used when purchase is implemented
 

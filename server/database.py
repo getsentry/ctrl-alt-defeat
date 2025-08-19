@@ -4,16 +4,67 @@ Database connection and session management for PostgreSQL
 
 import os
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
+from urllib.parse import urlparse, urlunparse
 
 from models import Base
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-# Get database URL from environment
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL", "postgresql://user:password@localhost:5432/autobattler"
+
+def get_database_url(
+    db_host: Optional[str] = None, db_name: Optional[str] = None
+) -> str:
+    """Build database URL from environment or parameters
+
+    Args:
+        db_host: Optional database host (e.g. 'localhost:5432' or 'db.example.com:5432')
+        db_name: Optional database name (e.g. 'autobattler_test')
+
+    Returns:
+        PostgreSQL connection URL
+    """
+    # Start with environment variable or default
+    base_url = os.environ.get(
+        "DATABASE_URL", "postgresql://user:password@localhost:5432/autobattler"
+    )
+
+    # If no overrides, return base URL
+    if not db_host and not db_name:
+        return base_url
+
+    # Parse the URL
+    parsed = urlparse(base_url)
+
+    # Override host if provided
+    if db_host:
+        # Handle both 'localhost:5432' and 'localhost' formats
+        if ":" in db_host:
+            host, port = db_host.split(":", 1)
+            netloc = f"{parsed.username}:{parsed.password}@{host}:{port}"
+        else:
+            netloc = (
+                f"{parsed.username}:{parsed.password}@{db_host}:{parsed.port or 5432}"
+            )
+    else:
+        netloc = parsed.netloc
+
+    # Override database name if provided
+    if db_name:
+        path = f"/{db_name}"
+    else:
+        path = parsed.path
+
+    # Reconstruct URL
+    return urlunparse(
+        (parsed.scheme, netloc, path, parsed.params, parsed.query, parsed.fragment)
+    )
+
+
+# Get database URL from environment or command line args
+DATABASE_URL = get_database_url(
+    db_host=os.environ.get("DB_HOST"), db_name=os.environ.get("DB_NAME")
 )
 
 # Convert to async URL if needed (postgresql:// -> postgresql+asyncpg://)
@@ -26,10 +77,23 @@ else:
 class DatabaseManager:
     """Manages database connections and sessions"""
 
-    def __init__(self):
+    def __init__(self, db_host: Optional[str] = None, db_name: Optional[str] = None):
         self.engine = None
         self.async_session_maker = None
         self._initialized = False
+
+        # Allow overriding database URL
+        if db_host or db_name:
+            self.database_url = get_database_url(db_host, db_name)
+            if self.database_url.startswith("postgresql://"):
+                self.async_database_url = self.database_url.replace(
+                    "postgresql://", "postgresql+asyncpg://"
+                )
+            else:
+                self.async_database_url = self.database_url
+        else:
+            self.database_url = DATABASE_URL
+            self.async_database_url = ASYNC_DATABASE_URL
 
     async def initialize(self):
         """Initialize the database connection"""
@@ -39,7 +103,7 @@ class DatabaseManager:
         try:
             # Create async engine with connection pooling
             self.engine = create_async_engine(
-                ASYNC_DATABASE_URL,
+                self.async_database_url,
                 echo=False,  # Set to True for SQL logging
                 pool_size=5,
                 max_overflow=10,
@@ -58,7 +122,7 @@ class DatabaseManager:
 
             self._initialized = True
             print(
-                f"Database initialized successfully at {ASYNC_DATABASE_URL.split('@')[1]}"
+                f"Database initialized successfully at {self.async_database_url.split('@')[1]}"
             )
 
         except Exception as e:

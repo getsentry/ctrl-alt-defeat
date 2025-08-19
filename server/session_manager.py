@@ -7,7 +7,8 @@ import random
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
-from database import db_manager
+# Import will be replaced in initialize() if custom config is provided
+from database import db_manager  # noqa: F401
 from models import BattleHistoryDB, GameSessionDB
 from schemas import GameSession as GameSessionPydantic
 from sqlalchemy import delete, select
@@ -16,13 +17,22 @@ from sqlalchemy import delete, select
 class SessionManager:
     """Manages game sessions with database persistence"""
 
-    def __init__(self):
+    def __init__(self, db_host: Optional[str] = None, db_name: Optional[str] = None):
         self.fallback_sessions: Dict[str, GameSessionPydantic] = {}
         self.use_fallback = False
+        self.db_host = db_host
+        self.db_name = db_name
 
     async def initialize(self):
         """Initialize the session manager and database"""
         try:
+            # Re-initialize db_manager with custom config if provided
+            if self.db_host or self.db_name:
+                from database import DatabaseManager
+
+                global db_manager
+                db_manager = DatabaseManager(self.db_host, self.db_name)
+
             await db_manager.initialize()
             # Check if database is working
             if not await db_manager.health_check():

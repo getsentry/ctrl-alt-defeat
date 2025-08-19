@@ -15,7 +15,9 @@ class TestPurchaseValidation:
     def test_purchase_to_storage(self):
         """Test purchasing an item to storage"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -39,7 +41,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
-                "placement": "storage",
+                "to_storage": True,
             },
         )
 
@@ -61,7 +63,9 @@ class TestPurchaseValidation:
     def test_purchase_to_grid(self):
         """Test purchasing an item to grid coordinates"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -82,7 +86,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
-                "placement": [2, 3],  # Top-left of first container
+                "target_position": [2, 3],  # Top-left of first container
             },
         )
 
@@ -102,7 +106,9 @@ class TestPurchaseValidation:
     def test_purchase_invalid_coordinates(self):
         """Test that invalid grid coordinates are rejected"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -123,7 +129,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
-                "placement": [0, 0],  # Not on any container
+                "target_position": [0, 0],  # Not on any container
             },
         )
 
@@ -133,7 +139,9 @@ class TestPurchaseValidation:
     def test_purchase_overlapping_item(self):
         """Test that overlapping items are rejected"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -151,7 +159,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": items[0]["id"],
-                "placement": [2, 3],
+                "target_position": [2, 3],
             },
         )
         assert response1.status_code == 200
@@ -162,7 +170,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": items[1]["id"],
-                "placement": [2, 3],  # Same position
+                "target_position": [2, 3],  # Same position
             },
         )
 
@@ -172,7 +180,9 @@ class TestPurchaseValidation:
     def test_purchase_nonexistent_item(self):
         """Test purchasing an item not in the shop"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -182,7 +192,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": "fake-item-id",
-                "placement": "storage",
+                "to_storage": True,
             },
         )
 
@@ -192,7 +202,9 @@ class TestPurchaseValidation:
     def test_purchase_insufficient_gold(self):
         """Test purchasing when player doesn't have enough gold"""
         # Start session with deterministic seed
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -208,7 +220,7 @@ class TestPurchaseValidation:
                     json={
                         "player_id": player_id,
                         "item_id": item["id"],
-                        "placement": "storage",
+                        "to_storage": True,
                     },
                 )
 
@@ -230,7 +242,7 @@ class TestPurchaseValidation:
                     json={
                         "player_id": player_id,
                         "item_id": item["id"],
-                        "placement": "storage",
+                        "to_storage": True,
                     },
                 )
                 assert response.status_code == 400
@@ -243,7 +255,9 @@ class TestPurchaseValidation:
     def test_purchase_removes_from_shop(self):
         """Test that purchased items are removed from shop"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -266,7 +280,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
-                "placement": "storage",
+                "to_storage": True,
             },
         )
         assert response.status_code == 200
@@ -287,7 +301,9 @@ class TestPurchaseValidation:
     def test_purchase_updates_placed_items(self):
         """Test that purchasing to grid updates placed_items list"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -310,7 +326,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
-                "placement": [2, 3],
+                "target_position": [2, 3],
             },
         )
         assert response.status_code == 200

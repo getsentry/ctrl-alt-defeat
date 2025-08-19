@@ -62,10 +62,25 @@ func test_shop_purchase_and_item_placement():
 	assert_gt(game_ui.shop_items.size(), 0, "Shop should have items from server")
 	var shop_item = game_ui.shop_items[0]
 	var initial_gold = GameStateManager.gold
+	var item_type = shop_item.item_data.get("item_type", "") if shop_item.has("item_data") else ""
+
+	# Record initial inventory state
+	var initial_inventory_count = 0
+	if game_ui.has("inventory_items"):
+		initial_inventory_count = game_ui.inventory_items.size()
+
+	# Target a specific grid position on first server container
+	# Servers are at positions (2,3), (4,3), (6,3) with 2x2 internal grids
+	# So valid positions for first server are (2,3) and (3,3) for row 1, (2,4) and (3,4) for row 2
+	var target_grid_pos = Vector2(2, 3)  # First position in first server
+
+	# Convert grid position to screen coordinates (assuming 64x64 cell size)
+	var cell_size = 64
+	var grid_offset = Vector2(100, 100)  # Approximate offset of grid on screen
+	var drag_end = grid_offset + target_grid_pos * cell_size + Vector2(cell_size/2, cell_size/2)
 
 	# Simulate drag from shop
 	var drag_start = shop_item.global_position + shop_item.size / 2
-	var drag_end = Vector2(400, 300)  # Target position on grid
 
 	# Create mouse events
 	var mouse_down = InputEventMouseButton.new()
@@ -90,10 +105,31 @@ func test_shop_purchase_and_item_placement():
 		game_ui._input(mouse_up)
 		await get_tree().process_frame
 
-		# Verify item was placed (gold should decrease)
+		# Verify item was placed
 		assert_lt(GameStateManager.gold, initial_gold, "Gold should decrease after purchase")
 
-	print("   ✓ Shop purchase tested with real server")
+		# Verify inventory increased
+		if game_ui.has("inventory_items"):
+			assert_gt(game_ui.inventory_items.size(), initial_inventory_count, "Inventory should have new item")
+
+			# Find the placed item and verify its position
+			var placed_item = null
+			for item in game_ui.inventory_items:
+				if item.has("position") and item.position == target_grid_pos:
+					placed_item = item
+					break
+
+			if placed_item:
+				assert_eq(placed_item.position, target_grid_pos, "Item should be at target position (2,3)")
+				print("   - Item placed at grid position (%d,%d)" % [placed_item.position.x, placed_item.position.y])
+				if item_type != "":
+					assert_eq(placed_item.get("item_type", ""), item_type, "Placed item should match shop item type")
+			else:
+				# Item might have snapped to a different valid position
+				print("   - Item placed but not at exact target (may have snapped to valid position)")
+				assert_true(game_ui.inventory_items.size() > initial_inventory_count, "Item was added to inventory")
+
+	print("   ✓ Shop purchase and placement validated with real server")
 
 func test_battle_button_and_full_battle():
 	"""Test clicking battle button and going through full battle"""

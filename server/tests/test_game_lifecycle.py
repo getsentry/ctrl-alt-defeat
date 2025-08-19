@@ -71,7 +71,9 @@ class TestGameLifecycle:
     def test_successful_run_to_victory(self):
         """Test a player reaching and winning round 10 for victory"""
         # Start new session with deterministic seed that gives offensive items
-        response = client.post("/session/start?game_seed=2")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 2}
+        )
         assert response.status_code == 200
         data = response.json()
         player_id = data["player_id"]
@@ -143,7 +145,7 @@ class TestGameLifecycle:
     def test_complete_failure_five_losses(self):
         """Test a player losing 5 times in a row and getting game over"""
         # Start new session
-        response = client.post("/session/start")
+        response = client.post("/session/start", json={"player_name": "test_player"})
         assert response.status_code == 200
         data = response.json()
         player_id = data["player_id"]
@@ -178,7 +180,7 @@ class TestGameLifecycle:
                         json={
                             "player_id": player_id,
                             "item_id": item["id"],
-                            "placement": [2, 3],
+                            "target_position": [2, 3],
                         },
                     )
                     purchased = response.status_code == 200
@@ -193,7 +195,7 @@ class TestGameLifecycle:
                             json={
                                 "player_id": player_id,
                                 "item_id": item["id"],
-                                "placement": [2, 3],
+                                "target_position": [2, 3],
                             },
                         )
                         purchased = response.status_code == 200
@@ -229,7 +231,9 @@ class TestGameLifecycle:
     def test_lives_and_rounds_mechanic(self):
         """Test that losing reduces lives and winning advances rounds"""
         # Start new session with deterministic seed
-        response = client.post("/session/start?game_seed=50")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 50}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -304,7 +308,9 @@ class TestGameLifecycle:
     def test_victory_condition(self):
         """Test that winning round 10 grants victory"""
         # Start new session with deterministic seed that gives offensive items
-        response = client.post("/session/start?game_seed=2")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 2}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -354,7 +360,7 @@ class TestGameLifecycle:
     def test_gold_economy_through_rounds(self):
         """Test that gold rewards match specification through all rounds"""
         # Start new session
-        response = client.post("/session/start")
+        response = client.post("/session/start", json={"player_name": "test_player"})
         data = response.json()
         player_id = data["player_id"]
 
@@ -412,7 +418,9 @@ class TestGameLifecycle:
     def test_shop_rarity_progression(self):
         """Test that shop items follow rarity table through rounds"""
         # Start new session with deterministic game seed that gives offensive items
-        response = client.post("/session/start?game_seed=2")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 2}
+        )
         data = response.json()
         player_id = data["player_id"]
 

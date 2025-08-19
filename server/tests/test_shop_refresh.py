@@ -16,7 +16,9 @@ class TestShopRefresh:
     def test_shop_always_has_five_items(self):
         """Test that shop always generates exactly 5 items"""
         # Start session with deterministic seed
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -45,7 +47,9 @@ class TestShopRefresh:
     def test_shop_refresh_produces_different_items(self):
         """Test that refreshing the shop produces different items"""
         # Start session with deterministic seed
-        response = client.post("/session/start?game_seed=100")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 100}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -74,7 +78,7 @@ class TestShopRefresh:
     def test_shop_refresh_costs_gold(self):
         """Test that refreshing the shop costs 1 gold"""
         # Start session
-        response = client.post("/session/start")
+        response = client.post("/session/start", json={"player_name": "test_player"})
         data = response.json()
         player_id = data["player_id"]
         initial_gold = data["session"]["gold"]
@@ -91,11 +95,15 @@ class TestShopRefresh:
     def test_shop_refresh_deterministic_with_seed(self):
         """Test that shop generation is deterministic with the same seed"""
         # Start two sessions with the same seed
-        response1 = client.post("/session/start?game_seed=999")
+        response1 = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 999}
+        )
         player1 = response1.json()["player_id"]
         shop1_initial = response1.json()["session"]["current_shop"]
 
-        response2 = client.post("/session/start?game_seed=999")
+        response2 = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 999}
+        )
         player2 = response2.json()["player_id"]
         shop2_initial = response2.json()["session"]["current_shop"]
 
@@ -132,7 +140,9 @@ class TestShopRefresh:
     def test_shop_reset_on_new_round(self):
         """Test that shop refresh counter resets when advancing to a new round"""
         # Start session with seed
-        response = client.post("/session/start?game_seed=500")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 500}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -156,7 +166,7 @@ class TestShopRefresh:
                     json={
                         "player_id": player_id,
                         "item_id": item["id"],
-                        "placement": [2 + i, 3],
+                        "target_position": [2 + i, 3],
                     },
                 )
 

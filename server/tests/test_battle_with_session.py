@@ -15,7 +15,9 @@ class TestBattleWithSession:
     def test_battle_with_empty_inventory_fails(self):
         """Test that battling with empty inventory fails"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -33,7 +35,9 @@ class TestBattleWithSession:
     def test_battle_with_purchased_items(self):
         """Test battle after purchasing items"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -49,7 +53,7 @@ class TestBattleWithSession:
                     json={
                         "player_id": player_id,
                         "item_id": item["id"],
-                        "placement": [2, 3],  # Place on first container
+                        "target_position": [2, 3],  # Place on first container
                     },
                 )
                 assert response.status_code == 200
@@ -73,7 +77,9 @@ class TestBattleWithSession:
     def test_battle_uses_correct_inventory(self):
         """Test that battle uses the items placed on grid, not storage"""
         # Start session
-        response = client.post("/session/start?game_seed=42")
+        response = client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -91,7 +97,7 @@ class TestBattleWithSession:
             json={
                 "player_id": player_id,
                 "item_id": items[0]["id"],
-                "placement": "storage",
+                "to_storage": True,
             },
         )
         assert response.status_code == 200
@@ -102,7 +108,7 @@ class TestBattleWithSession:
             json={
                 "player_id": player_id,
                 "item_id": items[1]["id"],
-                "placement": [2, 3],
+                "target_position": [2, 3],
             },
         )
         assert response.status_code == 200

@@ -25,13 +25,18 @@ from schemas import (
     SimpleBattleRequest,
     StartSessionRequest,
 )
-from session_manager import session_manager
+from session_manager import SessionManager
 
 # Test mode allows seeds and special AI configurations for testing
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
 
 # Database URL for future PostgreSQL integration
 DATABASE_URL = os.environ.get("DATABASE_URL", None)
+
+# Create session manager with database configuration
+session_manager = SessionManager(
+    db_host=os.environ.get("DB_HOST"), db_name=os.environ.get("DB_NAME")
+)
 
 app = FastAPI(title="Sentry Autobattler Server")
 
@@ -940,7 +945,29 @@ if __name__ == "__main__":
     parser.add_argument(
         "--port", type=int, default=8000, help="Port to run server on (default: 8000)"
     )
+    parser.add_argument(
+        "--db-host",
+        type=str,
+        default=None,
+        help="Database host (e.g. localhost:5432 or db.example.com:5432)",
+    )
+    parser.add_argument(
+        "--db-name",
+        type=str,
+        default=None,
+        help="Database name (e.g. autobattler_test)",
+    )
     args = parser.parse_args()
 
+    # Set environment variables for database configuration
+    if args.db_host:
+        os.environ["DB_HOST"] = args.db_host
+    if args.db_name:
+        os.environ["DB_NAME"] = args.db_name
+
     print(f"Starting server on port {args.port}...")
+    if args.db_host or args.db_name:
+        print(
+            f"Database config: host={args.db_host or 'default'}, name={args.db_name or 'default'}"
+        )
     uvicorn.run(app, host="0.0.0.0", port=args.port)
