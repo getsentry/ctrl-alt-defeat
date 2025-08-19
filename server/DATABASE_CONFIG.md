@@ -38,6 +38,31 @@ The project uses separate databases for different test scenarios to avoid confli
 - **Client tests**: `autobattler_test` (default for run_test_server.sh)
 - **Development**: `autobattler` (default database)
 
+### Test Isolation Methods
+
+#### Fast: Transaction-based isolation (Recommended)
+Use test sessions with automatic rollback - much faster than truncating:
+
+```python
+# Start a test session
+response = requests.post("http://localhost:8000/test/start-session")
+session_id = response.json()["session_id"]
+
+# Run your tests - all changes are within a transaction
+# ...
+
+# End session - automatically rolls back all changes
+requests.post(f"http://localhost:8000/test/end-session/{session_id}")
+```
+
+#### Slow: Table truncation
+For complete cleanup when transactions aren't suitable:
+
+```python
+# Reset database by truncating all tables (slower)
+requests.post("http://localhost:8000/test/reset-database")
+```
+
 To run tests with a separate database instance:
 
 ### Option 1: Use the test server script

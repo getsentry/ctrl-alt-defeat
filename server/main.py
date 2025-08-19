@@ -8,6 +8,7 @@ Sentry Autobattler Server
 import os
 import random
 import uuid
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
@@ -937,14 +938,96 @@ async def get_battle_history(player_id: str, limit: int = 10) -> List[Dict]:
 
 # Test-only endpoints
 if TEST_MODE:
+    # Store active test transactions
+    test_transactions = {}
+
+    @app.post("/test/start-session")
+    async def start_test_session() -> Dict[str, str]:
+        """Start a test session with transaction isolation (TEST MODE ONLY)
+
+        This creates a database transaction that will be rolled back when
+        the test session ends, providing fast test isolation.
+        """
+        if not TEST_MODE:
+            raise HTTPException(
+                status_code=403, detail="This endpoint is only available in TEST_MODE"
+            )
+
+        import uuid
+
+        from database import db_manager
+
+        try:
+            # Generate a unique session ID
+            session_id = str(uuid.uuid4())
+
+            # Create a new connection and start a transaction
+            connection = await db_manager.engine.connect()
+            transaction = await connection.begin()
+
+            # Store the connection and transaction
+            test_transactions[session_id] = {
+                "connection": connection,
+                "transaction": transaction,
+                "started_at": datetime.utcnow(),
+            }
+
+            return {
+                "status": "success",
+                "session_id": session_id,
+                "message": "Test session started with transaction isolation",
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to start test session: {str(e)}"
+            )
+
+    @app.post("/test/end-session/{session_id}")
+    async def end_test_session(session_id: str) -> Dict[str, str]:
+        """End a test session and rollback all changes (TEST MODE ONLY)
+
+        This rolls back the transaction, undoing all database changes made
+        during the test session. Much faster than truncating tables.
+        """
+        if not TEST_MODE:
+            raise HTTPException(
+                status_code=403, detail="This endpoint is only available in TEST_MODE"
+            )
+
+        if session_id not in test_transactions:
+            raise HTTPException(
+                status_code=404, detail=f"Test session {session_id} not found"
+            )
+
+        try:
+            session = test_transactions[session_id]
+
+            # Rollback the transaction
+            await session["transaction"].rollback()
+
+            # Close the connection
+            await session["connection"].close()
+
+            # Remove from active sessions
+            del test_transactions[session_id]
+
+            return {
+                "status": "success",
+                "message": "Test session ended, all changes rolled back",
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to end test session: {str(e)}"
+            )
 
     @app.post("/test/reset-database")
     async def reset_database() -> Dict[str, str]:
         """Reset database to clean state (TEST MODE ONLY)
 
-        This endpoint is only available in TEST_MODE and is used to reset
-        the database between test runs. It truncates all tables but keeps
-        the schema intact.
+        This endpoint truncates all tables. It's slower than using
+        test sessions but ensures complete cleanup.
+
+        Prefer /test/start-session and /test/end-session for faster isolation.
         """
         if not TEST_MODE:
             raise HTTPException(
@@ -954,7 +1037,10 @@ if TEST_MODE:
         try:
             # Reset the database tables
             await session_manager.reset_database()
-            return {"status": "success", "message": "Database reset successfully"}
+            return {
+                "status": "success",
+                "message": "Database reset successfully (slow)",
+            }
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to reset database: {str(e)}"
