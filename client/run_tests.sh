@@ -1,20 +1,27 @@
 #!/bin/bash
+# Run all client tests
 
-echo "Running Autobattler Tests with GUT..."
-echo ""
+echo "Running Godot Client Tests..."
+echo "=============================="
 
-# Run GUT tests using the command line interface
-godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -gexit
-
-# Check exit code
-EXIT_CODE=$?
-
-if [ $EXIT_CODE -eq 0 ]; then
-    echo ""
-    echo "✅ All tests passed!"
-    exit 0
-else
-    echo ""
-    echo "❌ Some tests failed! (Exit code: $EXIT_CODE)"
+# Check if Godot is available
+if ! command -v godot &> /dev/null; then
+    echo "Error: Godot is not installed or not in PATH"
     exit 1
 fi
+
+# Run tests in headless mode
+godot --headless --script res://test/run_all_tests.gd
+
+# Capture exit code
+EXIT_CODE=$?
+
+echo ""
+echo "=============================="
+if [ $EXIT_CODE -eq 0 ]; then
+    echo "✅ All tests passed!"
+else
+    echo "❌ Some tests failed (exit code: $EXIT_CODE)"
+fi
+
+exit $EXIT_CODE

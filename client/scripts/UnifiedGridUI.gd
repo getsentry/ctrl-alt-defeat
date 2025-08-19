@@ -1,9 +1,6 @@
 extends Control
 
-# Game state (now pulled from GameStateManager)
-var current_gold: int = 10
-var current_round: int = 1
-var current_health: int = 100
+# Game state is pulled from GameStateManager - no local copies
 
 # Grid settings
 const ROOM_WIDTH = 9
@@ -156,10 +153,7 @@ func _ready():
 		DisplayServer.window_set_size(Vector2i(1600, 900))
 		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))  # Center better
 
-	# Load game state from GameStateManager
-	current_gold = GameStateManager.gold
-	current_round = GameStateManager.current_round
-	current_health = GameStateManager.player_health
+	# State is read directly from GameStateManager, no local copies
 
 	# Initialize UI first
 	_initialize_grids()
@@ -484,7 +478,7 @@ func _create_controls():
 	if not read_only_mode:
 		if not hide_shop:
 			var refresh_btn = Button.new()
-			refresh_btn.text = "Refresh (2g)"
+			refresh_btn.text = "Refresh (1g)"
 			refresh_btn.position = Vector2(50, 600)
 			refresh_btn.size = Vector2(100, 30)
 			refresh_btn.pressed.connect(_on_refresh_shop)
@@ -552,11 +546,19 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	item_style.set_corner_radius_all(4)
 	shop_item.add_theme_stylebox_override("panel", item_style)
 
+	# Check if it's a container
+	var is_container = data.get("is_container", false)
+
 	# Item visual
 	var item_visual = ColorRect.new()
 	item_visual.size = Vector2(40, 40)
 	item_visual.position = Vector2(10, 15)
-	item_visual.color = _get_color_for_category(data.get("category", "problem"))
+
+	# Use different color for containers
+	if is_container:
+		item_visual.color = Color(0.5, 0.3, 0.7)  # Purple for containers
+	else:
+		item_visual.color = _get_color_for_category(data.get("category", "problem"))
 	shop_item.add_child(item_visual)
 
 	# Name label
@@ -566,10 +568,19 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	name_label.add_theme_font_size_override("font_size", 12)
 	shop_item.add_child(name_label)
 
+	# Size label for containers
+	if is_container:
+		var size_label = Label.new()
+		size_label.text = "%dx%d slots" % [data.get("internal_width", 2), data.get("internal_height", 2)]
+		size_label.position = Vector2(60, 25)
+		size_label.add_theme_font_size_override("font_size", 10)
+		size_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+		shop_item.add_child(size_label)
+
 	# Cost label
 	var cost_label = Label.new()
 	cost_label.text = "%dg" % data.get("cost", 5)
-	cost_label.position = Vector2(60, 35)
+	cost_label.position = Vector2(60, 35 if not is_container else 45)
 	cost_label.add_theme_font_size_override("font_size", 14)
 	cost_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	shop_item.add_child(cost_label)
@@ -582,17 +593,29 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	# Create a simplified item_data for the handler
 	var handler_data = {
 		"name": data.get("name", "Unknown"),
-		"width": 1,
-		"height": 1,
-		"color": _get_color_for_category(data.get("category", "problem")),
+		"width": data.get("internal_width", 2) if is_container else 1,
+		"height": data.get("internal_height", 2) if is_container else 1,
+		"color": Color(0.5, 0.3, 0.7) if is_container else _get_color_for_category(data.get("category", "problem")),
 		"cost": data.get("cost", 5),
-		"type": "item"  # Mark as regular item, not server
+		"type": "server" if is_container else "item",  # Mark containers as servers
+		"pattern": _create_pattern_from_size(data.get("internal_width", 2), data.get("internal_height", 2)) if is_container else null,
+		"id": data.get("id", "")  # Include the item ID
 	}
 
 	# Connect input handling for dragging
 	shop_item.gui_input.connect(_on_shop_item_input.bind(shop_item, handler_data))
 
 	return shop_item
+
+func _create_pattern_from_size(width: int, height: int) -> Array:
+	# Create a pattern array for a container of given size
+	var pattern = []
+	for y in range(height):
+		var row = []
+		for x in range(width):
+			row.append(1)  # All cells are active in container
+		pattern.append(row)
+	return pattern
 
 func _get_color_for_category(category: String) -> Color:
 	match category:
@@ -607,74 +630,10 @@ func _get_color_for_category(category: String) -> Color:
 		_:
 			return Color(0.5, 0.5, 0.5)
 
+# DEPRECATED: Shop items now come from server via _display_shop_items()
+# This function is no longer used but kept for reference
 func _generate_shop():
-	for child in shop_container.get_children():
-		child.queue_free()
-	shop_items.clear()
-
-	var all_items = {}
-	for key in server_types:
-		all_items[key] = server_types[key]
-	for key in item_types:
-		all_items[key] = item_types[key]
-
-	var keys = all_items.keys()
-	keys.shuffle()
-
-	var y_pos = 0
-	for i in range(min(7, keys.size())):
-		var item_key = keys[i]
-		var item_data = all_items[item_key].duplicate()
-		item_data["id"] = item_key
-
-		var shop_item = Panel.new()
-		shop_item.position = Vector2(0, y_pos)
-		shop_item.size = Vector2(210, 60)
-
-		var item_style = StyleBoxFlat.new()
-		if item_data.type == "server":
-			item_style.bg_color = Color(0.2, 0.25, 0.3, 0.9)
-		else:
-			item_style.bg_color = item_data.color
-			item_style.bg_color.a = 0.8
-		item_style.set_corner_radius_all(4)
-		shop_item.add_theme_stylebox_override("panel", item_style)
-
-		shop_item.gui_input.connect(_on_shop_item_input.bind(shop_item, item_data))
-		shop_item.set_meta("shop_item", true)
-		shop_item.set_meta("item_data", item_data)
-
-		var name_label = Label.new()
-		name_label.text = item_data.name
-		name_label.position = Vector2(10, 10)
-		name_label.add_theme_font_size_override("font_size", 14)
-		name_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-		shop_item.add_child(name_label)
-
-		var info_label = Label.new()
-		if item_data.type == "server":
-			var pattern = item_data.pattern
-			info_label.text = "Grid %dx%d" % [pattern[0].size(), pattern.size()]
-		else:
-			info_label.text = "%dx%d" % [item_data.width, item_data.height]
-		info_label.position = Vector2(10, 30)
-		info_label.add_theme_font_size_override("font_size", 11)
-		info_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-		shop_item.add_child(info_label)
-
-		var cost_label = Label.new()
-		cost_label.text = "%dg" % item_data.cost
-		cost_label.position = Vector2(160, 20)
-		cost_label.add_theme_font_size_override("font_size", 14)
-		cost_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
-		shop_item.add_child(cost_label)
-
-		shop_container.add_child(shop_item)
-		shop_items.append(shop_item)
-
-		y_pos += 65
-
-	print("Shop generated with %d items" % shop_items.size())
+	push_warning("_generate_shop() is deprecated - shop should come from server")
 
 func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Dictionary):
 	if read_only_mode:
@@ -685,6 +644,11 @@ func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Diction
 				_start_dragging_from_shop(shop_item, item_data, event.position)
 
 func _start_dragging_from_shop(shop_item: Panel, item_data: Dictionary, local_pos: Vector2):
+	# Don't allow dragging sold items
+	if shop_item.modulate.a < 1.0:
+		print("This item has already been sold")
+		return
+
 	if item_data.type == "server":
 		dragging_object = _create_server_preview(item_data)
 	else:
@@ -1026,6 +990,29 @@ func _try_place_item(item: Panel) -> bool:
 				if GameStateManager.gold < item_data.cost:
 					print("Not enough gold!")
 					return false
+
+				# Call server to purchase item
+				var item_id = original_parent.get_meta("item_data").get("id", "")
+				if item_id != "":
+					BattleServerAPI.purchase_item(item_id, [grid_x, grid_y])
+
+					# Mark item as sold in shop display
+					for i in range(shop_items.size()):
+						var shop_item = shop_items[i]
+						if shop_item == original_parent:
+							# Update the shop data to mark as sold
+							if i < GameStateManager.current_shop.size():
+								GameStateManager.current_shop[i] = null
+							# Update visual to show as sold
+							original_parent.modulate = Color(0.5, 0.5, 0.5, 0.5)
+							var sold_label = Label.new()
+							sold_label.text = "SOLD"
+							sold_label.position = Vector2(70, 25)
+							sold_label.add_theme_font_size_override("font_size", 16)
+							sold_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+							original_parent.add_child(sold_label)
+							break
+
 				GameStateManager.gold -= item_data.cost
 				_update_stats()
 
@@ -1059,6 +1046,29 @@ func _try_place_item(item: Panel) -> bool:
 			if GameStateManager.gold < item_data.cost:
 				print("Not enough gold!")
 				return false
+
+			# Call server to purchase item (storage placement)
+			var item_id = original_parent.get_meta("item_data").get("id", "")
+			if item_id != "":
+				BattleServerAPI.purchase_item(item_id, "storage")
+
+				# Mark item as sold in shop display
+				for i in range(shop_items.size()):
+					var shop_item = shop_items[i]
+					if shop_item == original_parent:
+						# Update the shop data to mark as sold
+						if i < GameStateManager.current_shop.size():
+							GameStateManager.current_shop[i] = null
+						# Update visual to show as sold
+						original_parent.modulate = Color(0.5, 0.5, 0.5, 0.5)
+						var sold_label = Label.new()
+						sold_label.text = "SOLD"
+						sold_label.position = Vector2(70, 25)
+						sold_label.add_theme_font_size_override("font_size", 16)
+						sold_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+						original_parent.add_child(sold_label)
+						break
+
 			GameStateManager.gold -= item_data.cost
 			_update_stats()
 
@@ -1202,10 +1212,17 @@ func _update_stats():
 		stats_label.text = _get_stats_text()
 
 func _on_refresh_shop():
-	if current_gold >= 2:
-		current_gold -= 2
-		_update_stats()
-		_generate_shop()
+	if GameStateManager.gold >= 1:
+		print("Refreshing shop from server...")
+		# Call the real server to refresh shop
+		var new_shop = await BattleServerAPI.refresh_shop(GameStateManager.current_round)
+		if new_shop.size() > 0:
+			GameStateManager.update_gold(-1)  # Deduct refresh cost
+			_update_stats()
+			_display_shop_items(new_shop)
+			GameStateManager.current_shop = new_shop
+		else:
+			print("Failed to refresh shop from server")
 
 func _try_move_server(server: Control) -> bool:
 	var mouse_pos = server_room_container.get_local_mouse_position()

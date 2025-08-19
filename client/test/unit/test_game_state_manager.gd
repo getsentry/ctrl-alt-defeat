@@ -1,5 +1,20 @@
 extends GutTest
-# Unit tests for GameStateManager using GUT framework
+# Comprehensive tests for GameStateManager singleton
+
+func test_singleton_exists():
+	assert_not_null(GameStateManager, "GameStateManager singleton should exist")
+
+func test_start_new_game():
+	GameStateManager.start_new_game()
+
+	assert_eq(GameStateManager.current_round, 1, "Should start at round 1")
+	assert_eq(GameStateManager.gold, 12, "Should start with 12 gold")
+	assert_eq(GameStateManager.player_lives, 5, "Should start with 5 lives")
+	assert_eq(GameStateManager.player_health, 100, "Should start with 100 health")
+	assert_eq(GameStateManager.wins, 0, "Should have 0 wins")
+	assert_eq(GameStateManager.losses, 0, "Should have 0 losses")
+	assert_false(GameStateManager.game_over, "Should not be game over")
+	assert_false(GameStateManager.victory, "Should not be victory")
 
 func test_starting_containers_property_exists():
 	# This tests the bug fix - GameStateManager should have starting_containers

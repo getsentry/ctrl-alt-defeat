@@ -35,6 +35,12 @@ var opponent_inventory: Dictionary = {}
 var battle_speed: float = 1.0  # Speed multiplier for battle playback
 var auto_ready: bool = false  # Auto-submit for battle when ready
 
+# Server integration
+var item_catalog: Dictionary = {}  # Item definitions from server
+var session_id: String = ""
+var last_error: String = ""
+var is_connected: bool = false
+
 func _ready():
 	# Make this a singleton
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -42,6 +48,9 @@ func _ready():
 func start_new_game():
 	# Reset all game state
 	player_id = ""
+	session_id = ""
+	last_error = ""
+	is_connected = false
 	current_round = 1
 	player_lives = 5
 	player_health = 100  # Reset player health
@@ -144,3 +153,23 @@ func calculate_health_loss(enemy_remaining_hp: int) -> int:
 	var base_loss = 10
 	var percent_loss = int(enemy_remaining_hp * 0.2)  # 20% of remaining HP
 	return min(base_loss + percent_loss, 20)  # Cap at 20 damage
+
+func update_gold(amount: int) -> bool:
+	# Safely update gold with validation
+	if gold + amount < 0:
+		last_error = "Not enough gold"
+		return false
+	gold += amount
+	return true
+
+func set_item_catalog(catalog: Dictionary):
+	# Store item definitions from server
+	item_catalog = catalog
+	print("Loaded %d item definitions from server" % catalog.size())
+
+func get_item_data(item_type: String) -> Dictionary:
+	# Get item data from catalog
+	if item_catalog.has(item_type):
+		return item_catalog[item_type]
+	push_warning("Unknown item type: " + item_type)
+	return {}
