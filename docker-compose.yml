@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - TEST_MODE=${TEST_MODE:-false}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://user:password@postgres:5432/autobattler}
+      - DB_HOST=${DB_HOST:-postgres:5432}
+      - DB_NAME=${DB_NAME:-autobattler}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - autobattler-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=autobattler
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - autobattler-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d autobattler"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres-data:
+
+networks:
+  autobattler-network:
+    driver: bridge
