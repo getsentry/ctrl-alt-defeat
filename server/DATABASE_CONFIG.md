@@ -30,9 +30,15 @@ export DATABASE_URL=postgresql://user:password@localhost:5432/autobattler
 python main.py
 ```
 
-## Running Tests with Separate Database
+## Running Tests with Separate Databases
 
-To run tests with a separate database instance to avoid conflicts:
+The project uses separate databases for different test scenarios to avoid conflicts:
+
+- **Server tests**: `ctrl_alt_defeat_server_tests` (configured in pytest.ini and conftest.py)
+- **Client tests**: `autobattler_test` (default for run_test_server.sh)
+- **Development**: `autobattler` (default database)
+
+To run tests with a separate database instance:
 
 ### Option 1: Use the test server script
 
@@ -71,14 +77,18 @@ docker-compose up -d postgres
 # - Port: 5432
 ```
 
-### Create Test Database
+### Create Test Databases
 
 ```bash
 # Connect to PostgreSQL
 docker exec -it autobattler-postgres-1 psql -U postgres
 
-# Create test database
+# Create test database for client tests
 CREATE DATABASE autobattler_test;
+
+# Create separate test database for server tests
+CREATE DATABASE ctrl_alt_defeat_server_tests;
+
 \q
 ```
 

@@ -15,8 +15,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 os.environ["TEST_MODE"] = "true"
 
 # Configure test database if not already set
+# Use a separate database specifically for server tests
 if "DB_NAME" not in os.environ:
-    os.environ["DB_NAME"] = "autobattler_test"
+    os.environ["DB_NAME"] = "ctrl_alt_defeat_server_tests"
 if "DB_HOST" not in os.environ:
     os.environ["DB_HOST"] = "localhost:5432"
 
