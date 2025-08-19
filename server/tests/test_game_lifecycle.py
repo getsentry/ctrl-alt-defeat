@@ -228,70 +228,48 @@ class TestGameLifecycle:
 
     def test_lives_and_rounds_mechanic(self):
         """Test that losing reduces lives and winning advances rounds"""
-        # Start new session
-        response = client.post("/session/start")
+        # Start new session with deterministic seed
+        response = client.post("/session/start?game_seed=50")
         data = response.json()
         player_id = data["player_id"]
 
-        # Test a few wins and losses
-        wins = 0
-        losses = 0
+        # Run multiple battles with deterministic seeds
+        # Some will win, some will lose based on the specific seed and AI combo
+        # The important thing is to verify the mechanics work correctly
+        initial_lives = 5
+        current_round = 1
+        total_wins = 0
+        total_losses = 0
 
-        for i in range(5):  # Do 5 battles
+        # Run 5 deterministic battles
+        test_battles = [
+            (3, "easy", 1000),  # Battle 1
+            (1, "hard", 1001),  # Battle 2
+            (4, "easy", 1002),  # Battle 3
+            (2, "medium", 1003),  # Battle 4
+            (5, "easy", 1004),  # Battle 5
+        ]
+
+        for i, (purchase_count, ai_difficulty, battle_seed) in enumerate(test_battles):
             response = client.get(f"/session/{player_id}")
             session = response.json()
-            initial_round = session["round"]
-            initial_lives = session["lives"]
 
-            # Alternate between strong and weak inventory
-            if i % 2 == 0:
-                # Strong inventory - purchase multiple items
-                purchase_items_for_battle(player_id, session, 5)
-                # Use easy AI to ensure wins with strong inventory
-                battle_request = {
-                    "player_id": player_id,
-                    "round_number": session["round"],
-                    "seed": 1 + i,
-                    "test_ai_difficulty": "easy",  # Easy AI for wins
-                }
-            else:
-                # Weak inventory - purchase just one defensive item (skip containers)
-                shop = session["current_shop"]
-                purchased = False
-                for item in shop:
-                    if item and item.get("item_type") == "firewall":
-                        response = client.post(
-                            "/purchase/item",
-                            json={
-                                "player_id": player_id,
-                                "item_id": item["id"],
-                                "placement": [2, 3],
-                            },
-                        )
-                        purchased = response.status_code == 200
-                        break
+            # Verify our tracking matches the session
+            assert session["round"] == current_round
+            assert session["lives"] == initial_lives - total_losses
+            assert session["wins"] == total_wins
+            assert session["losses"] == total_losses
 
-                # Make sure we have at least one item for battle
-                if not purchased:
-                    for item in shop:
-                        if item and not item.get("is_container", False):
-                            response = client.post(
-                                "/purchase/item",
-                                json={
-                                    "player_id": player_id,
-                                    "item_id": item["id"],
-                                    "placement": [2, 3],
-                                },
-                            )
-                            if response.status_code == 200:
-                                break
-                # Use harder AI to ensure losses with weak inventory
-                battle_request = {
-                    "player_id": player_id,
-                    "round_number": session["round"],
-                    "seed": 5 + i,
-                    "test_ai_difficulty": "medium",  # Harder AI for losses
-                }
+            # Purchase items
+            purchase_items_for_battle(player_id, session, purchase_count)
+
+            # Battle with deterministic seed
+            battle_request = {
+                "player_id": player_id,
+                "round_number": session["round"],
+                "seed": battle_seed,
+                "test_ai_difficulty": ai_difficulty,
+            }
 
             response = client.post("/battle/simulate", json=battle_request)
             assert response.status_code == 200
@@ -300,21 +278,28 @@ class TestGameLifecycle:
             session_update = result["session_update"]
 
             if result["battle_result"]["winner"] == 1:
-                # Won - should advance round
-                wins += 1
-                assert session_update["round"] == initial_round + 1
-                assert session_update["lives"] == initial_lives
+                # Won - should advance round and not lose life
+                total_wins += 1
+                current_round += 1
+                assert session_update["round"] == current_round
+                assert session_update["lives"] == initial_lives - total_losses
+                assert session_update["wins"] == total_wins
             else:
                 # Lost - should stay on same round and lose a life
-                losses += 1
-                assert session_update["round"] == initial_round
-                assert session_update["lives"] == initial_lives - 1
+                total_losses += 1
+                assert session_update["round"] == current_round
+                assert session_update["lives"] == initial_lives - total_losses
+                assert session_update["losses"] == total_losses
 
-        # With TEST_MODE and AI difficulty, we should have predictable results
-        # Easy AI with items should win, medium AI with fewer items might lose
-        assert wins >= 2  # At least 2 wins from strong inventory with easy AI
-        # Losses might not happen with easy AI, so make it optional
-        assert wins + losses == 5  # All 5 battles were processed
+        # Verify we ran all battles and mechanics worked
+        assert total_wins + total_losses == 5, "All 5 battles should have completed"
+
+        # Verify final state
+        final_session = client.get(f"/session/{player_id}").json()
+        assert final_session["wins"] == total_wins
+        assert final_session["losses"] == total_losses
+        assert final_session["lives"] == initial_lives - total_losses
+        assert final_session["round"] == current_round
 
     def test_victory_condition(self):
         """Test that winning round 10 grants victory"""
