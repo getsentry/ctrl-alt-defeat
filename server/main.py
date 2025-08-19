@@ -9,7 +9,7 @@ import os
 import random
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
 from fastapi import FastAPI, HTTPException
@@ -31,40 +31,10 @@ app.add_middleware(
 )
 
 
-class ItemDefinition(BaseModel):
-    """Item as sent from client"""
-
-    id: str
-    item_type: str  # Key from ITEM_CATALOG
-    position: Tuple[int, int]
-    container_id: Optional[str] = None  # Which server rack it's in
-    tier: int = 1
-
-
-class InventorySubmission(BaseModel):
-    """Full inventory state from client"""
-
-    items: List[ItemDefinition]
-    grid_size: int = 7  # 7x9 main server room
-
-
 class SimpleBattleRequest(BaseModel):
     """Simplified battle request - uses inventory from session"""
 
     player_id: str
-    round_number: int
-    opponent_id: Optional[str] = None  # None = fight AI
-    seed: Optional[int] = None  # For deterministic testing (TEST_MODE only)
-    test_ai_difficulty: Optional[
-        str
-    ] = None  # "easy", "medium", "hard" (TEST_MODE only)
-
-
-class BattleRequest(BaseModel):
-    """Legacy battle request with inventory (for backward compatibility)"""
-
-    player_id: str
-    inventory: InventorySubmission
     round_number: int
     opponent_id: Optional[str] = None  # None = fight AI
     seed: Optional[int] = None  # For deterministic testing (TEST_MODE only)
@@ -119,16 +89,6 @@ class GameSession(BaseModel):
 # In-memory storage (replace with Redis/DB for production)
 sessions: Dict[str, GameSession] = {}
 battle_history: List[Dict] = []
-
-
-def create_placed_item(item_def: ItemDefinition) -> PlacedItem:
-    """Convert client item definition to PlacedItem for battle"""
-    if item_def.item_type not in ITEM_CATALOG:
-        raise ValueError(f"Unknown item type: {item_def.item_type}")
-
-    item_spec = ITEM_CATALOG[item_def.item_type]
-
-    return PlacedItem(spec=item_spec, position=item_def.position, uid=item_def.id)
 
 
 @app.post("/session/start")
@@ -388,13 +348,9 @@ def generate_shop_items(
 
 
 @app.post("/battle/simulate")
-async def simulate_battle(
-    request: Union[BattleRequest, SimpleBattleRequest]
-) -> Dict[str, Any]:
+async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     """
-    Simulate a battle - supports both legacy BattleRequest and new SimpleBattleRequest
-    SimpleBattleRequest uses inventory from session (preferred)
-    BattleRequest includes inventory for backward compatibility
+    Simulate a battle using inventory from session
     """
     if request.player_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -413,40 +369,23 @@ async def simulate_battle(
                 detail="AI difficulty override only allowed in test mode",
             )
 
-    # Get inventory from request or session
-    if isinstance(request, SimpleBattleRequest):
-        # Use inventory from session
-        if len(session.inventory_grid) == 0:
-            raise HTTPException(
-                status_code=400, detail="Cannot battle with empty inventory"
-            )
+    # Use inventory from session
+    if len(session.inventory_grid) == 0:
+        raise HTTPException(
+            status_code=400, detail="Cannot battle with empty inventory"
+        )
 
-        # Convert session inventory to PlacedItems
-        player_items = []
-        for item_data in session.inventory_grid:
-            if item_data["item_type"] in ITEM_CATALOG:
-                item_spec = ITEM_CATALOG[item_data["item_type"]]
-                placed_item = PlacedItem(
-                    spec=item_spec,
-                    position=tuple(item_data["position"]),
-                    uid=item_data["id"],
-                )
-                player_items.append(placed_item)
-    else:
-        # Legacy: use inventory from request
-        if len(request.inventory.items) == 0:
-            raise HTTPException(
-                status_code=400, detail="Cannot battle with empty inventory"
+    # Convert session inventory to PlacedItems
+    player_items = []
+    for item_data in session.inventory_grid:
+        if item_data["item_type"] in ITEM_CATALOG:
+            item_spec = ITEM_CATALOG[item_data["item_type"]]
+            placed_item = PlacedItem(
+                spec=item_spec,
+                position=tuple(item_data["position"]),
+                uid=item_data["id"],
             )
-
-        # Convert client items to PlacedItems
-        player_items = []
-        for item_def in request.inventory.items:
-            try:
-                placed_item = create_placed_item(item_def)
-                player_items.append(placed_item)
-            except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e))
+            player_items.append(placed_item)
 
     # Generate or fetch opponent
     if request.opponent_id and request.opponent_id in sessions:
