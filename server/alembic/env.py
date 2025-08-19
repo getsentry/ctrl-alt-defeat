@@ -24,9 +24,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Get database URL from environment
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL", "postgresql://user:password@localhost:5432/autobattler"
+# Import database URL builder
+sys.path.append(str(Path(__file__).parent.parent))
+from database import get_database_url  # noqa: E402
+
+# Get database URL from environment with support for DB_HOST and DB_NAME
+DATABASE_URL = get_database_url(
+    db_host=os.environ.get("DB_HOST"), db_name=os.environ.get("DB_NAME")
 )
 
 # Convert to async URL for migrations

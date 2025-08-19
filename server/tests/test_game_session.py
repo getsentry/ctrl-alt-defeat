@@ -13,7 +13,7 @@ client = TestClient(app)
 class TestGameSessionInventory:
     """Test GameSession with inventory fields"""
 
-    def test_session_creation_with_inventory(self):
+    def test_session_creation_with_inventory(self, clean_database):
         """Test that new sessions include inventory state"""
         response = client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
@@ -39,7 +39,7 @@ class TestGameSessionInventory:
         actual_positions = [tuple(c["position"]) for c in containers]
         assert actual_positions == expected_positions
 
-    def test_inventory_persistence(self):
+    def test_inventory_persistence(self, clean_database):
         """Test that inventory persists across requests"""
         # Start session
         response = client.post(
@@ -87,7 +87,7 @@ class TestGameSessionInventory:
         assert len(session["inventory_storage"]) == 1
         assert session["inventory_storage"][0]["id"] == shop_item["id"]
 
-    def test_inventory_grid_initialization(self):
+    def test_inventory_grid_initialization(self, clean_database):
         """Test that inventory grid is properly initialized"""
         response = client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
@@ -107,7 +107,7 @@ class TestGameSessionInventory:
             assert container["width"] == 2
             assert container["height"] == 2
 
-    def test_placed_items_tracking(self):
+    def test_placed_items_tracking(self, clean_database):
         """Test that placed items are tracked separately"""
         response = client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}

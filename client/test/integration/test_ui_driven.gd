@@ -3,10 +3,20 @@ extends GutTest
 # These tests simulate real user interactions through the UI
 # Now using real server instead of mocks
 
+var ResetTestDB = preload("res://test/integration/reset_test_db.gd")
+
+func before_all():
+	# Verify server is in test mode once at start
+	var is_test_mode = await ResetTestDB.ensure_test_mode()
+	if not is_test_mode:
+		push_warning("Server may not be in TEST_MODE - database reset may not work")
+
 func before_each():
-	# Tests now use real server started by run_tests_with_server.sh
-	# Server URL is set via BATTLE_SERVER_URL environment variable
-	pass
+	# Reset database before each test to ensure clean state
+	var reset_success = await ResetTestDB.reset_database()
+	if not reset_success:
+		push_warning("Failed to reset database - test may have stale data")
+	await get_tree().process_frame
 
 func after_each():
 	# Clean up current scene
@@ -15,16 +25,18 @@ func after_each():
 		await get_tree().process_frame
 
 func test_full_user_journey_through_ui():
-	"""Test complete user journey from launch to battle through UI only"""
+	"""Test complete user journey from launch through shopping, battling, and advancing rounds"""
 	print("\n=== UI TEST: Complete User Journey ===")
 
 	# 1. Launch game
+	print("   1. Launching game...")
 	var main_menu = load("res://scenes/MainMenu.tscn").instantiate()
 	get_tree().root.add_child(main_menu)
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
 	# 2. Click New Game
+	print("   2. Starting new game...")
 	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
 	assert_not_null(new_game_btn, "New Game button must exist")
 	new_game_btn.pressed.emit()
@@ -33,14 +45,121 @@ func test_full_user_journey_through_ui():
 	# 3. Verify game UI loaded
 	var game_ui = get_tree().current_scene
 	assert_eq(game_ui.name, "UnifiedGridUI", "Should transition to game UI")
+	assert_eq(GameStateManager.current_round, 1, "Should start at round 1")
 
-	# 4. Verify starting containers placed
+	# 4. Verify starting setup
+	print("   3. Verifying initial setup...")
 	assert_eq(game_ui.servers.size(), 3, "Should have 3 starting containers")
-
-	# 5. Verify shop loaded from server
 	assert_gte(game_ui.shop_items.size(), 2, "Shop should have items from server")
+	var initial_gold = GameStateManager.gold
+	assert_gt(initial_gold, 0, "Should start with gold")
 
-	print("   ✓ Game launched and initialized with real server")
+	# 5. Purchase an item from shop
+	print("   4. Purchasing from shop...")
+	if game_ui.shop_items.size() > 0:
+		var shop_item = game_ui.shop_items[0]
+		var item_cost = 3
+		if shop_item.has_meta("item_data"):
+			var item_data = shop_item.get_meta("item_data")
+			item_cost = item_data.get("cost", 3)
+
+		# Simulate purchase by dragging to grid
+		var drag_start = shop_item.global_position + shop_item.size / 2
+		var cell_size = 64
+		var grid_offset = Vector2(100, 100)
+		var target_pos = Vector2(2, 3)  # First server position
+		var drag_end = grid_offset + target_pos * cell_size + Vector2(cell_size/2, cell_size/2)
+
+		var mouse_down = InputEventMouseButton.new()
+		mouse_down.button_index = MOUSE_BUTTON_LEFT
+		mouse_down.pressed = true
+		mouse_down.position = drag_start
+
+		var mouse_move = InputEventMouseMotion.new()
+		mouse_move.position = drag_end
+
+		var mouse_up = InputEventMouseButton.new()
+		mouse_up.button_index = MOUSE_BUTTON_LEFT
+		mouse_up.pressed = false
+		mouse_up.position = drag_end
+
+		if shop_item.has_method("_gui_input"):
+			shop_item._gui_input(mouse_down)
+			await get_tree().process_frame
+			game_ui._input(mouse_move)
+			await get_tree().process_frame
+			game_ui._input(mouse_up)
+			await get_tree().process_frame
+
+			# Verify purchase
+			assert_true(GameStateManager.gold <= initial_gold - item_cost, "Gold should decrease after purchase")
+			print("   - Item purchased, gold: %d -> %d" % [initial_gold, GameStateManager.gold])
+
+	# 6. Start a battle
+	print("   5. Starting battle...")
+	var battle_btn = null
+	for child in game_ui.get_children():
+		if child is Button and ("Battle" in str(child.text) or "Fight" in str(child.text)):
+			battle_btn = child
+			break
+
+	if battle_btn:
+		battle_btn.pressed.emit()
+		await get_tree().create_timer(3.0).timeout  # Wait for server
+
+		# 7. Handle battle screen
+		var current_scene = get_tree().current_scene
+		if current_scene.name == "BattleScreen":
+			print("   6. Battle in progress...")
+			# Skip or wait for battle
+			var skip_btn = current_scene.find_child("SkipButton", true, false)
+			if skip_btn:
+				skip_btn.pressed.emit()
+			await get_tree().create_timer(1.0).timeout
+
+		# 8. Handle post-battle screen
+		current_scene = get_tree().current_scene
+		if current_scene.name == "PostBattleScreen":
+			print("   7. Post-battle results...")
+			# Check if we won or lost
+			var result_label = current_scene.find_child("ResultLabel", true, false)
+			if result_label:
+				print("   - Battle result: %s" % result_label.text)
+
+			# Continue to next round
+			var continue_btn = current_scene.find_child("ContinueButton", true, false)
+			if not continue_btn:
+				for child in current_scene.get_children():
+					if child is Button and "Continue" in str(child.text):
+						continue_btn = child
+						break
+
+			if continue_btn:
+				continue_btn.pressed.emit()
+				await get_tree().create_timer(1.0).timeout
+
+		# 9. Verify we're back in game UI for next round
+		current_scene = get_tree().current_scene
+		if current_scene.name == "UnifiedGridUI":
+			print("   8. Back to shop for round %d" % GameStateManager.current_round)
+			assert_eq(GameStateManager.current_round, 2, "Should advance to round 2")
+			assert_gte(current_scene.shop_items.size(), 1, "Should have new shop for round 2")
+
+			# 10. Try one more purchase to verify the cycle continues
+			print("   9. Testing shop in round 2...")
+			if current_scene.shop_items.size() > 0:
+				var round2_gold = GameStateManager.gold
+				assert_gt(round2_gold, 0, "Should have gold for round 2")
+				print("   - Round 2 shop has %d items, gold: %d" % [current_scene.shop_items.size(), round2_gold])
+
+			print("   ✓ Complete user journey validated: Menu -> Game -> Shop -> Battle -> Next Round")
+		else:
+			print("   - Ended in %s scene" % current_scene.name)
+			assert_true(false, "Should return to game UI after battle")
+	else:
+		# No battle button yet
+		print("   - Battle button not implemented yet")
+		print("   ✓ Partial journey completed: Menu -> Game -> Shop")
 
 func test_shop_purchase_and_item_placement():
 	"""Test purchasing from shop and placing items through UI"""
@@ -62,12 +181,15 @@ func test_shop_purchase_and_item_placement():
 	assert_gt(game_ui.shop_items.size(), 0, "Shop should have items from server")
 	var shop_item = game_ui.shop_items[0]
 	var initial_gold = GameStateManager.gold
-	var item_type = shop_item.item_data.get("item_type", "") if shop_item.has("item_data") else ""
+	var item_type = ""
+	if shop_item.has_meta("item_data"):
+		var item_data = shop_item.get_meta("item_data")
+		item_type = item_data.get("item_type", "")
 
 	# Record initial inventory state
 	var initial_inventory_count = 0
-	if game_ui.has("inventory_items"):
-		initial_inventory_count = game_ui.inventory_items.size()
+	if "items" in game_ui:
+		initial_inventory_count = game_ui.items.size()
 
 	# Target a specific grid position on first server container
 	# Servers are at positions (2,3), (4,3), (6,3) with 2x2 internal grids
@@ -109,25 +231,30 @@ func test_shop_purchase_and_item_placement():
 		assert_lt(GameStateManager.gold, initial_gold, "Gold should decrease after purchase")
 
 		# Verify inventory increased
-		if game_ui.has("inventory_items"):
-			assert_gt(game_ui.inventory_items.size(), initial_inventory_count, "Inventory should have new item")
+		if "items" in game_ui:
+			assert_gt(game_ui.items.size(), initial_inventory_count, "Inventory should have new item")
 
 			# Find the placed item and verify its position
 			var placed_item = null
-			for item in game_ui.inventory_items:
-				if item.has("position") and item.position == target_grid_pos:
-					placed_item = item
-					break
+			for item in game_ui.items:
+				if item.has_meta("grid_pos"):
+					var pos = item.get_meta("grid_pos")
+					if pos == target_grid_pos:
+						placed_item = item
+						break
 
 			if placed_item:
-				assert_eq(placed_item.position, target_grid_pos, "Item should be at target position (2,3)")
-				print("   - Item placed at grid position (%d,%d)" % [placed_item.position.x, placed_item.position.y])
-				if item_type != "":
-					assert_eq(placed_item.get("item_type", ""), item_type, "Placed item should match shop item type")
+				var pos = placed_item.get_meta("grid_pos")
+				assert_eq(pos, target_grid_pos, "Item should be at target position (2,3)")
+				print("   - Item placed at grid position (%d,%d)" % [pos.x, pos.y])
+				if placed_item.has_meta("item_data"):
+					var data = placed_item.get_meta("item_data")
+					if item_type != "":
+						assert_eq(data.get("item_type", ""), item_type, "Placed item should match shop item type")
 			else:
 				# Item might have snapped to a different valid position
 				print("   - Item placed but not at exact target (may have snapped to valid position)")
-				assert_true(game_ui.inventory_items.size() > initial_inventory_count, "Item was added to inventory")
+				assert_true(game_ui.items.size() > initial_inventory_count, "Item was added to inventory")
 
 	print("   ✓ Shop purchase and placement validated with real server")
 

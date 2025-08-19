@@ -6,6 +6,9 @@ TEST_SERVER_PORT=8081
 SERVER_DIR="../server"
 SERVER_LOG="test_server.log"
 SERVER_PID_FILE="test_server.pid"
+TEST_DB_NAME="ctrl_alt_defeat_client_test"
+# Use default host (localhost:5432) unless specified
+TEST_DB_HOST="${TEST_DB_HOST:-localhost:5432}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -50,10 +53,12 @@ if [ ! -d "$SERVER_DIR" ]; then
     exit 1
 fi
 
-# Start the Python server on test port
+# Start the Python server on test port with test database
 echo "Starting Python server on port $TEST_SERVER_PORT..."
+echo "Using test database: $TEST_DB_NAME on $TEST_DB_HOST"
 cd "$SERVER_DIR"
-python main.py --port "$TEST_SERVER_PORT" > "../client/$SERVER_LOG" 2>&1 &
+# Set TEST_MODE environment variable for test-only endpoints
+TEST_MODE=true python main.py --port "$TEST_SERVER_PORT" --db-host "$TEST_DB_HOST" --db-name "$TEST_DB_NAME" > "../client/$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
 cd ../client
 

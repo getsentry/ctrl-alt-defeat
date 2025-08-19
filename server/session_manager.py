@@ -243,6 +243,40 @@ class SessionManager:
             print(f"Failed to get battle history: {e}")
             return []
 
+    async def reset_database(self):
+        """Reset database to clean state - TEST MODE ONLY
+
+        Truncates all tables while keeping the schema intact.
+        This is used for testing to ensure a clean state between test runs.
+        """
+        if self.use_fallback:
+            # Clear in-memory sessions
+            self.fallback_sessions.clear()
+            print("Cleared all in-memory sessions")
+        else:
+            try:
+                from sqlalchemy import text
+
+                async with db_manager.get_session() as db:
+                    # Use TRUNCATE for PostgreSQL (faster and resets sequences)
+                    # CASCADE handles foreign key constraints if any exist
+                    await db.execute(text("TRUNCATE TABLE game_sessions CASCADE"))
+                    await db.execute(text("TRUNCATE TABLE battle_history CASCADE"))
+                    await db.commit()
+                    print("Database tables truncated successfully")
+            except Exception as e:
+                print(f"Failed to reset database with TRUNCATE: {e}")
+                # Try DELETE as fallback (works with more databases)
+                try:
+                    async with db_manager.get_session() as db:
+                        await db.execute(delete(BattleHistoryDB))
+                        await db.execute(delete(GameSessionDB))
+                        await db.commit()
+                        print("Database tables cleared using DELETE")
+                except Exception as e2:
+                    print(f"Failed to reset database with DELETE: {e2}")
+                    raise
+
 
 # Global session manager instance
 session_manager = SessionManager()

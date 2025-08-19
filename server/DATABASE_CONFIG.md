@@ -82,16 +82,71 @@ CREATE DATABASE autobattler_test;
 \q
 ```
 
-## Migration Storage
+## Database Migrations
+
+### Migration Storage
 
 Database migrations are stored in `/server/alembic/versions/`
 
-To create a new migration:
+### Migration Commands
+
+#### Create a new migration
 ```bash
-cd server
+# Automatically generate migration from model changes
+./create_migration.sh "Description of changes"
+
+# Or manually with alembic
 alembic revision --autogenerate -m "Description of changes"
+```
+
+#### Apply migrations
+```bash
+# Apply all pending migrations
+./migrate.sh
+
+# Or manually with alembic
 alembic upgrade head
 ```
+
+#### Check migration status
+```bash
+alembic current
+```
+
+#### Rollback migrations
+```bash
+# Rollback one migration
+alembic downgrade -1
+
+# Rollback to specific revision
+alembic downgrade <revision_id>
+```
+
+### Migration Workflow
+
+1. **Initial Setup** (first time only):
+   ```bash
+   cd server
+   ./migrate.sh  # Applies the initial migration
+   ```
+
+2. **After Model Changes**:
+   ```bash
+   # Generate migration for your changes
+   ./create_migration.sh "Add new field to game_sessions"
+
+   # Apply the migration
+   ./migrate.sh
+   ```
+
+3. **For Different Databases**:
+   ```bash
+   # For test database
+   DB_NAME=autobattler_test ./migrate.sh
+
+   # For custom database
+   DB_HOST=db.example.com:5432 DB_NAME=production ./migrate.sh
+   ```
 
 ## Fallback Mode
 

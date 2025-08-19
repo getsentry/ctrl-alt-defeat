@@ -935,6 +935,50 @@ async def get_battle_history(player_id: str, limit: int = 10) -> List[Dict]:
     return battles
 
 
+# Test-only endpoints
+if TEST_MODE:
+
+    @app.post("/test/reset-database")
+    async def reset_database() -> Dict[str, str]:
+        """Reset database to clean state (TEST MODE ONLY)
+
+        This endpoint is only available in TEST_MODE and is used to reset
+        the database between test runs. It truncates all tables but keeps
+        the schema intact.
+        """
+        if not TEST_MODE:
+            raise HTTPException(
+                status_code=403, detail="This endpoint is only available in TEST_MODE"
+            )
+
+        try:
+            # Reset the database tables
+            await session_manager.reset_database()
+            return {"status": "success", "message": "Database reset successfully"}
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to reset database: {str(e)}"
+            )
+
+    @app.get("/test/status")
+    async def test_status() -> Dict[str, Any]:
+        """Get test environment status (TEST MODE ONLY)"""
+        if not TEST_MODE:
+            raise HTTPException(
+                status_code=403, detail="This endpoint is only available in TEST_MODE"
+            )
+
+        return {
+            "test_mode": TEST_MODE,
+            "database_fallback": session_manager.use_fallback,
+            "session_count": len(session_manager.fallback_sessions)
+            if session_manager.use_fallback
+            else "using database",
+            "db_host": os.environ.get("DB_HOST", "default"),
+            "db_name": os.environ.get("DB_NAME", "default"),
+        }
+
+
 if __name__ == "__main__":
     import argparse
 

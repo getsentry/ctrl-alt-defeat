@@ -111,14 +111,39 @@ class DatabaseManager:
                 pool_recycle=3600,  # Recycle connections after 1 hour
             )
 
-            # Create async session factory
+            # Create async session factory first (needed for migrations)
             self.async_session_maker = sessionmaker(
                 self.engine, class_=AsyncSession, expire_on_commit=False
             )
 
-            # Create tables if they don't exist
-            async with self.engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
+            # Check and run migrations if needed
+            await self.check_and_run_migrations()
+
+            # In production, tables should be created via migrations
+            # Only use create_all for development/testing if migrations haven't been run
+            try:
+                # Check if tables exist
+                async with self.engine.begin() as conn:
+                    result = await conn.execute(
+                        text(
+                            "SELECT EXISTS (SELECT FROM information_schema.tables "
+                            "WHERE table_name = 'game_sessions')"
+                        )
+                    )
+                    tables_exist = result.scalar()
+
+                    if not tables_exist:
+                        print("Tables don't exist, creating via create_all (dev mode)")
+                        await conn.run_sync(Base.metadata.create_all)
+                    else:
+                        print(
+                            "Tables already exist (created via migrations or previous run)"
+                        )
+            except Exception as e:
+                print(f"Warning: Could not check table existence: {e}")
+                # Fall back to create_all to ensure tables exist
+                async with self.engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.create_all)
 
             self._initialized = True
             print(
@@ -160,6 +185,55 @@ class DatabaseManager:
         except Exception as e:
             print(f"Database health check failed: {e}")
             return False
+
+    async def check_and_run_migrations(self):
+        """Check if migrations need to be run and apply them"""
+        import os
+        import subprocess
+
+        # Set environment variables for alembic
+        env = os.environ.copy()
+        if hasattr(self, "db_host") and self.db_host:
+            env["DB_HOST"] = self.db_host
+        if hasattr(self, "db_name") and self.db_name:
+            env["DB_NAME"] = self.db_name
+
+        try:
+            # Check current migration status
+            result = subprocess.run(
+                ["alembic", "current"],
+                capture_output=True,
+                text=True,
+                env=env,
+                cwd=os.path.dirname(__file__),  # Run in server directory
+            )
+
+            # Check if we need to run migrations
+            if "head" not in result.stdout:
+                print("Database migrations are not up to date. Running migrations...")
+
+                # Run migrations
+                migrate_result = subprocess.run(
+                    ["alembic", "upgrade", "head"],
+                    capture_output=True,
+                    text=True,
+                    env=env,
+                    cwd=os.path.dirname(__file__),
+                )
+
+                if migrate_result.returncode == 0:
+                    print("Migrations applied successfully")
+                else:
+                    print(f"Warning: Migration failed: {migrate_result.stderr}")
+                    print("Falling back to create_all for table creation")
+            else:
+                print("Database migrations are up to date")
+
+        except FileNotFoundError:
+            print("Alembic not found. Skipping migration check.")
+        except Exception as e:
+            print(f"Could not check migrations: {e}")
+            print("Continuing with normal initialization...")
 
 
 # Global database manager instance

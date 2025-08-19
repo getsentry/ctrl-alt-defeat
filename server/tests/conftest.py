@@ -28,3 +28,24 @@ def setup_test_mode():
     # Tests will use test database configured above
     yield
     # Keep TEST_MODE set after test
+
+
+@pytest.fixture(scope="function")
+def clean_database():
+    """Reset database before each test that uses sessions"""
+    from fastapi.testclient import TestClient
+    from main import app
+
+    client = TestClient(app)
+
+    # Reset database via test endpoint (only works in TEST_MODE)
+    response = client.post("/test/reset-database")
+    if response.status_code == 200:
+        print("Database reset for test")
+    else:
+        print(f"Warning: Could not reset database: {response.status_code}")
+
+    yield
+
+    # Optionally clean up after test as well
+    # client.post("/test/reset-database")
