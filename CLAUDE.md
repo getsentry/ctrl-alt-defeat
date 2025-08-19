@@ -12,7 +12,3 @@
 - Run ALL tests: `cd server && python -m pytest tests/`
 - Run specific test: `cd server && python -m pytest tests/test_battle_engine.py -v`
 - Start server: `cd server && python main.py`
-
-## Test Status
-- ✅ 80 tests passing
-- All tests fixed to include mandatory container validation

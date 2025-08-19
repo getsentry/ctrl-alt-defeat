@@ -16,11 +16,10 @@ client = TestClient(app)
 class TestGameLifecycle:
     """Test complete game scenarios from start to finish"""
 
-    @pytest.mark.skip(reason="Ghost players too strong for reliable testing")
     def test_successful_run_to_victory(self):
         """Test a player reaching and winning round 10 for victory"""
-        # Start new session
-        response = client.post("/session/start")
+        # Start new session with deterministic seed
+        response = client.post("/session/start?game_seed=42")
         assert response.status_code == 200
         data = response.json()
         player_id = data["player_id"]
@@ -51,14 +50,19 @@ class TestGameLifecycle:
                 break  # We've won!
 
             # Create a strong inventory that scales with round
-            # More items for later rounds to beat stronger ghosts
-            num_items = min(5 + current_round, 15)  # 6 items at round 1, up to 15
+            # With easy AI, we just need a reasonable number of items
+            num_items = min(
+                3 + current_round, 6
+            )  # Start with 4, max 6 (2 per container)
+            # Place items on the 3 server containers at (2,3), (4,3), (6,3)
+            # Each container is 2x2, so valid positions are (x,y), (x+1,y), (x,y+1), (x+1,y+1)
+            container_positions = [(2, 3), (3, 3), (4, 3), (5, 3), (6, 3), (2, 4)]
             strong_inventory = {
                 "items": [
                     {
                         "id": f"item_{i}",
                         "item_type": "null_pointer",
-                        "position": [i % 7, 3 + (i // 7)],
+                        "position": list(container_positions[i]),
                         "tier": 1,
                     }
                     for i in range(num_items)
@@ -66,13 +70,12 @@ class TestGameLifecycle:
                 "grid_size": 7,
             }
 
-            # Simulate battle with deterministic seed for wins
-            # Use seed 3 which tends to win more often
             battle_request = {
                 "player_id": player_id,
                 "inventory": strong_inventory,
                 "round_number": current_round,
-                "seed": 3,  # Seed 3 generally produces wins
+                "seed": 42 + current_round,  # Deterministic seed per round
+                "test_ai_difficulty": "easy",  # Easy AI for testing victory
             }
 
             response = client.post("/battle/simulate", json=battle_request)
@@ -137,7 +140,7 @@ class TestGameLifecycle:
                     {
                         "id": "weak_item",
                         "item_type": "firewall",  # Defensive item, no attack
-                        "position": [0, 0],
+                        "position": [2, 3],  # Place on first container
                         "tier": 1,
                     }
                 ],  # Very weak single item
@@ -196,7 +199,10 @@ class TestGameLifecycle:
                         {
                             "id": f"item_{j}",
                             "item_type": "null_pointer",
-                            "position": [j, 3],
+                            "position": [
+                                2 + (j % 3) * 2,
+                                3 + (j // 3),
+                            ],  # Use containers properly
                             "tier": 1,
                         }
                         for j in range(5)
@@ -210,7 +216,7 @@ class TestGameLifecycle:
                         {
                             "id": "weak",
                             "item_type": "firewall",  # Defensive item
-                            "position": [0, 0],
+                            "position": [2, 3],  # Place on first container
                             "tier": 1,
                         }
                     ],
@@ -250,11 +256,10 @@ class TestGameLifecycle:
         assert wins >= 2  # At least 2 wins from even iterations
         assert losses >= 2  # At least 2 losses from odd iterations
 
-    @pytest.mark.skip(reason="Ghost players too strong for reliable testing")
     def test_victory_condition(self):
         """Test that winning round 10 grants victory"""
-        # Start new session
-        response = client.post("/session/start")
+        # Start new session with deterministic seed
+        response = client.post("/session/start?game_seed=42")
         data = response.json()
         player_id = data["player_id"]
 
@@ -273,17 +278,19 @@ class TestGameLifecycle:
             if session["lives"] <= 0:
                 pytest.fail("Lost all lives before reaching round 10")
 
-            # Scale inventory with round - more items for harder rounds
+            # Scale inventory with round - reasonable number for easy AI
             current_round = session["round"]
-            num_items = min(5 + current_round * 2, 20)  # Up to 20 items
+            num_items = min(3 + current_round, 6)  # 4-6 items is plenty for easy AI
 
-            # Very strong inventory
+            # Very strong inventory - place on server containers
+            # Each container is 2x2, so valid positions are within those bounds
+            container_positions = [(2, 3), (3, 3), (4, 3), (5, 3), (6, 3), (2, 4)]
             inventory = {
                 "items": [
                     {
                         "id": f"item_{i}",
                         "item_type": "null_pointer",
-                        "position": [i % 7, 3 + (i // 7)],
+                        "position": list(container_positions[i]),
                         "tier": 1,
                     }
                     for i in range(num_items)
@@ -295,7 +302,8 @@ class TestGameLifecycle:
                 "player_id": player_id,
                 "inventory": inventory,
                 "round_number": session["round"],
-                "seed": (attempts % 10) + 1,  # Try different seeds
+                "seed": 42 + session["round"],  # Deterministic seed per round
+                "test_ai_difficulty": "easy",  # Easy AI for reliable victories
             }
 
             response = client.post("/battle/simulate", json=battle_request)
@@ -348,7 +356,10 @@ class TestGameLifecycle:
                     {
                         "id": f"item_{i}",
                         "item_type": "null_pointer",
-                        "position": [i, 3],
+                        "position": [
+                            2 + i * 2,
+                            3,
+                        ],  # Place on containers at (2,3), (4,3), (6,3)
                         "tier": 1,
                     }
                     for i in range(3)
@@ -412,7 +423,10 @@ class TestGameLifecycle:
                     {
                         "id": f"item_{i}",
                         "item_type": "null_pointer",
-                        "position": [i, 3],
+                        "position": [
+                            2 + i * 2,
+                            3,
+                        ],  # Place on containers at (2,3), (4,3), (6,3)
                         "tier": 1,
                     }
                     for i in range(3)

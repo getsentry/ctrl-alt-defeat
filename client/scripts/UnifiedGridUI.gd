@@ -6,8 +6,8 @@ var current_round: int = 1
 var current_health: int = 100
 
 # Grid settings
-const ROOM_WIDTH = 12
-const ROOM_HEIGHT = 8
+const ROOM_WIDTH = 9
+const ROOM_HEIGHT = 7
 const CELL_SIZE = 45
 const CELL_SPACING = 1
 
@@ -201,18 +201,34 @@ func _place_starting_containers():
 		containers_to_place = GameStateManager.starting_containers
 		print("Using server-provided starting containers: %d" % containers_to_place.size())
 	else:
-		# Default starting containers
+		# Default starting containers - 3 adjacent 2x2 containers
 		containers_to_place = [
 			{"type": "cube_2x2", "position": Vector2i(1, 3)},
-			{"type": "cube_2x2", "position": Vector2i(4, 3)},
-			{"type": "cube_2x2", "position": Vector2i(7, 3)}
+			{"type": "cube_2x2", "position": Vector2i(3, 3)},
+			{"type": "cube_2x2", "position": Vector2i(5, 3)}
 		]
 		print("Using default starting containers")
 
 	# Place each container
 	for container_info in containers_to_place:
 		var container_type_key = container_info.get("type", "cube_2x2")
-		var position = container_info.get("position", Vector2i(1, 3))
+
+		# Handle both Vector2i and dictionary formats for position
+		var position
+		if container_info.has("position"):
+			var pos_data = container_info["position"]
+			if pos_data is Vector2i:
+				position = pos_data
+			elif pos_data is Dictionary:
+				position = Vector2i(pos_data.get("x", 1), pos_data.get("y", 3))
+			else:
+				position = Vector2i(1, 3)
+		else:
+			position = Vector2i(1, 3)
+
+		# Map server container types to client types
+		if container_type_key == "standard_vm":
+			container_type_key = "cube_2x2"  # Map server type to client type
 
 		if not server_types.has(container_type_key):
 			print("Warning: Unknown container type '%s', using cube_2x2" % container_type_key)
@@ -492,9 +508,12 @@ func _create_controls():
 
 func _load_shop_from_state():
 	# Load shop from GameStateManager
+	print("Loading shop from state, current_shop size: %d" % GameStateManager.current_shop.size())
 	if GameStateManager.current_shop.size() > 0:
+		print("Displaying %d shop items from server" % GameStateManager.current_shop.size())
 		_display_shop_items(GameStateManager.current_shop)
 	else:
+		print("No shop items from server, generating local shop")
 		_generate_shop()
 
 func _display_shop_items(shop_data: Array):
@@ -503,48 +522,77 @@ func _display_shop_items(shop_data: Array):
 		child.queue_free()
 	shop_items.clear()
 
+	print("Displaying shop items, data size: %d" % shop_data.size())
+
 	# Display shop items from server data
+	var item_count = 0
 	for i in range(shop_data.size()):
 		if shop_data[i] == null:
+			print("  Slot %d: empty" % i)
 			continue  # Empty slot
 
 		var item_data = shop_data[i]
+		print("  Slot %d: %s (cost: %d)" % [i, item_data.get("name", "Unknown"), item_data.get("cost", 0)])
 		var shop_item = _create_shop_item_from_data(item_data)
-		shop_item.position = Vector2(10, 10 + i * 85)
+		shop_item.position = Vector2(10, 10 + item_count * 85)
 		shop_container.add_child(shop_item)
 		shop_items.append(shop_item)
+		item_count += 1
+
+	print("Added %d shop items to container" % item_count)
 
 func _create_shop_item_from_data(data: Dictionary) -> Control:
-	var container = Control.new()
-	container.custom_minimum_size = Vector2(150, 75)
+	var shop_item = Panel.new()
+	shop_item.custom_minimum_size = Vector2(200, 70)
+	shop_item.size = Vector2(200, 70)
+
+	# Style the panel
+	var item_style = StyleBoxFlat.new()
+	item_style.bg_color = Color(0.15, 0.15, 0.2, 0.9)
+	item_style.set_corner_radius_all(4)
+	shop_item.add_theme_stylebox_override("panel", item_style)
 
 	# Item visual
 	var item_visual = ColorRect.new()
 	item_visual.size = Vector2(40, 40)
-	item_visual.position = Vector2(5, 5)
+	item_visual.position = Vector2(10, 15)
 	item_visual.color = _get_color_for_category(data.get("category", "problem"))
-	container.add_child(item_visual)
+	shop_item.add_child(item_visual)
 
 	# Name label
 	var name_label = Label.new()
 	name_label.text = data.get("name", "Unknown")
-	name_label.position = Vector2(50, 5)
+	name_label.position = Vector2(60, 10)
 	name_label.add_theme_font_size_override("font_size", 12)
-	container.add_child(name_label)
+	shop_item.add_child(name_label)
 
 	# Cost label
 	var cost_label = Label.new()
 	cost_label.text = "%dg" % data.get("cost", 5)
-	cost_label.position = Vector2(50, 25)
+	cost_label.position = Vector2(60, 35)
 	cost_label.add_theme_font_size_override("font_size", 14)
 	cost_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
-	container.add_child(cost_label)
+	shop_item.add_child(cost_label)
 
-	# Store data for purchasing
-	container.set_meta("item_data", data)
-	container.set_meta("cost", data.get("cost", 5))
+	# Store data and connect input
+	shop_item.set_meta("shop_item", true)
+	shop_item.set_meta("item_data", data)
+	shop_item.set_meta("cost", data.get("cost", 5))
 
-	return container
+	# Create a simplified item_data for the handler
+	var handler_data = {
+		"name": data.get("name", "Unknown"),
+		"width": 1,
+		"height": 1,
+		"color": _get_color_for_category(data.get("category", "problem")),
+		"cost": data.get("cost", 5),
+		"type": "item"  # Mark as regular item, not server
+	}
+
+	# Connect input handling for dragging
+	shop_item.gui_input.connect(_on_shop_item_input.bind(shop_item, handler_data))
+
+	return shop_item
 
 func _get_color_for_category(category: String) -> Color:
 	match category:
@@ -1150,7 +1198,8 @@ func _get_stats_text() -> String:
 	]
 
 func _update_stats():
-	stats_label.text = _get_stats_text()
+	if stats_label:
+		stats_label.text = _get_stats_text()
 
 func _on_refresh_shop():
 	if current_gold >= 2:

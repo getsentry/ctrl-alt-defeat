@@ -175,27 +175,18 @@ class BattleSimulator:
         p1_items = deepcopy(p1_items)
         p2_items = deepcopy(p2_items)
 
-        # Validate placement - if no containers provided, use simple validation
-        if p1_containers is None and p2_containers is None:
-            # For tests and backward compatibility - validate without containers
-            if not self._validate_placement_simple(p1_items):
-                raise ValueError(
-                    "Invalid placement for player 1 items - items overlap or are out of bounds"
-                )
-            if not self._validate_placement_simple(p2_items):
-                raise ValueError(
-                    "Invalid placement for player 2 items - items overlap or are out of bounds"
-                )
-        else:
-            # Production mode - validate with containers
-            if not self._validate_placement_with_containers(p1_items, p1_containers):
-                raise ValueError(
-                    "Invalid placement for player 1 items - items overlap or are outside containers"
-                )
-            if not self._validate_placement_with_containers(p2_items, p2_containers):
-                raise ValueError(
-                    "Invalid placement for player 2 items - items overlap or are outside containers"
-                )
+        # ALWAYS validate with containers - containers are REQUIRED
+        if p1_containers is None or p2_containers is None:
+            raise ValueError("Containers are required for battle simulation")
+
+        if not self._validate_placement_with_containers(p1_items, p1_containers):
+            raise ValueError(
+                "Invalid placement for player 1 items - items overlap or are outside containers"
+            )
+        if not self._validate_placement_with_containers(p2_items, p2_containers):
+            raise ValueError(
+                "Invalid placement for player 2 items - items overlap or are outside containers"
+            )
 
         # Reset state
         self.current_time = 0.0
@@ -820,11 +811,8 @@ class BattleSimulator:
         2. Regular items MUST be placed on server-provided squares
         3. Regular items cannot overlap each other
         """
-        if not PlacementValidator:
-            # Fallback to simple validation if container system not available
-            return self._validate_placement_simple(items)
-
-        validator = PlacementValidator()
+        # Grid is 9 wide x 7 tall
+        validator = PlacementValidator(main_grid_size=(9, 7))
 
         # First, place all containers (servers)
         if containers:
@@ -854,29 +842,5 @@ class BattleSimulator:
                     return False  # Overlapping with another item
 
                 item_occupied.add((x, y))
-
-        return True
-
-    def _validate_placement_simple(self, items: List[PlacedItem]) -> bool:
-        """
-        Simple validation without container system (fallback)
-        """
-        # Track all occupied squares
-        occupied_squares = set()
-
-        for item in items:
-            # Get all squares this item occupies
-            item_squares = item.get_occupied_squares()
-
-            for x, y in item_squares:
-                # Check bounds (7x9 main grid)
-                if x < 0 or x >= 7 or y < 0 or y >= 9:
-                    return False  # Out of bounds
-
-                # Check for overlap
-                if (x, y) in occupied_squares:
-                    return False  # Overlapping with another item
-
-                occupied_squares.add((x, y))
 
         return True

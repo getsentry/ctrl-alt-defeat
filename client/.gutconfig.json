@@ -15,7 +15,6 @@
   "hide_settings": false,
   "inner_class": "",
   "ignore_pause": true,
-  "include_subdirs": true,
   "double_strategy": "partial",
   "pre_run_script": "",
   "post_run_script": "",

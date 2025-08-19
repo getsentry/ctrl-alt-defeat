@@ -21,7 +21,7 @@ func test_inventory_setup_and_save():
 	var test_servers = [
 		{"data": {"name": "Rack", "pattern": [[1,1],[1,1]], "cost": 5}, "pos": Vector2i(0, 0)}
 	]
-	
+
 	GameStateManager.save_inventory_state(test_items, test_servers)
 	var saved = GameStateManager.get_inventory_state()
 	assert_eq(saved.items.size(), 2, "Should have 2 items saved")
@@ -49,7 +49,7 @@ func test_battle_simulation():
 		},
 		"health_lost": 0
 	}
-	
+
 	GameStateManager.update_after_battle(mock_result)
 	assert_eq(GameStateManager.current_round, initial_round + 1, "Should advance round after battle")
 	assert_eq(GameStateManager.gold, 22, "Should have 22 gold after winning")
@@ -65,14 +65,14 @@ func test_inventory_persistence_after_battle():
 		{"data": {"name": "Rack", "pattern": [[1,1],[1,1]]}, "pos": Vector2i(0, 0)}
 	]
 	GameStateManager.save_inventory_state(test_items, test_servers)
-	
+
 	# Simulate battle
 	var mock_result = {
 		"battle_result": {"winner": 1},
 		"session_update": {"round": 2, "gold": 20}
 	}
 	GameStateManager.update_after_battle(mock_result)
-	
+
 	# Check inventory still exists
 	var after_battle = GameStateManager.get_inventory_state()
 	assert_eq(after_battle.items.size(), 1, "Items should persist after battle")
@@ -91,7 +91,7 @@ func test_losing_battle():
 			"lives": lives_before - 1
 		}
 	}
-	
+
 	GameStateManager.update_after_battle(loss_result)
 	assert_eq(GameStateManager.player_lives, lives_before - 1, "Should lose a life on defeat")
 	assert_eq(GameStateManager.losses, 1, "Should have 1 loss")
@@ -100,10 +100,10 @@ func test_game_over_detection():
 	# Test 6: Check game over
 	GameStateManager.player_lives = 5
 	assert_false(GameStateManager.is_game_over(), "Should not be game over at 5 lives")
-	
+
 	GameStateManager.player_lives = 0
 	assert_true(GameStateManager.is_game_over(), "Should be game over at 0 lives")
-	
+
 	# Also test game_over flag
 	GameStateManager.player_lives = 3
 	GameStateManager.game_over = true

@@ -34,11 +34,11 @@ func start_session() -> Dictionary:
 
 	var initial_shop = _generate_mock_shop(1)
 
-	# Starting containers - server will eventually provide these
+	# Starting containers - 3 adjacent 2x2 containers
 	var starting_containers = [
 		{"type": "cube_2x2", "position": Vector2i(1, 3)},
-		{"type": "cube_2x2", "position": Vector2i(4, 3)},
-		{"type": "cube_2x2", "position": Vector2i(7, 3)}
+		{"type": "cube_2x2", "position": Vector2i(3, 3)},
+		{"type": "cube_2x2", "position": Vector2i(5, 3)}
 	]
 
 	var response = {

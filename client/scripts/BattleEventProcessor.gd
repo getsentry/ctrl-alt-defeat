@@ -31,12 +31,19 @@ var player2_cpu: float = 10.0
 func _ready():
 	set_process(false)
 
-func load_battle_events(battle_result: Dictionary):
+func load_battle_events(battle_data: Dictionary):
 	# Load events from battle result
+	# Handle both direct battle_result and nested structure
+	var battle_result = battle_data
+	if battle_data.has("battle_result"):
+		battle_result = battle_data.battle_result
+
 	if battle_result.has("actions"):
 		events = battle_result.actions
+		print("Loaded %d battle events" % events.size())
 	else:
 		events = []
+		print("Warning: No battle events found in battle data")
 
 	# Set initial HP from round quota
 	player1_max_hp = GameStateManager.get_round_quota()
@@ -51,6 +58,8 @@ func load_battle_events(battle_result: Dictionary):
 
 	if battle_result.has("duration"):
 		battle_duration = battle_result.duration
+	else:
+		battle_duration = 20.0  # Default duration
 
 	current_event_index = 0
 	is_playing = false

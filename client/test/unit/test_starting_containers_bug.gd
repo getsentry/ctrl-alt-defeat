@@ -18,13 +18,13 @@ func test_main_menu_starting_containers_assignment():
 			{"type": "cube_2x2", "position": Vector2i(7, 3)}
 		]
 	}
-	
+
 	# This line was causing: "Invalid assignment of property or key 'starting_containers'"
 	# Now it should work fine
 	if mock_session_data.has("starting_containers"):
 		GameStateManager.starting_containers = mock_session_data.starting_containers
-		
-	assert_eq(GameStateManager.starting_containers.size(), 3, 
+
+	assert_eq(GameStateManager.starting_containers.size(), 3,
 		"Should have set 3 starting containers from session data")
 	assert_eq(GameStateManager.starting_containers[0].type, "cube_2x2",
 		"First container should be cube_2x2")
@@ -36,10 +36,10 @@ func test_game_over_screen_starting_containers_assignment():
 			{"type": "rack_2x3", "position": Vector2i(2, 2)}
 		]
 	}
-	
+
 	if session_data.has("starting_containers"):
 		GameStateManager.starting_containers = session_data.starting_containers
-		
+
 	assert_eq(GameStateManager.starting_containers.size(), 1,
 		"Should have 1 container from game over screen")
 	assert_eq(GameStateManager.starting_containers[0].type, "rack_2x3",
@@ -50,7 +50,7 @@ func test_empty_starting_containers_is_valid():
 	GameStateManager.starting_containers = []
 	assert_eq(GameStateManager.starting_containers.size(), 0,
 		"Empty starting_containers should be valid")
-	
+
 	# Test clearing via start_new_game
 	GameStateManager.starting_containers = [{"type": "test"}]
 	GameStateManager.start_new_game()
@@ -62,7 +62,7 @@ func test_unified_grid_uses_starting_containers():
 	GameStateManager.starting_containers = [
 		{"type": "cube_2x2", "position": Vector2i(5, 5)}
 	]
-	
+
 	# UnifiedGridUI should be able to read this
 	var containers = GameStateManager.starting_containers
 	assert_eq(containers.size(), 1, "Should retrieve containers from GameStateManager")

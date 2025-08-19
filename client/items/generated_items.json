@@ -1,0 +1,365 @@
+{
+  "items": {
+    "error_monitoring": {
+      "name": "Error Monitoring Shield",
+      "description": "Detects and blocks incoming errors",
+      "category": "defense",
+      "rarity": "common",
+      "icon": "res://assets/items/icons/error_monitoring.png",
+      "width": 1,
+      "height": 1,
+      "cost": 3,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "error_monitoring_activate",
+        "hit": "error_monitoring_hit"
+      }
+    },
+    "firewall": {
+      "name": "Firewall",
+      "description": "First line of defense against attacks",
+      "category": "defense",
+      "rarity": "uncommon",
+      "icon": "res://assets/items/icons/firewall.png",
+      "width": 1,
+      "height": 2,
+      "cost": 5,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "firewall_activate",
+        "hit": "firewall_hit"
+      }
+    },
+    "rate_limiter": {
+      "name": "Rate Limiter",
+      "description": "Slows down incoming attacks",
+      "category": "defense",
+      "rarity": "rare",
+      "icon": "res://assets/items/icons/rate_limiter.png",
+      "width": 2,
+      "height": 1,
+      "cost": 6,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "rate_limiter_activate",
+        "hit": "rate_limiter_hit"
+      }
+    },
+    "encryption_layer": {
+      "name": "Encryption Layer",
+      "description": "Makes data unreadable to attackers",
+      "category": "defense",
+      "rarity": "epic",
+      "icon": "res://assets/items/icons/encryption_layer.png",
+      "width": 2,
+      "height": 2,
+      "cost": 8,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "encryption_layer_activate",
+        "hit": "encryption_layer_hit"
+      }
+    },
+    "quantum_firewall": {
+      "name": "Quantum Firewall",
+      "description": "Next-gen defense using quantum encryption",
+      "category": "defense",
+      "rarity": "legendary",
+      "icon": "res://assets/items/icons/quantum_firewall.png",
+      "width": 1,
+      "height": 1,
+      "cost": 12,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "quantum_firewall_activate",
+        "hit": "quantum_firewall_hit"
+      }
+    },
+    "null_pointer": {
+      "name": "Null Pointer Exception",
+      "description": "Classic bug that crashes systems",
+      "category": "problem",
+      "rarity": "common",
+      "icon": "res://assets/items/icons/null_pointer.png",
+      "width": 1,
+      "height": 1,
+      "cost": 3,
+      "min_damage": 4,
+      "max_damage": 8,
+      "cooldown": 2.5,
+      "cpu_cost": 3,
+      "animations": {
+        "activate": "null_pointer_activate",
+        "hit": "null_pointer_hit"
+      }
+    },
+    "memory_leak": {
+      "name": "Memory Leak",
+      "description": "Slowly drains resources over time",
+      "category": "problem",
+      "rarity": "common",
+      "icon": "res://assets/items/icons/memory_leak.png",
+      "width": 1,
+      "height": 1,
+      "cost": 4,
+      "min_damage": 2,
+      "max_damage": 4,
+      "cooldown": 3.0,
+      "cpu_cost": 2,
+      "animations": {
+        "activate": "memory_leak_activate",
+        "hit": "memory_leak_hit"
+      }
+    },
+    "race_condition": {
+      "name": "Race Condition",
+      "description": "Unpredictable timing-based bug",
+      "category": "problem",
+      "rarity": "uncommon",
+      "icon": "res://assets/items/icons/race_condition.png",
+      "width": 1,
+      "height": 1,
+      "cost": 5,
+      "min_damage": 3,
+      "max_damage": 6,
+      "cooldown": 1.5,
+      "cpu_cost": 4,
+      "animations": {
+        "activate": "race_condition_activate",
+        "hit": "race_condition_hit"
+      }
+    },
+    "infinite_loop": {
+      "name": "Infinite Loop",
+      "description": "Consumes CPU indefinitely",
+      "category": "problem",
+      "rarity": "rare",
+      "icon": "res://assets/items/icons/infinite_loop.png",
+      "width": 2,
+      "height": 1,
+      "cost": 6,
+      "min_damage": 1,
+      "max_damage": 3,
+      "cooldown": 4.0,
+      "cpu_cost": 1,
+      "animations": {
+        "activate": "infinite_loop_activate",
+        "hit": "infinite_loop_hit"
+      }
+    },
+    "sql_injection": {
+      "name": "SQL Injection",
+      "description": "Exploits database vulnerabilities",
+      "category": "problem",
+      "rarity": "rare",
+      "icon": "res://assets/items/icons/sql_injection.png",
+      "width": 1,
+      "height": 2,
+      "cost": 7,
+      "min_damage": 8,
+      "max_damage": 12,
+      "cooldown": 3.5,
+      "cpu_cost": 5,
+      "animations": {
+        "activate": "sql_injection_activate",
+        "hit": "sql_injection_hit"
+      }
+    },
+    "ddos_attack": {
+      "name": "DDoS Attack",
+      "description": "Overwhelming distributed attack",
+      "category": "problem",
+      "rarity": "epic",
+      "icon": "res://assets/items/icons/ddos_attack.png",
+      "width": 2,
+      "height": 2,
+      "cost": 10,
+      "min_damage": 3,
+      "max_damage": 5,
+      "cooldown": 5.0,
+      "cpu_cost": 8,
+      "animations": {
+        "activate": "ddos_attack_activate",
+        "hit": "ddos_attack_hit"
+      }
+    },
+    "zero_day_exploit": {
+      "name": "Zero Day Exploit",
+      "description": "Unknown vulnerability with no patch",
+      "category": "problem",
+      "rarity": "legendary",
+      "icon": "res://assets/items/icons/zero_day_exploit.png",
+      "width": 1,
+      "height": 1,
+      "cost": 15,
+      "min_damage": 10,
+      "max_damage": 15,
+      "cooldown": 4.0,
+      "cpu_cost": 6,
+      "animations": {
+        "activate": "zero_day_exploit_activate",
+        "hit": "zero_day_exploit_hit"
+      }
+    },
+    "health_potion": {
+      "name": "Health Potion",
+      "description": "Restores health when damaged",
+      "category": "defense",
+      "rarity": "common",
+      "icon": "res://assets/items/icons/health_potion.png",
+      "width": 1,
+      "height": 1,
+      "cost": 2,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "health_potion_activate",
+        "hit": "health_potion_hit"
+      }
+    },
+    "cpu_booster": {
+      "name": "CPU Booster",
+      "description": "Temporary CPU boost",
+      "category": "infrastructure",
+      "rarity": "uncommon",
+      "icon": "res://assets/items/icons/cpu_booster.png",
+      "width": 1,
+      "height": 1,
+      "cost": 3,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "cpu_booster_activate",
+        "hit": "cpu_booster_hit"
+      }
+    },
+    "emergency_patch": {
+      "name": "Emergency Patch",
+      "description": "Quick fix for critical issues",
+      "category": "defense",
+      "rarity": "rare",
+      "icon": "res://assets/items/icons/emergency_patch.png",
+      "width": 1,
+      "height": 1,
+      "cost": 4,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "emergency_patch_activate",
+        "hit": "emergency_patch_hit"
+      }
+    },
+    "health_check": {
+      "name": "Health Check",
+      "description": "Regular system health monitoring",
+      "category": "infrastructure",
+      "rarity": "common",
+      "icon": "res://assets/items/icons/health_check.png",
+      "width": 1,
+      "height": 1,
+      "cost": 3,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 4.0,
+      "cpu_cost": 2,
+      "animations": {
+        "activate": "health_check_activate",
+        "hit": "health_check_hit"
+      }
+    },
+    "auto_scaler": {
+      "name": "Auto Scaler",
+      "description": "Automatically adjusts resources based on load",
+      "category": "infrastructure",
+      "rarity": "uncommon",
+      "icon": "res://assets/items/icons/auto_scaler.png",
+      "width": 2,
+      "height": 1,
+      "cost": 5,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "auto_scaler_activate",
+        "hit": "auto_scaler_hit"
+      }
+    },
+    "load_balancer_module": {
+      "name": "Load Balancer Module",
+      "description": "Distributes work across systems",
+      "category": "infrastructure",
+      "rarity": "rare",
+      "icon": "res://assets/items/icons/load_balancer_module.png",
+      "width": 1,
+      "height": 1,
+      "cost": 4,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "load_balancer_module_activate",
+        "hit": "load_balancer_module_hit"
+      }
+    },
+    "backup_system": {
+      "name": "Backup System",
+      "description": "Restores health when critically damaged",
+      "category": "infrastructure",
+      "rarity": "epic",
+      "icon": "res://assets/items/icons/backup_system.png",
+      "width": 2,
+      "height": 2,
+      "cost": 8,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "backup_system_activate",
+        "hit": "backup_system_hit"
+      }
+    },
+    "quantum_processor": {
+      "name": "Quantum Processor",
+      "description": "Revolutionary processing power",
+      "category": "infrastructure",
+      "rarity": "legendary",
+      "icon": "res://assets/items/icons/quantum_processor.png",
+      "width": 1,
+      "height": 1,
+      "cost": 15,
+      "min_damage": 0,
+      "max_damage": 0,
+      "cooldown": 0,
+      "cpu_cost": 0,
+      "animations": {
+        "activate": "quantum_processor_activate",
+        "hit": "quantum_processor_hit"
+      }
+    }
+  },
+  "version": "1.0.0"
+}

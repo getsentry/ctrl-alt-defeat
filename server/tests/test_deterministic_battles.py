@@ -3,8 +3,10 @@ Test deterministic battle system with seeded RNG
 Same seed + same items = same result every time
 """
 
+from copy import deepcopy
 
-from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
+import pytest
+from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
@@ -147,7 +149,7 @@ class TestDeterministicBattles:
 
         # At least some results should differ
         unique_winners = set(r["winner"] for r in results)
-        unique_durations = set(r["duration"] for r in results)
+        # unique_durations = set(r["duration"] for r in results)
         unique_quotas = set((r["player1_quota"], r["player2_quota"]) for r in results)
 
         # With 5 different seeds and high RNG, we should see some variation

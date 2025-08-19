@@ -3,7 +3,7 @@ Test timer item behavior with CPU throttling
 """
 
 
-from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
+from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 
 from .test_utils import get_test_containers
@@ -59,7 +59,7 @@ class TestTimerScheduling:
 
     def test_timer_activates_when_cpu_available(self):
         """Timer items should activate when CPU regenerates enough"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=42)  # Fixed seed for deterministic behavior
 
         # Create item that costs 7 CPU with 1 second cooldown
         # This will sometimes succeed and sometimes fail
@@ -111,16 +111,26 @@ class TestTimerScheduling:
         )
 
         if len(all_item_events) >= 2:
-            for i in range(1, len(all_item_events)):
-                time_diff = all_item_events[i]["t"] - all_item_events[i - 1]["t"]
-                # Should be close to 1 second cooldown
-                assert (
-                    0.8 <= time_diff <= 1.2
-                ), f"Time diff {time_diff} not close to 1.0"
+            # Filter out CPU fail events at same timestamp
+            unique_times = []
+            seen_times = set()
+            for event in all_item_events:
+                if event["t"] not in seen_times:
+                    unique_times.append(event["t"])
+                    seen_times.add(event["t"])
+
+            # Check time differences between unique timestamps
+            if len(unique_times) >= 2:
+                for i in range(1, len(unique_times)):
+                    time_diff = unique_times[i] - unique_times[i - 1]
+                    # Should be close to 1 second cooldown
+                    assert (
+                        0.8 <= time_diff <= 1.2
+                    ), f"Time diff {time_diff} not close to 1.0"
 
     def test_multiple_items_maintain_independent_schedules(self):
         """Multiple timer items should maintain independent schedules"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=123)  # Fixed seed for deterministic behavior
 
         # Create two items with different cooldowns (low damage to ensure long battle)
         item1 = PlacedItem(
@@ -192,4 +202,6 @@ class TestTimerScheduling:
 
 
 if __name__ == "__main__":
+    import pytest
+
     pytest.main([__file__, "-v"])

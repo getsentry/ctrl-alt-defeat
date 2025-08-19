@@ -1,0 +1,809 @@
+{
+  "error_monitoring": {
+    "id": "error_monitoring",
+    "name": "Error Monitoring Shield",
+    "category": "defense",
+    "rarity": "common",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.3,
+              "block_amount": 8,
+              "cpu_steal": 0.5
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 3
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/error_monitoring.png",
+      "description": "Detects and blocks incoming errors",
+      "animations": {
+        "activate": "error_monitoring_activate",
+        "hit": "error_monitoring_hit"
+      }
+    }
+  },
+  "firewall": {
+    "id": "firewall",
+    "name": "Firewall",
+    "category": "defense",
+    "rarity": "uncommon",
+    "shape": {
+      "width": 1,
+      "height": 2,
+      "string": "1x2"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.3,
+              "block_amount": 10,
+              "cpu_steal": 0.7
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 5
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/firewall.png",
+      "description": "First line of defense against attacks",
+      "animations": {
+        "activate": "firewall_activate",
+        "hit": "firewall_hit"
+      }
+    }
+  },
+  "rate_limiter": {
+    "id": "rate_limiter",
+    "name": "Rate Limiter",
+    "category": "defense",
+    "rarity": "rare",
+    "shape": {
+      "width": 2,
+      "height": 1,
+      "string": "2x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.2,
+              "block_amount": 5
+            },
+            {
+              "type": "debuff",
+              "target": "attacker",
+              "stat": "speed",
+              "value": -0.2,
+              "duration": 3
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 6
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/rate_limiter.png",
+      "description": "Slows down incoming attacks",
+      "animations": {
+        "activate": "rate_limiter_activate",
+        "hit": "rate_limiter_hit"
+      }
+    }
+  },
+  "encryption_layer": {
+    "id": "encryption_layer",
+    "name": "Encryption Layer",
+    "category": "defense",
+    "rarity": "epic",
+    "shape": {
+      "width": 2,
+      "height": 2,
+      "string": "2x2"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "damage_reduction",
+              "value": 0.25
+            }
+          ]
+        },
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.4,
+              "block_amount": 12
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 8
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/encryption_layer.png",
+      "description": "Makes data unreadable to attackers",
+      "animations": {
+        "activate": "encryption_layer_activate",
+        "hit": "encryption_layer_hit"
+      }
+    }
+  },
+  "quantum_firewall": {
+    "id": "quantum_firewall",
+    "name": "Quantum Firewall",
+    "category": "defense",
+    "rarity": "legendary",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "effects": [
+            {
+              "type": "shield_block",
+              "block_chance": 0.5,
+              "block_amount": 15,
+              "reflect_damage": 5
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 12
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/quantum_firewall.png",
+      "description": "Next-gen defense using quantum encryption",
+      "animations": {
+        "activate": "quantum_firewall_activate",
+        "hit": "quantum_firewall_hit"
+      }
+    }
+  },
+  "null_pointer": {
+    "id": "null_pointer",
+    "name": "Null Pointer Exception",
+    "category": "problem",
+    "rarity": "common",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.5,
+          "cpu_cost": 3,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 8,
+              "accuracy": 0.85,
+              "crit_chance": 0.2
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 3
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/null_pointer.png",
+      "description": "Classic bug that crashes systems",
+      "animations": {
+        "activate": "null_pointer_activate",
+        "hit": "null_pointer_hit"
+      }
+    }
+  },
+  "memory_leak": {
+    "id": "memory_leak",
+    "name": "Memory Leak",
+    "category": "problem",
+    "rarity": "common",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 4,
+              "accuracy": 0.95,
+              "special": "stacking"
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 4
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/memory_leak.png",
+      "description": "Slowly drains resources over time",
+      "animations": {
+        "activate": "memory_leak_activate",
+        "hit": "memory_leak_hit"
+      }
+    }
+  },
+  "race_condition": {
+    "id": "race_condition",
+    "name": "Race Condition",
+    "category": "problem",
+    "rarity": "uncommon",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.5,
+          "cpu_cost": 4,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 3,
+              "max_damage": 6,
+              "accuracy": 0.75,
+              "crit_chance": 0.3
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 5
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/race_condition.png",
+      "description": "Unpredictable timing-based bug",
+      "animations": {
+        "activate": "race_condition_activate",
+        "hit": "race_condition_hit"
+      }
+    }
+  },
+  "infinite_loop": {
+    "id": "infinite_loop",
+    "name": "Infinite Loop",
+    "category": "problem",
+    "rarity": "rare",
+    "shape": {
+      "width": 2,
+      "height": 1,
+      "string": "2x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 1,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 1,
+              "max_damage": 3,
+              "accuracy": 1.0
+            },
+            {
+              "type": "cpu_drain",
+              "value": 2,
+              "target": "enemy"
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 6
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/infinite_loop.png",
+      "description": "Consumes CPU indefinitely",
+      "animations": {
+        "activate": "infinite_loop_activate",
+        "hit": "infinite_loop_hit"
+      }
+    }
+  },
+  "sql_injection": {
+    "id": "sql_injection",
+    "name": "SQL Injection",
+    "category": "problem",
+    "rarity": "rare",
+    "shape": {
+      "width": 1,
+      "height": 2,
+      "string": "1x2"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.5,
+          "cpu_cost": 5,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 12,
+              "accuracy": 0.8,
+              "pierce": true
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 7
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/sql_injection.png",
+      "description": "Exploits database vulnerabilities",
+      "animations": {
+        "activate": "sql_injection_activate",
+        "hit": "sql_injection_hit"
+      }
+    }
+  },
+  "ddos_attack": {
+    "id": "ddos_attack",
+    "name": "DDoS Attack",
+    "category": "problem",
+    "rarity": "epic",
+    "shape": {
+      "width": 2,
+      "height": 2,
+      "string": "2x2"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 5.0,
+          "cpu_cost": 8,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 3,
+              "max_damage": 5,
+              "accuracy": 0.9,
+              "hits": 5
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 10
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/ddos_attack.png",
+      "description": "Overwhelming distributed attack",
+      "animations": {
+        "activate": "ddos_attack_activate",
+        "hit": "ddos_attack_hit"
+      }
+    }
+  },
+  "zero_day_exploit": {
+    "id": "zero_day_exploit",
+    "name": "Zero Day Exploit",
+    "category": "problem",
+    "rarity": "legendary",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 15,
+              "max_damage": 20,
+              "accuracy": 1.0,
+              "pierce": true
+            }
+          ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 6,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 10,
+              "max_damage": 15,
+              "accuracy": 0.9,
+              "crit_chance": 0.25
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 15
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/zero_day_exploit.png",
+      "description": "Unknown vulnerability with no patch",
+      "animations": {
+        "activate": "zero_day_exploit_activate",
+        "hit": "zero_day_exploit_hit"
+      }
+    }
+  },
+  "health_potion": {
+    "id": "health_potion",
+    "name": "Health Potion",
+    "category": "defense",
+    "rarity": "common",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "damage_taken",
+          "threshold": 0.5,
+          "cooldown": 0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 10,
+              "max_heal": 15
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 2
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/health_potion.png",
+      "description": "Restores health when damaged",
+      "animations": {
+        "activate": "health_potion_activate",
+        "hit": "health_potion_hit"
+      }
+    }
+  },
+  "cpu_booster": {
+    "id": "cpu_booster",
+    "name": "CPU Booster",
+    "category": "infrastructure",
+    "rarity": "uncommon",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_cpu",
+              "value": 10
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 3
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/cpu_booster.png",
+      "description": "Temporary CPU boost",
+      "animations": {
+        "activate": "cpu_booster_activate",
+        "hit": "cpu_booster_hit"
+      }
+    }
+  },
+  "emergency_patch": {
+    "id": "emergency_patch",
+    "name": "Emergency Patch",
+    "category": "defense",
+    "rarity": "rare",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "damage_taken",
+          "threshold": 0.2,
+          "cooldown": 0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 25,
+              "max_heal": 35
+            },
+            {
+              "type": "block",
+              "value": 10
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 4
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/emergency_patch.png",
+      "description": "Quick fix for critical issues",
+      "animations": {
+        "activate": "emergency_patch_activate",
+        "hit": "emergency_patch_hit"
+      }
+    }
+  },
+  "health_check": {
+    "id": "health_check",
+    "name": "Health Check",
+    "category": "infrastructure",
+    "rarity": "common",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 3,
+              "max_heal": 5
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 3
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/health_check.png",
+      "description": "Regular system health monitoring",
+      "animations": {
+        "activate": "health_check_activate",
+        "hit": "health_check_hit"
+      }
+    }
+  },
+  "auto_scaler": {
+    "id": "auto_scaler",
+    "name": "Auto Scaler",
+    "category": "infrastructure",
+    "rarity": "uncommon",
+    "shape": {
+      "width": 2,
+      "height": 1,
+      "string": "2x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_cpu",
+              "value": 5
+            },
+            {
+              "type": "stat_mod",
+              "stat": "cpu_regen",
+              "value": 1
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 5
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/auto_scaler.png",
+      "description": "Automatically adjusts resources based on load",
+      "animations": {
+        "activate": "auto_scaler_activate",
+        "hit": "auto_scaler_hit"
+      }
+    }
+  },
+  "load_balancer_module": {
+    "id": "load_balancer_module",
+    "name": "Load Balancer Module",
+    "category": "infrastructure",
+    "rarity": "rare",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "buff",
+              "target": "adjacent",
+              "stat": "speed",
+              "value": 0.15
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 4
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/load_balancer_module.png",
+      "description": "Distributes work across systems",
+      "animations": {
+        "activate": "load_balancer_module_activate",
+        "hit": "load_balancer_module_hit"
+      }
+    }
+  },
+  "backup_system": {
+    "id": "backup_system",
+    "name": "Backup System",
+    "category": "infrastructure",
+    "rarity": "epic",
+    "shape": {
+      "width": 2,
+      "height": 2,
+      "string": "2x2"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "damage_taken",
+          "threshold": 0.3,
+          "cooldown": 0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 20,
+              "max_heal": 30
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 8
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/backup_system.png",
+      "description": "Restores health when critically damaged",
+      "animations": {
+        "activate": "backup_system_activate",
+        "hit": "backup_system_hit"
+      }
+    }
+  },
+  "quantum_processor": {
+    "id": "quantum_processor",
+    "name": "Quantum Processor",
+    "category": "infrastructure",
+    "rarity": "legendary",
+    "shape": {
+      "width": 1,
+      "height": 1,
+      "string": "1x1"
+    },
+    "gameplay": {
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_cpu",
+              "value": 10
+            },
+            {
+              "type": "stat_mod",
+              "stat": "cpu_regen",
+              "value": 3
+            },
+            {
+              "type": "buff",
+              "target": "all_friendly",
+              "stat": "cpu_cost",
+              "value": -0.2
+            }
+          ]
+        }
+      ],
+      "adjacency_bonus": null,
+      "cost": 15
+    },
+    "visual": {
+      "icon": "res://assets/items/icons/quantum_processor.png",
+      "description": "Revolutionary processing power",
+      "animations": {
+        "activate": "quantum_processor_activate",
+        "hit": "quantum_processor_hit"
+      }
+    }
+  }
+}

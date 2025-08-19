@@ -8,7 +8,9 @@ var player_name: String = "Player"
 # Game progression
 var current_round: int = 1
 var player_lives: int = 5  # Player has 5 lives/tries
-var battle_health: int = 25  # Health for the current battle
+var player_health: int = 100  # Player's health (different from lives)
+var max_player_health: int = 100  # Maximum player health
+var battle_health: int = 25  # Health for the current battle (quota)
 var gold: int = 12  # Start with 12 gold
 var wins: int = 0
 var losses: int = 0
@@ -42,7 +44,9 @@ func start_new_game():
 	player_id = ""
 	current_round = 1
 	player_lives = 5
-	battle_health = 25
+	player_health = 100  # Reset player health
+	max_player_health = 100
+	battle_health = get_round_quota()  # Set based on round
 	gold = 12  # Starting gold
 	wins = 0
 	losses = 0
