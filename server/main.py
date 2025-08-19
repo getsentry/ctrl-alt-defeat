@@ -8,14 +8,24 @@ Sentry Autobattler Server
 import os
 import random
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
+
+# Import session management and schemas
+from database import db_manager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from inventory_manager import InventoryManager
-from pydantic import BaseModel
+from schemas import (
+    GameSession,
+    PurchaseRequest,
+    SellRequest,
+    ShopRefreshRequest,
+    SimpleBattleRequest,
+    StartSessionRequest,
+)
+from session_manager import session_manager
 
 # Test mode allows seeds and special AI configurations for testing
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
@@ -34,88 +44,46 @@ app.add_middleware(
 )
 
 
-class SimpleBattleRequest(BaseModel):
-    """Simplified battle request - uses inventory from session"""
-
-    player_id: str
-    round_number: int
-    opponent_id: Optional[str] = None  # None = fight AI
-    seed: Optional[int] = None  # For deterministic testing (TEST_MODE only)
-    test_ai_difficulty: Optional[
-        str
-    ] = None  # "easy", "medium", "hard" (TEST_MODE only)
-
-
-class PurchaseRequest(BaseModel):
-    """Request to purchase an item from shop"""
-
-    player_id: str
-    item_id: str  # ID of item from shop
-    placement: Union[str, List[int]]  # Either "storage" or [x, y] coordinates
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connection on startup"""
+    await session_manager.initialize()
+    print(f"Server started in {'TEST' if TEST_MODE else 'PRODUCTION'} mode")
+    if session_manager.use_fallback:
+        print("WARNING: Using in-memory session storage (database unavailable)")
+    else:
+        print("Using PostgreSQL for session persistence")
 
 
-class SellRequest(BaseModel):
-    """Request to sell an item from inventory"""
-
-    player_id: str
-    item_id: str  # ID of item to sell
-    from_storage: bool = False  # Whether item is in storage (vs grid)
-
-
-class ShopRefreshRequest(BaseModel):
-    """Request for new shop items"""
-
-    player_id: str
-    round: int
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up database connections on shutdown"""
+    await db_manager.close()
+    print("Server shutdown complete")
 
 
-class GameSession(BaseModel):
-    """Player's current game session"""
-
-    player_id: str
-    round: int = 1
-    gold: int = 12  # Start with 12g for round 1
-    lives: int = 5  # Player has 5 lives/tries
-    wins: int = 0
-    losses: int = 0
-    last_battle_result: Optional[Dict] = None
-    current_shop: List[Optional[Dict]] = []  # Shop can have empty slots
-    game_seed: int  # Master seed for all RNG in this game session (always set)
-    shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
-
-    # Inventory fields
-    inventory_grid: List[Dict] = []  # Items placed on the grid
-    inventory_storage: List[Dict] = []  # Items in storage (not used in battle)
-    placed_items: List[Dict] = []  # Quick reference to items on grid
-    server_containers: List[Dict] = []  # Server container positions and info
+# Request/Response models have been moved to schemas.py
 
 
-# In-memory storage (replace with Redis/DB for production)
-# TODO: When DATABASE_URL is available, migrate to PostgreSQL storage
-sessions: Dict[str, GameSession] = {}
-battle_history: List[Dict] = []
-
-# Future: Initialize database connection when DATABASE_URL is available
-# if DATABASE_URL:
-#     import databases
-#     database = databases.Database(DATABASE_URL)
-#     # Database initialization would go here
+# Session storage is now handled by SessionManager with PostgreSQL persistence
+# Fallback to in-memory storage if database is unavailable
 
 
 @app.post("/session/start")
-async def start_session(game_seed: Optional[int] = None) -> Dict[str, Any]:
+async def start_session(request: StartSessionRequest) -> Dict[str, Any]:
     """Start a new game session"""
     player_id = str(uuid.uuid4())
 
     # Only allow custom seeds in TEST_MODE
-    if game_seed is not None and not TEST_MODE:
+    if request.seed is not None and not TEST_MODE:
         raise HTTPException(
             status_code=403, detail="Custom seeds only allowed in test mode"
         )
 
     # Always have a seed - use provided or generate one
-    if game_seed is None:
-        game_seed = random.randint(0, 2**31 - 1)
+    game_seed = (
+        request.seed if request.seed is not None else random.randint(0, 2**31 - 1)
+    )
 
     # Initialize inventory with 3 server containers
     inventory_manager = InventoryManager()
@@ -134,20 +102,17 @@ async def start_session(game_seed: Optional[int] = None) -> Dict[str, Any]:
             }
         )
 
-    session = GameSession(
-        player_id=player_id,
-        round=1,
-        gold=12,
-        lives=5,
-        current_shop=generate_shop_items(1, seed=game_seed),
-        game_seed=game_seed,
-        inventory_grid=inventory_state["grid"],
-        inventory_storage=inventory_state["storage"],
-        placed_items=[],
-        server_containers=server_containers,
-    )
+    # Create session using SessionManager
+    session = await session_manager.create_session(player_id, game_seed)
 
-    sessions[player_id] = session
+    # Update session with shop and inventory
+    session.current_shop = generate_shop_items(1, seed=game_seed)
+    session.inventory_grid = inventory_state["grid"]
+    session.inventory_storage = inventory_state["storage"]
+    session.server_containers = server_containers
+
+    # Save the updated session
+    await session_manager.update_session(session)
 
     # Create simplified item catalog for client
     item_catalog_simple = {}
@@ -190,20 +155,20 @@ async def start_session(game_seed: Optional[int] = None) -> Dict[str, Any]:
 
 
 @app.get("/session/{player_id}")
-async def get_session(player_id: str) -> GameSession:
+async def get_session_endpoint(player_id: str) -> GameSession:
     """Get current session state"""
-    if player_id not in sessions:
+    session = await session_manager.get_session(player_id)
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    return sessions[player_id]
+    return session
 
 
 @app.post("/shop/refresh")
 async def refresh_shop(request: ShopRefreshRequest) -> Dict[str, Any]:
     """Get new shop items (costs 1 gold if not free refresh)"""
-    if request.player_id not in sessions:
+    session = await session_manager.get_session(request.player_id)
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-
-    session = sessions[request.player_id]
 
     # Check if this is a paid refresh
     if len(session.current_shop) > 0:  # Not the first shop of the round
@@ -218,6 +183,9 @@ async def refresh_shop(request: ShopRefreshRequest) -> Dict[str, Any]:
     shop_seed = session.game_seed + session.round * 1000 + session.shop_refresh_count
 
     session.current_shop = generate_shop_items(session.round, seed=shop_seed)
+
+    # Save updated session
+    await session_manager.update_session(session)
 
     return {"shop": session.current_shop, "gold": session.gold}
 
@@ -416,10 +384,9 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     """
     Simulate a battle using inventory from session
     """
-    if request.player_id not in sessions:
+    session = await session_manager.get_session(request.player_id)
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-
-    session = sessions[request.player_id]
 
     # Validate test-only parameters
     if not TEST_MODE:
@@ -452,8 +419,13 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
             player_items.append(placed_item)
 
     # Generate or fetch opponent
-    if request.opponent_id and request.opponent_id in sessions:
+    opponent_session = None
+    if request.opponent_id:
+        opponent_session = await session_manager.get_session(request.opponent_id)
+
+    if opponent_session:
         # In real implementation, load opponent's last submitted inventory
+        # For now, just use AI items
         opponent_items = generate_ai_items(
             request.round_number, request.test_ai_difficulty
         )
@@ -574,16 +546,19 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
 
     session.current_shop = generate_shop_items(session.round, seed=shop_seed)
 
+    # Save updated session
+    await session_manager.update_session(session)
+
     # Store battle in history
-    battle_record = {
-        "id": str(uuid.uuid4()),
-        "player_id": request.player_id,
-        "opponent_id": request.opponent_id,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "round": request.round_number,
-        "result": battle_result,
-    }
-    battle_history.append(battle_record)
+    await session_manager.save_battle_history(
+        player1_id=request.player_id,
+        player2_id=request.opponent_id,
+        round_number=request.round_number,
+        winner=battle_result["winner"],
+        battle_data=battle_result,
+    )
+
+    battle_id = str(uuid.uuid4())
 
     # Check win/loss conditions
     game_over = session.lives <= 0
@@ -602,7 +577,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
             "victory": victory,
         },
         "new_shop": session.current_shop,
-        "battle_id": battle_record["id"],
+        "battle_id": battle_id,
     }
 
 
@@ -753,10 +728,9 @@ def generate_ai_items(
 @app.post("/purchase/item")
 async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
     """Purchase an item from shop and place in inventory or storage"""
-    if request.player_id not in sessions:
+    session = await session_manager.get_session(request.player_id)
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-
-    session = sessions[request.player_id]
 
     # Find item in shop
     item = None
@@ -778,7 +752,7 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
 
     if is_container:
         # Containers can't be placed in storage, only on the main grid
-        if request.placement == "storage":
+        if request.to_storage:
             raise HTTPException(
                 status_code=400, detail="Containers cannot be placed in storage"
             )
@@ -809,15 +783,15 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
     }
 
     # Place item based on placement type
-    if request.placement == "storage":
+    if request.to_storage:
         # Add to storage
         success = manager.place_item(inventory_item, placement="storage")
         if not success:
             raise HTTPException(status_code=500, detail="Failed to add item to storage")
     else:
         # Place on grid
-        if isinstance(request.placement, list) and len(request.placement) == 2:
-            position = tuple(request.placement)
+        if request.target_position and len(request.target_position) == 2:
+            position = tuple(request.target_position)
             success = manager.place_item(inventory_item, placement=position)
             if not success:
                 raise HTTPException(
@@ -825,7 +799,10 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
                     detail="Invalid placement - position may be occupied or not on a server",
                 )
         else:
-            raise HTTPException(status_code=400, detail="Invalid placement format")
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid placement format - need target_position",
+            )
 
     # Update session with new inventory state
     new_state = manager.get_state()
@@ -842,16 +819,18 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
         for si in session.current_shop
     ]
 
+    # Save updated session
+    await session_manager.update_session(session)
+
     return {"success": True, "purchased_item": item, "gold": session.gold}
 
 
 @app.post("/sell/item")
 async def sell_item(request: SellRequest) -> Dict[str, Any]:
     """Sell an item for 50% value"""
-    if request.player_id not in sessions:
+    session = await session_manager.get_session(request.player_id)
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-
-    session = sessions[request.player_id]
 
     # Create inventory manager from session state
     manager = InventoryManager()
@@ -867,25 +846,26 @@ async def sell_item(request: SellRequest) -> Dict[str, Any]:
     item_found = None
     item_cost = 3  # Default cost for gold calculation
 
-    if request.from_storage:
-        # Search in storage
-        for item in session.inventory_storage:
-            if item["id"] == request.item_id:
-                item_found = item
-                item_cost = item.get("cost", 3)
-                # Remove from storage using item_id
-                removed = manager.remove_item(item_id=request.item_id)
-                if not removed:
-                    raise HTTPException(status_code=500, detail="Failed to remove item")
-                break
-    else:
-        # Search in grid
+    # Search in both storage and grid for the item
+    # First try storage
+    for item in session.inventory_storage:
+        if item["id"] == request.item_uid:
+            item_found = item
+            item_cost = item.get("cost", 3)
+            # Remove from storage using item_id
+            removed = manager.remove_item(item_id=request.item_uid)
+            if not removed:
+                raise HTTPException(status_code=500, detail="Failed to remove item")
+            break
+
+    # If not found in storage, try grid
+    if not item_found:
         for item in session.inventory_grid:
-            if item["id"] == request.item_id:
+            if item["id"] == request.item_uid:
                 item_found = item
                 item_cost = item.get("cost", 3)
                 # Remove from grid using item_id (remove_item handles both storage and grid)
-                removed = manager.remove_item(item_id=request.item_id)
+                removed = manager.remove_item(item_id=request.item_uid)
                 if not removed:
                     raise HTTPException(status_code=500, detail="Failed to remove item")
                 break
@@ -903,6 +883,9 @@ async def sell_item(request: SellRequest) -> Dict[str, Any]:
     gold_gained = item_cost // 2
     session.gold += gold_gained
 
+    # Save updated session
+    await session_manager.update_session(session)
+
     return {
         "success": True,
         "gold_gained": gold_gained,
@@ -916,7 +899,12 @@ async def get_leaderboard(limit: int = 10) -> List[Dict]:
     """Get top players"""
     leaderboard = []
 
-    for player_id, session in sessions.items():
+    # Get all active sessions
+    player_ids = await session_manager.list_sessions()
+    for player_id in player_ids:
+        session = await session_manager.get_session(player_id)
+        if not session:
+            continue
         leaderboard.append(
             {
                 "player_id": player_id,
@@ -937,14 +925,22 @@ async def get_leaderboard(limit: int = 10) -> List[Dict]:
 @app.get("/battle/history/{player_id}")
 async def get_battle_history(player_id: str, limit: int = 10) -> List[Dict]:
     """Get player's recent battles"""
-    player_battles = [b for b in battle_history if b["player_id"] == player_id]
-
-    # Sort by timestamp desc and return latest
-    player_battles.sort(key=lambda x: x["timestamp"], reverse=True)
-    return player_battles[:limit]
+    # Get battle history from session manager
+    battles = await session_manager.get_battle_history(player_id, limit)
+    return battles
 
 
 if __name__ == "__main__":
+    import argparse
+
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Battle Server")
+    parser.add_argument(
+        "--port", type=int, default=8000, help="Port to run server on (default: 8000)"
+    )
+    args = parser.parse_args()
+
+    print(f"Starting server on port {args.port}...")
+    uvicorn.run(app, host="0.0.0.0", port=args.port)
