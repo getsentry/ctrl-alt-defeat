@@ -107,7 +107,7 @@ def test_json_config():
     print("  • Created battle-ready items from configurations")
     print("  • Ran a complete battle simulation")
     print("\nYou can now easily add/modify items by editing:")
-    print("  • data/items.json")
+    print("  • data/items/*.json (category-specific item files)")
     print("  • data/containers.json")
 
 
