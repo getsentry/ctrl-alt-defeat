@@ -8,7 +8,7 @@ signal purchase_completed(success: bool, data: Dictionary)
 signal sell_completed(success: bool, data: Dictionary)
 signal error_occurred(message: String)
 
-const BASE_URL = "http://localhost:8000"
+var BASE_URL = "http://localhost:8000"
 
 var http_request: HTTPRequest
 var player_id: String = ""
@@ -16,10 +16,7 @@ var session_data: Dictionary = {}
 var last_response_code: int = 0
 var last_response_body: PackedByteArray
 
-# Testing support
-var use_mock_mode: bool = false
-var mock_session_data: Dictionary = {}
-var mock_battle_result: Dictionary = {}
+# Testing support - using real server for tests
 
 # Action codes from server (matching Python ACTION_CODES)
 const ACTION_CODES = {
@@ -39,18 +36,18 @@ const ACTION_CODES = {
 }
 
 func _ready():
+	# Check for environment variable to override server URL (for testing)
+	var env_url = OS.get_environment("BATTLE_SERVER_URL")
+	if env_url != "":
+		BASE_URL = env_url
+		print("Using server URL from environment: ", BASE_URL)
+	else:
+		print("Using default server URL: ", BASE_URL)
+
 	http_request = HTTPRequest.new()
 	add_child(http_request)
 
 func start_session(game_seed: int = -1) -> Dictionary:
-	# Check if we're in mock mode for testing
-	if use_mock_mode:
-		await get_tree().create_timer(0.1).timeout  # Simulate network delay
-		session_data = mock_session_data
-		player_id = mock_session_data.get("player_id", "test-player")
-		session_started.emit(session_data)
-		return session_data
-
 	# Start a new game session with the real server
 	var url = BASE_URL + "/session/start"
 	var headers = ["Content-Type: application/json"]
@@ -106,28 +103,6 @@ func start_session(game_seed: int = -1) -> Dictionary:
 	return {}
 
 func submit_battle(inventory_state: Dictionary) -> Dictionary:
-	# Check if we're in mock mode for testing
-	if use_mock_mode:
-		await get_tree().create_timer(0.1).timeout  # Simulate network delay
-		if mock_battle_result.is_empty():
-			# Provide default mock result
-			mock_battle_result = {
-				"battle_result": {
-					"winner": 1,
-					"duration": 10.0,
-					"player1_quota": 100,
-					"player2_quota": 0,
-					"actions": []
-				},
-				"session_update": {
-					"round": 2,
-					"gold": 15,
-					"lives": 5
-				}
-			}
-		battle_completed.emit(mock_battle_result)
-		return mock_battle_result
-
 	# Submit battle to real server
 	print("Submitting battle to server")
 
