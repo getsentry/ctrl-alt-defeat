@@ -1,7 +1,7 @@
 """
 Tests for AI opponent generation with containers
 """
-
+import pytest
 from battle_engine import BattleSimulator
 from main import generate_ai_opponent
 from server_containers import ServerContainer
@@ -446,3 +446,423 @@ class TestBattleAPIResponse:
         # Should only have the grid item, not the storage item
         assert len(player_items) == 1
         assert player_items[0]["position"] == [2, 3]
+
+
+class TestMoveItemAPI:
+    """Test the /move/item endpoint functionality"""
+
+    def test_move_item_grid_to_grid(self, auth_client):
+        """Test moving an item from one grid position to another"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 42}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Purchase an item
+        shop = data["session"]["current_shop"]
+        item = next(item for item in shop if item)
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item["id"],
+                "target_position": [2, 3],  # First container
+            },
+        )
+        assert response.status_code == 200
+        purchase_data = response.json()
+        item_uid = purchase_data["purchased_item"]["id"]
+
+        # Move item to different position
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": [4, 3],  # Second container
+            },
+        )
+        assert response.status_code == 200
+        result = response.json()
+
+        assert result["success"] is True
+        assert result["item"]["id"] == item_uid
+        assert result["item"]["position"] == [4, 3]
+
+        # Verify item is at new position in inventory
+        found = False
+        for grid_item in result["inventory_grid"]:
+            if grid_item["id"] == item_uid:
+                assert grid_item["position"] == [4, 3]
+                found = True
+                break
+        assert found, "Item not found at new position"
+
+    def test_move_item_grid_to_storage(self, auth_client):
+        """Test moving an item from grid to storage"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Purchase item to grid
+        shop = data["session"]["current_shop"]
+        item = next(item for item in shop if item)
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item["id"],
+                "target_position": [2, 3],
+            },
+        )
+        item_uid = response.json()["purchased_item"]["id"]
+
+        # Move to storage
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": "storage",
+            },
+        )
+        assert response.status_code == 200
+        result = response.json()
+
+        assert result["success"] is True
+        assert result["item"]["position"] is None  # No position in storage
+        assert len(result["inventory_storage"]) == 1
+        assert len(result["inventory_grid"]) == 0
+
+    def test_move_item_storage_to_grid(self, auth_client):
+        """Test moving an item from storage to grid"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Purchase item to storage
+        shop = data["session"]["current_shop"]
+        item = next(item for item in shop if item)
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item["id"],
+                "to_storage": True,
+            },
+        )
+        item_uid = response.json()["purchased_item"]["id"]
+
+        # Move to grid
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": [2, 3],
+            },
+        )
+        assert response.status_code == 200
+        result = response.json()
+
+        assert result["success"] is True
+        assert result["item"]["position"] == [2, 3]
+        assert len(result["inventory_storage"]) == 0
+        assert len(result["inventory_grid"]) == 1
+
+    def test_move_item_storage_to_storage_noop(self, auth_client):
+        """Test that moving from storage to storage is a no-op"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Purchase item to storage
+        shop = data["session"]["current_shop"]
+        item = next(item for item in shop if item)
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item["id"],
+                "to_storage": True,
+            },
+        )
+        item_uid = response.json()["purchased_item"]["id"]
+
+        # Try to move from storage to storage (should be no-op, not error)
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": "storage",
+            },
+        )
+        assert response.status_code == 200  # Should succeed as no-op
+        result = response.json()
+        assert result["success"] is True
+        assert result["item"]["position"] is None  # Still in storage
+        assert len(result["inventory_storage"]) == 1
+
+    def test_move_item_to_invalid_position(self, auth_client):
+        """Test moving an item to a position not on a container"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Purchase item
+        shop = data["session"]["current_shop"]
+        item = next(item for item in shop if item)
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item["id"],
+                "target_position": [2, 3],
+            },
+        )
+        item_uid = response.json()["purchased_item"]["id"]
+
+        # Try to move to invalid position (not on container)
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": [0, 0],  # Not on any container
+            },
+        )
+        assert response.status_code == 400
+        assert "not on a server container" in response.json()["detail"]
+
+    def test_move_item_to_occupied_position(self, auth_client):
+        """Test moving an item to an occupied position"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Purchase two items
+        shop = data["session"]["current_shop"]
+        items = [item for item in shop if item][:2]
+
+        # Place first item
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": items[0]["id"],
+                "target_position": [2, 3],
+            },
+        )
+        assert response.status_code == 200
+
+        # Place second item
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": items[1]["id"],
+                "target_position": [4, 3],
+            },
+        )
+        item2_uid = response.json()["purchased_item"]["id"]
+
+        # Try to move second item to first item's position
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item2_uid,
+                "to_location": [2, 3],  # Already occupied
+            },
+        )
+        assert response.status_code == 400
+        assert "already occupied" in response.json()["detail"]
+
+    def test_move_nonexistent_item(self, auth_client):
+        """Test moving an item that doesn't exist"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Try to move non-existent item
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": "fake-item-id-12345",
+                "to_location": [4, 3],
+            },
+        )
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+
+    def test_move_item_same_position_noop(self, auth_client):
+        """Test moving an item to the same position (no-op)"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Purchase item
+        shop = data["session"]["current_shop"]
+        item = next(item for item in shop if item)
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item["id"],
+                "target_position": [2, 3],
+            },
+        )
+        item_uid = response.json()["purchased_item"]["id"]
+
+        # Move to same position
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": [2, 3],
+            },
+        )
+        assert response.status_code == 200
+        result = response.json()
+
+        assert result["success"] is True
+        assert result["item"]["position"] == [2, 3]
+
+    def test_move_item_preserves_metadata(self, auth_client):
+        """Test that moving an item preserves all its metadata"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player", "seed": 123}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Purchase item
+        shop = data["session"]["current_shop"]
+        item = next(item for item in shop if item)
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item["id"],
+                "target_position": [2, 3],
+            },
+        )
+        purchased = response.json()["purchased_item"]
+        item_uid = purchased["id"]
+        original_type = purchased["item_type"]
+        original_name = purchased["name"]
+
+        # Move item
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": [4, 3],
+            },
+        )
+        result = response.json()
+
+        # Find moved item in grid
+        moved_item = None
+        for grid_item in result["inventory_grid"]:
+            if grid_item["id"] == item_uid:
+                moved_item = grid_item
+                break
+
+        assert moved_item is not None
+        assert moved_item["item_type"] == original_type
+        assert moved_item["name"] == original_name
+        assert moved_item["position"] == [4, 3]
+
+    def test_move_multi_square_item(self, auth_client):
+        """Test moving an item that occupies multiple squares"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Find a multi-square item if available
+        shop = data["session"]["current_shop"]
+        multi_square_item = None
+        for item in shop:
+            if item and "shape" in item and len(item["shape"]) > 1:
+                multi_square_item = item
+                break
+
+        if not multi_square_item:
+            # If no multi-square item in shop, skip test
+            pytest.skip("No multi-square item available in shop")
+
+        # Purchase multi-square item
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": multi_square_item["id"],
+                "target_position": [2, 3],
+            },
+        )
+        item_uid = response.json()["purchased_item"]["id"]
+
+        # Move to different container
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": [6, 3],  # Third container
+            },
+        )
+
+        # Should succeed if item fits, or fail with appropriate message
+        if response.status_code == 200:
+            result = response.json()
+            assert result["item"]["position"] == [6, 3]
+        else:
+            # If it doesn't fit, should get appropriate error
+            assert response.status_code == 400
+            detail = response.json()["detail"]
+            assert "invalid placement" in detail.lower() or "not on" in detail.lower()
+
+    def test_move_item_without_session(self, auth_client):
+        """Test moving item without valid session"""
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": "invalid-player-id",
+                "item_uid": "some-item",
+                "to_location": [4, 3],
+            },
+        )
+        assert response.status_code == 404
+        assert "Session not found" in response.json()["detail"]

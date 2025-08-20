@@ -9,7 +9,7 @@ import os
 import random
 import uuid
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import auth_endpoints
 import sentry_sdk
@@ -20,9 +20,10 @@ from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
 from database import db_manager
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from inventory_manager import InventoryManager
+from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
 from schemas import (
     GameSession,
+    MoveItemRequest,
     PurchaseRequest,
     SellRequest,
     ShopRefreshRequest,
@@ -965,6 +966,53 @@ def generate_ai_containers(items: List[PlacedItem]) -> List[ServerContainer]:
     return containers
 
 
+def place_item_in_inventory(
+    manager: InventoryManager,
+    item: Dict[str, Any],
+    to_location: Union[str, Tuple[int, int]],
+) -> None:
+    """
+    Shared logic for placing an item in inventory (grid or storage)
+
+    Args:
+        manager: InventoryManager instance
+        item: Item dictionary with id, item_type, etc.
+        to_location: Either "storage" or (x, y) tuple
+
+    Raises:
+        HTTPException: If placement fails with appropriate error message
+    """
+    if to_location == "storage":
+        success = manager.place_item(item, placement="storage")
+        if not success:
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Failed to add item to storage",
+            )
+    else:
+        # Place on grid
+        success = manager.place_item(item, placement=to_location)
+        if not success:
+            # Determine specific error
+            if not manager.grid.is_valid_placement(to_location):
+                raise HTTPException(
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail=f"Position {to_location} is not on a server container",
+                )
+            else:
+                existing = manager.grid.get_item_at(to_location)
+                if existing:
+                    raise HTTPException(
+                        status_code=HTTPStatus.BAD_REQUEST,
+                        detail=f"Position {to_location} is already occupied",
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=HTTPStatus.BAD_REQUEST,
+                        detail="Invalid placement for this item",
+                    )
+
+
 @app.post("/purchase/item")
 async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
     """Purchase an item from shop and place in inventory or storage"""
@@ -1024,30 +1072,19 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
         "rarity": item.get("rarity", "common"),
     }
 
-    # Place item based on placement type
+    # Determine placement location
     if request.to_storage:
-        # Add to storage
-        success = manager.place_item(inventory_item, placement="storage")
-        if not success:
-            raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="Failed to add item to storage",
-            )
+        to_location = "storage"
+    elif request.target_position and len(request.target_position) == 2:
+        to_location = tuple(request.target_position)
     else:
-        # Place on grid
-        if request.target_position and len(request.target_position) == 2:
-            position = tuple(request.target_position)
-            success = manager.place_item(inventory_item, placement=position)
-            if not success:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Invalid placement - position may be occupied or not on a server",
-                )
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid placement format - need target_position",
-            )
+        raise HTTPException(
+            status_code=400,
+            detail="Must specify either to_storage=True or target_position",
+        )
+
+    # Use shared placement logic
+    place_item_in_inventory(manager, inventory_item, to_location)
 
     # Update session with new inventory state
     new_state = manager.get_state()
@@ -1146,6 +1183,118 @@ async def sell_item(request: SellRequest) -> Dict[str, Any]:
         "gold_gained": gold_gained,
         "gold": session.gold,
         "sold_item": item_found,
+    }
+
+
+@app.post("/move/item")
+async def move_item(request: MoveItemRequest) -> Dict[str, Any]:
+    """Move an item to a new position or storage"""
+    session = await session_manager.get_session(request.player_id)
+    if not session:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
+        )
+
+    # Create inventory manager from session state
+    manager = InventoryManager()
+    manager.restore_state(
+        {
+            "grid": session.inventory_grid,
+            "storage": session.inventory_storage,
+            "containers": session.server_containers,
+        }
+    )
+
+    # Find the item and its current location
+    item_found = None
+    current_location = None
+
+    # Check storage
+    for item in session.inventory_storage:
+        if item["id"] == request.item_uid:
+            item_found = item
+            current_location = "storage"
+            break
+
+    # Check grid if not found in storage
+    if not item_found:
+        for item in session.inventory_grid:
+            if item["id"] == request.item_uid:
+                item_found = item
+                # Get actual position from item
+                if "position" in item:
+                    pos = item["position"]
+                    if isinstance(pos, list):
+                        current_location = tuple(pos)
+                    else:
+                        current_location = pos
+                break
+
+    if not item_found:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Item not found in inventory"
+        )
+
+    # Convert to_location to proper type
+    to_loc = request.to_location
+    if isinstance(to_loc, list):
+        to_loc = tuple(to_loc)
+
+    # Check for same position move (no-op)
+    if current_location == to_loc:
+        # No-op, just return success
+        return {
+            "success": True,
+            "inventory_grid": session.inventory_grid,
+            "inventory_storage": session.inventory_storage,
+            "item": {
+                "id": item_found["id"],
+                "item_type": item_found.get("item_type"),
+                "position": list(to_loc) if to_loc != "storage" else None,
+            },
+        }
+
+    # Attempt the move using InventoryManager
+    try:
+        manager.move_item(
+            item_id=request.item_uid, from_location=current_location, to_location=to_loc
+        )
+    except ItemNotFoundError as e:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
+    except InvalidPlacementError as e:
+        # Parse the error message to provide cleaner output
+        error_msg = str(e)
+        if "not on a server container" in error_msg:
+            detail = f"Position {list(to_loc)} is not on a server container"
+        elif "already occupied" in error_msg:
+            detail = f"Position {list(to_loc)} is already occupied"
+        else:
+            detail = error_msg
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=detail)
+
+    # Update session with new inventory state
+    new_state = manager.get_state()
+    session.inventory_grid = new_state["grid"]
+    session.inventory_storage = new_state["storage"]
+    session.placed_items = new_state["grid"].copy()
+
+    # Save updated session
+    await session_manager.update_session(session)
+
+    # Determine final position for response
+    final_position = None
+    if to_loc != "storage":
+        final_position = list(to_loc)
+
+    return {
+        "success": True,
+        "inventory_grid": session.inventory_grid,
+        "inventory_storage": session.inventory_storage,
+        "item": {
+            "id": item_found["id"],
+            "item_type": item_found.get("item_type"),
+            "position": final_position,
+        },
     }
 
 

@@ -267,12 +267,10 @@ class TestInventoryManager:
         item = {"id": "item1", "item_type": "null_pointer"}
         manager.place_item(item, placement="storage")
 
-        # Move to grid
-        success = manager.move_item(
-            "item1", from_location="storage", to_location=(2, 3)
-        )
+        # Move to grid - should not raise exception
+        manager.move_item("item1", from_location="storage", to_location=(2, 3))
 
-        assert success is True
+        # Verify move succeeded
         assert len(manager.storage.items) == 0
         assert len(manager.grid.items) == 1
         assert manager.grid.get_item_at((2, 3)) == item
@@ -285,12 +283,10 @@ class TestInventoryManager:
         item = {"id": "item1", "item_type": "null_pointer"}
         manager.place_item(item, placement=(2, 3))
 
-        # Move to storage
-        success = manager.move_item(
-            "item1", from_location=(2, 3), to_location="storage"
-        )
+        # Move to storage - should not raise exception
+        manager.move_item("item1", from_location=(2, 3), to_location="storage")
 
-        assert success is True
+        # Verify move succeeded
         assert len(manager.grid.items) == 0
         assert len(manager.storage.items) == 1
         assert manager.storage.find_item("item1") == item

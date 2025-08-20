@@ -2,7 +2,7 @@
 Pydantic schemas for API request/response models
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -68,3 +68,11 @@ class SellRequest(BaseModel):
 
     player_id: str
     item_uid: str  # Unique ID of the placed item
+
+
+class MoveItemRequest(BaseModel):
+    """Request to move an item to a new position or storage"""
+
+    player_id: str
+    item_uid: str  # Unique instance ID of the item to move
+    to_location: Union[str, List[int]]  # "storage" or [x, y] coordinates

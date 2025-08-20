@@ -214,7 +214,7 @@ class InventoryManager:
         item_id: str,
         from_location: Union[str, Tuple[int, int]],
         to_location: Union[str, Tuple[int, int]],
-    ) -> bool:
+    ) -> None:
         """
         Move an item between storage and grid
 
@@ -223,30 +223,36 @@ class InventoryManager:
             from_location: Either "storage" or (x, y) coordinates
             to_location: Either "storage" or (x, y) coordinates
 
-        Returns:
-            True if successful
+        Raises:
+            ItemNotFoundError: If item not found at source location
+            InvalidPlacementError: If destination is invalid
         """
-        try:
-            # Find and remove from source
-            if from_location == "storage":
-                item = self.storage.remove_item(item_id)
-            else:
-                # Remove from grid position
-                item = self.grid.remove_item_at(from_location)
-                if item["id"] != item_id:
-                    # Wrong item, put it back
-                    self.grid.place_item(item, from_location)
-                    return False
+        # Find and remove from source
+        if from_location == "storage":
+            item = self.storage.remove_item(item_id)
+        else:
+            # Remove from grid position
+            item = self.grid.remove_item_at(from_location)
+            if item["id"] != item_id:
+                # Wrong item, put it back
+                self.grid.place_item(item, from_location)
+                raise ItemNotFoundError(
+                    f"Item {item_id} not found at position {from_location}"
+                )
 
-            # Place at destination
+        # Place at destination
+        try:
             if to_location == "storage":
                 self.storage.add_item(item)
             else:
                 self.grid.place_item(item, to_location)
-
-            return True
-        except (ItemNotFoundError, InvalidPlacementError):
-            return False
+        except (InvalidPlacementError, Exception):
+            # Restore item to original location on failure
+            if from_location == "storage":
+                self.storage.add_item(item)
+            else:
+                self.grid.place_item(item, from_location)
+            raise
 
     def get_battle_inventory(self) -> List[Dict]:
         """Get only grid items for battle (storage items not used)"""

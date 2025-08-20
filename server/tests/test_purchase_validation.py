@@ -130,7 +130,8 @@ class TestPurchaseValidation:
         )
 
         assert response.status_code == 400
-        assert "invalid placement" in response.json()["detail"].lower()
+        detail = response.json()["detail"].lower()
+        assert "not on a server container" in detail or "invalid placement" in detail
 
     def test_purchase_overlapping_item(self, auth_client):
         """Test that overlapping items are rejected"""
