@@ -539,72 +539,129 @@ def replay_battle_from_file(filename: str, speed: float = 1.0):
 
 
 if __name__ == "__main__":
-    # Example usage
-    from battle_engine import BattleSimulator, PlacedItem
-    from item_effects import AttackEffect, ItemSpec, TimerTrigger
+    # Example usage with real items from ITEM_CATALOG
+    from copy import deepcopy
+
+    from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
     from server_containers import create_server_containers
 
     # Get container specs
     containers = create_server_containers()
 
-    # Create containers for both players
-    p1_container = ServerContainer(
-        spec=containers["standard_vm"]["spec"],
-        position=(0, 0),
-        uid="p1_rack",
-        internal_grid_size=containers["standard_vm"]["internal_size"],
-        shape=containers["standard_vm"]["external_shape"],
-    )
-
-    p2_container = ServerContainer(
-        spec=containers["standard_vm"]["spec"],
-        position=(4, 0),
-        uid="p2_rack",
-        internal_grid_size=containers["standard_vm"]["internal_size"],
-        shape=containers["standard_vm"]["external_shape"],
-    )
-
-    # Create simple test items - placed ON the containers
-    p1_items = [
-        PlacedItem(
-            spec=ItemSpec(
-                id="test1",
-                name="Bug Attacker",
-                category="problem",
-                triggers=[
-                    TimerTrigger(
-                        cooldown=2.0,
-                        cpu_cost=3,
-                        effects=[
-                            AttackEffect(min_damage=5, max_damage=8, accuracy=0.9)
-                        ],
-                    )
-                ],
-            ),
-            position=(0, 0),  # On p1's container
-            uid="p1_item1",
-        )
+    # Create larger containers for both players (2x2 each)
+    p1_containers = [
+        ServerContainer(
+            spec=containers["standard_vm"]["spec"],
+            position=(0, 2),
+            uid="p1_rack1",
+            internal_grid_size=containers["standard_vm"]["internal_size"],
+            shape=containers["standard_vm"]["external_shape"],
+        ),
+        ServerContainer(
+            spec=containers["standard_vm"]["spec"],
+            position=(2, 2),
+            uid="p1_rack2",
+            internal_grid_size=containers["standard_vm"]["internal_size"],
+            shape=containers["standard_vm"]["external_shape"],
+        ),
     ]
 
-    p2_items = [
+    p2_containers = [
+        ServerContainer(
+            spec=containers["standard_vm"]["spec"],
+            position=(4, 2),
+            uid="p2_rack1",
+            internal_grid_size=containers["standard_vm"]["internal_size"],
+            shape=containers["standard_vm"]["external_shape"],
+        ),
+        ServerContainer(
+            spec=containers["standard_vm"]["spec"],
+            position=(4, 4),
+            uid="p2_rack2",
+            internal_grid_size=containers["standard_vm"]["internal_size"],
+            shape=containers["standard_vm"]["external_shape"],
+        ),
+    ]
+
+    # Create diverse items from real ITEM_CATALOG for Player 1
+    p1_items = [
+        # Offensive items
         PlacedItem(
-            spec=ItemSpec(
-                id="test2",
-                name="Shield Defender",
-                category="problem",
-                triggers=[
-                    TimerTrigger(
-                        cooldown=3.0,
-                        cpu_cost=2,
-                        effects=[
-                            AttackEffect(min_damage=4, max_damage=6, accuracy=0.95)
-                        ],
-                    )
-                ],
-            ),
-            position=(4, 0),  # On p2's container
-            uid="p2_item1",
-        )
+            spec=deepcopy(ITEM_CATALOG["memory_leak"]),  # Problem: 3-5 damage
+            position=(0, 2),  # On p1's first container
+            uid="p1_leak",
+        ),
+        PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["null_pointer"]),  # Problem: 4-7 damage
+            position=(1, 2),
+            uid="p1_null",
+        ),
+        # Defensive item
+        PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["firewall"]),  # Defense: firewall
+            position=(0, 3),
+            uid="p1_firewall",
+        ),
+        # Support item
+        PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["error_monitoring"]),  # Monitor: +10% accuracy
+            position=(1, 3),
+            uid="p1_monitor",
+        ),
+        # Additional offensive items on second container
+        PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["infinite_loop"]),  # Problem: 2-4 damage, fast
+            position=(2, 2),
+            uid="p1_loop",
+        ),
+        PlacedItem(
+            spec=deepcopy(
+                ITEM_CATALOG["race_condition"]
+            ),  # Problem: high damage variance
+            position=(3, 2),
+            uid="p1_race",
+        ),
+    ]
+
+    # Create diverse items from real ITEM_CATALOG for Player 2
+    p2_items = [
+        # Offensive items
+        PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["ddos_attack"]),  # Problem: DDoS attack
+            position=(4, 2),  # On p2's first container
+            uid="p2_ddos",
+        ),
+        PlacedItem(
+            spec=deepcopy(
+                ITEM_CATALOG["zero_day_exploit"]
+            ),  # Problem: Zero-day exploit
+            position=(5, 2),
+            uid="p2_zero_day",
+        ),
+        # Defensive items
+        PlacedItem(
+            spec=deepcopy(
+                ITEM_CATALOG["quantum_firewall"]
+            ),  # Defense: quantum firewall
+            position=(4, 3),
+            uid="p2_quantum_firewall",
+        ),
+        PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["encryption_layer"]),  # Defense: encryption
+            position=(5, 3),
+            uid="p2_encryption",
+        ),
+        # Support items on second container
+        PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["rate_limiter"]),  # Defense: rate limiter
+            position=(4, 4),
+            uid="p2_rate_limiter",
+        ),
+        PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["cpu_booster"]),  # Infrastructure: CPU boost
+            position=(5, 4),
+            uid="p2_cpu_booster",
+        ),
     ]
 
     # Run battle WITH containers
@@ -613,8 +670,8 @@ if __name__ == "__main__":
         p1_items,
         p2_items,
         round_number=1,
-        p1_containers=[p1_container],
-        p2_containers=[p2_container],
+        p1_containers=p1_containers,
+        p2_containers=p2_containers,
     )
 
     # Add starting HP to result for renderer
@@ -635,8 +692,8 @@ if __name__ == "__main__":
             p1_items,
             p2_items,
             real_time=False,
-            p1_containers=[p1_container],
-            p2_containers=[p2_container],
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
         )
     else:
         print("Enter playback speed (1.0 = normal, 2.0 = 2x speed, 0.5 = half speed): ")
@@ -647,6 +704,6 @@ if __name__ == "__main__":
             p2_items,
             real_time=True,
             speed=speed,
-            p1_containers=[p1_container],
-            p2_containers=[p2_container],
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
         )
