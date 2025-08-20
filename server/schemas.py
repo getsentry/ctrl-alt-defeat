@@ -46,7 +46,6 @@ class SimpleBattleRequest(BaseModel):
     """Simple battle request with just player ID"""
 
     player_id: str
-    round_number: int
     seed: Optional[int] = None  # For deterministic testing
     test_ai_difficulty: Optional[
         int

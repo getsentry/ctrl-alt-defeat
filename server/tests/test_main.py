@@ -382,7 +382,6 @@ class TestBattleAPIResponse:
             json={
                 "player_id": player_id,
                 "round_number": 5,
-                "test_ai_difficulty": 1,
             },
         )
         enemy_inv5 = response5.json()["battle_result"]["enemy_inventory"]

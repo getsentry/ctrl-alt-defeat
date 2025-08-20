@@ -73,7 +73,7 @@ def test_full_game_flow():
         "player_id": player_id,
         "round_number": 1,
         "seed": 42,
-        "test_ai_difficulty": "easy"  # Easy AI for demo
+        "test_ai_difficulty": 1
     }
 
     response = requests.post(

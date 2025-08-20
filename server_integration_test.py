@@ -334,7 +334,7 @@ class ServerIntegrationTest:
                 "player_id": self.player_id,
                 "round_number": 1,
                 "seed": 42,
-                "test_ai_difficulty": "easy"  # Easy AI for testing
+                "test_ai_difficulty": 1
             }
 
             response = requests.post(f"{BASE_URL}/battle/simulate", json=payload)
@@ -426,7 +426,7 @@ class ServerIntegrationTest:
             "player_id": self.player_id,
             "round_number": 1,
             "seed": 42,
-            "test_ai_difficulty": "easy"
+            "test_ai_difficulty": 1
         }
 
         response = requests.post(f"{BASE_URL}/battle/simulate", json=payload)
@@ -481,7 +481,7 @@ class ServerIntegrationTest:
                 "player_id": self.player_id,
                 "round_number": round_num,
                 "seed": 42 + round_num,
-                "test_ai_difficulty": "easy"
+                "test_ai_difficulty": 1
             }
 
             response = requests.post(f"{BASE_URL}/battle/simulate", json=payload)

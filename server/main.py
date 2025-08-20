@@ -549,6 +549,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
         )
+    current_round = session.round
 
     # Validate test-only parameters
     if not TEST_MODE:
@@ -613,7 +614,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
 
                     opponent_data = await matchmaking.find_opponent(
                         user_id=db_session.user_id,
-                        round_number=request.round_number,
+                        round_number=current_round,
                         win_percent=win_percent,
                         game_version="1.0.0",  # TODO: Get from config
                         fallback_to_ai=True,
@@ -659,7 +660,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     else:
         # Fall back to AI opponent
         opponent_items, p2_containers = generate_ai_opponent(
-            request.round_number, request.test_ai_difficulty
+            current_round, request.test_ai_difficulty
         )
         opponent_type = "ai"
 
@@ -669,9 +670,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     else:
         # Derive battle seed from game seed + round + battle count
         battle_seed = (
-            session.game_seed
-            + request.round_number * 10000
-            + (session.wins + session.losses)
+            session.game_seed + current_round * 10000 + (session.wins + session.losses)
         )
 
     # Get containers from session for player
@@ -696,13 +695,13 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     with sentry_sdk.start_span(op="battle.simulation") as span:
         span.set_data("player_items_count", len(player_items))
         span.set_data("opponent_items_count", len(opponent_items))
-        span.set_data("round", request.round_number)
+        span.set_data("round", current_round)
 
         simulator = BattleSimulator(seed=battle_seed)
         battle_result = simulator.simulate_battle(
             player_items,
             opponent_items,
-            round_number=request.round_number,
+            round_number=current_round,
             p1_containers=p1_containers,
             p2_containers=p2_containers,
         )
@@ -729,16 +728,15 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
         else:  # Round 15+
             return 15
 
+    session.round += 1  # Advance to next round
     if battle_result["winner"] == 1:  # Player won
         session.wins += 1
-        session.round += 1  # Advance to next round
         session.shop_refresh_count = 0  # Reset refresh counter for new round
-        gold_reward = get_round_gold(session.round)  # Gold for new round
     else:
         session.losses += 1
         session.lives -= 1  # Lose a life on defeat
-        gold_reward = get_round_gold(session.round)  # Same round gold (no advance)
 
+    gold_reward = get_round_gold(session.round)
     session.gold += gold_reward
 
     # Store clean battle result for database (before adding non-serializable objects)
@@ -773,7 +771,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
                         user_id=db_session.user_id,
                         player_name=session.player_name,
                         game_session_id=request.player_id,
-                        round_number=request.round_number,
+                        round_number=current_round,
                         wins=session.wins,
                         losses=session.losses,
                         lives=session.lives,
@@ -813,7 +811,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     await session_manager.save_battle_history(
         player1_id=request.player_id,
         player2_id=None,  # AI opponent for now
-        round_number=request.round_number,
+        round_number=current_round,
         winner=battle_result["winner"],
         battle_data=clean_battle_result,
     )
@@ -822,7 +820,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
 
     # Check win/loss conditions
     game_over = session.lives <= 0
-    victory = session.round > 10 and battle_result["winner"] == 1  # Won round 10
+    victory = session.wins >= 10  # Won round 10
 
     # Serialize player and enemy inventories for client display
     def serialize_placed_item(item: PlacedItem) -> Dict:
@@ -1021,9 +1019,9 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
     return items
 
 
-def get_test_ai_items(difficulty: str, round_number: int) -> List[PlacedItem]:
+def get_test_ai_items(difficulty: int, round_number: int) -> List[PlacedItem]:
     """Get test AI items based on difficulty for testing"""
-    if difficulty == "easy":
+    if difficulty == 1:
         # Very weak - just one defensive item
         # Place on P2 container at (1,3)
         return [
@@ -1033,7 +1031,7 @@ def get_test_ai_items(difficulty: str, round_number: int) -> List[PlacedItem]:
                 uid="test_firewall",
             )
         ]
-    elif difficulty == "medium":
+    elif difficulty == 2:
         # Moderate - a few basic items
         # Place on P2 containers which cover (1-2,3-4), (3-4,3-4), (5-6,3-4)
         items = []

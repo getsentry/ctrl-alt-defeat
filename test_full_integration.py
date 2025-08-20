@@ -123,7 +123,7 @@ class FullIntegrationTest:
                     "player_id": player_id,
                     "round_number": round_num,
                     "seed": 42 + round_num,
-                    "test_ai_difficulty": "easy" if round_num <= 3 else None
+                    "test_ai_difficulty": 1
                 }
             )
             assert response.status_code == 200, f"Battle failed: {response.status_code}"

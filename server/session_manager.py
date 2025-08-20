@@ -238,28 +238,6 @@ class SessionManager:
 
             return False
 
-    async def save_or_update_session(self, session: GameSessionPydantic) -> None:
-        """Save or update a session"""
-        player_id = session.player_id
-
-        async with db_manager.get_session() as db:
-            # Check if session exists
-            result = await db.execute(
-                select(GameSession).where(GameSession.player_id == player_id)
-            )
-            existing = result.scalar_one_or_none()
-
-            if existing:
-                # Update existing session
-                existing.update_from_dict(session.model_dump())
-                db_session = existing
-            else:
-                # Create new session
-                db_session = GameSession(**session.model_dump())
-                db.add(db_session)
-
-            await db.commit()
-
     async def delete_session(self, player_id: str) -> bool:
         """Delete a session"""
         async with db_manager.get_session() as db:

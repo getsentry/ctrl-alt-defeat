@@ -151,7 +151,10 @@ class TestGameLifecycle:
             current_round = session["round"]
 
             # Purchase items for battle (buy max items for better chance)
-            purchase_items_for_battle(auth_client, player_id, session, 6)
+            num_purchased = purchase_items_for_battle(
+                auth_client, player_id, session, 6
+            )
+            print("items purchased", num_purchased)
 
             # Battle with purchased items
             battle_request = {
@@ -296,11 +299,11 @@ class TestGameLifecycle:
 
         # Run 5 deterministic battles
         test_battles = [
-            (3, "easy", 1000),  # Battle 1
-            (1, "hard", 1001),  # Battle 2
-            (4, "easy", 1002),  # Battle 3
-            (2, "medium", 1003),  # Battle 4
-            (5, "easy", 1004),  # Battle 5
+            (3, 1, 1000),  # Battle 1
+            (1, 3, 1001),  # Battle 2
+            (4, 1, 1002),  # Battle 3
+            (2, 2, 1003),  # Battle 4
+            (5, 1, 1004),  # Battle 5
         ]
 
         for i, (purchase_count, ai_difficulty, battle_seed) in enumerate(test_battles):
@@ -317,12 +320,11 @@ class TestGameLifecycle:
             purchase_items_for_battle(auth_client, player_id, session, purchase_count)
 
             # Battle with deterministic seed
-            ai_difficulty_map = {"easy": 1, "medium": 2, "hard": 3}
             battle_request = {
                 "player_id": player_id,
                 "round_number": session["round"],
                 "seed": battle_seed,
-                "test_ai_difficulty": ai_difficulty_map[ai_difficulty],
+                "test_ai_difficulty": ai_difficulty,
             }
 
             response = auth_client.post("/battle/simulate", json=battle_request)
@@ -331,19 +333,17 @@ class TestGameLifecycle:
 
             session_update = result["session_update"]
 
+            current_round += 1
+            assert session_update["round"] == current_round
             if result["battle_result"]["winner"] == 1:
-                # Won - should advance round and not lose life
+                # Won - should not lose life
                 total_wins += 1
-                current_round += 1
-                assert session_update["round"] == current_round
-                assert session_update["lives"] == initial_lives - total_losses
-                assert session_update["wins"] == total_wins
             else:
-                # Lost - should stay on same round and lose a life
+                # Lost - should lose a life
                 total_losses += 1
-                assert session_update["round"] == current_round
-                assert session_update["lives"] == initial_lives - total_losses
-                assert session_update["losses"] == total_losses
+            assert session_update["lives"] == initial_lives - total_losses
+            assert session_update["wins"] == total_wins
+            assert session_update["losses"] == total_losses
 
         # Verify we ran all battles and mechanics worked
         assert total_wins + total_losses == 5, "All 5 battles should have completed"
