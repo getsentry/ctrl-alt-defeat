@@ -1,0 +1,37 @@
+# Godot editor files
+.godot/
+.import/
+*.tmp
+
+# Export directories (we'll create fresh ones)
+web-build/
+build/
+export/
+
+# Test files
+test/
+tests/
+*.test.gd
+*_test.gd
+
+# Development files
+*.md
+.gitignore
+.gitattributes
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor backups
+*.gd~
+*.tscn~
+*.tres~
+
+# Other export presets we don't need
+export_presets.cfg.bak
+android/
+ios/
+linux/
+windows/
+mac/
