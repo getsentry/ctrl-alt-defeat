@@ -9,7 +9,7 @@ WORKDIR /app
 COPY . .
 
 # Update the API URL in the export settings (if using environment variable)
-ARG API_URL="https://p01--ctr-alt-defeat--5kxy496847t2.code.run"
+ARG API_URL="https://ctrl-alt-defeat-backend.sentry.gg"
 ENV API_URL=${API_URL}
 
 # Create export directory

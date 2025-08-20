@@ -8,13 +8,17 @@ signal purchase_completed(success: bool, data: Dictionary)
 signal sell_completed(success: bool, data: Dictionary)
 signal error_occurred(message: String)
 
-var BASE_URL = "http://localhost:8000"
+var BASE_URL = "https://ctrl-alt-defeat-backend.sentry.gg"
 
 var http_request: HTTPRequest
 var player_id: String = ""
 var session_data: Dictionary = {}
 var last_response_code: int = 0
 var last_response_body: PackedByteArray
+
+# Auth state managed internally - not exposed globally
+var _auth_token: String = ""
+var _user_id: int = 0
 
 # Testing support - using real server for tests
 
@@ -48,9 +52,19 @@ func _ready():
 	add_child(http_request)
 
 func start_session(game_seed: int = -1) -> Dictionary:
+	# First authenticate as guest if we don't have a token
+	if _auth_token == "":
+		var auth_success = await _authenticate_guest()
+		if not auth_success:
+			push_error("Failed to authenticate with server")
+			return {}
+
 	# Start a new game session with the real server
 	var url = BASE_URL + "/session/start"
-	var headers = ["Content-Type: application/json"]
+	var headers = [
+		"Content-Type: application/json",
+		"Authorization: Bearer " + _auth_token
+	]
 
 	var body_dict = {
 		"player_name": "Player"
@@ -91,7 +105,7 @@ func start_session(game_seed: int = -1) -> Dictionary:
 					{"type": "standard_vm", "position": {"x": 4, "y": 3}},
 					{"type": "standard_vm", "position": {"x": 6, "y": 3}}
 				],
-				"item_catalog": {}  # Item catalog comes from server
+				"item_catalog": data.get("item_catalog", {})
 			}
 
 			session_data = response
@@ -99,8 +113,29 @@ func start_session(game_seed: int = -1) -> Dictionary:
 			return response
 
 	# Server connection failed
-	push_error("Failed to connect to server at " + BASE_URL)
+	push_error("Failed to start session - code: " + str(last_response_code))
 	return {}
+
+func _authenticate_guest() -> bool:
+	# Authenticate as guest to get a token
+	var url = BASE_URL + "/auth/guest"
+	var headers = ["Content-Type: application/json"]
+
+	http_request.request(url, headers, HTTPClient.METHOD_POST, "")
+	var result = await http_request.request_completed
+
+	if result[1] == 200:
+		var json = JSON.new()
+		var parse_result = json.parse(result[3].get_string_from_utf8())
+		if parse_result == OK:
+			var data = json.data
+			_auth_token = data.get("access_token", "")
+			_user_id = data.get("user_id", 0)
+			print("Authenticated as guest user: ", data.get("username", ""))
+			return true
+
+	push_error("Failed to authenticate as guest")
+	return false
 
 func submit_battle(inventory_state: Dictionary) -> Dictionary:
 	# Submit battle to real server
@@ -111,7 +146,10 @@ func submit_battle(inventory_state: Dictionary) -> Dictionary:
 		return {}
 
 	var url = BASE_URL + "/battle/simulate"
-	var headers = ["Content-Type: application/json"]
+	var headers = [
+		"Content-Type: application/json",
+		"Authorization: Bearer " + _auth_token
+	]
 
 	var body_dict = {
 		"player_id": player_id,
@@ -164,7 +202,10 @@ func refresh_shop(round: int) -> Array:
 		return []
 
 	var url = BASE_URL + "/shop/refresh"
-	var headers = ["Content-Type: application/json"]
+	var headers = [
+		"Content-Type: application/json",
+		"Authorization: Bearer " + _auth_token
+	]
 	var body = JSON.stringify({
 		"player_id": player_id,
 		"round": round
@@ -197,7 +238,10 @@ func purchase_item(item_id: String, placement):
 		return
 
 	var url = BASE_URL + "/purchase/item"
-	var headers = ["Content-Type: application/json"]
+	var headers = [
+		"Content-Type: application/json",
+		"Authorization: Bearer " + _auth_token
+	]
 
 	var body_dict = {
 		"player_id": player_id,
@@ -232,7 +276,10 @@ func sell_item(item_id: String, from_storage: bool = false):
 		return
 
 	var url = BASE_URL + "/sell/item"
-	var headers = ["Content-Type: application/json"]
+	var headers = [
+		"Content-Type: application/json",
+		"Authorization: Bearer " + _auth_token
+	]
 
 	var body_dict = {
 		"player_id": player_id,
