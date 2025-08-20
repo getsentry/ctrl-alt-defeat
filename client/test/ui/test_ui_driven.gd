@@ -376,21 +376,15 @@ func test_shop_purchase_and_item_placement():
 				placed_item = item
 				break
 
-	if placed_item:
-		var pos = placed_item.get_meta("grid_pos")
-		assert_eq(Vector2(pos), target_grid_pos, "Item should be at target position (2,3)")
-		print("   - Item placed at grid position (%d,%d)" % [pos.x, pos.y])
-		if placed_item.has_meta("item_data"):
-			var data = placed_item.get_meta("item_data")
-			print("   - Placed item data: %s" % data)
-			if item_type != "":
-				assert_eq(data.get("item_type", ""), item_type, "Placed item should match shop item type")
-	else:
-		# Item might have snapped to a different valid position
-		print("   - Item placed but not at exact target (may have snapped to valid position)")
-		assert_true(game_ui.items.size() > initial_inventory_count, "Item was added to inventory")
+	var pos = placed_item.get_meta("grid_pos")
+	assert_eq(Vector2(pos), target_grid_pos, "Item should be at target position (2,3)")
+	print("   - Item placed at grid position (%d,%d)" % [pos.x, pos.y])
+	if placed_item.has_meta("item_data"):
+		var data = placed_item.get_meta("item_data")
+		print("   - Placed item data: %s" % data)
+		if item_type != "":
+			assert_eq(data.get("item_type", ""), item_type, "Placed item should match shop item type")
 
-		print("   ✓ Shop purchase and placement validated with real server")
 
 func test_battle_button_and_full_battle():
 	"""Test clicking battle button and going through full battle"""

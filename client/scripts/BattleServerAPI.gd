@@ -157,10 +157,7 @@ func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResult:
 		"Authorization: Bearer " + _auth_token
 	]
 
-	var body_dict = {
-		"player_id": player_id,
-		"round_number": session_data.get("round", 1)
-	}
+	var body_dict = {"player_id": player_id}
 
 	print("Sending battle request for round %d" % session_data.get("round", 1))
 

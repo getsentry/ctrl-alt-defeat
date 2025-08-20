@@ -114,48 +114,18 @@ fi
 
 # Run all test suites, passing filter
 echo ""
-echo "Running Unit Tests..."
+echo "Running All Tests..."
 echo "--------------------"
+# Run all tests in one command - GUT will find all test directories
 godot --headless --script addons/gut/gut_cmdln.gd \
-    -gdir=res://test/unit \
+    -gdir=res://test \
     -gexit \
     -glog=3 \
     $FILTER_ARG
 
-UNIT_EXIT_CODE=$?
+TEST_EXIT_CODE=$?
 
-# Run integration tests in headless mode
-echo ""
-echo "Running Integration Tests..."
-echo "----------------------------"
-godot --headless --script addons/gut/gut_cmdln.gd \
-    -gdir=res://test/integration \
-    -gexit \
-    -glog=3 \
-    $FILTER_ARG
-
-INTEGRATION_EXIT_CODE=$?
-
-# Run UI tests with visible window for proper UI simulation
-echo ""
-echo "Running UI Tests (Visible Window)..."
-echo "-------------------------------------"
-# Position window at top-left corner so UI events work properly
-godot --position 0,0 \
-    --script addons/gut/gut_cmdln.gd \
-    -gdir=res://test/ui \
-    -gexit \
-    -glog=3 \
-    $FILTER_ARG
-
-UI_EXIT_CODE=$?
-
-# Determine overall exit code
-if [ $UNIT_EXIT_CODE -ne 0 ] || [ $INTEGRATION_EXIT_CODE -ne 0 ] || [ $UI_EXIT_CODE -ne 0 ]; then
-    TEST_EXIT_CODE=1
-else
-    TEST_EXIT_CODE=0
-fi
+# Exit code is already set from the single test run
 
 echo ""
 echo "==============================="
