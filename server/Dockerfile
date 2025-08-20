@@ -1,30 +1,32 @@
 FROM python:3.13-slim
 
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies for PostgreSQL client
+# Layer 1: System dependencies (rarely changes)
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Layer 2: Create user (rarely changes)
+RUN useradd -m -u 1000 appuser
 
-# Install Python dependencies
+# Layer 3: Set working directory (rarely changes)
+WORKDIR /app
+
+# Layer 4: Python dependencies (changes occasionally)
+# This layer only rebuilds when requirements.txt changes
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
-COPY . .
+# Layer 5: Application code (changes most frequently)
+# This is last so code changes don't bust the cache
+COPY --chown=appuser:appuser . .
+
+# Switch to non-root user for security
+USER appuser
 
 # Expose the port the app runs on
 EXPOSE 8000
-
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
