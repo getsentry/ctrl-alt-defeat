@@ -5,7 +5,7 @@ Database connection and session management for PostgreSQL
 import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import parse_qs, urlparse, urlunparse
 
 from models import Base
 from sqlalchemy import text
@@ -117,18 +117,57 @@ class DatabaseManager:
                 else AsyncAdaptedQueuePool
             )
 
+            # Parse the URL to extract and handle SSL parameters
+            parsed_url = urlparse(self.async_database_url)
+            query_params = parse_qs(parsed_url.query)
+
+            # Check for sslmode in query parameters
+            sslmode = query_params.get("sslmode", [None])[0]
+
+            # Remove sslmode from URL as asyncpg doesn't accept it directly
+            if "sslmode" in query_params:
+                del query_params["sslmode"]
+                # Reconstruct query string without sslmode
+                new_query = "&".join([f"{k}={v[0]}" for k, v in query_params.items()])
+                # Reconstruct URL without sslmode
+                clean_url = urlunparse(
+                    (
+                        parsed_url.scheme,
+                        parsed_url.netloc,
+                        parsed_url.path,
+                        parsed_url.params,
+                        new_query,
+                        parsed_url.fragment,
+                    )
+                )
+            else:
+                clean_url = self.async_database_url
+
+            # Prepare connect_args based on SSL requirements
+            connect_args = {
+                "server_settings": {"jit": "off"},
+                "timeout": 2,  # Connection timeout in seconds
+                "command_timeout": 5,  # Command timeout in seconds
+            }
+
+            # Add SSL configuration if sslmode was specified
+            if sslmode:
+                if sslmode == "require":
+                    connect_args["ssl"] = True
+                elif sslmode == "disable":
+                    connect_args["ssl"] = False
+                # For other modes like 'prefer', 'allow', etc., default to True for safety
+                elif sslmode in ["prefer", "allow", "verify-ca", "verify-full"]:
+                    connect_args["ssl"] = True
+
             self.engine = create_async_engine(
-                self.async_database_url,
+                clean_url,
                 echo=False,  # Set to True for SQL logging
                 poolclass=poolclass,
                 pool_pre_ping=True
                 if poolclass == AsyncAdaptedQueuePool
                 else False,  # Verify connections before using
-                connect_args={
-                    "server_settings": {"jit": "off"},
-                    "timeout": 2,  # Connection timeout in seconds
-                    "command_timeout": 5,  # Command timeout in seconds
-                },
+                connect_args=connect_args,
             )
 
             # Create async session factory first (needed for migrations)
