@@ -8,7 +8,7 @@ signal purchase_completed(success: bool, data: Dictionary)
 signal sell_completed(success: bool, data: Dictionary)
 signal error_occurred(message: String)
 
-var BASE_URL = "https://ctrl-alt-defeat-backend.sentry.gg"
+var BASE_URL = "http://localhost:8000"
 
 var http_request: HTTPRequest
 var player_id: String = ""

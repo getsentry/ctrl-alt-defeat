@@ -12,6 +12,7 @@ from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
 import auth_endpoints
+import sentry_sdk
 from auth import TokenData, get_current_user
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
 
@@ -28,11 +29,82 @@ from schemas import (
     SimpleBattleRequest,
     StartSessionRequest,
 )
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 from session_manager import SessionManager
 from utils import utc_now
 
 # Test mode allows seeds and special AI configurations for testing
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
+
+
+def filter_sensitive_data(event):
+    """Filter out sensitive data from Sentry events"""
+    # Remove authentication headers
+    if "request" in event and "headers" in event["request"]:
+        headers = event["request"]["headers"]
+        if "authorization" in headers:
+            headers["authorization"] = "[FILTERED]"
+        if "cookie" in headers:
+            headers["cookie"] = "[FILTERED]"
+
+    # Remove passwords from request data
+    if "request" in event and "data" in event["request"]:
+        data = event["request"]["data"]
+        if isinstance(data, dict):
+            if "password" in data:
+                data["password"] = "[FILTERED]"
+            if "password_hash" in data:
+                data["password_hash"] = "[FILTERED]"
+
+    # Remove JWT tokens from error messages
+    if "exception" in event and "values" in event["exception"]:
+        for exception in event["exception"]["values"]:
+            if "value" in exception and "jwt" in exception["value"].lower():
+                exception["value"] = "[JWT TOKEN FILTERED]"
+
+    return event
+
+
+# Initialize Sentry
+SENTRY_DSN = os.environ.get(
+    "SENTRY_DSN",
+    "https://6a4ff9b3cfcb25b639b4ba43d1990e9f@o1.ingest.us.sentry.io/4509874488410112",
+)
+ENVIRONMENT = "test" if TEST_MODE else os.environ.get("ENVIRONMENT", "production")
+
+if SENTRY_DSN and not TEST_MODE:  # Don't initialize Sentry in test mode
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            FastApiIntegration(
+                transaction_style="endpoint",
+                failed_request_status_codes=[
+                    400,
+                    401,
+                    403,
+                    404,
+                    405,
+                    500,
+                    501,
+                    502,
+                    503,
+                    504,
+                ],
+            ),
+            StarletteIntegration(transaction_style="endpoint"),
+            SqlalchemyIntegration(),
+        ],
+        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
+        profiles_sample_rate=0.1,  # 10% of transactions for profiling
+        environment=ENVIRONMENT,
+        release=os.environ.get("RELEASE", "autobattler-server@1.0.0"),
+        send_default_pii=False,  # Don't send personally identifiable information
+        attach_stacktrace=True,
+        before_send=lambda event, hint: filter_sensitive_data(event),
+    )
+    print(f"Sentry initialized for {ENVIRONMENT} environment")
 
 # Create session manager
 session_manager = SessionManager()
@@ -51,12 +123,40 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    """Log HTTP exceptions to Sentry"""
+    if exc.status_code >= 500 and not TEST_MODE:
+        sentry_sdk.capture_exception(exc)
+    from fastapi.responses import JSONResponse
+
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    """Log unhandled exceptions to Sentry"""
+    if not TEST_MODE:
+        sentry_sdk.capture_exception(exc)
+    from fastapi.responses import JSONResponse
+
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize database connection on startup"""
-    await session_manager.initialize()
-    print(f"Server started in {'TEST' if TEST_MODE else 'PRODUCTION'} mode")
-    print("Using PostgreSQL for session persistence")
+    try:
+        await session_manager.initialize()
+        print(f"Server started in {'TEST' if TEST_MODE else 'PRODUCTION'} mode")
+        print("Using PostgreSQL for session persistence")
+        if SENTRY_DSN and not TEST_MODE:
+            # Log startup to Sentry
+            sentry_sdk.capture_message(f"Server started in {ENVIRONMENT}", level="info")
+    except Exception as e:
+        if not TEST_MODE:
+            sentry_sdk.capture_exception(e)
+        raise
 
 
 @app.on_event("shutdown")
@@ -67,6 +167,27 @@ async def shutdown_event():
 
 
 # Request/Response models have been moved to schemas.py
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring"""
+    try:
+        # Check database connection
+        await db_manager.execute("SELECT 1")
+        db_status = "healthy"
+    except Exception as e:
+        db_status = f"unhealthy: {str(e)}"
+        if not TEST_MODE:
+            sentry_sdk.capture_exception(e)
+
+    return {
+        "status": "healthy" if db_status == "healthy" else "degraded",
+        "database": db_status,
+        "environment": ENVIRONMENT,
+        "test_mode": TEST_MODE,
+        "version": os.environ.get("RELEASE", "autobattler-server@1.0.0"),
+    }
 
 
 @app.post("/session/start")
@@ -82,6 +203,15 @@ async def start_session(
     """
     # Use authenticated user from token
     player_id = str(current_user.user_id)
+
+    # Set Sentry user context for better error tracking
+    if not TEST_MODE:
+        sentry_sdk.set_user(
+            {
+                "id": player_id,
+                "username": current_user.username,
+            }
+        )
 
     # Only allow custom seeds in TEST_MODE
     if request.seed is not None and not TEST_MODE:
@@ -515,14 +645,20 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
         ),
     ]
 
-    simulator = BattleSimulator(seed=battle_seed)
-    battle_result = simulator.simulate_battle(
-        player_items,
-        opponent_items,
-        round_number=request.round_number,
-        p1_containers=p1_containers,
-        p2_containers=p2_containers,
-    )
+    # Add performance monitoring for battle simulation
+    with sentry_sdk.start_span(op="battle.simulation") as span:
+        span.set_data("player_items_count", len(player_items))
+        span.set_data("opponent_items_count", len(opponent_items))
+        span.set_data("round", request.round_number)
+
+        simulator = BattleSimulator(seed=battle_seed)
+        battle_result = simulator.simulate_battle(
+            player_items,
+            opponent_items,
+            round_number=request.round_number,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
 
     # Calculate gold reward based on round (same win or lose)
     def get_round_gold(round_num: int) -> int:

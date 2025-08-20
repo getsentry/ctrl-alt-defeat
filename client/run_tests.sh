@@ -105,10 +105,10 @@ godot --headless --script addons/gut/gut_cmdln.gd \
 
 UNIT_EXIT_CODE=$?
 
-# Run integration tests
+# Run integration tests in headless mode
 echo ""
 echo "Running Integration Tests..."
-echo "---------------------------"
+echo "----------------------------"
 godot --headless --script addons/gut/gut_cmdln.gd \
     -gdir=res://test/integration \
     -gexit \
@@ -116,8 +116,20 @@ godot --headless --script addons/gut/gut_cmdln.gd \
 
 INTEGRATION_EXIT_CODE=$?
 
+# Run UI tests with off-screen window (non-headless)
+echo ""
+echo "Running UI Tests (Off-screen Window)..."
+echo "---------------------------------------"
+godot --position -2000,-2000 \
+    --script addons/gut/gut_cmdln.gd \
+    -gdir=res://test/ui \
+    -gexit \
+    -glog=1
+
+UI_EXIT_CODE=$?
+
 # Determine overall exit code
-if [ $UNIT_EXIT_CODE -ne 0 ] || [ $INTEGRATION_EXIT_CODE -ne 0 ]; then
+if [ $UNIT_EXIT_CODE -ne 0 ] || [ $INTEGRATION_EXIT_CODE -ne 0 ] || [ $UI_EXIT_CODE -ne 0 ]; then
     TEST_EXIT_CODE=1
 else
     TEST_EXIT_CODE=0

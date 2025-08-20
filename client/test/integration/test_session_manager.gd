@@ -146,6 +146,3 @@ static func ensure_test_mode() -> bool:
 		return false
 
 	return false
-
-# Note: We no longer use the slow reset method
-# Always use transaction-based test sessions for speed and isolation
