@@ -8,7 +8,7 @@ Sentry Autobattler Server
 import os
 import random
 import uuid
-from datetime import datetime
+from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
 import auth_endpoints
@@ -29,6 +29,7 @@ from schemas import (
     StartSessionRequest,
 )
 from session_manager import SessionManager
+from utils import utc_now
 
 # Test mode allows seeds and special AI configurations for testing
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
@@ -85,7 +86,8 @@ async def start_session(
     # Only allow custom seeds in TEST_MODE
     if request.seed is not None and not TEST_MODE:
         raise HTTPException(
-            status_code=403, detail="Custom seeds only allowed in test mode"
+            status_code=HTTPStatus.FORBIDDEN,
+            detail="Custom seeds only allowed in test mode",
         )
 
     # Always have a seed - use provided or generate one
@@ -167,7 +169,9 @@ async def get_session_endpoint(player_id: str) -> GameSession:
     """Get current session state"""
     session = await session_manager.get_session(player_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
+        )
     return session
 
 
@@ -176,12 +180,16 @@ async def refresh_shop(request: ShopRefreshRequest) -> Dict[str, Any]:
     """Get new shop items (costs 1 gold if not free refresh)"""
     session = await session_manager.get_session(request.player_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
+        )
 
     # Check if this is a paid refresh
     if len(session.current_shop) > 0:  # Not the first shop of the round
         if session.gold < 1:
-            raise HTTPException(status_code=400, detail="Not enough gold")
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST, detail="Not enough gold"
+            )
         session.gold -= 1
 
     # Increment refresh counter for this round
@@ -394,7 +402,9 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     """
     session = await session_manager.get_session(request.player_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
+        )
 
     # Validate test-only parameters
     if not TEST_MODE:
@@ -738,7 +748,9 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
     """Purchase an item from shop and place in inventory or storage"""
     session = await session_manager.get_session(request.player_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
+        )
 
     # Find item in shop
     item = None
@@ -748,7 +760,7 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
             break
 
     if not item:
-        raise HTTPException(status_code=404, detail="Item not in shop")
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Item not in shop")
 
     # Check gold
     cost = item["cost"]
@@ -795,7 +807,10 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
         # Add to storage
         success = manager.place_item(inventory_item, placement="storage")
         if not success:
-            raise HTTPException(status_code=500, detail="Failed to add item to storage")
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Failed to add item to storage",
+            )
     else:
         # Place on grid
         if request.target_position and len(request.target_position) == 2:
@@ -838,7 +853,9 @@ async def sell_item(request: SellRequest) -> Dict[str, Any]:
     """Sell an item for 50% value"""
     session = await session_manager.get_session(request.player_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
+        )
 
     # Create inventory manager from session state
     manager = InventoryManager()
@@ -863,7 +880,10 @@ async def sell_item(request: SellRequest) -> Dict[str, Any]:
             # Remove from storage using item_id
             removed = manager.remove_item(item_id=request.item_uid)
             if not removed:
-                raise HTTPException(status_code=500, detail="Failed to remove item")
+                raise HTTPException(
+                    status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                    detail="Failed to remove item",
+                )
             break
 
     # If not found in storage, try grid
@@ -875,11 +895,16 @@ async def sell_item(request: SellRequest) -> Dict[str, Any]:
                 # Remove from grid using item_id (remove_item handles both storage and grid)
                 removed = manager.remove_item(item_id=request.item_uid)
                 if not removed:
-                    raise HTTPException(status_code=500, detail="Failed to remove item")
+                    raise HTTPException(
+                        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                        detail="Failed to remove item",
+                    )
                 break
 
     if not item_found:
-        raise HTTPException(status_code=404, detail="Item not found in inventory")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Item not found in inventory"
+        )
 
     # Update session with new inventory state
     new_state = manager.get_state()
@@ -971,7 +996,7 @@ if TEST_MODE:
             test_transactions[session_id] = {
                 "connection": connection,
                 "transaction": transaction,
-                "started_at": datetime.utcnow(),
+                "started_at": utc_now(),
             }
 
             return {

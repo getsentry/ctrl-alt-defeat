@@ -2,8 +2,6 @@
 Database models for game session persistence using SQLAlchemy
 """
 
-from datetime import datetime
-
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -17,6 +15,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
+from utils import utc_now
 
 Base = declarative_base()
 
@@ -63,11 +62,9 @@ class GameSession(Base):
     server_containers = Column(JSON, default=list, nullable=False)
 
     # Timestamps for session management
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
-    last_activity = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    last_activity = Column(DateTime, default=utc_now, nullable=False)
 
     def to_dict(self) -> dict:
         """Convert database model to dictionary for API responses"""
@@ -95,7 +92,7 @@ class GameSession(Base):
         for key, value in data.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        self.last_activity = datetime.utcnow()
+        self.last_activity = utc_now()
 
 
 class BattleHistory(Base):
@@ -109,7 +106,7 @@ class BattleHistory(Base):
     round_number = Column(Integer, nullable=False)
     winner = Column(Integer, nullable=False)  # 1 or 2
     battle_data = Column(JSON, nullable=False)  # Full battle replay data
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
 
     def to_dict(self) -> dict:
         """Convert to dictionary"""
@@ -153,10 +150,8 @@ class User(Base):
     current_rank = Column(Integer, default=1000, nullable=False)  # ELO-style rating
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     last_login_at = Column(DateTime, nullable=True)
 
     def to_dict(self) -> dict:
@@ -212,7 +207,7 @@ class PlayerBuild(Base):
     opponent_difficulty = Column(Integer, nullable=True)  # For AI opponents
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False, index=True)
 
     # Composite index for efficient matchmaking queries
     __table_args__ = (
@@ -257,7 +252,7 @@ class MatchmakingHistory(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     player_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     opponent_build_id = Column(Integer, ForeignKey("player_builds.id"), nullable=False)
-    matched_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    matched_at = Column(DateTime, default=utc_now, nullable=False, index=True)
 
     # Prevent matching same opponent too frequently
     __table_args__ = (

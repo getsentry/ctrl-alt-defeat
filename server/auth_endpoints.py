@@ -4,7 +4,6 @@ Authentication endpoints for user login/registration
 
 import random
 import uuid
-from datetime import datetime
 from typing import Optional
 
 from auth import (
@@ -20,6 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from models import User
 from pydantic import BaseModel
 from sqlalchemy import select
+from utils import utc_now
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -174,7 +174,7 @@ async def login(request: LoginRequest):
             )
 
         # Update last login
-        user.last_login_at = datetime.utcnow()
+        user.last_login_at = utc_now()
         await db.commit()
 
         # Create access token

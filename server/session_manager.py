@@ -4,13 +4,14 @@ Handles database operations and provides a clean interface for the API
 """
 
 import random
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import List, Optional
 
 from database import db_manager  # noqa: F401
 from models import BattleHistory, GameSession, User
 from schemas import GameSession as GameSessionPydantic
 from sqlalchemy import delete, select, text
+from utils import utc_now
 
 
 class SessionManager:
@@ -158,7 +159,7 @@ class SessionManager:
                 existing_session.last_battle_result = session.last_battle_result
                 existing_session.game_seed = game_seed
                 existing_session.shop_refresh_count = session.shop_refresh_count
-                existing_session.last_activity = datetime.utcnow()
+                existing_session.last_activity = utc_now()
                 print(f"Updated existing session for player {player_id}")
             else:
                 # Create new session
@@ -198,7 +199,7 @@ class SessionManager:
 
             if db_session:
                 # Update last activity
-                db_session.last_activity = datetime.utcnow()
+                db_session.last_activity = utc_now()
                 await db.commit()
                 return GameSessionPydantic.model_validate(db_session.to_dict())
 
@@ -227,7 +228,7 @@ class SessionManager:
                 db_session.current_shop = session.current_shop
                 db_session.last_battle_result = session.last_battle_result
                 db_session.shop_refresh_count = session.shop_refresh_count
-                db_session.last_activity = datetime.utcnow()
+                db_session.last_activity = utc_now()
 
                 await db.commit()
                 return True
@@ -273,7 +274,7 @@ class SessionManager:
 
     async def cleanup_old_sessions(self, hours: int = 24):
         """Remove sessions that haven't been active for X hours"""
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = utc_now() - timedelta(hours=hours)
 
         async with db_manager.get_session() as db:
             result = await db.execute(
