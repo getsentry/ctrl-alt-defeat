@@ -1,5 +1,10 @@
 #!/bin/bash
 # Run tests with a real Python server
+# Usage: ./run_tests.sh [test_name_pattern]
+# Example: ./run_tests.sh test_shop_purchase
+
+# Get test filter from command line argument
+TEST_FILTER="${1:-}"
 
 # Configuration
 TEST_SERVER_PORT=8081
@@ -94,14 +99,28 @@ echo "==============================="
 export BATTLE_SERVER_URL="http://localhost:$TEST_SERVER_PORT"
 echo "Test server URL: $BATTLE_SERVER_URL"
 
-# Run unit tests
+# Show filter if provided
+if [ -n "$TEST_FILTER" ]; then
+    echo "Running tests matching: $TEST_FILTER"
+else
+    echo "Running all tests"
+fi
+
+# Build filter argument if provided
+FILTER_ARG=""
+if [ -n "$TEST_FILTER" ]; then
+    FILTER_ARG="-gunit_test_name=$TEST_FILTER"
+fi
+
+# Run all test suites, passing filter
 echo ""
 echo "Running Unit Tests..."
 echo "--------------------"
 godot --headless --script addons/gut/gut_cmdln.gd \
     -gdir=res://test/unit \
     -gexit \
-    -glog=1
+    -glog=1 \
+    $FILTER_ARG
 
 UNIT_EXIT_CODE=$?
 
@@ -112,19 +131,22 @@ echo "----------------------------"
 godot --headless --script addons/gut/gut_cmdln.gd \
     -gdir=res://test/integration \
     -gexit \
-    -glog=1
+    -glog=1 \
+    $FILTER_ARG
 
 INTEGRATION_EXIT_CODE=$?
 
-# Run UI tests with off-screen window (non-headless)
+# Run UI tests with visible window for proper UI simulation
 echo ""
-echo "Running UI Tests (Off-screen Window)..."
-echo "---------------------------------------"
-godot --position -2000,-2000 \
+echo "Running UI Tests (Visible Window)..."
+echo "-------------------------------------"
+# Position window at top-left corner so UI events work properly
+godot --position 0,0 \
     --script addons/gut/gut_cmdln.gd \
     -gdir=res://test/ui \
     -gexit \
-    -glog=1
+    -glog=1 \
+    $FILTER_ARG
 
 UI_EXIT_CODE=$?
 
