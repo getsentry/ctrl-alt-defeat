@@ -11,11 +11,13 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import auth_endpoints
+from auth import TokenData, get_optional_user
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
 
 # Import session management and schemas
 from database import db_manager
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from inventory_manager import InventoryManager
 from schemas import (
@@ -40,6 +42,9 @@ session_manager = SessionManager(
 )
 
 app = FastAPI(title="Sentry Autobattler Server")
+
+# Include authentication routes
+app.include_router(auth_endpoints.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -73,20 +78,31 @@ async def shutdown_event():
 
 
 @app.post("/session/start")
-async def start_session(request: StartSessionRequest) -> Dict[str, Any]:
-    """Start a new game session"""
-    # For now, accept user_id from request if provided, otherwise create a guest user
-    if hasattr(request, "user_id") and request.user_id:
-        player_id = request.user_id
-    else:
-        # Create a guest user and use their ID
+async def start_session(
+    request: StartSessionRequest,
+    current_user: Optional[TokenData] = Depends(get_optional_user),
+) -> Dict[str, Any]:
+    """
+    Start a new game session
+
+    If authenticated (token provided), uses that user.
+    If is_guest=True, creates a new guest user and returns their session.
+    Otherwise, returns error (must be authenticated or explicitly request guest).
+    """
+    # Determine which user to use
+    if current_user:
+        # Authenticated user from token
+        player_id = str(current_user.user_id)
+    elif request.is_guest:
+        # Explicitly requested guest account
+        from auth import create_access_token
         from models import User
 
         async with db_manager.get_session() as db:
             username = f"Guest_{uuid.uuid4().hex[:8]}_{random.randint(1000, 9999)}"
             user = User(
                 username=username,
-                display_name=f"Player_{uuid.uuid4().hex[:8]}",
+                display_name=request.player_name or f"Player_{uuid.uuid4().hex[:8]}",
                 account_type="guest",
                 account_status="active",
                 total_games_played=0,
@@ -98,6 +114,21 @@ async def start_session(request: StartSessionRequest) -> Dict[str, Any]:
             await db.commit()
             await db.refresh(user)
             player_id = str(user.id)
+
+            # Create access token for the guest user
+            access_token = create_access_token(
+                data={
+                    "user_id": user.id,
+                    "username": user.username,
+                    "account_type": "guest",
+                }
+            )
+    else:
+        # No authentication and not requesting guest
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Provide token or set is_guest=true",
+        )
 
     # Only allow custom seeds in TEST_MODE
     if request.seed is not None and not TEST_MODE:
@@ -172,11 +203,18 @@ async def start_session(request: StartSessionRequest) -> Dict[str, Any]:
             "special_effect": special,
         }
 
-    return {
+    response = {
         "player_id": player_id,
         "session": session.model_dump(),
         "item_catalog": item_catalog_simple,
     }
+
+    # Include access token if guest account was created
+    if request.is_guest:
+        response["access_token"] = access_token
+        response["token_type"] = "bearer"
+
+    return response
 
 
 @app.get("/session/{player_id}")

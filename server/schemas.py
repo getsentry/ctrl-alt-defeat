@@ -34,9 +34,7 @@ class StartSessionRequest(BaseModel):
 
     player_name: str
     seed: Optional[int] = None
-    user_id: Optional[
-        str
-    ] = None  # Optional user ID, if not provided a guest user is created
+    is_guest: bool = False  # Explicitly request guest account creation
 
 
 class ShopRefreshRequest(BaseModel):
