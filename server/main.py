@@ -647,7 +647,17 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
         gold_reward = get_round_gold(session.round)  # Same round gold (no advance)
 
     session.gold += gold_reward
-    session.last_battle_result = battle_result
+
+    # Store clean battle result for database (before adding non-serializable objects)
+    clean_battle_result = {
+        "winner": battle_result["winner"],
+        "duration": battle_result["duration"],
+        "player1_quota": battle_result["player1_quota"],
+        "player2_quota": battle_result["player2_quota"],
+        "actions": battle_result["actions"],
+        "seed": battle_result["seed"],
+    }
+    session.last_battle_result = clean_battle_result
 
     # Generate new shop for the round (first shop = refresh count 0)
     shop_seed = session.game_seed + session.round * 1000 + session.shop_refresh_count
@@ -657,13 +667,13 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     # Save updated session
     await session_manager.update_session(session)
 
-    # Store battle in history
+    # Store battle in history (use clean result without PlacedItem objects)
     await session_manager.save_battle_history(
         player1_id=request.player_id,
         player2_id=None,  # AI opponent for now
         round_number=request.round_number,
         winner=battle_result["winner"],
-        battle_data=battle_result,
+        battle_data=clean_battle_result,
     )
 
     battle_id = str(uuid.uuid4())
@@ -671,6 +681,87 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     # Check win/loss conditions
     game_over = session.lives <= 0
     victory = session.round > 10 and battle_result["winner"] == 1  # Won round 10
+
+    # Serialize player and enemy inventories for client display
+    def serialize_placed_item(item: PlacedItem) -> Dict:
+        """Convert PlacedItem to client-compatible format"""
+        shape_data = [[0, 0]]  # Default 1x1 shape
+        if item.spec.shape:
+            # ItemShape has 'squares' attribute, not 'occupied_squares'
+            if hasattr(item.spec.shape, "squares"):
+                shape_data = [list(s) for s in item.spec.shape.squares]
+            elif hasattr(item.spec.shape, "get_occupied_squares"):
+                shape_data = [list(s) for s in item.spec.shape.get_occupied_squares()]
+
+        return {
+            "id": item.uid,
+            "item_type": item.spec.id,
+            "name": item.spec.name,
+            "position": list(item.position),
+            "category": item.spec.category,
+            "shape": shape_data,
+        }
+
+    def serialize_container(container: ServerContainer) -> Dict:
+        """Convert ServerContainer to client-compatible format"""
+        width = 2  # Default width
+        height = 2  # Default height
+
+        if hasattr(container, "shape"):
+            if hasattr(container.shape, "width"):
+                width = container.shape.width
+            elif hasattr(container.shape, "squares"):
+                # Calculate from squares
+                max_x = max(s[0] for s in container.shape.squares) + 1
+                width = max_x
+
+            if hasattr(container.shape, "height"):
+                height = container.shape.height
+            elif hasattr(container.shape, "squares"):
+                # Calculate from squares
+                max_y = max(s[1] for s in container.shape.squares) + 1
+                height = max_y
+
+        return {
+            "id": container.uid,
+            "type": container.spec.id
+            if hasattr(container.spec, "id")
+            else "standard_vm",
+            "position": list(container.position),
+            "width": width,
+            "height": height,
+        }
+
+    # Add serialized inventories to battle result for client display
+    if "player1_items" in battle_result:
+        player_inventory = {
+            "items": [
+                serialize_placed_item(item) for item in battle_result["player1_items"]
+            ],
+            "servers": [
+                serialize_container(c)
+                for c in battle_result.get("player1_containers", [])
+            ],
+        }
+        battle_result["player_inventory"] = player_inventory
+
+    if "player2_items" in battle_result:
+        enemy_inventory = {
+            "items": [
+                serialize_placed_item(item) for item in battle_result["player2_items"]
+            ],
+            "servers": [
+                serialize_container(c)
+                for c in battle_result.get("player2_containers", [])
+            ],
+        }
+        battle_result["enemy_inventory"] = enemy_inventory
+
+    # Remove the raw objects from the result (they're not JSON serializable)
+    battle_result.pop("player1_items", None)
+    battle_result.pop("player2_items", None)
+    battle_result.pop("player1_containers", None)
+    battle_result.pop("player2_containers", None)
 
     return {
         "battle_result": battle_result,

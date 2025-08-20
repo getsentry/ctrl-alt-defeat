@@ -146,9 +146,19 @@ class TestBattleRenderer:
             p2_containers=[p2_container],
         )
 
+        # Remove non-serializable fields before saving
+        clean_result = {
+            "winner": result["winner"],
+            "duration": result["duration"],
+            "player1_quota": result["player1_quota"],
+            "player2_quota": result["player2_quota"],
+            "actions": result["actions"],
+            "seed": result["seed"],
+        }
+
         # Save to temp file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(result, f, indent=2)
+            json.dump(clean_result, f, indent=2)
             temp_path = f.name
 
         # Load from file
@@ -156,9 +166,9 @@ class TestBattleRenderer:
             loaded_result = json.load(f)
 
         # Verify loaded data matches original
-        assert loaded_result["winner"] == result["winner"]
-        assert loaded_result["duration"] == result["duration"]
-        assert len(loaded_result["actions"]) == len(result["actions"])
+        assert loaded_result["winner"] == clean_result["winner"]
+        assert loaded_result["duration"] == clean_result["duration"]
+        assert len(loaded_result["actions"]) == len(clean_result["actions"])
 
         # Clean up
         import os

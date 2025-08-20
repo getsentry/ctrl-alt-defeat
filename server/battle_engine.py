@@ -276,6 +276,10 @@ class BattleSimulator:
             "player2_quota": max(0, player2.quota),
             "actions": self.actions,
             "seed": self.seed,  # Include seed for replay/debugging
+            "player1_items": p1_items,  # Include player 1 loadout
+            "player2_items": p2_items,  # Include player 2 (enemy) loadout
+            "player1_containers": p1_containers,  # Include player 1 containers
+            "player2_containers": p2_containers,  # Include player 2 containers
         }
 
     def _get_round_quota(self, round_num: int) -> int:
