@@ -48,8 +48,9 @@ class SimpleBattleRequest(BaseModel):
     player_id: str
     round_number: int
     seed: Optional[int] = None  # For deterministic testing
-    test_ai_difficulty: int = 1  # AI difficulty for testing
-    opponent_id: Optional[str] = None  # For PvP battles
+    test_ai_difficulty: Optional[
+        int
+    ] = None  # AI difficulty for testing (test mode only)
 
 
 class PurchaseRequest(BaseModel):

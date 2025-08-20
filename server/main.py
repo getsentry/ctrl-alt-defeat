@@ -9,7 +9,7 @@ import os
 import random
 import uuid
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import auth_endpoints
 import sentry_sdk
@@ -32,6 +32,7 @@ from schemas import (
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
+from server_containers import ServerContainer, create_server_containers
 from session_manager import SessionManager
 from utils import utc_now
 
@@ -457,8 +458,6 @@ def generate_shop_items(
                 used_item_types.pop(0)
 
             # Check if it's a container (containers have internal_size in their catalog)
-            from server_containers import create_server_containers
-
             containers_catalog = create_server_containers()
             is_container = item_type in containers_catalog
             if is_container:
@@ -566,21 +565,10 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
             )
             player_items.append(placed_item)
 
-    # Generate or fetch opponent
-    opponent_session = None
-    if request.opponent_id:
-        opponent_session = await session_manager.get_session(request.opponent_id)
-
-    if opponent_session:
-        # In real implementation, load opponent's last submitted inventory
-        # For now, just use AI items
-        opponent_items = generate_ai_items(
-            request.round_number, request.test_ai_difficulty
-        )
-    else:
-        opponent_items = generate_ai_items(
-            request.round_number, request.test_ai_difficulty
-        )
+    # Generate AI opponent (matchmaking will be implemented later)
+    opponent_items, p2_containers = generate_ai_opponent(
+        request.round_number, request.test_ai_difficulty
+    )
 
     # Simulate battle - use request seed or derive from game seed
     if request.seed is not None:
@@ -594,8 +582,6 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
         )
 
     # Get containers from session for player
-    from server_containers import ServerContainer, create_server_containers
-
     p1_containers = []
     for container_data in session.server_containers:
         # Create ServerContainer from session data
@@ -612,38 +598,6 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
                     shape=container_info["external_shape"],
                 )
             )
-
-    # For P2 (AI), create appropriate containers for the AI items
-    # AI places items at specific positions based on round
-    p2_containers = []
-    containers_catalog = create_server_containers()
-
-    # Create containers that cover AI positions
-    # Positions used: (1,3), (2,3), (4,3), (5,3), (1,4), (2,4), (4,4), (5,4)
-    vm_info = containers_catalog["standard_vm"]
-    p2_containers = [
-        ServerContainer(
-            spec=vm_info["spec"],
-            position=(1, 3),
-            uid="ai_vm1",
-            internal_grid_size=vm_info["internal_size"],
-            shape=vm_info["external_shape"],
-        ),
-        ServerContainer(
-            spec=vm_info["spec"],
-            position=(3, 3),
-            uid="ai_vm2",
-            internal_grid_size=vm_info["internal_size"],
-            shape=vm_info["external_shape"],
-        ),
-        ServerContainer(
-            spec=vm_info["spec"],
-            position=(5, 3),
-            uid="ai_vm3",
-            internal_grid_size=vm_info["internal_size"],
-            shape=vm_info["external_shape"],
-        ),
-    ]
 
     # Add performance monitoring for battle simulation
     with sentry_sdk.start_span(op="battle.simulation") as span:
@@ -706,7 +660,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     # Store battle in history
     await session_manager.save_battle_history(
         player1_id=request.player_id,
-        player2_id=request.opponent_id,
+        player2_id=None,  # AI opponent for now
         round_number=request.round_number,
         winner=battle_result["winner"],
         battle_data=battle_result,
@@ -870,13 +824,54 @@ def get_test_ai_items(difficulty: str, round_number: int) -> List[PlacedItem]:
         return get_ghost_player_items(round_number)
 
 
-def generate_ai_items(
+def generate_ai_opponent(
     round_number: int, test_difficulty: Optional[str] = None
-) -> List[PlacedItem]:
-    """Generate AI opponent items based on round - uses ghost players or test difficulty"""
+) -> Tuple[List[PlacedItem], List[ServerContainer]]:
+    """
+    Generate AI opponent items and containers based on round
+    Returns: (items, containers) tuple
+    """
     if TEST_MODE and test_difficulty:
-        return get_test_ai_items(test_difficulty, round_number)
-    return get_ghost_player_items(round_number)
+        items = get_test_ai_items(test_difficulty, round_number)
+    else:
+        items = get_ghost_player_items(round_number)
+
+    # Generate containers for AI based on item positions
+    containers = generate_ai_containers(items)
+    return items, containers
+
+
+def generate_ai_containers(items: List[PlacedItem]) -> List[ServerContainer]:
+    """Generate server containers that cover all AI item positions"""
+    containers_catalog = create_server_containers()
+    vm_info = containers_catalog["standard_vm"]
+
+    # Create a minimal set of containers that cover all item positions
+    # For simplicity, create 3 standard VMs at fixed positions
+    containers = [
+        ServerContainer(
+            spec=vm_info["spec"],
+            position=(1, 3),
+            uid="ai_vm1",
+            internal_grid_size=vm_info["internal_size"],
+            shape=vm_info["external_shape"],
+        ),
+        ServerContainer(
+            spec=vm_info["spec"],
+            position=(3, 3),
+            uid="ai_vm2",
+            internal_grid_size=vm_info["internal_size"],
+            shape=vm_info["external_shape"],
+        ),
+        ServerContainer(
+            spec=vm_info["spec"],
+            position=(5, 3),
+            uid="ai_vm3",
+            internal_grid_size=vm_info["internal_size"],
+            shape=vm_info["external_shape"],
+        ),
+    ]
+    return containers
 
 
 @app.post("/purchase/item")
