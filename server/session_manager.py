@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from database import db_manager  # noqa: F401
-from models import BattleHistoryDB, GameSessionDB
+from models import BattleHistoryDB, GameSession
 from schemas import GameSession as GameSessionPydantic
 from sqlalchemy import delete, select, text
 
@@ -99,7 +99,7 @@ class SessionManager:
         # Save to database
         async with db_manager.get_session() as db:
             # Create database model
-            db_session = GameSessionDB(
+            db_session = GameSession(
                 player_id=player_id,
                 player_name=session.player_name,
                 round=session.round,
@@ -127,7 +127,7 @@ class SessionManager:
         """Get a session by player ID"""
         async with db_manager.get_session() as db:
             result = await db.execute(
-                select(GameSessionDB).where(GameSessionDB.player_id == player_id)
+                select(GameSession).where(GameSession.player_id == player_id)
             )
             db_session = result.scalar_one_or_none()
 
@@ -143,9 +143,7 @@ class SessionManager:
         """Update an existing session"""
         async with db_manager.get_session() as db:
             result = await db.execute(
-                select(GameSessionDB).where(
-                    GameSessionDB.player_id == session.player_id
-                )
+                select(GameSession).where(GameSession.player_id == session.player_id)
             )
             db_session = result.scalar_one_or_none()
 
@@ -178,7 +176,7 @@ class SessionManager:
         async with db_manager.get_session() as db:
             # Check if session exists
             result = await db.execute(
-                select(GameSessionDB).where(GameSessionDB.player_id == player_id)
+                select(GameSession).where(GameSession.player_id == player_id)
             )
             existing = result.scalar_one_or_none()
 
@@ -188,7 +186,7 @@ class SessionManager:
                 db_session = existing
             else:
                 # Create new session
-                db_session = GameSessionDB(**session.model_dump())
+                db_session = GameSession(**session.model_dump())
                 db.add(db_session)
 
             await db.commit()
@@ -197,7 +195,7 @@ class SessionManager:
         """Delete a session"""
         async with db_manager.get_session() as db:
             result = await db.execute(
-                delete(GameSessionDB).where(GameSessionDB.player_id == player_id)
+                delete(GameSession).where(GameSession.player_id == player_id)
             )
             await db.commit()
             return result.rowcount > 0
@@ -205,7 +203,7 @@ class SessionManager:
     async def list_active_sessions(self) -> List[str]:
         """List all active session IDs"""
         async with db_manager.get_session() as db:
-            result = await db.execute(select(GameSessionDB.player_id))
+            result = await db.execute(select(GameSession.player_id))
             return [row[0] for row in result.fetchall()]
 
     async def cleanup_old_sessions(self, hours: int = 24):
@@ -214,7 +212,7 @@ class SessionManager:
 
         async with db_manager.get_session() as db:
             result = await db.execute(
-                delete(GameSessionDB).where(GameSessionDB.last_activity < cutoff)
+                delete(GameSession).where(GameSession.last_activity < cutoff)
             )
             await db.commit()
             return result.rowcount
@@ -273,7 +271,7 @@ class SessionManager:
                 # Try DELETE as fallback (works with more databases)
                 try:
                     await db.execute(delete(BattleHistoryDB))
-                    await db.execute(delete(GameSessionDB))
+                    await db.execute(delete(GameSession))
                     await db.commit()
                     print("Database reset using DELETE")
                 except Exception as e2:

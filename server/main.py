@@ -55,10 +55,7 @@ async def startup_event():
     """Initialize database connection on startup"""
     await session_manager.initialize()
     print(f"Server started in {'TEST' if TEST_MODE else 'PRODUCTION'} mode")
-    if session_manager.use_fallback:
-        print("WARNING: Using in-memory session storage (database unavailable)")
-    else:
-        print("Using PostgreSQL for session persistence")
+    print("Using PostgreSQL for session persistence")
 
 
 @app.on_event("shutdown")
@@ -1056,10 +1053,6 @@ if TEST_MODE:
 
         return {
             "test_mode": TEST_MODE,
-            "database_fallback": session_manager.use_fallback,
-            "session_count": len(session_manager.fallback_sessions)
-            if session_manager.use_fallback
-            else "using database",
             "db_host": os.environ.get("DB_HOST", "default"),
             "db_name": os.environ.get("DB_NAME", "default"),
         }
