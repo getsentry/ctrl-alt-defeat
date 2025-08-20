@@ -3,6 +3,7 @@ Session management layer for game sessions
 Handles database operations and provides a clean interface for the API
 """
 
+import logging
 import random
 from datetime import timedelta
 from typing import List, Optional
@@ -12,6 +13,8 @@ from models import BattleHistory, GameSession, User
 from schemas import GameSession as GameSessionPydantic
 from sqlalchemy import delete, select, text
 from utils import utc_now
+
+logger = logging.getLogger(__name__)
 
 
 class SessionManager:
@@ -331,17 +334,20 @@ class SessionManager:
                 await db.execute(text("TRUNCATE TABLE game_sessions CASCADE"))
                 await db.execute(text("TRUNCATE TABLE battle_history CASCADE"))
                 await db.commit()
-                print("Database reset using TRUNCATE")
-            except Exception as e:
-                print(f"Failed to reset database with TRUNCATE: {e}")
+                logger.info("Database reset using TRUNCATE")
+            except Exception:
+                logger.warning(
+                    "Failed to reset database with TRUNCATE, trying DELETE",
+                    exc_info=True,
+                )
                 # Try DELETE as fallback (works with more databases)
                 try:
                     await db.execute(delete(BattleHistory))
                     await db.execute(delete(GameSession))
                     await db.commit()
-                    print("Database reset using DELETE")
-                except Exception as e2:
-                    print(f"Failed to reset database with DELETE: {e2}")
+                    logger.info("Database reset using DELETE")
+                except Exception:
+                    logger.exception("Failed to reset database with DELETE")
                     raise
 
 

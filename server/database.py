@@ -2,6 +2,7 @@
 Database connection and session management for PostgreSQL
 """
 
+import logging
 import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
@@ -11,6 +12,8 @@ from models import Base
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+
+logger = logging.getLogger(__name__)
 
 
 def get_database_url(
@@ -205,12 +208,12 @@ class DatabaseManager:
                     await conn.run_sync(Base.metadata.create_all)
 
             self._initialized = True
-            print(
+            logger.info(
                 f"Database initialized successfully at {self.async_database_url.split('@')[1]}"
             )
 
-        except Exception as e:
-            print(f"Failed to initialize database: {e}")
+        except Exception:
+            logger.exception("Failed to initialize database")
             raise
 
     async def close(self):
@@ -291,14 +294,14 @@ class DatabaseManager:
                 if not exists:
                     # Create the database
                     await conn.execute(f'CREATE DATABASE "{db_name}"')
-                    print(f"Created database: {db_name}")
+                    logger.info(f"Created database: {db_name}")
 
                 await conn.close()
             except asyncpg.DuplicateDatabaseError:
                 # Database already exists, that's fine
                 pass
             except Exception as e:
-                print(f"Could not ensure database exists: {e}")
+                logger.warning(f"Could not ensure database exists: {e}")
                 # Continue anyway - the main connection will fail if there's a real problem
 
     async def health_check(self) -> bool:
@@ -307,8 +310,8 @@ class DatabaseManager:
             async with self.get_session() as session:
                 result = await session.execute(text("SELECT 1"))
                 return result.scalar() == 1
-        except Exception as e:
-            print(f"Database health check failed: {e}")
+        except Exception:
+            logger.exception("Database health check failed")
             return False
 
     async def check_and_run_migrations(self):
@@ -339,7 +342,9 @@ class DatabaseManager:
 
             # Check if we need to run migrations
             if "head" not in result.stdout:
-                print("Database migrations are not up to date. Running migrations...")
+                logger.info(
+                    "Database migrations are not up to date. Running migrations..."
+                )
 
                 # Run migrations
                 migrate_result = subprocess.run(
@@ -351,18 +356,16 @@ class DatabaseManager:
                 )
 
                 if migrate_result.returncode == 0:
-                    print("Migrations applied successfully")
+                    logger.info("Migrations applied successfully")
                 else:
-                    print(f"Warning: Migration failed: {migrate_result.stderr}")
-                    print("Falling back to create_all for table creation")
+                    logger.error(f"Migration failed: {migrate_result.stderr}")
             else:
-                print("Database migrations are up to date")
+                logger.debug("Database migrations are up to date")
 
         except FileNotFoundError:
-            print("Alembic not found. Skipping migration check.")
+            logger.error("Alembic not found. Skipping migration check.")
         except Exception as e:
-            print(f"Could not check migrations: {e}")
-            print("Continuing with normal initialization...")
+            logger.error(f"Could not check migrations: {e}")
 
 
 # Global database manager instance

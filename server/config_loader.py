@@ -3,6 +3,7 @@ Configuration loader for items and containers from JSON files
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -21,6 +22,8 @@ from item_effects import (
     TimerTrigger,
 )
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigLoader:
@@ -86,8 +89,8 @@ class ConfigLoader:
                     items[item_id] = self._create_item_spec(item_id, config)
 
                 print(f"Loaded {len(category_items)} items from {category_file.name}")
-            except Exception as e:
-                print(f"Warning: Failed to load {category_file}: {e}")
+            except Exception:
+                logging.exception(f"Failed to load item config {category_file}:")
 
         if not items:
             print("Warning: No items loaded from any files")

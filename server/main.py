@@ -5,6 +5,7 @@ Sentry Autobattler Server
 - Uses battle_engine for combat simulation
 """
 
+import logging
 import os
 import random
 import uuid
@@ -21,6 +22,7 @@ from database import db_manager
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
+from matchmaking import MatchmakingService
 from schemas import (
     GameSession,
     MoveItemRequest,
@@ -31,6 +33,7 @@ from schemas import (
     StartSessionRequest,
 )
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 from server_containers import ServerContainer, create_server_containers
@@ -76,6 +79,13 @@ SENTRY_DSN = os.environ.get(
 )
 ENVIRONMENT = "test" if TEST_MODE else os.environ.get("ENVIRONMENT", "production")
 
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG if TEST_MODE else logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 if SENTRY_DSN and not TEST_MODE:  # Don't initialize Sentry in test mode
     sentry_sdk.init(
         dsn=SENTRY_DSN,
@@ -97,6 +107,10 @@ if SENTRY_DSN and not TEST_MODE:  # Don't initialize Sentry in test mode
             ),
             StarletteIntegration(transaction_style="endpoint"),
             SqlalchemyIntegration(),
+            LoggingIntegration(
+                level=logging.INFO,  # Capture info and above as breadcrumbs
+                event_level=logging.ERROR,  # Send errors and above as events
+            ),
         ],
         traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
         profiles_sample_rate=0.1,  # 10% of transactions for profiling
@@ -566,10 +580,88 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
             )
             player_items.append(placed_item)
 
-    # Generate AI opponent (matchmaking will be implemented later)
-    opponent_items, p2_containers = generate_ai_opponent(
-        request.round_number, request.test_ai_difficulty
-    )
+    # Try matchmaking first (unless in test mode with specified AI difficulty)
+    opponent_data = None
+    opponent_type = "ai"
+    match_history_id = None  # Track for updating after battle
+
+    if not TEST_MODE or request.test_ai_difficulty is None:
+        # Try to find a real player opponent
+        try:
+            # Get the database session and user_id
+            async with db_manager.get_session() as db:
+                # Get the actual database GameSession model
+                from models import GameSession as DBGameSession
+                from sqlalchemy import select
+
+                db_session_result = await db.execute(
+                    select(DBGameSession).where(
+                        DBGameSession.player_id == request.player_id
+                    )
+                )
+                db_session = db_session_result.scalar_one_or_none()
+
+                if db_session and db_session.user_id:
+                    # Calculate win percentage
+                    total_games = session.wins + session.losses
+                    win_percent = (
+                        (session.wins / total_games * 100) if total_games > 0 else 0
+                    )
+
+                    # Try matchmaking
+                    matchmaking = MatchmakingService(db)
+
+                    opponent_data = await matchmaking.find_opponent(
+                        user_id=db_session.user_id,
+                        round_number=request.round_number,
+                        win_percent=win_percent,
+                        game_version="1.0.0",  # TODO: Get from config
+                        fallback_to_ai=True,
+                    )
+
+                    if opponent_data:
+                        opponent_type = "player_ghost"
+                        opponent_build_id = opponent_data.get("build_id")
+        except Exception:
+            # Log error but continue with AI opponent
+            logger.exception("Matchmaking failed, falling back to AI opponent")
+
+    # Generate opponent items and containers
+    if opponent_data and opponent_type == "player_ghost":
+        # Use the matched player's build
+        opponent_items = []
+        for item_data in opponent_data["inventory"]:
+            if item_data["item_type"] in ITEM_CATALOG:
+                item_spec = ITEM_CATALOG[item_data["item_type"]]
+                placed_item = PlacedItem(
+                    spec=item_spec,
+                    position=tuple(item_data["position"]),
+                    uid=item_data["id"],
+                )
+                opponent_items.append(placed_item)
+
+        # Create containers from opponent data
+        p2_containers = []
+        containers_catalog = create_server_containers()
+        for container_data in opponent_data["containers"]:
+            container_type = container_data.get("type", "standard_vm")
+            if container_type in containers_catalog:
+                container_info = containers_catalog[container_type]
+                p2_containers.append(
+                    ServerContainer(
+                        spec=container_info["spec"],
+                        position=tuple(container_data["position"]),
+                        uid=container_data["id"],
+                        internal_grid_size=container_info["internal_size"],
+                        shape=container_info["external_shape"],
+                    )
+                )
+    else:
+        # Fall back to AI opponent
+        opponent_items, p2_containers = generate_ai_opponent(
+            request.round_number, request.test_ai_difficulty
+        )
+        opponent_type = "ai"
 
     # Simulate battle - use request seed or derive from game seed
     if request.seed is not None:
@@ -659,6 +751,55 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
         "seed": battle_result["seed"],
     }
     session.last_battle_result = clean_battle_result
+
+    # Save player build for future matchmaking and record match history
+    if not TEST_MODE:
+        try:
+            async with db_manager.get_session() as db:
+                from models import GameSession as DBGameSession
+                from sqlalchemy import select
+
+                db_session_result = await db.execute(
+                    select(DBGameSession).where(
+                        DBGameSession.player_id == request.player_id
+                    )
+                )
+                db_session = db_session_result.scalar_one_or_none()
+
+                if db_session and db_session.user_id:
+                    matchmaking = MatchmakingService(db)
+                    # Save player build
+                    player_build = await matchmaking.save_player_build(
+                        user_id=db_session.user_id,
+                        player_name=session.player_name,
+                        game_session_id=request.player_id,
+                        round_number=request.round_number,
+                        wins=session.wins,
+                        losses=session.losses,
+                        lives=session.lives,
+                        inventory_grid=session.inventory_grid,
+                        server_containers=session.server_containers,
+                        battle_won=(battle_result["winner"] == 1),
+                        opponent_type=opponent_type,
+                        opponent_difficulty=request.test_ai_difficulty,
+                    )
+
+                    # Record match history if this was a PvP match (after battle completes)
+                    # We always have player_build.id since save_player_build returns the saved build
+                    if (
+                        opponent_type == "player_ghost"
+                        and "opponent_build_id" in locals()
+                        and player_build
+                    ):
+                        await matchmaking.record_match_result(
+                            player_user_id=db_session.user_id,
+                            player_build_id=player_build.id,
+                            opponent_build_id=opponent_build_id,
+                            battle_winner=battle_result["winner"],
+                        )
+        except Exception:
+            # Log but don't fail the battle
+            logger.exception("Failed to save player build or record match history")
 
     # Generate new shop for the round (first shop = refresh count 0)
     shop_seed = session.game_seed + session.round * 1000 + session.shop_refresh_count

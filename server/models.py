@@ -12,7 +12,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
-    UniqueConstraint,
+    text,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from utils import utc_now
@@ -209,13 +209,23 @@ class PlayerBuild(Base):
     # Metadata
     created_at = Column(DateTime, default=utc_now, nullable=False, index=True)
 
-    # Composite index for efficient matchmaking queries
+    # Composite indexes for efficient matchmaking queries
     __table_args__ = (
+        # Partial index for recent winning builds - the main matchmaking index
+        # This dramatically reduces index size and improves query performance
         Index(
-            "idx_matchmaking",
-            "game_version",
+            "idx_matchmaking_recent_wins",
             "round_number",
+            "game_version",
             "win_percent",
+            postgresql_where=text(
+                "created_at > (CURRENT_TIMESTAMP - INTERVAL '7 days') AND battle_won = TRUE"
+            ),
+        ),
+        # Index for finding player's recent builds
+        Index(
+            "idx_player_recent_builds",
+            "user_id",
             "created_at",
         ),
     )
@@ -245,21 +255,28 @@ class PlayerBuild(Base):
 
 
 class MatchmakingHistory(Base):
-    """Database model for tracking matchmaking history to prevent repeat matches"""
+    """Database model for tracking matchmaking history and battle outcomes"""
 
     __tablename__ = "matchmaking_history"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     player_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    opponent_build_id = Column(Integer, ForeignKey("player_builds.id"), nullable=False)
+    player_build_id = Column(
+        Integer, ForeignKey("player_builds.id"), nullable=False, index=True
+    )
+    opponent_build_id = Column(
+        Integer, ForeignKey("player_builds.id"), nullable=False, index=True
+    )
     matched_at = Column(DateTime, default=utc_now, nullable=False, index=True)
 
-    # Prevent matching same opponent too frequently
+    # Battle outcome - always set since we only write after battle completes
+    battle_winner = Column(Integer, nullable=False)  # 1 = player won, 2 = opponent won
+
+    # Indexes for analytics and leaderboards
     __table_args__ = (
-        UniqueConstraint(
-            "player_user_id", "opponent_build_id", name="unique_recent_match"
-        ),
         Index("idx_player_history", "player_user_id", "matched_at"),
+        Index("idx_build_performance", "opponent_build_id", "battle_winner"),
+        Index("idx_recent_matches", "matched_at"),
     )
 
     def to_dict(self) -> dict:
@@ -267,6 +284,8 @@ class MatchmakingHistory(Base):
         return {
             "id": self.id,
             "player_user_id": self.player_user_id,
+            "player_build_id": self.player_build_id,
             "opponent_build_id": self.opponent_build_id,
             "matched_at": self.matched_at.isoformat() if self.matched_at else None,
+            "battle_winner": self.battle_winner,
         }
