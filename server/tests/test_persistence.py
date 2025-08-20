@@ -206,12 +206,12 @@ class TestSessionPersistence:
         await manager.delete_session(player_id)
         # Also clean up battle history
         from database import db_manager
-        from models import BattleHistoryDB
+        from models import BattleHistory
         from sqlalchemy import delete
 
         async with db_manager.get_session() as db:
             await db.execute(
-                delete(BattleHistoryDB).where(BattleHistoryDB.player1_id == player_id)
+                delete(BattleHistory).where(BattleHistory.player1_id == player_id)
             )
             await db.commit()
 

@@ -98,7 +98,7 @@ class GameSession(Base):
         self.last_activity = datetime.utcnow()
 
 
-class BattleHistoryDB(Base):
+class BattleHistory(Base):
     """Database model for storing battle history"""
 
     __tablename__ = "battle_history"
@@ -124,7 +124,7 @@ class BattleHistoryDB(Base):
         }
 
 
-class UserDB(Base):
+class User(Base):
     """Database model for user accounts"""
 
     __tablename__ = "users"
@@ -179,7 +179,7 @@ class UserDB(Base):
         }
 
 
-class PlayerBuildDB(Base):
+class PlayerBuild(Base):
     """Database model for player build snapshots used in matchmaking"""
 
     __tablename__ = "player_builds"
@@ -249,7 +249,7 @@ class PlayerBuildDB(Base):
         }
 
 
-class MatchmakingHistoryDB(Base):
+class MatchmakingHistory(Base):
     """Database model for tracking matchmaking history to prevent repeat matches"""
 
     __tablename__ = "matchmaking_history"

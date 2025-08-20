@@ -97,11 +97,16 @@ func _on_start_game():
 	# Start new session with server
 	var session_data = await BattleServerAPI.start_session()
 
+	# Check if server connection failed
+	if session_data.is_empty():
+		push_error("Failed to start game session - server connection failed")
+		return
+
 	# Update game state with session data
-	GameStateManager.player_id = session_data.player_id
-	GameStateManager.current_round = session_data.round
-	GameStateManager.gold = session_data.gold
-	GameStateManager.current_shop = session_data.current_shop
+	GameStateManager.player_id = session_data.get("player_id", "")
+	GameStateManager.current_round = session_data.get("round", 1)
+	GameStateManager.gold = session_data.get("gold", 12)
+	GameStateManager.current_shop = session_data.get("current_shop", [])
 
 	# Store starting containers if provided (server will send these)
 	if session_data.has("starting_containers"):

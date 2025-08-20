@@ -1,0 +1,147 @@
+# Problems (Weapons)
+
+Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage to the opponent's infrastructure.
+
+## Basic Problems
+
+### Null Pointer
+- **Shape:** 2x1 (2 slots horizontal)
+- **Damage:** 1-3 (1.4 DPS)
+- **Cooldown:** 1.4s
+- **CPU Cost:** 1 (0.7/s)
+- **Effect:** None
+- **Cost:** 3 Gold
+- **Rarity:** Common
+- **Description:** Basic exploit that dereferences null
+- **Backpack Battles Equivalent:** Wooden Sword
+
+### Ping Flood
+- **Shape:** 1x1 (1 slot)
+- **Damage:** 2-4 (1.2 DPS)
+- **Cooldown:** 2.5s
+- **CPU Cost:** 0 (0/s)
+- **Effect:** Can only be used once per battle. On hit: Destroy 4 Block
+- **Cost:** 1 Gold
+- **Rarity:** Common
+- **Description:** Simple ICMP flood attack
+- **Backpack Battles Equivalent:** Stone
+
+### Script Injection
+- **Shape:** 2x1 (2 slots horizontal)
+- **Damage:** 2-5 (1.0 DPS)
+- **Cooldown:** 3.5s
+- **CPU Cost:** 0 (0/s)
+- **Effect:** On stun: Triggers extra attack
+- **Cost:** 4 Gold
+- **Rarity:** Rare
+- **Description:** Injects malicious code when defenses are down
+- **Backpack Battles Equivalent:** Dagger
+
+### Data Miner
+- **Shape:** 4x1 (4 slots horizontal)
+- **Damage:** 5-8 (2.7 DPS)
+- **Cooldown:** 2.4s
+- **CPU Cost:** 1.7 (0.7/s)
+- **Effect:** Deploy phase: Dig up a random module. On hit: 40% chance to inflict 1 Blind
+- **Cost:** 8 Gold
+- **Rarity:** Rare
+- **Description:** Extracts valuable data while obscuring vision
+- **Backpack Battles Equivalent:** Shovel
+
+## Advanced Exploits
+
+### Memory Leak
+- **Shape:** 3x1 (3 slots horizontal)
+- **Damage:** 3-6 (2.0 DPS)
+- **Cooldown:** 2.3s
+- **CPU Cost:** 1.4 (0.7/s)
+- **Effect:** On hit: Gain 1 damage
+- **Cost:** 6 Gold
+- **Rarity:** Rare
+- **Description:** Grows stronger as it consumes more memory
+- **Backpack Battles Equivalent:** Axe
+
+### Buffer Overflow
+- **Shape:** 3x1 (3 slots horizontal)
+- **Damage:** 4-7 (2.2 DPS)
+- **Cooldown:** 2.5s
+- **CPU Cost:** 1 (0.7/s)
+- **Effect:** On hit: Destroy 4 Block for each free slot in front of this
+- **Cost:** 6 Gold
+- **Rarity:** Rare
+- **Description:** Exploits unprotected memory boundaries
+- **Backpack Battles Equivalent:** Spear
+
+### Process Fork Bomb
+- **Shape:** 2x1 (2 slots horizontal)
+- **Damage:** 2-4 (1.5 DPS)
+- **Cooldown:** 2.0s
+- **CPU Cost:** 1 (0.7/s)
+- **Effect:** On hit: 25% chance to gain 1 damage
+- **Cost:** 5 Gold
+- **Rarity:** Rare
+- **Description:** Multiplies processes exponentially
+- **Backpack Battles Equivalent:** Torch
+
+### Stack Smasher
+- **Shape:** 2x2 (4 slots square)
+- **Damage:** 4-6 (2.0 DPS)
+- **Cooldown:** 2.5s
+- **CPU Cost:** 2 (0.9/s)
+- **Effect:** +1 damage for each Star-tier Module
+- **Cost:** 4 Gold
+- **Rarity:** Common
+- **Description:** Corrupts the call stack for massive damage
+- **Backpack Battles Equivalent:** Pan
+
+## Unique Exploits
+
+### Rage Click
+- **Shape:** 2x1 (2 slots horizontal)
+- **Damage:** 3-5 (1.8 DPS)
+- **Cooldown:** 2.2s
+- **CPU Cost:** 0 (0/s)
+- **Effect:** Can only be used once per battle. On hit: Inflict 3 Frustration
+- **Cost:** 10 Gold
+- **Rarity:** Unique
+- **Description:** Simulates user frustration from unresponsive UI
+- **Backpack Battles Equivalent:** Artifact Stone: Cold
+
+### Dead Click
+- **Shape:** 2x1 (2 slots horizontal)
+- **Damage:** 4-6 (2.0 DPS)
+- **Cooldown:** 2.5s
+- **CPU Cost:** 0 (0/s)
+- **Effect:** Can only be used once per battle. On hit: Inflict Fatigue damage
+- **Cost:** 8 Gold
+- **Rarity:** Unique
+- **Description:** Clicks that lead nowhere drain user patience
+- **Backpack Battles Equivalent:** Artifact Stone: Death
+
+### Thermal Throttle
+- **Shape:** 2x1 (2 slots horizontal)
+- **Damage:** 3-5 (1.8 DPS)
+- **Cooldown:** 2.2s
+- **CPU Cost:** 0 (0/s)
+- **Effect:** Can only be used once per battle. On hit: Gain 3 Heat
+- **Cost:** 9 Gold
+- **Rarity:** Unique
+- **Description:** Overheats the opponent's CPU
+- **Backpack Battles Equivalent:** Artifact Stone: Heat
+
+### Credential Harvester
+- **Shape:** 3x1 (3 slots horizontal)
+- **Damage:** 5-8 (2.5 DPS)
+- **Cooldown:** 2.8s
+- **CPU Cost:** 0 (0/s)
+- **Effect:** Star Items give +100% Data Theft. Attacks 5% faster for every Data Theft point
+- **Cost:** 7 Gold
+- **Rarity:** Unique
+- **Description:** Steals authentication tokens to fuel attacks
+- **Backpack Battles Equivalent:** Blood Harvester
+
+## Notes
+
+- Damage values are placeholders and will need balancing
+- Additional exploits will be added as we design more weapon types
+- Class-specific exploits will be documented separately

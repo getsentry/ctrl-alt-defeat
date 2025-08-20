@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from database import db_manager  # noqa: F401
-from models import BattleHistoryDB, GameSession
+from models import BattleHistory, GameSession, User
 from schemas import GameSession as GameSessionPydantic
 from sqlalchemy import delete, select, text
 
@@ -41,13 +41,56 @@ class SessionManager:
 
         self._initialized = True
 
+    async def _get_user(self, user_id: str) -> Optional[User]:
+        """Get a user by ID"""
+        async with db_manager.get_session() as db:
+            # user_id is the actual user.id from the database
+            try:
+                user_id_int = int(user_id)
+                result = await db.execute(select(User).where(User.id == user_id_int))
+                return result.scalar_one_or_none()
+            except (ValueError, TypeError):
+                # Invalid user_id format
+                return None
+
     async def create_session(
         self, player_id: str, game_seed: Optional[int] = None
     ) -> GameSessionPydantic:
-        """Create a new game session"""
+        """Create a new game session
+
+        Args:
+            player_id: The user ID (as string) for this session, or a temporary ID for guest users
+            game_seed: Optional seed for deterministic gameplay
+        """
         # Generate seed if not provided
         if game_seed is None:
             game_seed = random.randint(0, 1000000)
+
+        # Try to get the user by ID first
+        user = await self._get_user(player_id)
+
+        # If no user found, create a guest user
+        if not user:
+            async with db_manager.get_session() as db:
+                import uuid
+
+                username = f"Guest_{uuid.uuid4().hex[:8]}_{random.randint(1000, 9999)}"
+                user = User(
+                    username=username,
+                    display_name=f"Player_{player_id[:8]}",
+                    account_type="guest",
+                    account_status="active",
+                    total_games_played=0,
+                    total_wins=0,
+                    total_losses=0,
+                    current_rank=1000,
+                )
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
+
+            # Update player_id to be the actual user ID
+            player_id = str(user.id)
 
         # Create session with starting values
         from shop_generation import generate_shop_items
@@ -78,8 +121,8 @@ class SessionManager:
         ]
 
         session = GameSessionPydantic(
-            player_id=player_id,
-            player_name=f"Player_{player_id[:8]}",
+            player_id=player_id,  # This is now the actual user.id
+            player_name=user.display_name or user.username,
             round=1,
             gold=12,  # Starting gold from game design
             lives=5,
@@ -102,6 +145,7 @@ class SessionManager:
             db_session = GameSession(
                 player_id=player_id,
                 player_name=session.player_name,
+                user_id=user.id,  # Link to the guest user
                 round=session.round,
                 gold=session.gold,
                 lives=session.lives,
@@ -227,7 +271,7 @@ class SessionManager:
     ):
         """Save battle history to database"""
         async with db_manager.get_session() as db:
-            battle = BattleHistoryDB(
+            battle = BattleHistory(
                 player1_id=player1_id,
                 player2_id=player2_id,
                 round_number=round_number,
@@ -241,9 +285,9 @@ class SessionManager:
         """Get recent battle history for a player"""
         async with db_manager.get_session() as db:
             result = await db.execute(
-                select(BattleHistoryDB)
-                .where(BattleHistoryDB.player1_id == player_id)
-                .order_by(BattleHistoryDB.created_at.desc())
+                select(BattleHistory)
+                .where(BattleHistory.player1_id == player_id)
+                .order_by(BattleHistory.created_at.desc())
                 .limit(limit)
             )
             battles = result.scalars().all()
@@ -270,7 +314,7 @@ class SessionManager:
                 print(f"Failed to reset database with TRUNCATE: {e}")
                 # Try DELETE as fallback (works with more databases)
                 try:
-                    await db.execute(delete(BattleHistoryDB))
+                    await db.execute(delete(BattleHistory))
                     await db.execute(delete(GameSession))
                     await db.commit()
                     print("Database reset using DELETE")

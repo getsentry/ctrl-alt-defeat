@@ -75,7 +75,29 @@ async def shutdown_event():
 @app.post("/session/start")
 async def start_session(request: StartSessionRequest) -> Dict[str, Any]:
     """Start a new game session"""
-    player_id = str(uuid.uuid4())
+    # For now, accept user_id from request if provided, otherwise create a guest user
+    if hasattr(request, "user_id") and request.user_id:
+        player_id = request.user_id
+    else:
+        # Create a guest user and use their ID
+        from models import User
+
+        async with db_manager.get_session() as db:
+            username = f"Guest_{uuid.uuid4().hex[:8]}_{random.randint(1000, 9999)}"
+            user = User(
+                username=username,
+                display_name=f"Player_{uuid.uuid4().hex[:8]}",
+                account_type="guest",
+                account_status="active",
+                total_games_played=0,
+                total_wins=0,
+                total_losses=0,
+                current_rank=1000,
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+            player_id = str(user.id)
 
     # Only allow custom seeds in TEST_MODE
     if request.seed is not None and not TEST_MODE:

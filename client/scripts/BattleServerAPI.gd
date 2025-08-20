@@ -141,8 +141,21 @@ func submit_battle(inventory_state: Dictionary) -> Dictionary:
 			battle_completed.emit(data)
 			return data
 
-	push_error("Battle request failed with code: " + str(last_response_code))
-	return {}
+	# Parse error response for better debugging
+	var error_msg = "Battle request failed with code: " + str(last_response_code)
+	if last_response_body.size() > 0:
+		var error_json = JSON.new()
+		var error_parse = error_json.parse(last_response_body.get_string_from_utf8())
+		if error_parse == OK:
+			var error_data = error_json.data
+			if error_data.has("detail"):
+				error_msg += " - " + str(error_data["detail"])
+		else:
+			error_msg += " - " + last_response_body.get_string_from_utf8()
+
+	push_error(error_msg)
+	error_occurred.emit(error_msg)
+	return {"error": error_msg}
 
 func refresh_shop(round: int) -> Array:
 	# Refresh shop from real server
