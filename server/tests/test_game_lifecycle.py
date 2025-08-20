@@ -8,13 +8,9 @@ import os
 os.environ["TEST_MODE"] = "true"
 
 import pytest  # noqa: E402
-from fastapi.testclient import TestClient  # noqa: E402
-from main import app  # noqa: E402
-
-client = TestClient(app)
 
 
-def purchase_items_for_battle(player_id, session, num_items=3):
+def purchase_items_for_battle(client, player_id, session, num_items=3):
     """Helper to purchase items from shop and place on grid"""
     shop = session["current_shop"]
     container_positions = [
@@ -121,10 +117,10 @@ def purchase_items_for_battle(player_id, session, num_items=3):
 class TestGameLifecycle:
     """Test complete game scenarios from start to finish"""
 
-    def test_successful_run_to_victory(self):
+    def test_successful_run_to_victory(self, auth_client):
         """Test a player can win battles and advance rounds"""
         # Start new session with deterministic seed
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 2}
         )
         assert response.status_code == 200
@@ -149,13 +145,13 @@ class TestGameLifecycle:
             attempts += 1
 
             # Get current session
-            response = client.get(f"/session/{player_id}")
+            response = auth_client.get(f"/session/{player_id}")
             assert response.status_code == 200
             session = response.json()
             current_round = session["round"]
 
             # Purchase items for battle (buy max items for better chance)
-            purchase_items_for_battle(player_id, session, 6)
+            purchase_items_for_battle(auth_client, player_id, session, 6)
 
             # Battle with purchased items
             battle_request = {
@@ -165,7 +161,7 @@ class TestGameLifecycle:
                 "test_ai_difficulty": 1,  # Easy AI for reliable wins
             }
 
-            response = client.post("/battle/simulate", json=battle_request)
+            response = auth_client.post("/battle/simulate", json=battle_request)
             assert response.status_code == 200
             result = response.json()
 
@@ -186,15 +182,17 @@ class TestGameLifecycle:
         ), f"Only won {wins_achieved} battles out of {wins_needed} needed"
 
         # Final state verification
-        response = client.get(f"/session/{player_id}")
+        response = auth_client.get(f"/session/{player_id}")
         session = response.json()
         assert session["wins"] >= wins_needed
         assert session["round"] > 1  # Advanced at least once
 
-    def test_complete_failure_five_losses(self):
+    def test_complete_failure_five_losses(self, auth_client):
         """Test a player losing 5 times in a row and getting game over"""
         # Start new session
-        response = client.post("/session/start", json={"player_name": "test_player"})
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
         assert response.status_code == 200
         data = response.json()
         player_id = data["player_id"]
@@ -212,7 +210,7 @@ class TestGameLifecycle:
             attempts += 1
 
             # Get current session
-            response = client.get(f"/session/{player_id}")
+            response = auth_client.get(f"/session/{player_id}")
             assert response.status_code == 200
             session = response.json()
 
@@ -226,7 +224,7 @@ class TestGameLifecycle:
                 purchased = False
                 for item in shop:
                     if item and item.get("item_type") == "firewall":
-                        response = client.post(
+                        response = auth_client.post(
                             "/purchase/item",
                             json={
                                 "player_id": player_id,
@@ -241,7 +239,7 @@ class TestGameLifecycle:
                     # If no firewall, purchase first available non-container item
                     for item in shop:
                         if item and not item.get("is_container", False):
-                            response = client.post(
+                            response = auth_client.post(
                                 "/purchase/item",
                                 json={
                                     "player_id": player_id,
@@ -260,7 +258,7 @@ class TestGameLifecycle:
                 "seed": 1,  # Any seed works
             }
 
-            response = client.post("/battle/simulate", json=battle_request)
+            response = auth_client.post("/battle/simulate", json=battle_request)
             assert response.status_code == 200
             result = response.json()
 
@@ -274,15 +272,15 @@ class TestGameLifecycle:
                     break
 
         # Verify we got game over
-        response = client.get(f"/session/{player_id}")
+        response = auth_client.get(f"/session/{player_id}")
         session = response.json()
         assert session["lives"] == 0
         assert session["losses"] == 5
 
-    def test_lives_and_rounds_mechanic(self):
+    def test_lives_and_rounds_mechanic(self, auth_client):
         """Test that losing reduces lives and winning advances rounds"""
         # Start new session with deterministic seed
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 50}
         )
         data = response.json()
@@ -306,7 +304,7 @@ class TestGameLifecycle:
         ]
 
         for i, (purchase_count, ai_difficulty, battle_seed) in enumerate(test_battles):
-            response = client.get(f"/session/{player_id}")
+            response = auth_client.get(f"/session/{player_id}")
             session = response.json()
 
             # Verify our tracking matches the session
@@ -316,7 +314,7 @@ class TestGameLifecycle:
             assert session["losses"] == total_losses
 
             # Purchase items
-            purchase_items_for_battle(player_id, session, purchase_count)
+            purchase_items_for_battle(auth_client, player_id, session, purchase_count)
 
             # Battle with deterministic seed
             ai_difficulty_map = {"easy": 1, "medium": 2, "hard": 3}
@@ -327,7 +325,7 @@ class TestGameLifecycle:
                 "test_ai_difficulty": ai_difficulty_map[ai_difficulty],
             }
 
-            response = client.post("/battle/simulate", json=battle_request)
+            response = auth_client.post("/battle/simulate", json=battle_request)
             assert response.status_code == 200
             result = response.json()
 
@@ -351,17 +349,17 @@ class TestGameLifecycle:
         assert total_wins + total_losses == 5, "All 5 battles should have completed"
 
         # Verify final state
-        final_session = client.get(f"/session/{player_id}").json()
+        final_session = auth_client.get(f"/session/{player_id}").json()
         assert final_session["wins"] == total_wins
         assert final_session["losses"] == total_losses
         assert final_session["lives"] == initial_lives - total_losses
         assert final_session["round"] == current_round
 
-    def test_victory_condition(self):
+    def test_victory_condition(self, auth_client):
         """Test that winning round 10 grants victory flag"""
         # We'll directly test the victory condition by mocking a session at round 10
         # Start new session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 2}
         )
         data = response.json()
@@ -383,7 +381,7 @@ class TestGameLifecycle:
         session = asyncio.run(update_to_round_10())
 
         # Purchase maximum items for best chance
-        purchase_items_for_battle(player_id, session.model_dump(), 6)
+        purchase_items_for_battle(auth_client, player_id, session.model_dump(), 6)
 
         # Battle at round 10 with easy AI
         battle_request = {
@@ -393,7 +391,7 @@ class TestGameLifecycle:
             "test_ai_difficulty": 1,  # Easy AI
         }
 
-        response = client.post("/battle/simulate", json=battle_request)
+        response = auth_client.post("/battle/simulate", json=battle_request)
         assert response.status_code == 200
         result = response.json()
 
@@ -406,10 +404,12 @@ class TestGameLifecycle:
             assert session_update["round"] == 11  # Advanced to round 11
             assert not session_update["game_over"]  # Victory is not game over
 
-    def test_gold_economy_through_rounds(self):
+    def test_gold_economy_through_rounds(self, auth_client):
         """Test that gold rewards match specification through all rounds"""
         # Start new session
-        response = client.post("/session/start", json={"player_name": "test_player"})
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player"}
+        )
         data = response.json()
         player_id = data["player_id"]
 
@@ -430,7 +430,7 @@ class TestGameLifecycle:
         # Play through rounds and check gold
         for _ in range(10):
             # Get current session state
-            response = client.get(f"/session/{player_id}")
+            response = auth_client.get(f"/session/{player_id}")
             session = response.json()
             current_round = session["round"]
 
@@ -438,7 +438,7 @@ class TestGameLifecycle:
                 break  # Completed all rounds
 
             # Purchase some items to have inventory for battle
-            purchase_items_for_battle(player_id, session, 3)
+            purchase_items_for_battle(auth_client, player_id, session, 3)
 
             battle_request = {
                 "player_id": player_id,
@@ -446,7 +446,7 @@ class TestGameLifecycle:
                 "seed": current_round,  # Use deterministic seed based on round
             }
 
-            response = client.post("/battle/simulate", json=battle_request)
+            response = auth_client.post("/battle/simulate", json=battle_request)
             assert response.status_code == 200
             result = response.json()
 
@@ -464,10 +464,10 @@ class TestGameLifecycle:
                         f"{next_round} gold: {expected}g, got {gold_earned}g"
                     )
 
-    def test_shop_rarity_progression(self):
+    def test_shop_rarity_progression(self, auth_client):
         """Test that shop items follow rarity table through rounds"""
         # Start new session with deterministic game seed
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 2}
         )
         data = response.json()

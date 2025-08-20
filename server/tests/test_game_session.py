@@ -3,19 +3,16 @@ Tests for the GameSession model with inventory management
 """
 
 import pytest
-from fastapi.testclient import TestClient
 from inventory_manager import InventoryManager
-from main import GameSession, app
-
-client = TestClient(app)
+from main import GameSession
 
 
 class TestGameSessionInventory:
     """Test GameSession with inventory fields"""
 
-    def test_session_creation_with_inventory(self, clean_database):
+    def test_session_creation_with_inventory(self, auth_client):
         """Test that new sessions include inventory state"""
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         assert response.status_code == 200
@@ -39,10 +36,10 @@ class TestGameSessionInventory:
         actual_positions = [tuple(c["position"]) for c in containers]
         assert actual_positions == expected_positions
 
-    def test_inventory_persistence(self, clean_database):
+    def test_inventory_persistence(self, auth_client):
         """Test that inventory persists across requests"""
         # Start session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -62,7 +59,7 @@ class TestGameSessionInventory:
         assert shop_item is not None, "No items in shop"
 
         # Purchase item to storage
-        purchase_response = client.post(
+        purchase_response = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -78,7 +75,7 @@ class TestGameSessionInventory:
         assert purchase_response.status_code == 200
 
         # Get session again
-        response = client.get(f"/session/{player_id}")
+        response = auth_client.get(f"/session/{player_id}")
         assert response.status_code == 200
 
         session = response.json()
@@ -87,9 +84,9 @@ class TestGameSessionInventory:
         assert len(session["inventory_storage"]) == 1
         assert session["inventory_storage"][0]["id"] == shop_item["id"]
 
-    def test_inventory_grid_initialization(self, clean_database):
+    def test_inventory_grid_initialization(self, auth_client):
         """Test that inventory grid is properly initialized"""
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -107,9 +104,9 @@ class TestGameSessionInventory:
             assert container["width"] == 2
             assert container["height"] == 2
 
-    def test_placed_items_tracking(self, clean_database):
+    def test_placed_items_tracking(self, auth_client):
         """Test that placed items are tracked separately"""
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -122,7 +119,7 @@ class TestGameSessionInventory:
         # After purchasing and placing an item (when implemented)
         # the placed_items list should update
 
-    def test_session_model_creation(self):
+    def test_session_model_creation(self, auth_client):
         """Test creating GameSession model directly"""
         # Create inventory manager
         manager = InventoryManager()
@@ -147,7 +144,7 @@ class TestGameSessionInventory:
         assert session.inventory_storage == []
         assert session.placed_items == []
 
-    def test_session_inventory_to_dict(self):
+    def test_session_inventory_to_dict(self, auth_client):
         """Test that session with inventory serializes correctly"""
         manager = InventoryManager()
 

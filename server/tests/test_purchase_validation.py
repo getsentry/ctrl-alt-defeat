@@ -3,19 +3,15 @@ Tests for purchase validation and placement
 """
 
 import pytest
-from fastapi.testclient import TestClient
-from main import app
-
-client = TestClient(app)
 
 
 class TestPurchaseValidation:
     """Test purchase request validation and item placement"""
 
-    def test_purchase_to_storage(self):
+    def test_purchase_to_storage(self, auth_client):
         """Test purchasing an item to storage"""
         # Start session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -36,7 +32,7 @@ class TestPurchaseValidation:
         assert shop_item is not None
 
         # Purchase to storage
-        response = client.post(
+        response = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -53,17 +49,17 @@ class TestPurchaseValidation:
         assert result["gold"] == initial_gold - shop_item["cost"]
 
         # Verify item is in storage
-        session_response = client.get(f"/session/{player_id}")
+        session_response = auth_client.get(f"/session/{player_id}")
         updated_session = session_response.json()
 
         assert len(updated_session["inventory_storage"]) == 1
         assert updated_session["inventory_storage"][0]["id"] == shop_item["id"]
         assert updated_session["gold"] == initial_gold - shop_item["cost"]
 
-    def test_purchase_to_grid(self):
+    def test_purchase_to_grid(self, auth_client):
         """Test purchasing an item to grid coordinates"""
         # Start session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -81,7 +77,7 @@ class TestPurchaseValidation:
                 break
 
         # Purchase to grid (on first container)
-        response = client.post(
+        response = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -96,17 +92,17 @@ class TestPurchaseValidation:
         assert result["success"] is True
 
         # Verify item is on grid
-        session_response = client.get(f"/session/{player_id}")
+        session_response = auth_client.get(f"/session/{player_id}")
         updated_session = session_response.json()
 
         assert len(updated_session["inventory_grid"]) == 1
         assert updated_session["inventory_grid"][0]["id"] == shop_item["id"]
         assert updated_session["inventory_grid"][0]["position"] == [2, 3]
 
-    def test_purchase_invalid_coordinates(self):
+    def test_purchase_invalid_coordinates(self, auth_client):
         """Test that invalid grid coordinates are rejected"""
         # Start session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -124,7 +120,7 @@ class TestPurchaseValidation:
                 break
 
         # Try to place off the server containers
-        response = client.post(
+        response = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -136,10 +132,10 @@ class TestPurchaseValidation:
         assert response.status_code == 400
         assert "invalid placement" in response.json()["detail"].lower()
 
-    def test_purchase_overlapping_item(self):
+    def test_purchase_overlapping_item(self, auth_client):
         """Test that overlapping items are rejected"""
         # Start session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -154,7 +150,7 @@ class TestPurchaseValidation:
         assert len(items) >= 2
 
         # Purchase first item
-        response1 = client.post(
+        response1 = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -165,7 +161,7 @@ class TestPurchaseValidation:
         assert response1.status_code == 200
 
         # Try to purchase second item at same location
-        response2 = client.post(
+        response2 = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -177,17 +173,17 @@ class TestPurchaseValidation:
         assert response2.status_code == 400
         assert "occupied" in response2.json()["detail"].lower()
 
-    def test_purchase_nonexistent_item(self):
+    def test_purchase_nonexistent_item(self, auth_client):
         """Test purchasing an item not in the shop"""
         # Start session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
         player_id = data["player_id"]
 
         # Try to purchase non-existent item
-        response = client.post(
+        response = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -199,10 +195,10 @@ class TestPurchaseValidation:
         assert response.status_code == 404
         assert "not in shop" in response.json()["detail"].lower()
 
-    def test_purchase_insufficient_gold(self):
+    def test_purchase_insufficient_gold(self, auth_client):
         """Test purchasing when player doesn't have enough gold"""
         # Start session with deterministic seed
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -215,7 +211,7 @@ class TestPurchaseValidation:
         # Buy items until we run out of gold
         for item in shop:
             if item:
-                response = client.post(
+                response = auth_client.post(
                     "/purchase/item",
                     json={
                         "player_id": player_id,
@@ -231,13 +227,13 @@ class TestPurchaseValidation:
 
         # If all items were free or we had enough gold, try again with any remaining item
         # Get updated shop
-        session_response = client.get(f"/session/{player_id}")
+        session_response = auth_client.get(f"/session/{player_id}")
         updated_session = session_response.json()
 
         # Find any non-null item still in shop and try to buy it
         for item in updated_session["current_shop"]:
             if item:
-                response = client.post(
+                response = auth_client.post(
                     "/purchase/item",
                     json={
                         "player_id": player_id,
@@ -252,10 +248,10 @@ class TestPurchaseValidation:
         # This should never happen - we should always run out of gold
         pytest.fail("Could not create insufficient gold scenario")
 
-    def test_purchase_removes_from_shop(self):
+    def test_purchase_removes_from_shop(self, auth_client):
         """Test that purchased items are removed from shop"""
         # Start session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -275,7 +271,7 @@ class TestPurchaseValidation:
                 shop_item = item
                 break
 
-        response = client.post(
+        response = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -286,7 +282,7 @@ class TestPurchaseValidation:
         assert response.status_code == 200
 
         # Check shop has one less item
-        session_response = client.get(f"/session/{player_id}")
+        session_response = auth_client.get(f"/session/{player_id}")
         updated_session = session_response.json()
         updated_shop = updated_session["current_shop"]
 
@@ -298,10 +294,10 @@ class TestPurchaseValidation:
             if item is not None:
                 assert item["id"] != shop_item["id"]
 
-    def test_purchase_updates_placed_items(self):
+    def test_purchase_updates_placed_items(self, auth_client):
         """Test that purchasing to grid updates placed_items list"""
         # Start session
-        response = client.post(
+        response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
@@ -321,7 +317,7 @@ class TestPurchaseValidation:
                 shop_item = item
                 break
 
-        response = client.post(
+        response = auth_client.post(
             "/purchase/item",
             json={
                 "player_id": player_id,
@@ -332,7 +328,7 @@ class TestPurchaseValidation:
         assert response.status_code == 200
 
         # Check placed_items updated
-        session_response = client.get(f"/session/{player_id}")
+        session_response = auth_client.get(f"/session/{player_id}")
         updated_session = session_response.json()
 
         assert len(updated_session["placed_items"]) == 1

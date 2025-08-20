@@ -16,22 +16,13 @@ from sqlalchemy import delete, select, text
 class SessionManager:
     """Manages game sessions with database persistence"""
 
-    def __init__(self, db_host: Optional[str] = None, db_name: Optional[str] = None):
-        self.db_host = db_host
-        self.db_name = db_name
+    def __init__(self):
         self._initialized = False
 
     async def initialize(self):
         """Initialize the session manager and database"""
         if self._initialized:
             return
-
-        # Re-initialize db_manager with custom config if provided
-        if self.db_host or self.db_name:
-            from database import DatabaseManager
-
-            global db_manager
-            db_manager = DatabaseManager(self.db_host, self.db_name)
 
         await db_manager.initialize()
 
@@ -141,29 +132,59 @@ class SessionManager:
 
         # Save to database
         async with db_manager.get_session() as db:
-            # Create database model
-            db_session = GameSession(
-                player_id=player_id,
-                player_name=session.player_name,
-                user_id=user.id,  # Link to the guest user
-                round=session.round,
-                gold=session.gold,
-                lives=session.lives,
-                wins=session.wins,
-                losses=session.losses,
-                inventory_grid=session.inventory_grid,
-                inventory_slots=session.inventory_slots,
-                inventory_storage=session.inventory_storage,
-                placed_items=session.placed_items,
-                server_containers=session.server_containers,
-                current_shop=session.current_shop,
-                last_battle_result=session.last_battle_result,
-                game_seed=game_seed,
-                shop_refresh_count=session.shop_refresh_count,
+            # Check if session already exists for this player
+            from sqlalchemy import select
+
+            result = await db.execute(
+                select(GameSession).where(GameSession.player_id == player_id)
             )
-            db.add(db_session)
+            existing_session = result.scalar_one_or_none()
+
+            if existing_session:
+                # Update existing session with new values
+                existing_session.player_name = session.player_name
+                existing_session.user_id = user.id
+                existing_session.round = session.round
+                existing_session.gold = session.gold
+                existing_session.lives = session.lives
+                existing_session.wins = session.wins
+                existing_session.losses = session.losses
+                existing_session.inventory_grid = session.inventory_grid
+                existing_session.inventory_slots = session.inventory_slots
+                existing_session.inventory_storage = session.inventory_storage
+                existing_session.placed_items = session.placed_items
+                existing_session.server_containers = session.server_containers
+                existing_session.current_shop = session.current_shop
+                existing_session.last_battle_result = session.last_battle_result
+                existing_session.game_seed = game_seed
+                existing_session.shop_refresh_count = session.shop_refresh_count
+                existing_session.last_activity = datetime.utcnow()
+                print(f"Updated existing session for player {player_id}")
+            else:
+                # Create new session
+                db_session = GameSession(
+                    player_id=player_id,
+                    player_name=session.player_name,
+                    user_id=user.id,  # Link to the guest user
+                    round=session.round,
+                    gold=session.gold,
+                    lives=session.lives,
+                    wins=session.wins,
+                    losses=session.losses,
+                    inventory_grid=session.inventory_grid,
+                    inventory_slots=session.inventory_slots,
+                    inventory_storage=session.inventory_storage,
+                    placed_items=session.placed_items,
+                    server_containers=session.server_containers,
+                    current_shop=session.current_shop,
+                    last_battle_result=session.last_battle_result,
+                    game_seed=game_seed,
+                    shop_refresh_count=session.shop_refresh_count,
+                )
+                db.add(db_session)
+                print(f"Created new session for player {player_id}")
+
             await db.commit()
-            print(f"Session saved to database for player {player_id}")
 
         return session
 

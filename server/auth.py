@@ -15,7 +15,7 @@ from pydantic import BaseModel
 # Security configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "development-secret-key-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days for guest sessions
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 90  # 90 days for guest sessions
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

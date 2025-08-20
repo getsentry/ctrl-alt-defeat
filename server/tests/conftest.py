@@ -119,3 +119,23 @@ def clean_database():
 
         client = TestClient(app)
         client.post("/test/reset-database")
+
+
+@pytest.fixture
+def auth_client():
+    """Test client with authentication setup"""
+    from fastapi.testclient import TestClient
+    from main import app
+
+    client = TestClient(app)
+
+    # Get a guest token
+    response = client.post("/auth/guest")
+    assert response.status_code == 200
+    data = response.json()
+
+    # Set the authorization header for all requests
+    client.headers["Authorization"] = f"Bearer {data['access_token']}"
+    client.user_id = data["user_id"]
+
+    return client
