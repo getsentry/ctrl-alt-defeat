@@ -112,21 +112,6 @@
           "description": "Deploy phase: If has 2+ Legendary modules, generate free API credits"
         }
       ]
-    },
-    "chaos_experiment": {
-      "name": "Chaos Experiment",
-      "description": "You never know what infrastructure you'll get",
-      "shape": "variable",
-      "internal_size": [2, 2],
-      "rarity": "unique",
-      "cost": 10,
-      "effects": [
-        {
-          "type": "game_start",
-          "effect": "replace_random",
-          "description": "Game started: Replace with random infrastructure and modules"
-        }
-      ]
     }
   }
 }

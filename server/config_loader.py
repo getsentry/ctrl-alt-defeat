@@ -157,10 +157,6 @@ class ConfigLoader:
 
     def _parse_shape(self, shape_str: str) -> Optional[ItemShape]:
         """Parse a shape string like '2x2' or '3x1'"""
-        if shape_str == "variable":
-            # Special case for variable shapes
-            return SHAPES.get("2x2")  # Default to 2x2
-
         # Check if it's a predefined shape
         if shape_str in SHAPES:
             return SHAPES[shape_str]
