@@ -1,5 +1,7 @@
 extends Control
 
+const APITypes = preload("res://scripts/api_types.gd")
+
 func _ready():
 	_setup_ui()
 
@@ -98,19 +100,23 @@ func _on_start_game():
 	var session_data = await BattleServerAPI.start_session()
 
 	# Check if server connection failed
-	if session_data.is_empty():
+	if session_data == null:
 		push_error("Failed to start game session - server connection failed")
 		return
 
-	# Update game state with session data
-	GameStateManager.player_id = session_data.get("player_id", "")
-	GameStateManager.current_round = session_data.get("round", 1)
-	GameStateManager.gold = session_data.get("gold", 12)
-	GameStateManager.current_shop = session_data.get("current_shop", [])
+	# Update game state with typed session data
+	GameStateManager.player_id = session_data.player_id
+	GameStateManager.current_round = session_data.round
+	GameStateManager.gold = session_data.gold
+	GameStateManager.current_shop = session_data.current_shop
 
 	# Store starting containers if provided (server will send these)
-	if session_data.has("starting_containers"):
-		GameStateManager.starting_containers = session_data.starting_containers
+	if session_data.starting_containers.size() > 0:
+		# Convert typed containers to dictionary format for GameStateManager
+		var containers_array = []
+		for container in session_data.starting_containers:
+			containers_array.append(container.to_dict())
+		GameStateManager.starting_containers = containers_array
 
 	# Go to shop/inventory screen
 	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")

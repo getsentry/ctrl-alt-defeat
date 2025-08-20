@@ -2,6 +2,7 @@ extends Control
 
 # Preload the BattleEventProcessor class since class_name might not be available yet
 const BattleEventProcessor = preload("res://scripts/BattleEventProcessor.gd")
+const APITypes = preload("res://scripts/api_types.gd")
 
 # Event processor for battle replay
 var event_processor
@@ -50,7 +51,8 @@ func _ready():
 	if GameStateManager.last_battle_events.size() > 0:
 		_load_battle_from_state()
 	else:
-		_load_mock_battle_data()
+		push_error("No battle events to play - this is a bug!")
+		assert(false, "Battle started with no events - server did not return battle actions")
 
 	# Start battle playback automatically
 	await get_tree().create_timer(0.5).timeout
@@ -278,6 +280,7 @@ func _create_battle_log():
 
 func _create_control_buttons():
 	var start_btn = Button.new()
+	start_btn.name = "StartBattle"
 	start_btn.text = "Start Battle"
 	start_btn.position = Vector2(720, 460)
 	start_btn.size = Vector2(120, 30)
@@ -290,55 +293,6 @@ func _create_control_buttons():
 	back_btn.size = Vector2(120, 30)
 	back_btn.pressed.connect(_on_back_to_inventory)
 	add_child(back_btn)
-
-func _load_mock_battle_data():
-	# Load mock player inventory
-	var player_inventory_data = {
-		"servers": [
-			{"data": {"name": "Rack 2x3", "pattern": [[1,1],[1,1],[1,1]], "color": Color(0.3, 0.4, 0.5, 0.3)}, "pos": Vector2i(1, 1)},
-			{"data": {"name": "Cube 2x2", "pattern": [[1,1],[1,1]], "color": Color(0.45, 0.35, 0.4, 0.3)}, "pos": Vector2i(5, 2)}
-		],
-		"items": [
-			{"data": {"name": "CPU", "width": 1, "height": 1, "color": Color(0.9, 0.3, 0.3)}, "grid_pos": Vector2i(1, 1)},
-			{"data": {"name": "RAM", "width": 2, "height": 1, "color": Color(0.3, 0.6, 0.9)}, "grid_pos": Vector2i(1, 2)},
-			{"data": {"name": "Firewall", "width": 1, "height": 2, "color": Color(0.6, 0.3, 0.9)}, "grid_pos": Vector2i(5, 2)}
-		]
-	}
-
-	# Load mock enemy inventory
-	var enemy_inventory_data = {
-		"servers": [
-			{"data": {"name": "Tower 1x4", "pattern": [[1],[1],[1],[1]], "color": Color(0.35, 0.45, 0.4, 0.3)}, "pos": Vector2i(3, 1)},
-			{"data": {"name": "Blade 3x2", "pattern": [[1,1,1],[1,1,1]], "color": Color(0.4, 0.3, 0.5, 0.3)}, "pos": Vector2i(6, 3)}
-		],
-		"items": [
-			{"data": {"name": "Balancer", "width": 2, "height": 2, "color": Color(0.3, 0.9, 0.6)}, "grid_pos": Vector2i(6, 3)},
-			{"data": {"name": "CPU", "width": 1, "height": 1, "color": Color(0.9, 0.3, 0.3)}, "grid_pos": Vector2i(3, 1)},
-			{"data": {"name": "CPU", "width": 1, "height": 1, "color": Color(0.9, 0.3, 0.3)}, "grid_pos": Vector2i(3, 2)}
-		]
-	}
-
-	player_inventory.load_inventory_state(player_inventory_data)
-	enemy_inventory.load_inventory_state(enemy_inventory_data)
-
-	# Set initial stats
-	player_data = {
-		"health": 100,
-		"max_health": 100,
-		"stamina": 10.0,
-		"max_stamina": 10.0,
-		"buffs": []
-	}
-
-	enemy_data = {
-		"health": 100,
-		"max_health": 100,
-		"stamina": 10.0,
-		"max_stamina": 10.0,
-		"buffs": []
-	}
-
-	_update_stats_display()
 
 func _update_stats_display():
 	# Update player stats
@@ -370,15 +324,34 @@ func _connect_event_signals():
 func _load_battle_from_state():
 	# Load battle data from GameStateManager
 	var battle_result = GameStateManager.last_battle_result
-	event_processor.load_battle_events(battle_result)
 
-	# Load inventories
-	var saved_inventory = GameStateManager.get_inventory_state()
-	if saved_inventory.has("items"):
-		player_inventory.load_inventory_state(saved_inventory)
+	# Check if this is a typed BattleResult or raw dictionary
+	if battle_result is APITypes.BattleResult:
+		# Typed response from API
+		event_processor.load_battle_events(battle_result)
 
-	# TODO: Load enemy inventory from server data
-	_load_mock_enemy_inventory()
+		# Load inventories - these are guaranteed to exist in BattleResult
+		player_inventory.load_inventory_state(battle_result.player_inventory.to_dict())
+		enemy_inventory.load_inventory_state(battle_result.enemy_inventory.to_dict())
+	else:
+		# Legacy dictionary format (for backwards compatibility)
+		event_processor.load_battle_events(battle_result)
+
+		# Try to find inventories in the dictionary
+		var actual_battle_data = battle_result
+		if battle_result.has("battle_result"):
+			actual_battle_data = battle_result.battle_result
+
+		if actual_battle_data.has("player_inventory"):
+			player_inventory.load_inventory_state(actual_battle_data.player_inventory)
+		else:
+			# Fallback to saved inventory
+			var saved_inventory = GameStateManager.get_inventory_state()
+			if saved_inventory.has("items"):
+				player_inventory.load_inventory_state(saved_inventory)
+
+		if actual_battle_data.has("enemy_inventory"):
+			enemy_inventory.load_inventory_state(actual_battle_data.enemy_inventory)
 
 func _start_battle_playback():
 	print("Starting battle playback...")
@@ -529,18 +502,6 @@ func _on_battle_ended(winner: int):
 	# Wait a moment then go to post-battle screen
 	await get_tree().create_timer(2.0).timeout
 	_go_to_post_battle()
-
-func _load_mock_enemy_inventory():
-	# Create mock enemy inventory
-	var enemy_inventory_data = {
-		"servers": [
-			{"data": {"name": "Tower 1x4", "pattern": [[1],[1],[1],[1]], "color": Color(0.35, 0.45, 0.4, 0.3)}, "pos": Vector2i(3, 1)},
-		],
-		"items": [
-			{"data": {"name": "CPU", "width": 1, "height": 1, "color": Color(0.9, 0.3, 0.3)}, "grid_pos": Vector2i(3, 1)},
-		]
-	}
-	enemy_inventory.load_inventory_state(enemy_inventory_data)
 
 func _show_damage_number(player: int, amount: int):
 	var label = Label.new()

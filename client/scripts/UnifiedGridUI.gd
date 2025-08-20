@@ -1,5 +1,7 @@
 extends Control
 
+const APITypes = preload("res://scripts/api_types.gd")
+
 # Game state is pulled from GameStateManager - no local copies
 
 # Grid settings
@@ -37,10 +39,11 @@ var original_grid_pos = Vector2i(-1, -1)
 var hover_preview: Panel = null
 var valid_placement = false
 var last_rotation_time: float = 0.0
+var last_drag_position = Vector2.ZERO  # Track last position during drag for placement
 const ROTATION_COOLDOWN: float = 0.3  # Seconds between rotations (increased for less sensitivity)
 
 # UI References
-var server_room_container: Control
+var server_room_container: Node2D
 var grid_container: Control
 var storage_container: Control
 var shop_container: Control
@@ -86,64 +89,6 @@ var server_types = {
 	}
 }
 
-# Item types
-var item_types = {
-	"cpu": {
-		"name": "CPU",
-		"width": 1,
-		"height": 1,
-		"color": Color(0.9, 0.3, 0.3),
-		"cost": 3,
-		"attack": 3,
-		"type": "item"
-	},
-	"ram": {
-		"name": "RAM",
-		"width": 2,
-		"height": 1,
-		"color": Color(0.3, 0.6, 0.9),
-		"cost": 4,
-		"defense": 3,
-		"type": "item"
-	},
-	"firewall": {
-		"name": "Firewall",
-		"width": 1,
-		"height": 2,
-		"color": Color(0.6, 0.3, 0.9),
-		"cost": 5,
-		"defense": 5,
-		"type": "item"
-	},
-	"balancer": {
-		"name": "Balancer",
-		"width": 2,
-		"height": 2,
-		"color": Color(0.3, 0.9, 0.6),
-		"cost": 7,
-		"attack": 2,
-		"defense": 3,
-		"type": "item"
-	},
-	"cooler": {
-		"name": "Cooler",
-		"width": 1,
-		"height": 1,
-		"color": Color(0.6, 0.8, 0.9),
-		"cost": 2,
-		"heal": 2,
-		"type": "item"
-	},
-	"storage": {
-		"name": "Storage",
-		"width": 3,
-		"height": 1,
-		"color": Color(0.5, 0.5, 0.7),
-		"cost": 6,
-		"defense": 4,
-		"type": "item"
-	}
-}
 
 func _ready():
 	print("UnifiedGridUI starting...")
@@ -269,31 +214,149 @@ func _load_saved_inventory(saved_data: Dictionary):
 		load_inventory_state(saved_data)
 		_update_stats()
 
-func load_inventory_state(inventory_data: Dictionary):
-	# Load servers and items from saved state
-	if inventory_data.has("servers"):
-		for server_data in inventory_data.servers:
-			# Handle both "pos" and "position" formats
-			var pos = server_data.get("pos", server_data.get("position", Vector2i.ZERO))
-			_place_server_pattern(pos.x, pos.y, server_data.data)
-			servers.append(server_data)
+func load_inventory_state(inventory_data):
+	# Accept either typed Inventory or Dictionary
+	var data_dict: Dictionary
 
-	if inventory_data.has("items"):
-		for item_info in inventory_data.items:
-			var item = _create_item(item_info.data)
-			var grid_pos = item_info.grid_pos
+	if inventory_data is APITypes.InventoryState:
+		# Convert typed inventory to dictionary
+		data_dict = inventory_data.to_dict()
+	elif inventory_data is Dictionary:
+		data_dict = inventory_data
+	else:
+		push_error("Invalid inventory data type")
+		return
+
+	# Load containers
+	var containers_list = data_dict.get("containers", data_dict.get("servers", []))
+	if containers_list.size() > 0:
+		for server_data in containers_list:
+			var pos_x = 0
+			var pos_y = 0
+
+			# Handle typed ServerContainer or dictionary
+			if server_data is APITypes.ServerContainer:
+				pos_x = server_data.position.x
+				pos_y = server_data.position.y
+				# Generate pattern from width/height (all cells active for now)
+				var pattern = []
+				for y in range(server_data.height):
+					var row = []
+					for x in range(server_data.width):
+						row.append(1)  # All cells active
+					pattern.append(row)
+
+				var container_data = {
+					"pattern": pattern,
+					"width": server_data.width,
+					"height": server_data.height,
+					"type": server_data.type,
+					"id": server_data.id,
+					"color": Color(0.3, 0.6, 1.0, 0.7)  # Default blue color for servers
+				}
+				_place_server_pattern(pos_x, pos_y, container_data)
+				servers.append({"data": container_data, "pos": Vector2i(pos_x, pos_y)})
+			else:
+				# Dictionary format
+				var pos_data = server_data.get("pos", server_data.get("position", {}))
+				if pos_data is Dictionary:
+					pos_x = pos_data.get("x", 0)
+					pos_y = pos_data.get("y", 0)
+				elif pos_data is Vector2 or pos_data is Vector2i:
+					pos_x = pos_data.x
+					pos_y = pos_data.y
+
+				# Get fields directly - let it error if missing
+				var width = server_data["width"]
+				var height = server_data["height"]
+
+				var pattern = []
+				for y in range(height):
+					var row = []
+					for x in range(width):
+						row.append(1)  # All cells active
+					pattern.append(row)
+
+				var container_data = {
+					"pattern": pattern,
+					"width": width,
+					"height": height,
+					"type": server_data["type"],
+					"id": server_data["id"],
+					"color": Color(0.3, 0.6, 1.0, 0.7)  # Default blue color for servers
+				}
+
+				_place_server_pattern(pos_x, pos_y, container_data)
+				servers.append({"data": container_data, "pos": Vector2i(pos_x, pos_y)})
+
+	# Load items
+	if data_dict.has("items"):
+		for item_info in data_dict.items:
+			var item_data = {}
+			var grid_x = 0
+			var grid_y = 0
+
+			# Handle typed InventoryItem or dictionary
+			if item_info is APITypes.InventoryItem:
+				grid_x = item_info.position.x
+				grid_y = item_info.position.y
+				item_data = {
+					"id": item_info.id,
+					"item_type": item_info.item_type,
+					"name": item_info.name,
+					"category": item_info.category,
+					"width": item_info.size.x,
+					"height": item_info.size.y
+				}
+			elif item_info.has("item_type"):
+				# Dictionary format from API
+				var pos = item_info.get("position", {"x": 0, "y": 0})
+				if pos is Dictionary:
+					grid_x = pos.get("x", 0)
+					grid_y = pos.get("y", 0)
+
+				item_data = {
+					"id": item_info.get("id", ""),
+					"item_type": item_info.get("item_type", ""),
+					"name": item_info.get("name", "Unknown"),
+					"category": item_info.get("category", "item"),
+					"width": 1,
+					"height": 1
+				}
+
+				if item_info.has("size"):
+					var size = item_info.get("size", {"x": 1, "y": 1})
+					item_data.width = size.get("x", 1)
+					item_data.height = size.get("y", 1)
+			else:
+				# Old saved format: {data: {...}, grid_pos: {...}}
+				item_data = item_info.get("data", {})
+				var grid_pos = item_info.get("grid_pos", {})
+				# Handle both Vector2i and Dictionary formats
+				if grid_pos is Vector2i or grid_pos is Vector2:
+					grid_x = grid_pos.x
+					grid_y = grid_pos.y
+				else:
+					grid_x = grid_pos.get("x", 0)
+					grid_y = grid_pos.get("y", 0)
+
+			# Create the item visual
+			var item = _create_item(item_data)
 
 			# Place on grid
-			item.position = Vector2(grid_pos.x * (CELL_SIZE + CELL_SPACING),
-									grid_pos.y * (CELL_SIZE + CELL_SPACING))
+			item.position = Vector2(grid_x * (CELL_SIZE + CELL_SPACING),
+									grid_y * (CELL_SIZE + CELL_SPACING))
 			server_room_container.add_child(item)
 
 			# Mark grid cells
-			for dy in range(item_info.data.height):
-				for dx in range(item_info.data.width):
-					item_grid[grid_pos.y + dy][grid_pos.x + dx] = item
+			var width = item_data.get("width", 1)
+			var height = item_data.get("height", 1)
+			for dy in range(height):
+				for dx in range(width):
+					if grid_y + dy < ROOM_HEIGHT and grid_x + dx < ROOM_WIDTH:
+						item_grid[grid_y + dy][grid_x + dx] = item
 
-			item.set_meta("grid_pos", grid_pos)
+			item.set_meta("grid_pos", Vector2(grid_x, grid_y))
 			items.append(item)
 
 func get_inventory_state() -> Dictionary:
@@ -435,17 +498,17 @@ func _create_server_room():
 		add_child(room_title)
 
 	# Container for the room
-	server_room_container = Control.new()
+	server_room_container = Node2D.new()
 	var container_y = 130 if not read_only_mode else 50
 	server_room_container.position = Vector2(290, container_y)
-	server_room_container.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
-										 ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
+	# Control2D doesn't have size property, we'll track the bounds separately
 	add_child(server_room_container)
 
 	# Grid container (for cells created by servers)
 	grid_container = Control.new()
 	grid_container.position = Vector2(0, 0)
-	grid_container.size = server_room_container.size
+	grid_container.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
+								  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 	grid_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	server_room_container.add_child(grid_container)
 
@@ -480,6 +543,7 @@ func _create_controls():
 	if not read_only_mode:
 		if not hide_shop:
 			var refresh_btn = Button.new()
+			refresh_btn.name = "RefreshButton"
 			refresh_btn.text = "Refresh (1g)"
 			refresh_btn.position = Vector2(50, 600)
 			refresh_btn.size = Vector2(100, 30)
@@ -487,6 +551,7 @@ func _create_controls():
 			add_child(refresh_btn)
 
 		var battle_btn = Button.new()
+		battle_btn.name = "ReadyButton"
 		battle_btn.text = "Ready for Battle!"
 		battle_btn.position = Vector2(1050, 600)
 		battle_btn.size = Vector2(150, 40)
@@ -592,17 +657,19 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	shop_item.set_meta("item_data", data)
 	shop_item.set_meta("cost", data.get("cost", 5))
 
-	# Create a simplified item_data for the handler
-	var handler_data = {
-		"name": data.get("name", "Unknown"),
-		"width": data.get("internal_width", 2) if is_container else 1,
-		"height": data.get("internal_height", 2) if is_container else 1,
-		"color": Color(0.5, 0.3, 0.7) if is_container else _get_color_for_category(data.get("category", "problem")),
-		"cost": data.get("cost", 5),
-		"type": "server" if is_container else "item",  # Mark containers as servers
-		"pattern": _create_pattern_from_size(data.get("internal_width", 2), data.get("internal_height", 2)) if is_container else null,
-		"id": data.get("id", "")  # Include the item ID
-	}
+	# Prepare full item data for the handler - include all original fields
+	var handler_data = data.duplicate()
+	# Add display-specific fields if not present
+	if not handler_data.has("width"):
+		handler_data["width"] = data.get("internal_width", 2) if is_container else 1
+	if not handler_data.has("height"):
+		handler_data["height"] = data.get("internal_height", 2) if is_container else 1
+	if not handler_data.has("color"):
+		handler_data["color"] = Color(0.5, 0.3, 0.7) if is_container else _get_color_for_category(data.get("category", "problem"))
+	if not handler_data.has("type"):
+		handler_data["type"] = "server" if is_container else "item"  # Mark containers as servers
+	if is_container and not handler_data.has("pattern"):
+		handler_data["pattern"] = _create_pattern_from_size(data.get("internal_width", 2), data.get("internal_height", 2))
 
 	# Connect input handling for dragging
 	shop_item.gui_input.connect(_on_shop_item_input.bind(shop_item, handler_data))
@@ -651,10 +718,12 @@ func _start_dragging_from_shop(shop_item: Panel, item_data: Dictionary, local_po
 		print("This item has already been sold")
 		return
 
-	if item_data.type == "server":
+	if item_data.get("type", "") == "server":
 		dragging_object = _create_server_preview(item_data)
 	else:
 		dragging_object = _create_item(item_data)
+
+	print("DEBUG: dragging_object created: %s" % (dragging_object != null))
 
 	dragging_object.position = shop_item.global_position
 	dragging_object.modulate.a = 0.7
@@ -697,9 +766,19 @@ func _create_item(item_data: Dictionary) -> Panel:
 	var item = Panel.new()
 	# Store original dimensions for rotation
 	var rotated_data = item_data.duplicate()
-	rotated_data["original_width"] = item_data.get("original_width", item_data.width)
-	rotated_data["original_height"] = item_data.get("original_height", item_data.height)
+	rotated_data["original_width"] = item_data.get("original_width", item_data.get("width", 1))
+	rotated_data["original_height"] = item_data.get("original_height", item_data.get("height", 1))
 	rotated_data["rotation"] = item_data.get("rotation", 0)  # 0, 90, 180, 270
+
+	# Ensure we have width and height for display
+	if not rotated_data.has("width"):
+		rotated_data["width"] = 1
+	if not rotated_data.has("height"):
+		rotated_data["height"] = 1
+
+	# Ensure we have a color
+	if not rotated_data.has("color"):
+		rotated_data["color"] = Color(0.3, 0.9, 0.6, 1.0)  # Default green color
 
 	# Apply rotation to dimensions
 	if rotated_data.rotation == 90 or rotated_data.rotation == 270:
@@ -710,7 +789,7 @@ func _create_item(item_data: Dictionary) -> Panel:
 					   rotated_data.height * (CELL_SIZE + CELL_SPACING) - CELL_SPACING)
 
 	var item_style = StyleBoxFlat.new()
-	item_style.bg_color = rotated_data.color
+	item_style.bg_color = rotated_data.get("color", Color(0.3, 0.9, 0.6, 1.0))
 	item_style.set_corner_radius_all(3)
 	item.add_theme_stylebox_override("panel", item_style)
 
@@ -819,20 +898,23 @@ func _start_dragging_item(item: Panel, local_pos: Vector2):
 
 	hover_preview.visible = true
 
-func _stop_dragging():
+func _stop_dragging(drop_position: Vector2 = Vector2.ZERO):
 	if not dragging_object:
+		print("DEBUG: No dragging_object to stop!")
 		return
 
+	print("DEBUG: Stopping drag at position: %s" % drop_position)
+	print("DEBUG: Stopping drag with dragging_object type: %s" % dragging_object.get_class())
 	dragging_object.modulate.a = 1.0
 
 	var placed = false
 
 	if dragging_object.has_meta("is_server"):
-		placed = _try_place_server(dragging_object)
+		placed = _try_place_server(dragging_object, drop_position)
 	elif dragging_object.has_meta("is_placed_server"):
-		placed = _try_move_server(dragging_object)
+		placed = _try_move_server(dragging_object, drop_position)
 	elif dragging_object.has_meta("is_item"):
-		placed = _try_place_item(dragging_object)
+		placed = _try_place_item(dragging_object, drop_position)
 
 	if not placed:
 		# Return to original position based on where it came from
@@ -867,12 +949,16 @@ func _stop_dragging():
 	dragging_object = null
 	original_grid_pos = Vector2i(-1, -1)
 	original_parent = null
+	last_drag_position = Vector2.ZERO  # Clear saved position
 
-func _try_place_server(server_preview: Control) -> bool:
-	var mouse_pos = server_room_container.get_local_mouse_position()
+func _try_place_server(server_preview: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
+	var global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
+	var mouse_pos = server_room_container.to_local(global_pos)
+	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
+							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 
-	if mouse_pos.x >= 0 and mouse_pos.x < server_room_container.size.x and \
-	   mouse_pos.y >= 0 and mouse_pos.y < server_room_container.size.y:
+	if mouse_pos.x >= 0 and mouse_pos.x < room_bounds.x and \
+	   mouse_pos.y >= 0 and mouse_pos.y < room_bounds.y:
 
 		var server_data = server_preview.get_meta("server_data")
 		var grid_x = int((mouse_pos.x + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
@@ -916,6 +1002,11 @@ func _can_place_server_pattern(x: int, y: int, pattern: Array) -> bool:
 
 func _place_server_pattern(x: int, y: int, server_data: Dictionary):
 	var pattern = server_data.pattern
+
+	# TEMP DEBUG: Print server placement
+#	print("DEBUG: Placing server at grid position (%d, %d)" % [x, y])
+#	print("       Pattern size: %dx%d" % [pattern[0].size(), pattern.size()])
+#	print("       Screen position: %s" % Vector2(x * (CELL_SIZE + CELL_SPACING), y * (CELL_SIZE + CELL_SPACING)))
 
 	# Create a visual representation for the entire server (for dragging)
 	var server_visual = Control.new()
@@ -974,14 +1065,18 @@ func _place_server_pattern(x: int, y: int, server_data: Dictionary):
 	server_room_container.add_child(server_visual)
 	server_visuals.append(server_visual)
 
-func _try_place_item(item: Panel) -> bool:
+func _try_place_item(item: Panel, drop_position: Vector2 = Vector2.ZERO) -> bool:
 	var item_data = item.get_meta("item_data")
 
-	# Check if over grid
-	var mouse_pos = server_room_container.get_local_mouse_position()
-
-	if mouse_pos.x >= 0 and mouse_pos.x < server_room_container.size.x and \
-	   mouse_pos.y >= 0 and mouse_pos.y < server_room_container.size.y:
+	# Use provided drop position, fallback to saved position or mouse
+	var global_pos = drop_position
+	if global_pos == Vector2.ZERO:
+		global_pos = last_drag_position if last_drag_position != Vector2.ZERO else get_global_mouse_position()
+	var mouse_pos = server_room_container.to_local(global_pos)
+	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
+							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
+	if mouse_pos.x >= 0 and mouse_pos.x < room_bounds.x and \
+	   mouse_pos.y >= 0 and mouse_pos.y < room_bounds.y:
 
 		var grid_x = int((mouse_pos.x + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
 		var grid_y = int((mouse_pos.y + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
@@ -1039,7 +1134,8 @@ func _try_place_item(item: Panel) -> bool:
 			return true
 
 	# Check storage
-	var storage_mouse = storage_container.get_local_mouse_position()
+	var storage_global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
+	var storage_mouse = storage_container.to_local(storage_global_pos) if storage_container.has_method("to_local") else storage_global_pos - storage_container.global_position
 	if storage_mouse.x >= 0 and storage_mouse.x < storage_container.size.x and \
 	   storage_mouse.y >= 0 and storage_mouse.y < storage_container.size.y:
 
@@ -1108,10 +1204,17 @@ func _can_place_item_on_grid(x: int, y: int, width: int, height: int) -> bool:
 	return true
 
 func _input(event):
+	# TEMP DEBUG: Print mouse events
+	if event is InputEventMouseButton:
+		print("DEBUG: Mouse button event at %s (pressed: %s, button: %d)" % [event.global_position, event.pressed, event.button_index])
+	elif event is InputEventMouseMotion:
+		if event.button_mask > 0:
+			print("DEBUG: Mouse motion while dragging at %s (button_mask: %d)" % [event.global_position, event.button_mask])
+
 	# Handle mouse release globally to drop items
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-			_stop_dragging()
+			_stop_dragging(event.global_position)
 		# Handle rotation with mouse wheel - only on initial press, with cooldown
 		elif (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
 			# Only process if pressed (not released) and cooldown has passed
@@ -1127,6 +1230,7 @@ func _input(event):
 	# Handle dragging motion
 	if dragging_object and event is InputEventMouseMotion:
 		dragging_object.global_position = get_global_mouse_position() - drag_offset
+		last_drag_position = event.global_position  # Save position for placement
 
 		if gold_preview_label.visible:
 			gold_preview_label.position = get_global_mouse_position() + Vector2(10, -20)
@@ -1134,15 +1238,19 @@ func _input(event):
 		# Update hover preview
 		_update_hover_preview()
 
-func _update_hover_preview():
+func _update_hover_preview(global_pos: Vector2 = Vector2.ZERO):
 	if not dragging_object:
 		hover_preview.visible = false
 		return
 
-	var mouse_pos = server_room_container.get_local_mouse_position()
+	if global_pos == Vector2.ZERO:
+		global_pos = get_global_mouse_position()
+	var mouse_pos = server_room_container.to_local(global_pos)
+	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
+							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 
-	if mouse_pos.x >= 0 and mouse_pos.x < server_room_container.size.x and \
-	   mouse_pos.y >= 0 and mouse_pos.y < server_room_container.size.y:
+	if mouse_pos.x >= 0 and mouse_pos.x < room_bounds.x and \
+	   mouse_pos.y >= 0 and mouse_pos.y < room_bounds.y:
 
 		var grid_x = int((mouse_pos.x + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
 		var grid_y = int((mouse_pos.y + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
@@ -1226,11 +1334,14 @@ func _on_refresh_shop():
 		else:
 			print("Failed to refresh shop from server")
 
-func _try_move_server(server: Control) -> bool:
-	var mouse_pos = server_room_container.get_local_mouse_position()
+func _try_move_server(server: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
+	var global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
+	var mouse_pos = server_room_container.to_local(global_pos)
+	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
+							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 
-	if mouse_pos.x >= 0 and mouse_pos.x < server_room_container.size.x and \
-	   mouse_pos.y >= 0 and mouse_pos.y < server_room_container.size.y:
+	if mouse_pos.x >= 0 and mouse_pos.x < room_bounds.x and \
+	   mouse_pos.y >= 0 and mouse_pos.y < room_bounds.y:
 
 		var server_data = server.get_meta("server_data")
 		var grid_x = int((mouse_pos.x + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
@@ -1282,8 +1393,22 @@ func _on_ready_for_battle():
 	# Submit battle to server
 	var battle_result = await BattleServerAPI.submit_battle(inventory_state)
 
+	# Check if battle request failed (null result indicates error)
+	if battle_result == null:
+		push_error("Battle request failed")
+		# In tests, fail immediately
+		if OS.get_environment("BATTLE_SERVER_URL") != "":
+			assert(false, "Battle request failed")
+		return
+
 	# Update game state with results
 	GameStateManager.update_after_battle(battle_result)
+
+	# Check if we have battle events to play
+	if GameStateManager.last_battle_events.size() == 0:
+		push_error("Server returned battle result with no events")
+		assert(false, "Cannot start battle without events")
+		return
 
 	# Go to battle visualization screen
 	get_tree().change_scene_to_file("res://scenes/BattleScreen.tscn")

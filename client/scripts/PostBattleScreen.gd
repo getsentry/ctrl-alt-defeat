@@ -1,5 +1,7 @@
 extends Control
 
+const APITypes = preload("res://scripts/api_types.gd")
+
 # Battle result display
 var result_data: Dictionary = {}
 var gold_earned: int = 0
@@ -9,7 +11,21 @@ func _ready():
 	_setup_ui()
 	# Get battle result from GameStateManager
 	if GameStateManager.last_battle_result:
-		set_battle_result(GameStateManager.last_battle_result)
+		# Convert typed result to dictionary if needed
+		if GameStateManager.last_battle_result is APITypes.BattleResult:
+			var typed_result = GameStateManager.last_battle_result
+			var dict_result = {
+				"battle_result": {
+					"winner": typed_result.winner,
+					"duration": typed_result.duration,
+					"player1_quota": typed_result.player1_quota,
+					"player2_quota": typed_result.player2_quota
+				},
+				"session_update": typed_result.session_update
+			}
+			set_battle_result(dict_result)
+		else:
+			set_battle_result(GameStateManager.last_battle_result)
 		_display_results()
 
 # Store references to UI elements

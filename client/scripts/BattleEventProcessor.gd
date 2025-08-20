@@ -2,6 +2,8 @@ class_name BattleEventProcessor
 extends Node
 # Processes battle events from server and triggers animations/updates
 
+const APITypes = preload("res://scripts/api_types.gd")
+
 signal event_processed(event: Dictionary)
 signal battle_started()
 signal damage_dealt(player: int, amount: int, remaining_hp: int)
@@ -31,35 +33,51 @@ var player2_cpu: float = 10.0
 func _ready():
 	set_process(false)
 
-func load_battle_events(battle_data: Dictionary):
+func load_battle_events(battle_data):
 	# Load events from battle result
-	# Handle both direct battle_result and nested structure
-	var battle_result = battle_data
-	if battle_data.has("battle_result"):
-		battle_result = battle_data.battle_result
-
-	if battle_result.has("actions"):
-		events = battle_result.actions
+	if battle_data is APITypes.BattleResult:
+		# Typed result - convert actions to dictionary format
+		events = []
+		for action in battle_data.actions:
+			events.append({
+				"t": action.time,
+				"a": action.action,
+				"p": action.player,
+				"i": action.item_id,
+				"v": action.value
+			})
 		print("Loaded %d battle events" % events.size())
+
+		# Set battle duration from typed result
+		battle_duration = battle_data.duration if battle_data.duration > 0 else 20.0
+
+	elif battle_data is Dictionary:
+		# Legacy dictionary format
+		var battle_result = battle_data
+		if battle_data.has("battle_result"):
+			battle_result = battle_data.battle_result
+
+		if battle_result.has("actions"):
+			events = battle_result.actions
+			print("Loaded %d battle events" % events.size())
+		else:
+			events = []
+			print("Warning: No battle events found in battle data")
+
+		if battle_result.has("duration"):
+			battle_duration = battle_result.duration
+		else:
+			battle_duration = 20.0  # Default duration
 	else:
 		events = []
-		print("Warning: No battle events found in battle data")
+		print("Warning: Unknown battle data format")
+		battle_duration = 20.0
 
 	# Set initial HP from round quota
 	player1_max_hp = GameStateManager.get_round_quota()
 	player2_max_hp = GameStateManager.get_round_quota()
 	player1_hp = player1_max_hp
 	player2_hp = player2_max_hp
-
-	# Set final HP if provided
-	if battle_result.has("player1_quota"):
-		# These will be the ending values
-		pass
-
-	if battle_result.has("duration"):
-		battle_duration = battle_result.duration
-	else:
-		battle_duration = 20.0  # Default duration
 
 	current_event_index = 0
 	is_playing = false

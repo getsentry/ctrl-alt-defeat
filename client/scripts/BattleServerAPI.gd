@@ -1,11 +1,13 @@
 extends Node
 # Server API - connects to real Python backend
 
-signal session_started(data: Dictionary)
-signal battle_completed(result: Dictionary)
-signal shop_refreshed(items: Array)
-signal purchase_completed(success: bool, data: Dictionary)
-signal sell_completed(success: bool, data: Dictionary)
+const APITypes = preload("res://scripts/api_types.gd")
+
+signal session_started(response: APITypes.SessionStartResponse)
+signal battle_completed(result: APITypes.BattleResult)
+signal shop_refreshed(response: APITypes.ShopRefreshResponse)
+signal purchase_completed(response: APITypes.PurchaseResponse)
+signal sell_completed(response: APITypes.SellResponse)
 signal error_occurred(message: String)
 
 var BASE_URL = "http://localhost:8000"
@@ -51,13 +53,20 @@ func _ready():
 	http_request = HTTPRequest.new()
 	add_child(http_request)
 
-func start_session(game_seed: int = -1) -> Dictionary:
+func reset_for_test():
+	# Reset everything to force a completely new session
+	player_id = ""
+	session_data = {}
+	_auth_token = ""  # Force re-authentication
+	_user_id = 0
+
+func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
 	# First authenticate as guest if we don't have a token
 	if _auth_token == "":
 		var auth_success = await _authenticate_guest()
 		if not auth_success:
 			push_error("Failed to authenticate with server")
-			return {}
+			return null
 
 	# Start a new game session with the real server
 	var url = BASE_URL + "/session/start"
@@ -91,30 +100,27 @@ func start_session(game_seed: int = -1) -> Dictionary:
 			var data = json.data
 			player_id = data.get("player_id", "")
 
-			# Get the session data from server
-			var session = data.get("session", {})
+			# Get starting containers from session data
+			if data.has("session") and data["session"].has("server_containers"):
+				data["starting_containers"] = data["session"]["server_containers"]
 
-			# Format response to match what game expects
-			var response = {
-				"player_id": player_id,
-				"round": session.get("round", 1),
-				"gold": session.get("gold", 12),
-				"current_shop": session.get("current_shop", []),
-				"starting_containers": [
-					{"type": "standard_vm", "position": {"x": 2, "y": 3}},
-					{"type": "standard_vm", "position": {"x": 4, "y": 3}},
-					{"type": "standard_vm", "position": {"x": 6, "y": 3}}
-				],
-				"item_catalog": data.get("item_catalog", {})
+			# Create typed response
+			var response = APITypes.SessionStartResponse.new(data)
+
+			# Store session data for internal use
+			session_data = {
+				"player_id": response.player_id,
+				"round": response.round,
+				"gold": response.gold,
+				"current_shop": response.current_shop
 			}
 
-			session_data = response
 			session_started.emit(response)
 			return response
 
 	# Server connection failed
 	push_error("Failed to start session - code: " + str(last_response_code))
-	return {}
+	return null
 
 func _authenticate_guest() -> bool:
 	# Authenticate as guest to get a token
@@ -137,13 +143,13 @@ func _authenticate_guest() -> bool:
 	push_error("Failed to authenticate as guest")
 	return false
 
-func submit_battle(inventory_state: Dictionary) -> Dictionary:
+func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResult:
 	# Submit battle to real server
 	print("Submitting battle to server")
 
 	if player_id == "":
 		push_error("Cannot submit battle - no player ID")
-		return {}
+		return null
 
 	var url = BASE_URL + "/battle/simulate"
 	var headers = [
@@ -155,6 +161,8 @@ func submit_battle(inventory_state: Dictionary) -> Dictionary:
 		"player_id": player_id,
 		"round_number": session_data.get("round", 1)
 	}
+
+	print("Sending battle request for round %d" % session_data.get("round", 1))
 
 	var body = JSON.stringify(body_dict)
 
@@ -170,14 +178,20 @@ func submit_battle(inventory_state: Dictionary) -> Dictionary:
 		if parse_result == OK:
 			var data = json.data
 
-			# Update session data
-			if data.has("session_update"):
-				var update = data["session_update"]
-				session_data["round"] = update.get("round", session_data.get("round", 1))
-				session_data["gold"] = update.get("gold", session_data.get("gold", 0))
+			# Create typed battle result - combine the nested battle_result with other top-level fields
+			var battle_data = data.get("battle_result", {})
+			# Add session_update from top level
+			battle_data["session_update"] = data.get("session_update", {})
+			var battle_result = APITypes.BattleResult.new(battle_data)
 
-			battle_completed.emit(data)
-			return data
+			# Update session data from top-level session_update
+			var session_update = data.get("session_update", {})
+			if session_update.size() > 0:
+				session_data["round"] = session_update.get("round", session_data.get("round", 1))
+				session_data["gold"] = session_update.get("gold", session_data.get("gold", 0))
+
+			battle_completed.emit(battle_result)
+			return battle_result
 
 	# Parse error response for better debugging
 	var error_msg = "Battle request failed with code: " + str(last_response_code)
@@ -193,13 +207,13 @@ func submit_battle(inventory_state: Dictionary) -> Dictionary:
 
 	push_error(error_msg)
 	error_occurred.emit(error_msg)
-	return {"error": error_msg}
+	return null
 
-func refresh_shop(round: int) -> Array:
+func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 	# Refresh shop from real server
 	if player_id == "":
 		push_error("Cannot refresh shop - no player ID")
-		return []
+		return null
 
 	var url = BASE_URL + "/shop/refresh"
 	var headers = [
@@ -222,20 +236,20 @@ func refresh_shop(round: int) -> Array:
 		var parse_result = json.parse(last_response_body.get_string_from_utf8())
 		if parse_result == OK:
 			var data = json.data
-			var new_shop = data.get("shop", [])
-			session_data["current_shop"] = new_shop
-			session_data["gold"] = data.get("gold", session_data.get("gold", 0))
-			shop_refreshed.emit(new_shop)
-			return new_shop
+			var response = APITypes.ShopRefreshResponse.new(data)
+			session_data["current_shop"] = response.shop
+			session_data["gold"] = response.gold
+			shop_refreshed.emit(response)
+			return response
 
 	push_error("Shop refresh failed with code: " + str(last_response_code))
-	return []
+	return null
 
-func purchase_item(item_id: String, placement):
+func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 	# Purchase item on real server
 	if player_id == "":
 		push_error("Cannot purchase item - no player ID")
-		return
+		return null
 
 	var url = BASE_URL + "/purchase/item"
 	var headers = [
@@ -245,35 +259,47 @@ func purchase_item(item_id: String, placement):
 
 	var body_dict = {
 		"player_id": player_id,
-		"item_id": item_id,
-		"placement": placement  # Can be [x,y] or "storage"
+		"item_id": item_id
 	}
 
+	# Server expects target_position field for grid placement
+	if placement is Array and placement.size() == 2:
+		body_dict["target_position"] = placement
+
 	var body = JSON.stringify(body_dict)
+	print("DEBUG: Purchasing item %s at position %s" % [item_id, placement])
 	http_request.request(url, headers, HTTPClient.METHOD_POST, body)
 	var result = await http_request.request_completed
 
 	last_response_code = result[1]
 	last_response_body = result[3]
 
+	var response: APITypes.PurchaseResponse
+
 	if last_response_code == 200:
 		var json = JSON.new()
 		var parse_result = json.parse(last_response_body.get_string_from_utf8())
 		if parse_result == OK:
 			var data = json.data
-			purchase_completed.emit(true, data)
-			return data
+			response = APITypes.PurchaseResponse.new(data)
+			if response.success:
+				session_data["gold"] = response.gold
+				print("DEBUG: Purchase successful, gold now: %d" % response.gold)
+			purchase_completed.emit(response)
+			return response
 
 	var error_msg = "Purchase failed with code: " + str(last_response_code)
-	purchase_completed.emit(false, {"error": error_msg})
+	print("DEBUG: " + error_msg)
+	response = APITypes.PurchaseResponse.new({"error": error_msg})
+	purchase_completed.emit(response)
 	error_occurred.emit(error_msg)
-	return {}
+	return response
 
-func sell_item(item_id: String, from_storage: bool = false):
+func sell_item(item_id: String, from_storage: bool = false) -> APITypes.SellResponse:
 	# Sell item on real server
 	if player_id == "":
 		push_error("Cannot sell item - no player ID")
-		return
+		return null
 
 	var url = BASE_URL + "/sell/item"
 	var headers = [
@@ -294,15 +320,21 @@ func sell_item(item_id: String, from_storage: bool = false):
 	last_response_code = result[1]
 	last_response_body = result[3]
 
+	var response: APITypes.SellResponse
+
 	if last_response_code == 200:
 		var json = JSON.new()
 		var parse_result = json.parse(last_response_body.get_string_from_utf8())
 		if parse_result == OK:
 			var data = json.data
-			sell_completed.emit(true, data)
-			return data
+			response = APITypes.SellResponse.new(data)
+			if response.success:
+				session_data["gold"] = response.gold
+			sell_completed.emit(response)
+			return response
 
 	var error_msg = "Sell failed with code: " + str(last_response_code)
-	sell_completed.emit(false, {"error": error_msg})
+	response = APITypes.SellResponse.new({"error": error_msg})
+	sell_completed.emit(response)
 	error_occurred.emit(error_msg)
-	return {}
+	return response

@@ -1,6 +1,8 @@
 extends Node
 # Singleton for managing persistent game state across scenes
 
+const APITypes = preload("res://scripts/api_types.gd")
+
 # Player info
 var player_id: String = ""
 var player_name: String = "Player"
@@ -27,7 +29,7 @@ var current_shop: Array = []
 var shop_rerolls: int = 0
 
 # Battle state
-var last_battle_result: Dictionary = {}
+var last_battle_result = null  # Can be Dictionary or APITypes.BattleResult
 var last_battle_events: Array = []
 var opponent_inventory: Dictionary = {}
 
@@ -66,7 +68,7 @@ func start_new_game():
 	starting_containers.clear()
 	current_shop.clear()
 	shop_rerolls = 0
-	last_battle_result.clear()
+	last_battle_result = null  # Reset to null instead of clear
 	last_battle_events.clear()
 	opponent_inventory.clear()
 
@@ -81,32 +83,64 @@ func save_inventory_state(items: Array, servers: Array):
 func get_inventory_state() -> Dictionary:
 	return current_inventory
 
-func update_after_battle(result: Dictionary):
+func update_after_battle(result):
 	# Store the COMPLETE battle result for PostBattle screen
 	last_battle_result = result
 
-	# Update state based on battle results
-	if result.has("session_update"):
+	# Check if this is a typed BattleResult or dictionary
+	if result is APITypes.BattleResult:
+		# Typed result - access properties directly
 		var update = result.session_update
-		if update.has("round"):
-			current_round = update.round
-		if update.has("gold"):
-			gold = update.gold
-		if update.has("wins"):
-			wins = update.wins
-		if update.has("losses"):
-			losses = update.losses
-		if update.has("lives"):
-			player_lives = update.lives
-		if update.has("game_over"):
-			game_over = update.game_over
-		if update.has("victory"):
-			victory = update.victory
+		if update.size() > 0:
+			if update.has("round"):
+				current_round = update.round
+			if update.has("gold"):
+				gold = update.gold
+			if update.has("wins"):
+				wins = update.wins
+			if update.has("losses"):
+				losses = update.losses
+			if update.has("lives"):
+				player_lives = update.lives
+			if update.has("game_over"):
+				game_over = update.game_over
+			if update.has("victory"):
+				victory = update.victory
 
-	# Store battle data for replay
-	if result.has("battle_result"):
-		if result.battle_result.has("actions"):
-			last_battle_events = result.battle_result.actions
+		# Store battle actions - convert to dictionary format for compatibility
+		last_battle_events = []
+		for action in result.actions:
+			# Convert BattleAction to dictionary
+			last_battle_events.append({
+				"t": action.time,
+				"a": action.action,
+				"p": action.player,
+				"i": action.item_id,
+				"v": action.value
+			})
+	else:
+		# Legacy dictionary format
+		if result.has("session_update"):
+			var update = result.session_update
+			if update.has("round"):
+				current_round = update.round
+			if update.has("gold"):
+				gold = update.gold
+			if update.has("wins"):
+				wins = update.wins
+			if update.has("losses"):
+				losses = update.losses
+			if update.has("lives"):
+				player_lives = update.lives
+			if update.has("game_over"):
+				game_over = update.game_over
+			if update.has("victory"):
+				victory = update.victory
+
+		# Store battle data for replay
+		if result.has("battle_result"):
+			if result.battle_result.has("actions"):
+				last_battle_events = result.battle_result.actions
 
 	# Update battle health for next round
 	battle_health = get_round_quota()

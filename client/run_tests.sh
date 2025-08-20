@@ -119,7 +119,7 @@ echo "--------------------"
 godot --headless --script addons/gut/gut_cmdln.gd \
     -gdir=res://test/unit \
     -gexit \
-    -glog=1 \
+    -glog=3 \
     $FILTER_ARG
 
 UNIT_EXIT_CODE=$?
@@ -131,7 +131,7 @@ echo "----------------------------"
 godot --headless --script addons/gut/gut_cmdln.gd \
     -gdir=res://test/integration \
     -gexit \
-    -glog=1 \
+    -glog=3 \
     $FILTER_ARG
 
 INTEGRATION_EXIT_CODE=$?
@@ -145,7 +145,7 @@ godot --position 0,0 \
     --script addons/gut/gut_cmdln.gd \
     -gdir=res://test/ui \
     -gexit \
-    -glog=1 \
+    -glog=3 \
     $FILTER_ARG
 
 UI_EXIT_CODE=$?
