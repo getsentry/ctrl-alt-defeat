@@ -498,7 +498,7 @@ class TestGameLifecycle:
             session.round = 8
             session.wins = 7  # Won 7 rounds to get here
             # Generate new shop for round 8
-            from shop_generation import generate_shop_items
+            from main import generate_shop_items
 
             shop_seed = session.game_seed + 8 * 1000 + session.shop_refresh_count
             session.current_shop = generate_shop_items(8, seed=shop_seed)

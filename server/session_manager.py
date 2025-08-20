@@ -84,7 +84,7 @@ class SessionManager:
             player_id = str(user.id)
 
         # Create session with starting values
-        from shop_generation import generate_shop_items
+        from main import generate_shop_items
 
         # Initialize server containers (3 standard VMs)
         server_containers = [
