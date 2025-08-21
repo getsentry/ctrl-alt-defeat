@@ -12,7 +12,6 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
-    text,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from utils import utc_now
@@ -213,10 +212,8 @@ class PlayerBuild(Base):
             "idx_matchmaking_recent_wins",
             "round_number",
             "game_version",
+            "created_at",
             "win_percent",
-            postgresql_where=text(
-                "created_at > (CURRENT_TIMESTAMP - INTERVAL '7 days') AND battle_won = TRUE"
-            ),
         ),
         # Index for finding player's recent builds
         Index(
