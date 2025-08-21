@@ -31,6 +31,7 @@ var shop_rerolls: int = 0
 var last_battle_result: APITypes.BattleResult = null
 var last_battle_events: Array = []
 var opponent_inventory: Dictionary = {}
+var last_gold_earned: int = 0
 
 # Settings
 var battle_speed: float = 1.0  # Speed multiplier for battle playback
@@ -71,6 +72,7 @@ func start_new_game():
 
 func save_inventory_state(items: Array, servers: Array):
 	# Save the current inventory configuration
+	print("DEBUG GameStateManager: Saving inventory with %d items and %d servers" % [items.size(), servers.size()])
 	current_inventory = {
 		"items": items.duplicate(true),
 		"servers": servers.duplicate(true)
@@ -117,6 +119,9 @@ func update_after_battle(response: APITypes.BattleResponse):
 	player_lives = update.lives
 	game_over = update.game_over
 	victory = update.victory
+
+	# Store gold earned separately for PostBattleScreen
+	last_gold_earned = update.gold_earned
 
 	# Store battle actions directly as typed objects from battle_result
 	last_battle_events = response.battle_result.actions

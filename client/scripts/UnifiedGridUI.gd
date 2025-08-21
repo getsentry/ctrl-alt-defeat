@@ -177,7 +177,15 @@ func _ready():
 
 	# Then load saved inventory if it exists
 	var saved_inventory = GameStateManager.get_inventory_state()
-	print("saved inventory", saved_inventory)
+	print("DEBUG: Loading saved inventory on UnifiedGridUI startup:")
+	print("  Items: %d" % saved_inventory.get("items", []).size())
+	print("  Servers: %d" % saved_inventory.get("servers", []).size())
+	if saved_inventory.get("items", []).size() > 0:
+		for item in saved_inventory.items:
+			if item is Dictionary:
+				print("    Item (dict): %s at %s" % [item.get("name", "unknown"), item.get("position", "?")])
+			else:
+				print("    Item (object): %s" % item)
 	_load_saved_inventory(saved_inventory)
 
 
@@ -809,16 +817,17 @@ func _on_ready_for_battle():
 	# Save current inventory state
 	var inventory_state = get_inventory_state()
 
-	# Make sure we're passing the actual inventory data, not the raw objects
-	var items_data = []
-	for item in items:
-		if item.has_meta("grid_pos") and item.has_meta("item_data"):
-			items_data.append({
-				"data": item.get_meta("item_data"),
-				"grid_pos": item.get_meta("grid_pos")
-			})
+	# Get the actual inventory from the grid
+	var grid_state = inventory_grid.get_inventory_state()
 
-	GameStateManager.save_inventory_state(items_data, servers)
+	print("DEBUG: Saving inventory before battle:")
+	print("  Items to save: %d" % grid_state.items.size())
+	for item in grid_state.items:
+		if item is Dictionary:
+			print("    - %s at %s" % [item.get("name", "?"), item.get("position", "?")])
+
+	# Save to GameStateManager so it persists across scene changes
+	GameStateManager.save_inventory_state(grid_state.items, grid_state.servers)
 
 	# Submit battle to server
 	var battle_response = await BattleServerAPI.submit_battle(inventory_state)

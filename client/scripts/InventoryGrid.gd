@@ -515,7 +515,10 @@ func _process(_delta):
 	if dragging_object:
 		dragging_object.position = get_local_mouse_position() + drag_offset
 
-		# Update hover preview
+		# Update hover preview - check if valid first
+		if not hover_preview or not is_instance_valid(hover_preview):
+			return  # Skip hover preview updates if it's invalid
+
 		var grid_pos = pixel_to_grid(get_local_mouse_position())
 		var item_data = dragging_object.get_meta("item_data")
 
@@ -555,9 +558,13 @@ func clear_all():
 		container_data.visual.queue_free()
 	containers.clear()
 
+	# Reset hover preview
+	hover_preview = null
+
 	# Reset grids
 	_initialize_grids()
 	_setup_visual()
+	_create_hover_preview()
 
 func get_inventory_state() -> Dictionary:
 	"""Get current inventory state for saving"""
@@ -566,19 +573,22 @@ func get_inventory_state() -> Dictionary:
 		"servers": []
 	}
 
-	# Save items
+	# Save items - convert to dictionaries for persistence
 	for item_visual in items:
 		var item_data = item_visual.get_meta("item_data")
-		var grid_pos = item_visual.get_meta("grid_pos")
-		state.items.append({
-			"data": item_data.to_dict() if item_data.has_method("to_dict") else item_data,
-			"position": [grid_pos.x, grid_pos.y]
-		})
+		# Convert InventoryItem to dictionary for saving
+		if item_data is APITypes.InventoryItem:
+			state.items.append(item_data.to_dict())
+		else:
+			state.items.append(item_data)
 
-	# Save containers
+	# Save containers - convert to dictionaries for persistence
 	for container_data in containers:
 		var container = container_data.data
-		state.servers.append(container.to_dict() if container.has_method("to_dict") else container)
+		if container is APITypes.ServerContainer:
+			state.servers.append(container.to_dict())
+		else:
+			state.servers.append(container)
 
 	return state
 

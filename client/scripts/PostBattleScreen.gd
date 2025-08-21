@@ -93,17 +93,14 @@ func _setup_ui():
 func set_battle_result(data: APITypes.BattleResult):
 	"""Called before scene loads to set battle data"""
 	result_data = data
-	var session_update = data.session_update
 
-	gold_earned = session_update.gold_earned
+	# Get gold earned from GameStateManager (it was stored from session_update)
+	gold_earned = GameStateManager.last_gold_earned
 	# Calculate health lost based on winner
 	health_lost = 1 if data.winner == 2 else 0
 
-	# Update GameStateManager with new values
-	GameStateManager.current_round = session_update.round
-	GameStateManager.gold = session_update.gold
-	GameStateManager.wins = session_update.wins
-	GameStateManager.losses = session_update.losses
+	# GameStateManager already has all the updated values from session_update
+	# (current_round, gold, wins, losses were updated in update_after_battle)
 
 	# Apply health loss
 	if health_lost > 0:
