@@ -140,13 +140,16 @@ func _ready():
 	# Ensure GridManagers are ready
 	await get_tree().process_frame
 
+	# Skip inventory loading for read-only mode (BattleScreen will load its own)
+	if read_only_mode:
+		print("Read-only mode - skipping inventory initialization")
+		return
+
 	# Then load saved inventory if it exists
 	var saved_inventory = GameStateManager.get_inventory_state()
-	if saved_inventory.has("servers") and saved_inventory.servers.size() > 0:
-		_load_saved_inventory(saved_inventory)
-	elif GameStateManager.current_round == 1:
-		# First round - give player starting containers
-		_place_starting_containers()
+	print("saved inventory", saved_inventory)
+	_load_saved_inventory(saved_inventory)
+
 
 	if not hide_shop:
 		_load_shop_from_state()
@@ -156,68 +159,9 @@ func configure(settings: Dictionary):
 	hide_shop = settings.get("hide_shop", false)
 	hide_storage = settings.get("hide_storage", false)
 
-	# Reload UI with new settings
-	for child in get_children():
-		child.queue_free()
-
-	_setup_ui()
-
-func _place_starting_containers():
-	print("Placing starting containers for new game")
-
-	# Check if server provided starting containers
-	var containers_to_place = []
-	if GameStateManager.starting_containers.size() > 0:
-		containers_to_place = GameStateManager.starting_containers
-		print("Using server-provided starting containers: %d" % containers_to_place.size())
-	else:
-		# Default starting containers - 3 adjacent 2x2 containers
-		containers_to_place = [
-			{"type": "cube_2x2", "position": Vector2i(1, 3)},
-			{"type": "cube_2x2", "position": Vector2i(3, 3)},
-			{"type": "cube_2x2", "position": Vector2i(5, 3)}
-		]
-		print("Using default starting containers")
-
-	# Place each container
-	for container_info in containers_to_place:
-		var container_type_key = container_info["type"]
-		var position = container_info["position"]
-
-		# Map server container types to client types
-		if container_type_key == "standard_vm":
-			container_type_key = "cube_2x2"  # Map server type to client type
-
-		if not server_types.has(container_type_key):
-			print("Warning: Unknown container type '%s', using cube_2x2" % container_type_key)
-			container_type_key = "cube_2x2"
-
-		var container_type = server_types[container_type_key]
-		var x_pos = position.x
-		var y_pos = position.y
-
-		# Create the server data
-		var server_data = {
-			"data": container_type.duplicate(),
-			"pos": Vector2i(x_pos, y_pos)
-		}
-
-		# Place the server using GridManager
-		var server_visual = inventory_grid.place_server(container_type, Vector2i(x_pos, y_pos))
-		server_visual.gui_input.connect(_on_server_input.bind(server_visual))
-		server_visual.set_meta("is_placed_server", true)
-
-		# Update grid tracking
-		_update_active_grid_for_server(x_pos, y_pos, container_type.pattern)
-
-		# Track the server
-		servers.append(server_data)
-
-	print("Placed %d starting containers" % containers_to_place.size())
-
-	# Save this initial state
-	var initial_state = get_inventory_state()
-	GameStateManager.save_inventory_state(initial_state.items, initial_state.servers)
+	# Settings will be applied in _ready() if not ready yet
+	if not is_node_ready():
+		return
 
 func _load_saved_inventory(saved_data: Dictionary):
 	# Wrapper to load saved inventory from GameStateManager
@@ -233,38 +177,16 @@ func _load_saved_inventory(saved_data: Dictionary):
 
 func load_inventory_state(inventory_data: APITypes.InventoryState):
 	# Convert typed inventory to dictionary for internal processing
-	var data_dict = inventory_data.to_dict()
 
 	# Load containers - handle both typed objects and dicts
-	for server_data in data_dict.get("containers", data_dict.get("servers", [])):
-		var pos_x: int
-		var pos_y: int
-		var width: int
-		var height: int
-		var server_type: String
-		var server_id: String
-
-		# Handle both dictionary and typed object
-		if server_data is Dictionary:
-			var pos = server_data["position"]
-			if pos is Dictionary:
-				pos_x = pos["x"]
-				pos_y = pos["y"]
-			else:  # Array format [x, y]
-				pos_x = pos[0]
-				pos_y = pos[1]
-			width = server_data["width"]
-			height = server_data["height"]
-			server_type = server_data["type"]
-			server_id = server_data["id"]
-		else:
-			var typed_server: APITypes.ServerContainer = server_data
-			pos_x = typed_server.position.x
-			pos_y = typed_server.position.y
-			width = typed_server.width
-			height = typed_server.height
-			server_type = typed_server.type
-			server_id = typed_server.id
+	for server_data in inventory_data.server_containers:
+		var typed_server: APITypes.ServerContainer = server_data
+		var pos_x = typed_server.position.x
+		var pos_y = typed_server.position.y
+		var width = typed_server.width
+		var height = typed_server.height
+		var server_type = typed_server.type
+		var server_id = typed_server.id
 
 		# Generate pattern from width/height (all cells active for now)
 		var pattern = []
@@ -286,7 +208,7 @@ func load_inventory_state(inventory_data: APITypes.InventoryState):
 		servers.append({"data": container_data, "pos": Vector2i(pos_x, pos_y)})
 
 	# Load items
-	for item_info in data_dict.items:
+	for item_info in inventory_data.items:
 		var item_data = {}
 		var grid_x = 0
 		var grid_y = 0
@@ -294,12 +216,8 @@ func load_inventory_state(inventory_data: APITypes.InventoryState):
 		# Handle dictionary (from to_dict())
 		if item_info is Dictionary:
 			var pos = item_info["position"]
-			if pos is Dictionary:
-				grid_x = pos["x"]
-				grid_y = pos["y"]
-			else:  # Array format [x, y]
-				grid_x = pos[0]
-				grid_y = pos[1]
+			grid_x = pos[0]
+			grid_y = pos[1]
 
 			# Calculate width/height from shape for display
 			var max_x = 0
@@ -378,6 +296,14 @@ func _setup_ui():
 	_create_server_room()
 	_create_storage_area()
 	_create_controls()
+
+	# Hide elements based on configuration
+	if has_node("ShopContainer") and hide_shop:
+		$ShopContainer.visible = false
+	if has_node("StorageContainer") and hide_storage:
+		$StorageContainer.visible = false
+	if has_node("CharacterStats") and (hide_shop or read_only_mode):
+		$CharacterStats.visible = false
 
 	# Gold preview
 	gold_preview_label = Label.new()
@@ -797,7 +723,7 @@ func _on_inventory_input(event: InputEvent):
 			if event.pressed:
 				# Get mouse position safely
 				var global_mouse = get_global_mouse_position()
-				var local_pos = inventory_grid.to_local(global_mouse) if inventory_grid.is_inside_tree() else Vector2.ZERO
+				var local_pos = (global_mouse - inventory_grid.global_position) if inventory_grid.is_inside_tree() else Vector2.ZERO
 				var grid_pos = inventory_grid.pixel_to_grid(local_pos)
 				# Check for items at this position
 				if grid_pos in inventory_grid.items:

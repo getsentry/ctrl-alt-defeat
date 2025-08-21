@@ -47,6 +47,9 @@ func _ready():
 
 	_setup_ui()
 
+	# Wait for child nodes to be ready
+	await get_tree().process_frame
+
 	# Load battle data from GameStateManager
 	if GameStateManager.last_battle_events.size() > 0:
 		_load_battle_from_state()
@@ -84,33 +87,31 @@ func _setup_ui():
 	_create_control_buttons()
 
 func _create_player_inventory():
-	var inventory_scene = preload("res://scenes/UnifiedGridUI.tscn")
+	var inventory_scene = preload("res://scenes/InventoryGrid.tscn")
 	player_inventory = inventory_scene.instantiate()
-	player_inventory.position = Vector2(20, 20)  # Move to top left
-	player_inventory.scale = Vector2(0.65, 0.65)  # Larger scale for better visibility
-
-	# Configure as read-only
-	player_inventory.configure({
-		"read_only": true,
-		"hide_shop": true,
-		"hide_storage": true
-	})
-
+	player_inventory.position = Vector2(20, 50)
+	player_inventory.scale = Vector2(0.8, 0.8)
+	player_inventory.read_only = true
+	player_inventory.title = "Player Inventory"
+	player_inventory.set_colors(
+		Color(0.1, 0.1, 0.15, 0.8),  # grid color
+		Color(0.3, 0.6, 1.0, 0.8),   # border color
+		Color(0.2, 0.5, 1.0, 0.9)    # item color
+	)
 	add_child(player_inventory)
 
 func _create_enemy_inventory():
-	var inventory_scene = preload("res://scenes/UnifiedGridUI.tscn")
+	var inventory_scene = preload("res://scenes/InventoryGrid.tscn")
 	enemy_inventory = inventory_scene.instantiate()
-	enemy_inventory.position = Vector2(750, 20)  # Position on right side, at top
-	enemy_inventory.scale = Vector2(0.65, 0.65)  # Larger scale for better visibility
-
-	# Configure as read-only
-	enemy_inventory.configure({
-		"read_only": true,
-		"hide_shop": true,
-		"hide_storage": true
-	})
-
+	enemy_inventory.position = Vector2(900, 50)
+	enemy_inventory.scale = Vector2(0.8, 0.8)
+	enemy_inventory.read_only = true
+	enemy_inventory.title = "Enemy Inventory"
+	enemy_inventory.set_colors(
+		Color(0.15, 0.1, 0.1, 0.8),  # grid color
+		Color(1.0, 0.3, 0.3, 0.8),   # border color
+		Color(1.0, 0.3, 0.3, 0.9)    # item color
+	)
 	add_child(enemy_inventory)
 
 func _create_player_stats():

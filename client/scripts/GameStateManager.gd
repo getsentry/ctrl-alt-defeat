@@ -22,14 +22,13 @@ var victory: bool = false
 # Inventory state
 var current_inventory: Dictionary = {}  # Stores placed items and servers
 var server_containers: Array = []  # Server rack configurations
-var starting_containers: Array = []  # Starting containers for new games
 
 # Shop state
 var current_shop: Array = []
 var shop_rerolls: int = 0
 
 # Battle state
-var last_battle_result = null  # Can be Dictionary or APITypes.BattleResult
+var last_battle_result: APITypes.BattleResult = null
 var last_battle_events: Array = []
 var opponent_inventory: Dictionary = {}
 
@@ -64,7 +63,6 @@ func start_new_game():
 	victory = false
 	current_inventory.clear()
 	server_containers.clear()
-	starting_containers.clear()
 	current_shop.clear()
 	shop_rerolls = 0
 	last_battle_result = null  # Reset to null instead of clear
@@ -78,6 +76,16 @@ func save_inventory_state(items: Array, servers: Array):
 		"servers": servers.duplicate(true)
 	}
 	server_containers = servers.duplicate(true)
+
+func update_from_session(session: APITypes.GameSession):
+	current_round = session.round
+	player_id = session.player_id
+	gold = session.gold
+	current_shop = session.current_shop
+
+	for container in session.server_containers:
+		server_containers.append(container.to_dict())
+
 
 func get_inventory_state() -> Dictionary:
 	return current_inventory

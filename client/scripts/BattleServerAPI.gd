@@ -110,9 +110,9 @@ func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
 			# Store session data for internal use
 			session_data = {
 				"player_id": response.player_id,
-				"round": response.round,
-				"gold": response.gold,
-				"current_shop": response.current_shop
+				"round": response.session.round,
+				"gold": response.session.gold,
+				"current_shop": response.session.current_shop
 			}
 
 			session_started.emit(response)

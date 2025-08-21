@@ -102,20 +102,6 @@ class InventoryState extends Resource:
 				containers.append(ServerContainer.new(container_data))
 			# else skip invalid container
 
-	func to_dict() -> Dictionary:
-		var items_array = []
-		for item in items:
-			items_array.append(item.to_dict())
-
-		var containers_array = []
-		for container in containers:
-			containers_array.append(container.to_dict())
-
-		return {
-			"items": items_array,
-			"containers": containers_array
-		}
-
 # Battle action - matches server BattleAction schema
 class BattleAction extends Resource:
 	var timestamp: int = 0  # milliseconds
@@ -190,31 +176,50 @@ class SessionUpdate extends Resource:
 		game_over = data["game_over"]
 		victory = data["victory"]
 
+
+class GameSession extends Resource:
+	var player_id: String
+	var player_name: String
+	var round: int
+	var gold: int
+	var lives: int
+	var wins: int
+	var losses: int
+	var current_shop: Array
+	var game_seed: int
+	var shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
+	# Inventory fields
+	var inventory_grid: Array
+	var server_containers: Array[ServerContainer]
+
+	func _init(data: Dictionary):
+		player_id = data["player_id"]
+		player_name = data["player_name"]
+		round = data["round"]
+		gold = data["gold"]
+		lives = data["lives"]
+		wins = data["wins"]
+		losses = data["losses"]
+		current_shop = data["current_shop"]
+		game_seed = data["game_seed"]
+		shop_refresh_count = data["shop_refresh_count"]
+		inventory_grid = data["inventory_grid"]
+
+		server_containers = []
+		for container_data in data.get("server_containers", []):
+			server_containers.append(ServerContainer.new(container_data))
+
+
 # Session start response - matches server StartSessionResponse
 class SessionStartResponse extends Resource:
 	var player_id: String = ""
-	var session: Dictionary = {}  # GameSession object - TODO: type this when we have GameSession class
-	# Extracted fields for convenience
-	var round: int = 1
-	var gold: int = 12
-	var current_shop: Array = []  # Array of ShopItem dicts
-	var server_containers: Array[ServerContainer] = []  # Array of ServerContainer
+	var session: GameSession
 
 	func _init(data: Dictionary):
 		# Required fields per server schema
 		player_id = data["player_id"]
-		session = data["session"]
+		session = GameSession.new(data["session"])
 
-		# Extract from session for convenience
-		round = session["round"]
-		gold = session["gold"]
-		current_shop = session["current_shop"]
-
-		# Parse server containers from session - typed array
-		server_containers.clear()
-		for container_data in session["server_containers"]:
-			var container := ServerContainer.new(container_data)
-			server_containers.append(container)
 
 # Shop refresh response
 class ShopRefreshResponse extends Resource:

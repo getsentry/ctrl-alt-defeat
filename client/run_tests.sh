@@ -121,9 +121,20 @@ godot --headless --script addons/gut/gut_cmdln.gd \
     -gdir=res://test \
     -gexit \
     -glog=3 \
-    $FILTER_ARG
+    $FILTER_ARG 2>&1 | tee test_output.tmp
 
-TEST_EXIT_CODE=$?
+TEST_EXIT_CODE=${PIPESTATUS[0]}
+
+# Also check for failures in output as backup
+if grep -q "\[Failed\]:\|SCRIPT ERROR:\|FAILED:" test_output.tmp; then
+    echo "Detected test failures or errors in output"
+    if [ $TEST_EXIT_CODE -eq 0 ]; then
+        TEST_EXIT_CODE=1
+    fi
+fi
+
+# Clean up temp file
+rm -f test_output.tmp
 
 # Exit code is already set from the single test run
 

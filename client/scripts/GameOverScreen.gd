@@ -164,26 +164,15 @@ func _on_new_game():
 	GameStateManager.start_new_game()
 
 	# Start new session with server
-	var session_data = await BattleServerAPI.start_session()
+	var session_response = await BattleServerAPI.start_session()
 
-	if session_data == null:
+	if session_response == null:
 		push_error("Failed to start new game session")
 		# Show error to user
 		_show_error_message("Failed to connect to server. Please try again.")
 		return
 
-	# Update game state with typed response
-	GameStateManager.player_id = session_data.player_id
-	GameStateManager.current_round = session_data.round
-	GameStateManager.gold = session_data.gold
-	GameStateManager.current_shop = session_data.current_shop
-
-	# Store server containers if provided
-	# Convert typed containers to dictionary format for GameStateManager
-	var containers_array = []
-	for container in session_data.server_containers:
-		containers_array.append(container.to_dict())
-	GameStateManager.starting_containers = containers_array
+	GameStateMananger.update_from_session(session_response.session)
 
 	# Go to shop
 	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")

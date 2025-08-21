@@ -33,6 +33,16 @@ func after_each():
 		get_tree().current_scene.queue_free()
 		await get_tree().process_frame
 
+	# Clean up any remaining nodes
+	for child in get_tree().root.get_children():
+		if child.name != "root" and not child.name.begins_with("@@"):
+			child.queue_free()
+	await get_tree().process_frame
+
+	# Reset game state
+	GameStateManager.start_new_game()
+	BattleServerAPI.reset_for_test()
+
 func after_all():
 	# End test session and rollback all changes (fast!)
 	var session_ended = await TestSessionManager.end_test_session()
@@ -128,7 +138,7 @@ func test_full_user_journey_through_ui():
 	mouse_up.position = drag_end
 
 	game_ui._input(mouse_up)
-	await get_tree().create_timer(0.5).timeout  # Wait for server response
+	await get_tree().create_timer(1.0).timeout  # Wait for server response
 
 	assert_lt(GameStateManager.gold, initial_gold, "Gold should decrease after purchase")
 
@@ -431,7 +441,10 @@ func test_battle_button_and_full_battle():
 			# Move to grid
 			var mouse_move = InputEventMouseMotion.new()
 			mouse_move.global_position = drag_end
-			game_ui.get_viewport().push_input(mouse_move)
+			mouse_move.position = drag_end
+			mouse_move.relative = drag_end - shop_item_center
+			mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
+			game_ui._input(mouse_move)
 			await get_tree().process_frame
 
 			# Release
@@ -439,9 +452,10 @@ func test_battle_button_and_full_battle():
 			mouse_up.button_index = MOUSE_BUTTON_LEFT
 			mouse_up.pressed = false
 			mouse_up.global_position = drag_end
-			game_ui.get_viewport().push_input(mouse_up)
-			await get_tree().create_timer(0.5).timeout
-			print("   - Purchase simulated")
+			mouse_up.position = drag_end
+			game_ui._input(mouse_up)
+			await get_tree().create_timer(1.0).timeout
+			print("   - Purchase completed")
 		else:
 			print("   - No empty cells for placement")
 	else:
@@ -554,7 +568,10 @@ func test_complete_round_cycle():
 			# Move to grid
 			var mouse_move = InputEventMouseMotion.new()
 			mouse_move.global_position = drag_end
-			game_ui.get_viewport().push_input(mouse_move)
+			mouse_move.position = drag_end
+			mouse_move.relative = drag_end - shop_item_center
+			mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
+			game_ui._input(mouse_move)
 			await get_tree().process_frame
 
 			# Release
@@ -562,9 +579,10 @@ func test_complete_round_cycle():
 			mouse_up.button_index = MOUSE_BUTTON_LEFT
 			mouse_up.pressed = false
 			mouse_up.global_position = drag_end
-			game_ui.get_viewport().push_input(mouse_up)
-			await get_tree().create_timer(0.5).timeout
-			print("   - Purchased item")
+			mouse_up.position = drag_end
+			game_ui._input(mouse_up)
+			await get_tree().create_timer(1.0).timeout
+			print("   - Item purchased")
 
 	# Start battle
 	var battle_btn = null
@@ -737,7 +755,10 @@ func test_multiple_rounds():
 				# Move to grid
 				var mouse_move = InputEventMouseMotion.new()
 				mouse_move.global_position = drag_end
-				game_ui.get_viewport().push_input(mouse_move)
+				mouse_move.position = drag_end
+				mouse_move.relative = drag_end - shop_item_center
+				mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
+				game_ui._input(mouse_move)
 				await get_tree().process_frame
 
 				# Release
@@ -745,8 +766,9 @@ func test_multiple_rounds():
 				mouse_up.button_index = MOUSE_BUTTON_LEFT
 				mouse_up.pressed = false
 				mouse_up.global_position = drag_end
-				game_ui.get_viewport().push_input(mouse_up)
-				await get_tree().create_timer(0.5).timeout
+				mouse_up.position = drag_end
+				game_ui._input(mouse_up)
+				await get_tree().create_timer(1.0).timeout
 
 		# Find and click battle button
 		var battle_btn = null
