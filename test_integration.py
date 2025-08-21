@@ -16,6 +16,7 @@ class GameIntegrationTest:
         self.player_id = None
         self.session = None
         self.shop = []
+        self.auth_token = None
 
     def test_server_running(self) -> bool:
         """Test if server is accessible"""
@@ -27,10 +28,37 @@ class GameIntegrationTest:
             print("✗ Server is not running. Start with: cd server && python main.py")
             return False
 
+    def test_authenticate(self) -> bool:
+        """Test guest authentication"""
+        try:
+            response = requests.post(f"{BASE_URL}/auth/guest")
+            if response.status_code == 200:
+                data = response.json()
+                self.auth_token = data.get("access_token")
+                print(f"✓ Authenticated as guest: {data.get('username', 'unknown')}")
+                return True
+            else:
+                print(f"✗ Failed to authenticate: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"✗ Error authenticating: {e}")
+            return False
+
     def test_start_session(self) -> bool:
         """Test starting a new game session"""
+        if not self.auth_token:
+            print("✗ No auth token - authenticate first")
+            return False
+
         try:
-            response = requests.post(f"{BASE_URL}/session/start")
+            headers = {
+                "Authorization": f"Bearer {self.auth_token}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "player_name": "TestPlayer"
+            }
+            response = requests.post(f"{BASE_URL}/session/start", json=payload, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 self.player_id = data.get("player_id")
@@ -48,16 +76,19 @@ class GameIntegrationTest:
 
     def test_shop_refresh(self) -> bool:
         """Test refreshing the shop"""
-        if not self.player_id:
-            print("✗ No player ID - start session first")
+        if not self.player_id or not self.auth_token:
+            print("✗ No player ID or auth token - start session first")
             return False
 
         try:
-            payload = {
-                "player_id": self.player_id,
-                "round": 1
+            headers = {
+                "Authorization": f"Bearer {self.auth_token}",
+                "Content-Type": "application/json"
             }
-            response = requests.post(f"{BASE_URL}/shop/refresh", json=payload)
+            payload = {
+                "player_id": self.player_id
+            }
+            response = requests.post(f"{BASE_URL}/shop/refresh", json=payload, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 self.shop = data.get("shop", [])
@@ -78,8 +109,8 @@ class GameIntegrationTest:
 
     def test_purchase_item(self) -> bool:
         """Test purchasing an item from the shop"""
-        if not self.player_id:
-            print("✗ No player ID - start session first")
+        if not self.player_id or not self.auth_token:
+            print("✗ No player ID or auth token - start session first")
             return False
 
         # Find first available item
@@ -94,8 +125,16 @@ class GameIntegrationTest:
             return False
 
         try:
-            url = f"{BASE_URL}/purchase/item?player_id={self.player_id}&item_id={item_to_buy['id']}"
-            response = requests.post(url)
+            headers = {
+                "Authorization": f"Bearer {self.auth_token}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "player_id": self.player_id,
+                "item_id": item_to_buy['id'],
+                "target_position": [3, 3]  # Place at center of grid
+            }
+            response = requests.post(f"{BASE_URL}/purchase/item", json=payload, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 print(f"✓ Purchased: {item_to_buy.get('name')} for {item_to_buy.get('cost')}g")
@@ -110,31 +149,19 @@ class GameIntegrationTest:
 
     def test_battle_simulation(self) -> bool:
         """Test running a battle simulation"""
-        if not self.player_id:
-            print("✗ No player ID - start session first")
+        if not self.player_id or not self.auth_token:
+            print("✗ No player ID or auth token - start session first")
             return False
 
-        # Create a simple inventory with one item
-        inventory = {
-            "items": [
-                {
-                    "id": "test-item-1",
-                    "item_type": "null_pointer",
-                    "position": [3, 4],
-                    "tier": 1
-                }
-            ],
-            "grid_size": 7
-        }
-
-        payload = {
-            "player_id": self.player_id,
-            "inventory": inventory,
-            "round_number": 1
-        }
-
         try:
-            response = requests.post(f"{BASE_URL}/battle/simulate", json=payload)
+            headers = {
+                "Authorization": f"Bearer {self.auth_token}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "player_id": self.player_id
+            }
+            response = requests.post(f"{BASE_URL}/battle/simulate", json=payload, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 result = data.get("battle_result", {})
@@ -160,6 +187,7 @@ class GameIntegrationTest:
 
         tests = [
             ("Server Running", self.test_server_running),
+            ("Authenticate", self.test_authenticate),
             ("Start Session", self.test_start_session),
             ("Shop Refresh", self.test_shop_refresh),
             ("Purchase Item", self.test_purchase_item),
