@@ -83,11 +83,24 @@ func update_from_session(session: APITypes.GameSession):
 	gold = session.gold
 	current_shop = session.current_shop
 
+	# Store server containers
+	server_containers.clear()
 	for container in session.server_containers:
 		server_containers.append(container.to_dict())
 
+	# Update current_inventory to include the server containers
+	current_inventory["servers"] = server_containers.duplicate()
+	# Items start empty for new session
+	if not current_inventory.has("items"):
+		current_inventory["items"] = []
+
 
 func get_inventory_state() -> Dictionary:
+	# Ensure we always return both items and servers
+	if not current_inventory.has("servers") and server_containers.size() > 0:
+		current_inventory["servers"] = server_containers.duplicate()
+	if not current_inventory.has("items"):
+		current_inventory["items"] = []
 	return current_inventory
 
 func update_after_battle(response: APITypes.BattleResponse):

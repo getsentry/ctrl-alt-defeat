@@ -6,9 +6,16 @@ class Position extends Resource:
 	var x: int = 0
 	var y: int = 0
 
-	func _init(data: Array):
-		x = int(data[0])
-		y = int(data[1])
+	func _init(data):
+		# Handle both Array [x, y] and Dictionary {x: _, y: _} formats
+		if data is Array:
+			x = int(data[0])
+			y = int(data[1])
+		elif data is Dictionary:
+			x = int(data.get("x", 0))
+			y = int(data.get("y", 0))
+		else:
+			push_error("Position received invalid data type: " + str(typeof(data)))
 
 	func to_dict() -> Dictionary:
 		return {"x": x, "y": y}
@@ -58,12 +65,9 @@ class ServerContainer extends Resource:
 
 	func _init(data: Dictionary):
 		# Server sends all these fields
-		if not data.has("id"):
-			return  # Invalid data
 		id = data["id"]
 		type = data.get("type", "")
-		if data.has("position"):
-			position = Position.new(data["position"])
+		position = Position.new(data["position"])
 		width = data.get("width", 2)
 		height = data.get("height", 2)
 
@@ -189,7 +193,7 @@ class GameSession extends Resource:
 	var game_seed: int
 	var shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
 	# Inventory fields
-	var inventory_grid: Array
+	var inventory_grid: Array  # Not used right now
 	var server_containers: Array[ServerContainer]
 
 	func _init(data: Dictionary):

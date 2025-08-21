@@ -406,7 +406,7 @@ anchors_preset = -1
 offset_left = 22.0
 offset_top = 192.0
 offset_right = 951.0
-offset_bottom = 871.0
+offset_bottom = 852.0
 
 [node name="StoragePanel" type="Panel" parent="."]
 modulate = Color(1, 1, 1, 0.2)
