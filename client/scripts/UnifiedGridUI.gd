@@ -5,8 +5,8 @@ const APITypes = preload("res://scripts/api_types.gd")
 # Game state is pulled from GameStateManager - no local copies
 
 # Grid settings
-const ROOM_WIDTH = 9
-const ROOM_HEIGHT = 7
+const ROOM_WIDTH = 9   # Fixed grid width
+const ROOM_HEIGHT = 7  # Fixed grid height
 const CELL_SIZE = 45  # Default cell size, actual size calculated from container
 const CELL_SPACING = 1
 
@@ -295,11 +295,19 @@ func _create_server_room():
 	room_style.set_corner_radius_all(4)
 	room_bg.add_theme_stylebox_override("panel", room_style)
 
-	# Create inventory grid
+	# Create inventory grid to fill the panel
 	inventory_grid = InventoryGrid.new()
-	inventory_grid.position = Vector2(10, 10)  # Small padding inside panel
-	inventory_grid.configure(ROOM_WIDTH, ROOM_HEIGHT, CELL_SIZE, CELL_SPACING)
-	inventory_grid.title = "Server Room"
+	var padding = 20  # Padding inside panel
+	inventory_grid.position = Vector2(padding, padding)
+
+	# Calculate cell size based on panel size and desired grid dimensions
+	var panel_size = room_bg.size - Vector2(padding * 2, padding * 2)
+	var cell_width = (panel_size.x - (ROOM_WIDTH - 1) * CELL_SPACING) / ROOM_WIDTH
+	var cell_height = (panel_size.y - (ROOM_HEIGHT - 1) * CELL_SPACING) / ROOM_HEIGHT
+	var cell_size = min(cell_width, cell_height)  # Use the smaller to maintain square cells
+
+	inventory_grid.configure(ROOM_WIDTH, ROOM_HEIGHT, cell_size, CELL_SPACING)
+	inventory_grid.title = ""  # Title is already in the UI
 	inventory_grid.read_only = read_only_mode
 	room_bg.add_child(inventory_grid)
 
