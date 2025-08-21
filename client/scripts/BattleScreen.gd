@@ -40,6 +40,11 @@ var attack_particles: Array = []
 func _ready():
 	print("BattleScreen starting...")
 
+	# Set window size for consistency
+	if OS.has_feature("standalone"):
+		DisplayServer.window_set_size(Vector2i(1536, 1024))
+		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))
+
 	# Create event processor
 	event_processor = BattleEventProcessor.new()
 	add_child(event_processor)

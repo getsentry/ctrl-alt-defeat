@@ -3,6 +3,10 @@ extends Control
 const APITypes = preload("res://scripts/api_types.gd")
 
 func _ready():
+	# Set window size for consistency
+	if OS.has_feature("standalone"):
+		DisplayServer.window_set_size(Vector2i(1536, 1024))
+		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))
 	_setup_ui()
 
 func _setup_ui():

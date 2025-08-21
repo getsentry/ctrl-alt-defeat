@@ -93,9 +93,9 @@ var server_types = {
 func _ready():
 	print("UnifiedGridUI starting...")
 
-	# Set window size if not in headless mode
+	# Set window size to match background if not in headless mode
 	if OS.has_feature("standalone"):
-		DisplayServer.window_set_size(Vector2i(1600, 900))
+		DisplayServer.window_set_size(Vector2i(1536, 1024))
 		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))  # Center better
 
 	# Connect to API signals for typed responses
@@ -316,11 +316,15 @@ func _initialize_grids():
 		grid_cells.append(cell_row)
 
 func _setup_ui():
-	# Background
-	var bg = ColorRect.new()
-	bg.color = Color(0.02, 0.02, 0.03, 1.0)
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	# Background image - required
+	var texture = load("res://assets/ui/backgrounds/inventory_background.png")
+	assert(texture != null, "FATAL: Could not load inventory background image at res://assets/ui/backgrounds/inventory_background.png")
+
+	var bg_texture = TextureRect.new()
+	bg_texture.texture = texture
+	bg_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg_texture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(bg_texture)
 
 	_create_header()
 	_create_shop_panel()
@@ -349,66 +353,72 @@ func _setup_ui():
 	print("UI setup complete")
 
 func _create_header():
-	# Only show header in normal mode, not in battle/read-only
+	# Character stats in bottom-left area
 	if not read_only_mode:
-		var header = ColorRect.new()
-		header.color = Color(0.05, 0.05, 0.08, 1.0)
-		header.position = Vector2(0, 0)
-		header.size = Vector2(1280, 70)
-		add_child(header)
+		# Stats panel with semi-transparent background
+		var stats_panel = Panel.new()
+		stats_panel.position = Vector2(50, 700)  # Bottom-left positioning
+		stats_panel.size = Vector2(280, 200)
+		var panel_style = StyleBoxFlat.new()
+		panel_style.bg_color = Color(0.1, 0.05, 0.15, 0.3)  # Semi-transparent purple
+		panel_style.border_color = Color(1.0, 0.0, 1.0, 0.5)  # Pink border
+		panel_style.set_border_width_all(2)
+		panel_style.set_corner_radius_all(5)
+		stats_panel.add_theme_stylebox_override("panel", panel_style)
+		add_child(stats_panel)
 
 		var title = Label.new()
-		title.text = "SENTRY DATA CENTER"
-		title.position = Vector2(480, 10)
-		title.add_theme_font_size_override("font_size", 28)
-		title.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0))
+		title.text = "CHARACTER STATS"
+		title.position = Vector2(70, 720)
+		title.add_theme_font_size_override("font_size", 20)
+		title.add_theme_color_override("font_color", Color(0.0, 1.0, 1.0))  # Cyan
+		title.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
+		title.add_theme_constant_override("shadow_offset_x", 2)
+		title.add_theme_constant_override("shadow_offset_y", 2)
 		add_child(title)
 
 		stats_label = Label.new()
 		stats_label.text = _get_stats_text()
-		stats_label.position = Vector2(460, 40)
+		stats_label.position = Vector2(70, 760)
 		stats_label.add_theme_font_size_override("font_size", 16)
-		stats_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
+		stats_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))  # White text
+		stats_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
+		stats_label.add_theme_constant_override("shadow_offset_x", 1)
+		stats_label.add_theme_constant_override("shadow_offset_y", 1)
 		add_child(stats_label)
 
 func _create_shop_panel():
 	if hide_shop:
 		return
 
-	var shop_bg = Panel.new()
-	shop_bg.position = Vector2(20, 90)
-	shop_bg.size = Vector2(240, 500)
-	var shop_style = StyleBoxFlat.new()
-	shop_style.bg_color = Color(0.06, 0.06, 0.10, 0.95)
-	shop_style.set_corner_radius_all(6)
-	shop_bg.add_theme_stylebox_override("panel", shop_style)
-	add_child(shop_bg)
-
+	# Shop title at top-right
 	var shop_title = Label.new()
 	shop_title.text = "SHOP"
-	shop_title.position = Vector2(110, 100)
-	shop_title.add_theme_font_size_override("font_size", 18)
-	shop_title.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	shop_title.position = Vector2(1320, 180)
+	shop_title.add_theme_font_size_override("font_size", 24)
+	shop_title.add_theme_color_override("font_color", Color(1.0, 0.0, 1.0))  # Pink
+	shop_title.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
+	shop_title.add_theme_constant_override("shadow_offset_x", 2)
+	shop_title.add_theme_constant_override("shadow_offset_y", 2)
 	add_child(shop_title)
 
+	# Shop container for items - positioned to align with shelf areas
 	shop_container = Control.new()
-	shop_container.position = Vector2(30, 130)
-	shop_container.size = Vector2(220, 450)
+	shop_container.position = Vector2(1100, 250)  # Right side positioning
+	shop_container.size = Vector2(400, 600)
 	add_child(shop_container)
 
 func _create_server_room():
-	# Server Room Background
+	# Server Room (Main Inventory) - positioned above character stats
 	var room_bg = Panel.new()
-	# Position higher if in read-only mode (no header)
-	var y_pos = 90 if not read_only_mode else 10
-	room_bg.position = Vector2(280, y_pos)
+	room_bg.position = Vector2(380, 280)  # Center-left, above character stats
 	room_bg.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING) + 20,
 						   ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING) + 20)
 	var room_style = StyleBoxFlat.new()
-	room_style.bg_color = Color(0.04, 0.06, 0.04, 0.95)
-	room_style.border_color = Color(0.15, 0.20, 0.15, 0.6)
+	room_style.bg_color = Color(0.05, 0.1, 0.15, 0.2)  # Semi-transparent blue
+	room_style.border_color = Color(0.0, 1.0, 1.0, 0.4)  # Cyan border
 	room_style.set_border_width_all(2)
-	room_style.set_corner_radius_all(6)
+	room_style.set_corner_radius_all(4)
 	room_bg.add_theme_stylebox_override("panel", room_style)
 	add_child(room_bg)
 
@@ -422,8 +432,7 @@ func _create_server_room():
 
 	# Container for the room
 	server_room_container = Node2D.new()
-	var container_y = 130 if not read_only_mode else 50
-	server_room_container.position = Vector2(290, container_y)
+	server_room_container.position = Vector2(390, 290)  # Match room background position
 	# Control2D doesn't have size property, we'll track the bounds separately
 	add_child(server_room_container)
 
@@ -439,27 +448,31 @@ func _create_storage_area():
 	if hide_storage:
 		return
 
+	# Storage in bottom-middle area
 	var storage_bg = Panel.new()
-	storage_bg.position = Vector2(280, 480)
-	storage_bg.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING) + 20, 100)
+	storage_bg.position = Vector2(520, 850)  # Bottom-middle positioning
+	storage_bg.size = Vector2(500, 120)
 	var storage_style = StyleBoxFlat.new()
-	storage_style.bg_color = Color(0.05, 0.05, 0.08, 0.95)
-	storage_style.border_color = Color(0.2, 0.2, 0.25, 0.6)
+	storage_style.bg_color = Color(0.1, 0.05, 0.15, 0.2)  # Semi-transparent purple
+	storage_style.border_color = Color(0.0, 1.0, 1.0, 0.4)  # Cyan border
 	storage_style.set_border_width_all(2)
-	storage_style.set_corner_radius_all(6)
+	storage_style.set_corner_radius_all(4)
 	storage_bg.add_theme_stylebox_override("panel", storage_style)
 	add_child(storage_bg)
 
 	var storage_title = Label.new()
-	storage_title.text = "STORAGE (Inactive)"
-	storage_title.position = Vector2(500, 490)
-	storage_title.add_theme_font_size_override("font_size", 14)
-	storage_title.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	storage_title.text = "STORAGE"
+	storage_title.position = Vector2(720, 860)
+	storage_title.add_theme_font_size_override("font_size", 18)
+	storage_title.add_theme_color_override("font_color", Color(0.0, 1.0, 1.0))  # Cyan
+	storage_title.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
+	storage_title.add_theme_constant_override("shadow_offset_x", 1)
+	storage_title.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(storage_title)
 
 	storage_container = Control.new()
-	storage_container.position = Vector2(290, 515)
-	storage_container.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING), 55)
+	storage_container.position = Vector2(530, 890)
+	storage_container.size = Vector2(480, 70)
 	add_child(storage_container)
 
 func _create_controls():
@@ -505,8 +518,19 @@ func _display_shop_items(shop_data: Array):
 
 	print("Displaying shop items, data size: %d" % shop_data.size())
 
-	# Display shop items from server data
-	var item_count = 0
+	# Shelf positions: 1 item on top shelf, 2 on middle, 2 on bottom
+	var shelf_positions = [
+		# Top shelf (1 item, centered)
+		[Vector2(100, 50)],
+		# Middle shelf (2 items)
+		[Vector2(20, 200), Vector2(200, 200)],
+		# Bottom shelf (2 items)
+		[Vector2(20, 350), Vector2(200, 350)]
+	]
+
+	var shelf_index = 0
+	var position_in_shelf = 0
+
 	for i in range(shop_data.size()):
 		if shop_data[i] == null:
 			print("  Slot %d: empty" % i)
@@ -514,22 +538,31 @@ func _display_shop_items(shop_data: Array):
 
 		var item_data = shop_data[i]
 		print("  Slot %d: %s (cost: %d)" % [i, item_data.get("name", "Unknown"), item_data.get("cost", 0)])
-		var shop_item = _create_shop_item_from_data(item_data)
-		shop_item.position = Vector2(10, 10 + item_count * 85)
-		shop_container.add_child(shop_item)
-		shop_items.append(shop_item)
-		item_count += 1
 
-	print("Added %d shop items to container" % item_count)
+		# Find position on shelf
+		if shelf_index < shelf_positions.size() and position_in_shelf < shelf_positions[shelf_index].size():
+			var shop_item = _create_shop_item_from_data(item_data)
+			shop_item.position = shelf_positions[shelf_index][position_in_shelf]
+			shop_container.add_child(shop_item)
+			shop_items.append(shop_item)
+
+			position_in_shelf += 1
+			if position_in_shelf >= shelf_positions[shelf_index].size():
+				shelf_index += 1
+				position_in_shelf = 0
+
+	print("Added %d shop items to container" % shop_items.size())
 
 func _create_shop_item_from_data(data: Dictionary) -> Control:
 	var shop_item = Panel.new()
-	shop_item.custom_minimum_size = Vector2(200, 70)
-	shop_item.size = Vector2(200, 70)
+	shop_item.custom_minimum_size = Vector2(160, 100)
+	shop_item.size = Vector2(160, 100)
 
-	# Style the panel
+	# Style the panel with cyberpunk theme
 	var item_style = StyleBoxFlat.new()
-	item_style.bg_color = Color(0.15, 0.15, 0.2, 0.9)
+	item_style.bg_color = Color(0.1, 0.05, 0.15, 0.4)  # Semi-transparent purple
+	item_style.border_color = Color(1.0, 0.0, 1.0, 0.6)  # Pink border
+	item_style.set_border_width_all(2)
 	item_style.set_corner_radius_all(4)
 	shop_item.add_theme_stylebox_override("panel", item_style)
 
@@ -564,12 +597,15 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 		size_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
 		shop_item.add_child(size_label)
 
-	# Cost label
+	# Cost label - positioned prominently
 	var cost_label = Label.new()
-	cost_label.text = "%dg" % data.get("cost", 5)
-	cost_label.position = Vector2(60, 35 if not is_container else 45)
-	cost_label.add_theme_font_size_override("font_size", 14)
-	cost_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	cost_label.text = "%d GOLD" % data.get("cost", 5)
+	cost_label.position = Vector2(50, 70)
+	cost_label.add_theme_font_size_override("font_size", 16)
+	cost_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.0))  # Yellow
+	cost_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
+	cost_label.add_theme_constant_override("shadow_offset_x", 2)
+	cost_label.add_theme_constant_override("shadow_offset_y", 2)
 	shop_item.add_child(cost_label)
 
 	# Store data and connect input
@@ -710,7 +746,10 @@ func _create_item(item_data: Dictionary) -> Control:
 			cell_panel.size = Vector2(CELL_SIZE, CELL_SIZE)
 
 			var cell_style = StyleBoxFlat.new()
-			cell_style.bg_color = rotated_data.get("color", Color(0.3, 0.9, 0.6, 1.0))
+			var base_color = rotated_data.get("color", Color(0.3, 0.9, 0.6, 1.0))
+			cell_style.bg_color = Color(base_color.r, base_color.g, base_color.b, 0.7)  # Semi-transparent
+			cell_style.border_color = Color(0.0, 1.0, 1.0, 0.8)  # Cyan border
+			cell_style.set_border_width_all(1)
 			cell_style.set_corner_radius_all(3)
 			cell_panel.add_theme_stylebox_override("panel", cell_style)
 			container.add_child(cell_panel)
@@ -720,6 +759,9 @@ func _create_item(item_data: Dictionary) -> Control:
 	label.position = Vector2(3, 3)
 	label.add_theme_font_size_override("font_size", 10)
 	label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
 	# Rotate label with item
 	label.rotation_degrees = rotated_data.rotation
 	if rotated_data.rotation == 90:
@@ -974,8 +1016,8 @@ func _place_server_pattern(x: int, y: int, server_data: Dictionary):
 				cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 				var cell_style = StyleBoxFlat.new()
-				cell_style.bg_color = Color(0.1, 0.15, 0.1, 0.3)
-				cell_style.border_color = Color(0.3, 0.4, 0.3, 0.5)
+				cell_style.bg_color = Color(0.0, 0.1, 0.2, 0.2)  # Semi-transparent blue
+				cell_style.border_color = Color(0.0, 1.0, 1.0, 0.6)  # Cyan border
 				cell_style.set_border_width_all(1)
 				cell.add_theme_stylebox_override("panel", cell_style)
 
