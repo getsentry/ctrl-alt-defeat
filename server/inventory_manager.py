@@ -55,23 +55,38 @@ class InventoryGrid:
             },
         ]
 
-    def is_valid_placement(self, position: Tuple[int, int]) -> bool:
-        """Check if a position is valid for item placement"""
-        x, y = position
+    def is_valid_placement(
+        self, position: Tuple[int, int], shape: List[Tuple[int, int]] = None
+    ) -> bool:
+        """Check if a position is valid for item placement, considering its shape"""
+        # If no shape provided, assume single square
+        if shape is None:
+            shape = [(0, 0)]
 
-        # Check bounds
-        if x < 0 or x >= self.width or y < 0 or y >= self.height:
-            return False
+        # Check all squares the item would occupy
+        base_x, base_y = position
+        for dx, dy in shape:
+            x = base_x + dx
+            y = base_y + dy
 
-        # Check if position is on a server container
-        for container in self.containers:
-            cx, cy = container["position"]
-            cw, ch = container["width"], container["height"]
+            # Check bounds
+            if x < 0 or x >= self.width or y < 0 or y >= self.height:
+                return False
 
-            if cx <= x < cx + cw and cy <= y < cy + ch:
-                return True
+            # Check if position is on a server container
+            on_container = False
+            for container in self.containers:
+                cx, cy = container["position"]
+                cw, ch = container["width"], container["height"]
 
-        return False
+                if cx <= x < cx + cw and cy <= y < cy + ch:
+                    on_container = True
+                    break
+
+            if not on_container:
+                return False
+
+        return True
 
     def get_item_at(self, position: Tuple[int, int]) -> Optional[Dict]:
         """Get the item at a specific position"""
@@ -113,13 +128,15 @@ class InventoryGrid:
         # Check all squares the item would occupy
         occupied_squares = self._get_occupied_squares(item, position)
 
-        # Validate all squares
-        for square in occupied_squares:
-            if not self.is_valid_placement(square):
-                raise InvalidPlacementError(
-                    f"Position {square} is not on a server container"
-                )
+        # First check if the entire shape fits on containers
+        shape = item.get("shape", [(0, 0)])  # Default to single square
+        if not self.is_valid_placement(position, shape):
+            raise InvalidPlacementError(
+                f"Item at position {position} does not fit entirely on server containers"
+            )
 
+        # Then check for overlaps with existing items
+        for square in occupied_squares:
             existing_item = self.get_item_at(square)
             if existing_item is not None:
                 item_id = existing_item.get("id", "unknown")

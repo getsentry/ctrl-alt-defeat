@@ -1186,11 +1186,15 @@ def place_item_in_inventory(
         # Place on grid
         success = manager.place_item(item, placement=to_location)
         if not success:
-            # Determine specific error
-            if not manager.grid.is_valid_placement(to_location):
+            # Determine specific error - need to check with shape
+            item_shape = item.get("shape", [(0, 0)])
+            if not manager.grid.is_valid_placement(to_location, item_shape):
                 raise HTTPException(
                     status_code=HTTPStatus.BAD_REQUEST,
-                    detail=f"Position {to_location} is not on a server container",
+                    detail=(
+                        f"Position {to_location} with shape does not fit "
+                        "entirely on server containers"
+                    ),
                 )
             else:
                 existing = manager.grid.get_item_at(to_location)

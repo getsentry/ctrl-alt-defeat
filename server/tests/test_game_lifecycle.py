@@ -15,21 +15,21 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
     shop = session["current_shop"]
     # Use positions within the default containers that are created with each session
     # Default containers are 3 standard_vm at (2,3), (4,3), (6,3), each 2x2
-    # Space positions out to reduce overlap chances with larger shapes
-    # Use one position per container to start, then fill in
+    # Be careful with shapes - items with shapes need all their squares to fit
+    # Prefer top-left positions for items with shapes to ensure they fit
     container_positions = [
-        (2, 3),  # Container A top-left
-        (4, 3),  # Container B top-left
-        (6, 3),  # Container C top-left
-        (3, 4),  # Container A bottom-right
-        (5, 4),  # Container B bottom-right
-        (7, 4),  # Container C bottom-right
-        (2, 4),  # Container A bottom-left
-        (4, 4),  # Container B bottom-left
-        (6, 4),  # Container C bottom-left
-        (3, 3),  # Container A top-right
-        (5, 3),  # Container B top-right
-        (7, 3),  # Container C top-right
+        (2, 3),  # Container A top-left - safe for any shape up to 2x2
+        (4, 3),  # Container B top-left - safe for any shape up to 2x2
+        (6, 3),  # Container C top-left - safe for any shape up to 2x2
+        (3, 3),  # Container A top-right - only safe for 1x1 or 1x2
+        (5, 3),  # Container B top-right - only safe for 1x1 or 1x2
+        (7, 3),  # Container C top-right - only safe for 1x1 or 1x2
+        (2, 4),  # Container A bottom-left - only safe for 1x1 or 2x1
+        (4, 4),  # Container B bottom-left - only safe for 1x1 or 2x1
+        (6, 4),  # Container C bottom-left - only safe for 1x1 or 2x1
+        (3, 4),  # Container A bottom-right - only safe for 1x1
+        (5, 4),  # Container B bottom-right - only safe for 1x1
+        (7, 4),  # Container C bottom-right - only safe for 1x1
     ]
 
     # Track occupied positions from existing inventory
@@ -53,15 +53,40 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
             if item["id"] in purchased_item_ids:
                 continue
 
-            # Find next available position
+            # Find next available position that fits item's shape
             target_position = None
+            item_shape = item.get("shape", [[0, 0]])
+
             for pos in container_positions:
-                if pos not in occupied_positions:
+                if pos in occupied_positions:
+                    continue
+
+                # Check if shape fits at this position
+                x, y = pos
+                fits = True
+                for offset in item_shape:
+                    check_x = x + offset[0]
+                    check_y = y + offset[1]
+                    # Check if this square is in a container
+                    # Containers: A=(2-3,3-4), B=(4-5,3-4), C=(6-7,3-4)
+                    in_container = False
+                    if 2 <= check_x <= 3 and 3 <= check_y <= 4:  # Container A
+                        in_container = True
+                    elif 4 <= check_x <= 5 and 3 <= check_y <= 4:  # Container B
+                        in_container = True
+                    elif 6 <= check_x <= 7 and 3 <= check_y <= 4:  # Container C
+                        in_container = True
+
+                    if not in_container or (check_x, check_y) in occupied_positions:
+                        fits = False
+                        break
+
+                if fits:
                     target_position = pos
                     break
 
             if not target_position:
-                break  # No more available positions
+                continue  # Try next item, this one doesn't fit
 
             # Prefer items with attack capability (damage > 0)
             # But purchase any item if we haven't purchased enough
@@ -80,7 +105,14 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
                 if response.status_code == 200:
                     items_purchased += 1
                     purchased_item_ids.add(item["id"])
-                    occupied_positions.add(target_position)
+                    # Mark all squares occupied by this item
+                    for offset in item_shape:
+                        occupied_positions.add(
+                            (
+                                target_position[0] + offset[0],
+                                target_position[1] + offset[1],
+                            )
+                        )
 
     # If we didn't get enough offensive items, purchase any available items
     if items_purchased < num_items:
@@ -114,7 +146,14 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
                 if response.status_code == 200:
                     items_purchased += 1
                     purchased_item_ids.add(item["id"])
-                    occupied_positions.add(target_position)
+                    # Mark all squares occupied by this item
+                    for offset in item_shape:
+                        occupied_positions.add(
+                            (
+                                target_position[0] + offset[0],
+                                target_position[1] + offset[1],
+                            )
+                        )
 
     return items_purchased
 
