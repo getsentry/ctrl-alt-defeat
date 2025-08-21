@@ -25,20 +25,28 @@ from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFo
 from matchmaking import MatchmakingService
 from schemas import (
     BattleAction,
+    BattleHistoryEntry,
+    BattleHistoryResponse,
     BattleResponse,
     BattleResult,
     GameSession,
+    HealthResponse,
     InventoryData,
     ItemCatalogEntry,
+    ItemInfo,
+    LeaderboardEntry,
+    LeaderboardResponse,
     MoveItemRequest,
+    MoveItemResponse,
 )
 from schemas import PlacedItem as PlacedItemSchema
-from schemas import PurchaseRequest, PurchaseResponse, SellRequest
+from schemas import PurchaseRequest, PurchaseResponse, SellRequest, SellResponse
 from schemas import ServerContainer as ServerContainerSchema
 from schemas import (
     SessionUpdate,
     ShopItem,
     ShopRefreshRequest,
+    ShopRefreshResponse,
     SimpleBattleRequest,
     StartSessionRequest,
     StartSessionResponse,
@@ -196,8 +204,8 @@ async def shutdown_event():
 # Request/Response models have been moved to schemas.py
 
 
-@app.get("/health")
-async def health_check():
+@app.get("/health", response_model=HealthResponse)
+async def health_check() -> HealthResponse:
     """Health check endpoint for monitoring"""
     try:
         # Check database connection
@@ -208,13 +216,13 @@ async def health_check():
         if not TEST_MODE:
             sentry_sdk.capture_exception(e)
 
-    return {
-        "status": "healthy" if db_status == "healthy" else "degraded",
-        "database": db_status,
-        "environment": ENVIRONMENT,
-        "test_mode": TEST_MODE,
-        "version": os.environ.get("RELEASE", "autobattler-server@1.0.0"),
-    }
+    return HealthResponse(
+        status="healthy" if db_status == "healthy" else "degraded",
+        database=db_status,
+        environment=ENVIRONMENT,
+        test_mode=TEST_MODE,
+        version=os.environ.get("RELEASE", "autobattler-server@1.0.0"),
+    )
 
 
 @app.post("/session/start", response_model=StartSessionResponse)
@@ -332,8 +340,8 @@ async def get_session_endpoint(player_id: str) -> GameSession:
     return session
 
 
-@app.post("/shop/refresh")
-async def refresh_shop(request: ShopRefreshRequest) -> Dict[str, Any]:
+@app.post("/shop/refresh", response_model=ShopRefreshResponse)
+async def refresh_shop(request: ShopRefreshRequest) -> ShopRefreshResponse:
     """Get new shop items (costs 1 gold if not free refresh)"""
     session = await session_manager.get_session(request.player_id)
     if not session:
@@ -360,7 +368,32 @@ async def refresh_shop(request: ShopRefreshRequest) -> Dict[str, Any]:
     # Save updated session
     await session_manager.update_session(session)
 
-    return {"shop": session.current_shop, "gold": session.gold}
+    # Convert shop items to ShopItem models
+    shop_items = []
+    for item in session.current_shop:
+        if item:
+            shop_items.append(
+                ShopItem(
+                    id=item["id"],
+                    item_type=item["item_type"],
+                    name=item.get("name", ""),
+                    category=item.get("category", ""),
+                    rarity=item.get("rarity", "common"),
+                    cost=item.get("cost", 0),
+                    is_container=item.get("is_container", False),
+                    internal_width=item.get("internal_width"),
+                    internal_height=item.get("internal_height"),
+                    min_damage=item.get("min_damage", 0),
+                    max_damage=item.get("max_damage", 0),
+                    cooldown=item.get("cooldown", 0),
+                    cpu_cost=item.get("cpu_cost", 0),
+                    special_effect=item.get("special_effect") or "",
+                )
+            )
+        else:
+            shop_items.append(None)
+
+    return ShopRefreshResponse(shop=shop_items, gold=session.gold)
 
 
 def get_shop_cost(rarity: str, tier: int) -> int:
@@ -1381,8 +1414,8 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
     )
 
 
-@app.post("/sell/item")
-async def sell_item(request: SellRequest) -> Dict[str, Any]:
+@app.post("/sell/item", response_model=SellResponse)
+async def sell_item(request: SellRequest) -> SellResponse:
     """Sell an item for 50% value"""
     session = await session_manager.get_session(request.player_id)
     if not session:
@@ -1452,16 +1485,16 @@ async def sell_item(request: SellRequest) -> Dict[str, Any]:
     # Save updated session
     await session_manager.update_session(session)
 
-    return {
-        "success": True,
-        "gold_gained": gold_gained,
-        "gold": session.gold,
-        "sold_item": item_found,
-    }
+    return SellResponse(
+        success=True,
+        gold_gained=gold_gained,
+        gold=session.gold,
+        sold_item=item_found,
+    )
 
 
-@app.post("/move/item")
-async def move_item(request: MoveItemRequest) -> Dict[str, Any]:
+@app.post("/move/item", response_model=MoveItemResponse)
+async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     """Move an item to a new position or storage"""
     session = await session_manager.get_session(request.player_id)
     if not session:
@@ -1517,16 +1550,17 @@ async def move_item(request: MoveItemRequest) -> Dict[str, Any]:
     # Check for same position move (no-op)
     if current_location == to_loc:
         # No-op, just return success
-        return {
-            "success": True,
-            "inventory_grid": session.inventory_grid,
-            "inventory_storage": session.inventory_storage,
-            "item": {
-                "id": item_found["id"],
-                "item_type": item_found.get("item_type"),
-                "position": list(to_loc) if to_loc != "storage" else None,
-            },
-        }
+        return MoveItemResponse(
+            success=True,
+            inventory_grid=session.inventory_grid,
+            inventory_storage=session.inventory_storage,
+            item=ItemInfo(
+                id=item_found["id"],
+                item_type=item_found.get("item_type", ""),
+                position=list(to_loc) if to_loc != "storage" else None,
+                name=item_found.get("name"),
+            ),
+        )
 
     # Attempt the move using InventoryManager
     try:
@@ -1560,52 +1594,69 @@ async def move_item(request: MoveItemRequest) -> Dict[str, Any]:
     if to_loc != "storage":
         final_position = list(to_loc)
 
-    return {
-        "success": True,
-        "inventory_grid": session.inventory_grid,
-        "inventory_storage": session.inventory_storage,
-        "item": {
-            "id": item_found["id"],
-            "item_type": item_found.get("item_type"),
-            "position": final_position,
-        },
-    }
+    return MoveItemResponse(
+        success=True,
+        inventory_grid=session.inventory_grid,
+        inventory_storage=session.inventory_storage,
+        item=ItemInfo(
+            id=item_found["id"],
+            item_type=item_found.get("item_type", ""),
+            position=final_position,
+            name=item_found.get("name"),
+        ),
+    )
 
 
-@app.get("/leaderboard")
-async def get_leaderboard(limit: int = 10) -> List[Dict]:
+@app.get("/leaderboard", response_model=LeaderboardResponse)
+async def get_leaderboard(limit: int = 10) -> LeaderboardResponse:
     """Get top players"""
-    leaderboard = []
+    entries = []
 
     # Get all active sessions
-    player_ids = await session_manager.list_sessions()
+    player_ids = await session_manager.list_active_sessions()
     for player_id in player_ids:
         session = await session_manager.get_session(player_id)
         if not session:
             continue
-        leaderboard.append(
-            {
-                "player_id": player_id,
-                "round": session.round,
-                "wins": session.wins,
-                "losses": session.losses,
-                "win_rate": round(
+        entries.append(
+            LeaderboardEntry(
+                player_id=player_id,
+                round=session.round,
+                wins=session.wins,
+                losses=session.losses,
+                win_rate=round(
                     session.wins / max(1, session.wins + session.losses) * 100, 1
                 ),
-                "score": session.wins * 100 + session.round * 10,
-            }
+                score=session.wins * 100 + session.round * 10,
+            )
         )
 
-    leaderboard.sort(key=lambda x: x["score"], reverse=True)
-    return leaderboard[:limit]
+    entries.sort(key=lambda x: x.score, reverse=True)
+    return LeaderboardResponse(entries=entries[:limit])
 
 
-@app.get("/battle/history/{player_id}")
-async def get_battle_history(player_id: str, limit: int = 10) -> List[Dict]:
+@app.get("/battle/history/{player_id}", response_model=BattleHistoryResponse)
+async def get_battle_history(player_id: str, limit: int = 10) -> BattleHistoryResponse:
     """Get player's recent battles"""
     # Get battle history from session manager
-    battles = await session_manager.get_battle_history(player_id, limit)
-    return battles
+    battles_data = await session_manager.get_battle_history(player_id, limit)
+
+    # Convert to BattleHistoryEntry models
+    battles = []
+    for battle in battles_data:
+        battles.append(
+            BattleHistoryEntry(
+                id=battle["id"],
+                player1_id=battle["player1_id"],
+                player2_id=battle.get("player2_id"),
+                round_number=battle["round_number"],
+                winner=battle["winner"],
+                battle_data=battle["battle_data"],
+                created_at=battle.get("created_at"),
+            )
+        )
+
+    return BattleHistoryResponse(battles=battles)
 
 
 # Test-only endpoints
