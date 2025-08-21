@@ -25,7 +25,7 @@ func test_purchase_and_battle():
 		print("   - Purchasing %s at position (2, 3)" % item.get("name", "Unknown"))
 		var purchase_response = await api.purchase_item(item.get("id"), [2, 3])
 		assert_not_null(purchase_response, "Should get purchase response")
-		assert_true(purchase_response.success, "Purchase should succeed")
+		# HTTP 200 means success, no separate success field
 		print("   - Purchase successful, gold: %d" % purchase_response.gold)
 
 		# Now try to battle

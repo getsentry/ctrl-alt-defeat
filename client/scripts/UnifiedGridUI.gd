@@ -1305,7 +1305,7 @@ func _update_stats():
 
 func _on_purchase_completed(response: APITypes.PurchaseResponse):
 	# Update gold from server response
-	if response != null and response.success:
+	if response != null:
 		GameStateManager.gold = response.gold
 		_update_stats()
 

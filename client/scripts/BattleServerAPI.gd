@@ -280,9 +280,9 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 		if parse_result == OK:
 			var data = json.data
 			response = APITypes.PurchaseResponse.new(data)
-			if response.success:
-				session_data["gold"] = response.gold
-				print("DEBUG: Purchase successful, gold now: %d" % response.gold)
+			# HTTP 200 means success
+			session_data["gold"] = response.gold
+			print("DEBUG: Purchase successful, gold now: %d" % response.gold)
 			purchase_completed.emit(response)
 			return response
 

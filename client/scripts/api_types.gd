@@ -211,13 +211,12 @@ class ShopRefreshResponse extends Resource:
 
 # Purchase response - matches server PurchaseResponse
 class PurchaseResponse extends Resource:
-	var success: bool = false
 	var purchased_item: Dictionary = {}  # ShopItem
 	var gold: int = 0
 
 	func _init(data: Dictionary):
 		# Required fields per server schema
-		success = data["success"]
+		# Server doesn't send success - HTTP 200 means success
 		purchased_item = data["purchased_item"]
 		gold = data["gold"]
 
