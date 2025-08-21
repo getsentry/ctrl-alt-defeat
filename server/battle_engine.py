@@ -8,7 +8,7 @@ import time
 import uuid
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 from event_system import Event, EventData, EventManager, EventType
 from grid_system import SHAPES, Rotation
@@ -135,6 +135,21 @@ class Player:
 ITEM_CATALOG = create_example_items()
 
 
+class BattleResult(TypedDict):
+    """Type definition for simulate_battle return value"""
+
+    winner: int  # 1 for player1, 2 for player2
+    duration: float  # Battle duration in seconds
+    player1_quota: int  # Player 1's remaining quota
+    player2_quota: int  # Player 2's remaining quota
+    actions: List[Dict[str, Any]]  # Battle action timeline
+    seed: int  # RNG seed used for the battle
+    player1_items: List[PlacedItem]  # Player 1's loadout
+    player2_items: List[PlacedItem]  # Player 2's loadout
+    player1_containers: List[ServerContainer]  # Player 1's containers
+    player2_containers: List[ServerContainer]  # Player 2's containers
+
+
 class BattleSimulator:
     """Simulates battles per Game Design Document specifications"""
 
@@ -159,7 +174,7 @@ class BattleSimulator:
         round_number: int = 1,
         p1_containers: List[ServerContainer] = None,
         p2_containers: List[ServerContainer] = None,
-    ) -> Dict:
+    ) -> BattleResult:
         """
         Simulate battle following Section 1.3 Item Activation Flow
         Returns compact action log per Section 10.2
@@ -269,18 +284,18 @@ class BattleSimulator:
         # Determine winner (Section 6.2)
         winner = 1 if player1.quota > player2.quota else 2
 
-        return {
-            "winner": winner,
-            "duration": round(self.current_time, 1),
-            "player1_quota": max(0, player1.quota),
-            "player2_quota": max(0, player2.quota),
-            "actions": self.actions,
-            "seed": self.seed,  # Include seed for replay/debugging
-            "player1_items": p1_items,  # Include player 1 loadout
-            "player2_items": p2_items,  # Include player 2 (enemy) loadout
-            "player1_containers": p1_containers,  # Include player 1 containers
-            "player2_containers": p2_containers,  # Include player 2 containers
-        }
+        return BattleResult(
+            winner=winner,
+            duration=round(self.current_time, 1),
+            player1_quota=max(0, player1.quota),
+            player2_quota=max(0, player2.quota),
+            actions=self.actions,
+            seed=self.seed,  # Include seed for replay/debugging
+            player1_items=p1_items,  # Include player 1 loadout
+            player2_items=p2_items,  # Include player 2 (enemy) loadout
+            player1_containers=p1_containers,  # Include player 1 containers
+            player2_containers=p2_containers,  # Include player 2 containers
+        )
 
     def _get_round_quota(self, round_num: int) -> int:
         """Get quota based on round number (Section 1.1)"""
