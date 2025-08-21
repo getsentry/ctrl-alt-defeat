@@ -45,9 +45,7 @@ class GameSession(BaseModel):
     shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
     # Inventory fields
     inventory_grid: List[Dict] = []  # Items placed on the grid
-    inventory_slots: List[Dict] = []  # Inventory slots (legacy compatibility)
     inventory_storage: List[Dict] = []  # Items in storage (not used in battle)
-    placed_items: List[Dict] = []  # Quick reference to items on grid
     server_containers: List[Dict] = []  # Server container positions and info
 
 
