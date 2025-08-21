@@ -117,13 +117,41 @@ echo ""
 echo "Running All Tests..."
 echo "--------------------"
 # Run all tests in one command - GUT will find all test directories
-godot --headless --script addons/gut/gut_cmdln.gd \
-    -gdir=res://test \
-    -gexit \
-    -glog=3 \
-    $FILTER_ARG 2>&1 | tee test_output.tmp
+# Use background process with timeout to prevent hanging tests
+(
+    godot --headless --script addons/gut/gut_cmdln.gd \
+        -gdir=res://test \
+        -gexit \
+        -glog=3 \
+        $FILTER_ARG 2>&1 | tee test_output.tmp
+) &
+TEST_PID=$!
 
-TEST_EXIT_CODE=${PIPESTATUS[0]}
+# Wait for up to 10 seconds
+SECONDS=0
+while [ $SECONDS -lt 10 ]; do
+    if ! kill -0 $TEST_PID 2>/dev/null; then
+        # Process finished
+        wait $TEST_PID
+        TEST_EXIT_CODE=$?
+        break
+    fi
+    sleep 0.1
+done
+
+# If still running after 10 seconds, kill it
+if kill -0 $TEST_PID 2>/dev/null; then
+    echo -e "${RED}❌ Tests timed out after 10 seconds${NC}"
+    kill -TERM $TEST_PID 2>/dev/null
+    wait $TEST_PID 2>/dev/null
+    TEST_EXIT_CODE=124
+else
+    # Get the exit code if we didn't already
+    if [ -z "$TEST_EXIT_CODE" ]; then
+        wait $TEST_PID
+        TEST_EXIT_CODE=$?
+    fi
+fi
 
 # Also check for failures in output as backup
 if grep -q "\[Failed\]:\|SCRIPT ERROR:\|FAILED:" test_output.tmp; then

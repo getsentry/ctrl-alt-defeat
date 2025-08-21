@@ -13,6 +13,13 @@
 - Keep test files focused on testing their corresponding source file
 
 ## Commands
+
+### Server Tests
 - Run ALL tests: `cd server && python -m pytest tests/`
 - Run specific test: `cd server && python -m pytest tests/test_battle_engine.py -v`
 - Start server: `cd server && python main.py`
+
+### Client Tests
+- Run ALL tests: `./run_tests.sh`
+- Run specific test by name: `./run_tests.sh test_shop_purchase`
+- Run specific test file: `./run_tests.sh test/ui/test_ui_driven.gd`
