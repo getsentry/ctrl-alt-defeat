@@ -765,7 +765,9 @@ func _on_inventory_input(event: InputEvent):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
-				var local_pos = inventory_grid.get_local_mouse_position()
+				# Get mouse position safely
+				var global_mouse = get_global_mouse_position()
+				var local_pos = inventory_grid.to_local(global_mouse) if inventory_grid.is_inside_tree() else Vector2.ZERO
 				var grid_pos = inventory_grid.pixel_to_grid(local_pos)
 				# Check for items at this position
 				if grid_pos in inventory_grid.items:
@@ -911,7 +913,12 @@ func _stop_dragging(drop_position: Vector2 = Vector2.ZERO):
 
 func _try_place_server(server_preview: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
 	var global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
-	var mouse_pos = inventory_grid.get_local_mouse_position() if inventory_grid else global_pos
+	# Convert global position to local position safely
+	var mouse_pos = Vector2.ZERO
+	if inventory_grid:
+		mouse_pos = inventory_grid.to_local(global_pos) if inventory_grid.is_inside_tree() else global_pos
+	else:
+		mouse_pos = global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 
@@ -1036,7 +1043,12 @@ func _try_place_item(item: Control, drop_position: Vector2 = Vector2.ZERO) -> bo
 	var global_pos = drop_position
 	if global_pos == Vector2.ZERO:
 		global_pos = last_drag_position if last_drag_position != Vector2.ZERO else get_global_mouse_position()
-	var mouse_pos = inventory_grid.get_local_mouse_position() if inventory_grid else global_pos
+	# Convert global position to local position safely
+	var mouse_pos = Vector2.ZERO
+	if inventory_grid:
+		mouse_pos = inventory_grid.to_local(global_pos) if inventory_grid.is_inside_tree() else global_pos
+	else:
+		mouse_pos = global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 	if mouse_pos.x >= 0 and mouse_pos.x < room_bounds.x and \
@@ -1102,7 +1114,12 @@ func _try_place_item(item: Control, drop_position: Vector2 = Vector2.ZERO) -> bo
 
 	# Check storage
 	var storage_global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
-	var storage_mouse = storage_grid.get_local_mouse_position() if storage_grid else storage_global_pos
+	# Convert to storage local position safely
+	var storage_mouse = Vector2.ZERO
+	if storage_grid:
+		storage_mouse = storage_grid.to_local(storage_global_pos) if storage_grid.is_inside_tree() else storage_global_pos
+	else:
+		storage_mouse = storage_global_pos
 	if storage_mouse.x >= 0 and storage_mouse.x < storage_container.size.x and \
 	   storage_mouse.y >= 0 and storage_mouse.y < storage_container.size.y:
 
@@ -1227,7 +1244,12 @@ func _update_hover_preview(global_pos: Vector2 = Vector2.ZERO):
 
 	if global_pos == Vector2.ZERO:
 		global_pos = get_global_mouse_position()
-	var mouse_pos = inventory_grid.get_local_mouse_position() if inventory_grid else global_pos
+	# Convert global position to local position safely
+	var mouse_pos = Vector2.ZERO
+	if inventory_grid:
+		mouse_pos = inventory_grid.to_local(global_pos) if inventory_grid.is_inside_tree() else global_pos
+	else:
+		mouse_pos = global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 
@@ -1324,7 +1346,12 @@ func _on_refresh_shop():
 
 func _try_move_server(server: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
 	var global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
-	var mouse_pos = inventory_grid.get_local_mouse_position() if inventory_grid else global_pos
+	# Convert global position to local position safely
+	var mouse_pos = Vector2.ZERO
+	if inventory_grid:
+		mouse_pos = inventory_grid.to_local(global_pos) if inventory_grid.is_inside_tree() else global_pos
+	else:
+		mouse_pos = global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 
