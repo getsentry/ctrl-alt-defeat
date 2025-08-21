@@ -45,7 +45,6 @@ class TestPurchaseValidation:
         result = response.json()
 
         # Check response
-        assert result["success"] is True
         assert result["gold"] == initial_gold - shop_item["cost"]
 
         # Verify item is in storage
@@ -87,9 +86,6 @@ class TestPurchaseValidation:
         )
 
         assert response.status_code == 200
-        result = response.json()
-
-        assert result["success"] is True
 
         # Verify item is on grid
         session_response = auth_client.get(f"/session/{player_id}")

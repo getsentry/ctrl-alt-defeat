@@ -131,7 +131,6 @@ class ShopItem(BaseModel):
 class PurchaseResponse(BaseModel):
     """Response after purchasing an item"""
 
-    success: bool = Field(description="Whether purchase was successful")
     purchased_item: ShopItem = Field(description="The item that was purchased")
     gold: int = Field(description="Remaining gold after purchase")
 
@@ -235,7 +234,6 @@ class ShopRefreshResponse(BaseModel):
 class SellResponse(BaseModel):
     """Response after selling an item"""
 
-    success: bool = Field(description="Whether sale was successful")
     gold_gained: int = Field(description="Gold gained from sale")
     gold: int = Field(description="Total gold after sale")
     sold_item: Dict[str, Any] = Field(description="The item that was sold")
@@ -255,7 +253,6 @@ class ItemInfo(BaseModel):
 class MoveItemResponse(BaseModel):
     """Response after moving an item"""
 
-    success: bool = Field(description="Whether move was successful")
     inventory_grid: List[Dict[str, Any]] = Field(description="Updated grid inventory")
     inventory_storage: List[Dict[str, Any]] = Field(description="Updated storage")
     item: ItemInfo = Field(description="Moved item information")

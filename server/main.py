@@ -1409,9 +1409,7 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
         special_effect=item.get("special_effect") or "",
     )
 
-    return PurchaseResponse(
-        success=True, purchased_item=purchased_item, gold=session.gold
-    )
+    return PurchaseResponse(purchased_item=purchased_item, gold=session.gold)
 
 
 @app.post("/sell/item", response_model=SellResponse)
@@ -1486,7 +1484,6 @@ async def sell_item(request: SellRequest) -> SellResponse:
     await session_manager.update_session(session)
 
     return SellResponse(
-        success=True,
         gold_gained=gold_gained,
         gold=session.gold,
         sold_item=item_found,
@@ -1551,7 +1548,6 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     if current_location == to_loc:
         # No-op, just return success
         return MoveItemResponse(
-            success=True,
             inventory_grid=session.inventory_grid,
             inventory_storage=session.inventory_storage,
             item=ItemInfo(
@@ -1595,7 +1591,6 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
         final_position = list(to_loc)
 
     return MoveItemResponse(
-        success=True,
         inventory_grid=session.inventory_grid,
         inventory_storage=session.inventory_storage,
         item=ItemInfo(
