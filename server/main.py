@@ -24,13 +24,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
 from matchmaking import MatchmakingService
 from schemas import (
+    BattleAction,
+    BattleResponse,
+    BattleResult,
     GameSession,
+    InventoryData,
+    ItemCatalogEntry,
     MoveItemRequest,
-    PurchaseRequest,
-    SellRequest,
+)
+from schemas import PlacedItem as PlacedItemSchema
+from schemas import PurchaseRequest, PurchaseResponse, SellRequest
+from schemas import ServerContainer as ServerContainerSchema
+from schemas import (
+    SessionUpdate,
+    ShopItem,
     ShopRefreshRequest,
     SimpleBattleRequest,
     StartSessionRequest,
+    StartSessionResponse,
 )
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -206,11 +217,11 @@ async def health_check():
     }
 
 
-@app.post("/session/start")
+@app.post("/session/start", response_model=StartSessionResponse)
 async def start_session(
     request: StartSessionRequest,
     current_user: TokenData = Depends(get_current_user),
-) -> Dict[str, Any]:
+) -> StartSessionResponse:
     """
     Start a new game session
 
@@ -292,22 +303,22 @@ async def start_session(
                             if hasattr(effect, "special"):
                                 special = effect.special
 
-        item_catalog_simple[k] = {
-            "name": v.name,
-            "category": v.category,
-            "rarity": v.rarity,
-            "min_damage": min_dmg,
-            "max_damage": max_dmg,
-            "cooldown": cooldown,
-            "cpu_cost": cpu_cost,
-            "special_effect": special,
-        }
+        item_catalog_simple[k] = ItemCatalogEntry(
+            name=v.name,
+            category=v.category,
+            rarity=v.rarity,
+            min_damage=min_dmg,
+            max_damage=max_dmg,
+            cooldown=cooldown,
+            cpu_cost=cpu_cost,
+            special_effect=special or "",
+        )
 
-    return {
-        "player_id": player_id,
-        "session": session.model_dump(),
-        "item_catalog": item_catalog_simple,
-    }
+    return StartSessionResponse(
+        player_id=player_id,
+        session=session,
+        item_catalog=item_catalog_simple,
+    )
 
 
 @app.get("/session/{player_id}")
@@ -539,8 +550,8 @@ def generate_shop_items(
     return items
 
 
-@app.post("/battle/simulate")
-async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
+@app.post("/battle/simulate", response_model=BattleResponse)
+async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     """
     Simulate a battle using inventory from session
     """
@@ -903,21 +914,125 @@ async def simulate_battle(request: SimpleBattleRequest) -> Dict[str, Any]:
     battle_result.pop("player1_containers", None)
     battle_result.pop("player2_containers", None)
 
-    return {
-        "battle_result": battle_result,
-        "session_update": {
-            "round": session.round,
-            "gold": session.gold,
-            "gold_earned": gold_reward,
-            "wins": session.wins,
-            "losses": session.losses,
-            "lives": session.lives,
-            "game_over": game_over,
-            "victory": victory,
-        },
-        "new_shop": session.current_shop,
-        "battle_id": battle_id,
-    }
+    # Convert actions to BattleAction models
+    battle_actions = []
+    for action in battle_result.get("actions", []):
+        battle_actions.append(
+            BattleAction(
+                timestamp=action.get("timestamp", 0),
+                source=action.get("source", ""),
+                action=action.get("action", ""),
+                target=action.get("target"),
+                damage=action.get("damage"),
+                player=action.get("player", 1),
+                details=action.get("details"),
+            )
+        )
+
+    # Convert inventories to InventoryData models
+    player_inventory = InventoryData(
+        items=[
+            PlacedItemSchema(
+                id=item["id"],
+                item_type=item["item_type"],
+                name=item["name"],
+                position=item["position"],
+                category=item["category"],
+                shape=item["shape"],
+            )
+            for item in battle_result.get("player_inventory", {}).get("items", [])
+        ],
+        servers=[
+            ServerContainerSchema(
+                id=server["id"],
+                type=server["type"],
+                position=server["position"],
+                width=server["width"],
+                height=server["height"],
+            )
+            for server in battle_result.get("player_inventory", {}).get("servers", [])
+        ],
+    )
+
+    enemy_inventory = InventoryData(
+        items=[
+            PlacedItemSchema(
+                id=item["id"],
+                item_type=item["item_type"],
+                name=item["name"],
+                position=item["position"],
+                category=item["category"],
+                shape=item["shape"],
+            )
+            for item in battle_result.get("enemy_inventory", {}).get("items", [])
+        ],
+        servers=[
+            ServerContainerSchema(
+                id=server["id"],
+                type=server["type"],
+                position=server["position"],
+                width=server["width"],
+                height=server["height"],
+            )
+            for server in battle_result.get("enemy_inventory", {}).get("servers", [])
+        ],
+    )
+
+    # Create BattleResult model
+    battle_result_model = BattleResult(
+        winner=battle_result["winner"],
+        duration=battle_result["duration"],
+        player1_quota=battle_result["player1_quota"],
+        player2_quota=battle_result["player2_quota"],
+        actions=battle_actions,
+        seed=battle_result["seed"],
+        player_inventory=player_inventory,
+        enemy_inventory=enemy_inventory,
+    )
+
+    # Create SessionUpdate model
+    session_update = SessionUpdate(
+        round=session.round,
+        gold=session.gold,
+        gold_earned=gold_reward,
+        wins=session.wins,
+        losses=session.losses,
+        lives=session.lives,
+        game_over=game_over,
+        victory=victory,
+    )
+
+    # Convert shop items to ShopItem models
+    new_shop = []
+    for shop_item in session.current_shop:
+        if shop_item:
+            new_shop.append(
+                ShopItem(
+                    id=shop_item["id"],
+                    item_type=shop_item["item_type"],
+                    name=shop_item.get("name", ""),
+                    category=shop_item.get("category", ""),
+                    rarity=shop_item.get("rarity", "common"),
+                    cost=shop_item.get("cost", 0),
+                    is_container=shop_item.get("is_container", False),
+                    internal_width=shop_item.get("internal_width"),
+                    internal_height=shop_item.get("internal_height"),
+                    min_damage=shop_item.get("min_damage", 0),
+                    max_damage=shop_item.get("max_damage", 0),
+                    cooldown=shop_item.get("cooldown", 0),
+                    cpu_cost=shop_item.get("cpu_cost", 0),
+                    special_effect=shop_item.get("special_effect") or "",
+                )
+            )
+        else:
+            new_shop.append(None)
+
+    return BattleResponse(
+        battle_result=battle_result_model,
+        session_update=session_update,
+        new_shop=new_shop,
+        battle_id=battle_id,
+    )
 
 
 def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
@@ -1152,8 +1267,8 @@ def place_item_in_inventory(
                     )
 
 
-@app.post("/purchase/item")
-async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
+@app.post("/purchase/item", response_model=PurchaseResponse)
+async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
     """Purchase an item from shop and place in inventory or storage"""
     session = await session_manager.get_session(request.player_id)
     if not session:
@@ -1243,7 +1358,27 @@ async def purchase_item(request: PurchaseRequest) -> Dict[str, Any]:
     # Save updated session
     await session_manager.update_session(session)
 
-    return {"success": True, "purchased_item": item, "gold": session.gold}
+    # Convert item dict to ShopItem model
+    purchased_item = ShopItem(
+        id=item["id"],
+        item_type=item["item_type"],
+        name=item.get("name", ""),
+        category=item.get("category", ""),
+        rarity=item.get("rarity", "common"),
+        cost=item.get("cost", 0),
+        is_container=item.get("is_container", False),
+        internal_width=item.get("internal_width"),
+        internal_height=item.get("internal_height"),
+        min_damage=item.get("min_damage", 0),
+        max_damage=item.get("max_damage", 0),
+        cooldown=item.get("cooldown", 0),
+        cpu_cost=item.get("cpu_cost", 0),
+        special_effect=item.get("special_effect") or "",
+    )
+
+    return PurchaseResponse(
+        success=True, purchased_item=purchased_item, gold=session.gold
+    )
 
 
 @app.post("/sell/item")
