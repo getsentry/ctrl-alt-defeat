@@ -104,14 +104,14 @@ func _process_event(event: APITypes.BattleAction):
 
 		"d":  # Damage
 			var damage = event.damage
-			var source = event.source if event.source else "Unknown"
+			var damage_source = event.source if event.source else "Unknown"
 			# Calculate remaining HP based on current HP
 			var remaining = (player1_hp if player == 1 else player2_hp) - damage
 			if player == 1:
 				player1_hp = remaining
 			else:
 				player2_hp = remaining
-			damage_dealt.emit(player, damage, remaining, source)
+			damage_dealt.emit(player, damage, remaining, damage_source)
 
 		"h":  # Heal
 			# Get heal amount from damage field
@@ -160,12 +160,12 @@ func _process_event(event: APITypes.BattleAction):
 
 		"dt":  # DoT (damage over time)
 			var damage = event.damage
-			var source = event.source if event.source else "DoT"
+			var dot_source = event.source if event.source else "DoT"
 			if player == 1:
 				player1_hp = max(0, player1_hp - damage)
 			else:
 				player2_hp = max(0, player2_hp - damage)
-			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp, source)
+			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp, dot_source)
 
 		"r":  # Reflect
 			# Show reflect animation
