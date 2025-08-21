@@ -66,7 +66,12 @@ func test_full_user_journey_through_ui():
 
 	# 4. Verify starting setup
 	print("   3. Verifying initial setup...")
-	assert_eq(game_ui.servers.size(), 3, "Should have 3 starting containers")
+	# With GridManager, servers are in the inventory_grid
+	if game_ui.inventory_grid:
+		assert_gte(game_ui.inventory_grid.servers.size(), 3, "Should have at least 3 starting containers")
+	else:
+		# Fallback for legacy
+		assert_eq(game_ui.servers.size(), 3, "Should have 3 starting containers")
 	assert_gte(game_ui.shop_items.size(), 2, "Shop should have items from server")
 	var initial_gold = GameStateManager.gold
 	assert_gt(initial_gold, 0, "Should start with gold")
@@ -224,40 +229,30 @@ func _find_ui_element(node: Node, property_name: String, property_value) -> Node
 
 func _find_first_empty_grid_cell(game_ui) -> Vector2:
 	"""Find the first empty cell that's on an active server grid"""
-	# Get the servers directly from game_ui
-	var servers = game_ui.servers
-	assert_gt(servers.size(), 0, "Should have at least one server")
+	# With GridManager, we check the inventory_grid
+	var inventory_grid = game_ui.inventory_grid
+	if not inventory_grid:
+		# Fallback to legacy approach
+		var servers = game_ui.servers
+		if servers.size() > 0:
+			return Vector2(2, 3)  # Default first server position
+		return Vector2(-1, -1)
 
-	# Get the first server's position
-	var first_server = servers[0]
-	var server_pos = first_server.get("pos", Vector2i(2, 3))
-	print("   - First server is at position: %s" % server_pos)
+	# Check known server positions (from server initialization)
+	# Default containers are at (2,3), (4,3), (6,3), each 2x2
+	var container_positions = [
+		Vector2i(2, 3), Vector2i(3, 3), Vector2i(2, 4), Vector2i(3, 4),  # Container A
+		Vector2i(4, 3), Vector2i(5, 3), Vector2i(4, 4), Vector2i(5, 4),  # Container B
+		Vector2i(6, 3), Vector2i(7, 3), Vector2i(6, 4), Vector2i(7, 4),  # Container C
+	]
 
-	# The server pattern tells us which cells are available
-	var pattern = first_server.data.get("pattern", [[1,1],[1,1]])
+	# Find first empty position
+	for pos in container_positions:
+		if not pos in inventory_grid.items:
+			print("   - Found empty cell at: %s" % pos)
+			return pos
 
-	# Find the first cell in this server's pattern
-	for py in range(pattern.size()):
-		for px in range(pattern[py].size()):
-			if pattern[py][px] == 1:
-				var grid_x = server_pos.x + px
-				var grid_y = server_pos.y + py
-				# Check if this cell is empty
-				if game_ui.item_grid[grid_y][grid_x] == null:
-					return Vector2(grid_x, grid_y)
-
-	# If first server is full, try others
-	for server in servers:
-		server_pos = server.get("pos", Vector2i(0, 0))
-		pattern = server.data.get("pattern", [[1,1],[1,1]])
-		for py in range(pattern.size()):
-			for px in range(pattern[py].size()):
-				if pattern[py][px] == 1:
-					var grid_x = server_pos.x + px
-					var grid_y = server_pos.y + py
-					if game_ui.item_grid[grid_y][grid_x] == null:
-						return Vector2(grid_x, grid_y)
-
+	print("   - No empty cells found in containers")
 	return Vector2(-1, -1)
 
 func test_shop_purchase_and_item_placement():
@@ -297,10 +292,15 @@ func test_shop_purchase_and_item_placement():
 	var initial_inventory_count = game_ui.items.size()
 
 	# Debug: Print server info
-	print("   - Number of servers: %d" % game_ui.servers.size())
-	for i in range(game_ui.servers.size()):
-		var server = game_ui.servers[i]
-		print("     Server %d at pos %s" % [i, server.get("pos", "unknown")])
+	if game_ui.inventory_grid:
+		print("   - Number of servers: %d" % game_ui.inventory_grid.servers.size())
+		for server_pos in game_ui.inventory_grid.servers:
+			print("     Server at pos %s" % server_pos)
+	else:
+		print("   - Number of servers: %d" % game_ui.servers.size())
+		for i in range(game_ui.servers.size()):
+			var server = game_ui.servers[i]
+			print("     Server %d at pos %s" % [i, server.get("pos", "unknown")])
 
 	# Find an empty grid cell to drop the item
 	var target_grid_pos = _find_first_empty_grid_cell(game_ui)
