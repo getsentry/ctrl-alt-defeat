@@ -392,8 +392,9 @@ class TestBattleAPIResponse:
         player_id = data["player_id"]
 
         shop = data["session"]["current_shop"]
-        items = [item for item in shop if item][:2]
-        assert len(items) >= 2
+        # Filter out containers since they can't be placed in storage (only on grid)
+        items = [item for item in shop if not item.get("is_container", False)][:2]
+        assert len(items) >= 2, "Need at least 2 non-container items in shop"
 
         # Purchase one item to storage
         response = auth_client.post(

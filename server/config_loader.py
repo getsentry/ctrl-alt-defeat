@@ -153,26 +153,9 @@ class ConfigLoader:
             rarity=config.get("rarity", "common"),
         )
 
-    def _parse_shape(self, shape_str: str) -> Optional[ItemShape]:
+    def _parse_shape(self, shape_str: str) -> ItemShape:
         """Parse a shape string like '2x2' or '3x1'"""
-        # Check if it's a predefined shape
-        if shape_str in SHAPES:
-            return SHAPES[shape_str]
-
-        # Parse custom shape
-        if "x" in shape_str:
-            try:
-                width, height = map(int, shape_str.split("x"))
-                squares = []
-                for y in range(height):
-                    for x in range(width):
-                        squares.append((x, y))
-                return ItemShape(squares, shape_str)
-            except Exception:
-                pass
-
-        # Default to 1x1
-        return SHAPES.get("1x1")
+        return SHAPES[shape_str]
 
     def _parse_trigger(self, config: Dict[str, Any]) -> Optional[Any]:
         """Parse a trigger configuration"""

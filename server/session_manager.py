@@ -180,7 +180,10 @@ class SessionManager:
                     inventory_storage=session.inventory_storage,
                     placed_items=session.placed_items,
                     server_containers=session.server_containers,
-                    current_shop=session.current_shop,
+                    current_shop=[
+                        item.model_dump() if item else None
+                        for item in session.current_shop
+                    ],
                     last_battle_result=session.last_battle_result,
                     game_seed=game_seed,
                     shop_refresh_count=session.shop_refresh_count,
@@ -228,7 +231,9 @@ class SessionManager:
                 db_session.inventory_storage = session.inventory_storage
                 db_session.placed_items = session.placed_items
                 db_session.server_containers = session.server_containers
-                db_session.current_shop = session.current_shop
+                db_session.current_shop = [
+                    item.model_dump() if item else None for item in session.current_shop
+                ]
                 db_session.last_battle_result = session.last_battle_result
                 db_session.shop_refresh_count = session.shop_refresh_count
                 db_session.last_activity = utc_now()

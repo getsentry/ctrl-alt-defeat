@@ -3,6 +3,7 @@ Test timer item behavior with CPU throttling
 """
 
 from battle_engine import BattleSimulator, PlacedItem
+from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 
 from .test_utils import get_test_containers
@@ -20,6 +21,7 @@ class TestTimerScheduling:
             spec=ItemSpec(
                 id="test",
                 name="Test Item",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -66,6 +68,7 @@ class TestTimerScheduling:
             spec=ItemSpec(
                 id="test",
                 name="Test Item",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -140,6 +143,7 @@ class TestTimerScheduling:
             spec=ItemSpec(
                 id="item1",
                 name="Fast Item",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -159,6 +163,7 @@ class TestTimerScheduling:
             spec=ItemSpec(
                 id="item2",
                 name="Slow Item",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(

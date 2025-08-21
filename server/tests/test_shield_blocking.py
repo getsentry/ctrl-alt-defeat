@@ -4,6 +4,7 @@ Shields should have 30% chance to block attacks and can have additional effects
 """
 
 from battle_engine import BattleSimulator, PlacedItem
+from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
@@ -22,6 +23,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="test_shield",
                 name="Test Shield",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -44,6 +46,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="attacker",
                 name="Attacker",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -93,6 +96,7 @@ class TestShieldBlocking:
                     spec=ItemSpec(
                         id=f"shield_{i}",
                         name=f"Shield {i}",
+                        shape=ItemShape([(0, 0)], "1x1"),
                         category="defense",
                         triggers=[
                             OnAttackedTrigger(
@@ -114,6 +118,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="fast_attacker",
                 name="Fast Attacker",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -172,6 +177,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="cpu_steal_shield",
                 name="CPU Steal Shield",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -194,6 +200,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="expensive_attacker",
                 name="Expensive Attacker",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -236,6 +243,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="shield1",
                 name="Shield 1",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -251,6 +259,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="shield2",
                 name="Shield 2",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -267,6 +276,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="attacker",
                 name="Attacker",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -313,6 +323,7 @@ class TestShieldBlocking:
             spec=ItemSpec(
                 id="shield",
                 name="Shield",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(

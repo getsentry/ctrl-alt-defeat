@@ -8,6 +8,7 @@ import time
 from dataclasses import dataclass
 from typing import Dict, List
 
+from grid_system import Rotation
 from schemas import BattleAction
 from server_containers import ServerContainer
 
@@ -597,11 +598,12 @@ if __name__ == "__main__":
             spec=deepcopy(ITEM_CATALOG["firewall"]),  # Defense: firewall
             position=(0, 3),
             uid="p1_firewall",
+            rotation=Rotation.CLOCKWISE_90,  # Rotate to horizontal
         ),
         # Support item
         PlacedItem(
             spec=deepcopy(ITEM_CATALOG["error_monitoring"]),  # Monitor: +10% accuracy
-            position=(1, 3),
+            position=(3, 3),
             uid="p1_monitor",
         ),
         # Additional offensive items on second container
@@ -614,18 +616,20 @@ if __name__ == "__main__":
             spec=deepcopy(
                 ITEM_CATALOG["race_condition"]
             ),  # Problem: high damage variance
-            position=(3, 2),
+            position=(2, 3),
             uid="p1_race",
         ),
     ]
 
     # Create diverse items from real ITEM_CATALOG for Player 2
     p2_items = [
-        # Offensive items
+        # Offensive items on first container
         PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["ddos_attack"]),  # Problem: DDoS attack
+            spec=deepcopy(
+                ITEM_CATALOG["race_condition"]
+            ),  # Problem: race condition (1x1)
             position=(4, 2),  # On p2's first container
-            uid="p2_ddos",
+            uid="p2_race",
         ),
         PlacedItem(
             spec=deepcopy(
@@ -634,29 +638,41 @@ if __name__ == "__main__":
             position=(5, 2),
             uid="p2_zero_day",
         ),
-        # Defensive items
         PlacedItem(
             spec=deepcopy(
                 ITEM_CATALOG["quantum_firewall"]
-            ),  # Defense: quantum firewall
+            ),  # Defense: quantum firewall (1x1)
             position=(4, 3),
             uid="p2_quantum_firewall",
         ),
         PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["encryption_layer"]),  # Defense: encryption
+            spec=deepcopy(
+                ITEM_CATALOG["error_monitoring"]
+            ),  # Monitor: +10% accuracy (1x1)
             position=(5, 3),
-            uid="p2_encryption",
+            uid="p2_monitor",
         ),
-        # Support items on second container
+        # Items on second container
         PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["rate_limiter"]),  # Defense: rate limiter
+            spec=deepcopy(
+                ITEM_CATALOG["rate_limiter"]
+            ),  # Defense: rate limiter (2x1 horizontal)
             position=(4, 4),
             uid="p2_rate_limiter",
         ),
         PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["cpu_booster"]),  # Infrastructure: CPU boost
-            position=(5, 4),
+            spec=deepcopy(
+                ITEM_CATALOG["cpu_booster"]
+            ),  # Infrastructure: CPU boost (1x1)
+            position=(4, 5),
             uid="p2_cpu_booster",
+        ),
+        PlacedItem(
+            spec=deepcopy(
+                ITEM_CATALOG["load_balancer"]
+            ),  # Infrastructure: load balancer (1x1)
+            position=(5, 5),
+            uid="p2_load_balancer",
         ),
     ]
 

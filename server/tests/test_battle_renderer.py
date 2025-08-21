@@ -12,6 +12,7 @@ import pytest
 from battle_engine import BattleSimulator, PlacedItem
 from battle_renderer import ASCIIBattleRenderer, BattleState
 from config_loader import ConfigLoader
+from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from schemas import BattleAction
 from server_containers import ServerContainer
@@ -289,6 +290,7 @@ class TestBattleRenderer:
         minimal_item = ItemSpec(
             id="test_item",
             name="Test Item",
+            shape=ItemShape([(0, 0)], "1x1"),
             category="problem",
             triggers=[
                 TimerTrigger(

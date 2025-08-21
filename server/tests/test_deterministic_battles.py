@@ -7,6 +7,7 @@ from copy import deepcopy
 
 import pytest
 from battle_engine import BattleSimulator, PlacedItem
+from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
@@ -23,6 +24,7 @@ class TestDeterministicBattles:
             spec=ItemSpec(
                 id="attacker",
                 name="Test Attacker",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -47,6 +49,7 @@ class TestDeterministicBattles:
             spec=ItemSpec(
                 id="defender",
                 name="Test Defender",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -110,6 +113,7 @@ class TestDeterministicBattles:
             spec=ItemSpec(
                 id="rng_heavy",
                 name="RNG Heavy",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -165,6 +169,7 @@ class TestDeterministicBattles:
             spec=ItemSpec(
                 id="shield",
                 name="Test Shield",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -185,6 +190,7 @@ class TestDeterministicBattles:
             spec=ItemSpec(
                 id="attacker",
                 name="Fast Attacker",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -236,6 +242,7 @@ class TestDeterministicBattles:
                 spec=ItemSpec(
                     id="item1",
                     name="Item 1",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -259,6 +266,7 @@ class TestDeterministicBattles:
                 spec=ItemSpec(
                     id="item2",
                     name="Item 2",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="defense",
                     triggers=[
                         OnAttackedTrigger(
@@ -278,6 +286,7 @@ class TestDeterministicBattles:
                 spec=ItemSpec(
                     id="item3",
                     name="Item 3",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -301,6 +310,7 @@ class TestDeterministicBattles:
                 spec=ItemSpec(
                     id="item4",
                     name="Item 4",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -362,6 +372,7 @@ class TestDeterministicBattles:
             spec=ItemSpec(
                 id="test",
                 name="Test",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(

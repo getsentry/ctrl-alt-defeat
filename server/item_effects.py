@@ -6,9 +6,9 @@ Effects determine WHAT happens
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import List, Optional
 
-from grid_system import SHAPES
+from grid_system import SHAPES, ItemShape
 
 # ============= EFFECTS (What happens) =============
 
@@ -302,14 +302,14 @@ class ItemSpec:
     name: str
     category: str  # "problem", "defense", "infrastructure"
 
+    # Shape for multi-square items (required for all items)
+    shape: ItemShape
+
     # List of triggers, each with their own effects
     triggers: List[Trigger] = field(default_factory=list)
 
     # Item properties
     rarity: str = "common"  # common, uncommon, rare, epic, legendary, godly
-
-    # Shape for multi-square items (None = default 1x1)
-    shape: Optional[Any] = None  # ItemShape from grid_system
 
     # Adjacency bonuses this item provides to neighbors
     adjacency_bonus: Optional[dict] = None

@@ -4,6 +4,7 @@ Tests for the improved item effects system
 
 from dataclasses import dataclass
 
+from grid_system import ItemShape
 from item_effects import (
     AttackEffect,
     BattleStartTrigger,
@@ -222,6 +223,7 @@ class TestItemSpecs:
         item = ItemSpec(
             id="complex_item",
             name="Complex Item",
+            shape=ItemShape([(0, 0)], "1x1"),
             category="problem",
             triggers=[
                 BattleStartTrigger(

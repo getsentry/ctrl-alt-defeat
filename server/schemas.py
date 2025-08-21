@@ -7,6 +7,26 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 
 
+class ShopItem(BaseModel):
+    """Item available in the shop"""
+
+    id: str = Field(description="Unique item instance ID")
+    item_type: str = Field(description="Item type identifier")
+    name: str = Field(description="Display name")
+    category: str = Field(description="Item category")
+    rarity: str = Field(description="Item rarity tier")
+    cost: int = Field(description="Gold cost to purchase")
+    is_container: bool = Field(
+        default=False, description="Whether this is a server container"
+    )
+    min_damage: int = Field(default=0, description="Minimum damage")
+    max_damage: int = Field(default=0, description="Maximum damage")
+    cooldown: float = Field(default=0, description="Cooldown in seconds")
+    cpu_cost: int = Field(default=0, description="CPU cost")
+    special_effect: str = Field(default="", description="Special effect")
+    shape: List[List[int]] = Field(description="Item shape as list of [x, y] offsets")
+
+
 class GameSession(BaseModel):
     """Player's current game session"""
 
@@ -18,7 +38,9 @@ class GameSession(BaseModel):
     wins: int = 0
     losses: int = 0
     last_battle_result: Optional[Dict]
-    current_shop: List[Optional[Dict]] = []  # Shop can have empty slots
+    current_shop: List[
+        Optional[ShopItem]
+    ] = []  # Shop can have empty slots after purchases
     game_seed: int  # Master seed for all RNG in this game session (always set)
     shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
     # Inventory fields
@@ -97,28 +119,6 @@ class StartSessionResponse(BaseModel):
 
     player_id: str = Field(description="Unique player/session identifier")
     session: GameSession = Field(description="Complete game session state")
-
-
-class ShopItem(BaseModel):
-    """Item available in the shop"""
-
-    id: str = Field(description="Unique item instance ID")
-    item_type: str = Field(description="Item type identifier")
-    name: str = Field(description="Display name")
-    category: str = Field(description="Item category")
-    rarity: str = Field(description="Item rarity tier")
-    cost: int = Field(description="Gold cost to purchase")
-    is_container: bool = Field(
-        default=False, description="Whether this is a server container"
-    )
-    min_damage: int = Field(default=0, description="Minimum damage")
-    max_damage: int = Field(default=0, description="Maximum damage")
-    cooldown: float = Field(default=0, description="Cooldown in seconds")
-    cpu_cost: int = Field(default=0, description="CPU cost")
-    special_effect: str = Field(default="", description="Special effect")
-    shape: Optional[List[List[int]]] = Field(
-        default=None, description="Item shape as list of [x, y] offsets"
-    )
 
 
 class PurchaseResponse(BaseModel):

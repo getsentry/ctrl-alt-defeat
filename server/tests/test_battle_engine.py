@@ -6,8 +6,7 @@ from copy import deepcopy
 
 import pytest
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem, Player
-
-# from grid_system import SHAPES  # Not currently used
+from grid_system import SHAPES
 from item_effects import ItemSpec, PassiveTrigger, TimerTrigger
 from server_containers import ServerContainer, create_server_containers
 
@@ -275,6 +274,7 @@ class TestGameDesignCompliance:
                 id="test",
                 name="Test",
                 category="problem",
+                shape=SHAPES["1x1"],
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -389,6 +389,7 @@ class TestBattleSimulation:
                 id="op",
                 name="OP",
                 category="problem",
+                shape=SHAPES["1x1"],
                 triggers=[
                     TimerTrigger(
                         cooldown=0.1,

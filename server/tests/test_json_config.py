@@ -27,7 +27,7 @@ def test_json_config():
     # Get some items from JSON config
     null_pointer = loader.get_item("null_pointer")
     memory_leak = loader.get_item("memory_leak")
-    firewall = loader.get_item("firewall")
+    loader.get_item("firewall")  # Verify it exists
     health_check = loader.get_item("health_check")
 
     # Get containers from JSON config
@@ -55,9 +55,11 @@ def test_json_config():
         PlacedItem(spec=memory_leak, position=(1, 0), uid="p1_leak"),
     ]
 
+    # Place items that fit within the edge_node container (2x1 horizontal at 4,0)
+    # Use smaller items that fit in the available squares
     p2_items = [
-        PlacedItem(spec=firewall, position=(4, 0), uid="p2_firewall"),
-        PlacedItem(spec=health_check, position=(5, 0), uid="p2_health"),
+        PlacedItem(spec=null_pointer, position=(4, 0), uid="p2_null2"),  # 1x1 item
+        PlacedItem(spec=health_check, position=(5, 0), uid="p2_health"),  # 1x1 item
     ]
 
     # Run battle

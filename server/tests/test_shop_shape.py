@@ -18,22 +18,15 @@ class TestShopShape:
         assert len(shop) == 5, "Shop should have 5 items"
 
         for item in shop:
-            if item:  # Skip None slots
-                # Verify shape field exists
-                assert "shape" in item, f"Shape field missing for {item['name']}"
-
-                # If it has a shape, verify format
-                if item["shape"]:
+            if item:  # Shop can have None values for empty slots
+                assert isinstance(
+                    item.shape, list
+                ), f"Shape should be a list for {item.name}"
+                if len(item.shape) > 0:
                     assert isinstance(
-                        item["shape"], list
-                    ), f"Shape should be a list for {item['name']}"
-                    if len(item["shape"]) > 0:
-                        assert isinstance(
-                            item["shape"][0], list
-                        ), "Shape should be list of [x,y] pairs"
-                        assert (
-                            len(item["shape"][0]) == 2
-                        ), "Each coordinate should be [x,y]"
+                        item.shape[0], list
+                    ), "Shape should be list of [x,y] pairs"
+                    assert len(item.shape[0]) == 2, "Each coordinate should be [x,y]"
 
     def test_container_shapes(self):
         """Test that containers have appropriate shapes"""
@@ -42,20 +35,14 @@ class TestShopShape:
         )  # Higher round for containers
 
         # Find a container if any
-        containers = [item for item in shop if item and item.get("is_container")]
+        containers = [item for item in shop if item and item.is_container]
 
         if containers:
             for container in containers:
-                assert (
-                    "shape" in container
-                ), f"Container {container['name']} missing shape"
-                assert (
-                    container["shape"] is not None
-                ), f"Container {container['name']} has null shape"
                 # Standard VM is 2x2 = 4 squares
-                if container["item_type"] == "standard_vm":
+                if container.item_type == "standard_vm":
                     assert (
-                        len(container["shape"]) == 4
+                        len(container.shape) == 4
                     ), "Standard VM should have 4 squares"
 
     def test_shop_refresh_includes_shape(self, auth_client):

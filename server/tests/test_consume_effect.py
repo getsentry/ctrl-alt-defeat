@@ -3,6 +3,7 @@ Test ConsumeEffect and item consumption mechanics
 """
 
 from battle_engine import BattleSimulator, PlacedItem
+from grid_system import ItemShape
 from item_effects import (
     BattleStartTrigger,
     ConsumeEffect,
@@ -28,6 +29,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="test_potion",
                 name="Test Potion",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     DamageTakenTrigger(
@@ -49,6 +51,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="attacker",
                 name="Attacker",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -97,6 +100,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="test_consumable",
                 name="Test Consumable",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="infrastructure",
                 triggers=[
                     BattleStartTrigger(
@@ -145,6 +149,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="p1",
                 name="Problem 1",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -164,6 +169,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="p2",
                 name="Problem 2",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -184,6 +190,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="p3",
                 name="Problem 3",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     BattleStartTrigger(
@@ -239,6 +246,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="potion1",
                 name="Potion 1",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     DamageTakenTrigger(
@@ -257,6 +265,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="potion2",
                 name="Potion 2",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="defense",
                 triggers=[
                     DamageTakenTrigger(
@@ -278,6 +287,7 @@ class TestConsumeEffect:
             spec=ItemSpec(
                 id="attacker",
                 name="Attacker",
+                shape=ItemShape([(0, 0)], "1x1"),
                 category="problem",
                 triggers=[
                     TimerTrigger(

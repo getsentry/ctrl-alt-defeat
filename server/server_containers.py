@@ -3,10 +3,11 @@ Server containers - items that provide grid space for other items
 Servers are placed in the main grid and provide internal storage space
 """
 
-from dataclasses import dataclass
-from typing import Any, List, Optional, Set, Tuple
+from dataclasses import dataclass, field
+from typing import List, Optional, Set, Tuple
 
-from grid_system import SHAPES, Rotation
+from grid_system import SHAPES, ItemShape, Rotation
+from item_effects import ItemSpec
 
 
 @dataclass
@@ -17,30 +18,19 @@ class ServerContainer:
     """
 
     # Item properties
-    spec: Any  # ItemSpec - the item specification with effects
+    spec: ItemSpec
     position: Tuple[int, int]  # Position in main grid
     uid: str
-    shape: Any = None  # ItemShape - shape it takes in main grid
-    rotation: Any = None  # Rotation
-
-    def __post_init__(self):
-        """Initialize with defaults"""
-        if self.shape is None and SHAPES:
-            self.shape = SHAPES["2x2"]  # Default 2x2 container
-        if self.rotation is None and Rotation:
-            self.rotation = Rotation.NONE
+    shape: ItemShape
+    rotation: Rotation = field(default=Rotation.NONE)
 
     def get_occupied_squares(self) -> List[Tuple[int, int]]:
         """Get all main grid squares this container occupies"""
-        if self.shape and self.rotation is not None:
-            rotated_shape = self.shape.rotate(self.rotation)
-            return [
-                (self.position[0] + dx, self.position[1] + dy)
-                for dx, dy in rotated_shape.squares
-            ]
-        else:
-            # Default to single square if grid system not available
-            return [self.position]
+        rotated_shape = self.shape.rotate(self.rotation)
+        return [
+            (self.position[0] + dx, self.position[1] + dy)
+            for dx, dy in rotated_shape.squares
+        ]
 
     def get_internal_squares(self) -> Set[Tuple[int, int]]:
         """Get all internal grid squares this container provides (in global coordinates)"""
@@ -95,27 +85,18 @@ class PlacementValidator:
         return True
 
     def validate_item_placement(
-        self, item_position: Tuple[int, int], item_shape: Any, item_rotation: Any = None
+        self,
+        item_position: Tuple[int, int],
+        item_shape: ItemShape,
+        item_rotation: Rotation = Rotation.NONE,
     ) -> bool:
         """Check if an item can be placed at the given position"""
         # Get squares the item would occupy
-        if item_shape:
-            if item_rotation is None and Rotation:
-                item_rotation = Rotation.NONE
-            if item_rotation is not None:
-                rotated_shape = item_shape.rotate(item_rotation)
-                item_squares = [
-                    (item_position[0] + dx, item_position[1] + dy)
-                    for dx, dy in rotated_shape.squares
-                ]
-            else:
-                # Fallback if rotation not available
-                item_squares = [
-                    (item_position[0] + dx, item_position[1] + dy)
-                    for dx, dy in item_shape.squares
-                ]
-        else:
-            item_squares = [item_position]
+        rotated_shape = item_shape.rotate(item_rotation)
+        item_squares = [
+            (item_position[0] + dx, item_position[1] + dy)
+            for dx, dy in rotated_shape.squares
+        ]
 
         # Check each square
         for x, y in item_squares:
@@ -129,30 +110,20 @@ class PlacementValidator:
         return True
 
     def place_item(
-        self, item_position: Tuple[int, int], item_shape: Any, item_rotation: Any = None
+        self,
+        item_position: Tuple[int, int],
+        item_shape: ItemShape,
+        item_rotation: Rotation = Rotation.NONE,
     ) -> bool:
         """Place an item if valid"""
         if not self.validate_item_placement(item_position, item_shape, item_rotation):
             return False
 
-        # Mark squares as occupied
-        if item_shape:
-            if item_rotation is None and Rotation:
-                item_rotation = Rotation.NONE
-            if item_rotation is not None:
-                rotated_shape = item_shape.rotate(item_rotation)
-                item_squares = [
-                    (item_position[0] + dx, item_position[1] + dy)
-                    for dx, dy in rotated_shape.squares
-                ]
-            else:
-                # Fallback if rotation not available
-                item_squares = [
-                    (item_position[0] + dx, item_position[1] + dy)
-                    for dx, dy in item_shape.squares
-                ]
-        else:
-            item_squares = [item_position]
+        rotated_shape = item_shape.rotate(item_rotation)
+        item_squares = [
+            (item_position[0] + dx, item_position[1] + dy)
+            for dx, dy in rotated_shape.squares
+        ]
 
         self.item_squares.update(item_squares)
         return True
@@ -167,27 +138,18 @@ class PlacementValidator:
         return None
 
     def get_containers_for_item(
-        self, item_position: Tuple[int, int], item_shape: Any, item_rotation: Any = None
+        self,
+        item_position: Tuple[int, int],
+        item_shape: ItemShape,
+        item_rotation: Rotation = Rotation.NONE,
     ) -> List[ServerContainer]:
         """Get all containers that an item overlaps with"""
         # Get squares the item occupies
-        if item_shape:
-            if item_rotation is None and Rotation:
-                item_rotation = Rotation.NONE
-            if item_rotation is not None:
-                rotated_shape = item_shape.rotate(item_rotation)
-                item_squares = [
-                    (item_position[0] + dx, item_position[1] + dy)
-                    for dx, dy in rotated_shape.squares
-                ]
-            else:
-                # Fallback if rotation not available
-                item_squares = [
-                    (item_position[0] + dx, item_position[1] + dy)
-                    for dx, dy in item_shape.squares
-                ]
-        else:
-            item_squares = [item_position]
+        rotated_shape = item_shape.rotate(item_rotation)
+        item_squares = [
+            (item_position[0] + dx, item_position[1] + dy)
+            for dx, dy in rotated_shape.squares
+        ]
 
         # Find all containers that provide any of these squares
         containers = []

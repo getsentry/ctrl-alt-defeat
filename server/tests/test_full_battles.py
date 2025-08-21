@@ -4,6 +4,7 @@ These tests simulate complete battles between two players with different strateg
 """
 
 from battle_engine import BattleSimulator, PlacedItem
+from grid_system import ItemShape
 from item_effects import (
     AttackEffect,
     BattleStartTrigger,
@@ -31,6 +32,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="null_pointer",
                     name="Null Pointer Exception",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -54,6 +56,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="memory_leak",
                     name="Memory Leak",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -77,6 +80,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="race_condition",
                     name="Race Condition",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -104,6 +108,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="error_shield",
                     name="Error Monitoring Shield",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="defense",
                     triggers=[
                         OnAttackedTrigger(
@@ -122,6 +127,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="firewall",
                     name="Firewall",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="defense",
                     triggers=[
                         OnAttackedTrigger(
@@ -140,6 +146,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="health_check",
                     name="Health Check",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="infrastructure",
                     triggers=[
                         TimerTrigger(
@@ -156,6 +163,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="counter_attack",
                     name="Counter Attack",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -211,6 +219,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="bug1",
                     name="Bug 1",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -229,6 +238,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="bug2",
                     name="Bug 2",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -247,6 +257,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="bug3",
                     name="Bug 3",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -269,6 +280,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="problem",
                     name="Problem",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -287,6 +299,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="defense",
                     name="Defense",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="defense",
                     triggers=[
                         OnAttackedTrigger(
@@ -303,6 +316,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="infrastructure",
                     name="Infrastructure",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="infrastructure",
                     triggers=[
                         PassiveTrigger(
@@ -340,6 +354,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="attacker",
                     name="Attacker",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -358,6 +373,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="health_potion",
                     name="Health Potion",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="defense",
                     triggers=[
                         DamageTakenTrigger(
@@ -378,6 +394,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="emergency_heal",
                     name="Emergency Heal",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="defense",
                     triggers=[
                         DamageTakenTrigger(
@@ -402,6 +419,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="cpu_booster",
                     name="CPU Booster",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="infrastructure",
                     triggers=[
                         BattleStartTrigger(
@@ -419,6 +437,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="heavy_hitter",
                     name="Heavy Hitter",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -437,6 +456,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="quick_strike",
                     name="Quick Strike",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -480,6 +500,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="upgraded_weapon",
                     name="Upgraded Weapon",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     rarity="rare",
                     triggers=[
@@ -499,6 +520,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="upgraded_shield",
                     name="Upgraded Shield",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="defense",
                     rarity="rare",
                     triggers=[
@@ -520,6 +542,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="legendary_weapon",
                     name="Legendary Weapon",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     rarity="legendary",
                     triggers=[
@@ -587,6 +610,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="weak_attack",
                     name="Weak Attack",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -605,6 +629,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="healer",
                     name="Healer",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="infrastructure",
                     triggers=[
                         TimerTrigger(
@@ -624,6 +649,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="weak_attack2",
                     name="Weak Attack 2",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -642,6 +668,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="healer2",
                     name="Healer 2",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="infrastructure",
                     triggers=[
                         TimerTrigger(
@@ -689,6 +716,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="expensive1",
                     name="Expensive 1",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -707,6 +735,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="expensive2",
                     name="Expensive 2",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -729,6 +758,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="cpu_infrastructure",
                     name="CPU Infrastructure",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="infrastructure",
                     triggers=[
                         PassiveTrigger(
@@ -746,6 +776,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="efficient1",
                     name="Efficient 1",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -764,6 +795,7 @@ class TestFullBattleScenarios:
                 spec=ItemSpec(
                     id="efficient2",
                     name="Efficient 2",
+                    shape=ItemShape([(0, 0)], "1x1"),
                     category="problem",
                     triggers=[
                         TimerTrigger(

@@ -8,10 +8,10 @@ import time
 import uuid
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
+from typing import Dict, List, Optional, Tuple, TypedDict
 
 from event_system import Event, EventData, EventManager, EventType
-from grid_system import SHAPES, Rotation
+from grid_system import ItemShape, Rotation
 from item_effects import (
     AttackEffect,
     BattleStartTrigger,
@@ -66,10 +66,7 @@ class PlacedItem:
     spec: ItemSpec
     position: Tuple[int, int]  # Grid position (top-left for multi-square items)
     uid: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-
-    # Multi-square item support - ALL items have shape and rotation
-    shape: Any = None  # ItemShape - will be set to default 1x1 in __post_init__
-    rotation: Any = None  # Rotation - will be set to NONE in __post_init__
+    rotation: Rotation = field(default=Rotation.NONE)
 
     # Battle state
     current_cooldown: float = 0.0
@@ -81,32 +78,18 @@ class PlacedItem:
     speed_mult: float = 1.0
     cpu_discount: int = 0
 
-    def __post_init__(self):
-        """Initialize shape and rotation if not provided"""
-        if self.shape is None:
-            if SHAPES:
-                self.shape = SHAPES["1x1"]  # Default to 1x1 square
-            else:
-                # Fallback if grid_system not available
-                self.shape = None
-
-        if self.rotation is None:
-            if Rotation:
-                self.rotation = Rotation.NONE
-            else:
-                self.rotation = None
+    @property
+    def shape(self) -> ItemShape:
+        """Get shape from spec"""
+        return self.spec.shape
 
     def get_occupied_squares(self) -> List[Tuple[int, int]]:
         """Get all grid squares this item occupies"""
-        if self.shape and self.rotation is not None:
-            rotated_shape = self.shape.rotate(self.rotation)
-            return [
-                (self.position[0] + dx, self.position[1] + dy)
-                for dx, dy in rotated_shape.squares
-            ]
-        else:
-            # Default to single square if grid system not available
-            return [self.position]
+        rotated_shape = self.shape.rotate(self.rotation)
+        return [
+            (self.position[0] + dx, self.position[1] + dy)
+            for dx, dy in rotated_shape.squares
+        ]
 
 
 @dataclass

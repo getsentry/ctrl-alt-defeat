@@ -205,13 +205,11 @@ class TestServerContainers:
                 spec=items["null_pointer"],
                 position=(1, 1),  # Inside VM
                 uid="item1",
-                shape=SHAPES["1x1"],
             ),
             PlacedItem(
                 spec=items["memory_leak"],
                 position=(2, 1),  # Inside VM
                 uid="item2",
-                shape=SHAPES["1x1"],
             ),
         ]
 
@@ -220,7 +218,6 @@ class TestServerContainers:
                 spec=items["error_monitoring"],
                 position=(1, 1),  # Would need its own VM
                 uid="item3",
-                shape=SHAPES["1x1"],
             )
         ]
 

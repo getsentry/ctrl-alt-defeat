@@ -7,6 +7,7 @@ import random
 import pytest
 import pytest_asyncio
 from database import db_manager
+from schemas import ShopItem
 from session_manager import SessionManager
 
 
@@ -160,8 +161,24 @@ class TestSessionPersistence:
         ]
 
         session.current_shop = [
-            {"id": "shop1", "item_type": "buffer_overflow", "cost": 8},
-            {"id": "shop2", "item_type": "race_condition", "cost": 6},
+            ShopItem(
+                id="shop1",
+                item_type="buffer_overflow",
+                name="Buffer Overflow",
+                category="attack",
+                rarity="rare",
+                cost=8,
+                shape=[[0, 0]],
+            ),
+            ShopItem(
+                id="shop2",
+                item_type="race_condition",
+                name="Race Condition",
+                category="attack",
+                rarity="uncommon",
+                cost=6,
+                shape=[[0, 0]],
+            ),
         ]
 
         # Update

@@ -331,30 +331,8 @@ async def refresh_shop(request: ShopRefreshRequest) -> ShopRefreshResponse:
     # Save updated session
     await session_manager.update_session(session)
 
-    # Convert shop items to ShopItem models
-    shop_items = []
-    for item in session.current_shop:
-        if item:
-            shop_items.append(
-                ShopItem(
-                    id=item["id"],
-                    item_type=item["item_type"],
-                    name=item.get("name", ""),
-                    category=item.get("category", ""),
-                    rarity=item.get("rarity", "common"),
-                    cost=item.get("cost", 0),
-                    is_container=item.get("is_container", False),
-                    min_damage=item.get("min_damage", 0),
-                    max_damage=item.get("max_damage", 0),
-                    cooldown=item.get("cooldown", 0),
-                    cpu_cost=item.get("cpu_cost", 0),
-                    special_effect=item.get("special_effect") or "",
-                )
-            )
-        else:
-            shop_items.append(None)
-
-    return ShopRefreshResponse(shop=shop_items, gold=session.gold)
+    # Shop already contains ShopItem models
+    return ShopRefreshResponse(shop=session.current_shop, gold=session.gold)
 
 
 def get_shop_cost(rarity: str, tier: int) -> int:
@@ -406,7 +384,7 @@ def pick_rarity(weights: Dict[str, float], rng=random) -> str:
 
 def generate_shop_items(
     round_number: int, seed: Optional[int] = None
-) -> List[Optional[Dict]]:
+) -> List[Optional[ShopItem]]:
     """Generate random shop items based on round and rarity"""
     # Use deterministic RNG if seed provided
     if seed is not None:
@@ -486,21 +464,21 @@ def generate_shop_items(
                 if item_spec.shape:
                     shape_data = [[x, y] for x, y in item_spec.shape.squares]
 
-                item_info = {
-                    "id": str(uuid.uuid4()),
-                    "item_type": item_type,
-                    "name": item_spec.name,
-                    "category": "container",  # Mark as container category for UI
-                    "rarity": item_spec.rarity,
-                    "cost": get_shop_cost(item_spec.rarity, 1),
-                    "is_container": True,
-                    "min_damage": 0,
-                    "max_damage": 0,
-                    "cooldown": 0,
-                    "cpu_cost": 0,
-                    "special_effect": "",
-                    "shape": shape_data,
-                }
+                item_info = ShopItem(
+                    id=str(uuid.uuid4()),
+                    item_type=item_type,
+                    name=item_spec.name,
+                    category="container",  # Mark as container category for UI
+                    rarity=item_spec.rarity,
+                    cost=get_shop_cost(item_spec.rarity, 1),
+                    is_container=True,
+                    min_damage=0,
+                    max_damage=0,
+                    cooldown=0,
+                    cpu_cost=0,
+                    special_effect="",
+                    shape=shape_data,
+                )
             else:
                 # Regular item
                 # Extract damage values from attack effects if present
@@ -529,21 +507,21 @@ def generate_shop_items(
                 if item_spec.shape:
                     shape_data = [[x, y] for x, y in item_spec.shape.squares]
 
-                item_info = {
-                    "id": str(uuid.uuid4()),
-                    "item_type": item_type,
-                    "name": item_spec.name,
-                    "category": item_spec.category,
-                    "rarity": item_spec.rarity,
-                    "cost": get_shop_cost(item_spec.rarity, 1),
-                    "is_container": False,
-                    "min_damage": min_dmg,
-                    "max_damage": max_dmg,
-                    "cooldown": cooldown,
-                    "cpu_cost": cpu_cost,
-                    "special_effect": special,
-                    "shape": shape_data,
-                }
+                item_info = ShopItem(
+                    id=str(uuid.uuid4()),
+                    item_type=item_type,
+                    name=item_spec.name,
+                    category=item_spec.category,
+                    rarity=item_spec.rarity,
+                    cost=get_shop_cost(item_spec.rarity, 1),
+                    is_container=False,
+                    min_damage=min_dmg,
+                    max_damage=max_dmg,
+                    cooldown=cooldown,
+                    cpu_cost=cpu_cost,
+                    special_effect=special or "",
+                    shape=shape_data,
+                )
 
             items.append(item_info)
 
@@ -990,33 +968,11 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
         victory=victory,
     )
 
-    # Convert shop items to ShopItem models
-    new_shop = []
-    for shop_item in session.current_shop:
-        if shop_item:
-            new_shop.append(
-                ShopItem(
-                    id=shop_item["id"],
-                    item_type=shop_item["item_type"],
-                    name=shop_item.get("name", ""),
-                    category=shop_item.get("category", ""),
-                    rarity=shop_item.get("rarity", "common"),
-                    cost=shop_item.get("cost", 0),
-                    is_container=shop_item.get("is_container", False),
-                    min_damage=shop_item.get("min_damage", 0),
-                    max_damage=shop_item.get("max_damage", 0),
-                    cooldown=shop_item.get("cooldown", 0),
-                    cpu_cost=shop_item.get("cpu_cost", 0),
-                    special_effect=shop_item.get("special_effect") or "",
-                )
-            )
-        else:
-            new_shop.append(None)
-
+    # Shop already contains ShopItem models
     return BattleResponse(
         battle_result=battle_result_model,
         session_update=session_update,
-        new_shop=new_shop,
+        new_shop=session.current_shop,
         battle_id=battle_id,
     )
 
@@ -1057,7 +1013,7 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             ("race_condition", (1, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
-            ("auto_scaler", (4, 4)),
+            ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
         ],
         7: [  # Stronger items
             ("null_pointer", (1, 3)),
@@ -1065,8 +1021,8 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             ("buffer_overflow", (1, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
-            ("auto_scaler", (4, 4)),
-            ("health_check", (5, 4)),
+            ("auto_scaler", (5, 4)),  # Moved to avoid overlap
+            ("health_check", (6, 3)),  # Moved to empty spot
         ],
         8: [  # Good mix
             ("null_pointer", (1, 3)),
@@ -1075,8 +1031,8 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             ("race_condition", (2, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
-            ("auto_scaler", (4, 4)),
-            ("quantum_processor", (5, 4)),
+            ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
+            ("quantum_processor", (6, 3)),  # Moved to empty spot
         ],
         9: [  # Near endgame
             ("null_pointer", (1, 3)),
@@ -1085,8 +1041,8 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             ("race_condition", (2, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
-            ("auto_scaler", (4, 4)),
-            ("quantum_processor", (5, 4)),
+            ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
+            ("quantum_processor", (6, 3)),  # Moved to empty spot
             ("load_balancer_module", (3, 3)),
         ],
         10: [  # Final boss
@@ -1096,8 +1052,8 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             ("race_condition", (2, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
-            ("auto_scaler", (4, 4)),
-            ("quantum_processor", (5, 4)),
+            ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
+            ("quantum_processor", (6, 3)),  # Moved to empty spot
             ("load_balancer_module", (3, 3)),
             ("health_check", (3, 4)),
         ],
@@ -1262,7 +1218,7 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
     # Find item in shop
     item = None
     for shop_item in session.current_shop:
-        if shop_item and shop_item.get("id") == request.item_id:
+        if shop_item and shop_item.id == request.item_id:
             item = shop_item
             break
 
@@ -1270,12 +1226,12 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Item not in shop")
 
     # Check gold
-    cost = item["cost"]
+    cost = item.cost
     if session.gold < cost:
         raise HTTPException(status_code=400, detail="Not enough gold")
 
     # Check if it's a container
-    is_container = item.get("is_container", False)
+    is_container = item.is_container
 
     if is_container:
         # Containers can't be placed in storage, only on the main grid
@@ -1302,11 +1258,11 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
 
     # Prepare item for placement
     inventory_item = {
-        "id": item["id"],
-        "item_type": item["item_type"],
-        "name": item.get("name", ""),
-        "cost": item.get("cost", 0),
-        "rarity": item.get("rarity", "common"),
+        "id": item.id,
+        "item_type": item.item_type,
+        "name": item.name,
+        "cost": item.cost,
+        "rarity": item.rarity,
     }
 
     # Determine placement location
@@ -1334,30 +1290,14 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
     # Deduct gold and remove from shop
     session.gold -= cost
     session.current_shop = [
-        si if si and si.get("id") != request.item_id else None
-        for si in session.current_shop
+        si if si and si.id != request.item_id else None for si in session.current_shop
     ]
 
     # Save updated session
     await session_manager.update_session(session)
 
-    # Convert item dict to ShopItem model
-    purchased_item = ShopItem(
-        id=item["id"],
-        item_type=item["item_type"],
-        name=item.get("name", ""),
-        category=item.get("category", ""),
-        rarity=item.get("rarity", "common"),
-        cost=item.get("cost", 0),
-        is_container=item.get("is_container", False),
-        min_damage=item.get("min_damage", 0),
-        max_damage=item.get("max_damage", 0),
-        cooldown=item.get("cooldown", 0),
-        cpu_cost=item.get("cpu_cost", 0),
-        special_effect=item.get("special_effect") or "",
-    )
-
-    return PurchaseResponse(purchased_item=purchased_item, gold=session.gold)
+    # Item is already a ShopItem model
+    return PurchaseResponse(purchased_item=item, gold=session.gold)
 
 
 @app.post("/sell/item", response_model=SellResponse)
