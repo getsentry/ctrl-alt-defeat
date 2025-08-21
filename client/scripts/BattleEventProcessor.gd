@@ -92,7 +92,21 @@ func _process_event(event: APITypes.BattleAction):
 	var event_time = event.timestamp / 1000.0
 	var source = event.source if event.source else "none"
 
-	print("[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, source, event.damage])
+	# More descriptive logging based on action type
+	match action:
+		"a":
+			print("[%.1fs] Player %d activates %s" % [event_time, player, source])
+		"d":
+			var attacker = 1 if player == 2 else 2  # Player who TAKES damage is opposite of attacker
+			print("[%.1fs] Player %d's %s deals %d damage → Player %d" % [event_time, attacker, source, event.damage, player])
+		"h":
+			print("[%.1fs] Player %d heals %d HP (source: %s)" % [event_time, player, event.damage, source])
+		"x":
+			print("[%.1fs] Player %d DIES!" % [event_time, player])
+		"s":
+			print("[%.1fs] Battle starts!" % [event_time])
+		_:
+			print("[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, source, event.damage])
 
 	match action:
 		"s":  # Start

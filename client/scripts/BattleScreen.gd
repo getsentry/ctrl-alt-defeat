@@ -154,15 +154,20 @@ func _create_player_stats():
 	player_health_bar = ProgressBar.new()
 	player_health_bar.position = Vector2(10, 50)
 	player_health_bar.size = Vector2(160, 20)
+	player_health_bar.max_value = 100
 	player_health_bar.value = 100
+	player_health_bar.show_percentage = false  # Don't show percentage text
 	player_health_bar.modulate = Color(0.3, 1.0, 0.3)
 	player_stats_panel.add_child(player_health_bar)
 
 	player_health_label = Label.new()
 	player_health_label.text = "100/100"
-	player_health_label.position = Vector2(65, 48)
-	player_health_label.add_theme_font_size_override("font_size", 12)
-	player_health_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))  # Match bar color
+	player_health_label.position = Vector2(65, 52)  # Center it vertically on the bar
+	player_health_label.add_theme_font_size_override("font_size", 11)
+	player_health_label.add_theme_color_override("font_color", Color.WHITE)
+	player_health_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	player_health_label.add_theme_constant_override("shadow_offset_x", 1)
+	player_health_label.add_theme_constant_override("shadow_offset_y", 1)
 	player_stats_panel.add_child(player_health_label)
 
 	# Stamina (CPU)
@@ -175,15 +180,20 @@ func _create_player_stats():
 	player_stamina_bar = ProgressBar.new()
 	player_stamina_bar.position = Vector2(10, 95)
 	player_stamina_bar.size = Vector2(160, 20)
-	player_stamina_bar.value = 100
+	player_stamina_bar.max_value = 10
+	player_stamina_bar.value = 10
+	player_stamina_bar.show_percentage = false
 	player_stamina_bar.modulate = Color(0.3, 0.6, 1.0)
 	player_stats_panel.add_child(player_stamina_bar)
 
 	player_stamina_label = Label.new()
 	player_stamina_label.text = "10/10"
-	player_stamina_label.position = Vector2(70, 93)
-	player_stamina_label.add_theme_font_size_override("font_size", 12)
-	player_stamina_label.add_theme_color_override("font_color", Color(0.3, 0.6, 1.0))  # Match bar color
+	player_stamina_label.position = Vector2(70, 97)
+	player_stamina_label.add_theme_font_size_override("font_size", 11)
+	player_stamina_label.add_theme_color_override("font_color", Color.WHITE)
+	player_stamina_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	player_stamina_label.add_theme_constant_override("shadow_offset_x", 1)
+	player_stamina_label.add_theme_constant_override("shadow_offset_y", 1)
 	player_stats_panel.add_child(player_stamina_label)
 
 	# Buffs - removed to save space in smaller panel
@@ -219,15 +229,20 @@ func _create_enemy_stats():
 	enemy_health_bar = ProgressBar.new()
 	enemy_health_bar.position = Vector2(10, 50)
 	enemy_health_bar.size = Vector2(160, 20)
+	enemy_health_bar.max_value = 100
 	enemy_health_bar.value = 100
+	enemy_health_bar.show_percentage = false
 	enemy_health_bar.modulate = Color(1.0, 0.3, 0.3)
 	enemy_stats_panel.add_child(enemy_health_bar)
 
 	enemy_health_label = Label.new()
 	enemy_health_label.text = "100/100"
-	enemy_health_label.position = Vector2(65, 48)
-	enemy_health_label.add_theme_font_size_override("font_size", 12)
-	enemy_health_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))  # Match bar color
+	enemy_health_label.position = Vector2(65, 52)
+	enemy_health_label.add_theme_font_size_override("font_size", 11)
+	enemy_health_label.add_theme_color_override("font_color", Color.WHITE)
+	enemy_health_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	enemy_health_label.add_theme_constant_override("shadow_offset_x", 1)
+	enemy_health_label.add_theme_constant_override("shadow_offset_y", 1)
 	enemy_stats_panel.add_child(enemy_health_label)
 
 	# Stamina (CPU)
@@ -240,15 +255,20 @@ func _create_enemy_stats():
 	enemy_stamina_bar = ProgressBar.new()
 	enemy_stamina_bar.position = Vector2(10, 95)
 	enemy_stamina_bar.size = Vector2(160, 20)
-	enemy_stamina_bar.value = 100
+	enemy_stamina_bar.max_value = 10
+	enemy_stamina_bar.value = 10
+	enemy_stamina_bar.show_percentage = false
 	enemy_stamina_bar.modulate = Color(1.0, 0.6, 0.3)
 	enemy_stats_panel.add_child(enemy_stamina_bar)
 
 	enemy_stamina_label = Label.new()
 	enemy_stamina_label.text = "10/10"
-	enemy_stamina_label.position = Vector2(70, 93)
-	enemy_stamina_label.add_theme_font_size_override("font_size", 12)
-	enemy_stamina_label.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3))  # Match bar color
+	enemy_stamina_label.position = Vector2(70, 97)
+	enemy_stamina_label.add_theme_font_size_override("font_size", 11)
+	enemy_stamina_label.add_theme_color_override("font_color", Color.WHITE)
+	enemy_stamina_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	enemy_stamina_label.add_theme_constant_override("shadow_offset_x", 1)
+	enemy_stamina_label.add_theme_constant_override("shadow_offset_y", 1)
 	enemy_stats_panel.add_child(enemy_stamina_label)
 
 	# Buffs - removed to save space in smaller panel
@@ -306,17 +326,21 @@ func _create_control_buttons():
 
 func _update_stats_display():
 	# Update player stats
-	player_health_bar.value = (player_data.health / float(player_data.max_health)) * 100
+	player_health_bar.max_value = player_data.max_health
+	player_health_bar.value = player_data.health
 	player_health_label.text = "%d/%d" % [player_data.health, player_data.max_health]
 
-	player_stamina_bar.value = (player_data.stamina / player_data.max_stamina) * 100
+	player_stamina_bar.max_value = player_data.max_stamina
+	player_stamina_bar.value = player_data.stamina
 	player_stamina_label.text = "%.0f/%.0f" % [player_data.stamina, player_data.max_stamina]
 
 	# Update enemy stats
-	enemy_health_bar.value = (enemy_data.health / float(enemy_data.max_health)) * 100
+	enemy_health_bar.max_value = enemy_data.max_health
+	enemy_health_bar.value = enemy_data.health
 	enemy_health_label.text = "%d/%d" % [enemy_data.health, enemy_data.max_health]
 
-	enemy_stamina_bar.value = (enemy_data.stamina / enemy_data.max_stamina) * 100
+	enemy_stamina_bar.max_value = enemy_data.max_stamina
+	enemy_stamina_bar.value = enemy_data.stamina
 	enemy_stamina_label.text = "%.0f/%.0f" % [enemy_data.stamina, enemy_data.max_stamina]
 
 	# Buffs removed from display to save space
