@@ -44,6 +44,7 @@ signal item_clicked(item)
 signal item_placed(item_data, grid_pos)
 signal item_removed(item_data, grid_pos)
 signal item_sold(item_data)
+signal item_moved(item_uid, from_pos, to_pos)
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_PASS
@@ -327,6 +328,10 @@ func _on_item_input(event: InputEvent, item_visual: Control):
 
 func _start_drag(item_visual: Control):
 	"""Start dragging an item"""
+	# Don't allow dragging in read-only mode
+	if read_only:
+		return
+
 	dragging_object = item_visual
 	original_position = item_visual.position
 	original_grid_pos = item_visual.get_meta("grid_pos")
@@ -351,17 +356,36 @@ func _end_drag():
 
 	var grid_pos = pixel_to_grid(get_local_mouse_position())
 	var item_data = dragging_object.get_meta("item_data")
-
-	if _can_place_item(item_data, grid_pos):
-		# Place at new position
-		_place_item_at(dragging_object, grid_pos)
-		item_placed.emit(item_data, grid_pos)
-	else:
-		# Return to original position
-		_place_item_at(dragging_object, original_grid_pos)
-
+	var temp_object = dragging_object
 	dragging_object = null
 	hover_preview.visible = false
+
+	# Check if we're trying to move to the same position - no-op
+	if grid_pos == original_grid_pos:
+		# Just put it back where it was visually, no API call needed
+		_place_item_at(temp_object, original_grid_pos)
+		return
+
+	# Check if the new position is valid
+	if _can_place_item(item_data, grid_pos):
+		# Try to persist the move on the server
+		var item_uid = item_data.id if item_data is Dictionary and item_data.has("id") else (item_data.id if item_data is Resource else "")
+		# Call API to move item
+		var response = await BattleServerAPI.move_item(item_uid, [grid_pos.x, grid_pos.y])
+		if response:
+			print("Move persisted on server")
+			# Move succeeded, place at new position
+			_place_item_at(temp_object, grid_pos)
+			# Emit signal for any listeners
+			item_moved.emit(item_uid, original_grid_pos, grid_pos)
+		else:
+			print("Failed to persist move on server, reverting")
+			# Move failed, return to original position
+			_place_item_at(temp_object, original_grid_pos)
+
+	else:
+		# Can't place at target position, return to original
+		_place_item_at(temp_object, original_grid_pos)
 
 func _place_item_at(item_visual: Control, grid_pos: Vector2i):
 	"""Place item visual at grid position"""

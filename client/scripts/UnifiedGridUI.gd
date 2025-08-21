@@ -45,6 +45,12 @@ func _on_item_sold(item_data):
 	# TODO: Call server to sell item
 	print("Selling item: ", item_data.name if item_data.has("name") else "Unknown")
 
+func _on_item_moved(item_uid: String, from_pos: Vector2i, to_pos: Vector2i):
+	"""Called after an item has been successfully moved within the inventory"""
+	print("Item %s successfully moved from %s to %s" % [item_uid, from_pos, to_pos])
+	# Save the current state to GameStateManager
+	_save_current_state()
+
 
 func _save_current_state():
 	"""Save the current inventory state to GameStateManager"""
@@ -315,6 +321,7 @@ func _create_server_room():
 	inventory_grid.item_placed.connect(_on_item_placed)
 	inventory_grid.item_removed.connect(_on_item_removed)
 	inventory_grid.item_sold.connect(_on_item_sold)
+	inventory_grid.item_moved.connect(_on_item_moved)
 
 	# Set legacy references for compatibility
 	server_room_container = inventory_grid

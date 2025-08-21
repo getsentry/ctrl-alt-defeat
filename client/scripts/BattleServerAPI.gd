@@ -342,3 +342,43 @@ func sell_item(item_id: String, from_storage: bool = false) -> APITypes.SellResp
 	sell_completed.emit(response)
 	error_occurred.emit(error_msg)
 	return response
+
+func move_item(item_uid: String, to_location) -> APITypes.MoveItemResponse:
+	# Move item to new position on real server
+	if player_id == "":
+		push_error("Cannot move item - no player ID")
+		return null
+
+	var url = BASE_URL + "/move/item"
+	var headers = [
+		"Content-Type: application/json",
+		"Authorization: Bearer " + _auth_token
+	]
+
+	var body_dict = {
+		"player_id": player_id,
+		"item_uid": item_uid,
+		"to_location": to_location  # Either "storage" or [x, y]
+	}
+
+	var body = JSON.stringify(body_dict)
+	print("DEBUG: Moving item %s to position %s" % [item_uid, to_location])
+	http_request.request(url, headers, HTTPClient.METHOD_POST, body)
+	var result = await http_request.request_completed
+
+	last_response_code = result[1]
+	last_response_body = result[3]
+
+	if last_response_code == 200:
+		var json = JSON.new()
+		var parse_result = json.parse(last_response_body.get_string_from_utf8())
+		if parse_result == OK:
+			var data = json.data
+			var response = APITypes.MoveItemResponse.new(data)
+			print("DEBUG: Move successful")
+			return response
+
+	var error_msg = "Move failed with code: " + str(last_response_code)
+	print("DEBUG: " + error_msg)
+	error_occurred.emit(error_msg)
+	return null

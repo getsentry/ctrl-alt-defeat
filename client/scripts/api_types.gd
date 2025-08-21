@@ -264,3 +264,19 @@ class SellResponse extends Resource:
 
 	func _init(data: Dictionary):
 		gold = data["gold"]
+
+# Move item response
+class MoveItemResponse extends Resource:
+	var inventory_grid: Array[InventoryItem] = []
+	var inventory_storage: Array[InventoryItem] = []
+	var item: InventoryItem
+
+	func _init(data: Dictionary):
+		if data.has("inventory_grid"):
+			for item_data in data["inventory_grid"]:
+				inventory_grid.append(InventoryItem.new(item_data))
+		if data.has("inventory_storage"):
+			for item_data in data["inventory_storage"]:
+				inventory_storage.append(InventoryItem.new(item_data))
+		if data.has("item"):
+			item = InventoryItem.new(data["item"])
