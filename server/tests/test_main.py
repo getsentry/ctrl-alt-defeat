@@ -634,7 +634,10 @@ class TestMoveItemAPI:
             },
         )
         assert response.status_code == 400
-        assert "not on a server container" in response.json()["detail"]
+        assert (
+            "not fit entirely on server containers" in response.json()["detail"]
+            or "not on a server container" in response.json()["detail"]
+        )
 
     def test_move_item_to_occupied_position(self, auth_client):
         """Test moving an item to an occupied position"""

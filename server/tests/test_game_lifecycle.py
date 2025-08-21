@@ -37,7 +37,10 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
     for item in session.get("inventory_grid", []):
         pos = tuple(item.get("position", []))
         if pos:
-            occupied_positions.add(pos)
+            # Add all squares occupied by this item
+            item_shape = item.get("shape", [[0, 0]])
+            for offset in item_shape:
+                occupied_positions.add((pos[0] + offset[0], pos[1] + offset[1]))
 
     items_purchased = 0
     purchased_item_ids = set()  # Track which items we've already purchased
@@ -125,15 +128,41 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
                 if item["id"] in purchased_item_ids:
                     continue
 
-                # Find next available position
+                # Get THIS item's shape
+                item_shape = item.get("shape", [[0, 0]])
+
+                # Find next available position that fits this item's shape
                 target_position = None
                 for pos in container_positions:
-                    if pos not in occupied_positions:
+                    if pos in occupied_positions:
+                        continue
+
+                    # Check if shape fits at this position
+                    x, y = pos
+                    fits = True
+                    for offset in item_shape:
+                        check_x = x + offset[0]
+                        check_y = y + offset[1]
+                        # Check if this square is in a container
+                        # Containers: A=(2-3,3-4), B=(4-5,3-4), C=(6-7,3-4)
+                        in_container = False
+                        if 2 <= check_x <= 3 and 3 <= check_y <= 4:  # Container A
+                            in_container = True
+                        elif 4 <= check_x <= 5 and 3 <= check_y <= 4:  # Container B
+                            in_container = True
+                        elif 6 <= check_x <= 7 and 3 <= check_y <= 4:  # Container C
+                            in_container = True
+
+                        if not in_container or (check_x, check_y) in occupied_positions:
+                            fits = False
+                            break
+
+                    if fits:
                         target_position = pos
                         break
 
                 if not target_position:
-                    break  # No more available positions
+                    continue  # Try next item
 
                 response = client.post(
                     "/purchase/item",
@@ -197,7 +226,9 @@ class TestGameLifecycle:
             # Purchase items for battle (buy fewer items to avoid overlaps)
             # With 3 containers of 2x2 each, we have 12 squares available
             # But items can have shapes larger than 1x1, so limit to 3 items
-            purchase_items_for_battle(auth_client, player_id, session, 3)
+            # Only purchase if we have room (less than 6 items total)
+            if len(session.get("inventory_grid", [])) < 6:
+                purchase_items_for_battle(auth_client, player_id, session, 3)
 
             # Battle with purchased items
             battle_request = {
