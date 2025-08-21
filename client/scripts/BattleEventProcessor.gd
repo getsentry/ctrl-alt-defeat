@@ -204,15 +204,3 @@ func skip_to_end():
 		current_event_index += 1
 
 	_finish_battle()
-
-func get_current_time() -> float:
-	if not is_playing:
-		return 0.0
-	return (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
-
-func get_progress() -> float:
-	if events.is_empty() or battle_duration <= 0:
-		return 0.0
-
-	var current_time = get_current_time()
-	return min(1.0, current_time / battle_duration)
