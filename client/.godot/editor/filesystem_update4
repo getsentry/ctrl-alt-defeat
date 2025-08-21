@@ -1,1 +1,5 @@
 res://scenes/UnifiedGridUI.tscn
+res://scripts/api_types.gd
+res://scripts/BattleServerAPI.gd
+res://scripts/GridManager.gd
+res://scripts/UnifiedGridUI.gd

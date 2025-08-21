@@ -151,16 +151,16 @@ func _ready():
 	if not hide_shop:
 		_load_shop_from_state()
 
-#func configure(settings: Dictionary):
-#	read_only_mode = settings.get("read_only", false)
-#	hide_shop = settings.get("hide_shop", false)
-#	hide_storage = settings.get("hide_storage", false)
-#
-#	# Reload UI with new settings
-#	for child in get_children():
-#		child.queue_free()
-#
-#	_setup_ui()
+func configure(settings: Dictionary):
+	read_only_mode = settings.get("read_only", false)
+	hide_shop = settings.get("hide_shop", false)
+	hide_storage = settings.get("hide_storage", false)
+
+	# Reload UI with new settings
+	for child in get_children():
+		child.queue_free()
+
+	_setup_ui()
 
 func _place_starting_containers():
 	print("Placing starting containers for new game")
@@ -235,26 +235,51 @@ func load_inventory_state(inventory_data: APITypes.InventoryState):
 	# Convert typed inventory to dictionary for internal processing
 	var data_dict = inventory_data.to_dict()
 
-	# Load containers - only handle typed objects
-	for server_data in data_dict.servers:
-		var typed_server: APITypes.ServerContainer = server_data as APITypes.ServerContainer
-		var pos_x = typed_server.position.x
-		var pos_y = typed_server.position.y
+	# Load containers - handle both typed objects and dicts
+	for server_data in data_dict.get("containers", data_dict.get("servers", [])):
+		var pos_x: int
+		var pos_y: int
+		var width: int
+		var height: int
+		var server_type: String
+		var server_id: String
+
+		# Handle both dictionary and typed object
+		if server_data is Dictionary:
+			var pos = server_data["position"]
+			if pos is Dictionary:
+				pos_x = pos["x"]
+				pos_y = pos["y"]
+			else:  # Array format [x, y]
+				pos_x = pos[0]
+				pos_y = pos[1]
+			width = server_data["width"]
+			height = server_data["height"]
+			server_type = server_data["type"]
+			server_id = server_data["id"]
+		else:
+			var typed_server: APITypes.ServerContainer = server_data
+			pos_x = typed_server.position.x
+			pos_y = typed_server.position.y
+			width = typed_server.width
+			height = typed_server.height
+			server_type = typed_server.type
+			server_id = typed_server.id
 
 		# Generate pattern from width/height (all cells active for now)
 		var pattern = []
-		for y in range(typed_server.height):
+		for y in range(height):
 			var row = []
-			for x in range(typed_server.width):
+			for x in range(width):
 				row.append(1)  # All cells active
 			pattern.append(row)
 
 		var container_data = {
 			"pattern": pattern,
-			"width": typed_server.width,
-			"height": typed_server.height,
-			"type": typed_server.type,
-			"id": typed_server.id,
+			"width": width,
+			"height": height,
+			"type": server_type,
+			"id": server_id,
 			"color": Color(0.3, 0.6, 1.0, 0.7)  # Default blue color for servers
 		}
 		_place_server_pattern(pos_x, pos_y, container_data)
@@ -913,10 +938,11 @@ func _stop_dragging(drop_position: Vector2 = Vector2.ZERO):
 
 func _try_place_server(server_preview: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
 	var global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
-	# Convert global position to local position safely
+	# Convert global position to local position relative to the grid
 	var mouse_pos = Vector2.ZERO
-	if inventory_grid:
-		mouse_pos = inventory_grid.to_local(global_pos) if inventory_grid.is_inside_tree() else global_pos
+	if inventory_grid and inventory_grid.is_inside_tree():
+		# Convert global to local position relative to inventory_grid's global position
+		mouse_pos = global_pos - inventory_grid.global_position
 	else:
 		mouse_pos = global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
@@ -1043,10 +1069,11 @@ func _try_place_item(item: Control, drop_position: Vector2 = Vector2.ZERO) -> bo
 	var global_pos = drop_position
 	if global_pos == Vector2.ZERO:
 		global_pos = last_drag_position if last_drag_position != Vector2.ZERO else get_global_mouse_position()
-	# Convert global position to local position safely
+	# Convert global position to local position relative to the grid
 	var mouse_pos = Vector2.ZERO
-	if inventory_grid:
-		mouse_pos = inventory_grid.to_local(global_pos) if inventory_grid.is_inside_tree() else global_pos
+	if inventory_grid and inventory_grid.is_inside_tree():
+		# Convert global to local position relative to inventory_grid's global position
+		mouse_pos = global_pos - inventory_grid.global_position
 	else:
 		mouse_pos = global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
@@ -1244,10 +1271,11 @@ func _update_hover_preview(global_pos: Vector2 = Vector2.ZERO):
 
 	if global_pos == Vector2.ZERO:
 		global_pos = get_global_mouse_position()
-	# Convert global position to local position safely
+	# Convert global position to local position relative to the grid
 	var mouse_pos = Vector2.ZERO
-	if inventory_grid:
-		mouse_pos = inventory_grid.to_local(global_pos) if inventory_grid.is_inside_tree() else global_pos
+	if inventory_grid and inventory_grid.is_inside_tree():
+		# Convert global to local position relative to inventory_grid's global position
+		mouse_pos = global_pos - inventory_grid.global_position
 	else:
 		mouse_pos = global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
@@ -1346,10 +1374,11 @@ func _on_refresh_shop():
 
 func _try_move_server(server: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
 	var global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
-	# Convert global position to local position safely
+	# Convert global position to local position relative to the grid
 	var mouse_pos = Vector2.ZERO
-	if inventory_grid:
-		mouse_pos = inventory_grid.to_local(global_pos) if inventory_grid.is_inside_tree() else global_pos
+	if inventory_grid and inventory_grid.is_inside_tree():
+		# Convert global to local position relative to inventory_grid's global position
+		mouse_pos = global_pos - inventory_grid.global_position
 	else:
 		mouse_pos = global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
