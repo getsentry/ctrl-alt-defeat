@@ -23,7 +23,6 @@ class TestGameSessionInventory:
         # Check inventory fields exist
         assert "inventory_grid" in session
         assert "inventory_storage" in session
-        assert "placed_items" in session
         assert "server_containers" in session
 
         # Check initial state
@@ -105,21 +104,6 @@ class TestGameSessionInventory:
             assert container["width"] == 2
             assert container["height"] == 2
 
-    def test_placed_items_tracking(self, auth_client):
-        """Test that placed items are tracked separately"""
-        response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
-        )
-        data = response.json()
-        # player_id = data["player_id"]  # Will be used when purchase is implemented
-
-        # Initially no placed items
-        session = data["session"]
-        assert session["placed_items"] == []
-
-        # After purchasing and placing an item (when implemented)
-        # the placed_items list should update
-
     def test_session_model_creation(self, auth_client):
         """Test creating GameSession model directly"""
         # Create inventory manager
@@ -137,14 +121,12 @@ class TestGameSessionInventory:
             game_seed=12345,  # Always need a seed now
             inventory_grid=manager.get_state()["grid"],
             inventory_storage=manager.get_state()["storage"],
-            placed_items=[],
             server_containers=manager.get_state()["containers"],
         )
 
         assert session.player_id == "test123"
         assert len(session.server_containers) == 3
         assert session.inventory_storage == []
-        assert session.placed_items == []
 
     def test_session_inventory_to_dict(self, auth_client):
         """Test that session with inventory serializes correctly"""
@@ -161,7 +143,6 @@ class TestGameSessionInventory:
             game_seed=12345,  # Always need a seed now
             inventory_grid=manager.get_state()["grid"],
             inventory_storage=manager.get_state()["storage"],
-            placed_items=[],
             server_containers=manager.get_state()["containers"],
         )
 
@@ -170,7 +151,6 @@ class TestGameSessionInventory:
 
         assert "inventory_grid" in session_dict
         assert "inventory_storage" in session_dict
-        assert "placed_items" in session_dict
         assert "server_containers" in session_dict
 
 

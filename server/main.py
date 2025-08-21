@@ -1284,9 +1284,6 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
     session.inventory_grid = new_state["grid"]
     session.inventory_storage = new_state["storage"]
 
-    # Update placed_items for quick reference
-    session.placed_items = new_state["grid"].copy()
-
     # Deduct gold and remove from shop
     session.gold -= cost
     session.current_shop = [
@@ -1362,7 +1359,6 @@ async def sell_item(request: SellRequest) -> SellResponse:
     new_state = manager.get_state()
     session.inventory_grid = new_state["grid"]
     session.inventory_storage = new_state["storage"]
-    session.placed_items = new_state["grid"].copy()
 
     # Calculate gold (50% of cost, rounded down)
     gold_gained = item_cost // 2
@@ -1468,7 +1464,6 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     new_state = manager.get_state()
     session.inventory_grid = new_state["grid"]
     session.inventory_storage = new_state["storage"]
-    session.placed_items = new_state["grid"].copy()
 
     # Save updated session
     await session_manager.update_session(session)

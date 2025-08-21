@@ -56,9 +56,7 @@ class GameSession(Base):
 
     # Inventory state (stored as JSON for flexibility)
     inventory_grid = Column(JSON, default=list, nullable=False)
-    inventory_slots = Column(JSON, default=list, nullable=False)
     inventory_storage = Column(JSON, default=list, nullable=False)
-    placed_items = Column(JSON, default=list, nullable=False)
     server_containers = Column(JSON, default=list, nullable=False)
 
     # Timestamps for session management
@@ -81,9 +79,7 @@ class GameSession(Base):
             "last_battle_result": self.last_battle_result,
             "current_shop": self.current_shop or [],
             "inventory_grid": self.inventory_grid or [],
-            "inventory_slots": self.inventory_slots or [],
             "inventory_storage": self.inventory_storage or [],
-            "placed_items": self.placed_items or [],
             "server_containers": self.server_containers or [],
         }
 

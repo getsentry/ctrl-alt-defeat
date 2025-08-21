@@ -124,13 +124,11 @@ class SessionManager:
             wins=0,
             losses=0,
             inventory_grid=[],
-            inventory_slots=[],
             current_shop=generate_shop_items(1, game_seed),
             last_battle_result=None,
             game_seed=game_seed,
             shop_refresh_count=0,
             inventory_storage=[],
-            placed_items=[],
             server_containers=server_containers,
         )
 
@@ -154,9 +152,7 @@ class SessionManager:
                 existing_session.wins = session.wins
                 existing_session.losses = session.losses
                 existing_session.inventory_grid = session.inventory_grid
-                existing_session.inventory_slots = session.inventory_slots
                 existing_session.inventory_storage = session.inventory_storage
-                existing_session.placed_items = session.placed_items
                 existing_session.server_containers = session.server_containers
                 existing_session.current_shop = session.current_shop
                 existing_session.last_battle_result = session.last_battle_result
@@ -176,9 +172,7 @@ class SessionManager:
                     wins=session.wins,
                     losses=session.losses,
                     inventory_grid=session.inventory_grid,
-                    inventory_slots=session.inventory_slots,
                     inventory_storage=session.inventory_storage,
-                    placed_items=session.placed_items,
                     server_containers=session.server_containers,
                     current_shop=[
                         item.model_dump() if item else None
@@ -227,9 +221,7 @@ class SessionManager:
                 db_session.wins = session.wins
                 db_session.losses = session.losses
                 db_session.inventory_grid = session.inventory_grid
-                db_session.inventory_slots = session.inventory_slots
                 db_session.inventory_storage = session.inventory_storage
-                db_session.placed_items = session.placed_items
                 db_session.server_containers = session.server_containers
                 db_session.current_shop = [
                     item.model_dump() if item else None for item in session.current_shop
