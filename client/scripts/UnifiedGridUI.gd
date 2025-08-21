@@ -291,28 +291,33 @@ func load_inventory_state(inventory_data: APITypes.InventoryState):
 		var grid_x = 0
 		var grid_y = 0
 
-		# Only handle typed InventoryItem
-		var typed_item: APITypes.InventoryItem = item_info as APITypes.InventoryItem
-		grid_x = typed_item.position.x
-		grid_y = typed_item.position.y
+		# Handle dictionary (from to_dict())
+		if item_info is Dictionary:
+			var pos = item_info["position"]
+			if pos is Dictionary:
+				grid_x = pos["x"]
+				grid_y = pos["y"]
+			else:  # Array format [x, y]
+				grid_x = pos[0]
+				grid_y = pos[1]
 
-		# Calculate width/height from shape for display
-		var max_x = 0
-		var max_y = 0
-		for coord in typed_item.shape:
-			if coord is Array and coord.size() >= 2:
-				max_x = max(max_x, coord[0])
-				max_y = max(max_y, coord[1])
+			# Calculate width/height from shape for display
+			var max_x = 0
+			var max_y = 0
+			for coord in item_info["shape"]:
+				if coord is Array and coord.size() >= 2:
+					max_x = max(max_x, coord[0])
+					max_y = max(max_y, coord[1])
 
-		item_data = {
-			"id": typed_item.id,
-			"item_type": typed_item.item_type,
-			"name": typed_item.name,
-			"category": typed_item.category,
-			"shape": typed_item.shape,  # Store shape for validation
-			"width": max_x + 1,  # Calculate width from shape
-			"height": max_y + 1  # Calculate height from shape
-		}
+			item_data = {
+				"id": item_info["id"],
+				"item_type": item_info["item_type"],
+				"name": item_info["name"],
+				"category": item_info["category"],
+				"shape": item_info["shape"],  # Store shape for validation
+				"width": max_x + 1,  # Calculate width from shape
+				"height": max_y + 1  # Calculate height from shape
+			}
 
 		# Create the item visual
 		var item = _create_item(item_data)
@@ -1143,8 +1148,9 @@ func _try_place_item(item: Control, drop_position: Vector2 = Vector2.ZERO) -> bo
 	var storage_global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
 	# Convert to storage local position safely
 	var storage_mouse = Vector2.ZERO
-	if storage_grid:
-		storage_mouse = storage_grid.to_local(storage_global_pos) if storage_grid.is_inside_tree() else storage_global_pos
+	if storage_grid and storage_grid.is_inside_tree():
+		# Convert global to local position relative to storage_grid's global position
+		storage_mouse = storage_global_pos - storage_grid.global_position
 	else:
 		storage_mouse = storage_global_pos
 	if storage_mouse.x >= 0 and storage_mouse.x < storage_container.size.x and \

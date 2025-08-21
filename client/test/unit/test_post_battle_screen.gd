@@ -1,6 +1,7 @@
-const APITypes = preload("res://scripts/api_types.gd")
 extends GutTest
 # Tests for PostBattleScreen to ensure no node errors
+
+const APITypes = preload("res://scripts/api_types.gd")
 
 func test_post_battle_screen_creation():
 	# Test that PostBattleScreen can be created without errors
@@ -198,8 +199,18 @@ func test_empty_result_handling():
 	add_child(screen)
 	await get_tree().process_frame
 
-	# Try with empty dictionary
-	screen.set_battle_result(APITypes.BattleResult())
+	# Try with minimal valid result data
+	var minimal_data = {
+		"winner": 1,
+		"duration": 0.0,
+		"player1_quota": 0,
+		"player2_quota": 0,
+		"seed": 0,
+		"actions": [],
+		"player_inventory": {"items": [], "servers": []},
+		"enemy_inventory": {"items": [], "servers": []}
+	}
+	screen.set_battle_result(APITypes.BattleResult.new(minimal_data))
 	screen._display_results()
 
 	# Should not crash

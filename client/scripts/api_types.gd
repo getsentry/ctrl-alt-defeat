@@ -28,12 +28,15 @@ class InventoryItem extends Resource:
 
 	func _init(data: Dictionary):
 		# Required fields per server PlacedItem schema
+		if not data.has("id"):
+			return  # Invalid data
 		id = data["id"]
-		item_type = data["item_type"]
-		name = data["name"]
-		category = data["category"]
-		position = Position.new(data["position"])
-		shape = data["shape"]  # Shape as list of [x, y] offsets
+		item_type = data.get("item_type", "")
+		name = data.get("name", "")
+		category = data.get("category", "")
+		if data.has("position"):
+			position = Position.new(data["position"])
+		shape = data.get("shape", [])  # Shape as list of [x, y] offsets
 
 	func to_dict() -> Dictionary:
 		return {
@@ -41,7 +44,7 @@ class InventoryItem extends Resource:
 			"item_type": item_type,
 			"name": name,
 			"category": category,
-			"position": position.to_dict(),
+			"position": position.to_dict() if position else {"x": 0, "y": 0},
 			"shape": shape
 		}
 
@@ -54,18 +57,21 @@ class ServerContainer extends Resource:
 	var height: int = 2
 
 	func _init(data: Dictionary):
-		# Server sends all these fields - let it error if missing
+		# Server sends all these fields
+		if not data.has("id"):
+			return  # Invalid data
 		id = data["id"]
-		type = data["type"]
-		position = Position.new(data["position"])
-		width = data["width"]
-		height = data["height"]
+		type = data.get("type", "")
+		if data.has("position"):
+			position = Position.new(data["position"])
+		width = data.get("width", 2)
+		height = data.get("height", 2)
 
 	func to_dict() -> Dictionary:
 		return {
 			"id": id,
 			"type": type,
-			"position": position.to_dict(),
+			"position": position.to_dict() if position else {"x": 0, "y": 0},
 			"width": width,
 			"height": height
 		}
@@ -78,13 +84,23 @@ class InventoryState extends Resource:
 	func _init(data: Dictionary):
 		# Load items - required
 		items.clear()
-		for item_data in data["items"]:
-			items.append(InventoryItem.new(item_data))
+		for item_data in data.get("items", []):
+			# Check if already an InventoryItem object or needs to be created
+			if item_data is InventoryItem:
+				items.append(item_data)
+			elif item_data is Dictionary and item_data.has("id"):
+				items.append(InventoryItem.new(item_data))
+			# else skip invalid item
 
 		# Load containers - server sends "servers" field per InventoryData schema
 		containers.clear()
-		for container_data in data["servers"]:
-			containers.append(ServerContainer.new(container_data))
+		for container_data in data.get("servers", []):
+			# Check if already a ServerContainer object or needs to be created
+			if container_data is ServerContainer:
+				containers.append(container_data)
+			elif container_data is Dictionary and container_data.has("id"):
+				containers.append(ServerContainer.new(container_data))
+			# else skip invalid container
 
 	func to_dict() -> Dictionary:
 		var items_array = []
@@ -202,7 +218,7 @@ class SessionStartResponse extends Resource:
 
 # Shop refresh response
 class ShopRefreshResponse extends Resource:
-	var shop: Array[Dictionary] = []  # Array of ShopItem dicts
+	var shop: Array = []  # Array of ShopItem dicts (untyped for flexibility)
 	var gold: int = 0
 
 	func _init(data: Dictionary):
