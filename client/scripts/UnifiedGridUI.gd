@@ -7,20 +7,52 @@ const APITypes = preload("res://scripts/api_types.gd")
 # Grid settings
 const ROOM_WIDTH = 9
 const ROOM_HEIGHT = 7
-const CELL_SIZE = 45
+const CELL_SIZE = 45  # Default cell size, actual size calculated from container
 const CELL_SPACING = 1
 
 # Storage settings
 const STORAGE_WIDTH = 12
 const STORAGE_HEIGHT = 2
 
-# Unified grid system
+# Runtime calculated cell size
+var actual_cell_size: float = CELL_SIZE
+var actual_cell_spacing: float = CELL_SPACING
+
+func get_cell_size() -> float:
+	return actual_cell_size
+
+func get_cell_spacing() -> float:
+	return actual_cell_spacing
+
+func get_cell_total() -> float:
+	return actual_cell_size + actual_cell_spacing
+
+func _update_active_grid_for_server(x: int, y: int, pattern: Array):
+	"""Update the active grid to mark where server cells are"""
+	for py in range(pattern.size()):
+		for px in range(pattern[py].size()):
+			if pattern[py][px] == 1:
+				var gx = x + px
+				var gy = y + py
+				if gy < ROOM_HEIGHT and gx < ROOM_WIDTH:
+					active_grid[gy][gx] = true
+
+# Grid managers
+var inventory_grid: GridManager  # Main inventory grid
+var storage_grid: GridManager    # Storage grid
+
+# Game state tracking
 var active_grid: Array = []  # Tracks which cells have server grids
 var item_grid: Array = []    # Tracks items placed on the grid
-var grid_cells: Array = []   # Visual grid cell references
 var servers: Array = []       # Server objects (for tracking)
-var server_visuals: Array = [] # Visual server representations (for dragging)
 var items: Array = []         # Item objects
+
+# Legacy references - these now point to GridManager
+var server_room_container: Node  # Points to inventory_grid
+var storage_container: Node      # Points to storage_grid
+var grid_container: Node         # Points to inventory_grid
+var grid_cells: Array = []       # Grid cell tracking
+var server_visuals: Array = []   # Server visual tracking
 
 # Shop
 var shop_items: Array = []
@@ -43,9 +75,6 @@ var last_drag_position = Vector2.ZERO  # Track last position during drag for pla
 const ROTATION_COOLDOWN: float = 0.3  # Seconds between rotations (increased for less sensitivity)
 
 # UI References
-var server_room_container: Node2D
-var grid_container: Control
-var storage_container: Control
 var shop_container: Control
 var stats_label: Label
 var gold_preview_label: Label
@@ -93,10 +122,11 @@ var server_types = {
 func _ready():
 	print("UnifiedGridUI starting...")
 
-	# Set window size to match background if not in headless mode
-	if OS.has_feature("standalone"):
-		DisplayServer.window_set_size(Vector2i(1536, 1024))
-		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))  # Center better
+	# Set window size for consistency (scaling 1600x1024 to 2560x1600)
+	if not OS.has_feature("headless"):
+		DisplayServer.window_set_size(Vector2i(2560, 1600))
+		get_window().min_size = Vector2i(2560, 1600)
+		get_window().max_size = Vector2i(2560, 1600)
 
 	# Connect to API signals for typed responses
 	BattleServerAPI.purchase_completed.connect(_on_purchase_completed)
@@ -107,15 +137,15 @@ func _ready():
 	_initialize_grids()
 	_setup_ui()
 
+	# Ensure GridManagers are ready
+	await get_tree().process_frame
+
 	# Then load saved inventory if it exists
 	var saved_inventory = GameStateManager.get_inventory_state()
 	if saved_inventory.has("servers") and saved_inventory.servers.size() > 0:
-		# Wait for next frame to ensure UI is ready
-		await get_tree().process_frame
 		_load_saved_inventory(saved_inventory)
 	elif GameStateManager.current_round == 1:
 		# First round - give player starting containers
-		await get_tree().process_frame
 		_place_starting_containers()
 
 	if not hide_shop:
@@ -172,20 +202,16 @@ func _place_starting_containers():
 			"pos": Vector2i(x_pos, y_pos)
 		}
 
-		# Place the server pattern on the grid
-		_place_server_pattern(x_pos, y_pos, container_type)
+		# Place the server using GridManager
+		var server_visual = inventory_grid.place_server(container_type, Vector2i(x_pos, y_pos))
+		server_visual.gui_input.connect(_on_server_input.bind(server_visual))
+		server_visual.set_meta("is_placed_server", true)
+
+		# Update grid tracking
+		_update_active_grid_for_server(x_pos, y_pos, container_type.pattern)
 
 		# Track the server
 		servers.append(server_data)
-
-		# Create visual representation
-		var server_visual = _create_server_preview(container_type)
-		server_visual.position = Vector2(x_pos * (CELL_SIZE + CELL_SPACING),
-										 y_pos * (CELL_SIZE + CELL_SPACING))
-		server_room_container.add_child(server_visual)
-		server_visual.set_meta("grid_pos", Vector2i(x_pos, y_pos))
-		server_visual.set_meta("server_data", container_type)
-		server_visuals.append(server_visual)
 
 	print("Placed %d starting containers" % containers_to_place.size())
 
@@ -316,16 +342,7 @@ func _initialize_grids():
 		grid_cells.append(cell_row)
 
 func _setup_ui():
-	# Background image - required
-	var texture = load("res://assets/ui/backgrounds/inventory_background.png")
-	assert(texture != null, "FATAL: Could not load inventory background image at res://assets/ui/backgrounds/inventory_background.png")
-
-	var bg_texture = TextureRect.new()
-	bg_texture.texture = texture
-	bg_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	bg_texture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(bg_texture)
-
+	# Check if nodes already exist in the scene
 	_create_header()
 	_create_shop_panel()
 	_create_server_room()
@@ -353,155 +370,122 @@ func _setup_ui():
 	print("UI setup complete")
 
 func _create_header():
-	# Character stats in bottom-left area
+	# Character stats in bottom-left area (no bounding box, just text)
 	if not read_only_mode:
-		# Stats panel with semi-transparent background
-		var stats_panel = Panel.new()
-		stats_panel.position = Vector2(50, 700)  # Bottom-left positioning
-		stats_panel.size = Vector2(280, 200)
-		var panel_style = StyleBoxFlat.new()
-		panel_style.bg_color = Color(0.1, 0.05, 0.15, 0.3)  # Semi-transparent purple
-		panel_style.border_color = Color(1.0, 0.0, 1.0, 0.5)  # Pink border
-		panel_style.set_border_width_all(2)
-		panel_style.set_corner_radius_all(5)
-		stats_panel.add_theme_stylebox_override("panel", panel_style)
-		add_child(stats_panel)
-
-		var title = Label.new()
-		title.text = "CHARACTER STATS"
-		title.position = Vector2(70, 720)
-		title.add_theme_font_size_override("font_size", 20)
-		title.add_theme_color_override("font_color", Color(0.0, 1.0, 1.0))  # Cyan
-		title.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
-		title.add_theme_constant_override("shadow_offset_x", 2)
-		title.add_theme_constant_override("shadow_offset_y", 2)
-		add_child(title)
-
-		stats_label = Label.new()
+		stats_label = $CharacterStats
 		stats_label.text = _get_stats_text()
-		stats_label.position = Vector2(70, 760)
-		stats_label.add_theme_font_size_override("font_size", 16)
-		stats_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))  # White text
-		stats_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
-		stats_label.add_theme_constant_override("shadow_offset_x", 1)
-		stats_label.add_theme_constant_override("shadow_offset_y", 1)
-		add_child(stats_label)
 
 func _create_shop_panel():
 	if hide_shop:
 		return
-
-	# Shop title at top-right
-	var shop_title = Label.new()
-	shop_title.text = "SHOP"
-	shop_title.position = Vector2(1320, 180)
-	shop_title.add_theme_font_size_override("font_size", 24)
-	shop_title.add_theme_color_override("font_color", Color(1.0, 0.0, 1.0))  # Pink
-	shop_title.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
-	shop_title.add_theme_constant_override("shadow_offset_x", 2)
-	shop_title.add_theme_constant_override("shadow_offset_y", 2)
-	add_child(shop_title)
-
-	# Shop container for items - positioned to align with shelf areas
-	shop_container = Control.new()
-	shop_container.position = Vector2(1100, 250)  # Right side positioning
-	shop_container.size = Vector2(400, 600)
-	add_child(shop_container)
+	shop_container = $ShopContainer
 
 func _create_server_room():
-	# Server Room (Main Inventory) - positioned above character stats
-	var room_bg = Panel.new()
-	room_bg.position = Vector2(380, 280)  # Center-left, above character stats
-	room_bg.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING) + 20,
-						   ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING) + 20)
+	# Panel already exists, just style it
+	var room_bg = $InventoryPanel
 	var room_style = StyleBoxFlat.new()
 	room_style.bg_color = Color(0.05, 0.1, 0.15, 0.2)  # Semi-transparent blue
 	room_style.border_color = Color(0.0, 1.0, 1.0, 0.4)  # Cyan border
 	room_style.set_border_width_all(2)
 	room_style.set_corner_radius_all(4)
 	room_bg.add_theme_stylebox_override("panel", room_style)
-	add_child(room_bg)
 
-	if not read_only_mode:
-		var room_title = Label.new()
-		room_title.text = "SERVER ROOM"
-		room_title.position = Vector2(550, 100)
-		room_title.add_theme_font_size_override("font_size", 18)
-		room_title.add_theme_color_override("font_color", Color(0.9, 1.0, 0.9))
-		add_child(room_title)
+	# Create inventory grid manager
+	var GridManagerClass = preload("res://scripts/GridManager.gd")
+	inventory_grid = GridManagerClass.new()
+	inventory_grid.position = Vector2(10, 10)  # Small padding inside panel
+	inventory_grid.size = room_bg.size - Vector2(20, 20)  # Account for padding
+	inventory_grid.setup(ROOM_WIDTH, ROOM_HEIGHT)
+	room_bg.add_child(inventory_grid)
 
-	# Container for the room
-	server_room_container = Node2D.new()
-	server_room_container.position = Vector2(390, 290)  # Match room background position
-	# Control2D doesn't have size property, we'll track the bounds separately
-	add_child(server_room_container)
+	# Set legacy references
+	server_room_container = inventory_grid
+	grid_container = inventory_grid
 
-	# Grid container (for cells created by servers)
-	grid_container = Control.new()
-	grid_container.position = Vector2(0, 0)
-	grid_container.size = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
-								  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
-	grid_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	server_room_container.add_child(grid_container)
+	# Initialize grid cells array for compatibility
+	for y in range(ROOM_HEIGHT):
+		var row = []
+		for x in range(ROOM_WIDTH):
+			row.append(null)
+		grid_cells.append(row)
+
+	# Connect signals
+	inventory_grid.gui_input.connect(_on_inventory_input)
 
 func _create_storage_area():
 	if hide_storage:
 		return
 
-	# Storage in bottom-middle area
-	var storage_bg = Panel.new()
-	storage_bg.position = Vector2(520, 850)  # Bottom-middle positioning
-	storage_bg.size = Vector2(500, 120)
-	var storage_style = StyleBoxFlat.new()
-	storage_style.bg_color = Color(0.1, 0.05, 0.15, 0.2)  # Semi-transparent purple
-	storage_style.border_color = Color(0.0, 1.0, 1.0, 0.4)  # Cyan border
-	storage_style.set_border_width_all(2)
-	storage_style.set_corner_radius_all(4)
-	storage_bg.add_theme_stylebox_override("panel", storage_style)
-	add_child(storage_bg)
+	# Use existing nodes from scene if available
+	if has_node("StoragePanel"):
+		var storage_bg = $StoragePanel
+		var storage_style = StyleBoxFlat.new()
+		storage_style.bg_color = Color(0.1, 0.05, 0.15, 0.2)  # Semi-transparent purple
+		storage_style.border_color = Color(0.0, 1.0, 1.0, 0.4)  # Cyan border
+		storage_style.set_border_width_all(2)
+		storage_style.set_corner_radius_all(4)
+		storage_bg.add_theme_stylebox_override("panel", storage_style)
 
-	var storage_title = Label.new()
-	storage_title.text = "STORAGE"
-	storage_title.position = Vector2(720, 860)
-	storage_title.add_theme_font_size_override("font_size", 18)
-	storage_title.add_theme_color_override("font_color", Color(0.0, 1.0, 1.0))  # Cyan
-	storage_title.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
-	storage_title.add_theme_constant_override("shadow_offset_x", 1)
-	storage_title.add_theme_constant_override("shadow_offset_y", 1)
-	add_child(storage_title)
+		# Create storage grid manager
+		var GridManagerClass = preload("res://scripts/GridManager.gd")
+		storage_grid = GridManagerClass.new()
+		storage_grid.position = Vector2(5, 5)  # Small padding
+		storage_grid.size = storage_bg.size - Vector2(10, 10)
+		storage_grid.setup(STORAGE_WIDTH, STORAGE_HEIGHT)
+		storage_bg.add_child(storage_grid)
 
-	storage_container = Control.new()
-	storage_container.position = Vector2(530, 890)
-	storage_container.size = Vector2(480, 70)
-	add_child(storage_container)
+		# Set legacy reference
+		storage_container = storage_grid
+
+		# Create visual cells for storage
+		for y in range(STORAGE_HEIGHT):
+			for x in range(STORAGE_WIDTH):
+				storage_grid.create_cell_visual(x, y, Color(0.0, 0.1, 0.2, 0.3))
 
 func _create_controls():
 	if not read_only_mode:
 		if not hide_shop:
-			var refresh_btn = Button.new()
-			refresh_btn.name = "RefreshButton"
-			refresh_btn.text = "Refresh (1g)"
-			refresh_btn.position = Vector2(50, 600)
-			refresh_btn.size = Vector2(100, 30)
-			refresh_btn.pressed.connect(_on_refresh_shop)
-			add_child(refresh_btn)
+			# Use existing RefreshButton from scene if available
+			if has_node("RefreshButton"):
+				var refresh_btn = $RefreshButton
+				if not refresh_btn.pressed.is_connected(_on_refresh_shop):
+					refresh_btn.pressed.connect(_on_refresh_shop)
+			else:
+				# Fallback to creating new
+				var refresh_btn = Button.new()
+				refresh_btn.name = "RefreshButton"
+				refresh_btn.text = "Refresh (1g)"
+				refresh_btn.position = Vector2(1950, 200)
+				refresh_btn.size = Vector2(120, 40)
+				refresh_btn.pressed.connect(_on_refresh_shop)
+				add_child(refresh_btn)
 
-		var battle_btn = Button.new()
-		battle_btn.name = "ReadyButton"
-		battle_btn.text = "Ready for Battle!"
-		battle_btn.position = Vector2(1050, 600)
-		battle_btn.size = Vector2(150, 40)
-		battle_btn.add_theme_font_size_override("font_size", 16)
-		battle_btn.pressed.connect(_on_ready_for_battle)
-		add_child(battle_btn)
+		# Use existing ReadyButton from scene if available
+		if has_node("ReadyButton"):
+			var battle_btn = $ReadyButton
+			if not battle_btn.pressed.is_connected(_on_ready_for_battle):
+				battle_btn.pressed.connect(_on_ready_for_battle)
+		else:
+			# Fallback to creating new
+			var battle_btn = Button.new()
+			battle_btn.name = "ReadyButton"
+			battle_btn.text = "Ready for Battle!"
+			battle_btn.position = Vector2(1050, 600)
+			battle_btn.size = Vector2(150, 40)
+			battle_btn.add_theme_font_size_override("font_size", 16)
+			battle_btn.pressed.connect(_on_ready_for_battle)
+			add_child(battle_btn)
 
 	if not read_only_mode and not hide_shop:
-		var help = Label.new()
-		help.text = "Drag servers to create grid → Place items on any grid cells → Items can span servers"
-		help.position = Vector2(300, 605)
-		help.add_theme_font_size_override("font_size", 12)
-		help.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
-		add_child(help)
+		# HelpText node is already in scene, no need to create
+		if not has_node("HelpText"):
+			# Fallback if not in scene
+			var help = Label.new()
+			help.text = "Drag servers to create grid → Place items on any grid cells → Items can span servers"
+			help.position = Vector2(300, 605)
+			help.add_theme_font_size_override("font_size", 12)
+			help.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+			add_child(help)
 
 func _load_shop_from_state():
 	# Load shop from GameStateManager
@@ -511,58 +495,53 @@ func _load_shop_from_state():
 
 
 func _display_shop_items(shop_data: Array):
-	# Clear existing shop
+	# Clear existing shop items (but not the containers/labels)
 	for child in shop_container.get_children():
-		child.queue_free()
+		if child.name.begins_with("ShopItem") and child.get_child_count() > 0:
+			for item_child in child.get_children():
+				item_child.queue_free()
 	shop_items.clear()
 
 	print("Displaying shop items, data size: %d" % shop_data.size())
 
-	# Shelf positions: 1 item on top shelf, 2 on middle, 2 on bottom
-	var shelf_positions = [
-		# Top shelf (1 item, centered)
-		[Vector2(100, 50)],
-		# Middle shelf (2 items)
-		[Vector2(20, 200), Vector2(200, 200)],
-		# Bottom shelf (2 items)
-		[Vector2(20, 350), Vector2(200, 350)]
-	]
+	# Use the predefined shop item positions from the scene
+	var shop_positions = []
+	for i in range(1, 6):  # ShopItem1 through ShopItem5
+		var item_node = shop_container.get_node_or_null("ShopItem" + str(i))
+		var price_node = shop_container.get_node_or_null("ShopPrice" + str(i))
+		if item_node and price_node:
+			shop_positions.append({"item": item_node, "price": price_node})
 
-	var shelf_index = 0
-	var position_in_shelf = 0
-
-	for i in range(shop_data.size()):
+	for i in range(min(shop_data.size(), shop_positions.size())):
 		if shop_data[i] == null:
 			print("  Slot %d: empty" % i)
+			# Hide the price label for empty slots
+			shop_positions[i].price.visible = false
 			continue  # Empty slot
 
 		var item_data = shop_data[i]
 		print("  Slot %d: %s (cost: %d)" % [i, item_data.get("name", "Unknown"), item_data.get("cost", 0)])
 
-		# Find position on shelf
-		if shelf_index < shelf_positions.size() and position_in_shelf < shelf_positions[shelf_index].size():
-			var shop_item = _create_shop_item_from_data(item_data)
-			shop_item.position = shelf_positions[shelf_index][position_in_shelf]
-			shop_container.add_child(shop_item)
-			shop_items.append(shop_item)
+		# Create shop item and add to the specific position container
+		var shop_item = _create_shop_item_from_data(item_data)
+		shop_item.position = Vector2.ZERO  # Position relative to container
+		shop_positions[i].item.add_child(shop_item)
+		shop_items.append(shop_item)
 
-			position_in_shelf += 1
-			if position_in_shelf >= shelf_positions[shelf_index].size():
-				shelf_index += 1
-				position_in_shelf = 0
+		# Update the price label
+		shop_positions[i].price.text = str(item_data.get("cost", 0)) + "g"
+		shop_positions[i].price.visible = true
 
 	print("Added %d shop items to container" % shop_items.size())
 
 func _create_shop_item_from_data(data: Dictionary) -> Control:
 	var shop_item = Panel.new()
-	shop_item.custom_minimum_size = Vector2(160, 100)
-	shop_item.size = Vector2(160, 100)
+	shop_item.custom_minimum_size = Vector2(200, 140)
+	shop_item.size = Vector2(200, 140)
 
-	# Style the panel with cyberpunk theme
+	# Style the panel - minimal/no border for shelf display
 	var item_style = StyleBoxFlat.new()
-	item_style.bg_color = Color(0.1, 0.05, 0.15, 0.4)  # Semi-transparent purple
-	item_style.border_color = Color(1.0, 0.0, 1.0, 0.6)  # Pink border
-	item_style.set_border_width_all(2)
+	item_style.bg_color = Color(0.1, 0.05, 0.15, 0.15)  # Very subtle background
 	item_style.set_corner_radius_all(4)
 	shop_item.add_theme_stylebox_override("panel", item_style)
 
@@ -597,11 +576,11 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 		size_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
 		shop_item.add_child(size_label)
 
-	# Cost label - positioned prominently
+	# Cost label - positioned below item
 	var cost_label = Label.new()
 	cost_label.text = "%d GOLD" % data.get("cost", 5)
-	cost_label.position = Vector2(50, 70)
-	cost_label.add_theme_font_size_override("font_size", 16)
+	cost_label.position = Vector2(70, 100)
+	cost_label.add_theme_font_size_override("font_size", 18)
 	cost_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.0))  # Yellow
 	cost_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
 	cost_label.add_theme_constant_override("shadow_offset_x", 2)
@@ -778,6 +757,23 @@ func _create_item(item_data: Dictionary) -> Control:
 
 	return container
 
+func _on_inventory_input(event: InputEvent):
+	"""Handle input on the inventory grid"""
+	if read_only_mode:
+		return
+	# Check if we clicked on a server or item
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				var local_pos = inventory_grid.get_local_mouse_position()
+				var grid_pos = inventory_grid.pixel_to_grid(local_pos)
+				# Check for items at this position
+				if grid_pos in inventory_grid.items:
+					_start_dragging_item(inventory_grid.items[grid_pos], event.position)
+				# Check for servers at this position
+				elif grid_pos in inventory_grid.servers:
+					_start_dragging_server(inventory_grid.servers[grid_pos], event.position)
+
 func _on_server_input(event: InputEvent, server: Control):
 	if read_only_mode:
 		return
@@ -915,7 +911,7 @@ func _stop_dragging(drop_position: Vector2 = Vector2.ZERO):
 
 func _try_place_server(server_preview: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
 	var global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
-	var mouse_pos = server_room_container.to_local(global_pos)
+	var mouse_pos = inventory_grid.get_local_mouse_position() if inventory_grid else global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 
@@ -965,12 +961,18 @@ func _can_place_server_pattern(x: int, y: int, pattern: Array) -> bool:
 func _place_server_pattern(x: int, y: int, server_data: Dictionary):
 	var pattern = server_data.pattern
 
-	# TEMP DEBUG: Print server placement
-#	print("DEBUG: Placing server at grid position (%d, %d)" % [x, y])
-#	print("       Pattern size: %dx%d" % [pattern[0].size(), pattern.size()])
-#	print("       Screen position: %s" % Vector2(x * (CELL_SIZE + CELL_SPACING), y * (CELL_SIZE + CELL_SPACING)))
+	# Use GridManager if available
+	if inventory_grid:
+		var server_visual = inventory_grid.place_server(server_data, Vector2i(x, y))
+		server_visual.gui_input.connect(_on_server_input.bind(server_visual))
+		server_visual.set_meta("is_placed_server", true)
+		server_visuals.append(server_visual)
 
-	# Create a visual representation for the entire server (for dragging)
+		# Update active grid
+		_update_active_grid_for_server(x, y, pattern)
+		return
+
+	# Fallback for when GridManager isn't ready yet
 	var server_visual = Control.new()
 	server_visual.position = Vector2(x * (CELL_SIZE + CELL_SPACING),
 									 y * (CELL_SIZE + CELL_SPACING))
@@ -1027,14 +1029,14 @@ func _place_server_pattern(x: int, y: int, server_data: Dictionary):
 	server_room_container.add_child(server_visual)
 	server_visuals.append(server_visual)
 
-func _try_place_item(item: Panel, drop_position: Vector2 = Vector2.ZERO) -> bool:
+func _try_place_item(item: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
 	var item_data = item.get_meta("item_data")
 
 	# Use provided drop position, fallback to saved position or mouse
 	var global_pos = drop_position
 	if global_pos == Vector2.ZERO:
 		global_pos = last_drag_position if last_drag_position != Vector2.ZERO else get_global_mouse_position()
-	var mouse_pos = server_room_container.to_local(global_pos)
+	var mouse_pos = inventory_grid.get_local_mouse_position() if inventory_grid else global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 	if mouse_pos.x >= 0 and mouse_pos.x < room_bounds.x and \
@@ -1100,7 +1102,7 @@ func _try_place_item(item: Panel, drop_position: Vector2 = Vector2.ZERO) -> bool
 
 	# Check storage
 	var storage_global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
-	var storage_mouse = storage_container.to_local(storage_global_pos) if storage_container.has_method("to_local") else storage_global_pos - storage_container.global_position
+	var storage_mouse = storage_grid.get_local_mouse_position() if storage_grid else storage_global_pos
 	if storage_mouse.x >= 0 and storage_mouse.x < storage_container.size.x and \
 	   storage_mouse.y >= 0 and storage_mouse.y < storage_container.size.y:
 
@@ -1225,7 +1227,7 @@ func _update_hover_preview(global_pos: Vector2 = Vector2.ZERO):
 
 	if global_pos == Vector2.ZERO:
 		global_pos = get_global_mouse_position()
-	var mouse_pos = server_room_container.to_local(global_pos)
+	var mouse_pos = inventory_grid.get_local_mouse_position() if inventory_grid else global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 
@@ -1322,7 +1324,7 @@ func _on_refresh_shop():
 
 func _try_move_server(server: Control, drop_position: Vector2 = Vector2.ZERO) -> bool:
 	var global_pos = drop_position if drop_position != Vector2.ZERO else get_global_mouse_position()
-	var mouse_pos = server_room_container.to_local(global_pos)
+	var mouse_pos = inventory_grid.get_local_mouse_position() if inventory_grid else global_pos
 	var room_bounds = Vector2(ROOM_WIDTH * (CELL_SIZE + CELL_SPACING),
 							  ROOM_HEIGHT * (CELL_SIZE + CELL_SPACING))
 

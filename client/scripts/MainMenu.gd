@@ -4,9 +4,11 @@ const APITypes = preload("res://scripts/api_types.gd")
 
 func _ready():
 	# Set window size for consistency
-	if OS.has_feature("standalone"):
-		DisplayServer.window_set_size(Vector2i(1536, 1024))
-		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))
+	if not OS.has_feature("headless"):  # Only set window size if we have a display
+		DisplayServer.window_set_size(Vector2i(2560, 1600))  # Match background image size
+		get_window().min_size = Vector2i(2560, 1600)  # Prevent resizing smaller
+		get_window().max_size = Vector2i(2560, 1600)  # Prevent resizing larger for fixed size
+#		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(268, 100))
 	_setup_ui()
 
 func _setup_ui():
