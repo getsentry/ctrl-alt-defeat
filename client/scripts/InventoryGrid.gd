@@ -368,8 +368,8 @@ func _end_drag():
 
 	# Check if the new position is valid
 	if _can_place_item(item_data, grid_pos):
-		# Try to persist the move on the server
 		var item_uid = item_data.id if item_data is Dictionary and item_data.has("id") else (item_data.id if item_data is Resource else "")
+
 		# Call API to move item
 		var response = await BattleServerAPI.move_item(item_uid, [grid_pos.x, grid_pos.y])
 		if response:
@@ -576,11 +576,18 @@ func get_inventory_state() -> Dictionary:
 	# Save items - convert to dictionaries for persistence
 	for item_visual in items:
 		var item_data = item_visual.get_meta("item_data")
-		# Convert InventoryItem to dictionary for saving
+		var grid_pos = item_visual.get_meta("grid_pos")
+
+		# Convert InventoryItem to dictionary for saving, preserving position
+		var item_dict
 		if item_data is APITypes.InventoryItem:
-			state.items.append(item_data.to_dict())
+			item_dict = item_data.to_dict()
 		else:
-			state.items.append(item_data)
+			item_dict = item_data if item_data is Dictionary else {}
+
+		item_dict["position"] = {"x": grid_pos.x, "y": grid_pos.y}
+
+		state.items.append(item_dict)
 
 	# Save containers - convert to dictionaries for persistence
 	for container_data in containers:
