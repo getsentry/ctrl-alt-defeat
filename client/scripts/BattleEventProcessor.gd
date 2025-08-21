@@ -6,7 +6,7 @@ const APITypes = preload("res://scripts/api_types.gd")
 
 signal event_processed(event: APITypes.BattleAction)
 signal battle_started()
-signal damage_dealt(player: int, amount: int, remaining_hp: int)
+signal damage_dealt(player: int, amount: int, remaining_hp: int, source: String)
 signal healing_done(player: int, amount: int, remaining_hp: int)
 signal block_activated(player: int, amount: int)
 signal item_activated(item_id: String, player: int)
@@ -90,8 +90,9 @@ func _process_event(event: APITypes.BattleAction):
 	var action = event.action
 	var player = event.player
 	var event_time = event.timestamp / 1000.0
+	var source = event.source if event.source else "none"
 
-	print("Processing event: %s at time %.1f" % [action, event_time])
+	print("[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, source, event.damage])
 
 	match action:
 		"s":  # Start
@@ -103,13 +104,14 @@ func _process_event(event: APITypes.BattleAction):
 
 		"d":  # Damage
 			var damage = event.damage
+			var source = event.source if event.source else "Unknown"
 			# Calculate remaining HP based on current HP
 			var remaining = (player1_hp if player == 1 else player2_hp) - damage
 			if player == 1:
 				player1_hp = remaining
 			else:
 				player2_hp = remaining
-			damage_dealt.emit(player, damage, remaining)
+			damage_dealt.emit(player, damage, remaining, source)
 
 		"h":  # Heal
 			# Get heal amount from damage field
@@ -158,11 +160,12 @@ func _process_event(event: APITypes.BattleAction):
 
 		"dt":  # DoT (damage over time)
 			var damage = event.damage
+			var source = event.source if event.source else "DoT"
 			if player == 1:
 				player1_hp = max(0, player1_hp - damage)
 			else:
 				player2_hp = max(0, player2_hp - damage)
-			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp)
+			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp, source)
 
 		"r":  # Reflect
 			# Show reflect animation
@@ -178,7 +181,17 @@ func _finish_battle():
 	var winner = 1 if player1_hp > player2_hp else 2
 	battle_ended.emit(winner)
 
-	print("Battle finished. Winner: Player %d" % winner)
+func get_current_time() -> float:
+	"""Get current playback time in seconds"""
+	if not is_playing:
+		return 0.0
+	return (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
+
+func get_progress() -> float:
+	"""Get battle progress as percentage (0-1)"""
+	if battle_duration <= 0:
+		return 0.0
+	return min(get_current_time() / battle_duration, 1.0)
 
 func skip_to_end():
 	# Fast forward to the end

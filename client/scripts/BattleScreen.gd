@@ -14,6 +14,7 @@ var battle_log: Array = []
 var current_time: float = 0.0
 var battle_active: bool = false
 var max_battle_duration: float = 20.0  # 20 second battles max
+var battle_speed_multiplier: float = 10.0  # Configurable speed (10x by default)
 
 # UI References
 var player_inventory: Control
@@ -280,6 +281,14 @@ func _create_battle_log():
 	log_panel.add_child(battle_log_container)
 
 func _create_control_buttons():
+	# Time label for battle progress
+	time_label = Label.new()
+	time_label.text = "0.0s / 20.0s"
+	time_label.position = Vector2(720, 430)
+	time_label.add_theme_font_size_override("font_size", 14)
+	time_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.9))
+	add_child(time_label)
+
 	var start_btn = Button.new()
 	start_btn.name = "StartBattle"
 	start_btn.text = "Start Battle"
@@ -358,8 +367,8 @@ func _start_battle_playback():
 
 	_update_stats_display()
 
-	# Start event playback
-	event_processor.start_playback(GameStateManager.battle_speed)
+	# Start event playback with configurable speed
+	event_processor.start_playback(battle_speed_multiplier)
 
 func _process(delta):
 	if battle_active and event_processor.is_playing:
@@ -434,13 +443,14 @@ func _on_back_to_inventory():
 func _on_battle_started():
 	_add_to_log("[color=green]Battle Started![/color]")
 
-func _on_damage_dealt(player: int, amount: int, remaining_hp: int):
+func _on_damage_dealt(player: int, amount: int, remaining_hp: int, source: String):
+	# Player parameter indicates who TAKES damage
 	if player == 1:
 		player_data.health = remaining_hp
-		_add_to_log("[color=red]You[/color] take [color=yellow]%d[/color] damage!" % amount)
+		_add_to_log("[color=red]Enemy's %s[/color] deals [color=yellow]%d[/color] damage to [color=aqua]You[/color]! (HP: %d/%d)" % [source, amount, remaining_hp, player_data.max_health])
 	else:
 		enemy_data.health = remaining_hp
-		_add_to_log("[color=aqua]You[/color] deal [color=yellow]%d[/color] damage!" % amount)
+		_add_to_log("[color=aqua]Your %s[/color] deals [color=yellow]%d[/color] damage to [color=red]Enemy[/color]! (HP: %d/%d)" % [source, amount, remaining_hp, enemy_data.max_health])
 
 	_show_damage_number(player, amount)
 	_update_stats_display()
@@ -462,6 +472,12 @@ func _on_block_activated(player: int, amount: int):
 	_show_block_effect(player)
 
 func _on_item_activated(item_id: String, player: int):
+	# Log item activation
+	if player == 1:
+		_add_to_log("[color=aqua]Your %s[/color] activates!" % item_id)
+	else:
+		_add_to_log("[color=red]Enemy's %s[/color] activates!" % item_id)
+
 	# Show item activation visual
 	_show_item_activation(item_id, player)
 
