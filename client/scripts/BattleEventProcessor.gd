@@ -4,7 +4,7 @@ extends Node
 
 const APITypes = preload("res://scripts/api_types.gd")
 
-signal event_processed(event: Dictionary)
+signal event_processed(event: APITypes.BattleAction)
 signal battle_started()
 signal damage_dealt(player: int, amount: int, remaining_hp: int)
 signal healing_done(player: int, amount: int, remaining_hp: int)
@@ -33,45 +33,13 @@ var player2_cpu: float = 10.0
 func _ready():
 	set_process(false)
 
-func load_battle_events(battle_data):
-	# Load events from battle result
-	if battle_data is APITypes.BattleResult:
-		# Typed result - convert actions to dictionary format
-		events = []
-		for action in battle_data.actions:
-			events.append({
-				"t": action.time,
-				"a": action.action,
-				"p": action.player,
-				"i": action.item_id,
-				"v": action.value
-			})
-		print("Loaded %d battle events" % events.size())
+func load_battle_events(battle_data: APITypes.BattleResult):
+	# Load events directly from typed battle result
+	events = battle_data.actions
+	print("Loaded %d battle events" % events.size())
 
-		# Set battle duration from typed result
-		battle_duration = battle_data.duration if battle_data.duration > 0 else 20.0
-
-	elif battle_data is Dictionary:
-		# Legacy dictionary format
-		var battle_result = battle_data
-		if battle_data.has("battle_result"):
-			battle_result = battle_data.battle_result
-
-		if battle_result.has("actions"):
-			events = battle_result.actions
-			print("Loaded %d battle events" % events.size())
-		else:
-			events = []
-			print("Warning: No battle events found in battle data")
-
-		if battle_result.has("duration"):
-			battle_duration = battle_result.duration
-		else:
-			battle_duration = 20.0  # Default duration
-	else:
-		events = []
-		print("Warning: Unknown battle data format")
-		battle_duration = 20.0
+	# Set battle duration from typed result
+	battle_duration = battle_data.duration if battle_data.duration > 0 else 20.0
 
 	# Set initial HP from round quota
 	player1_max_hp = GameStateManager.get_round_quota()
@@ -109,8 +77,8 @@ func _process(_delta):
 
 	# Process all events that should have happened by now
 	while current_event_index < events.size():
-		var event = events[current_event_index]
-		var event_time = event.get("t", 0.0)
+		var event: APITypes.BattleAction = events[current_event_index]
+		var event_time = event.timestamp / 1000.0  # Convert ms to seconds
 
 		if event_time <= current_time:
 			_process_event(event)
@@ -118,23 +86,25 @@ func _process(_delta):
 		else:
 			break  # Wait for next frame
 
-func _process_event(event: Dictionary):
-	var action = event.get("a", "")
-	var player = event.get("p", 0)
+func _process_event(event: APITypes.BattleAction):
+	var action = event.action
+	var player = event.player
+	var event_time = event.timestamp / 1000.0
 
-	print("Processing event: %s at time %.1f" % [action, event.get("t", 0.0)])
+	print("Processing event: %s at time %.1f" % [action, event_time])
 
 	match action:
 		"s":  # Start
 			battle_started.emit()
 
 		"a":  # Activate
-			var item_id = event.get("item", "")
+			var item_id = event.source
 			item_activated.emit(item_id, player)
 
 		"d":  # Damage
-			var damage = event.get("dmg", 0)
-			var remaining = event.get("hp", 0)
+			var damage = event.damage
+			# Calculate remaining HP based on current HP
+			var remaining = (player1_hp if player == 1 else player2_hp) - damage
 			if player == 1:
 				player1_hp = remaining
 			else:
@@ -142,8 +112,9 @@ func _process_event(event: Dictionary):
 			damage_dealt.emit(player, damage, remaining)
 
 		"h":  # Heal
-			var amount = event.get("amount", 0)
-			var remaining = event.get("hp", 0)
+			# Get heal amount from damage field
+			var amount = event.damage
+			var remaining = (player1_hp if player == 1 else player2_hp) + amount
 			if player == 1:
 				player1_hp = min(remaining, player1_max_hp)
 			else:
@@ -151,15 +122,19 @@ func _process_event(event: Dictionary):
 			healing_done.emit(player, amount, remaining)
 
 		"b":  # Block
-			var amount = event.get("amount", 0)
+			var amount = event.damage
 			block_activated.emit(player, amount)
 
 		"bf":  # Buff
-			var buff_name = event.get("buff", "")
+			var buff_name = ""
+			if not event.details.is_empty():
+				buff_name = event.details.get("buff", "")
 			buff_applied.emit(player, buff_name)
 
 		"df":  # Debuff
-			var debuff_name = event.get("debuff", "")
+			var debuff_name = ""
+			if not event.details.is_empty():
+				debuff_name = event.details.get("debuff", "")
 			debuff_applied.emit(player, debuff_name)
 
 		"cf":  # CPU Fail
@@ -182,7 +157,7 @@ func _process_event(event: Dictionary):
 			pass
 
 		"dt":  # DoT (damage over time)
-			var damage = event.get("dmg", 0)
+			var damage = event.damage
 			if player == 1:
 				player1_hp = max(0, player1_hp - damage)
 			else:

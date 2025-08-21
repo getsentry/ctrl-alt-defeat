@@ -166,15 +166,24 @@ func _on_new_game():
 	# Start new session with server
 	var session_data = await BattleServerAPI.start_session()
 
-	# Update game state
+	if session_data == null:
+		push_error("Failed to start new game session")
+		# Show error to user
+		_show_error_message("Failed to connect to server. Please try again.")
+		return
+
+	# Update game state with typed response
 	GameStateManager.player_id = session_data.player_id
 	GameStateManager.current_round = session_data.round
 	GameStateManager.gold = session_data.gold
 	GameStateManager.current_shop = session_data.current_shop
 
-	# Store starting containers if provided
-	if session_data.has("starting_containers"):
-		GameStateManager.starting_containers = session_data.starting_containers
+	# Store server containers if provided
+	# Convert typed containers to dictionary format for GameStateManager
+	var containers_array = []
+	for container in session_data.server_containers:
+		containers_array.append(container.to_dict())
+	GameStateManager.starting_containers = containers_array
 
 	# Go to shop
 	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")
@@ -185,3 +194,12 @@ func _on_main_menu():
 
 func _on_exit():
 	get_tree().quit()
+
+func _show_error_message(message: String):
+	# Create error dialog
+	var error_dialog = AcceptDialog.new()
+	error_dialog.dialog_text = message
+	error_dialog.title = "Connection Error"
+	get_tree().root.add_child(error_dialog)
+	error_dialog.popup_centered()
+	error_dialog.connect("confirmed", func(): error_dialog.queue_free())

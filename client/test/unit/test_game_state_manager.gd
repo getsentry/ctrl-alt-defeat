@@ -1,6 +1,8 @@
 extends GutTest
 # Comprehensive tests for GameStateManager singleton
 
+const APITypes = preload("res://scripts/api_types.gd")
+
 func test_singleton_exists():
 	assert_not_null(GameStateManager, "GameStateManager singleton should exist")
 
@@ -50,7 +52,7 @@ func test_inventory_persistence():
 
 	# Save some inventory
 	var test_items = [
-		{"data": {"name": "CPU", "width": 1}, "grid_pos": Vector2i(2, 2)}
+		{"data": {"name": "CPU", "shape": [[0, 0]], "width": 1}, "grid_pos": Vector2i(2, 2)}
 	]
 	var test_servers = [
 		{"data": {"name": "Rack"}, "pos": Vector2i(0, 0)}
@@ -67,18 +69,33 @@ func test_battle_result_updates_state():
 	GameStateManager.start_new_game()
 	var initial_gold = GameStateManager.gold
 
-	# Simulate battle result
-	var mock_result = {
-		"battle_result": {"winner": 1},
+	# Create typed BattleResponse
+	var mock_response = APITypes.BattleResponse.new({
+		"battle_result": {
+			"winner": 1,
+			"duration": 10.0,
+			"player1_quota": 100,
+			"player2_quota": 0,
+			"actions": [],
+			"seed": 12345,
+			"player_inventory": {"items": [], "servers": []},
+			"enemy_inventory": {"items": [], "servers": []}
+		},
 		"session_update": {
 			"round": 2,
 			"gold": initial_gold + 10,
+			"gold_earned": 10,
 			"wins": 1,
-			"losses": 0
-		}
-	}
+			"losses": 0,
+			"lives": 5,
+			"game_over": false,
+			"victory": false
+		},
+		"new_shop": [],
+		"battle_id": "test-battle-123"
+	})
 
-	GameStateManager.update_after_battle(mock_result)
+	GameStateManager.update_after_battle(mock_response)
 
 	assert_eq(GameStateManager.current_round, 2, "Round should be 2")
 	assert_eq(GameStateManager.gold, initial_gold + 10, "Gold should increase")

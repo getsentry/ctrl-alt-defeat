@@ -38,7 +38,6 @@ var battle_speed: float = 1.0  # Speed multiplier for battle playback
 var auto_ready: bool = false  # Auto-submit for battle when ready
 
 # Server integration
-var item_catalog: Dictionary = {}  # Item definitions from server
 var session_id: String = ""
 var last_error: String = ""
 var is_connected: bool = false
@@ -83,64 +82,23 @@ func save_inventory_state(items: Array, servers: Array):
 func get_inventory_state() -> Dictionary:
 	return current_inventory
 
-func update_after_battle(result):
-	# Store the COMPLETE battle result for PostBattle screen
-	last_battle_result = result
+func update_after_battle(response: APITypes.BattleResponse):
+	# Store the COMPLETE battle response for PostBattle screen
+	last_battle_result = response.battle_result
+	current_shop = response.new_shop
 
-	# Check if this is a typed BattleResult or dictionary
-	if result is APITypes.BattleResult:
-		# Typed result - access properties directly
-		var update = result.session_update
-		if update.size() > 0:
-			if update.has("round"):
-				current_round = update.round
-			if update.has("gold"):
-				gold = update.gold
-			if update.has("wins"):
-				wins = update.wins
-			if update.has("losses"):
-				losses = update.losses
-			if update.has("lives"):
-				player_lives = update.lives
-			if update.has("game_over"):
-				game_over = update.game_over
-			if update.has("victory"):
-				victory = update.victory
+	# Update from typed SessionUpdate
+	var update = response.session_update
+	current_round = update.round
+	gold = update.gold
+	wins = update.wins
+	losses = update.losses
+	player_lives = update.lives
+	game_over = update.game_over
+	victory = update.victory
 
-		# Store battle actions - convert to dictionary format for compatibility
-		last_battle_events = []
-		for action in result.actions:
-			# Convert BattleAction to dictionary
-			last_battle_events.append({
-				"t": action.time,
-				"a": action.action,
-				"p": action.player,
-				"i": action.item_id,
-				"v": action.value
-			})
-	else:
-		# Legacy dictionary format
-		if result.has("session_update"):
-			var update = result.session_update
-			if update.has("round"):
-				current_round = update.round
-			if update.has("gold"):
-				gold = update.gold
-			if update.has("wins"):
-				wins = update.wins
-			if update.has("losses"):
-				losses = update.losses
-			if update.has("lives"):
-				player_lives = update.lives
-			if update.has("game_over"):
-				game_over = update.game_over
-			if update.has("victory"):
-				victory = update.victory
-
-		# Store battle data for replay
-		if result.has("battle_result"):
-			if result.battle_result.has("actions"):
-				last_battle_events = result.battle_result.actions
+	# Store battle actions directly as typed objects from battle_result
+	last_battle_events = response.battle_result.actions
 
 	# Update battle health for next round
 	battle_health = get_round_quota()
@@ -195,15 +153,3 @@ func update_gold(amount: int) -> bool:
 		return false
 	gold += amount
 	return true
-
-func set_item_catalog(catalog: Dictionary):
-	# Store item definitions from server
-	item_catalog = catalog
-	print("Loaded %d item definitions from server" % catalog.size())
-
-func get_item_data(item_type: String) -> Dictionary:
-	# Get item data from catalog
-	if item_catalog.has(item_type):
-		return item_catalog[item_type]
-	push_warning("Unknown item type: " + item_type)
-	return {}

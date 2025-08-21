@@ -322,36 +322,15 @@ func _connect_event_signals():
 	event_processor.battle_ended.connect(_on_battle_ended)
 
 func _load_battle_from_state():
-	# Load battle data from GameStateManager
-	var battle_result = GameStateManager.last_battle_result
+	# Load battle data from GameStateManager - always typed BattleResult
+	var battle_result: APITypes.BattleResult = GameStateManager.last_battle_result
 
-	# Check if this is a typed BattleResult or raw dictionary
-	if battle_result is APITypes.BattleResult:
-		# Typed response from API
-		event_processor.load_battle_events(battle_result)
+	# Load battle events
+	event_processor.load_battle_events(battle_result)
 
-		# Load inventories - these are guaranteed to exist in BattleResult
-		player_inventory.load_inventory_state(battle_result.player_inventory.to_dict())
-		enemy_inventory.load_inventory_state(battle_result.enemy_inventory.to_dict())
-	else:
-		# Legacy dictionary format (for backwards compatibility)
-		event_processor.load_battle_events(battle_result)
-
-		# Try to find inventories in the dictionary
-		var actual_battle_data = battle_result
-		if battle_result.has("battle_result"):
-			actual_battle_data = battle_result.battle_result
-
-		if actual_battle_data.has("player_inventory"):
-			player_inventory.load_inventory_state(actual_battle_data.player_inventory)
-		else:
-			# Fallback to saved inventory
-			var saved_inventory = GameStateManager.get_inventory_state()
-			if saved_inventory.has("items"):
-				player_inventory.load_inventory_state(saved_inventory)
-
-		if actual_battle_data.has("enemy_inventory"):
-			enemy_inventory.load_inventory_state(actual_battle_data.enemy_inventory)
+	# Load inventories - these are guaranteed to exist in BattleResult
+	player_inventory.load_inventory_state(battle_result.player_inventory)
+	enemy_inventory.load_inventory_state(battle_result.enemy_inventory)
 
 func _start_battle_playback():
 	print("Starting battle playback...")

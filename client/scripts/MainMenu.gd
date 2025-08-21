@@ -102,6 +102,7 @@ func _on_start_game():
 	# Check if server connection failed
 	if session_data == null:
 		push_error("Failed to start game session - server connection failed")
+		_show_error_message("Cannot connect to server. Please check your connection and try again.")
 		return
 
 	# Update game state with typed session data
@@ -110,11 +111,11 @@ func _on_start_game():
 	GameStateManager.gold = session_data.gold
 	GameStateManager.current_shop = session_data.current_shop
 
-	# Store starting containers if provided (server will send these)
-	if session_data.starting_containers.size() > 0:
+	# Store server containers if provided (server will send these)
+	if session_data.server_containers.size() > 0:
 		# Convert typed containers to dictionary format for GameStateManager
 		var containers_array = []
-		for container in session_data.starting_containers:
+		for container in session_data.server_containers:
 			containers_array.append(container.to_dict())
 		GameStateManager.starting_containers = containers_array
 
@@ -127,3 +128,12 @@ func _on_settings():
 
 func _on_exit():
 	get_tree().quit()
+
+func _show_error_message(message: String):
+	# Create error dialog
+	var error_dialog = AcceptDialog.new()
+	error_dialog.dialog_text = message
+	error_dialog.title = "Connection Error"
+	get_tree().root.add_child(error_dialog)
+	error_dialog.popup_centered()
+	error_dialog.connect("confirmed", func(): error_dialog.queue_free())

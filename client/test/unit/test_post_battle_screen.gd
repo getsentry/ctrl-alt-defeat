@@ -1,3 +1,4 @@
+const APITypes = preload("res://scripts/api_types.gd")
 extends GutTest
 # Tests for PostBattleScreen to ensure no node errors
 
@@ -198,7 +199,7 @@ func test_empty_result_handling():
 	await get_tree().process_frame
 
 	# Try with empty dictionary
-	screen.set_battle_result({})
+	screen.set_battle_result(APITypes.BattleResult())
 	screen._display_results()
 
 	# Should not crash

@@ -1,14 +1,16 @@
 extends GutTest
 # Test inventory persistence between scenes
 
+const APITypes = preload("res://scripts/api_types.gd")
+
 func before_each():
 	GameStateManager.start_new_game()
 
 func test_save_and_load_inventory():
 	# Save inventory
 	var test_items = [
-		{"data": {"name": "CPU", "width": 1, "height": 1, "cost": 3}, "grid_pos": Vector2i(2, 2)},
-		{"data": {"name": "RAM", "width": 2, "height": 1, "cost": 4}, "grid_pos": Vector2i(3, 3)}
+		{"data": {"name": "CPU", "shape": [[0, 0]], "width": 1, "height": 1, "cost": 3}, "grid_pos": Vector2i(2, 2)},
+		{"data": {"name": "RAM", "shape": [[0, 0], [1, 0]], "width": 2, "height": 1, "cost": 4}, "grid_pos": Vector2i(3, 3)}
 	]
 	var test_servers = [
 		{"data": {"name": "Rack", "pattern": [[1,1],[1,1]], "cost": 5}, "pos": Vector2i(0, 0)}
@@ -25,16 +27,36 @@ func test_save_and_load_inventory():
 
 func test_inventory_survives_battle():
 	# Setup inventory
-	var items = [{"data": {"name": "Test", "width": 1, "height": 1}, "grid_pos": Vector2i(1, 1)}]
+	var items = [{"data": {"name": "Test", "shape": [[0, 0]], "width": 1, "height": 1}, "grid_pos": Vector2i(1, 1)}]
 	var servers = [{"data": {"name": "Server", "pattern": [[1,1]]}, "pos": Vector2i(0, 0)}]
 	GameStateManager.save_inventory_state(items, servers)
 
-	# Simulate battle
-	var battle_result = {
-		"battle_result": {"winner": 1},
-		"session_update": {"round": 2, "gold": 20}
-	}
-	GameStateManager.update_after_battle(battle_result)
+	# Simulate battle with typed response
+	var mock_response = APITypes.BattleResponse.new({
+		"battle_result": {
+			"winner": 1,
+			"duration": 10.0,
+			"player1_quota": 100,
+			"player2_quota": 0,
+			"actions": [],
+			"seed": 12345,
+			"player_inventory": {"items": [], "servers": []},
+			"enemy_inventory": {"items": [], "servers": []}
+		},
+		"session_update": {
+			"round": 2,
+			"gold": 20,
+			"gold_earned": 5,
+			"wins": 1,
+			"losses": 0,
+			"lives": 5,
+			"game_over": false,
+			"victory": false
+		},
+		"new_shop": [],
+		"battle_id": "test-123"
+	})
+	GameStateManager.update_after_battle(mock_response)
 
 	# Check inventory still there
 	var after = GameStateManager.get_inventory_state()
@@ -49,7 +71,7 @@ func test_empty_inventory_is_valid():
 
 func test_inventory_cleared_on_new_game():
 	# Setup inventory
-	var items = [{"data": {"name": "Test"}, "grid_pos": Vector2i(1, 1)}]
+	var items = [{"data": {"name": "Test", "shape": [[0, 0]]}, "grid_pos": Vector2i(1, 1)}]
 	GameStateManager.save_inventory_state(items, [])
 
 	# Verify it was saved

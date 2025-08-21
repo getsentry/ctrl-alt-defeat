@@ -3,7 +3,7 @@ extends Control
 const APITypes = preload("res://scripts/api_types.gd")
 
 # Battle result display
-var result_data: Dictionary = {}
+var result_data: APITypes.BattleResult = null
 var gold_earned: int = 0
 var health_lost: int = 0
 
@@ -11,21 +11,7 @@ func _ready():
 	_setup_ui()
 	# Get battle result from GameStateManager
 	if GameStateManager.last_battle_result:
-		# Convert typed result to dictionary if needed
-		if GameStateManager.last_battle_result is APITypes.BattleResult:
-			var typed_result = GameStateManager.last_battle_result
-			var dict_result = {
-				"battle_result": {
-					"winner": typed_result.winner,
-					"duration": typed_result.duration,
-					"player1_quota": typed_result.player1_quota,
-					"player2_quota": typed_result.player2_quota
-				},
-				"session_update": typed_result.session_update
-			}
-			set_battle_result(dict_result)
-		else:
-			set_battle_result(GameStateManager.last_battle_result)
+		set_battle_result(GameStateManager.last_battle_result)
 		_display_results()
 
 # Store references to UI elements
@@ -104,38 +90,31 @@ func _setup_ui():
 	continue_button.pressed.connect(_on_continue_pressed)
 	main_container.add_child(continue_button)
 
-func set_battle_result(data: Dictionary):
+func set_battle_result(data: APITypes.BattleResult):
 	"""Called before scene loads to set battle data"""
-	result_data = data.get("battle_result", {})
-	var session_update = data.get("session_update", {})
+	result_data = data
+	var session_update = data.session_update
 
-	gold_earned = session_update.get("gold_earned", 0)
-	health_lost = data.get("health_lost", 0)
+	gold_earned = session_update.gold_earned
+	# Calculate health lost based on winner
+	health_lost = 1 if data.winner == 2 else 0
 
 	# Update GameStateManager with new values
-	if session_update.has("round"):
-		GameStateManager.current_round = session_update.round
-	if session_update.has("gold"):
-		GameStateManager.gold = session_update.gold
-	if session_update.has("wins"):
-		GameStateManager.wins = session_update.wins
-	if session_update.has("losses"):
-		GameStateManager.losses = session_update.losses
+	GameStateManager.current_round = session_update.round
+	GameStateManager.gold = session_update.gold
+	GameStateManager.wins = session_update.wins
+	GameStateManager.losses = session_update.losses
 
 	# Apply health loss
 	if health_lost > 0:
 		GameStateManager.player_health -= health_lost
-
-	# Store new shop
-	if data.has("new_shop"):
-		GameStateManager.current_shop = data.new_shop
 
 func _display_results():
 	"""Update UI with battle results"""
 	if not result_data:
 		return
 
-	var won = result_data.get("winner", 1) == 1
+	var won = result_data.winner == 1
 
 	# Update title
 	if title_label:

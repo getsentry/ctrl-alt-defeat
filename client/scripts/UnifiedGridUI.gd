@@ -98,6 +98,9 @@ func _ready():
 		DisplayServer.window_set_size(Vector2i(1600, 900))
 		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(150, 50))  # Center better
 
+	# Connect to API signals for typed responses
+	BattleServerAPI.purchase_completed.connect(_on_purchase_completed)
+
 	# State is read directly from GameStateManager, no local copies
 
 	# Initialize UI first
@@ -118,18 +121,16 @@ func _ready():
 	if not hide_shop:
 		_load_shop_from_state()
 
-func configure(settings: Dictionary):
-	read_only_mode = settings.get("read_only", false)
-	hide_shop = settings.get("hide_shop", false)
-	hide_storage = settings.get("hide_storage", false)
-
-	# Reload UI with new settings
-	for child in get_children():
-		child.queue_free()
-
-	_setup_ui()
-	if not hide_shop:
-		_generate_shop()
+#func configure(settings: Dictionary):
+#	read_only_mode = settings.get("read_only", false)
+#	hide_shop = settings.get("hide_shop", false)
+#	hide_storage = settings.get("hide_storage", false)
+#
+#	# Reload UI with new settings
+#	for child in get_children():
+#		child.queue_free()
+#
+#	_setup_ui()
 
 func _place_starting_containers():
 	print("Placing starting containers for new game")
@@ -150,20 +151,8 @@ func _place_starting_containers():
 
 	# Place each container
 	for container_info in containers_to_place:
-		var container_type_key = container_info.get("type", "cube_2x2")
-
-		# Handle both Vector2i and dictionary formats for position
-		var position
-		if container_info.has("position"):
-			var pos_data = container_info["position"]
-			if pos_data is Vector2i:
-				position = pos_data
-			elif pos_data is Dictionary:
-				position = Vector2i(pos_data.get("x", 1), pos_data.get("y", 3))
-			else:
-				position = Vector2i(1, 3)
-		else:
-			position = Vector2i(1, 3)
+		var container_type_key = container_info["type"]
+		var position = container_info["position"]
 
 		# Map server container types to client types
 		if container_type_key == "standard_vm":
@@ -211,153 +200,87 @@ func _load_saved_inventory(saved_data: Dictionary):
 			saved_data.servers.size(),
 			saved_data.items.size()
 		])
-		load_inventory_state(saved_data)
+		# Convert to typed InventoryState
+		var typed_inventory = APITypes.InventoryState.new(saved_data)
+		load_inventory_state(typed_inventory)
 		_update_stats()
 
-func load_inventory_state(inventory_data):
-	# Accept either typed Inventory or Dictionary
-	var data_dict: Dictionary
+func load_inventory_state(inventory_data: APITypes.InventoryState):
+	# Convert typed inventory to dictionary for internal processing
+	var data_dict = inventory_data.to_dict()
 
-	if inventory_data is APITypes.InventoryState:
-		# Convert typed inventory to dictionary
-		data_dict = inventory_data.to_dict()
-	elif inventory_data is Dictionary:
-		data_dict = inventory_data
-	else:
-		push_error("Invalid inventory data type")
-		return
+	# Load containers - only handle typed objects
+	for server_data in data_dict.servers:
+		var typed_server: APITypes.ServerContainer = server_data as APITypes.ServerContainer
+		var pos_x = typed_server.position.x
+		var pos_y = typed_server.position.y
 
-	# Load containers
-	var containers_list = data_dict.get("containers", data_dict.get("servers", []))
-	if containers_list.size() > 0:
-		for server_data in containers_list:
-			var pos_x = 0
-			var pos_y = 0
+		# Generate pattern from width/height (all cells active for now)
+		var pattern = []
+		for y in range(typed_server.height):
+			var row = []
+			for x in range(typed_server.width):
+				row.append(1)  # All cells active
+			pattern.append(row)
 
-			# Handle typed ServerContainer or dictionary
-			if server_data is APITypes.ServerContainer:
-				pos_x = server_data.position.x
-				pos_y = server_data.position.y
-				# Generate pattern from width/height (all cells active for now)
-				var pattern = []
-				for y in range(server_data.height):
-					var row = []
-					for x in range(server_data.width):
-						row.append(1)  # All cells active
-					pattern.append(row)
-
-				var container_data = {
-					"pattern": pattern,
-					"width": server_data.width,
-					"height": server_data.height,
-					"type": server_data.type,
-					"id": server_data.id,
-					"color": Color(0.3, 0.6, 1.0, 0.7)  # Default blue color for servers
-				}
-				_place_server_pattern(pos_x, pos_y, container_data)
-				servers.append({"data": container_data, "pos": Vector2i(pos_x, pos_y)})
-			else:
-				# Dictionary format
-				var pos_data = server_data.get("pos", server_data.get("position", {}))
-				if pos_data is Dictionary:
-					pos_x = pos_data.get("x", 0)
-					pos_y = pos_data.get("y", 0)
-				elif pos_data is Vector2 or pos_data is Vector2i:
-					pos_x = pos_data.x
-					pos_y = pos_data.y
-
-				# Get fields directly - let it error if missing
-				var width = server_data["width"]
-				var height = server_data["height"]
-
-				var pattern = []
-				for y in range(height):
-					var row = []
-					for x in range(width):
-						row.append(1)  # All cells active
-					pattern.append(row)
-
-				var container_data = {
-					"pattern": pattern,
-					"width": width,
-					"height": height,
-					"type": server_data["type"],
-					"id": server_data["id"],
-					"color": Color(0.3, 0.6, 1.0, 0.7)  # Default blue color for servers
-				}
-
-				_place_server_pattern(pos_x, pos_y, container_data)
-				servers.append({"data": container_data, "pos": Vector2i(pos_x, pos_y)})
+		var container_data = {
+			"pattern": pattern,
+			"width": typed_server.width,
+			"height": typed_server.height,
+			"type": typed_server.type,
+			"id": typed_server.id,
+			"color": Color(0.3, 0.6, 1.0, 0.7)  # Default blue color for servers
+		}
+		_place_server_pattern(pos_x, pos_y, container_data)
+		servers.append({"data": container_data, "pos": Vector2i(pos_x, pos_y)})
 
 	# Load items
-	if data_dict.has("items"):
-		for item_info in data_dict.items:
-			var item_data = {}
-			var grid_x = 0
-			var grid_y = 0
+	for item_info in data_dict.items:
+		var item_data = {}
+		var grid_x = 0
+		var grid_y = 0
 
-			# Handle typed InventoryItem or dictionary
-			if item_info is APITypes.InventoryItem:
-				grid_x = item_info.position.x
-				grid_y = item_info.position.y
-				item_data = {
-					"id": item_info.id,
-					"item_type": item_info.item_type,
-					"name": item_info.name,
-					"category": item_info.category,
-					"width": item_info.size.x,
-					"height": item_info.size.y
-				}
-			elif item_info.has("item_type"):
-				# Dictionary format from API
-				var pos = item_info.get("position", {"x": 0, "y": 0})
-				if pos is Dictionary:
-					grid_x = pos.get("x", 0)
-					grid_y = pos.get("y", 0)
+		# Only handle typed InventoryItem
+		var typed_item: APITypes.InventoryItem = item_info as APITypes.InventoryItem
+		grid_x = typed_item.position.x
+		grid_y = typed_item.position.y
 
-				item_data = {
-					"id": item_info.get("id", ""),
-					"item_type": item_info.get("item_type", ""),
-					"name": item_info.get("name", "Unknown"),
-					"category": item_info.get("category", "item"),
-					"width": 1,
-					"height": 1
-				}
+		# Calculate width/height from shape for display
+		var max_x = 0
+		var max_y = 0
+		for coord in typed_item.shape:
+			if coord is Array and coord.size() >= 2:
+				max_x = max(max_x, coord[0])
+				max_y = max(max_y, coord[1])
 
-				if item_info.has("size"):
-					var size = item_info.get("size", {"x": 1, "y": 1})
-					item_data.width = size.get("x", 1)
-					item_data.height = size.get("y", 1)
-			else:
-				# Old saved format: {data: {...}, grid_pos: {...}}
-				item_data = item_info.get("data", {})
-				var grid_pos = item_info.get("grid_pos", {})
-				# Handle both Vector2i and Dictionary formats
-				if grid_pos is Vector2i or grid_pos is Vector2:
-					grid_x = grid_pos.x
-					grid_y = grid_pos.y
-				else:
-					grid_x = grid_pos.get("x", 0)
-					grid_y = grid_pos.get("y", 0)
+		item_data = {
+			"id": typed_item.id,
+			"item_type": typed_item.item_type,
+			"name": typed_item.name,
+			"category": typed_item.category,
+			"shape": typed_item.shape,  # Store shape for validation
+			"width": max_x + 1,  # Calculate width from shape
+			"height": max_y + 1  # Calculate height from shape
+		}
 
-			# Create the item visual
-			var item = _create_item(item_data)
+		# Create the item visual
+		var item = _create_item(item_data)
 
-			# Place on grid
-			item.position = Vector2(grid_x * (CELL_SIZE + CELL_SPACING),
-									grid_y * (CELL_SIZE + CELL_SPACING))
-			server_room_container.add_child(item)
+		# Place on grid
+		item.position = Vector2(grid_x * (CELL_SIZE + CELL_SPACING),
+								grid_y * (CELL_SIZE + CELL_SPACING))
+		server_room_container.add_child(item)
 
-			# Mark grid cells
-			var width = item_data.get("width", 1)
-			var height = item_data.get("height", 1)
-			for dy in range(height):
-				for dx in range(width):
-					if grid_y + dy < ROOM_HEIGHT and grid_x + dx < ROOM_WIDTH:
-						item_grid[grid_y + dy][grid_x + dx] = item
+		# Mark grid cells based on shape
+		for offset in item_data.shape:
+			if offset is Array and offset.size() >= 2:
+				var cell_x = grid_x + offset[0]
+				var cell_y = grid_y + offset[1]
+				if cell_x >= 0 and cell_y >= 0 and cell_x < ROOM_WIDTH and cell_y < ROOM_HEIGHT:
+					item_grid[cell_y][cell_x] = item
 
-			item.set_meta("grid_pos", Vector2(grid_x, grid_y))
-			items.append(item)
+		item.set_meta("grid_pos", Vector2(grid_x, grid_y))
+		items.append(item)
 
 func get_inventory_state() -> Dictionary:
 	var state = {
@@ -570,12 +493,9 @@ func _create_controls():
 func _load_shop_from_state():
 	# Load shop from GameStateManager
 	print("Loading shop from state, current_shop size: %d" % GameStateManager.current_shop.size())
-	if GameStateManager.current_shop.size() > 0:
-		print("Displaying %d shop items from server" % GameStateManager.current_shop.size())
-		_display_shop_items(GameStateManager.current_shop)
-	else:
-		print("No shop items from server, generating local shop")
-		_generate_shop()
+	print("Displaying %d shop items from server" % GameStateManager.current_shop.size())
+	_display_shop_items(GameStateManager.current_shop)
+
 
 func _display_shop_items(shop_data: Array):
 	# Clear existing shop
@@ -699,11 +619,6 @@ func _get_color_for_category(category: String) -> Color:
 		_:
 			return Color(0.5, 0.5, 0.5)
 
-# DEPRECATED: Shop items now come from server via _display_shop_items()
-# This function is no longer used but kept for reference
-func _generate_shop():
-	push_warning("_generate_shop() is deprecated - shop should come from server")
-
 func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Dictionary):
 	if read_only_mode:
 		return
@@ -722,8 +637,6 @@ func _start_dragging_from_shop(shop_item: Panel, item_data: Dictionary, local_po
 		dragging_object = _create_server_preview(item_data)
 	else:
 		dragging_object = _create_item(item_data)
-
-	print("DEBUG: dragging_object created: %s" % (dragging_object != null))
 
 	dragging_object.position = shop_item.global_position
 	dragging_object.modulate.a = 0.7
@@ -762,8 +675,8 @@ func _create_server_preview(server_data: Dictionary) -> Control:
 
 	return preview
 
-func _create_item(item_data: Dictionary) -> Panel:
-	var item = Panel.new()
+func _create_item(item_data: Dictionary) -> Control:
+	var container = Control.new()
 	# Store original dimensions for rotation
 	var rotated_data = item_data.duplicate()
 	rotated_data["original_width"] = item_data.get("original_width", item_data.get("width", 1))
@@ -785,13 +698,22 @@ func _create_item(item_data: Dictionary) -> Panel:
 		rotated_data.width = rotated_data.original_height
 		rotated_data.height = rotated_data.original_width
 
-	item.size = Vector2(rotated_data.width * (CELL_SIZE + CELL_SPACING) - CELL_SPACING,
+	container.size = Vector2(rotated_data.width * (CELL_SIZE + CELL_SPACING) - CELL_SPACING,
 					   rotated_data.height * (CELL_SIZE + CELL_SPACING) - CELL_SPACING)
 
-	var item_style = StyleBoxFlat.new()
-	item_style.bg_color = rotated_data.get("color", Color(0.3, 0.9, 0.6, 1.0))
-	item_style.set_corner_radius_all(3)
-	item.add_theme_stylebox_override("panel", item_style)
+	# Render each cell individually based on shape
+	for offset in rotated_data.shape:
+		if offset is Array and offset.size() >= 2:
+			var cell_panel = Panel.new()
+			cell_panel.position = Vector2(offset[0] * (CELL_SIZE + CELL_SPACING),
+										  offset[1] * (CELL_SIZE + CELL_SPACING))
+			cell_panel.size = Vector2(CELL_SIZE, CELL_SIZE)
+
+			var cell_style = StyleBoxFlat.new()
+			cell_style.bg_color = rotated_data.get("color", Color(0.3, 0.9, 0.6, 1.0))
+			cell_style.set_corner_radius_all(3)
+			cell_panel.add_theme_stylebox_override("panel", cell_style)
+			container.add_child(cell_panel)
 
 	var label = Label.new()
 	label.text = rotated_data.name
@@ -801,18 +723,18 @@ func _create_item(item_data: Dictionary) -> Panel:
 	# Rotate label with item
 	label.rotation_degrees = rotated_data.rotation
 	if rotated_data.rotation == 90:
-		label.position = Vector2(item.size.x - 15, 3)
+		label.position = Vector2(container.size.x - 15, 3)
 	elif rotated_data.rotation == 180:
-		label.position = Vector2(item.size.x - 3, item.size.y - 15)
+		label.position = Vector2(container.size.x - 3, container.size.y - 15)
 	elif rotated_data.rotation == 270:
-		label.position = Vector2(15, item.size.y - 3)
-	item.add_child(label)
+		label.position = Vector2(15, container.size.y - 3)
+	container.add_child(label)
 
-	item.set_meta("item_data", rotated_data)
-	item.set_meta("is_item", true)
-	item.gui_input.connect(_on_item_input.bind(item))
+	container.set_meta("item_data", rotated_data)
+	container.set_meta("is_item", true)
+	container.gui_input.connect(_on_item_input.bind(container))
 
-	return item
+	return container
 
 func _on_server_input(event: InputEvent, server: Control):
 	if read_only_mode:
@@ -903,8 +825,6 @@ func _stop_dragging(drop_position: Vector2 = Vector2.ZERO):
 		print("DEBUG: No dragging_object to stop!")
 		return
 
-	print("DEBUG: Stopping drag at position: %s" % drop_position)
-	print("DEBUG: Stopping drag with dragging_object type: %s" % dragging_object.get_class())
 	dragging_object.modulate.a = 1.0
 
 	var placed = false
@@ -1081,7 +1001,10 @@ func _try_place_item(item: Panel, drop_position: Vector2 = Vector2.ZERO) -> bool
 		var grid_x = int((mouse_pos.x + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
 		var grid_y = int((mouse_pos.y + CELL_SIZE/2) / (CELL_SIZE + CELL_SPACING))
 
-		if _can_place_item_on_grid(grid_x, grid_y, item_data.width, item_data.height):
+		# Use shape-based validation if shape is available
+		var can_place = _can_place_item_with_shape(grid_x, grid_y, item_data.shape)
+
+		if can_place:
 			# Pay if from shop
 			if original_parent and original_parent.has_meta("shop_item"):
 				if GameStateManager.gold < item_data.cost:
@@ -1189,6 +1112,7 @@ func _try_place_item(item: Panel, drop_position: Vector2 = Vector2.ZERO) -> bool
 	return false
 
 func _can_place_item_on_grid(x: int, y: int, width: int, height: int) -> bool:
+	# Legacy rectangular check - kept for compatibility
 	if x < 0 or y < 0 or x + width > ROOM_WIDTH or y + height > ROOM_HEIGHT:
 		return false
 
@@ -1203,14 +1127,28 @@ func _can_place_item_on_grid(x: int, y: int, width: int, height: int) -> bool:
 
 	return true
 
-func _input(event):
-	# TEMP DEBUG: Print mouse events
-	if event is InputEventMouseButton:
-		print("DEBUG: Mouse button event at %s (pressed: %s, button: %d)" % [event.global_position, event.pressed, event.button_index])
-	elif event is InputEventMouseMotion:
-		if event.button_mask > 0:
-			print("DEBUG: Mouse motion while dragging at %s (button_mask: %d)" % [event.global_position, event.button_mask])
+func _can_place_item_with_shape(x: int, y: int, shape: Array) -> bool:
+	# Check if item with given shape can be placed at position
+	for offset in shape:
+		if offset is Array and offset.size() >= 2:
+			var cell_x = x + offset[0]
+			var cell_y = y + offset[1]
 
+			# Check bounds
+			if cell_x < 0 or cell_y < 0 or cell_x >= ROOM_WIDTH or cell_y >= ROOM_HEIGHT:
+				return false
+
+			# Must have active grid cell
+			if not active_grid[cell_y][cell_x]:
+				return false
+
+			# Must not have another item
+			if item_grid[cell_y][cell_x] != null:
+				return false
+
+	return true
+
+func _input(event):
 	# Handle mouse release globally to drop items
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
@@ -1321,16 +1259,22 @@ func _update_stats():
 	if stats_label:
 		stats_label.text = _get_stats_text()
 
+func _on_purchase_completed(response: APITypes.PurchaseResponse):
+	# Update gold from server response
+	if response != null and response.success:
+		GameStateManager.gold = response.gold
+		_update_stats()
+
 func _on_refresh_shop():
 	if GameStateManager.gold >= 1:
 		print("Refreshing shop from server...")
 		# Call the real server to refresh shop
-		var new_shop = await BattleServerAPI.refresh_shop(GameStateManager.current_round)
-		if new_shop.size() > 0:
-			GameStateManager.update_gold(-1)  # Deduct refresh cost
+		var response = await BattleServerAPI.refresh_shop(GameStateManager.current_round)
+		if response != null and response.shop.size() > 0:
+			GameStateManager.gold = response.gold  # Server manages gold deduction
 			_update_stats()
-			_display_shop_items(new_shop)
-			GameStateManager.current_shop = new_shop
+			_display_shop_items(response.shop)
+			GameStateManager.current_shop = response.shop
 		else:
 			print("Failed to refresh shop from server")
 
@@ -1391,10 +1335,10 @@ func _on_ready_for_battle():
 	GameStateManager.save_inventory_state(items_data, servers)
 
 	# Submit battle to server
-	var battle_result = await BattleServerAPI.submit_battle(inventory_state)
+	var battle_response = await BattleServerAPI.submit_battle(inventory_state)
 
 	# Check if battle request failed (null result indicates error)
-	if battle_result == null:
+	if battle_response == null:
 		push_error("Battle request failed")
 		# In tests, fail immediately
 		if OS.get_environment("BATTLE_SERVER_URL") != "":
@@ -1402,7 +1346,7 @@ func _on_ready_for_battle():
 		return
 
 	# Update game state with results
-	GameStateManager.update_after_battle(battle_result)
+	GameStateManager.update_after_battle(battle_response)
 
 	# Check if we have battle events to play
 	if GameStateManager.last_battle_events.size() == 0:

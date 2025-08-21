@@ -68,7 +68,7 @@ func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
 			push_error("Failed to authenticate with server")
 			return null
 
-	# Start a new game session with the real server
+	# Start a new game session
 	var url = BASE_URL + "/session/start"
 	var headers = [
 		"Content-Type: application/json",
@@ -92,20 +92,20 @@ func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
 	# Parse the actual server response
 	last_response_code = result[1]
 	last_response_body = result[3]
+	print("response code", last_response_code)
 
 	if last_response_code == 200:
 		var json = JSON.new()
 		var parse_result = json.parse(last_response_body.get_string_from_utf8())
 		if parse_result == OK:
 			var data = json.data
-			player_id = data.get("player_id", "")
+			print("data", data)
 
-			# Get starting containers from session data
-			if data.has("session") and data["session"].has("server_containers"):
-				data["starting_containers"] = data["session"]["server_containers"]
-
-			# Create typed response
+			# Create typed response - let it fail if fields are missing
 			var response = APITypes.SessionStartResponse.new(data)
+
+			# Store player_id
+			player_id = response.player_id
 
 			# Store session data for internal use
 			session_data = {
@@ -119,7 +119,11 @@ func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
 			return response
 
 	# Server connection failed
-	push_error("Failed to start session - code: " + str(last_response_code))
+	var error_msg = "Failed to start session - code: " + str(last_response_code)
+	push_error(error_msg)
+	error_occurred.emit(error_msg)
+	# For debug builds, assert to make the failure obvious
+	assert(false, "Server connection failed: " + error_msg)
 	return null
 
 func _authenticate_guest() -> bool:
@@ -143,7 +147,7 @@ func _authenticate_guest() -> bool:
 	push_error("Failed to authenticate as guest")
 	return false
 
-func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResult:
+func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResponse:
 	# Submit battle to real server
 	print("Submitting battle to server")
 
@@ -175,20 +179,17 @@ func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResult:
 		if parse_result == OK:
 			var data = json.data
 
-			# Create typed battle result - combine the nested battle_result with other top-level fields
-			var battle_data = data.get("battle_result", {})
-			# Add session_update from top level
-			battle_data["session_update"] = data.get("session_update", {})
-			var battle_result = APITypes.BattleResult.new(battle_data)
+			# Create typed BattleResponse per server schema
+			var battle_response = APITypes.BattleResponse.new(data)
 
-			# Update session data from top-level session_update
-			var session_update = data.get("session_update", {})
-			if session_update.size() > 0:
-				session_data["round"] = session_update.get("round", session_data.get("round", 1))
-				session_data["gold"] = session_update.get("gold", session_data.get("gold", 0))
+			# Update session data from typed session_update
+			var session_update = battle_response.session_update
+			session_data["round"] = session_update.round
+			session_data["gold"] = session_update.gold
 
-			battle_completed.emit(battle_result)
-			return battle_result
+			# Emit battle_result signal but return full response
+			battle_completed.emit(battle_response.battle_result)
+			return battle_response
 
 	# Parse error response for better debugging
 	var error_msg = "Battle request failed with code: " + str(last_response_code)
@@ -287,7 +288,11 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 
 	var error_msg = "Purchase failed with code: " + str(last_response_code)
 	print("DEBUG: " + error_msg)
-	response = APITypes.PurchaseResponse.new({"error": error_msg})
+	# Create a failed purchase response with proper fields
+	response = APITypes.PurchaseResponse.new({
+		"purchased_item": {},
+		"gold": GameStateManager.gold  # Keep current gold
+	})
 	purchase_completed.emit(response)
 	error_occurred.emit(error_msg)
 	return response
@@ -325,13 +330,15 @@ func sell_item(item_id: String, from_storage: bool = false) -> APITypes.SellResp
 		if parse_result == OK:
 			var data = json.data
 			response = APITypes.SellResponse.new(data)
-			if response.success:
-				session_data["gold"] = response.gold
+			session_data["gold"] = response.gold
 			sell_completed.emit(response)
 			return response
 
 	var error_msg = "Sell failed with code: " + str(last_response_code)
-	response = APITypes.SellResponse.new({"error": error_msg})
+	# Create a failed sell response with proper fields
+	response = APITypes.SellResponse.new({
+		"gold": GameStateManager.gold  # Keep current gold
+	})
 	sell_completed.emit(response)
 	error_occurred.emit(error_msg)
 	return response
