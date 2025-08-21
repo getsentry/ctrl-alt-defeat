@@ -9,7 +9,6 @@ from item_effects import (
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
-    ConsumeEffect,
     DamageDealtTrigger,
     DamageTakenTrigger,
     DebuffEffect,
@@ -127,7 +126,7 @@ class TestTriggers:
 
         # Should not activate for wrong event type
         trigger.current_cooldown = 0.0
-        assert trigger.should_activate("battle_start", None, None, None) == False
+        assert trigger.should_activate("battle_start", None, None, None) is False
 
     def test_battle_start_trigger(self):
         """Test battle start trigger"""
@@ -316,4 +315,6 @@ class TestItemSpecs:
 
 
 if __name__ == "__main__":
+    import pytest
+
     pytest.main([__file__, "-v"])

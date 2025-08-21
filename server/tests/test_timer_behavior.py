@@ -2,8 +2,7 @@
 Test timer item behavior with CPU throttling
 """
 
-
-from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem
+from battle_engine import BattleSimulator, PlacedItem
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 
 from .test_utils import get_test_containers
@@ -46,7 +45,7 @@ class TestTimerScheduling:
         )
 
         # Count CPU_FAIL actions
-        cpu_fails = [a for a in result["actions"] if a["a"] == ACTION_CODES["CPU_FAIL"]]
+        cpu_fails = [a for a in result["actions"] if a.action == "cpu_fail"]
 
         # With 1 second cooldown over 5 seconds, should attempt ~5 times
         # All should fail due to insufficient CPU
@@ -54,7 +53,7 @@ class TestTimerScheduling:
 
         # Check timing - failures should be ~1 second apart
         if len(cpu_fails) >= 2:
-            time_diff = cpu_fails[1]["t"] - cpu_fails[0]["t"]
+            time_diff = (cpu_fails[1].timestamp - cpu_fails[0].timestamp) / 1000.0
             assert 0.9 <= time_diff <= 1.1  # Within 10% of expected cooldown
 
     def test_timer_activates_when_cpu_available(self):
@@ -97,8 +96,8 @@ class TestTimerScheduling:
         )
 
         # Check for mix of successes and failures
-        damages = [a for a in result["actions"] if a["a"] == ACTION_CODES["DAMAGE"]]
-        cpu_fails = [a for a in result["actions"] if a["a"] == ACTION_CODES["CPU_FAIL"]]
+        damages = [a for a in result["actions"] if a.action == "damage"]
+        cpu_fails = [a for a in result["actions"] if a.action == "cpu_fail"]
 
         # Should have some successes and some failures
         assert len(damages) > 0
@@ -106,8 +105,12 @@ class TestTimerScheduling:
 
         # Verify timing is maintained (all events ~1 second apart)
         all_item_events = sorted(
-            [a for a in result["actions"] if "i" in a and a.get("i") == item.uid],
-            key=lambda x: x["t"],
+            [
+                a
+                for a in result["actions"]
+                if hasattr(a, "source") and a.source == item.uid
+            ],
+            key=lambda x: x.timestamp,
         )
 
         if len(all_item_events) >= 2:
@@ -115,14 +118,14 @@ class TestTimerScheduling:
             unique_times = []
             seen_times = set()
             for event in all_item_events:
-                if event["t"] not in seen_times:
-                    unique_times.append(event["t"])
-                    seen_times.add(event["t"])
+                if event.timestamp not in seen_times:
+                    unique_times.append(event.timestamp)
+                    seen_times.add(event.timestamp)
 
             # Check time differences between unique timestamps
             if len(unique_times) >= 2:
                 for i in range(1, len(unique_times)):
-                    time_diff = unique_times[i] - unique_times[i - 1]
+                    time_diff = (unique_times[i] - unique_times[i - 1]) / 1000.0
                     # Should be close to 1 second cooldown
                     assert (
                         0.8 <= time_diff <= 1.2
@@ -181,8 +184,12 @@ class TestTimerScheduling:
         )
 
         # Get all events for each item
-        item1_events = [a for a in result["actions"] if a.get("i") == "item1"]
-        item2_events = [a for a in result["actions"] if a.get("i") == "item2"]
+        item1_events = [
+            a for a in result["actions"] if hasattr(a, "source") and a.source == "item1"
+        ]
+        item2_events = [
+            a for a in result["actions"] if hasattr(a, "source") and a.source == "item2"
+        ]
 
         # Item1 (1s cooldown) should have ~3x more events than item2 (3s cooldown)
         # Over 6 seconds: item1 ~6 events, item2 ~2 events
@@ -191,9 +198,11 @@ class TestTimerScheduling:
 
         # Verify each maintains its schedule
         for events, expected_cooldown in [(item1_events, 1.0), (item2_events, 3.0)]:
-            sorted_events = sorted(events, key=lambda x: x["t"])
+            sorted_events = sorted(events, key=lambda x: x.timestamp)
             if len(sorted_events) >= 2:
-                time_diff = sorted_events[1]["t"] - sorted_events[0]["t"]
+                time_diff = (
+                    sorted_events[1].timestamp - sorted_events[0].timestamp
+                ) / 1000.0
                 # Allow for some floating point error and tick granularity
                 assert (
                     abs(time_diff - expected_cooldown) <= 0.2

@@ -159,7 +159,6 @@ class TestGameLifecycle:
             # Battle with purchased items
             battle_request = {
                 "player_id": player_id,
-                "round_number": current_round,
                 "seed": 1000 + attempts,  # Different seed each attempt
                 "test_ai_difficulty": 1,  # Easy AI for reliable wins
             }
@@ -257,8 +256,8 @@ class TestGameLifecycle:
             # Simulate battle with weak inventory
             battle_request = {
                 "player_id": player_id,
-                "round_number": session["round"],
                 "seed": 1,  # Any seed works
+                "test_ai_difficulty": None,
             }
 
             response = auth_client.post("/battle/simulate", json=battle_request)
@@ -322,7 +321,6 @@ class TestGameLifecycle:
             # Battle with deterministic seed
             battle_request = {
                 "player_id": player_id,
-                "round_number": session["round"],
                 "seed": battle_seed,
                 "test_ai_difficulty": ai_difficulty,
             }
@@ -386,7 +384,6 @@ class TestGameLifecycle:
         # Battle at round 10 with easy AI
         battle_request = {
             "player_id": player_id,
-            "round_number": 10,
             "seed": 42,
             "test_ai_difficulty": 1,  # Easy AI
         }
@@ -442,8 +439,8 @@ class TestGameLifecycle:
 
             battle_request = {
                 "player_id": player_id,
-                "round_number": current_round,
                 "seed": current_round,  # Use deterministic seed based on round
+                "test_ai_difficulty": None,
             }
 
             response = auth_client.post("/battle/simulate", json=battle_request)

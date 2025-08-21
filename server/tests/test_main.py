@@ -1,6 +1,7 @@
 """
 Tests for AI opponent generation with containers
 """
+
 import pytest
 from battle_engine import BattleSimulator
 from main import generate_ai_opponent
@@ -64,9 +65,11 @@ class TestAIOpponentGeneration:
         from schemas import SimpleBattleRequest
 
         # Create request without test_ai_difficulty
-        request = SimpleBattleRequest(player_id="test_player", round_number=1)
+        request = SimpleBattleRequest(
+            player_id="test_player", seed=None, test_ai_difficulty=None
+        )
 
-        # Should default to None, not 1
+        # Should be None as specified
         assert request.test_ai_difficulty is None
         assert request.seed is None
 
@@ -78,7 +81,9 @@ class TestAIOpponentGeneration:
         assert not hasattr(SimpleBattleRequest, "opponent_id")
 
         # Create request - should work without opponent_id
-        request = SimpleBattleRequest(player_id="test_player", round_number=1)
+        request = SimpleBattleRequest(
+            player_id="test_player", seed=None, test_ai_difficulty=None
+        )
 
         # Should not have opponent_id attribute
         assert not hasattr(request, "opponent_id")
@@ -125,7 +130,6 @@ class TestBattleAPIResponse:
         # Simulate battle
         battle_request = {
             "player_id": player_id,
-            "round_number": 1,
             "seed": 42,
             "test_ai_difficulty": 1,
         }
@@ -223,7 +227,7 @@ class TestBattleAPIResponse:
         """Test that item shapes are properly serialized"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -245,11 +249,7 @@ class TestBattleAPIResponse:
         # Battle
         response = auth_client.post(
             "/battle/simulate",
-            json={
-                "player_id": player_id,
-                "round_number": 1,
-                "test_ai_difficulty": 1,
-            },
+            json={"player_id": player_id, "test_ai_difficulty": 1, "seed": None},
         )
 
         result = response.json()
@@ -270,7 +270,7 @@ class TestBattleAPIResponse:
         """Test battle response when player has only containers, no items"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -278,11 +278,7 @@ class TestBattleAPIResponse:
         # Don't purchase any items, just battle
         response = auth_client.post(
             "/battle/simulate",
-            json={
-                "player_id": player_id,
-                "round_number": 1,
-                "test_ai_difficulty": 1,
-            },
+            json={"player_id": player_id, "test_ai_difficulty": 1, "seed": None},
         )
 
         # Should fail with 400 - empty inventory
@@ -312,7 +308,7 @@ class TestBattleAPIResponse:
                         "target_position": [
                             2 + len(purchased),
                             3,
-                        ],  # Place at (2,3) and (3,3)
+                        ],
                     },
                 )
                 assert response.status_code == 200
@@ -323,7 +319,6 @@ class TestBattleAPIResponse:
             "/battle/simulate",
             json={
                 "player_id": player_id,
-                "round_number": 1,
                 "seed": 456,
                 "test_ai_difficulty": 1,
             },
@@ -346,7 +341,7 @@ class TestBattleAPIResponse:
         """Test that enemy inventory is different for different rounds"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -368,21 +363,14 @@ class TestBattleAPIResponse:
         # Battle round 1
         response1 = auth_client.post(
             "/battle/simulate",
-            json={
-                "player_id": player_id,
-                "round_number": 1,
-                "test_ai_difficulty": 1,
-            },
+            json={"player_id": player_id, "test_ai_difficulty": 1, "seed": None},
         )
         enemy_inv1 = response1.json()["battle_result"]["enemy_inventory"]
 
         # Battle round 5 (should have more/different items)
         response5 = auth_client.post(
             "/battle/simulate",
-            json={
-                "player_id": player_id,
-                "round_number": 5,
-            },
+            json={"player_id": player_id, "seed": None, "test_ai_difficulty": None},
         )
         enemy_inv5 = response5.json()["battle_result"]["enemy_inventory"]
 
@@ -398,7 +386,7 @@ class TestBattleAPIResponse:
         """Test that items in storage are not included in battle inventory"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -413,6 +401,7 @@ class TestBattleAPIResponse:
             json={
                 "player_id": player_id,
                 "item_id": items[0]["id"],
+                "target_position": None,
                 "to_storage": True,
             },
         )
@@ -432,11 +421,7 @@ class TestBattleAPIResponse:
         # Battle
         response = auth_client.post(
             "/battle/simulate",
-            json={
-                "player_id": player_id,
-                "round_number": 1,
-                "test_ai_difficulty": 1,
-            },
+            json={"player_id": player_id, "test_ai_difficulty": 1, "seed": None},
         )
 
         result = response.json()
@@ -467,7 +452,7 @@ class TestMoveItemAPI:
             json={
                 "player_id": player_id,
                 "item_id": item["id"],
-                "target_position": [2, 3],  # First container
+                "target_position": [2, 3],
             },
         )
         assert response.status_code == 200
@@ -486,7 +471,7 @@ class TestMoveItemAPI:
         assert response.status_code == 200
         result = response.json()
 
-        assert result["success"] is True
+        # Success is indicated by 200 status
         assert result["item"]["id"] == item_uid
         assert result["item"]["position"] == [4, 3]
 
@@ -503,7 +488,7 @@ class TestMoveItemAPI:
         """Test moving an item from grid to storage"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -533,7 +518,7 @@ class TestMoveItemAPI:
         assert response.status_code == 200
         result = response.json()
 
-        assert result["success"] is True
+        # Success is indicated by 200 status
         assert result["item"]["position"] is None  # No position in storage
         assert len(result["inventory_storage"]) == 1
         assert len(result["inventory_grid"]) == 0
@@ -542,7 +527,7 @@ class TestMoveItemAPI:
         """Test moving an item from storage to grid"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -555,6 +540,7 @@ class TestMoveItemAPI:
             json={
                 "player_id": player_id,
                 "item_id": item["id"],
+                "target_position": None,
                 "to_storage": True,
             },
         )
@@ -572,7 +558,7 @@ class TestMoveItemAPI:
         assert response.status_code == 200
         result = response.json()
 
-        assert result["success"] is True
+        # Success is indicated by 200 status
         assert result["item"]["position"] == [2, 3]
         assert len(result["inventory_storage"]) == 0
         assert len(result["inventory_grid"]) == 1
@@ -581,7 +567,7 @@ class TestMoveItemAPI:
         """Test that moving from storage to storage is a no-op"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -594,6 +580,7 @@ class TestMoveItemAPI:
             json={
                 "player_id": player_id,
                 "item_id": item["id"],
+                "target_position": None,
                 "to_storage": True,
             },
         )
@@ -610,7 +597,7 @@ class TestMoveItemAPI:
         )
         assert response.status_code == 200  # Should succeed as no-op
         result = response.json()
-        assert result["success"] is True
+        # Success is indicated by 200 status
         assert result["item"]["position"] is None  # Still in storage
         assert len(result["inventory_storage"]) == 1
 
@@ -750,7 +737,7 @@ class TestMoveItemAPI:
         assert response.status_code == 200
         result = response.json()
 
-        assert result["success"] is True
+        # Success is indicated by 200 status
         assert result["item"]["position"] == [2, 3]
 
     def test_move_item_preserves_metadata(self, auth_client):

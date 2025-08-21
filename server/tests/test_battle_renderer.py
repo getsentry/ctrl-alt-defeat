@@ -13,6 +13,7 @@ from battle_engine import BattleSimulator, PlacedItem
 from battle_renderer import ASCIIBattleRenderer, BattleState
 from config_loader import ConfigLoader
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
+from schemas import BattleAction
 from server_containers import ServerContainer
 
 
@@ -45,7 +46,6 @@ class TestBattleRenderer:
             spec=standard_vm["spec"],
             position=(0, 0),
             uid="p1_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
 
@@ -53,7 +53,6 @@ class TestBattleRenderer:
             spec=standard_vm["spec"],
             position=(4, 0),
             uid="p2_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
 
@@ -121,14 +120,12 @@ class TestBattleRenderer:
             spec=standard_vm["spec"],
             position=(0, 0),
             uid="p1_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
         p2_container = ServerContainer(
             spec=standard_vm["spec"],
             position=(4, 0),
             uid="p2_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
 
@@ -147,12 +144,14 @@ class TestBattleRenderer:
         )
 
         # Remove non-serializable fields before saving
+        # Convert BattleAction objects to dicts for JSON serialization
+        serializable_actions = [action.model_dump() for action in result["actions"]]
         clean_result = {
             "winner": result["winner"],
             "duration": result["duration"],
             "player1_quota": result["player1_quota"],
             "player2_quota": result["player2_quota"],
-            "actions": result["actions"],
+            "actions": serializable_actions,
             "seed": result["seed"],
         }
 
@@ -187,14 +186,12 @@ class TestBattleRenderer:
             spec=standard_vm["spec"],
             position=(0, 0),
             uid="p1_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
         p2_container = ServerContainer(
             spec=standard_vm["spec"],
             position=(4, 0),
             uid="p2_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
 
@@ -245,11 +242,35 @@ class TestBattleRenderer:
 
         renderer = ASCIIBattleRenderer()
 
-        # Process some test actions - use dict format expected by renderer
+        # Process some test actions - use BattleAction objects
         test_actions = [
-            {"a": "a", "i": "p1_null", "t": 1.0},  # Activate
-            {"a": "d", "p": 2, "v": 5, "t": 1.0},  # Damage to player 2
-            {"a": "h", "p": 1, "v": 3, "t": 1.0},  # Heal player 1
+            BattleAction(
+                timestamp=1000,
+                source="p1_null",
+                action="activate",
+                target=None,
+                damage=None,
+                player=1,
+                details=None,
+            ),
+            BattleAction(
+                timestamp=1000,
+                source="",
+                action="damage",
+                target=None,
+                damage=5,
+                player=2,
+                details=None,
+            ),
+            BattleAction(
+                timestamp=1000,
+                source="",
+                action="heal",
+                target=None,
+                damage=3,
+                player=1,
+                details=None,
+            ),
         ]
 
         for action in test_actions:
@@ -288,14 +309,12 @@ class TestBattleRenderer:
             spec=standard_vm["spec"],
             position=(0, 0),
             uid="p1_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
         p2_container = ServerContainer(
             spec=standard_vm["spec"],
             position=(4, 0),
             uid="p2_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
 
@@ -346,14 +365,12 @@ class TestBattleRenderer:
             spec=standard_vm["spec"],
             position=(0, 0),
             uid="p1_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
         p2_container = ServerContainer(
             spec=standard_vm["spec"],
             position=(4, 0),
             uid="p2_vm",
-            internal_grid_size=standard_vm["internal_size"],
             shape=standard_vm["external_shape"],
         )
 

@@ -8,11 +8,8 @@ import time
 from dataclasses import dataclass
 from typing import Dict, List
 
-from battle_engine import ACTION_CODES
+from schemas import BattleAction
 from server_containers import ServerContainer
-
-# Reverse action codes for display
-ACTION_NAMES = {v: k for k, v in ACTION_CODES.items()}
 
 
 # ANSI color codes for terminal output
@@ -168,7 +165,9 @@ class ASCIIBattleRenderer:
             # Process all actions up to current time
             while action_index < len(actions):
                 action = actions[action_index]
-                if action["t"] <= current_real_time:
+                action_time = action.timestamp / 1000.0
+
+                if action_time <= current_real_time:
                     self._process_action(state, action)
                     action_index += 1
                 else:
@@ -185,7 +184,7 @@ class ASCIIBattleRenderer:
             # Check if battle is over
             if (
                 action_index >= len(actions)
-                and current_real_time > actions[-1]["t"] + 1
+                and current_real_time > actions[-1].timestamp / 1000.0 + 1
             ):
                 break
 
@@ -198,7 +197,7 @@ class ASCIIBattleRenderer:
         """Render the battle step by step with user input"""
         for i, action in enumerate(actions):
             self._process_action(state, action)
-            state.current_time = action["t"]
+            state.current_time = action.timestamp / 1000.0
             self._render_frame(state)
 
             print(
@@ -209,69 +208,70 @@ class ASCIIBattleRenderer:
             if user_input.lower() == "q":
                 break
 
-    def _process_action(self, state: BattleState, action: Dict):
+    def _process_action(self, state: BattleState, action: BattleAction):
         """Update state based on action"""
-        action_type = ACTION_NAMES.get(action["a"], action["a"])
+        action_code = action.action
+        timestamp = action.timestamp / 1000.0
+        player = action.player
+        item_uid = action.source
+        value = action.damage
 
         # Clear previous active items (they fade after one frame)
         state.active_items.clear()
 
         # Build action description
-        desc = f"[{action['t']:.1f}s] {action_type}"
+        desc = f"[{timestamp:.1f}s] {action_code}"
 
-        item_uid = action.get("i")
-        if "p" in action:
-            desc += f" P{action['p']}"
-        if item_uid:
+        if player is not None:
+            desc += f" P{player}"
+        if item_uid and item_uid != "system":
             item_name = self._get_item_name(state, item_uid)
             desc += f" {item_name}"
-        if "v" in action:
-            desc += f" ({action['v']})"
+        if value is not None:
+            desc += f" ({value})"
 
         # Update state and set item colors based on action type
-        if action["a"] == ACTION_CODES["DAMAGE"]:
-            if action["p"] == 1:
-                state.player1_hp -= action.get("v", 0)
+        if action_code == "damage":
+            damage = value or 0
+            if player == 1:
+                state.player1_hp -= damage
             else:
-                state.player2_hp -= action.get("v", 0)
+                state.player2_hp -= damage
             desc = Colors.colorize(f"💥 {desc}", Colors.BRIGHT_RED)
             if item_uid:
                 state.active_items[item_uid] = Colors.BRIGHT_RED
 
-        elif action["a"] == ACTION_CODES["HEAL"]:
-            if action["p"] == 1:
-                state.player1_hp = min(
-                    state.player1_max_hp, state.player1_hp + action.get("v", 0)
-                )
+        elif action_code == "heal":
+            heal = value or 0
+            if player == 1:
+                state.player1_hp = min(state.player1_max_hp, state.player1_hp + heal)
             else:
-                state.player2_hp = min(
-                    state.player2_max_hp, state.player2_hp + action.get("v", 0)
-                )
+                state.player2_hp = min(state.player2_max_hp, state.player2_hp + heal)
             desc = Colors.colorize(f"💚 {desc}", Colors.BRIGHT_GREEN)
             if item_uid:
                 state.active_items[item_uid] = Colors.BRIGHT_GREEN
 
-        elif action["a"] == ACTION_CODES["BLOCK"]:
+        elif action_code == "block":
             desc = Colors.colorize(f"🛡️ {desc}", Colors.BRIGHT_CYAN)
             if item_uid:
                 state.active_items[item_uid] = Colors.BRIGHT_CYAN
 
-        elif action["a"] == ACTION_CODES["CPU_FAIL"]:
+        elif action_code == "cpu_fail":
             desc = Colors.colorize(f"⚠️ {desc}", Colors.YELLOW)
             if item_uid:
                 state.active_items[item_uid] = Colors.YELLOW
 
-        elif action["a"] == ACTION_CODES["ACTIVATE"]:
+        elif action_code == "activate":
             desc = Colors.colorize(f"⚡ {desc}", Colors.BRIGHT_YELLOW)
             if item_uid:
                 state.active_items[item_uid] = Colors.BRIGHT_YELLOW
 
-        elif action["a"] == ACTION_CODES["CRIT"]:
+        elif action_code == "critical_hit":
             desc = Colors.colorize(f"💥 CRIT! {desc}", Colors.BRIGHT_MAGENTA)
             if item_uid:
                 state.active_items[item_uid] = Colors.BRIGHT_MAGENTA
 
-        elif action["a"] == ACTION_CODES["MISS"]:
+        elif action_code == "miss":
             desc = Colors.colorize(f"✗ {desc}", Colors.WHITE)
             if item_uid:
                 state.active_items[item_uid] = Colors.WHITE
@@ -554,14 +554,12 @@ if __name__ == "__main__":
             spec=containers["standard_vm"]["spec"],
             position=(0, 2),
             uid="p1_rack1",
-            internal_grid_size=containers["standard_vm"]["internal_size"],
             shape=containers["standard_vm"]["external_shape"],
         ),
         ServerContainer(
             spec=containers["standard_vm"]["spec"],
             position=(2, 2),
             uid="p1_rack2",
-            internal_grid_size=containers["standard_vm"]["internal_size"],
             shape=containers["standard_vm"]["external_shape"],
         ),
     ]
@@ -571,14 +569,12 @@ if __name__ == "__main__":
             spec=containers["standard_vm"]["spec"],
             position=(4, 2),
             uid="p2_rack1",
-            internal_grid_size=containers["standard_vm"]["internal_size"],
             shape=containers["standard_vm"]["external_shape"],
         ),
         ServerContainer(
             spec=containers["standard_vm"]["spec"],
             position=(4, 4),
             uid="p2_rack2",
-            internal_grid_size=containers["standard_vm"]["internal_size"],
             shape=containers["standard_vm"]["external_shape"],
         ),
     ]

@@ -6,7 +6,7 @@ Same seed + same items = same result every time
 from copy import deepcopy
 
 import pytest
-from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem
+from battle_engine import BattleSimulator, PlacedItem
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
@@ -222,20 +222,8 @@ class TestDeterministicBattles:
             assert results[0]["player2_quota"] == results[i]["player2_quota"]
 
             # Count blocks in each result
-            blocks_0 = len(
-                [
-                    a
-                    for a in results[0]["actions"]
-                    if a.get("a") == ACTION_CODES["BLOCK"]
-                ]
-            )
-            blocks_i = len(
-                [
-                    a
-                    for a in results[i]["actions"]
-                    if a.get("a") == ACTION_CODES["BLOCK"]
-                ]
-            )
+            blocks_0 = len([a for a in results[0]["actions"] if a.action == "block"])
+            blocks_i = len([a for a in results[i]["actions"] if a.action == "block"])
             assert (
                 blocks_0 == blocks_i
             ), f"Block count differs: {blocks_0} != {blocks_i}"

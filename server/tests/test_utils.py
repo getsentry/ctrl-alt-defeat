@@ -15,7 +15,6 @@ def get_test_containers():
         spec=vm["spec"],
         position=(0, 0),
         uid="p1_test_vm",
-        internal_grid_size=vm["internal_size"],
         shape=vm["external_shape"],
     )
 
@@ -24,7 +23,6 @@ def get_test_containers():
         spec=vm["spec"],
         position=(4, 0),
         uid="p2_test_vm",
-        internal_grid_size=vm["internal_size"],
         shape=vm["external_shape"],
     )
 
@@ -41,7 +39,6 @@ def get_large_test_containers():
         spec=orchestrator["spec"],
         position=(0, 0),
         uid="p1_test_orchestrator",
-        internal_grid_size=orchestrator["internal_size"],
         shape=orchestrator["external_shape"],
     )
 
@@ -50,7 +47,6 @@ def get_large_test_containers():
         spec=orchestrator["spec"],
         position=(3, 0),
         uid="p2_test_orchestrator",
-        internal_grid_size=orchestrator["internal_size"],
         shape=orchestrator["external_shape"],
     )
 
@@ -67,7 +63,6 @@ def get_battle_containers():
             spec=vm["spec"],
             position=position,
             uid=uid,
-            internal_grid_size=vm["internal_size"],
             shape=vm["external_shape"],
         )
 

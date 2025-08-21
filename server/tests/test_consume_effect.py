@@ -2,9 +2,8 @@
 Test ConsumeEffect and item consumption mechanics
 """
 
-from battle_engine import BattleSimulator, PlacedItem, Player
+from battle_engine import BattleSimulator, PlacedItem
 from item_effects import (
-    AttackEffect,
     BattleStartTrigger,
     ConsumeEffect,
     DamageTakenTrigger,
@@ -76,17 +75,17 @@ class TestConsumeEffect:
         )
 
         # Check that potion was consumed
-        consume_actions = [a for a in result["actions"] if a.get("a") == "consume"]
+        consume_actions = [a for a in result["actions"] if a.action == "consume"]
         assert len(consume_actions) == 1
-        assert consume_actions[0]["i"] == "potion1"
+        assert consume_actions[0].source == "potion1"
 
         # Check that heal happened before consume
-        heal_actions = [a for a in result["actions"] if a.get("a") == "h"]
+        heal_actions = [a for a in result["actions"] if a.action == "heal"]
         assert len(heal_actions) == 1
 
         # Consume should happen right after heal
-        heal_time = heal_actions[0]["t"]
-        consume_time = consume_actions[0]["t"]
+        heal_time = heal_actions[0].timestamp
+        consume_time = consume_actions[0].timestamp
         assert consume_time == heal_time  # Same tick
 
     def test_consumed_item_stops_triggering(self):
@@ -128,12 +127,12 @@ class TestConsumeEffect:
         )
 
         # Check that item was consumed at battle start
-        consume_actions = [a for a in result["actions"] if a.get("a") == "consume"]
+        consume_actions = [a for a in result["actions"] if a.action == "consume"]
         assert len(consume_actions) == 1
-        assert consume_actions[0]["t"] == 0  # At battle start
+        assert consume_actions[0].timestamp == 0  # At battle start
 
         # Check that no heal actions from the timer trigger
-        heal_actions = [a for a in result["actions"] if a.get("a") == "h"]
+        heal_actions = [a for a in result["actions"] if a.action == "heal"]
         assert len(heal_actions) == 0  # Timer never fired
 
     def test_consumed_item_affects_adjacency(self):
@@ -216,7 +215,7 @@ class TestConsumeEffect:
         from .test_utils import get_large_test_containers
 
         p1_containers, p2_containers = get_large_test_containers()
-        result = sim.simulate_battle(
+        sim.simulate_battle(
             items,
             [],
             round_number=1,
@@ -304,11 +303,13 @@ class TestConsumeEffect:
         )
 
         # Both potions should be consumed
-        consume_actions = [a for a in result["actions"] if a.get("a") == "consume"]
-        consumed_ids = {a["i"] for a in consume_actions}
+        consume_actions = [a for a in result["actions"] if a.action == "consume"]
+        consumed_ids = {a.source for a in consume_actions}
         assert "pot1" in consumed_ids
         assert "pot2" in consumed_ids
 
 
 if __name__ == "__main__":
+    import pytest
+
     pytest.main([__file__, "-v"])

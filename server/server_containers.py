@@ -6,8 +6,7 @@ Servers are placed in the main grid and provide internal storage space
 from dataclasses import dataclass
 from typing import Any, List, Optional, Set, Tuple
 
-from grid_system import SHAPES, ItemShape, Rotation
-from item_effects import BuffEffect, ItemSpec, PassiveTrigger, StatModEffect
+from grid_system import SHAPES, Rotation
 
 
 @dataclass
@@ -21,9 +20,6 @@ class ServerContainer:
     spec: Any  # ItemSpec - the item specification with effects
     position: Tuple[int, int]  # Position in main grid
     uid: str
-
-    # Container properties
-    internal_grid_size: Tuple[int, int]  # (width, height) of internal storage
     shape: Any = None  # ItemShape - shape it takes in main grid
     rotation: Any = None  # Rotation
 
@@ -48,251 +44,16 @@ class ServerContainer:
 
     def get_internal_squares(self) -> Set[Tuple[int, int]]:
         """Get all internal grid squares this container provides (in global coordinates)"""
-        # The container occupies certain squares in the main grid
-        # Those same squares become available for items to be placed on
-        # So we return the squares the container occupies
+        # The container's shape IS its internal space
+        # If it's T-shaped, you get T-shaped internal space
         return set(self.get_occupied_squares())
 
 
 def create_server_containers():
     """Create server containers from JSON configuration"""
-    try:
-        from config_loader import create_server_containers_from_config
+    from config_loader import create_server_containers_from_config
 
-        containers = create_server_containers_from_config()
-        if containers:
-            return containers
-    except (ImportError, FileNotFoundError):
-        pass
-
-    # Fallback to hardcoded version
-    return create_server_containers_hardcoded()
-
-
-def create_server_containers_hardcoded():
-    """Create different types of server containers with their item specs (hardcoded fallback)"""
-
-    if not ItemSpec:
-        return {}
-
-    # Standard VM - 2x2 (4 slots)
-    standard_vm_spec = ItemSpec(
-        id="standard_vm",
-        name="Standard VM",
-        category="infrastructure",
-        shape=SHAPES["2x2"] if SHAPES else None,
-        triggers=[],  # No special effects
-        rarity="common",
-    )
-
-    # Edge Node - 2x1 (2 slots horizontal)
-    edge_node_spec = ItemSpec(
-        id="edge_node",
-        name="Edge Node",
-        category="infrastructure",
-        shape=ItemShape([(0, 0), (1, 0)], "2x1") if ItemShape else None,
-        triggers=[
-            PassiveTrigger(
-                effects=[
-                    BuffEffect(
-                        buff_name="edge_speed",
-                        value=0.1,  # Modules inside execute 10% faster
-                        target_type="contained",
-                    ),
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
-        rarity="rare",
-    )
-
-    # Memory Cache - 3x1 (3 slots horizontal)
-    memory_cache_spec = ItemSpec(
-        id="memory_cache",
-        name="Memory Cache",
-        category="infrastructure",
-        shape=ItemShape([(0, 0), (1, 0), (2, 0)], "3x1") if ItemShape else None,
-        triggers=[
-            PassiveTrigger(
-                effects=[
-                    StatModEffect(stat_name="max_cpu", value=1),  # Gain 1 maximum CPU
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
-        rarity="epic",
-    )
-
-    # Load Balancer - 1x1 (1 slot)
-    load_balancer_spec = ItemSpec(
-        id="load_balancer",
-        name="Load Balancer",
-        category="infrastructure",
-        shape=ItemShape([(0, 0)], "1x1") if ItemShape else None,
-        triggers=[
-            # BattleStartTrigger would be needed for "Start of battle: Gain 15 Block"
-            # For now using PassiveTrigger as placeholder
-            PassiveTrigger(
-                effects=[
-                    StatModEffect(stat_name="block", value=15),  # Start with 15 Block
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
-        rarity="godly",
-    )
-
-    # Patch Registry - 2x2 (4 slots)
-    patch_registry_spec = ItemSpec(
-        id="patch_registry",
-        name="Patch Registry",
-        category="infrastructure",
-        shape=SHAPES["2x2"] if SHAPES else None,
-        triggers=[
-            # Complex trigger for "First Patch deployed: Random buff / 4 Patches deployed: Clear 8 errors"
-            # Placeholder for now
-            PassiveTrigger(
-                effects=[
-                    BuffEffect(
-                        buff_name="patch_efficiency",
-                        value=0.1,  # Placeholder effect
-                        target_type="contained",
-                    ),
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
-        rarity="legendary",
-    )
-
-    # Container Orchestrator - 3x2 (6 slots)
-    container_orchestrator_spec = ItemSpec(
-        id="container_orchestrator",
-        name="Container Orchestrator",
-        category="infrastructure",
-        shape=ItemShape(
-            [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)],
-            "3x2",
-        )
-        if ItemShape
-        else None,
-        triggers=[
-            # "Start of battle: gain 7 Block for each Basic module inside"
-            # Placeholder for now
-            PassiveTrigger(
-                effects=[
-                    StatModEffect(stat_name="block", value=7),  # Placeholder
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
-        rarity="epic",
-    )
-
-    # Serverless Function - 2x2 (4 slots)
-    serverless_function_spec = ItemSpec(
-        id="serverless_function",
-        name="Serverless Function",
-        category="infrastructure",
-        shape=SHAPES["2x2"] if SHAPES else None,
-        triggers=[
-            # "Deploy phase: If has 2+ Legendary modules, generate free API credits"
-            # Placeholder for now
-            PassiveTrigger(
-                effects=[
-                    BuffEffect(
-                        buff_name="api_efficiency",
-                        value=0.15,  # Placeholder
-                        target_type="contained",
-                    ),
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
-        rarity="epic",
-    )
-
-    # Chaos Experiment - Variable shape (for now using 2x2)
-    chaos_experiment_spec = ItemSpec(
-        id="chaos_experiment",
-        name="Chaos Experiment",
-        category="infrastructure",
-        shape=SHAPES["2x2"]
-        if SHAPES
-        else None,  # Variable shape - using 2x2 as placeholder
-        triggers=[
-            # "Game started: Replace with random infrastructure and modules"
-            # This would require special handling
-            PassiveTrigger(
-                effects=[
-                    BuffEffect(
-                        buff_name="chaos",
-                        value=0.2,  # Placeholder
-                        target_type="contained",
-                    ),
-                ]
-            )
-        ]
-        if PassiveTrigger
-        else [],
-        rarity="unique",
-    )
-
-    return {
-        "standard_vm": {
-            "spec": standard_vm_spec,
-            "internal_size": (2, 2),  # Same as external
-            "external_shape": SHAPES["2x2"] if SHAPES else None,
-        },
-        "edge_node": {
-            "spec": edge_node_spec,
-            "internal_size": (2, 1),  # Same as external
-            "external_shape": ItemShape([(0, 0), (1, 0)], "2x1") if ItemShape else None,
-        },
-        "memory_cache": {
-            "spec": memory_cache_spec,
-            "internal_size": (3, 1),  # Same as external
-            "external_shape": ItemShape([(0, 0), (1, 0), (2, 0)], "3x1")
-            if ItemShape
-            else None,
-        },
-        "load_balancer": {
-            "spec": load_balancer_spec,
-            "internal_size": (1, 1),  # Same as external
-            "external_shape": ItemShape([(0, 0)], "1x1") if ItemShape else None,
-        },
-        "patch_registry": {
-            "spec": patch_registry_spec,
-            "internal_size": (2, 2),  # Same as external
-            "external_shape": SHAPES["2x2"] if SHAPES else None,
-        },
-        "container_orchestrator": {
-            "spec": container_orchestrator_spec,
-            "internal_size": (3, 2),  # Same as external
-            "external_shape": ItemShape(
-                [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)],
-                "3x2",
-            )
-            if ItemShape
-            else None,
-        },
-        "serverless_function": {
-            "spec": serverless_function_spec,
-            "internal_size": (2, 2),  # Same as external
-            "external_shape": SHAPES["2x2"] if SHAPES else None,
-        },
-        "chaos_experiment": {
-            "spec": chaos_experiment_spec,
-            "internal_size": (2, 2),  # Variable - using 2x2 as placeholder
-            "external_shape": SHAPES["2x2"] if SHAPES else None,
-        },
-    }
+    return create_server_containers_from_config()
 
 
 class PlacementValidator:
@@ -455,7 +216,6 @@ if __name__ == "__main__":
         spec=containers["standard_vm"]["spec"],
         position=(1, 1),
         uid="vm1",
-        internal_grid_size=containers["standard_vm"]["internal_size"],
         shape=containers["standard_vm"]["external_shape"],
     )
 
@@ -476,7 +236,6 @@ if __name__ == "__main__":
         spec=containers["edge_node"]["spec"],
         position=(4, 2),
         uid="edge1",
-        internal_grid_size=containers["edge_node"]["internal_size"],
         shape=containers["edge_node"]["external_shape"],
     )
 

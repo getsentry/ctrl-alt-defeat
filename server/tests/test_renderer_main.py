@@ -118,7 +118,6 @@ p1_container = ServerContainer(
     spec=standard_vm["spec"],
     position=(0, 0),
     uid="p1_vm",
-    internal_grid_size=standard_vm["internal_size"],
     shape=standard_vm["external_shape"],
 )
 
@@ -126,7 +125,6 @@ p2_container = ServerContainer(
     spec=standard_vm["spec"],
     position=(4, 0),
     uid="p2_vm",
-    internal_grid_size=standard_vm["internal_size"],
     shape=standard_vm["external_shape"],
 )
 

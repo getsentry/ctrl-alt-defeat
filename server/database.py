@@ -167,9 +167,9 @@ class DatabaseManager:
                 clean_url,
                 echo=False,  # Set to True for SQL logging
                 poolclass=poolclass,
-                pool_pre_ping=True
-                if poolclass == AsyncAdaptedQueuePool
-                else False,  # Verify connections before using
+                pool_pre_ping=(
+                    True if poolclass == AsyncAdaptedQueuePool else False
+                ),  # Verify connections before using
                 connect_args=connect_args,
             )
 

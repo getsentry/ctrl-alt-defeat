@@ -100,9 +100,8 @@ class ConfigLoader:
 
     def _create_container_spec(self, container_id: str, config: Dict[str, Any]) -> Dict:
         """Create a container specification from config"""
-        # Parse shape
-        shape = self._parse_shape(config.get("shape", "2x2"))
-        internal_size = tuple(config.get("internal_size", [2, 2]))
+        # Parse shape - it's required, let it crash if missing
+        shape = self._parse_shape(config["shape"])
 
         # Parse effects
         effects = []
@@ -128,7 +127,6 @@ class ConfigLoader:
 
         return {
             "spec": spec,
-            "internal_size": internal_size,
             "external_shape": shape,
             "description": config.get("description", ""),
             "cost": config.get("cost", 1),

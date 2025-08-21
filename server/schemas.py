@@ -17,7 +17,7 @@ class GameSession(BaseModel):
     lives: int = 5  # Player has 5 lives/tries
     wins: int = 0
     losses: int = 0
-    last_battle_result: Optional[Dict] = None
+    last_battle_result: Optional[Dict]
     current_shop: List[Optional[Dict]] = []  # Shop can have empty slots
     game_seed: int  # Master seed for all RNG in this game session (always set)
     shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
@@ -58,7 +58,6 @@ class PurchaseRequest(BaseModel):
     player_id: str
     item_id: str
     target_position: Optional[List[int]] = None  # [x, y] position on grid
-    target_container_id: Optional[str] = None  # Container to place item in
     to_storage: bool = False  # Place in storage instead of grid
 
 
@@ -98,9 +97,6 @@ class StartSessionResponse(BaseModel):
 
     player_id: str = Field(description="Unique player/session identifier")
     session: GameSession = Field(description="Complete game session state")
-    item_catalog: Dict[str, ItemCatalogEntry] = Field(
-        description="Catalog of all available items with their stats"
-    )
 
 
 class ShopItem(BaseModel):
@@ -115,17 +111,14 @@ class ShopItem(BaseModel):
     is_container: bool = Field(
         default=False, description="Whether this is a server container"
     )
-    internal_width: Optional[int] = Field(
-        default=None, description="Container internal width"
-    )
-    internal_height: Optional[int] = Field(
-        default=None, description="Container internal height"
-    )
     min_damage: int = Field(default=0, description="Minimum damage")
     max_damage: int = Field(default=0, description="Maximum damage")
     cooldown: float = Field(default=0, description="Cooldown in seconds")
     cpu_cost: int = Field(default=0, description="CPU cost")
     special_effect: str = Field(default="", description="Special effect")
+    shape: Optional[List[List[int]]] = Field(
+        default=None, description="Item shape as list of [x, y] offsets"
+    )
 
 
 class PurchaseResponse(BaseModel):
@@ -169,12 +162,10 @@ class BattleAction(BaseModel):
     timestamp: int = Field(description="Time in milliseconds")
     source: str = Field(description="Item that triggered the action")
     action: str = Field(description="Action type")
-    target: Optional[str] = Field(default=None, description="Target item")
-    damage: Optional[int] = Field(default=None, description="Damage dealt")
+    target: Optional[str] = Field(description="Target item")
+    damage: Optional[int] = Field(description="Damage dealt")
     player: int = Field(description="Player 1 or 2")
-    details: Optional[Dict[str, Any]] = Field(
-        default=None, description="Additional details"
-    )
+    details: Optional[Dict[str, Any]] = Field(description="Additional details")
 
 
 class BattleResult(BaseModel):
@@ -247,7 +238,7 @@ class ItemInfo(BaseModel):
     position: Optional[List[int]] = Field(
         description="Current position or None if in storage"
     )
-    name: Optional[str] = Field(default=None, description="Item name")
+    name: Optional[str] = Field(description="Item name")
 
 
 class MoveItemResponse(BaseModel):

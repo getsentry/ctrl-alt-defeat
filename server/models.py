@@ -168,9 +168,9 @@ class User(Base):
             "total_losses": self.total_losses,
             "current_rank": self.current_rank,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "last_login_at": self.last_login_at.isoformat()
-            if self.last_login_at
-            else None,
+            "last_login_at": (
+                self.last_login_at.isoformat() if self.last_login_at else None
+            ),
         }
 
 

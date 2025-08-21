@@ -20,8 +20,8 @@ class TestBattleWithSession:
         # Try to battle with empty inventory
         battle_request = {
             "player_id": player_id,
-            "round_number": 1,
             "seed": 42,
+            "test_ai_difficulty": None,
         }
 
         response = auth_client.post("/battle/simulate", json=battle_request)
@@ -49,7 +49,7 @@ class TestBattleWithSession:
                     json={
                         "player_id": player_id,
                         "item_id": item["id"],
-                        "target_position": [2, 3],  # Place on first container
+                        "target_position": [2, 3],
                     },
                 )
                 assert response.status_code == 200
@@ -58,7 +58,6 @@ class TestBattleWithSession:
         # Now battle with the purchased item
         battle_request = {
             "player_id": player_id,
-            "round_number": 1,
             "seed": 42,
             "test_ai_difficulty": 1,  # Easy AI (1)
         }
@@ -112,6 +111,7 @@ class TestBattleWithSession:
             json={
                 "player_id": player_id,
                 "item_id": items[0]["id"],
+                "target_position": None,
                 "to_storage": True,
             },
         )
@@ -131,7 +131,6 @@ class TestBattleWithSession:
         # Battle should only use the grid item, not storage item
         battle_request = {
             "player_id": player_id,
-            "round_number": 1,
             "seed": 42,
             "test_ai_difficulty": 1,  # Easy AI (1)
         }

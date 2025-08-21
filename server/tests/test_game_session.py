@@ -64,6 +64,7 @@ class TestGameSessionInventory:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
+                "target_position": None,
                 "to_storage": True,
             },
         )
@@ -132,6 +133,7 @@ class TestGameSessionInventory:
             lives=5,
             wins=0,
             losses=0,
+            last_battle_result=None,
             game_seed=12345,  # Always need a seed now
             inventory_grid=manager.get_state()["grid"],
             inventory_storage=manager.get_state()["storage"],
@@ -155,6 +157,7 @@ class TestGameSessionInventory:
             lives=5,
             wins=0,
             losses=0,
+            last_battle_result=None,
             game_seed=12345,  # Always need a seed now
             inventory_grid=manager.get_state()["grid"],
             inventory_storage=manager.get_state()["storage"],

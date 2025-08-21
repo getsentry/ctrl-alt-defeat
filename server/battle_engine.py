@@ -29,6 +29,7 @@ from item_effects import (
     TimerTrigger,
     create_example_items,
 )
+from schemas import BattleAction
 from server_containers import PlacementValidator, ServerContainer
 
 # Import shield effect if available
@@ -142,7 +143,7 @@ class BattleResult(TypedDict):
     duration: float  # Battle duration in seconds
     player1_quota: int  # Player 1's remaining quota
     player2_quota: int  # Player 2's remaining quota
-    actions: List[Dict[str, Any]]  # Battle action timeline
+    actions: List[BattleAction]  # Battle action timeline with BattleAction objects
     seed: int  # RNG seed used for the battle
     player1_items: List[PlacedItem]  # Player 1's loadout
     player2_items: List[PlacedItem]  # Player 2's loadout
@@ -157,7 +158,7 @@ class BattleSimulator:
         self.max_duration = 60.0  # Section 6.2
         self.tick_rate = 0.1  # Section 10.1: 10 ticks/second
         self.current_time = 0.0
-        self.actions = []
+        self.actions: List[BattleAction] = []
         self.event_manager = EventManager()
         self.consumed_items = set()  # Track consumed item UIDs
 
@@ -166,6 +167,10 @@ class BattleSimulator:
             seed if seed is not None else int(time.time() * 1000000) % 2147483647
         )
         self.rng = random.Random(self.seed)
+
+    def _time_ms(self) -> int:
+        """Convert current time to milliseconds for BattleAction"""
+        return int(self.current_time * 1000)
 
     def simulate_battle(
         self,
@@ -223,7 +228,17 @@ class BattleSimulator:
 
         # Emit battle start event
         self.event_manager.emit(Event(EventType.BATTLE_START, None, None))
-        self.actions.append({"t": 0, "a": ACTION_CODES["START"]})
+        self.actions.append(
+            BattleAction(
+                timestamp=0,
+                source="system",
+                action="battle_start",
+                target=None,
+                damage=None,
+                player=0,  # 0 for system events
+                details=None,
+            )
+        )
 
         # Main battle loop (Section 6.2)
         while self.current_time < self.max_duration:
@@ -246,12 +261,28 @@ class BattleSimulator:
             # Check for defeat
             if player1.quota <= 0:
                 self.actions.append(
-                    {"t": self.current_time, "a": ACTION_CODES["DEATH"], "p": 1}
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source="system",
+                        action="player_defeated",
+                        target=None,
+                        damage=None,
+                        player=1,
+                        details=None,
+                    )
                 )
                 break
             if player2.quota <= 0:
                 self.actions.append(
-                    {"t": self.current_time, "a": ACTION_CODES["DEATH"], "p": 2}
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source="system",
+                        action="player_defeated",
+                        target=None,
+                        damage=None,
+                        player=2,
+                        details=None,
+                    )
                 )
                 break
 
@@ -505,13 +536,15 @@ class BattleSimulator:
 
                                         # Log the block
                                         self.actions.append(
-                                            {
-                                                "t": self.current_time,
-                                                "a": ACTION_CODES["BLOCK"],
-                                                "p": owner.id,
-                                                "i": item.uid,
-                                                "v": blocked_damage,
-                                            }
+                                            BattleAction(
+                                                timestamp=self._time_ms(),
+                                                source=item.uid,
+                                                action="block",
+                                                target=None,
+                                                damage=blocked_damage,
+                                                player=owner.id,
+                                                details=None,
+                                            )
                                         )
 
                                         # Apply counter effects if any
@@ -558,12 +591,15 @@ class BattleSimulator:
             else:
                 # Not enough CPU - log throttle but don't activate
                 self.actions.append(
-                    {
-                        "t": self.current_time,
-                        "a": ACTION_CODES["CPU_FAIL"],
-                        "p": owner.id,
-                        "i": item.uid,
-                    }
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source=item.uid,
+                        action="cpu_fail",
+                        target=None,
+                        damage=None,
+                        player=owner.id,
+                        details={"reason": "Insufficient CPU"},
+                    )
                 )
 
             # Always schedule next activation at regular cooldown (unless consumed)
@@ -589,25 +625,29 @@ class BattleSimulator:
                 heal = self.rng.randint(result["min_heal"], result["max_heal"])
                 owner.quota = min(owner.max_quota, owner.quota + heal)
                 self.actions.append(
-                    {
-                        "t": self.current_time,
-                        "a": ACTION_CODES["HEAL"],
-                        "p": owner.id,
-                        "i": item.uid,
-                        "v": heal,
-                    }
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source=item.uid,
+                        action="heal",
+                        target=None,
+                        damage=heal,  # Use damage field for heal amount
+                        player=owner.id,
+                        details=None,
+                    )
                 )
             elif isinstance(effect, BlockEffect):
                 # Handle block effect
                 owner.buffs["block"] = owner.buffs.get("block", 0) + result["amount"]
                 self.actions.append(
-                    {
-                        "t": self.current_time,
-                        "a": ACTION_CODES["BLOCK"],
-                        "p": owner.id,
-                        "i": item.uid,
-                        "v": result["amount"],
-                    }
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source=item.uid,
+                        action="block",
+                        target=None,
+                        damage=result["amount"],  # Block amount
+                        player=owner.id,
+                        details=None,
+                    )
                 )
             elif isinstance(effect, BuffEffect):
                 # Handle buff effect
@@ -615,13 +655,22 @@ class BattleSimulator:
                     owner.buffs.get(result["buff_name"], 0) + result["value"]
                 )
                 self.actions.append(
-                    {
-                        "t": self.current_time,
-                        "a": ACTION_CODES["BUFF"],
-                        "p": owner.id,
-                        "i": item.uid,
-                        "v": result["value"],
-                    }
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source=item.uid,
+                        action="buff",
+                        target=None,
+                        damage=(
+                            int(result["value"] * 100)
+                            if isinstance(result["value"], float)
+                            else result["value"]
+                        ),  # Convert float to int percentage
+                        player=owner.id,
+                        details={
+                            "buff_name": result["buff_name"],
+                            "actual_value": result["value"],
+                        },
+                    )
                 )
             elif isinstance(effect, DebuffEffect):
                 # Handle debuff effect
@@ -630,13 +679,22 @@ class BattleSimulator:
                         enemy.debuffs.get(result["debuff_name"], 0) + result["value"]
                     )
                     self.actions.append(
-                        {
-                            "t": self.current_time,
-                            "a": ACTION_CODES["DEBUFF"],
-                            "p": enemy.id,
-                            "i": item.uid,
-                            "v": result["value"],
-                        }
+                        BattleAction(
+                            timestamp=self._time_ms(),
+                            source=item.uid,
+                            action="debuff",
+                            target=None,
+                            damage=(
+                                int(result["value"] * 100)
+                                if isinstance(result["value"], float)
+                                else result["value"]
+                            ),  # Convert float to int percentage
+                            player=enemy.id,
+                            details={
+                                "debuff_name": result["debuff_name"],
+                                "actual_value": result["value"],
+                            },
+                        )
                     )
             elif isinstance(effect, ReflectEffect):
                 # Reflect is handled in damage events
@@ -663,12 +721,15 @@ class BattleSimulator:
         if self.rng.random() > accuracy:
             # Miss
             self.actions.append(
-                {
-                    "t": self.current_time,
-                    "a": ACTION_CODES["MISS"],
-                    "p": owner.id,
-                    "i": item.uid,
-                }
+                BattleAction(
+                    timestamp=self._time_ms(),
+                    source=item.uid,
+                    action="miss",
+                    target=None,
+                    damage=None,
+                    player=owner.id,
+                    details=None,
+                )
             )
             return
 
@@ -686,13 +747,15 @@ class BattleSimulator:
                 damage = 15  # Instant 15 damage
 
             self.actions.append(
-                {
-                    "t": self.current_time,
-                    "a": ACTION_CODES["CRIT"],
-                    "p": owner.id,
-                    "i": item.uid,
-                    "v": damage,
-                }
+                BattleAction(
+                    timestamp=self._time_ms(),
+                    source=item.uid,
+                    action="critical_hit",
+                    target=None,
+                    damage=damage,
+                    player=owner.id,
+                    details=None,
+                )
             )
 
         # Handle special attack types
@@ -740,12 +803,15 @@ class BattleSimulator:
 
             if blocked > 0:
                 self.actions.append(
-                    {
-                        "t": self.current_time,
-                        "a": ACTION_CODES["BLOCK"],
-                        "p": target.id,
-                        "v": blocked,
-                    }
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source="system",  # Block from buff, not specific item
+                        action="block",
+                        target=None,
+                        damage=blocked,
+                        player=target.id,
+                        details={"type": "buff_block"},
+                    )
                 )
 
         # Store old health for threshold detection
@@ -756,13 +822,15 @@ class BattleSimulator:
 
         # Log damage
         self.actions.append(
-            {
-                "t": self.current_time,
-                "a": ACTION_CODES["DAMAGE"],
-                "p": target.id,
-                "i": item_id,
-                "v": damage,
-            }
+            BattleAction(
+                timestamp=self._time_ms(),
+                source=item_id,
+                action="damage",
+                target=None,  # Target is implicit from player field
+                damage=damage,
+                player=target.id,
+                details=None,
+            )
         )
 
         # Emit damage event for reactive items (Session Replay, health potions, etc)
@@ -790,12 +858,15 @@ class BattleSimulator:
                 damage = int(tick_damage)
                 player.quota -= damage
                 self.actions.append(
-                    {
-                        "t": self.current_time,
-                        "a": ACTION_CODES["DOT"],
-                        "p": player.id,
-                        "v": damage,
-                    }
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source="memory_leak",  # DOT source
+                        action="dot",
+                        target=None,
+                        damage=damage,
+                        player=player.id,
+                        details={"debuff": "memory_leaked"},
+                    )
                 )
 
     def _consume_item(self, item: PlacedItem, owner: Player):
@@ -808,7 +879,15 @@ class BattleSimulator:
 
         # Log the consumption
         self.actions.append(
-            {"t": self.current_time, "a": "consume", "p": owner.id, "i": item.uid}
+            BattleAction(
+                timestamp=self._time_ms(),
+                source=item.uid,
+                action="consume",
+                target=None,
+                damage=None,
+                player=owner.id,
+                details=None,
+            )
         )
 
         # Emit event so adjacency can be recalculated

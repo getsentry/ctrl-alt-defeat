@@ -25,7 +25,6 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(1, 1),
             uid="vm1",
-            internal_grid_size=containers["standard_vm"]["internal_size"],
             shape=containers["standard_vm"]["external_shape"],
         )
 
@@ -49,7 +48,6 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(1, 1),
             uid="vm1",
-            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
         assert validator.add_container(vm1)
@@ -59,7 +57,6 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(2, 2),  # This would overlap with vm1
             uid="vm2",
-            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
         assert not validator.add_container(vm2)  # Should fail
@@ -69,7 +66,6 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(4, 1),  # No overlap
             uid="vm3",
-            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
         assert validator.add_container(vm3)  # Should succeed
@@ -90,7 +86,6 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(1, 1),
             uid="vm1",
-            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
         validator.add_container(vm)
@@ -118,7 +113,6 @@ class TestServerContainers:
             spec=containers["container_orchestrator"]["spec"],
             position=(1, 1),
             uid="container1",
-            internal_grid_size=(3, 2),
             shape=containers["container_orchestrator"]["external_shape"],
         )
         validator.add_container(container)
@@ -142,7 +136,6 @@ class TestServerContainers:
             spec=containers["container_orchestrator"]["spec"],
             position=(1, 1),
             uid="container1",
-            internal_grid_size=(3, 2),
             shape=containers["container_orchestrator"]["external_shape"],
         )
         validator.add_container(container)
@@ -172,14 +165,12 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(0, 0),
             uid="vm1",
-            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
         vm2 = ServerContainer(
             spec=containers["standard_vm"]["spec"],
             position=(2, 0),  # Adjacent to vm1
             uid="vm2",
-            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
 
@@ -205,7 +196,6 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(1, 1),
             uid="p1_vm",
-            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
 
@@ -240,7 +230,6 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(1, 1),
             uid="p2_vm",
-            internal_grid_size=(2, 2),
             shape=SHAPES["2x2"],
         )
 

@@ -4,14 +4,7 @@ Tests for the event-driven battle system
 
 from dataclasses import dataclass
 
-from event_system import (
-    Event,
-    EventData,
-    EventManager,
-    EventType,
-    ItemEventHandler,
-    TimerEvent,
-)
+from event_system import Event, EventData, EventManager, EventType
 
 
 class TestEventManager:
@@ -68,9 +61,11 @@ class TestEventManager:
             results.append(event.data.damage)
 
         # Only handle events where damage > 5
-        condition = lambda e: e.data.damage and e.data.damage > 5
-
-        manager.subscribe(EventType.DAMAGE_DEALT, handler, condition)
+        manager.subscribe(
+            EventType.DAMAGE_DEALT,
+            handler,
+            lambda e: e.data.damage and e.data.damage > 5,
+        )
 
         # This should not trigger
         event1 = Event(EventType.DAMAGE_DEALT, None, None, EventData(damage=3))
@@ -140,7 +135,7 @@ class TestEventManager:
 
         # Cancel all timers for item1
         cancelled = manager.cancel_timer("item1")
-        assert cancelled == True
+        assert cancelled
 
         # Process all timers
         manager.process_timers(5.0)
@@ -387,4 +382,6 @@ class TestIntegration:
 
 
 if __name__ == "__main__":
+    import pytest
+
     pytest.main([__file__, "-v"])

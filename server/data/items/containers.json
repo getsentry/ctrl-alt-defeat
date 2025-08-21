@@ -4,7 +4,6 @@
       "name": "Standard VM",
       "description": "Basic virtual machine with no special effects",
       "shape": "2x2",
-      "internal_size": [2, 2],
       "rarity": "common",
       "cost": 4,
       "effects": []
@@ -13,7 +12,6 @@
       "name": "Edge Node",
       "description": "Closer to users means faster response times",
       "shape": "2x1",
-      "internal_size": [2, 1],
       "rarity": "rare",
       "cost": 3,
       "effects": [
@@ -30,7 +28,6 @@
       "name": "Memory Cache",
       "description": "RAM boost for better performance",
       "shape": "3x1",
-      "internal_size": [3, 1],
       "rarity": "epic",
       "cost": 5,
       "effects": [
@@ -46,7 +43,6 @@
       "name": "Load Balancer",
       "description": "Distributes traffic to prevent overload",
       "shape": "1x1",
-      "internal_size": [1, 1],
       "rarity": "godly",
       "cost": 2,
       "effects": [
@@ -62,7 +58,6 @@
       "name": "Patch Registry",
       "description": "Optimized storage for deployable patches",
       "shape": "2x2",
-      "internal_size": [2, 2],
       "rarity": "legendary",
       "cost": 5,
       "effects": [
@@ -85,7 +80,6 @@
       "name": "Container Orchestrator",
       "description": "Kubernetes-style orchestration provides baseline protection",
       "shape": "3x2",
-      "internal_size": [3, 2],
       "rarity": "epic",
       "cost": 13,
       "effects": [
@@ -101,7 +95,6 @@
       "name": "Serverless Function",
       "description": "Pay-per-use efficiency that rewards rare deployments",
       "shape": "2x2",
-      "internal_size": [2, 2],
       "rarity": "epic",
       "cost": 5,
       "effects": [

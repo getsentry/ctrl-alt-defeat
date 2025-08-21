@@ -3,22 +3,17 @@ Test full battle scenarios with realistic item loadouts
 These tests simulate complete battles between two players with different strategies
 """
 
-
-from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
+from battle_engine import BattleSimulator, PlacedItem
 from item_effects import (
     AttackEffect,
     BattleStartTrigger,
-    BlockEffect,
-    BuffEffect,
     ConsumeEffect,
     DamageTakenTrigger,
-    DebuffEffect,
     HealEffect,
     ItemSpec,
     PassiveTrigger,
     StatModEffect,
     TimerTrigger,
-    create_example_items,
 )
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
@@ -194,13 +189,13 @@ class TestFullBattleScenarios:
 
         # Check that appropriate actions occurred
         actions = result["actions"]
-        damage_actions = [a for a in actions if a["a"] == ACTION_CODES["DAMAGE"]]
-        block_actions = [a for a in actions if a["a"] == ACTION_CODES["BLOCK"]]
-        heal_actions = [a for a in actions if a["a"] == ACTION_CODES["HEAL"]]
+        damage_actions = [a for a in actions if a.action == "damage"]
+        block_actions = [a for a in actions if a.action == "block"]
+        heal_actions = [a for a in actions if a.action == "heal"]
 
         # Should have damage from both sides
-        p1_damage = [a for a in damage_actions if a["p"] == 2]
-        p2_damage = [a for a in damage_actions if a["p"] == 1]
+        p1_damage = [a for a in damage_actions if a.player == 2]
+        p2_damage = [a for a in damage_actions if a.player == 1]
         assert len(p1_damage) > 0, "Player 1 should deal damage"
         assert len(p2_damage) > 0, "Player 2 should deal damage"
 
@@ -469,13 +464,13 @@ class TestFullBattleScenarios:
         )
 
         # Check that consumables were used
-        consume_actions = [a for a in result["actions"] if a.get("a") == "consume"]
+        consume_actions = [a for a in result["actions"] if a.action == "consume"]
         assert len(consume_actions) > 0, "Some items should be consumed"
 
         # CPU booster should be consumed at battle start
-        cpu_boost_consume = [a for a in consume_actions if a.get("i") == "p2_boost"]
+        cpu_boost_consume = [a for a in consume_actions if a.source == "p2_boost"]
         assert len(cpu_boost_consume) == 1
-        assert cpu_boost_consume[0]["t"] == 0  # At battle start
+        assert cpu_boost_consume[0].timestamp == 0  # At battle start
 
     def test_late_game_high_powered_battle(self):
         """Test late game battle with high-powered items and high health"""
@@ -562,23 +557,20 @@ class TestFullBattleScenarios:
         assert result["winner"] in [1, 2]
 
         # Check that high-powered items deal appropriate damage
-        damage_actions = [
-            a for a in result["actions"] if a["a"] == ACTION_CODES["DAMAGE"]
-        ]
+        damage_actions = [a for a in result["actions"] if a.action == "damage"]
 
         # Upgraded weapon should deal 8-12 damage
         # Legendary weapon should deal 10-15 damage
         p2_legendary_damage = [
-            a for a in damage_actions if a.get("i") == "p2_legendary" and a["p"] == 1
+            a for a in damage_actions if a.source == "p2_legendary" and a.player == 1
         ]
         if p2_legendary_damage:
             # Filter out 0 damage (blocked attacks) and get all damage values
-            all_hits = [a["v"] for a in p2_legendary_damage]
-            successful_hits = [v for v in all_hits if v > 0]
+            all_hits = [a.damage for a in p2_legendary_damage]
+            successful_hits = [v for v in all_hits if v and v > 0]
 
             if successful_hits:
                 # Legendary weapon: 10-15 damage
-                min_damage = min(successful_hits)
                 max_damage = max(successful_hits)
 
                 # Account for shields potentially blocking part of the damage
@@ -680,15 +672,14 @@ class TestFullBattleScenarios:
 
         # After 30 seconds, fatigue should increase damage
         late_damage = [
-            a
-            for a in result["actions"]
-            if a["a"] == ACTION_CODES["DAMAGE"] and a["t"] > 30
+            a for a in result["actions"] if a.action == "damage" and a.timestamp > 30000
         ]
         if late_damage:
             # Damage should be higher than base (2-3) due to fatigue
-            late_damage_values = [a["v"] for a in late_damage]
-            max_late_damage = max(late_damage_values)
-            assert max_late_damage > 3, "Fatigue should increase damage after 30s"
+            late_damage_values = [a.damage for a in late_damage if a.damage]
+            if late_damage_values:
+                max_late_damage = max(late_damage_values)
+                assert max_late_damage > 3, "Fatigue should increase damage after 30s"
 
     def test_cpu_management_battle(self):
         """Test battle where CPU management is critical"""
@@ -800,18 +791,20 @@ class TestFullBattleScenarios:
         )
 
         # Check CPU throttling
-        cpu_fails = [a for a in result["actions"] if a["a"] == ACTION_CODES["CPU_FAIL"]]
+        cpu_fails = [a for a in result["actions"] if a.action == "cpu_fail"]
 
         # Player 1 should have CPU failures due to high costs
-        p1_cpu_fails = [a for a in cpu_fails if a["p"] == 1]
+        p1_cpu_fails = [a for a in cpu_fails if a.player == 1]
         assert len(p1_cpu_fails) > 0, "Player 1 should experience CPU throttling"
 
         # Player 2 should have fewer or no CPU failures due to infrastructure
-        p2_cpu_fails = [a for a in cpu_fails if a["p"] == 2]
+        p2_cpu_fails = [a for a in cpu_fails if a.player == 2]
         assert len(p2_cpu_fails) < len(
             p1_cpu_fails
         ), "Player 2 should have better CPU management"
 
 
 if __name__ == "__main__":
+    import pytest
+
     pytest.main([__file__, "-v"])

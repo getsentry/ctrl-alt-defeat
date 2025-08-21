@@ -24,7 +24,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
 from matchmaking import MatchmakingService
 from schemas import (
-    BattleAction,
     BattleHistoryEntry,
     BattleHistoryResponse,
     BattleResponse,
@@ -32,7 +31,6 @@ from schemas import (
     GameSession,
     HealthResponse,
     InventoryData,
-    ItemCatalogEntry,
     ItemInfo,
     LeaderboardEntry,
     LeaderboardResponse,
@@ -288,44 +286,9 @@ async def start_session(
 
     # Save the updated session
     await session_manager.update_session(session)
-
-    # Create simplified item catalog for client
-    item_catalog_simple = {}
-    for k, v in ITEM_CATALOG.items():
-        min_dmg = 0
-        max_dmg = 0
-        cooldown = 0
-        cpu_cost = 0
-        special = ""
-
-        if hasattr(v, "triggers") and v.triggers:
-            for trigger in v.triggers:
-                if hasattr(trigger, "cooldown"):
-                    cooldown = trigger.cooldown
-                    cpu_cost = getattr(trigger, "cpu_cost", 0)
-                    if hasattr(trigger, "effects"):
-                        for effect in trigger.effects:
-                            if hasattr(effect, "min_damage"):
-                                min_dmg = effect.min_damage
-                                max_dmg = effect.max_damage
-                            if hasattr(effect, "special"):
-                                special = effect.special
-
-        item_catalog_simple[k] = ItemCatalogEntry(
-            name=v.name,
-            category=v.category,
-            rarity=v.rarity,
-            min_damage=min_dmg,
-            max_damage=max_dmg,
-            cooldown=cooldown,
-            cpu_cost=cpu_cost,
-            special_effect=special or "",
-        )
-
     return StartSessionResponse(
         player_id=player_id,
         session=session,
-        item_catalog=item_catalog_simple,
     )
 
 
@@ -381,8 +344,6 @@ async def refresh_shop(request: ShopRefreshRequest) -> ShopRefreshResponse:
                     rarity=item.get("rarity", "common"),
                     cost=item.get("cost", 0),
                     is_container=item.get("is_container", False),
-                    internal_width=item.get("internal_width"),
-                    internal_height=item.get("internal_height"),
                     min_damage=item.get("min_damage", 0),
                     max_damage=item.get("max_damage", 0),
                     cooldown=item.get("cooldown", 0),
@@ -516,13 +477,14 @@ def generate_shop_items(
             if len(used_item_types) > 3:
                 used_item_types.pop(0)
 
-            # Check if it's a container (containers have internal_size in their catalog)
+            # Check if it's a container
             containers_catalog = create_server_containers()
             is_container = item_type in containers_catalog
             if is_container:
-                # Get container info for internal size
-                container_info = containers_catalog.get(item_type, {})
-                internal_size = container_info.get("internal_size", (2, 2))
+                # Get container info and shape
+                shape_data = None
+                if item_spec.shape:
+                    shape_data = [[x, y] for x, y in item_spec.shape.squares]
 
                 item_info = {
                     "id": str(uuid.uuid4()),
@@ -532,13 +494,12 @@ def generate_shop_items(
                     "rarity": item_spec.rarity,
                     "cost": get_shop_cost(item_spec.rarity, 1),
                     "is_container": True,
-                    "internal_width": internal_size[0],
-                    "internal_height": internal_size[1],
                     "min_damage": 0,
                     "max_damage": 0,
                     "cooldown": 0,
                     "cpu_cost": 0,
                     "special_effect": "",
+                    "shape": shape_data,
                 }
             else:
                 # Regular item
@@ -563,6 +524,11 @@ def generate_shop_items(
                                     if hasattr(effect, "special"):
                                         special = effect.special
 
+                # Get shape data
+                shape_data = None
+                if item_spec.shape:
+                    shape_data = [[x, y] for x, y in item_spec.shape.squares]
+
                 item_info = {
                     "id": str(uuid.uuid4()),
                     "item_type": item_type,
@@ -576,6 +542,7 @@ def generate_shop_items(
                     "cooldown": cooldown,
                     "cpu_cost": cpu_cost,
                     "special_effect": special,
+                    "shape": shape_data,
                 }
 
             items.append(item_info)
@@ -697,7 +664,6 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                         spec=container_info["spec"],
                         position=tuple(container_data["position"]),
                         uid=container_data["id"],
-                        internal_grid_size=container_info["internal_size"],
                         shape=container_info["external_shape"],
                     )
                 )
@@ -730,7 +696,6 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                     spec=container_info["spec"],
                     position=tuple(container_data["position"]),
                     uid=container_data["id"],
-                    internal_grid_size=container_info["internal_size"],
                     shape=container_info["external_shape"],
                 )
             )
@@ -784,12 +749,15 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     session.gold += gold_reward
 
     # Store clean battle result for database (before adding non-serializable objects)
+    # Convert BattleAction objects to dicts for JSON serialization
+    serializable_actions = [action.model_dump() for action in battle_result["actions"]]
+
     clean_battle_result = {
         "winner": battle_result["winner"],
         "duration": battle_result["duration"],
         "player1_quota": battle_result["player1_quota"],
         "player2_quota": battle_result["player2_quota"],
-        "actions": battle_result["actions"],
+        "actions": serializable_actions,
         "seed": battle_result["seed"],
     }
     session.last_battle_result = clean_battle_result
@@ -908,9 +876,9 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
         return {
             "id": container.uid,
-            "type": container.spec.id
-            if hasattr(container.spec, "id")
-            else "standard_vm",
+            "type": (
+                container.spec.id if hasattr(container.spec, "id") else "standard_vm"
+            ),
             "position": list(container.position),
             "width": width,
             "height": height,
@@ -947,20 +915,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     battle_result.pop("player1_containers", None)
     battle_result.pop("player2_containers", None)
 
-    # Convert actions to BattleAction models
-    battle_actions = []
-    for action in battle_result.get("actions", []):
-        battle_actions.append(
-            BattleAction(
-                timestamp=action.get("timestamp", 0),
-                source=action.get("source", ""),
-                action=action.get("action", ""),
-                target=action.get("target"),
-                damage=action.get("damage"),
-                player=action.get("player", 1),
-                details=action.get("details"),
-            )
-        )
+    battle_actions = battle_result["actions"]
 
     # Convert inventories to InventoryData models
     player_inventory = InventoryData(
@@ -1048,8 +1003,6 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                     rarity=shop_item.get("rarity", "common"),
                     cost=shop_item.get("cost", 0),
                     is_container=shop_item.get("is_container", False),
-                    internal_width=shop_item.get("internal_width"),
-                    internal_height=shop_item.get("internal_height"),
                     min_damage=shop_item.get("min_damage", 0),
                     max_damage=shop_item.get("max_damage", 0),
                     cooldown=shop_item.get("cooldown", 0),
@@ -1232,21 +1185,18 @@ def generate_ai_containers(items: List[PlacedItem]) -> List[ServerContainer]:
             spec=vm_info["spec"],
             position=(1, 3),
             uid="ai_vm1",
-            internal_grid_size=vm_info["internal_size"],
             shape=vm_info["external_shape"],
         ),
         ServerContainer(
             spec=vm_info["spec"],
             position=(3, 3),
             uid="ai_vm2",
-            internal_grid_size=vm_info["internal_size"],
             shape=vm_info["external_shape"],
         ),
         ServerContainer(
             spec=vm_info["spec"],
             position=(5, 3),
             uid="ai_vm3",
-            internal_grid_size=vm_info["internal_size"],
             shape=vm_info["external_shape"],
         ),
     ]
@@ -1400,8 +1350,6 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
         rarity=item.get("rarity", "common"),
         cost=item.get("cost", 0),
         is_container=item.get("is_container", False),
-        internal_width=item.get("internal_width"),
-        internal_height=item.get("internal_height"),
         min_damage=item.get("min_damage", 0),
         max_damage=item.get("max_damage", 0),
         cooldown=item.get("cooldown", 0),

@@ -37,6 +37,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
+                "target_position": None,
                 "to_storage": True,
             },
         )
@@ -81,7 +82,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
-                "target_position": [2, 3],  # Top-left of first container
+                "target_position": [2, 3],
             },
         )
 
@@ -121,7 +122,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
-                "target_position": [0, 0],  # Not on any container
+                "target_position": [0, 0],
             },
         )
 
@@ -163,7 +164,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": items[1]["id"],
-                "target_position": [2, 3],  # Same position
+                "target_position": [2, 3],
             },
         )
 
@@ -185,6 +186,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": "fake-item-id",
+                "target_position": None,
                 "to_storage": True,
             },
         )
@@ -213,6 +215,7 @@ class TestPurchaseValidation:
                     json={
                         "player_id": player_id,
                         "item_id": item["id"],
+                        "target_position": None,
                         "to_storage": True,
                     },
                 )
@@ -235,6 +238,7 @@ class TestPurchaseValidation:
                     json={
                         "player_id": player_id,
                         "item_id": item["id"],
+                        "target_position": None,
                         "to_storage": True,
                     },
                 )
@@ -273,6 +277,7 @@ class TestPurchaseValidation:
             json={
                 "player_id": player_id,
                 "item_id": shop_item["id"],
+                "target_position": None,
                 "to_storage": True,
             },
         )

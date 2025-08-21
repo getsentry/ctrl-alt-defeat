@@ -39,7 +39,6 @@ def test_json_config():
         spec=standard_vm["spec"],
         position=(0, 0),
         uid="p1_vm",
-        internal_grid_size=standard_vm["internal_size"],
         shape=standard_vm["external_shape"],
     )
 
@@ -47,7 +46,6 @@ def test_json_config():
         spec=edge_node["spec"],
         position=(4, 0),
         uid="p2_edge",
-        internal_grid_size=edge_node["internal_size"],
         shape=edge_node["external_shape"],
     )
 
@@ -97,7 +95,9 @@ def test_json_config():
     orchestrator = loader.get_container("container_orchestrator")
     if orchestrator:
         print(f"\n✅ Container Orchestrator: {orchestrator['spec'].name}")
-        print(f"   Internal size: {orchestrator['internal_size']}")
+        print(
+            f"   Shape: {orchestrator['spec'].shape.name if orchestrator['spec'].shape else 'None'}"
+        )
         print(f"   Cost: {orchestrator.get('cost', 'N/A')}")
 
     print("\n" + "=" * 50)

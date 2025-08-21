@@ -21,7 +21,6 @@ def get_test_containers():
         spec=containers["standard_vm"]["spec"],
         position=(0, 0),
         uid="p1_test_rack",
-        internal_grid_size=containers["standard_vm"]["internal_size"],
         shape=containers["standard_vm"]["external_shape"],
     )
 
@@ -30,7 +29,6 @@ def get_test_containers():
         spec=containers["standard_vm"]["spec"],
         position=(4, 0),
         uid="p2_test_rack",
-        internal_grid_size=containers["standard_vm"]["internal_size"],
         shape=containers["standard_vm"]["external_shape"],
     )
 
@@ -238,7 +236,7 @@ class TestGameDesignCompliance:
         assert problem1.damage_mult == 1.2  # +20% damage
 
     def test_compact_action_format(self):
-        """Test Section 10.2: Compact action log format"""
+        """Test Section 10.2: Compact action log format - now using BattleAction models"""
         sim = BattleSimulator()
 
         # Create simple test items
@@ -253,14 +251,17 @@ class TestGameDesignCompliance:
             p2_containers=p2_containers,
         )
 
-        # Check action format
+        # Check action format - now using BattleAction objects
         assert "actions" in result
         if len(result["actions"]) > 0:
             action = result["actions"][0]
-            assert "t" in action  # timestamp
-            assert "a" in action  # action code
-            # Optional fields only if needed
-            # "p" for player, "i" for item, "v" for value
+            # BattleAction model has these attributes
+            assert hasattr(action, "timestamp")  # timestamp in milliseconds
+            assert hasattr(action, "action")  # action name (verbose)
+            assert hasattr(action, "player")  # player id
+            # Optional fields
+            assert hasattr(action, "source")  # item source
+            assert hasattr(action, "damage")  # damage/value
 
     def test_cpu_throttling(self):
         """Test Section 1.2: Items skip when CPU exhausted"""
@@ -320,16 +321,14 @@ class TestGameDesignCompliance:
         assert player2.cpu_regen == 5.0  # 2 base + 3 from JSON
 
         # Test Health Check (simple infrastructure item)
-        player3 = Player(id=1, quota=25, max_quota=25, cpu=10.0)
-        health_check = PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["health_check"]), position=(0, 0)
-        )
+        Player(id=1, quota=25, max_quota=25, cpu=10.0)
+        PlacedItem(spec=deepcopy(ITEM_CATALOG["health_check"]), position=(0, 0))
         # Health check is not infrastructure category, it's a timer-based healing item
         # So no passive effects to test here
 
     def test_special_item_effects(self):
         """Test specific item special effects from Section 2"""
-        sim = BattleSimulator()
+        BattleSimulator()
 
         # Memory Leak stacking
         ml = PlacedItem(spec=deepcopy(ITEM_CATALOG["memory_leak"]), position=(0, 0))
@@ -340,8 +339,8 @@ class TestGameDesignCompliance:
         em = PlacedItem(
             spec=deepcopy(ITEM_CATALOG["error_monitoring"]), position=(0, 0)
         )
-        player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
-        enemy = Player(id=2, quota=25, max_quota=25, cpu=10.0)
+        Player(id=1, quota=25, max_quota=25, cpu=10.0)
+        Player(id=2, quota=25, max_quota=25, cpu=10.0)
 
         # Error monitoring now has on_attacked trigger, not battle start
         # It provides a chance to block attacks with shield_block effect

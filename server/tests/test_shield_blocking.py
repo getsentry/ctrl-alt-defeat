@@ -3,7 +3,7 @@ Test shield blocking mechanics
 Shields should have 30% chance to block attacks and can have additional effects
 """
 
-from battle_engine import ACTION_CODES, BattleSimulator, PlacedItem, Player
+from battle_engine import BattleSimulator, PlacedItem
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
@@ -70,20 +70,16 @@ class TestShieldBlocking:
         )
 
         # Check that damage was blocked
-        block_actions = [
-            a for a in result["actions"] if a.get("a") == ACTION_CODES["BLOCK"]
-        ]
-        damage_actions = [
-            a for a in result["actions"] if a.get("a") == ACTION_CODES["DAMAGE"]
-        ]
+        block_actions = [a for a in result["actions"] if a.action == "block"]
+        damage_actions = [a for a in result["actions"] if a.action == "damage"]
 
         # Should have blocks from shield
         assert len(block_actions) > 0
 
         # First attack: 15 damage, shield blocks 10, so 5 damage goes through
-        first_damage = next((a for a in damage_actions if a.get("v")), None)
+        first_damage = next((a for a in damage_actions if a.damage), None)
         if first_damage:
-            assert first_damage["v"] == 5  # 15 - 10 blocked
+            assert first_damage.damage == 5  # 15 - 10 blocked
 
     def test_shield_30_percent_chance(self):
         """Test that shields have 30% base block chance"""
@@ -147,13 +143,11 @@ class TestShieldBlocking:
                 p2_containers=p2_containers,
             )
 
-            damage_actions = [
-                a for a in result["actions"] if a.get("a") == ACTION_CODES["DAMAGE"]
-            ]
+            damage_actions = [a for a in result["actions"] if a.action == "damage"]
             block_actions = [
                 a
                 for a in result["actions"]
-                if a.get("a") == ACTION_CODES["BLOCK"] and a.get("i") == "shield0"
+                if a.action == "block" and a.source == "shield0"
             ]
 
             # Count attacks (damage + blocks = total attacks)
@@ -226,9 +220,7 @@ class TestShieldBlocking:
 
         # After first attack, attacker should have less CPU
         # This might cause subsequent attacks to fail
-        cpu_fail_actions = [
-            a for a in result["actions"] if a.get("a") == ACTION_CODES["CPU_FAIL"]
-        ]
+        cpu_fail_actions = [a for a in result["actions"] if a.action == "cpu_fail"]
 
         # Should have some CPU failures due to stolen CPU
         # (Attacker starts with 10 CPU, uses 6 for first attack = 4 left,
@@ -300,21 +292,17 @@ class TestShieldBlocking:
         )
 
         # Both shields should block (5 + 7 = 12 total)
-        block_actions = [
-            a for a in result["actions"] if a.get("a") == ACTION_CODES["BLOCK"]
-        ]
-        damage_actions = [
-            a for a in result["actions"] if a.get("a") == ACTION_CODES["DAMAGE"]
-        ]
+        block_actions = [a for a in result["actions"] if a.action == "block"]
+        damage_actions = [a for a in result["actions"] if a.action == "damage"]
 
         # Should have blocks from both shields
         assert len(block_actions) >= 2
 
         # Damage should be reduced by total blocks
         # 20 damage - 5 (shield1) - 7 (shield2) = 8 damage
-        first_damage = next((a for a in damage_actions if a.get("v")), None)
+        first_damage = next((a for a in damage_actions if a.damage), None)
         if first_damage:
-            assert first_damage["v"] == 8
+            assert first_damage.damage == 8
 
     def test_shield_with_no_damage(self):
         """Test that shields don't activate when no damage is dealt"""
@@ -347,11 +335,5 @@ class TestShieldBlocking:
         )
 
         # Should have no block actions
-        block_actions = [
-            a for a in result["actions"] if a.get("a") == ACTION_CODES["BLOCK"]
-        ]
+        block_actions = [a for a in result["actions"] if a.action == "block"]
         assert len(block_actions) == 0
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

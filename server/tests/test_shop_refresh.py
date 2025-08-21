@@ -1,6 +1,7 @@
 """
 Test shop refresh functionality
 """
+
 import os
 
 # Enable TEST_MODE for testing
@@ -74,7 +75,7 @@ class TestShopRefresh:
         """Test that refreshing the shop costs 1 gold"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -186,7 +187,6 @@ class TestShopRefresh:
             "/battle/simulate",
             json={
                 "player_id": player_id,
-                "round_number": 1,
                 "seed": 42,
                 "test_ai_difficulty": 1,  # Easy AI (1)
             },
