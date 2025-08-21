@@ -150,8 +150,12 @@ func test_full_user_journey_through_ui():
 	assert_gt(inventory_state["items"].size(), 0, "Inventory state should contain items")
 	print("   - Inventory items: %d" % inventory_state["items"].size())
 
+	# Store inventory count before battle for verification later
+	var items_before_battle = inventory_state["items"].size()
+	print("   - Items before battle: %d" % items_before_battle)
+
 	# 6. Start a battle
-	print("   5. Starting battle with %d items..." % [game_ui.items.size() if "items" in game_ui else 0])
+	print("   5. Starting battle with %d items..." % items_before_battle)
 	var battle_btn = get_tree().current_scene.find_child("ReadyButton", true , false)
 	if not battle_btn:
 		battle_btn = get_tree().current_scene.find_child("BattleButton", true, false)
@@ -208,6 +212,13 @@ func test_full_user_journey_through_ui():
 		print("   8. Back to shop for round %d" % GameStateManager.current_round)
 		assert_eq(GameStateManager.current_round, 2, "Should advance to round 2")
 		assert_gte(current_scene.shop_items.size(), 1, "Should have new shop for round 2")
+
+		# Verify inventory was preserved across battle
+		var post_battle_inventory = current_scene.get_inventory_state() if current_scene.has_method("get_inventory_state") else {}
+		if post_battle_inventory.has("items"):
+			var items_after_battle = post_battle_inventory["items"].size()
+			print("   - Items after battle: %d (was %d before battle)" % [items_after_battle, items_before_battle])
+			assert_eq(items_after_battle, items_before_battle, "Inventory items should be preserved across battle")
 
 		# 10. Try one more purchase to verify the cycle continues
 		print("   9. Testing shop in round 2...")
@@ -704,6 +715,139 @@ func test_server_connection():
 	else:
 		# Connection might have failed
 		assert_true(false, "Failed to connect to server - is it running?")
+
+func test_inventory_persistence_across_battle():
+	"""Test that inventory items are preserved when going through a battle"""
+	print("\n=== UI TEST: Inventory Persistence Across Battle ===")
+
+	# Start game
+	var main_menu = load("res://scenes/MainMenu.tscn").instantiate()
+	get_tree().root.add_child(main_menu)
+	get_tree().current_scene = main_menu
+	await get_tree().process_frame
+
+	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	new_game_btn.pressed.emit()
+	await get_tree().create_timer(2.0).timeout  # Wait for server
+
+	var game_ui = get_tree().current_scene
+	assert_eq(game_ui.name, "UnifiedGridUI", "Should be in game UI")
+
+	# Purchase multiple items to test persistence
+	print("   - Purchasing items to test persistence...")
+	var items_to_purchase = min(3, game_ui.shop_items.size())
+	var purchased_items = []
+
+	for i in range(items_to_purchase):
+		if GameStateManager.gold < 3:  # Most items cost at least 3
+			break
+
+		var shop_item = game_ui.shop_items[i]
+		var item_data = shop_item.get_meta("item_data")
+		var target_pos = _find_first_empty_grid_cell(game_ui)
+
+		if target_pos == Vector2(-1, -1):
+			print("   - No more empty cells, stopping purchases")
+			break
+
+		# Quick purchase via drag/drop
+		var inventory_grid = game_ui.inventory_grid
+		var target_pixel = inventory_grid.grid_to_pixel(Vector2i(target_pos.x, target_pos.y))
+		var drop_pos = inventory_grid.global_position + target_pixel + Vector2(game_ui.CELL_SIZE/2, game_ui.CELL_SIZE/2)
+
+		# Simulate drag and drop
+		var mouse_down = InputEventMouseButton.new()
+		mouse_down.button_index = MOUSE_BUTTON_LEFT
+		mouse_down.pressed = true
+		mouse_down.position = shop_item.size / 2
+		mouse_down.global_position = shop_item.global_position + shop_item.size / 2
+		shop_item.gui_input.emit(mouse_down)
+		await get_tree().process_frame
+
+		var mouse_up = InputEventMouseButton.new()
+		mouse_up.button_index = MOUSE_BUTTON_LEFT
+		mouse_up.pressed = false
+		mouse_up.global_position = drop_pos
+		mouse_up.position = drop_pos
+		game_ui._input(mouse_up)
+		await get_tree().create_timer(0.5).timeout
+
+		purchased_items.append(item_data.get("name", "Unknown"))
+		print("   - Purchased: %s" % item_data.get("name", "Unknown"))
+
+	# Get inventory state before battle
+	var pre_battle_inventory = game_ui.inventory_grid.get_inventory_state()
+	var items_before = pre_battle_inventory.items.size()
+	print("   - Total items before battle: %d" % items_before)
+	assert_gt(items_before, 0, "Should have items before battle")
+
+	# Record item details for verification
+	var item_details_before = []
+	for item in pre_battle_inventory.items:
+		if item is Dictionary:
+			item_details_before.append({
+				"name": item.get("name", "unknown"),
+				"position": item.get("position", [])
+			})
+
+	# Start battle
+	print("   - Starting battle...")
+	var battle_btn = null
+	for child in game_ui.get_children():
+		if child is Button and ("Battle" in str(child.text) or "Fight" in str(child.text)):
+			battle_btn = child
+			break
+
+	assert_not_null(battle_btn, "Battle button should exist")
+	battle_btn.pressed.emit()
+	await get_tree().create_timer(3.0).timeout  # Wait for battle to start
+
+	# Wait for battle to complete
+	var current_scene = get_tree().current_scene
+	if current_scene.name == "BattleScreen":
+		print("   - Battle in progress...")
+		await get_tree().create_timer(8.0).timeout  # Wait for battle to complete
+		current_scene = get_tree().current_scene
+
+	# Handle post-battle screen
+	if current_scene.name == "PostBattleScreen":
+		print("   - In post-battle screen...")
+		var continue_btn = current_scene.find_child("ContinueButton", true, false)
+		if not continue_btn:
+			for child in current_scene.get_children():
+				if child is Button and "Continue" in str(child.text):
+					continue_btn = child
+					break
+
+		if continue_btn:
+			continue_btn.pressed.emit()
+			await get_tree().create_timer(1.0).timeout
+
+	# Verify we're back in game UI
+	current_scene = get_tree().current_scene
+	assert_eq(current_scene.name, "UnifiedGridUI", "Should return to game UI after battle")
+
+	# Verify inventory was preserved
+	print("   - Checking inventory after battle...")
+	var post_battle_inventory = current_scene.inventory_grid.get_inventory_state()
+	var items_after = post_battle_inventory.items.size()
+
+	print("   - Items after battle: %d (was %d before)" % [items_after, items_before])
+	assert_eq(items_after, items_before, "All items should be preserved across battle")
+
+	# Verify item details match
+	var items_match = true
+	for i in range(min(item_details_before.size(), post_battle_inventory.items.size())):
+		var before = item_details_before[i]
+		var after = post_battle_inventory.items[i]
+		if after is Dictionary:
+			if after.get("name") != before.name:
+				items_match = false
+				print("   - Item mismatch: %s != %s" % [after.get("name"), before.name])
+
+	assert_true(items_match, "Item details should match after battle")
+
+	print("   ✓ Inventory persistence across battle verified")
 
 func test_item_drag_and_move_persistence():
 	"""Test dragging items within inventory and verifying move is persisted"""
