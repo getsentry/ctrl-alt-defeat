@@ -100,7 +100,6 @@ class ConfigLoader:
 
     def _create_container_spec(self, container_id: str, config: Dict[str, Any]) -> Dict:
         """Create a container specification from config"""
-        # Parse shape - it's required, let it crash if missing
         shape = self._parse_shape(config["shape"])
 
         # Parse effects
@@ -128,7 +127,6 @@ class ConfigLoader:
 
         return {
             "spec": spec,
-            "external_shape": shape,
             "description": config.get("description", ""),
             "cost": config.get("cost", 1),
         }
@@ -281,23 +279,3 @@ def create_items_from_config():
     if not config_loader.items:
         config_loader.load_all()  # Load all to include containers
     return config_loader.items
-
-
-if __name__ == "__main__":
-    # Demo the configuration loader
-    print("Loading configurations from JSON files...\n")
-
-    loader = ConfigLoader()
-    loader.load_all()
-
-    print(f"Loaded {len(loader.containers)} containers:")
-    for container_id in loader.list_containers():
-        container = loader.get_container(container_id)
-        print(f"  - {container['spec'].name}: {container.get('description', '')}")
-
-    print(f"\nLoaded {len(loader.items)} items:")
-    for item_id in loader.list_items():
-        item = loader.get_item(item_id)
-        print(f"  - {item.name} ({item.category})")
-
-    print("\n✅ Configuration loading complete!")

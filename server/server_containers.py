@@ -178,7 +178,7 @@ if __name__ == "__main__":
         spec=containers["standard_vm"]["spec"],
         position=(1, 1),
         uid="vm1",
-        shape=containers["standard_vm"]["external_shape"],
+        shape=containers["standard_vm"]["spec"].shape,
     )
 
     if validator.add_container(standard_vm):
@@ -198,7 +198,7 @@ if __name__ == "__main__":
         spec=containers["edge_node"]["spec"],
         position=(4, 2),
         uid="edge1",
-        shape=containers["edge_node"]["external_shape"],
+        shape=containers["edge_node"]["spec"].shape,
     )
 
     if validator.add_container(edge_node):

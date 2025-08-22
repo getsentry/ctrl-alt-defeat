@@ -39,14 +39,14 @@ def test_json_config():
         spec=standard_vm["spec"],
         position=(0, 0),
         uid="p1_vm",
-        shape=standard_vm["external_shape"],
+        shape=standard_vm["spec"].shape,
     )
 
     p2_container = ServerContainer(
         spec=edge_node["spec"],
         position=(4, 0),
         uid="p2_edge",
-        shape=edge_node["external_shape"],
+        shape=edge_node["spec"].shape,
     )
 
     # Create items

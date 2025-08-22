@@ -770,7 +770,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                         spec=container_info["spec"],
                         position=tuple(container_data["position"]),
                         uid=container_data["id"],
-                        shape=container_info["external_shape"],
+                        shape=container_info["spec"].shape,
                     )
                 )
     else:
@@ -815,7 +815,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                     spec=container_info["spec"],
                     position=tuple(container_data["position"]),
                     uid=container_data["id"],
-                    shape=container_info["external_shape"],
+                    shape=container_info["spec"].shape,
                 )
             )
 
@@ -1318,7 +1318,7 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
                 spec=vm_info["spec"],
                 position=(6, 3),
                 uid="ai_vm3",
-                shape=vm_info["external_shape"],
+                shape=vm_info["spec"].shape,
             ),
         )
 
@@ -1399,19 +1399,19 @@ def generate_ai_containers() -> List[ServerContainer]:
             spec=vm_info["spec"],
             position=(0, 3),  # Covers (0,3), (1,3), (0,4), (1,4)
             uid="ai_vm1",
-            shape=vm_info["external_shape"],
+            shape=vm_info["spec"].shape,
         ),
         ServerContainer(
             spec=vm_info["spec"],
             position=(2, 3),  # Covers (2,3), (3,3), (2,4), (3,4)
             uid="ai_vm2",
-            shape=vm_info["external_shape"],
+            shape=vm_info["spec"].shape,
         ),
         ServerContainer(
             spec=vm_info["spec"],
             position=(4, 3),  # Covers (4,3), (5,3), (4,4), (5,4)
             uid="ai_vm3",
-            shape=vm_info["external_shape"],
+            shape=vm_info["spec"].shape,
         ),
     ]
     return containers

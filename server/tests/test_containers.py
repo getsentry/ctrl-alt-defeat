@@ -25,7 +25,7 @@ class TestServerContainers:
             spec=containers["standard_vm"]["spec"],
             position=(1, 1),
             uid="vm1",
-            shape=containers["standard_vm"]["external_shape"],
+            shape=containers["standard_vm"]["spec"].shape,
         )
 
         # Should be able to place it
@@ -113,7 +113,7 @@ class TestServerContainers:
             spec=containers["container_orchestrator"]["spec"],
             position=(1, 1),
             uid="container1",
-            shape=containers["container_orchestrator"]["external_shape"],
+            shape=containers["container_orchestrator"]["spec"].shape,
         )
         validator.add_container(container)
 
@@ -136,7 +136,7 @@ class TestServerContainers:
             spec=containers["container_orchestrator"]["spec"],
             position=(1, 1),
             uid="container1",
-            shape=containers["container_orchestrator"]["external_shape"],
+            shape=containers["container_orchestrator"]["spec"].shape,
         )
         validator.add_container(container)
 
