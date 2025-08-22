@@ -14,7 +14,7 @@ var battle_log: Array = []
 var current_time: float = 0.0
 var battle_active: bool = false
 var max_battle_duration: float = 20.0  # 20 second battles max
-var battle_speed_multiplier: float = 5.0  # Configurable speed (10x by default)
+var battle_speed_multiplier: float = 1.0  # Configurable speed (10x by default)
 
 # UI References
 var player_inventory: Control

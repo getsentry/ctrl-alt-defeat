@@ -23,7 +23,7 @@ const SHOP_REFRESH_COST = 1
 
 # Battle
 const BATTLE_MAX_DURATION = 30.0  # seconds
-const DEFAULT_BATTLE_SPEED = 1.0
+
 
 # Network
 const API_BASE_URL = "http://localhost:8000"
