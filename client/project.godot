@@ -23,8 +23,8 @@ BattleServerAPI="*res://scripts/BattleServerAPI.gd"
 
 [display]
 
-window/size/viewport_width=2560
-window/size/viewport_height=1600
+window/size/viewport_width=1680
+window/size/viewport_height=1050
 window/size/initial_position_type=2
 window/size/resizable=false
 

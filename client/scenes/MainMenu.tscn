@@ -32,11 +32,12 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -1084.0
-offset_top = 88.0
-offset_right = 104.0
-offset_bottom = 854.0
+offset_left = -637.0
+offset_top = 24.0
+offset_right = 551.0
+offset_bottom = 790.0
 grow_horizontal = 2
+scale = Vector2(0.725133, 0.725133)
 texture = ExtResource("3_l72w3")
 
 [node name="PlayerCharacter" type="TextureRect" parent="."]
@@ -45,11 +46,12 @@ layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = -210.0
-offset_top = -905.0
-offset_right = 814.0
-offset_bottom = 631.0
+offset_left = 17.0
+offset_top = -609.0
+offset_right = 1041.0
+offset_bottom = 927.0
 grow_vertical = 0
+scale = Vector2(0.636037, 0.636037)
 texture = ExtResource("4_826wr")
 
 [node name="RobotCharacter" type="TextureRect" parent="."]
@@ -60,23 +62,23 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -936.0
-offset_top = -820.0
-offset_right = 88.0
-offset_bottom = 716.0
+offset_left = -656.0
+offset_top = -555.0
+offset_right = 368.0
+offset_bottom = 981.0
 grow_horizontal = 0
 grow_vertical = 0
-scale = Vector2(0.809621, 0.809621)
+scale = Vector2(0.494615, 0.494615)
 texture = ExtResource("5_ucygd")
 
 [node name="MenuPanel_ButtonContainer#NewGameButton" type="Button" parent="."]
 custom_minimum_size = Vector2(400, 60)
 layout_mode = 2
-offset_left = 865.0
-offset_top = 927.0
-offset_right = 1350.0
-offset_bottom = 1094.0
-scale = Vector2(1.47363, 1.47363)
+offset_left = 583.0
+offset_top = 591.0
+offset_right = 1068.0
+offset_bottom = 758.0
+scale = Vector2(0.897124, 0.897124)
 icon = ExtResource("6_826wr")
 
 [node name="MenuPanel_ButtonContainer#QuitButton" type="Button" parent="."]

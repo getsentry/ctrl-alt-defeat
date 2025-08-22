@@ -34,9 +34,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -25.0
-offset_right = 100.0
+offset_left = -101.0
+offset_top = -73.0
+offset_right = 99.0
+offset_bottom = -48.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -59,11 +60,12 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 20.0
+offset_left = 12.0
 offset_top = 20.0
-offset_right = 200.0
+offset_right = 192.0
 offset_bottom = 50.0
 grow_vertical = 2
+scale = Vector2(0.636286, 0.636286)
 
 [node name="CharacterDisplay" type="TextureRect" parent="Player1Container"]
 layout_mode = 1
@@ -156,12 +158,13 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = 50.0
+offset_left = -115.0
+offset_top = 21.0
+offset_right = 65.0
+offset_bottom = 51.0
 grow_horizontal = 0
 grow_vertical = 2
+scale = Vector2(0.634545, 0.634545)
 
 [node name="CharacterDisplay" type="TextureRect" parent="Player2Container"]
 layout_mode = 1
@@ -254,6 +257,7 @@ offset_left = 18.0
 offset_top = 21.0
 offset_right = 1197.0
 offset_bottom = 614.0
+scale = Vector2(0.616159, 0.616159)
 
 [node name="GridContainer" type="GridContainer" parent="Player1Inventory"]
 layout_mode = 1
@@ -273,11 +277,12 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -1193.0
-offset_top = 19.0
-offset_right = -14.0
-offset_bottom = 612.0
+offset_left = -736.0
+offset_top = 8.0
+offset_right = 443.0
+offset_bottom = 601.0
 grow_horizontal = 0
+scale = Vector2(0.612477, 0.612477)
 
 [node name="GridContainer" type="GridContainer" parent="Player2Inventory"]
 layout_mode = 1
@@ -331,10 +336,10 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -183.0
-offset_top = -1450.0
-offset_right = 217.0
-offset_bottom = -1410.0
+offset_left = -205.0
+offset_top = -1133.0
+offset_right = 195.0
+offset_bottom = -1093.0
 grow_horizontal = 2
 grow_vertical = 0
 alignment = 1
