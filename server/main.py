@@ -1245,9 +1245,64 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
             )
 
         # Containers need special handling - they become part of the server infrastructure
-        # For now, return an error since container placement needs more work
-        raise HTTPException(
-            status_code=501, detail="Container placement not yet implemented"
+        if not request.target_position or len(request.target_position) != 2:
+            raise HTTPException(
+                status_code=400, detail="Container placement requires target_position"
+            )
+
+        # Add the container to the session's server_containers
+        # Use list format for position to match session initialization
+        new_container = {
+            "id": item.id,
+            "type": item.item_type,
+            "position": list(request.target_position),  # Store as list [x, y]
+            "width": item.width if hasattr(item, "width") else 2,
+            "height": item.height if hasattr(item, "height") else 2,
+        }
+
+        # Check if position overlaps with existing containers
+        for existing in session.server_containers:
+            # Position is stored as a list [x, y]
+            ex_pos = existing.get("position", [0, 0])
+            ex_x = ex_pos[0] if isinstance(ex_pos, list) else ex_pos.get("x", 0)
+            ex_y = ex_pos[1] if isinstance(ex_pos, list) else ex_pos.get("y", 0)
+            ex_w = existing.get("width", 2)
+            ex_h = existing.get("height", 2)
+
+            new_x = new_container["position"][0]
+            new_y = new_container["position"][1]
+            new_w = new_container["width"]
+            new_h = new_container["height"]
+
+            # Check for overlap
+            if not (
+                new_x + new_w <= ex_x
+                or ex_x + ex_w <= new_x
+                or new_y + new_h <= ex_y
+                or ex_y + ex_h <= new_y
+            ):
+                raise HTTPException(
+                    status_code=400, detail="Container overlaps with existing container"
+                )
+
+        # Add the container
+        session.server_containers.append(new_container)
+
+        # Deduct gold and remove from shop
+        session.gold -= cost
+        session.current_shop = [
+            si if si and si.id != request.item_id else None
+            for si in session.current_shop
+        ]
+
+        # Save updated session
+        await session_manager.update_session(session)
+
+        # Return response with updated server_containers
+        return PurchaseResponse(
+            purchased_item=item,
+            gold=session.gold,
+            server_containers=session.server_containers,
         )
 
     # Create inventory manager from session state

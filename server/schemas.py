@@ -124,6 +124,10 @@ class PurchaseResponse(BaseModel):
 
     purchased_item: ShopItem = Field(description="The item that was purchased")
     gold: int = Field(description="Remaining gold after purchase")
+    server_containers: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Updated server containers list (when purchasing a container)",
+    )
 
 
 class PlacedItem(BaseModel):

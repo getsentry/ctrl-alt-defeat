@@ -238,12 +238,20 @@ class ShopRefreshResponse extends Resource:
 class PurchaseResponse extends Resource:
 	var purchased_item: Dictionary = {}  # ShopItem
 	var gold: int = 0
+	var server_containers: Array = []  # Array of server containers (when purchasing a container)
 
 	func _init(data: Dictionary):
 		# Required fields per server schema
 		# Server doesn't send success - HTTP 200 means success
 		purchased_item = data["purchased_item"]
 		gold = data["gold"]
+		# Optional field for container purchases
+		# TODO: This is probably unnecessary, just expect it to always be there.
+		# TODO: Probably fetch the whole session down instead and refresh from that
+		if data.has("server_containers") and data["server_containers"] != null:
+			server_containers = data["server_containers"]
+		else:
+			server_containers = []  # Initialize as empty array if not provided
 
 # Battle response - matches server BattleResponse schema
 class BattleResponse extends Resource:

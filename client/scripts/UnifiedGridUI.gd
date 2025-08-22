@@ -67,14 +67,35 @@ func _process(_delta):
 			var mouse_pos = inventory_grid.get_local_mouse_position()
 			var grid_pos = inventory_grid.pixel_to_grid(mouse_pos)
 
-			# Update the inventory grid's hover preview for shop items
-			inventory_grid.show_hover_preview_for_shop(dragging_shop_data, grid_pos)
+			# Check if this is a container
+			if dragging_shop_data.get("is_container", false):
+				# Show container preview differently - show the full area it will occupy
+				_show_container_preview(dragging_shop_data, grid_pos)
+			else:
+				# Update the inventory grid's hover preview for regular items
+				inventory_grid.show_hover_preview_for_shop(dragging_shop_data, grid_pos)
 
 func _input(event):
-	# Handle shop item drop
-	if dragging_shop_item and event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-			_end_shop_drag()
+	# Handle shop item dragging
+	if dragging_shop_item:
+		if event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+				_end_shop_drag()
+		elif event is InputEventMouseMotion:
+			# Update drag preview position
+			if drag_preview:
+				drag_preview.global_position = event.global_position - drag_preview.size / 2
+
+			# Show container preview if dragging a container
+			if dragging_shop_data.get("is_container", false):
+				var mouse_pos = inventory_grid.get_local_mouse_position()
+				var grid_pos = inventory_grid.pixel_to_grid(mouse_pos)
+				_show_container_preview(dragging_shop_data, grid_pos)
+			else:
+				# For normal items, use the inventory grid's hover preview
+				var mouse_pos = inventory_grid.get_local_mouse_position()
+				var grid_pos = inventory_grid.pixel_to_grid(mouse_pos)
+				inventory_grid.show_hover_preview_for_shop(dragging_shop_data, grid_pos)
 
 # Grid managers
 var inventory_grid: InventoryGrid  # Main inventory grid
@@ -569,6 +590,7 @@ func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Diction
 var dragging_shop_item: Panel = null
 var dragging_shop_data: Dictionary = {}
 var drag_preview: Control = null
+var container_preview: Panel = null  # Preview for container placement
 
 func _start_shop_drag(shop_item: Panel, item_data: Dictionary):
 	"""Start dragging a shop item"""
@@ -639,25 +661,54 @@ func _end_shop_drag():
 	var mouse_pos = inventory_grid.get_local_mouse_position()
 	var grid_pos = inventory_grid.pixel_to_grid(mouse_pos)
 
-	# Use the grid's can_place_item method
-	if inventory_grid.can_place_item(dragging_shop_data, grid_pos):
-		# Place the item in the grid immediately (optimistic update)
-		if inventory_grid.place_shop_item(dragging_shop_data, grid_pos):
-			print("Placed item at position [%d, %d]" % [grid_pos.x, grid_pos.y])
+	# Check if this is a container/server
+	var is_container = dragging_shop_data.get("is_container", false)
 
-			# Now tell the server about the purchase
+	if is_container:
+		# Containers need special handling - they can only go in the main grid area
+		# They also define their own active area, not fit within existing containers
+		if _can_place_container(dragging_shop_data, grid_pos):
+			print("Placing container at position [%d, %d]" % [grid_pos.x, grid_pos.y])
+
+			# Tell the server about the container purchase
 			var item_id = dragging_shop_data.get("id", "")
 			if item_id:
-				print("Purchasing item %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
-				BattleServerAPI.purchase_item(item_id, [grid_pos.x, grid_pos.y])
-				_mark_shop_item_sold(dragging_shop_item)
+				print("Purchasing container %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
+				var response = await BattleServerAPI.purchase_item(item_id, [grid_pos.x, grid_pos.y])
+				# Check if purchase was actually successful
+				if response and response.purchased_item and not response.purchased_item.is_empty():
+					# Add the container to our grid
+					_add_container_from_purchase(response, grid_pos)
+					_mark_shop_item_sold(dragging_shop_item)
+				else:
+					print("Failed to purchase container - server rejected placement")
 		else:
-			print("Failed to place item at position")
+			print("Cannot place container at this position")
 	else:
-		print("Cannot place item at this position")
+		# Regular item placement
+		if inventory_grid.can_place_item(dragging_shop_data, grid_pos):
+			# Place the item in the grid immediately (optimistic update)
+			if inventory_grid.place_shop_item(dragging_shop_data, grid_pos):
+				print("Placed item at position [%d, %d]" % [grid_pos.x, grid_pos.y])
+
+				# Now tell the server about the purchase
+				var item_id = dragging_shop_data.get("id", "")
+				if item_id:
+					print("Purchasing item %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
+					BattleServerAPI.purchase_item(item_id, [grid_pos.x, grid_pos.y])
+					_mark_shop_item_sold(dragging_shop_item)
+			else:
+				print("Failed to place item at position")
+		else:
+			print("Cannot place item at this position")
 
 	# Hide the hover preview
 	inventory_grid.hide_hover_preview()
+
+	# Clean up container preview if it exists
+	if container_preview:
+		container_preview.queue_free()
+		container_preview = null
 
 	# Clean up drag state
 	if drag_preview:
@@ -720,6 +771,111 @@ func _mark_shop_item_sold(shop_item: Panel):
 	sold_label.add_theme_font_size_override("font_size", 16)
 	sold_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 	shop_item.add_child(sold_label)
+
+func _can_place_container(container_data: Dictionary, grid_pos: Vector2i) -> bool:
+	"""Check if a container can be placed at the given position"""
+	var width = container_data.get("width", 2)
+	var height = container_data.get("height", 2)
+
+	# Check if it fits within the main grid bounds
+	if grid_pos.x < 0 or grid_pos.y < 0:
+		return false
+	if grid_pos.x + width > ROOM_WIDTH or grid_pos.y + height > ROOM_HEIGHT:
+		return false
+
+	# Check for overlap with existing containers
+	for container_dict in inventory_grid.containers:
+		var cont_pos: Vector2i
+		var cont_width: int = 2
+		var cont_height: int = 2
+
+		# Containers are stored as {"visual": ..., "data": ServerContainer, "position": Vector2i}
+		if container_dict is Dictionary and container_dict.has("data"):
+			var cont_data = container_dict["data"]
+			if cont_data is APITypes.ServerContainer:
+				cont_pos = Vector2i(cont_data.position.x, cont_data.position.y)
+				cont_width = cont_data.width
+				cont_height = cont_data.height
+			else:
+				# Fallback to position stored in the dict
+				cont_pos = container_dict.get("position", Vector2i.ZERO)
+				if cont_data is Dictionary:
+					cont_width = cont_data.get("width", 2)
+					cont_height = cont_data.get("height", 2)
+		else:
+			continue  # Skip unknown formats
+
+		# Check for overlap
+		if grid_pos.x < cont_pos.x + cont_width and grid_pos.x + width > cont_pos.x:
+			if grid_pos.y < cont_pos.y + cont_height and grid_pos.y + height > cont_pos.y:
+				return false  # Overlapping
+
+	return true
+
+func _add_container_from_purchase(response: APITypes.PurchaseResponse, grid_pos: Vector2i):
+	"""Add a purchased container to the inventory grid"""
+	if response and response.server_containers.size() > 0:
+		# Build containers array from response
+		var containers = []
+		for container_data in response.server_containers:
+			containers.append(APITypes.ServerContainer.new(container_data))
+
+		# Update GameStateManager
+		GameStateManager.server_containers = containers
+
+		# Get current items from GameStateManager
+		var current_state = GameStateManager.get_inventory_state()
+		var items = []
+		if current_state.has("items"):
+			for item_data in current_state["items"]:
+				if item_data is Dictionary:
+					items.append(APITypes.InventoryItem.new(item_data))
+
+		# Create a complete inventory state with new containers and existing items
+		var new_inventory_state = APITypes.InventoryState.new({
+			"servers": response.server_containers,  # Use raw server response data
+			"items": current_state.get("items", [])  # Use raw item data
+		})
+
+		# Reload the entire inventory state
+		inventory_grid.load_inventory_state(new_inventory_state)
+
+func _show_container_preview(container_data: Dictionary, grid_pos: Vector2i):
+	"""Show preview for container placement"""
+	# Remove old preview if it exists
+	if container_preview:
+		container_preview.queue_free()
+		container_preview = null
+
+	# Check if position is valid
+	if not _can_place_container(container_data, grid_pos):
+		# Maybe show red preview or hide
+		inventory_grid.hide_hover_preview()
+		return
+
+	# Create container preview
+	container_preview = Panel.new()
+	container_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var width = container_data.get("width", 2)
+	var height = container_data.get("height", 2)
+
+	# Position and size based on grid
+	container_preview.position = inventory_grid.grid_to_pixel(grid_pos)
+	container_preview.size = Vector2(
+		width * (inventory_grid.cell_size + inventory_grid.cell_spacing) - inventory_grid.cell_spacing,
+		height * (inventory_grid.cell_size + inventory_grid.cell_spacing) - inventory_grid.cell_spacing
+	)
+
+	# Style for valid placement
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.3, 0.6, 1.0, 0.3)  # Blue for containers
+	style.border_color = Color(0.3, 0.6, 1.0, 0.8)
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(4)
+	container_preview.add_theme_stylebox_override("panel", style)
+
+	inventory_grid.add_child(container_preview)
 
 func _create_server_preview(server_data: Dictionary) -> Control:
 	var preview = Control.new()
