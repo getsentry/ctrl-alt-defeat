@@ -5,6 +5,7 @@
       "name": "Null Pointer Exception",
       "description": "Classic bug that crashes systems",
       "category": "problem",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "common",
       "cost": 3,
@@ -29,6 +30,7 @@
       "name": "Memory Leak",
       "description": "Slowly drains resources over time",
       "category": "problem",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "common",
       "cost": 4,
@@ -53,6 +55,7 @@
       "name": "Race Condition",
       "description": "Unpredictable timing-based bug",
       "category": "problem",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "uncommon",
       "cost": 5,
@@ -77,6 +80,7 @@
       "name": "Infinite Loop",
       "description": "Consumes CPU indefinitely",
       "category": "problem",
+      "class": "neutral",
       "shape": "2x1",
       "rarity": "rare",
       "cost": 6,
@@ -105,6 +109,7 @@
       "name": "SQL Injection",
       "description": "Exploits database vulnerabilities",
       "category": "problem",
+      "class": "neutral",
       "shape": "1x2",
       "rarity": "rare",
       "cost": 7,
@@ -129,6 +134,7 @@
       "name": "DDoS Attack",
       "description": "Overwhelming distributed attack",
       "category": "problem",
+      "class": "neutral",
       "shape": "2x2",
       "rarity": "epic",
       "cost": 10,
@@ -153,6 +159,7 @@
       "name": "Zero Day Exploit",
       "description": "Unknown vulnerability with no patch",
       "category": "problem",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "legendary",
       "cost": 15,
@@ -180,6 +187,399 @@
               "max_damage": 15,
               "accuracy": 0.9,
               "crit_chance": 0.25
+            }
+          ]
+        }
+      ]
+    },
+    "network_scanner": {
+      "name": "Network Scanner",
+      "description": "Advanced Sentaur surveillance tool for ranged reconnaissance",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "2x1",
+      "rarity": "common",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 3,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 5,
+              "max_damage": 9,
+              "accuracy": 0.9,
+              "crit_chance": 0.15,
+              "range": "long"
+            }
+          ]
+        }
+      ]
+    },
+    "neural_interface_blade": {
+      "name": "Neural Interface Blade",
+      "description": "Sentaur hybrid weapon combining cybernetic precision with melee strikes",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "1x2",
+      "rarity": "uncommon",
+      "cost": 6,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.0,
+          "cpu_cost": 4,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 6,
+              "max_damage": 10,
+              "accuracy": 0.85,
+              "crit_chance": 0.25,
+              "range": "melee"
+            }
+          ]
+        },
+        {
+          "type": "on_crit",
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 3,
+              "max_damage": 5,
+              "accuracy": 1.0,
+              "range": "long",
+              "special": "neural_pulse"
+            }
+          ]
+        }
+      ]
+    },
+    "distributed_scanner_array": {
+      "name": "Distributed Scanner Array",
+      "description": "Advanced Sentaur surveillance network with enhanced coverage",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "2x2",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.5,
+          "cpu_cost": 5,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 14,
+              "accuracy": 0.95,
+              "crit_chance": 0.2,
+              "range": "long",
+              "pierce": true
+            }
+          ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "buff",
+              "target": "all_sentaur",
+              "stat": "accuracy",
+              "value": 0.1,
+              "description": "All Sentaur items gain +10% accuracy"
+            }
+          ]
+        }
+      ]
+    },
+    "quantum_sniper": {
+      "name": "Quantum Sniper",
+      "description": "Sentaur short-range precision scanner",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "1x2",
+      "rarity": "common",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.7,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 3,
+              "accuracy": 0.85,
+              "crit_chance": 0.1,
+              "ranged": true,
+              "description": "Quick precision shot"
+            }
+          ]
+        }
+      ]
+    },
+    "virus_injector": {
+      "name": "Virus Injector",
+      "description": "Sentaur malware launcher that spreads corruption",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "2x2",
+      "rarity": "legendary",
+      "cost": 11,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.7,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 11,
+              "accuracy": 0.85,
+              "ranged": true,
+              "description": "Ranged virus attack"
+            },
+            {
+              "type": "debuff",
+              "chance": 0.7,
+              "debuff_name": "malware",
+              "value": 2,
+              "duration": 5,
+              "description": "70% chance to inflict 2 Malware stacks"
+            }
+          ]
+        }
+      ]
+    },
+    "malware_propagator": {
+      "name": "Malware Propagator",
+      "description": "Sentaur advanced virus that scales with infection",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "2x2",
+      "rarity": "legendary",
+      "cost": 14,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 3,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 9,
+              "max_damage": 12,
+              "accuracy": 0.85,
+              "ranged": true,
+              "scaling_damage": "malware",
+              "scale_ratio": 0.5,
+              "description": "+0.5 damage per Malware on enemy"
+            }
+          ]
+        }
+      ]
+    },
+    "probability_manipulator": {
+      "name": "Probability Manipulator",
+      "description": "Sentaur quantum weapon that bends fortune",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "2x2",
+      "rarity": "legendary",
+      "cost": 11,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "compute",
+              "value": 3,
+              "duration": -1,
+              "description": "Start: Gain 3 Compute"
+            }
+          ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 3,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 6,
+              "max_damage": 9,
+              "accuracy": 0.85,
+              "crit_chance": 0.25,
+              "ranged": true,
+              "double_attack_on_crit": true,
+              "description": "Crits trigger double attack next turn"
+            }
+          ]
+        }
+      ]
+    },
+    "quantum_flux_rifle": {
+      "name": "Quantum Flux Rifle",
+      "description": "Sentaur probability weapon that generates compute",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "2x1",
+      "rarity": "epic",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.7,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 3,
+              "accuracy": 1.0,
+              "ranged": true,
+              "description": "Perfect accuracy shot"
+            },
+            {
+              "type": "buff",
+              "chance": 0.7,
+              "buff_name": "compute",
+              "value": 1,
+              "duration": -1,
+              "description": "70% chance to gain 1 Compute"
+            }
+          ]
+        }
+      ]
+    },
+    "data_leech_swarm": {
+      "name": "Data Leech Swarm",
+      "description": "Sentaur AI-controlled nanobots that steal buffs",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "2x2",
+      "rarity": "epic",
+      "cost": 9,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.2,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 3,
+              "accuracy": 0.85,
+              "ranged": true,
+              "steal_buff": true,
+              "description": "Steals a random buff on hit"
+            }
+          ]
+        }
+      ]
+    },
+    "spike_launcher": {
+      "name": "Spike Launcher",
+      "description": "Sentaur kinetic weapon that fires energy spikes",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "2x2",
+      "rarity": "legendary",
+      "cost": 11,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "energy_spikes",
+              "value": 4,
+              "duration": -1,
+              "description": "Start: Gain 4 Energy Spikes"
+            }
+          ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 3,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 9,
+              "max_damage": 12,
+              "accuracy": 0.85,
+              "ranged": true,
+              "consume_spike_damage": 9,
+              "description": "Use 1 Spike for +9 damage"
+            }
+          ]
+        }
+      ]
+    },
+    "spike_generator": {
+      "name": "Spike Generator",
+      "description": "Sentaur energy weapon that builds charge",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "1x2",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.7,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 3,
+              "accuracy": 0.85,
+              "ranged": true,
+              "description": "Energy shot"
+            },
+            {
+              "type": "buff",
+              "chance": 0.5,
+              "buff_name": "energy_spikes",
+              "value": 1,
+              "duration": -1,
+              "description": "50% chance to gain 1 Energy Spike"
+            }
+          ]
+        }
+      ]
+    },
+    "plasma_edge": {
+      "name": "Plasma Edge",
+      "description": "Sentaur energy blade for close-range cyberwarfare",
+      "category": "problem",
+      "class": "sentaur",
+      "shape": "1x2",
+      "rarity": "common",
+      "cost": 3,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.5,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 6,
+              "accuracy": 0.9,
+              "crit_chance": 0.15,
+              "description": "Energy slash with 15% crit chance"
             }
           ]
         }

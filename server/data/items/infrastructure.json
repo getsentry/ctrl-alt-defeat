@@ -5,6 +5,7 @@
       "name": "Health Check",
       "description": "Regular system health monitoring",
       "category": "infrastructure",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "common",
       "cost": 3,
@@ -23,35 +24,11 @@
         }
       ]
     },
-    "auto_scaler": {
-      "name": "Auto Scaler",
-      "description": "Automatically adjusts resources based on load",
-      "category": "infrastructure",
-      "shape": "2x1",
-      "rarity": "uncommon",
-      "cost": 5,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "max_cpu",
-              "value": 5
-            },
-            {
-              "type": "stat_mod",
-              "stat": "cpu_regen",
-              "value": 1
-            }
-          ]
-        }
-      ]
-    },
     "load_balancer_module": {
       "name": "Load Balancer Module",
       "description": "Distributes work across systems",
       "category": "infrastructure",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "rare",
       "cost": 4,
@@ -73,6 +50,7 @@
       "name": "Backup System",
       "description": "Restores health when critically damaged",
       "category": "infrastructure",
+      "class": "neutral",
       "shape": "2x2",
       "rarity": "epic",
       "cost": 8,
@@ -99,6 +77,7 @@
       "name": "Quantum Processor",
       "description": "Revolutionary processing power",
       "category": "infrastructure",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "legendary",
       "cost": 15,
@@ -121,6 +100,52 @@
               "target": "all_friendly",
               "stat": "cpu_cost",
               "value": -0.2
+            }
+          ]
+        }
+      ]
+    },
+    "quantum_probability_core": {
+      "name": "Quantum Probability Core",
+      "description": "Sentaur luck generator using quantum uncertainty",
+      "category": "infrastructure",
+      "class": "sentaur",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 2,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "compute",
+              "value": 1,
+              "duration": -1,
+              "description": "Start of battle: Gain 1 Compute (luck equivalent)"
+            }
+          ]
+        }
+      ]
+    },
+    "neural_link_collar": {
+      "name": "Neural Link Collar",
+      "description": "Sentaur neural interface that enhances critical calculations",
+      "category": "infrastructure",
+      "class": "sentaur",
+      "shape": "2x1",
+      "rarity": "epic",
+      "cost": 6,
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "scaling_buff",
+              "buff_name": "crit_chance",
+              "scale_stat": "compute",
+              "scale_ratio": 0.05,
+              "description": "Items gain 5% critical hit chance for each Compute"
             }
           ]
         }

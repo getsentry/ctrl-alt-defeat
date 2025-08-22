@@ -3,6 +3,7 @@
     "standard_vm": {
       "name": "Standard VM",
       "description": "Basic virtual machine with no special effects",
+      "class": "neutral",
       "shape": "2x2",
       "rarity": "common",
       "cost": 4,
@@ -11,6 +12,7 @@
     "edge_node": {
       "name": "Edge Node",
       "description": "Closer to users means faster response times",
+      "class": "neutral",
       "shape": "2x1",
       "rarity": "rare",
       "cost": 3,
@@ -27,6 +29,7 @@
     "memory_cache": {
       "name": "Memory Cache",
       "description": "RAM boost for better performance",
+      "class": "neutral",
       "shape": "3x1",
       "rarity": "epic",
       "cost": 5,
@@ -42,6 +45,7 @@
     "load_balancer": {
       "name": "Load Balancer",
       "description": "Distributes traffic to prevent overload",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "godly",
       "cost": 2,
@@ -57,6 +61,7 @@
     "patch_registry": {
       "name": "Patch Registry",
       "description": "Optimized storage for deployable patches",
+      "class": "neutral",
       "shape": "2x2",
       "rarity": "legendary",
       "cost": 5,
@@ -79,6 +84,7 @@
     "container_orchestrator": {
       "name": "Container Orchestrator",
       "description": "Kubernetes-style orchestration provides baseline protection",
+      "class": "neutral",
       "shape": "3x2",
       "rarity": "epic",
       "cost": 13,
@@ -94,6 +100,7 @@
     "serverless_function": {
       "name": "Serverless Function",
       "description": "Pay-per-use efficiency that rewards rare deployments",
+      "class": "neutral",
       "shape": "2x2",
       "rarity": "epic",
       "cost": 5,
@@ -103,6 +110,84 @@
           "condition": "2_legendary",
           "effect": "free_api_credits",
           "description": "Deploy phase: If has 2+ Legendary modules, generate free API credits"
+        }
+      ]
+    },
+    "packet_buffer": {
+      "name": "Packet Buffer",
+      "description": "Sentaur storage system that amplifies data packet effectiveness",
+      "class": "sentaur",
+      "shape": "1x2",
+      "rarity": "uncommon",
+      "cost": 4,
+      "effects": [
+        {
+          "type": "buff",
+          "target": "data_packets",
+          "stat": "stack_limit",
+          "value": 3,
+          "description": "Data Packets can stack 3 higher"
+        },
+        {
+          "type": "buff",
+          "target": "contained",
+          "stat": "damage",
+          "value": 0.25,
+          "description": "Items inside deal 25% more damage"
+        }
+      ]
+    },
+    "network_cache": {
+      "name": "Network Cache",
+      "description": "Sentaur storage node that optimizes data flow and resource distribution",
+      "class": "sentaur",
+      "shape": "2x2",
+      "rarity": "rare",
+      "cost": 7,
+      "effects": [
+        {
+          "type": "battle_start",
+          "stat": "cpu_regen",
+          "value": 2,
+          "description": "Start of battle: Gain +2 CPU regeneration"
+        },
+        {
+          "type": "buff",
+          "target": "contained_sentaur",
+          "stat": "cooldown_reduction",
+          "value": 0.2,
+          "description": "Sentaur items inside have 20% faster cooldowns"
+        },
+        {
+          "type": "special",
+          "condition": "sentaur_synergy",
+          "effect": "network_boost",
+          "threshold": 3,
+          "description": "If contains 3+ Sentaur items: All gain +1 damage"
+        }
+      ]
+    },
+    "mesh_network_hub": {
+      "name": "Mesh Network Hub",
+      "description": "Sentaur decentralized storage with adaptive routing",
+      "class": "sentaur",
+      "shape": "3x1",
+      "rarity": "uncommon",
+      "cost": 5,
+      "effects": [
+        {
+          "type": "buff",
+          "target": "sentaur_items",
+          "stat": "speed",
+          "value": 0.1,
+          "description": "Sentaur items activate 10% faster"
+        },
+        {
+          "type": "buff",
+          "target": "contained",
+          "stat": "accuracy",
+          "value": 0.1,
+          "description": "Items inside gain 10% accuracy"
         }
       ]
     }

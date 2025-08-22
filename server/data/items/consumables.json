@@ -4,7 +4,8 @@
     "health_potion": {
       "name": "Health Potion",
       "description": "Restores health when damaged",
-      "category": "defense",
+      "category": "consumable",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "common",
       "cost": 2,
@@ -30,7 +31,8 @@
     "cpu_booster": {
       "name": "CPU Booster",
       "description": "Temporary CPU boost",
-      "category": "infrastructure",
+      "category": "consumable",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "uncommon",
       "cost": 3,
@@ -53,7 +55,8 @@
     "emergency_patch": {
       "name": "Emergency Patch",
       "description": "Quick fix for critical issues",
-      "category": "defense",
+      "category": "consumable",
+      "class": "neutral",
       "shape": "1x1",
       "rarity": "rare",
       "cost": 4,
@@ -72,6 +75,207 @@
             {
               "type": "block",
               "value": 10
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ]
+    },
+    "data_packets": {
+      "name": "Data Packets",
+      "description": "Sentaur ammunition that stacks for enhanced firepower",
+      "category": "consumable",
+      "class": "sentaur",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 2,
+      "max_stack": 5,
+      "triggers": [
+        {
+          "type": "on_attack",
+          "effects": [
+            {
+              "type": "damage_bonus",
+              "value": 2,
+              "per_stack": true
+            },
+            {
+              "type": "consume",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "ai_companion_core": {
+      "name": "AI Companion Core",
+      "description": "Sentaur autonomous assistant that provides tactical support",
+      "category": "consumable",
+      "class": "sentaur",
+      "shape": "2x1",
+      "rarity": "epic",
+      "cost": 9,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "spawn_companion",
+              "companion_type": "ai_tactical_drone",
+              "health": 15,
+              "description": "Summon AI Tactical Drone with 15 health"
+            }
+          ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 2,
+          "effects": [
+            {
+              "type": "buff",
+              "target": "self",
+              "stat": "accuracy",
+              "value": 0.15,
+              "duration": 5,
+              "description": "AI targeting assistance: +15% accuracy for 5 seconds"
+            },
+            {
+              "type": "heal",
+              "min_heal": 3,
+              "max_heal": 6,
+              "description": "Nano-repair protocols"
+            }
+          ]
+        }
+      ]
+    },
+    "surveillance_drone": {
+      "name": "Surveillance Drone",
+      "description": "Sentaur defensive companion that blocks incoming attacks",
+      "category": "consumable",
+      "class": "sentaur",
+      "shape": "1x1",
+      "rarity": "uncommon",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "spawn_companion",
+              "companion_type": "surveillance_drone",
+              "health": 10,
+              "block_chance": 0.25,
+              "block_amount": 5,
+              "description": "Summon Surveillance Drone (10 HP, 25% block chance)"
+            }
+          ]
+        }
+      ]
+    },
+    "data_crawler": {
+      "name": "Data Crawler",
+      "description": "Sentaur fast-attacking companion that gathers intelligence",
+      "category": "consumable",
+      "class": "sentaur",
+      "shape": "1x1",
+      "rarity": "uncommon",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "spawn_companion",
+              "companion_type": "data_crawler",
+              "health": 8,
+              "damage": 2,
+              "attack_speed": 1.5,
+              "description": "Summon Data Crawler (8 HP, 2 damage/1.5s)"
+            }
+          ]
+        }
+      ]
+    },
+    "cache_spider": {
+      "name": "Cache Spider",
+      "description": "Sentaur resource-gathering companion that boosts efficiency",
+      "category": "consumable",
+      "class": "sentaur",
+      "shape": "1x1",
+      "rarity": "uncommon",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "spawn_companion",
+              "companion_type": "cache_spider",
+              "health": 6,
+              "cpu_generation": 0.5,
+              "description": "Summon Cache Spider (6 HP, +0.5 CPU/s)"
+            }
+          ]
+        }
+      ]
+    },
+    "healing_nanobots": {
+      "name": "Healing Nanobots",
+      "description": "Sentaur nano-repair swarm for emergency health restoration",
+      "category": "consumable",
+      "class": "sentaur",
+      "shape": "1x1",
+      "rarity": "common",
+      "cost": 3,
+      "triggers": [
+        {
+          "type": "damage_taken",
+          "threshold": 0.4,
+          "cooldown": 0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 12,
+              "max_heal": 18
+            },
+            {
+              "type": "consume"
+            }
+          ]
+        }
+      ]
+    },
+    "system_restore": {
+      "name": "System Restore",
+      "description": "Sentaur full system restoration protocol",
+      "category": "consumable",
+      "class": "sentaur",
+      "shape": "1x1",
+      "rarity": "rare",
+      "cost": 5,
+      "triggers": [
+        {
+          "type": "damage_taken",
+          "threshold": 0.3,
+          "cooldown": 0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 20,
+              "max_heal": 25
+            },
+            {
+              "type": "buff",
+              "buff_name": "damage_reduction",
+              "value": 0.2,
+              "duration": 5,
+              "description": "20% damage reduction for 5 seconds"
             },
             {
               "type": "consume"

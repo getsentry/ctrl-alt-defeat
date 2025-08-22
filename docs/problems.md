@@ -140,8 +140,131 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 - **Description:** Steals authentication tokens to fuel attacks
 - **Backpack Battles Equivalent:** Blood Harvester
 
+## Sentaur Class Problems
+
+### Network Scanner
+- **Shape:** 2x1 (2 slots horizontal)
+- **Damage:** 5-9 (2.3 DPS)
+- **Cooldown:** 3.0s
+- **CPU Cost:** 3 (1.0/s)
+- **Effect:** Long range. High accuracy (90%). 15% crit chance
+- **Cost:** 4 Gold
+- **Rarity:** Common
+- **Class:** Sentaur
+- **Description:** Advanced surveillance tool for ranged reconnaissance
+- **Backpack Battles Equivalent:** Bow
+
+~~### Distributed Scanner Array
+- **Shape:** 2x2 (4 slots square)
+- **Damage:** 8-14 (4.4 DPS)
+- **Cooldown:** 2.5s
+- **CPU Cost:** 5 (2.0/s)
+- **Effect:** Long range. Pierce. 95% accuracy. Passive: +10% accuracy to all Sentaur items
+- **Cost:** 12 Gold
+- **Rarity:** Rare
+- **Class:** Sentaur
+- **Description:** Advanced surveillance network with enhanced coverage
+- **Backpack Battles Equivalent:** Recurve Bow
+
+### Quantum Sniper
+- **Shape:** 1x2 (2 slots vertical)
+- **Damage:** 2-3 (1.5 DPS)
+- **Cooldown:** 1.7s
+- **CPU Cost:** 2 (1.2/s)
+- **Effect:** Ranged. 85% accuracy. 10% crit chance
+- **Cost:** 4 Gold
+- **Rarity:** Common
+- **Class:** Sentaur
+- **Description:** Short-range precision scanner
+- **Backpack Battles Equivalent:** Shortbow
+
+### Virus Injector
+- **Shape:** 2x2 (4 slots square)
+- **Damage:** 4-11 (4.4 DPS)
+- **Cooldown:** 1.7s
+- **CPU Cost:** 2 (1.2/s)
+- **Effect:** Ranged. 70% chance to inflict 2 Malware and random debuff
+- **Cost:** 11 Gold
+- **Rarity:** Legendary
+- **Class:** Sentaur
+- **Description:** Malware launcher that spreads corruption
+- **Backpack Battles Equivalent:** Belladonna's Shade
+
+### Malware Propagator
+- **Shape:** 2x2 (4 slots square)
+- **Damage:** 9-12 (3.5 DPS)
+- **Cooldown:** 3.0s
+- **CPU Cost:** 3 (1.0/s)
+- **Effect:** Ranged. +0.5 damage per Malware on enemy. Inflicts +1 Malware per 5 damage
+- **Cost:** 14 Gold
+- **Rarity:** Legendary
+- **Class:** Sentaur
+- **Description:** Advanced virus that scales with infection
+- **Backpack Battles Equivalent:** Belladonna's Whisper
+
+### Probability Manipulator
+- **Shape:** 2x2 (4 slots square)
+- **Damage:** 6-9 (2.5 DPS)
+- **Cooldown:** 3.0s
+- **CPU Cost:** 3 (1.0/s)
+- **Effect:** Start: Gain 3 Compute. Ranged. 25% crit. Crits trigger double attack next turn
+- **Cost:** 11 Gold
+- **Rarity:** Legendary
+- **Class:** Sentaur
+- **Description:** Quantum weapon that bends fortune
+- **Backpack Battles Equivalent:** Fortuna's Grace
+
+### Quantum Flux Rifle
+- **Shape:** 2x1 (2 slots horizontal)
+- **Damage:** 2-3 (1.5 DPS)
+- **Cooldown:** 1.7s
+- **CPU Cost:** 2 (1.2/s)
+- **Effect:** Ranged. 100% accuracy. 70% chance to gain 1 Compute on hit
+- **Cost:** 8 Gold
+- **Rarity:** Epic
+- **Class:** Sentaur
+- **Description:** Probability weapon that generates compute
+- **Backpack Battles Equivalent:** Fortuna's Hope
+
+### Data Leech Swarm
+- **Shape:** 2x2 (4 slots square)
+- **Damage:** 2-3 (0.8 DPS)
+- **Cooldown:** 3.2s
+- **CPU Cost:** 2 (0.6/s)
+- **Effect:** Ranged. Steals a random buff on hit. 15% faster per pet
+- **Cost:** 9 Gold
+- **Rarity:** Epic
+- **Class:** Sentaur
+- **Description:** AI-controlled nanobots that steal buffs
+- **Backpack Battles Equivalent:** Squirrel Archer
+
+### Spike Launcher
+- **Shape:** 2x2 (4 slots square)
+- **Damage:** 9-12 (3.5 DPS)
+- **Cooldown:** 3.0s
+- **CPU Cost:** 3 (1.0/s)
+- **Effect:** Start: Gain 4 Energy Spikes. Ranged. Use 1 Spike for +9 damage
+- **Cost:** 11 Gold
+- **Rarity:** Legendary
+- **Class:** Sentaur
+- **Description:** Kinetic weapon that fires energy spikes
+- **Backpack Battles Equivalent:** Tusk Piercer
+
+### Spike Generator
+- **Shape:** 1x2 (2 slots vertical)
+- **Damage:** 2-3 (1.5 DPS)
+- **Cooldown:** 1.7s
+- **CPU Cost:** 2 (1.2/s)
+- **Effect:** Ranged. 50% chance to gain 1 Energy Spike on hit
+- **Cost:** 8 Gold
+- **Rarity:** Rare
+- **Class:** Sentaur
+- **Description:** Energy weapon that builds charge
+- **Backpack Battles Equivalent:** Tusk Poker~~
+
+
 ## Notes
 
 - Damage values are placeholders and will need balancing
 - Additional exploits will be added as we design more weapon types
-- Class-specific exploits will be documented separately
+- Class-specific exploits are now included in their respective sections

@@ -68,6 +68,34 @@ Containers are the equivalent of "Bags" from Backpack Battles. They provide grid
 - **Description:** You never know what infrastructure you'll get
 - **Backpack Battles Equivalent:** Sack of Surprises
 
-## Class-Specific Containers
+## Sentaur Class Containers
 
-*To be designed based on character classes*
+### Packet Buffer
+- **Shape:** 1x2 (2 slots vertical)
+- **Internal Storage:** 2x1
+- **Effect:** Items inside gain +25% damage. Data Packets can stack to 8 (instead of 5)
+- **Cost:** 5 Gold
+- **Rarity:** Uncommon
+- **Class:** Sentaur
+- **Description:** Storage system that amplifies data packet effectiveness
+- **Backpack Battles Equivalent:** Quiver
+
+### Network Cache
+- **Shape:** 2x2 (4 slots square)
+- **Internal Storage:** 3x2
+- **Effect:** +2 CPU regeneration. Sentaur items inside have -15% cooldown. 3+ Sentaur items: All Sentaur items gain +15% damage
+- **Cost:** 10 Gold
+- **Rarity:** Rare
+- **Class:** Sentaur
+- **Description:** Storage node that optimizes data flow and resource distribution
+- **Backpack Battles Equivalent:** Ranger Bag
+
+### Mesh Network Hub
+- **Shape:** 3x1 (3 slots horizontal)
+- **Internal Storage:** 2x2
+- **Effect:** Sentaur items activate 10% faster. Items inside gain +10% accuracy
+- **Cost:** 5 Gold
+- **Rarity:** Uncommon
+- **Class:** Sentaur
+- **Description:** Decentralized storage with adaptive routing
+- **Backpack Battles Equivalent:** Vineweave Basket
