@@ -27,6 +27,7 @@ class TestDeterministicBattles:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -53,6 +54,7 @@ class TestDeterministicBattles:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.5,
@@ -118,6 +120,7 @@ class TestDeterministicBattles:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=0.5,
@@ -175,6 +178,7 @@ class TestDeterministicBattles:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
                         effects=[
@@ -197,6 +201,7 @@ class TestDeterministicBattles:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=0.3,
@@ -250,6 +255,7 @@ class TestDeterministicBattles:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    player_class="neutral",
                     triggers=[
                         TimerTrigger(
                             cooldown=1.0,
@@ -275,6 +281,7 @@ class TestDeterministicBattles:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="defense",
+                    player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
                             effects=[
@@ -296,6 +303,7 @@ class TestDeterministicBattles:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    player_class="neutral",
                     triggers=[
                         TimerTrigger(
                             cooldown=0.8,
@@ -321,6 +329,7 @@ class TestDeterministicBattles:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    player_class="neutral",
                     triggers=[
                         TimerTrigger(
                             cooldown=1.2,
@@ -384,6 +393,7 @@ class TestDeterministicBattles:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,

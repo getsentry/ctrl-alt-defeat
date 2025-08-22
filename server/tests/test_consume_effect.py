@@ -32,6 +32,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     DamageTakenTrigger(
                         threshold=0.5,  # Activate below 50% health
@@ -55,6 +56,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -105,6 +107,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="infrastructure",
+                player_class="neutral",
                 triggers=[
                     BattleStartTrigger(
                         effects=[
@@ -155,6 +158,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=2.0,
@@ -176,6 +180,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=2.0,
@@ -198,6 +203,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     BattleStartTrigger(
                         effects=[
@@ -255,6 +261,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     DamageTakenTrigger(
                         threshold=0.7,  # Activate at 70% health
@@ -275,6 +282,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     DamageTakenTrigger(
                         threshold=0.4,  # Activate at 40% health
@@ -298,6 +306,7 @@ class TestConsumeEffect:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=0.5,

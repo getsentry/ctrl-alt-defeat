@@ -3,7 +3,6 @@
   "items": {
     "basic_firewall": {
       "name": "Basic Firewall",
-      "description": "Start of battle: Gain 5 Block",
       "category": "monitor",
       "class": "neutral",
       "shape": "2x1",
@@ -26,7 +25,6 @@
     },
     "cryogenic_shield": {
       "name": "Cryogenic Shield",
-      "description": "Start of battle: Gain 10 Block",
       "category": "monitor",
       "class": "neutral",
       "shape": "2x1",
@@ -49,7 +47,6 @@
     },
     "sanctified_firewall": {
       "name": "Sanctified Firewall",
-      "description": "Start of battle: Gain 15 Block and 2 Regeneration",
       "category": "monitor",
       "class": "neutral",
       "shape": "2x2",
@@ -78,7 +75,6 @@
     },
     "corrupted_kernel": {
       "name": "Corrupted Kernel",
-      "description": "Start of battle: Gain 20 Block but take 1 damage per second",
       "category": "monitor",
       "class": "neutral",
       "shape": "2x2",

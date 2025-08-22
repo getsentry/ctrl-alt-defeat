@@ -3,7 +3,6 @@
   "items": {
     "api_token": {
       "name": "API Token",
-      "description": "Every 3 seconds: Deal 3 damage",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
@@ -29,7 +28,6 @@
     },
     "bitcoin_wallet": {
       "name": "Bitcoin Wallet",
-      "description": "Start of battle: Gain 3 gold (next shop)",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
@@ -50,7 +48,6 @@
     },
     "captcha_module": {
       "name": "CAPTCHA Module",
-      "description": "Enemies have 20% miss chance",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
@@ -72,7 +69,6 @@
     },
     "script_compiler": {
       "name": "Script Compiler - Alchemy",
-      "description": "Combine adjacent items for bonus effects",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x1",
@@ -94,7 +90,6 @@
     },
     "dark_web_access": {
       "name": "Dark Web Access",
-      "description": "Shop items cost 1 less gold",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
@@ -115,7 +110,6 @@
     },
     "power_management_unit": {
       "name": "Power Management Unit",
-      "description": "+2 CPU regeneration per second",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x1",
@@ -137,7 +131,6 @@
     },
     "auto_scaler": {
       "name": "Auto-Scaler",
-      "description": "Gain +1 damage for every 10 max health",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x1",
@@ -160,7 +153,6 @@
     },
     "redundancy_protocol": {
       "name": "Redundancy Protocol",
-      "description": "When you take damage, 25% chance to ignore it",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x2",
@@ -181,7 +173,6 @@
     },
     "encryption_module": {
       "name": "Encryption Module",
-      "description": "All attacks deal +2 damage but cost +1 CPU",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
@@ -208,7 +199,6 @@
     },
     "machine_learning_core": {
       "name": "Machine Learning Core",
-      "description": "Every attack has 10% chance to repeat",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x2",
@@ -230,7 +220,6 @@
     },
     "crypto_mining_rig": {
       "name": "Crypto Mining Rig",
-      "description": "Every 5 seconds: Gain 1 gold (for next shop)",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x1",
@@ -252,7 +241,6 @@
     },
     "transaction_log": {
       "name": "Transaction Log",
-      "description": "Track all actions for +10% accuracy",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
@@ -274,7 +262,6 @@
     },
     "premium_subscription": {
       "name": "Premium Subscription",
-      "description": "Start of each round: Free shop refresh",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
@@ -295,7 +282,6 @@
     },
     "vampire_rootkit": {
       "name": "Vampire Rootkit",
-      "description": "All damage dealt heals you for 30% of damage",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x2",

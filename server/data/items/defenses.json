@@ -3,7 +3,6 @@
   "items": {
     "error_monitoring": {
       "name": "Error Monitoring Shield",
-      "description": "Detects and blocks incoming errors",
       "category": "defense",
       "class": "neutral",
       "shape": "1x1",
@@ -26,7 +25,6 @@
     },
     "firewall": {
       "name": "Firewall",
-      "description": "First line of defense against attacks",
       "category": "defense",
       "class": "neutral",
       "shape": "1x2",
@@ -49,7 +47,6 @@
     },
     "rate_limiter": {
       "name": "Rate Limiter",
-      "description": "Slows down incoming attacks",
       "category": "defense",
       "class": "neutral",
       "shape": "2x1",
@@ -78,7 +75,6 @@
     },
     "encryption_layer": {
       "name": "Encryption Layer",
-      "description": "Makes data unreadable to attackers",
       "category": "defense",
       "class": "neutral",
       "shape": "2x2",
@@ -109,7 +105,6 @@
     },
     "quantum_firewall": {
       "name": "Quantum Firewall",
-      "description": "Next-gen defense using quantum encryption",
       "category": "defense",
       "class": "neutral",
       "shape": "1x1",
@@ -132,7 +127,6 @@
     },
     "adaptive_mesh_armor": {
       "name": "Adaptive Mesh Armor",
-      "description": "Sentaur defensive system that evolves with each encounter",
       "category": "defense",
       "class": "sentaur",
       "shape": "2x1",

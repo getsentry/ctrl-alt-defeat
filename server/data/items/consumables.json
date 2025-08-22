@@ -3,7 +3,6 @@
   "items": {
     "health_potion": {
       "name": "Health Potion",
-      "description": "Restores health when damaged",
       "category": "consumable",
       "class": "neutral",
       "shape": "1x1",
@@ -31,7 +30,6 @@
     },
     "cpu_booster": {
       "name": "CPU Booster",
-      "description": "Temporary CPU boost",
       "category": "consumable",
       "class": "neutral",
       "shape": "1x1",
@@ -56,7 +54,6 @@
     },
     "emergency_patch": {
       "name": "Emergency Patch",
-      "description": "Quick fix for critical issues",
       "category": "consumable",
       "class": "neutral",
       "shape": "1x1",
@@ -88,7 +85,6 @@
     },
     "data_packets": {
       "name": "Data Packets",
-      "description": "Sentaur ammunition that stacks for enhanced firepower",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
@@ -115,7 +111,6 @@
     },
     "ai_companion_core": {
       "name": "AI Companion Core",
-      "description": "Sentaur autonomous assistant that provides tactical support",
       "category": "consumable",
       "class": "sentaur",
       "shape": "2x1",
@@ -159,7 +154,6 @@
     },
     "surveillance_drone": {
       "name": "Surveillance Drone",
-      "description": "Sentaur defensive companion that blocks incoming attacks",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
@@ -184,7 +178,6 @@
     },
     "data_crawler": {
       "name": "Data Crawler",
-      "description": "Sentaur fast-attacking companion that gathers intelligence",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
@@ -209,7 +202,6 @@
     },
     "cache_spider": {
       "name": "Cache Spider",
-      "description": "Sentaur resource-gathering companion that boosts efficiency",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
@@ -233,7 +225,6 @@
     },
     "healing_nanobots": {
       "name": "Healing Nanobots",
-      "description": "Sentaur nano-repair swarm for emergency health restoration",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
@@ -261,7 +252,6 @@
     },
     "system_restore": {
       "name": "System Restore",
-      "description": "Sentaur full system restoration protocol",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",

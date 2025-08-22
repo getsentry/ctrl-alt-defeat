@@ -2,7 +2,6 @@
   "containers": {
     "standard_vm": {
       "name": "Standard VM",
-      "description": "Basic virtual machine with no special effects",
       "class": "neutral",
       "shape": "2x2",
       "rarity": "common",
@@ -12,7 +11,6 @@
     },
     "edge_node": {
       "name": "Edge Node",
-      "description": "Closer to users means faster response times",
       "class": "neutral",
       "shape": "2x1",
       "rarity": "rare",
@@ -30,7 +28,6 @@
     },
     "memory_cache": {
       "name": "Memory Cache",
-      "description": "RAM boost for better performance",
       "class": "neutral",
       "shape": "3x1",
       "rarity": "epic",
@@ -47,7 +44,6 @@
     },
     "load_balancer": {
       "name": "Load Balancer",
-      "description": "Distributes traffic to prevent overload",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "godly",
@@ -64,7 +60,6 @@
     },
     "patch_registry": {
       "name": "Patch Registry",
-      "description": "Optimized storage for deployable patches",
       "class": "neutral",
       "shape": "2x2",
       "rarity": "legendary",
@@ -88,7 +83,6 @@
     },
     "container_orchestrator": {
       "name": "Container Orchestrator",
-      "description": "Kubernetes-style orchestration provides baseline protection",
       "class": "neutral",
       "shape": "3x2",
       "rarity": "epic",
@@ -105,7 +99,6 @@
     },
     "serverless_function": {
       "name": "Serverless Function",
-      "description": "Pay-per-use efficiency that rewards rare deployments",
       "class": "neutral",
       "shape": "2x2",
       "rarity": "epic",
@@ -122,7 +115,6 @@
     },
     "packet_buffer": {
       "name": "Packet Buffer",
-      "description": "Sentaur storage system that amplifies data packet effectiveness",
       "class": "sentaur",
       "shape": "1x2",
       "rarity": "uncommon",
@@ -147,7 +139,6 @@
     },
     "network_cache": {
       "name": "Network Cache",
-      "description": "Sentaur storage node that optimizes data flow and resource distribution",
       "class": "sentaur",
       "shape": "2x2",
       "rarity": "rare",
@@ -178,7 +169,6 @@
     },
     "mesh_network_hub": {
       "name": "Mesh Network Hub",
-      "description": "Sentaur decentralized storage with adaptive routing",
       "class": "sentaur",
       "shape": "3x1",
       "rarity": "uncommon",

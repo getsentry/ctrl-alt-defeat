@@ -3,7 +3,6 @@
   "items": {
     "null_blade": {
       "name": "Null blade",
-      "description": "Classic bug that crashes systems",
       "category": "problem",
       "class": "neutral",
       "shape": "1x2",
@@ -29,7 +28,6 @@
     },
     "core_dumper": {
       "name": "Core Dumper",
-      "description": "Slowly drains resources over time",
       "category": "problem",
       "class": "neutral",
       "shape": "1x1",
@@ -55,7 +53,6 @@
     },
     "deadlock_twins": {
       "name": "Deadlock Twins",
-      "description": "Unpredictable timing-based bug",
       "category": "problem",
       "class": "neutral",
       "shape": "1x1",
@@ -81,7 +78,6 @@
     },
     "mobius_lash": {
       "name": "Mobius Lash",
-      "description": "Consumes CPU indefinitely",
       "category": "problem",
       "class": "neutral",
       "shape": "2x1",
@@ -111,7 +107,6 @@
     },
     "sql_injector": {
       "name": "SQL Injector",
-      "description": "Exploits database vulnerabilities",
       "category": "problem",
       "class": "neutral",
       "shape": "1x2",
@@ -137,7 +132,6 @@
     },
     "denier_of_service": {
       "name": "Denier of Service",
-      "description": "Overwhelming distributed attack",
       "category": "problem",
       "class": "neutral",
       "shape": "2x2",
@@ -163,7 +157,6 @@
     },
     "day_zero": {
       "name": "Day Zero",
-      "description": "Unknown vulnerability with no patch",
       "category": "problem",
       "class": "neutral",
       "shape": "1x1",
@@ -201,7 +194,6 @@
     },
     "nullshot": {
       "name": "Nullshot",
-      "description": "Dead Click",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
@@ -228,7 +220,6 @@
     },
     "neural_interface_blade": {
       "name": "Neural Interface Blade",
-      "description": "Sentaur hybrid weapon combining cybernetic precision with melee strikes",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
@@ -268,7 +259,6 @@
     },
     "querystorm": {
       "name": "Querystorm",
-      "description": "N+1 query",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
@@ -308,7 +298,6 @@
     },
     "quantum_sniper": {
       "name": "Quantum Sniper",
-      "description": "Sentaur short-range precision scanner",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
@@ -336,7 +325,6 @@
     },
     "virus_injector": {
       "name": "Virus Injector",
-      "description": "Sentaur malware launcher that spreads corruption",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
@@ -371,7 +359,6 @@
     },
     "malware_propagator": {
       "name": "Malware Propagator",
-      "description": "Sentaur advanced virus that scales with infection",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
@@ -400,7 +387,6 @@
     },
     "probability_manipulator": {
       "name": "Probability Manipulator",
-      "description": "Sentaur quantum weapon that bends fortune",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
@@ -441,7 +427,6 @@
     },
     "quantum_flux_rifle": {
       "name": "Quantum Flux Rifle",
-      "description": "Sentaur probability weapon that generates compute",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x1",
@@ -476,7 +461,6 @@
     },
     "data_leech_swarm": {
       "name": "Data Leech Swarm",
-      "description": "Sentaur AI-controlled nanobots that steal buffs",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
@@ -504,7 +488,6 @@
     },
     "spike_launcher": {
       "name": "Spike Launcher",
-      "description": "Sentaur kinetic weapon that fires energy spikes",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
@@ -544,7 +527,6 @@
     },
     "spike_generator": {
       "name": "Spike Generator",
-      "description": "Sentaur energy weapon that builds charge",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
@@ -579,7 +561,6 @@
     },
     "plasma_edge": {
       "name": "Plasma Edge",
-      "description": "Sentaur energy blade for close-range cyberwarfare",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",

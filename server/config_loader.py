@@ -119,6 +119,7 @@ class ConfigLoader:
             id=container_id,
             name=config.get("name", "Unknown Container"),
             category="infrastructure",
+            player_class=config["class"],
             slug=config["slug"],
             shape=shape,
             triggers=triggers,
@@ -127,8 +128,6 @@ class ConfigLoader:
 
         return {
             "spec": spec,
-            "description": config.get("description", ""),
-            "cost": config.get("cost", 1),
         }
 
     def _create_item_spec(self, item_id: str, config: Dict[str, Any]) -> ItemSpec:
@@ -147,6 +146,7 @@ class ConfigLoader:
             id=item_id,
             name=config.get("name", "Unknown Item"),
             category=config.get("category", "problem"),
+            player_class=config["class"],
             slug=config["slug"],
             shape=shape,
             triggers=triggers,

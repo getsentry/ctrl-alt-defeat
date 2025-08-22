@@ -3,7 +3,6 @@
   "items": {
     "emergency_hotfix": {
       "name": "Emergency Hotfix",
-      "description": "Start of battle: Heal 5 errors",
       "category": "patch",
       "class": "neutral",
       "shape": "1x1",
@@ -24,7 +23,6 @@
     },
     "memory_injection": {
       "name": "Memory Injection",
-      "description": "Start of battle: +10 Max Memory for this battle",
       "category": "patch",
       "class": "neutral",
       "shape": "1x1",
@@ -47,7 +45,6 @@
     },
     "security_hardening": {
       "name": "Security Hardening",
-      "description": "Start of battle: Gain 15% damage reduction",
       "category": "patch",
       "class": "neutral",
       "shape": "1x1",
@@ -70,7 +67,6 @@
     },
     "virus_payload": {
       "name": "Virus Payload",
-      "description": "Start of battle: Enemy takes 2 damage per second",
       "category": "patch",
       "class": "neutral",
       "shape": "1x1",
@@ -94,7 +90,6 @@
     },
     "performance_boost": {
       "name": "Performance Boost",
-      "description": "Start of battle: +50% attack speed for 10 seconds",
       "category": "patch",
       "class": "neutral",
       "shape": "1x2",
@@ -117,7 +112,6 @@
     },
     "system_restore": {
       "name": "System Restore",
-      "description": "Start of battle: Clear all debuffs and heal 20 errors",
       "category": "patch",
       "class": "neutral",
       "shape": "2x2",

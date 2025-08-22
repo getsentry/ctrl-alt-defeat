@@ -3,7 +3,6 @@
   "items": {
     "health_check": {
       "name": "Health Check",
-      "description": "Regular system health monitoring",
       "category": "infrastructure",
       "class": "neutral",
       "shape": "1x1",
@@ -27,7 +26,6 @@
     },
     "load_balancer_module": {
       "name": "Load Balancer Module",
-      "description": "Distributes work across systems",
       "category": "infrastructure",
       "class": "neutral",
       "shape": "1x1",
@@ -50,7 +48,6 @@
     },
     "backup_system": {
       "name": "Backup System",
-      "description": "Restores health when critically damaged",
       "category": "infrastructure",
       "class": "neutral",
       "shape": "2x2",
@@ -78,7 +75,6 @@
     },
     "quantum_processor": {
       "name": "Quantum Processor",
-      "description": "Revolutionary processing power",
       "category": "infrastructure",
       "class": "neutral",
       "shape": "1x1",
@@ -111,7 +107,6 @@
     },
     "quantum_probability_core": {
       "name": "Quantum Probability Core",
-      "description": "Sentaur luck generator using quantum uncertainty",
       "category": "infrastructure",
       "class": "sentaur",
       "shape": "1x1",
@@ -135,7 +130,6 @@
     },
     "neural_link_collar": {
       "name": "Neural Link Collar",
-      "description": "Sentaur neural interface that enhances critical calculations",
       "category": "infrastructure",
       "class": "sentaur",
       "shape": "2x1",

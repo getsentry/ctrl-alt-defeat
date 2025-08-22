@@ -272,6 +272,7 @@ class TestGameDesignCompliance:
                 id="test",
                 name="Test",
                 category="problem",
+                player_class="neutral",
                 shape=SHAPES["1x1"],
                 slug="test_slug",
                 triggers=[
@@ -388,6 +389,7 @@ class TestBattleSimulation:
                 id="op",
                 name="OP",
                 category="problem",
+                player_class="neutral",
                 shape=SHAPES["1x1"],
                 slug="test_slug",
                 triggers=[

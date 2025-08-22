@@ -225,6 +225,7 @@ class TestItemSpecs:
             shape=ItemShape([(0, 0)], "1x1"),
             slug="test_slug",
             category="problem",
+            player_class="neutral",
             triggers=[
                 BattleStartTrigger(
                     effects=[BuffEffect(buff_name="speed", value=0.5, duration=3.0)]

@@ -26,6 +26,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
                         effects=[
@@ -50,6 +51,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -101,6 +103,7 @@ class TestShieldBlocking:
                         shape=ItemShape([(0, 0)], "1x1"),
                         slug="test_slug",
                         category="defense",
+                        player_class="neutral",
                         triggers=[
                             OnAttackedTrigger(
                                 effects=[
@@ -124,6 +127,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=0.5,  # Fast attacks
@@ -184,6 +188,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
                         effects=[
@@ -208,6 +213,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -252,6 +258,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
                         effects=[ShieldBlockEffect(block_chance=1.0, block_amount=5)]
@@ -269,6 +276,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
                         effects=[ShieldBlockEffect(block_chance=1.0, block_amount=7)]
@@ -287,6 +295,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=2.0,
@@ -335,6 +344,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
                         effects=[ShieldBlockEffect(block_chance=1.0, block_amount=10)]

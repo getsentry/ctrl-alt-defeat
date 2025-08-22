@@ -301,6 +301,7 @@ class ItemSpec:
     id: str
     name: str
     category: str  # "problem", "defense", "infrastructure"
+    player_class: str
 
     # Shape for multi-square items (required for all items)
     shape: ItemShape

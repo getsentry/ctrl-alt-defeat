@@ -24,6 +24,7 @@ class TestTimerScheduling:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,  # 1 second cooldown
@@ -72,6 +73,7 @@ class TestTimerScheduling:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,  # 1 second cooldown
@@ -148,6 +150,7 @@ class TestTimerScheduling:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,  # 1 second
@@ -169,6 +172,7 @@ class TestTimerScheduling:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                player_class="neutral",
                 triggers=[
                     TimerTrigger(
                         cooldown=3.0,  # 3 seconds
