@@ -68,7 +68,9 @@ func _setup_ui_references():
 
 	# Player stats references
 	player_health_bar = $Player1Container/StatusPanel/HealthBar
+	player_health_label = $Player1Container/StatusPanel/HealthValue
 	player_stamina_bar = $Player1Container/StatusPanel/StaminaBar
+	player_stamina_label = $Player1Container/StatusPanel/StaminaValue
 
 	# Enemy stats references
 	enemy_health_bar = $Player2Container/StatusPanel/HealthBar
@@ -76,8 +78,8 @@ func _setup_ui_references():
 	enemy_stamina_bar = $Player2Container/StatusPanel/StaminaBar
 	enemy_stamina_label = $Player2Container/StatusPanel/StaminaValue
 
-	# Battle log
-	battle_log_container = $CenterArea/BattleLog/LogScroll/LogText
+	# Battle log - correct path
+	battle_log_container = $BattleLog/LogScroll/LogText
 
 	var speed_button = $ControlButtons/SpeedButton
 	speed_button.pressed.connect(_on_toggle_speed)
@@ -86,12 +88,25 @@ func _setup_ui_references():
 	_setup_inventories()
 
 func _setup_inventories():
-	# Create inventory instances in the grid containers from the scene
-	var inventory_scene = preload("res://scenes/InventoryGrid.tscn")
+	# Constants for grid configuration
+	const GRID_WIDTH = 9
+	const GRID_HEIGHT = 7
+	const CELL_SPACING = 1
 
-	# Player inventory
-	var player_grid = $Player1Inventory/GridContainer
-	player_inventory = inventory_scene.instantiate()
+	# Create inventory grids using InventoryGrid class (not scene)
+	# Player inventory - standard 9x7 grid like UnifiedGridUI
+	var player_panel = $Player1Inventory
+	player_inventory = InventoryGrid.new()
+
+	# Calculate cell size based on panel size
+	var padding = 20
+	player_inventory.position = Vector2(padding, padding)
+	var panel_size = player_panel.size - Vector2(padding * 2, padding * 2)
+	var cell_width = (panel_size.x - (GRID_WIDTH - 1) * CELL_SPACING) / GRID_WIDTH
+	var cell_height = (panel_size.y - (GRID_HEIGHT - 1) * CELL_SPACING) / GRID_HEIGHT
+	var cell_size = min(cell_width, cell_height)  # Keep cells square
+
+	player_inventory.configure(GRID_WIDTH, GRID_HEIGHT, cell_size, CELL_SPACING)
 	player_inventory.read_only = true
 	player_inventory.title = "Player Inventory"
 	player_inventory.set_colors(
@@ -99,11 +114,20 @@ func _setup_inventories():
 		Color(0.3, 0.6, 1.0, 0.8),   # border color
 		Color(0.2, 0.5, 1.0, 0.9)    # item color
 	)
-	player_grid.add_child(player_inventory)
+	player_panel.add_child(player_inventory)
 
-	# Enemy inventory
-	var enemy_grid = $Player2Inventory/GridContainer
-	enemy_inventory = inventory_scene.instantiate()
+	# Enemy inventory - standard 9x7 grid like UnifiedGridUI
+	var enemy_panel = $Player2Inventory
+	enemy_inventory = InventoryGrid.new()
+
+	# Same calculation for enemy panel
+	enemy_inventory.position = Vector2(padding, padding)
+	panel_size = enemy_panel.size - Vector2(padding * 2, padding * 2)
+	cell_width = (panel_size.x - (GRID_WIDTH - 1) * CELL_SPACING) / GRID_WIDTH
+	cell_height = (panel_size.y - (GRID_HEIGHT - 1) * CELL_SPACING) / GRID_HEIGHT
+	cell_size = min(cell_width, cell_height)  # Keep cells square
+
+	enemy_inventory.configure(GRID_WIDTH, GRID_HEIGHT, cell_size, CELL_SPACING)
 	enemy_inventory.read_only = true
 	enemy_inventory.title = "Enemy Inventory"
 	enemy_inventory.set_colors(
@@ -111,7 +135,7 @@ func _setup_inventories():
 		Color(1.0, 0.3, 0.3, 0.8),   # border color
 		Color(1.0, 0.3, 0.3, 0.9)    # item color
 	)
-	enemy_grid.add_child(enemy_inventory)
+	enemy_panel.add_child(enemy_inventory)
 
 func _on_toggle_speed():
 	# Toggle between different playback speeds
