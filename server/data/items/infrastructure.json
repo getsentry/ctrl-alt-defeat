@@ -22,7 +22,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "health_check"
     },
     "load_balancer_module": {
       "name": "Load Balancer Module",
@@ -44,7 +45,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "load_balancer_module"
     },
     "backup_system": {
       "name": "Backup System",
@@ -71,7 +73,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "backup_system"
     },
     "quantum_processor": {
       "name": "Quantum Processor",
@@ -103,7 +106,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "quantum_processor"
     },
     "quantum_probability_core": {
       "name": "Quantum Probability Core",
@@ -126,7 +130,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "quantum_probability_core"
     },
     "neural_link_collar": {
       "name": "Neural Link Collar",
@@ -149,7 +154,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "neural_link_collar"
     }
   }
 }

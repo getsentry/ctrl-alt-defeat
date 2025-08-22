@@ -21,7 +21,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "error_monitoring_shield"
     },
     "firewall": {
       "name": "Firewall",
@@ -43,7 +44,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "firewall"
     },
     "rate_limiter": {
       "name": "Rate Limiter",
@@ -71,7 +73,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "rate_limiter"
     },
     "encryption_layer": {
       "name": "Encryption Layer",
@@ -101,7 +104,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "encryption_layer"
     },
     "quantum_firewall": {
       "name": "Quantum Firewall",
@@ -123,7 +127,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "quantum_firewall"
     },
     "adaptive_mesh_armor": {
       "name": "Adaptive Mesh Armor",
@@ -151,7 +156,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "adaptive_mesh_armor"
     }
   }
 }

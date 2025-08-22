@@ -24,7 +24,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "null_pointer_exception"
     },
     "memory_leak": {
       "name": "Memory Leak",
@@ -49,7 +50,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "memory_leak"
     },
     "race_condition": {
       "name": "Race Condition",
@@ -74,7 +76,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "race_condition"
     },
     "infinite_loop": {
       "name": "Infinite Loop",
@@ -103,7 +106,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "infinite_loop"
     },
     "sql_injection": {
       "name": "SQL Injection",
@@ -128,7 +132,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "sql_injection"
     },
     "ddos_attack": {
       "name": "DDoS Attack",
@@ -153,7 +158,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "ddos_attack"
     },
     "zero_day_exploit": {
       "name": "Zero Day Exploit",
@@ -190,7 +196,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "zero_day_exploit"
     },
     "network_scanner": {
       "name": "Network Scanner",
@@ -216,7 +223,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "network_scanner"
     },
     "neural_interface_blade": {
       "name": "Neural Interface Blade",
@@ -255,7 +263,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "neural_interface_blade"
     },
     "distributed_scanner_array": {
       "name": "Distributed Scanner Array",
@@ -294,7 +303,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "distributed_scanner_array"
     },
     "quantum_sniper": {
       "name": "Quantum Sniper",
@@ -321,7 +331,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "quantum_sniper"
     },
     "virus_injector": {
       "name": "Virus Injector",
@@ -355,7 +366,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "virus_injector"
     },
     "malware_propagator": {
       "name": "Malware Propagator",
@@ -383,7 +395,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "malware_propagator"
     },
     "probability_manipulator": {
       "name": "Probability Manipulator",
@@ -423,7 +436,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "probability_manipulator"
     },
     "quantum_flux_rifle": {
       "name": "Quantum Flux Rifle",
@@ -457,7 +471,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "quantum_flux_rifle"
     },
     "data_leech_swarm": {
       "name": "Data Leech Swarm",
@@ -484,7 +499,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "data_leech_swarm"
     },
     "spike_launcher": {
       "name": "Spike Launcher",
@@ -523,7 +539,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "spike_launcher"
     },
     "spike_generator": {
       "name": "Spike Generator",
@@ -557,7 +574,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "spike_generator"
     },
     "plasma_edge": {
       "name": "Plasma Edge",
@@ -583,7 +601,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "plasma_edge"
     }
   }
 }

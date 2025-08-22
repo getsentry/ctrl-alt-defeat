@@ -19,12 +19,13 @@
               "type": "attack",
               "min_damage": 3,
               "max_damage": 3,
-              "accuracy": 0.90,
+              "accuracy": 0.9,
               "crit_chance": 0.1
             }
           ]
         }
-      ]
+      ],
+      "slug": "api_token"
     },
     "bitcoin_wallet": {
       "name": "Bitcoin Wallet",
@@ -44,7 +45,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "bitcoin_wallet"
     },
     "captcha_module": {
       "name": "CAPTCHA Module",
@@ -61,11 +63,12 @@
             {
               "type": "enemy_debuff",
               "debuff_name": "accuracy",
-              "value": -0.20
+              "value": -0.2
             }
           ]
         }
-      ]
+      ],
+      "slug": "captcha_module"
     },
     "script_compiler": {
       "name": "Script Compiler - Alchemy",
@@ -86,7 +89,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "script_compiler_alchemy"
     },
     "dark_web_access": {
       "name": "Dark Web Access",
@@ -106,7 +110,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "dark_web_access"
     },
     "power_management_unit": {
       "name": "Power Management Unit",
@@ -127,7 +132,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "power_management_unit"
     },
     "auto_scaler": {
       "name": "Auto-Scaler",
@@ -149,7 +155,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "auto_scaler"
     },
     "redundancy_protocol": {
       "name": "Redundancy Protocol",
@@ -169,7 +176,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "redundancy_protocol"
     },
     "encryption_module": {
       "name": "Encryption Module",
@@ -195,7 +203,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "encryption_module"
     },
     "machine_learning_core": {
       "name": "Machine Learning Core",
@@ -211,12 +220,13 @@
           "effects": [
             {
               "type": "multicast",
-              "chance": 0.10,
+              "chance": 0.1,
               "count": 2
             }
           ]
         }
-      ]
+      ],
+      "slug": "machine_learning_core"
     },
     "crypto_mining_rig": {
       "name": "Crypto Mining Rig",
@@ -237,7 +247,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "crypto_mining_rig"
     },
     "transaction_log": {
       "name": "Transaction Log",
@@ -254,11 +265,12 @@
             {
               "type": "stat_mod",
               "stat": "accuracy",
-              "value": 0.10
+              "value": 0.1
             }
           ]
         }
-      ]
+      ],
+      "slug": "transaction_log"
     },
     "premium_subscription": {
       "name": "Premium Subscription",
@@ -278,7 +290,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "premium_subscription"
     },
     "vampire_rootkit": {
       "name": "Vampire Rootkit",
@@ -294,11 +307,12 @@
           "effects": [
             {
               "type": "lifesteal",
-              "value": 0.30
+              "value": 0.3
             }
           ]
         }
-      ]
+      ],
+      "slug": "vampire_rootkit"
     }
   }
 }

@@ -7,7 +7,8 @@
       "shape": "2x2",
       "rarity": "common",
       "cost": 4,
-      "effects": []
+      "effects": [],
+      "slug": "standard_vm"
     },
     "edge_node": {
       "name": "Edge Node",
@@ -24,7 +25,8 @@
           "value": 0.1,
           "description": "Modules inside execute 10% faster"
         }
-      ]
+      ],
+      "slug": "edge_node"
     },
     "memory_cache": {
       "name": "Memory Cache",
@@ -40,7 +42,8 @@
           "value": 1,
           "description": "Gain 1 maximum CPU"
         }
-      ]
+      ],
+      "slug": "memory_cache"
     },
     "load_balancer": {
       "name": "Load Balancer",
@@ -56,7 +59,8 @@
           "value": 15,
           "description": "Start of battle: Gain 15 Block"
         }
-      ]
+      ],
+      "slug": "load_balancer"
     },
     "patch_registry": {
       "name": "Patch Registry",
@@ -79,7 +83,8 @@
           "value": 8,
           "description": "4 Patches deployed: Clear 8 errors"
         }
-      ]
+      ],
+      "slug": "patch_registry"
     },
     "container_orchestrator": {
       "name": "Container Orchestrator",
@@ -95,7 +100,8 @@
           "value": 7,
           "description": "Start of battle: gain 7 Block for each Basic module inside"
         }
-      ]
+      ],
+      "slug": "container_orchestrator"
     },
     "serverless_function": {
       "name": "Serverless Function",
@@ -111,7 +117,8 @@
           "effect": "free_api_credits",
           "description": "Deploy phase: If has 2+ Legendary modules, generate free API credits"
         }
-      ]
+      ],
+      "slug": "serverless_function"
     },
     "packet_buffer": {
       "name": "Packet Buffer",
@@ -135,7 +142,8 @@
           "value": 0.25,
           "description": "Items inside deal 25% more damage"
         }
-      ]
+      ],
+      "slug": "packet_buffer"
     },
     "network_cache": {
       "name": "Network Cache",
@@ -165,7 +173,8 @@
           "threshold": 3,
           "description": "If contains 3+ Sentaur items: All gain +1 damage"
         }
-      ]
+      ],
+      "slug": "network_cache"
     },
     "mesh_network_hub": {
       "name": "Mesh Network Hub",
@@ -189,7 +198,8 @@
           "value": 0.1,
           "description": "Items inside gain 10% accuracy"
         }
-      ]
+      ],
+      "slug": "mesh_network_hub"
     }
   }
 }

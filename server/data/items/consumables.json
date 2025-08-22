@@ -26,7 +26,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "health_potion"
     },
     "cpu_booster": {
       "name": "CPU Booster",
@@ -50,7 +51,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "cpu_booster"
     },
     "emergency_patch": {
       "name": "Emergency Patch",
@@ -81,7 +83,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "emergency_patch"
     },
     "data_packets": {
       "name": "Data Packets",
@@ -107,7 +110,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "data_packets"
     },
     "ai_companion_core": {
       "name": "AI Companion Core",
@@ -150,7 +154,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "ai_companion_core"
     },
     "surveillance_drone": {
       "name": "Surveillance Drone",
@@ -174,7 +179,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "surveillance_drone"
     },
     "data_crawler": {
       "name": "Data Crawler",
@@ -198,7 +204,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "data_crawler"
     },
     "cache_spider": {
       "name": "Cache Spider",
@@ -221,7 +228,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "cache_spider"
     },
     "healing_nanobots": {
       "name": "Healing Nanobots",
@@ -248,7 +256,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "healing_nanobots"
     },
     "system_restore": {
       "name": "System Restore",
@@ -282,7 +291,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "system_restore"
     }
   }
 }

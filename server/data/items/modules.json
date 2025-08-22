@@ -20,7 +20,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "chipped_performance_module"
     },
     "performance_module_flawed": {
       "name": "Flawed Performance Module",
@@ -41,7 +42,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "flawed_performance_module"
     },
     "performance_module_regular": {
       "name": "Performance Module",
@@ -62,7 +64,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "performance_module"
     },
     "performance_module_flawless": {
       "name": "Flawless Performance Module",
@@ -83,7 +86,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "flawless_performance_module"
     },
     "performance_module_perfect": {
       "name": "Perfect Performance Module",
@@ -100,11 +104,12 @@
             {
               "type": "stat_mod",
               "stat": "crit_chance",
-              "value": 0.20
+              "value": 0.2
             }
           ]
         }
-      ]
+      ],
+      "slug": "perfect_performance_module"
     },
     "memory_module_chipped": {
       "name": "Chipped Memory Module",
@@ -125,7 +130,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "chipped_memory_module"
     },
     "memory_module_flawed": {
       "name": "Flawed Memory Module",
@@ -146,7 +152,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "flawed_memory_module"
     },
     "memory_module_regular": {
       "name": "Memory Module",
@@ -167,7 +174,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "memory_module"
     },
     "processing_module_chipped": {
       "name": "Chipped Processing Module",
@@ -188,7 +196,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "chipped_processing_module"
     },
     "processing_module_regular": {
       "name": "Processing Module",
@@ -209,7 +218,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "processing_module"
     },
     "efficiency_module_chipped": {
       "name": "Chipped Efficiency Module",
@@ -226,11 +236,12 @@
             {
               "type": "stat_mod",
               "stat": "attack_speed",
-              "value": 0.10
+              "value": 0.1
             }
           ]
         }
-      ]
+      ],
+      "slug": "chipped_efficiency_module"
     },
     "efficiency_module_regular": {
       "name": "Efficiency Module",
@@ -247,11 +258,12 @@
             {
               "type": "stat_mod",
               "stat": "attack_speed",
-              "value": 0.30
+              "value": 0.3
             }
           ]
         }
-      ]
+      ],
+      "slug": "efficiency_module"
     },
     "security_module_chipped": {
       "name": "Chipped Security Module",
@@ -272,7 +284,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "chipped_security_module"
     },
     "security_module_regular": {
       "name": "Security Module",
@@ -293,7 +306,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "security_module"
     }
   }
 }

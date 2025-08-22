@@ -21,7 +21,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "health_check_script"
     },
     "firewall_script": {
       "name": "Firewall Script",
@@ -45,7 +46,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "firewall_script"
     },
     "cache_optimizer": {
       "name": "Cache Optimizer",
@@ -69,7 +71,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "cache_optimizer"
     },
     "load_balancer_script": {
       "name": "Load Balancer Script",
@@ -86,11 +89,12 @@
             {
               "type": "stat_mod",
               "stat": "damage_reduction",
-              "value": 0.20
+              "value": 0.2
             }
           ]
         }
-      ]
+      ],
+      "slug": "load_balancer_script"
     },
     "ai_assistant_bot": {
       "name": "AI Assistant Bot",
@@ -115,7 +119,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "ai_assistant_bot"
     },
     "ddos_protection_module": {
       "name": "DDoS Protection Module",
@@ -138,7 +143,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "ddos_protection_module"
     },
     "cryogenic_cooling_system": {
       "name": "Cryogenic Cooling System",
@@ -155,11 +161,12 @@
             {
               "type": "stat_mod",
               "stat": "cooldown_reduction",
-              "value": 0.30
+              "value": 0.3
             }
           ]
         }
-      ]
+      ],
+      "slug": "cryogenic_cooling_system"
     }
   }
 }

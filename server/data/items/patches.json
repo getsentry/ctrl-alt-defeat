@@ -19,7 +19,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "emergency_hotfix"
     },
     "memory_injection": {
       "name": "Memory Injection",
@@ -41,7 +42,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "memory_injection"
     },
     "security_hardening": {
       "name": "Security Hardening",
@@ -63,7 +65,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "security_hardening"
     },
     "virus_payload": {
       "name": "Virus Payload",
@@ -86,7 +89,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "virus_payload"
     },
     "performance_boost": {
       "name": "Performance Boost",
@@ -108,7 +112,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "performance_boost"
     },
     "system_restore": {
       "name": "System Restore",
@@ -132,7 +137,8 @@
             }
           ]
         }
-      ]
+      ],
+      "slug": "system_restore"
     }
   }
 }
