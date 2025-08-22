@@ -82,8 +82,8 @@ func _setup_ui_references():
 	battle_log_container = $BattleLog/LogScroll/LogText
 
 	# Name labels
-	var player_name_label = $Player1NameLabel
-	var opponent_name_label = $Player2NameLabel
+	var player_name_label = $Player1Container/Player1NameLabel
+	var opponent_name_label = $Player2Container/Player2NameLabel
 
 	# Set player name from GameStateManager
 	player_name_label.text = GameStateManager.player_name if GameStateManager.player_name != "" else "Player"
@@ -214,7 +214,7 @@ func _load_battle_from_state():
 	enemy_inventory.load_inventory_state(battle_result.enemy_inventory)
 
 	# Set opponent name and style based on type
-	var opponent_name_label = $Player2NameLabel
+	var opponent_name_label = $Player2Container/Player2NameLabel
 	opponent_name_label.text = battle_result.opponent_name
 
 	# Different color for ghost players vs AI

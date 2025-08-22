@@ -67,6 +67,16 @@ offset_bottom = 50.0
 grow_vertical = 2
 scale = Vector2(0.636286, 0.636286)
 
+[node name="Player1NameLabel" type="Label" parent="Player1Container"]
+z_index = 5
+layout_mode = 0
+offset_left = 314.0
+offset_top = 490.0
+offset_right = 872.0
+offset_bottom = 583.0
+theme_override_font_sizes/font_size = 51
+text = "Player"
+
 [node name="CharacterDisplay" type="TextureRect" parent="Player1Container"]
 layout_mode = 1
 anchors_preset = 8
@@ -166,6 +176,20 @@ grow_horizontal = 0
 grow_vertical = 2
 scale = Vector2(0.634545, 0.634545)
 
+[node name="Player2NameLabel" type="Label" parent="Player2Container"]
+z_index = 5
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -767.823
+offset_top = 493.267
+offset_right = -209.823
+offset_bottom = 586.267
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 51
+text = "AI Opponent"
+
 [node name="CharacterDisplay" type="TextureRect" parent="Player2Container"]
 layout_mode = 1
 anchors_preset = 8
@@ -251,16 +275,6 @@ offset_right = 1229.0
 offset_bottom = 397.0
 texture = ExtResource("6_3n4vy")
 
-[node name="Player1NameLabel" type="Label" parent="."]
-layout_mode = 0
-offset_left = 18.0
-offset_top = -5.0
-offset_right = 400.0
-offset_bottom = 20.0
-text = "Player"
-add_theme_font_size_override("font_size", 20)
-add_theme_color_override("font_color", Color(0.3, 0.6, 1.0))
-
 [node name="Player1Inventory" type="Panel" parent="."]
 layout_mode = 0
 offset_left = 18.0
@@ -281,21 +295,6 @@ offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 columns = 6
-
-[node name="Player2NameLabel" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -400.0
-offset_top = -5.0
-offset_right = -18.0
-offset_bottom = 20.0
-grow_horizontal = 0
-text = "AI Opponent"
-add_theme_font_size_override("font_size", 20)
-add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-horizontal_alignment = 2
 
 [node name="Player2Inventory" type="Panel" parent="."]
 layout_mode = 1
