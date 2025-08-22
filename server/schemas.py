@@ -53,7 +53,7 @@ class GameSession(BaseModel):
 class StartSessionRequest(BaseModel):
     """Request to start a new game session"""
 
-    player_name: str
+    player_name: Optional[str] = None
     seed: Optional[int] = None
 
 
@@ -117,6 +117,7 @@ class StartSessionResponse(BaseModel):
     """Response when starting a new game session"""
 
     player_id: str = Field(description="Unique player/session identifier")
+    player_name: str = Field(description="Player's display name")
     session: GameSession = Field(description="Complete game session state")
 
 

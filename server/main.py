@@ -314,6 +314,7 @@ async def start_session(
 
     return StartSessionResponse(
         player_id=player_id,
+        player_name=session.player_name,
         session=enhanced_session,
     )
 
