@@ -5,6 +5,7 @@ const APITypes = preload("res://scripts/api_types.gd")
 @onready var new_game_button = $"MenuPanel_ButtonContainer#NewGameButton"
 @onready var quit_button = $"MenuPanel_ButtonContainer#QuitButton"
 @onready var version_label = $VersionLabel
+@onready var music_player = $BackgroundMusic
 
 func _ready():
 	# Set window size for consistency
@@ -13,6 +14,10 @@ func _ready():
 		get_window().min_size = Vector2i(2560, 1600)  # Prevent resizing smaller
 		get_window().max_size = Vector2i(2560, 1600)  # Prevent resizing larger for fixed size
 	_setup_ui()
+
+	# Start playing background music
+	if music_player and not music_player.playing:
+		music_player.play()
 
 func _setup_ui():
 	# Style the buttons
@@ -53,6 +58,13 @@ func _setup_ui():
 
 func _on_start_game():
 	print("Starting new game...")
+
+	# Fade out music before transitioning
+	if music_player and music_player.playing:
+		var tween = get_tree().create_tween()
+		tween.tween_property(music_player, "volume_db", -80.0, 1.0)  # Fade to silence over 1 second
+		await tween.finished
+		music_player.stop()
 
 	# Reset game state
 	GameStateManager.start_new_game()

@@ -103,6 +103,11 @@ offset_right = 1494.0
 offset_bottom = 1280.0
 text = "EXIT"
 
+[node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]
+autoplay = true
+volume_db = -10.0
+bus = "Music"
+
 [node name="VersionLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 3
