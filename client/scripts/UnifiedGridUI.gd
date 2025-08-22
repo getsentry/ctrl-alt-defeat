@@ -445,7 +445,7 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	var item_visual = ItemVisual.new()
 	item_visual.position = Vector2(10, 15)
 	item_visual.show_border = false  # Cleaner look in shop
-	item_visual.enable_tooltip = false  # Disable tooltips for now to avoid interference
+	item_visual.enable_tooltip = true  # Enable tooltips for shop items
 	item_visual.setup(data, 45, 1)  # Use same 45px cell size as inventory grid
 	shop_item.add_child(item_visual)
 

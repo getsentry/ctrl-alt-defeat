@@ -1,0 +1,96 @@
+[gd_scene load_steps=3 format=3 uid="uid://btooltip123"]
+
+[ext_resource type="Script" path="res://scripts/ItemTooltip.gd" id="1_tooltip"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
+bg_color = Color(0.1, 0.1, 0.15, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.4, 0.7, 1.0, 1.0)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="ItemTooltip" type="Panel"]
+custom_minimum_size = Vector2(400, 200)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_1")
+script = ExtResource("1_tooltip")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 15
+theme_override_constants/margin_bottom = 15
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "Item Name"
+
+[node name="InfoLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 24
+text = "Category • Rarity"
+
+[node name="CostLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 20
+text = "Value: 10 gold"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+theme_override_styles/separator = SubResource("StyleBoxFlat_1")
+
+[node name="DamageLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 20
+text = "⚔️ Damage: 5-10"
+
+[node name="HealLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_font_sizes/font_size = 20
+text = "❤️ Heals: 3-5 HP"
+
+[node name="BlockLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "🛡️ Blocks: 5 damage"
+
+[node name="SpecialLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
+theme_override_font_sizes/font_size = 20
+text = "✨ Special: Effect description"
+
+[node name="DescriptionLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.9, 1)
+theme_override_font_sizes/font_size = 20
+text = "Item description text"
+autowrap_mode = 2

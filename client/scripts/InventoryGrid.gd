@@ -207,11 +207,11 @@ func _add_container(container: APITypes.ServerContainer):
 			shape.append([cx, cy])
 	container_data["shape"] = shape
 
+	# Enable tooltips for containers too (must be before setup)
+	container_visual.enable_tooltip = true
+
 	# Set up the visual
 	container_visual.setup(container_data, cell_size, cell_spacing)
-
-	# Enable tooltips for containers too
-	container_visual.enable_tooltip = true
 
 	# Update grid cells to show server pattern and mark as active
 	for cy in range(height):
@@ -253,11 +253,11 @@ func _add_item(item: APITypes.InventoryItem):
 	item_visual.set_meta("item_data", item)
 	item_visual.set_meta("grid_pos", Vector2i(x, y))
 
+	# Enable tooltips for all items (must be before setup)
+	item_visual.enable_tooltip = true
+
 	# Set up the visual with item data and grid settings
 	item_visual.setup(item, cell_size, cell_spacing)
-
-	# Enable tooltips for all items
-	item_visual.enable_tooltip = true
 
 	# Mark grid cells as occupied
 	for offset in item.shape:
