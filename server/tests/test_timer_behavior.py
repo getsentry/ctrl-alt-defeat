@@ -22,6 +22,7 @@ class TestTimerScheduling:
                 id="test",
                 name="Test Item",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -69,6 +70,7 @@ class TestTimerScheduling:
                 id="test",
                 name="Test Item",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -144,6 +146,7 @@ class TestTimerScheduling:
                 id="item1",
                 name="Fast Item",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -164,6 +167,7 @@ class TestTimerScheduling:
                 id="item2",
                 name="Slow Item",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(

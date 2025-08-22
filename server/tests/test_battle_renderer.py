@@ -291,6 +291,7 @@ class TestBattleRenderer:
             id="test_item",
             name="Test Item",
             shape=ItemShape([(0, 0)], "1x1"),
+            slug="test_slug",
             category="problem",
             triggers=[
                 TimerTrigger(
@@ -302,7 +303,7 @@ class TestBattleRenderer:
         )
 
         # Create placed item
-        p1_items = [PlacedItem(spec=minimal_item, position=(0, 0), uid="test1")]
+        p1_items = [PlacedItem(spec=minimal_item, position=(0, 0))]
         p2_items = []
 
         # Get container

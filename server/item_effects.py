@@ -304,6 +304,7 @@ class ItemSpec:
 
     # Shape for multi-square items (required for all items)
     shape: ItemShape
+    slug: str
 
     # List of triggers, each with their own effects
     triggers: List[Trigger] = field(default_factory=list)

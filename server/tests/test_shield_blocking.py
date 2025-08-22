@@ -24,6 +24,7 @@ class TestShieldBlocking:
                 id="test_shield",
                 name="Test Shield",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -47,6 +48,7 @@ class TestShieldBlocking:
                 id="attacker",
                 name="Attacker",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -97,6 +99,7 @@ class TestShieldBlocking:
                         id=f"shield_{i}",
                         name=f"Shield {i}",
                         shape=ItemShape([(0, 0)], "1x1"),
+                        slug="test_slug",
                         category="defense",
                         triggers=[
                             OnAttackedTrigger(
@@ -119,6 +122,7 @@ class TestShieldBlocking:
                 id="fast_attacker",
                 name="Fast Attacker",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -178,6 +182,7 @@ class TestShieldBlocking:
                 id="cpu_steal_shield",
                 name="CPU Steal Shield",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -201,6 +206,7 @@ class TestShieldBlocking:
                 id="expensive_attacker",
                 name="Expensive Attacker",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -244,6 +250,7 @@ class TestShieldBlocking:
                 id="shield1",
                 name="Shield 1",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -260,6 +267,7 @@ class TestShieldBlocking:
                 id="shield2",
                 name="Shield 2",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -277,6 +285,7 @@ class TestShieldBlocking:
                 id="attacker",
                 name="Attacker",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -324,6 +333,7 @@ class TestShieldBlocking:
                 id="shield",
                 name="Shield",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(

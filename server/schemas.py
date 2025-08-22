@@ -14,6 +14,7 @@ class ShopItem(BaseModel):
     item_type: str = Field(description="Item type identifier")
     name: str = Field(description="Display name")
     category: str = Field(description="Item category")
+    slug: str = Field(default="", description="URL-friendly identifier")
     rarity: str = Field(description="Item rarity tier")
     cost: int = Field(description="Gold cost to purchase")
     is_container: bool = Field(

@@ -469,6 +469,7 @@ def generate_shop_items(
                     item_type=item_type,
                     name=item_spec.name,
                     category="container",  # Mark as container category for UI
+                    slug=item_spec.slug,
                     rarity=item_spec.rarity,
                     cost=get_shop_cost(item_spec.rarity, 1),
                     is_container=True,
@@ -512,6 +513,7 @@ def generate_shop_items(
                     item_type=item_type,
                     name=item_spec.name,
                     category=item_spec.category,
+                    slug=item_spec.slug,
                     rarity=item_spec.rarity,
                     cost=get_shop_cost(item_spec.rarity, 1),
                     is_container=False,
@@ -1320,6 +1322,7 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
         "id": item.id,
         "item_type": item.item_type,
         "name": item.name,
+        "slug": item.slug,
         "cost": item.cost,
         "rarity": item.rarity,
     }

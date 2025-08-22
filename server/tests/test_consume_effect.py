@@ -30,6 +30,7 @@ class TestConsumeEffect:
                 id="test_potion",
                 name="Test Potion",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     DamageTakenTrigger(
@@ -52,6 +53,7 @@ class TestConsumeEffect:
                 id="attacker",
                 name="Attacker",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -101,6 +103,7 @@ class TestConsumeEffect:
                 id="test_consumable",
                 name="Test Consumable",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="infrastructure",
                 triggers=[
                     BattleStartTrigger(
@@ -150,6 +153,7 @@ class TestConsumeEffect:
                 id="p1",
                 name="Problem 1",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -170,6 +174,7 @@ class TestConsumeEffect:
                 id="p2",
                 name="Problem 2",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -191,6 +196,7 @@ class TestConsumeEffect:
                 id="p3",
                 name="Problem 3",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     BattleStartTrigger(
@@ -201,7 +207,7 @@ class TestConsumeEffect:
                     )
                 ],
             ),
-            position=(0, 1),  # Adjacent to problem1 (below it)
+            position=(0, 1),
             uid="p3",
         )
 
@@ -247,6 +253,7 @@ class TestConsumeEffect:
                 id="potion1",
                 name="Potion 1",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     DamageTakenTrigger(
@@ -266,6 +273,7 @@ class TestConsumeEffect:
                 id="potion2",
                 name="Potion 2",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     DamageTakenTrigger(
@@ -288,6 +296,7 @@ class TestConsumeEffect:
                 id="attacker",
                 name="Attacker",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(

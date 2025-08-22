@@ -25,6 +25,7 @@ class TestDeterministicBattles:
                 id="attacker",
                 name="Test Attacker",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -50,6 +51,7 @@ class TestDeterministicBattles:
                 id="defender",
                 name="Test Defender",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -114,6 +116,7 @@ class TestDeterministicBattles:
                 id="rng_heavy",
                 name="RNG Heavy",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -170,6 +173,7 @@ class TestDeterministicBattles:
                 id="shield",
                 name="Test Shield",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="defense",
                 triggers=[
                     OnAttackedTrigger(
@@ -191,6 +195,7 @@ class TestDeterministicBattles:
                 id="attacker",
                 name="Fast Attacker",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(
@@ -243,6 +248,7 @@ class TestDeterministicBattles:
                     id="item1",
                     name="Item 1",
                     shape=ItemShape([(0, 0)], "1x1"),
+                    slug="test_slug",
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -267,6 +273,7 @@ class TestDeterministicBattles:
                     id="item2",
                     name="Item 2",
                     shape=ItemShape([(0, 0)], "1x1"),
+                    slug="test_slug",
                     category="defense",
                     triggers=[
                         OnAttackedTrigger(
@@ -287,6 +294,7 @@ class TestDeterministicBattles:
                     id="item3",
                     name="Item 3",
                     shape=ItemShape([(0, 0)], "1x1"),
+                    slug="test_slug",
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -311,6 +319,7 @@ class TestDeterministicBattles:
                     id="item4",
                     name="Item 4",
                     shape=ItemShape([(0, 0)], "1x1"),
+                    slug="test_slug",
                     category="problem",
                     triggers=[
                         TimerTrigger(
@@ -373,6 +382,7 @@ class TestDeterministicBattles:
                 id="test",
                 name="Test",
                 shape=ItemShape([(0, 0)], "1x1"),
+                slug="test_slug",
                 category="problem",
                 triggers=[
                     TimerTrigger(

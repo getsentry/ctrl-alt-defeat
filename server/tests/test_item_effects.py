@@ -224,6 +224,7 @@ class TestItemSpecs:
             id="complex_item",
             name="Complex Item",
             shape=ItemShape([(0, 0)], "1x1"),
+            slug="test_slug",
             category="problem",
             triggers=[
                 BattleStartTrigger(

@@ -117,15 +117,15 @@ class TestGameDesignCompliance:
         assert shield_effect.block_chance == 0.3  # 30% block chance from JSON
 
         # Test Infrastructure (Section 2.3)
-        autoscaler = ITEM_CATALOG["auto_scaler"]
+        quantum_proc = ITEM_CATALOG["quantum_processor"]
         # Should have passive trigger with stat mod effects
-        assert len(autoscaler.triggers) == 1
-        assert isinstance(autoscaler.triggers[0], PassiveTrigger)
-        # Auto scaler has 2 effects: max_cpu and cpu_regen
-        assert len(autoscaler.triggers[0].effects) == 2
-        stat_effect = autoscaler.triggers[0].effects[0]
+        assert len(quantum_proc.triggers) == 1
+        assert isinstance(quantum_proc.triggers[0], PassiveTrigger)
+        # Quantum processor has 3 effects: max_cpu, cpu_regen, and cpu_cost buff
+        assert len(quantum_proc.triggers[0].effects) == 3
+        stat_effect = quantum_proc.triggers[0].effects[0]
         assert stat_effect.stat_name == "max_cpu"
-        assert stat_effect.value == 5  # From JSON
+        assert stat_effect.value == 10  # From JSON
 
     def test_battle_duration(self):
         """Test Section 6.2: Battle max duration 60s"""
@@ -275,6 +275,7 @@ class TestGameDesignCompliance:
                 name="Test",
                 category="problem",
                 shape=SHAPES["1x1"],
+                slug="test_slug",
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -390,6 +391,7 @@ class TestBattleSimulation:
                 name="OP",
                 category="problem",
                 shape=SHAPES["1x1"],
+                slug="test_slug",
                 triggers=[
                     TimerTrigger(
                         cooldown=0.1,
