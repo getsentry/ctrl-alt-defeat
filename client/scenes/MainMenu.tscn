@@ -69,20 +69,6 @@ grow_vertical = 0
 scale = Vector2(0.809621, 0.809621)
 texture = ExtResource("5_ucygd")
 
-[node name="MenuPanel" type="Panel" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 282.0
-offset_top = -518.0
-offset_right = 682.0
-offset_bottom = -218.0
-grow_horizontal = 2
-grow_vertical = 2
-
 [node name="MenuPanel_ButtonContainer#NewGameButton" type="Button" parent="."]
 custom_minimum_size = Vector2(400, 60)
 layout_mode = 2
@@ -104,9 +90,8 @@ offset_bottom = 1280.0
 text = "EXIT"
 
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]
-autoplay = true
 volume_db = -10.0
-bus = "Music"
+autoplay = true
 
 [node name="VersionLabel" type="Label" parent="."]
 layout_mode = 1

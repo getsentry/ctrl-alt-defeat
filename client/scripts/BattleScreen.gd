@@ -46,7 +46,7 @@ func _ready():
 	add_child(event_processor)
 	_connect_event_signals()
 
-	_setup_ui()
+	_setup_ui_references()
 
 	# Wait for child nodes to be ready
 	await get_tree().process_frame
@@ -62,36 +62,36 @@ func _ready():
 	await get_tree().create_timer(0.5).timeout
 	_start_battle_playback()
 
-func _setup_ui():
-	# Background
-	var bg = ColorRect.new()
-	bg.color = Color(0.02, 0.02, 0.03, 1.0)
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+func _setup_ui_references():
+	# Get references to the nodes from the scene
+	time_label = $TopBar/TimeLabel
 
-	# Player inventory (left side)
-	_create_player_inventory()
+	# Player stats references
+	player_health_bar = $Player1Container/StatusPanel/HealthBar
+	player_stamina_bar = $Player1Container/StatusPanel/StaminaBar
 
-	# Enemy inventory (right side)
-	_create_enemy_inventory()
+	# Enemy stats references
+	enemy_health_bar = $Player2Container/StatusPanel/HealthBar
+	enemy_health_label = $Player2Container/StatusPanel/HealthValue
+	enemy_stamina_bar = $Player2Container/StatusPanel/StaminaBar
+	enemy_stamina_label = $Player2Container/StatusPanel/StaminaValue
 
-	# Player stats (center-left)
-	_create_player_stats()
+	# Battle log
+	battle_log_container = $CenterArea/BattleLog/LogScroll/LogText
 
-	# Enemy stats (center-right)
-	_create_enemy_stats()
+	var speed_button = $ControlButtons/SpeedButton
+	speed_button.pressed.connect(_on_toggle_speed)
 
-	# Battle log (bottom center)
-	_create_battle_log()
+	# Load inventories into the grid containers
+	_setup_inventories()
 
-	# Control buttons
-	_create_control_buttons()
-
-func _create_player_inventory():
+func _setup_inventories():
+	# Create inventory instances in the grid containers from the scene
 	var inventory_scene = preload("res://scenes/InventoryGrid.tscn")
+
+	# Player inventory
+	var player_grid = $Player1Inventory/GridContainer
 	player_inventory = inventory_scene.instantiate()
-	player_inventory.position = Vector2(20, 50)
-	player_inventory.scale = Vector2(0.8, 0.8)
 	player_inventory.read_only = true
 	player_inventory.title = "Player Inventory"
 	player_inventory.set_colors(
@@ -99,13 +99,11 @@ func _create_player_inventory():
 		Color(0.3, 0.6, 1.0, 0.8),   # border color
 		Color(0.2, 0.5, 1.0, 0.9)    # item color
 	)
-	add_child(player_inventory)
+	player_grid.add_child(player_inventory)
 
-func _create_enemy_inventory():
-	var inventory_scene = preload("res://scenes/InventoryGrid.tscn")
+	# Enemy inventory
+	var enemy_grid = $Player2Inventory/GridContainer
 	enemy_inventory = inventory_scene.instantiate()
-	enemy_inventory.position = Vector2(900, 50)
-	enemy_inventory.scale = Vector2(0.8, 0.8)
 	enemy_inventory.read_only = true
 	enemy_inventory.title = "Enemy Inventory"
 	enemy_inventory.set_colors(
@@ -113,216 +111,24 @@ func _create_enemy_inventory():
 		Color(1.0, 0.3, 0.3, 0.8),   # border color
 		Color(1.0, 0.3, 0.3, 0.9)    # item color
 	)
-	add_child(enemy_inventory)
+	enemy_grid.add_child(enemy_inventory)
 
-func _create_player_stats():
-	# Timer in center middle
-	time_label = Label.new()
-	time_label.text = "0.0s"
-	time_label.position = Vector2(780, 420)  # Center between health bars
-	time_label.add_theme_font_size_override("font_size", 24)
-	time_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.5))
-	add_child(time_label)
+func _on_toggle_speed():
+	# Toggle between different playback speeds
+	if battle_speed_multiplier == 1.0:
+		battle_speed_multiplier = 2.0
+	elif battle_speed_multiplier == 2.0:
+		battle_speed_multiplier = 3.0
+	else:
+		battle_speed_multiplier = 1.0
 
-	player_stats_panel = Panel.new()
-	player_stats_panel.position = Vector2(500, 460)  # Bottom center-left
-	player_stats_panel.size = Vector2(180, 100)
+	# Update button text
+	var speed_button = $ControlButtons/SpeedButton
+	speed_button.text = "Speed: %.0fx" % battle_speed_multiplier
 
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.1, 0.15, 0.2, 0.9)
-	panel_style.border_color = Color(0.3, 0.8, 1.0, 0.8)
-	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(8)
-	player_stats_panel.add_theme_stylebox_override("panel", panel_style)
-	add_child(player_stats_panel)
-
-	# Player name
-	var name_label = Label.new()
-	name_label.text = "PLAYER"
-	name_label.position = Vector2(10, 5)
-	name_label.add_theme_font_size_override("font_size", 14)
-	name_label.add_theme_color_override("font_color", Color(0.3, 0.8, 1.0))
-	player_stats_panel.add_child(name_label)
-
-	# Health
-	var health_title = Label.new()
-	health_title.text = "Quota:"
-	health_title.position = Vector2(10, 30)
-	health_title.add_theme_font_size_override("font_size", 12)
-	player_stats_panel.add_child(health_title)
-
-	player_health_bar = ProgressBar.new()
-	player_health_bar.position = Vector2(10, 50)
-	player_health_bar.size = Vector2(160, 20)
-	player_health_bar.max_value = 100
-	player_health_bar.value = 100
-	player_health_bar.show_percentage = false  # Don't show percentage text
-	player_health_bar.modulate = Color(0.3, 1.0, 0.3)
-	player_stats_panel.add_child(player_health_bar)
-
-	player_health_label = Label.new()
-	player_health_label.text = "100/100"
-	player_health_label.position = Vector2(65, 52)  # Center it vertically on the bar
-	player_health_label.add_theme_font_size_override("font_size", 11)
-	player_health_label.add_theme_color_override("font_color", Color.WHITE)
-	player_health_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	player_health_label.add_theme_constant_override("shadow_offset_x", 1)
-	player_health_label.add_theme_constant_override("shadow_offset_y", 1)
-	player_stats_panel.add_child(player_health_label)
-
-	# Stamina (CPU)
-	var stamina_title = Label.new()
-	stamina_title.text = "CPU:"
-	stamina_title.position = Vector2(10, 75)
-	stamina_title.add_theme_font_size_override("font_size", 12)
-	player_stats_panel.add_child(stamina_title)
-
-	player_stamina_bar = ProgressBar.new()
-	player_stamina_bar.position = Vector2(10, 95)
-	player_stamina_bar.size = Vector2(160, 20)
-	player_stamina_bar.max_value = 10
-	player_stamina_bar.value = 10
-	player_stamina_bar.show_percentage = false
-	player_stamina_bar.modulate = Color(0.3, 0.6, 1.0)
-	player_stats_panel.add_child(player_stamina_bar)
-
-	player_stamina_label = Label.new()
-	player_stamina_label.text = "10/10"
-	player_stamina_label.position = Vector2(70, 97)
-	player_stamina_label.add_theme_font_size_override("font_size", 11)
-	player_stamina_label.add_theme_color_override("font_color", Color.WHITE)
-	player_stamina_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	player_stamina_label.add_theme_constant_override("shadow_offset_x", 1)
-	player_stamina_label.add_theme_constant_override("shadow_offset_y", 1)
-	player_stats_panel.add_child(player_stamina_label)
-
-	# Buffs - removed to save space in smaller panel
-
-func _create_enemy_stats():
-	enemy_stats_panel = Panel.new()
-	enemy_stats_panel.position = Vector2(900, 460)  # Bottom center-right
-	enemy_stats_panel.size = Vector2(180, 100)
-
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.2, 0.1, 0.1, 0.9)
-	panel_style.border_color = Color(1.0, 0.3, 0.3, 0.8)
-	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(8)
-	enemy_stats_panel.add_theme_stylebox_override("panel", panel_style)
-	add_child(enemy_stats_panel)
-
-	# Enemy name
-	var name_label = Label.new()
-	name_label.text = "ENEMY"
-	name_label.position = Vector2(10, 5)
-	name_label.add_theme_font_size_override("font_size", 14)
-	name_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-	enemy_stats_panel.add_child(name_label)
-
-	# Health
-	var health_title = Label.new()
-	health_title.text = "Quota:"
-	health_title.position = Vector2(10, 30)
-	health_title.add_theme_font_size_override("font_size", 12)
-	enemy_stats_panel.add_child(health_title)
-
-	enemy_health_bar = ProgressBar.new()
-	enemy_health_bar.position = Vector2(10, 50)
-	enemy_health_bar.size = Vector2(160, 20)
-	enemy_health_bar.max_value = 100
-	enemy_health_bar.value = 100
-	enemy_health_bar.show_percentage = false
-	enemy_health_bar.modulate = Color(1.0, 0.3, 0.3)
-	enemy_stats_panel.add_child(enemy_health_bar)
-
-	enemy_health_label = Label.new()
-	enemy_health_label.text = "100/100"
-	enemy_health_label.position = Vector2(65, 52)
-	enemy_health_label.add_theme_font_size_override("font_size", 11)
-	enemy_health_label.add_theme_color_override("font_color", Color.WHITE)
-	enemy_health_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	enemy_health_label.add_theme_constant_override("shadow_offset_x", 1)
-	enemy_health_label.add_theme_constant_override("shadow_offset_y", 1)
-	enemy_stats_panel.add_child(enemy_health_label)
-
-	# Stamina (CPU)
-	var stamina_title = Label.new()
-	stamina_title.text = "CPU:"
-	stamina_title.position = Vector2(10, 75)
-	stamina_title.add_theme_font_size_override("font_size", 12)
-	enemy_stats_panel.add_child(stamina_title)
-
-	enemy_stamina_bar = ProgressBar.new()
-	enemy_stamina_bar.position = Vector2(10, 95)
-	enemy_stamina_bar.size = Vector2(160, 20)
-	enemy_stamina_bar.max_value = 10
-	enemy_stamina_bar.value = 10
-	enemy_stamina_bar.show_percentage = false
-	enemy_stamina_bar.modulate = Color(1.0, 0.6, 0.3)
-	enemy_stats_panel.add_child(enemy_stamina_bar)
-
-	enemy_stamina_label = Label.new()
-	enemy_stamina_label.text = "10/10"
-	enemy_stamina_label.position = Vector2(70, 97)
-	enemy_stamina_label.add_theme_font_size_override("font_size", 11)
-	enemy_stamina_label.add_theme_color_override("font_color", Color.WHITE)
-	enemy_stamina_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	enemy_stamina_label.add_theme_constant_override("shadow_offset_x", 1)
-	enemy_stamina_label.add_theme_constant_override("shadow_offset_y", 1)
-	enemy_stats_panel.add_child(enemy_stamina_label)
-
-	# Buffs - removed to save space in smaller panel
-
-func _create_battle_log():
-	var log_panel = Panel.new()
-	log_panel.position = Vector2(200, 580)  # Bottom of screen
-	log_panel.size = Vector2(1200, 80)  # Wide and short
-
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.05, 0.05, 0.08, 0.9)
-	panel_style.border_color = Color(0.3, 0.3, 0.4, 0.6)
-	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(6)
-	log_panel.add_theme_stylebox_override("panel", panel_style)
-	add_child(log_panel)
-
-	var log_title = Label.new()
-	log_title.text = "Battle Log"
-	log_title.position = Vector2(10, 5)
-	log_title.add_theme_font_size_override("font_size", 14)
-	log_panel.add_child(log_title)
-
-	battle_log_container = RichTextLabel.new()
-	battle_log_container.position = Vector2(10, 20)
-	battle_log_container.size = Vector2(1180, 50)
-	battle_log_container.bbcode_enabled = true
-	battle_log_container.scroll_following = true
-	battle_log_container.add_theme_font_size_override("normal_font_size", 10)
-	log_panel.add_child(battle_log_container)
-
-func _create_control_buttons():
-	# Time label for battle progress
-	time_label = Label.new()
-	time_label.text = "0.0s / 20.0s"
-	time_label.position = Vector2(720, 430)
-	time_label.add_theme_font_size_override("font_size", 14)
-	time_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.9))
-	add_child(time_label)
-
-	var start_btn = Button.new()
-	start_btn.name = "StartBattle"
-	start_btn.text = "Start Battle"
-	start_btn.position = Vector2(720, 460)
-	start_btn.size = Vector2(120, 30)
-	start_btn.pressed.connect(_on_start_battle)
-	add_child(start_btn)
-
-	var back_btn = Button.new()
-	back_btn.text = "Back to Inventory"
-	back_btn.position = Vector2(720, 500)
-	back_btn.size = Vector2(120, 30)
-	back_btn.pressed.connect(_on_back_to_inventory)
-	add_child(back_btn)
+	# Update the event processor speed if playing
+	if event_processor and event_processor.is_playing:
+		event_processor.set_playback_speed(battle_speed_multiplier)
 
 func _update_stats_display():
 	# Update player stats
