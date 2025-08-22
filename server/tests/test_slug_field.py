@@ -81,7 +81,7 @@ class TestSlugField:
 
         for container_id in containers:
             container_info = config_loader.get_container(container_id)
-            item_spec = container_info["spec"]
+            item_spec = container_info
             assert hasattr(item_spec, "slug"), f"Container {container_id} missing slug"
             assert item_spec.slug != "", f"Container {container_id} has empty slug"
 

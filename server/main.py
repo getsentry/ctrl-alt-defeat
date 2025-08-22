@@ -767,10 +767,10 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                 container_info = containers_catalog[container_type]
                 p2_containers.append(
                     ServerContainer(
-                        spec=container_info["spec"],
+                        spec=container_info,
                         position=tuple(container_data["position"]),
                         uid=container_data["id"],
-                        shape=container_info["spec"].shape,
+                        shape=container_info.shape,
                     )
                 )
     else:
@@ -812,10 +812,10 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             container_info = containers_catalog[container_type]
             p1_containers.append(
                 ServerContainer(
-                    spec=container_info["spec"],
+                    spec=container_info,
                     position=tuple(container_data["position"]),
                     uid=container_data["id"],
-                    shape=container_info["spec"].shape,
+                    shape=container_info.shape,
                 )
             )
 
@@ -1315,10 +1315,10 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
     if round_number >= 5:
         containers.append(
             ServerContainer(
-                spec=vm_info["spec"],
+                spec=vm_info,
                 position=(6, 3),
                 uid="ai_vm3",
-                shape=vm_info["spec"].shape,
+                shape=vm_info.shape,
             ),
         )
 
@@ -1396,22 +1396,22 @@ def generate_ai_containers() -> List[ServerContainer]:
     # Standard VMs are 2x2, so adjust positions to avoid gaps
     containers = [
         ServerContainer(
-            spec=vm_info["spec"],
+            spec=vm_info,
             position=(0, 3),  # Covers (0,3), (1,3), (0,4), (1,4)
             uid="ai_vm1",
-            shape=vm_info["spec"].shape,
+            shape=vm_info.shape,
         ),
         ServerContainer(
-            spec=vm_info["spec"],
+            spec=vm_info,
             position=(2, 3),  # Covers (2,3), (3,3), (2,4), (3,4)
             uid="ai_vm2",
-            shape=vm_info["spec"].shape,
+            shape=vm_info.shape,
         ),
         ServerContainer(
-            spec=vm_info["spec"],
+            spec=vm_info,
             position=(4, 3),  # Covers (4,3), (5,3), (4,4), (5,4)
             uid="ai_vm3",
-            shape=vm_info["spec"].shape,
+            shape=vm_info.shape,
         ),
     ]
     return containers

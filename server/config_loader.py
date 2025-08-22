@@ -31,7 +31,7 @@ class ConfigLoader:
 
     def __init__(self, data_dir: str = "data"):
         self.data_dir = Path(data_dir)
-        self.containers = {}
+        self.containers: dict[str, ItemSpec] = {}
         self.items = {}
 
     def load_all(self):
@@ -41,9 +41,9 @@ class ConfigLoader:
         # Add containers to items catalog with special markers
         for container_id, container_info in self.containers.items():
             # Add to items with a special marker to indicate it's a container
-            self.items[container_id] = container_info["spec"]
+            self.items[container_id] = container_info
 
-    def load_containers(self, filename: str = "containers.json"):
+    def load_containers(self, filename: str = "containers.json") -> dict[str, ItemSpec]:
         """Load container configurations from JSON"""
         # Look for containers in items directory first, then data directory
         filepath = self.data_dir / "items" / filename
@@ -98,7 +98,9 @@ class ConfigLoader:
         self.items = items
         return items
 
-    def _create_container_spec(self, container_id: str, config: Dict[str, Any]) -> Dict:
+    def _create_container_spec(
+        self, container_id: str, config: Dict[str, Any]
+    ) -> ItemSpec:
         """Create a container specification from config"""
         shape = self._parse_shape(config["shape"])
 
@@ -126,9 +128,7 @@ class ConfigLoader:
             rarity=config.get("rarity", "common"),
         )
 
-        return {
-            "spec": spec,
-        }
+        return spec
 
     def _create_item_spec(self, item_id: str, config: Dict[str, Any]) -> ItemSpec:
         """Create an item specification from config"""
@@ -240,9 +240,9 @@ class ConfigLoader:
 
         return None
 
-    def get_container(self, container_id: str) -> Optional[Dict]:
+    def get_container(self, container_id: str) -> ItemSpec:
         """Get a container by ID"""
-        return self.containers.get(container_id)
+        return self.containers[container_id]
 
     def get_item(self, item_id: str) -> Optional[ItemSpec]:
         """Get an item by ID"""
@@ -261,13 +261,7 @@ class ConfigLoader:
 config_loader = ConfigLoader()
 
 
-def load_configurations():
-    """Load all configurations from JSON files"""
-    config_loader.load_all()
-    return config_loader
-
-
-def create_server_containers_from_config():
+def create_server_containers_from_config() -> dict[str, ItemSpec]:
     """Create server containers from configuration"""
     if not config_loader.containers:
         config_loader.load_containers()

@@ -39,7 +39,7 @@ class ServerContainer:
         return set(self.get_occupied_squares())
 
 
-def create_server_containers():
+def create_server_containers() -> dict[str, ItemSpec]:
     """Create server containers from JSON configuration"""
     from config_loader import create_server_containers_from_config
 
@@ -175,10 +175,10 @@ if __name__ == "__main__":
 
     # Add a standard VM at position (1, 1)
     standard_vm = ServerContainer(
-        spec=containers["standard_vm"]["spec"],
+        spec=containers["standard_vm"],
         position=(1, 1),
         uid="vm1",
-        shape=containers["standard_vm"]["spec"].shape,
+        shape=containers["standard_vm"].shape,
     )
 
     if validator.add_container(standard_vm):
@@ -195,10 +195,10 @@ if __name__ == "__main__":
 
     # Add an edge node
     edge_node = ServerContainer(
-        spec=containers["edge_node"]["spec"],
+        spec=containers["edge_node"],
         position=(4, 2),
         uid="edge1",
-        shape=containers["edge_node"]["spec"].shape,
+        shape=containers["edge_node"].shape,
     )
 
     if validator.add_container(edge_node):

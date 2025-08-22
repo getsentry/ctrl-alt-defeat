@@ -17,18 +17,18 @@ def get_test_containers():
 
     # Player 1 gets a standard VM at (0,0)
     p1_container = ServerContainer(
-        spec=containers["standard_vm"]["spec"],
+        spec=containers["standard_vm"],
         position=(0, 0),
         uid="p1_test_rack",
-        shape=containers["standard_vm"]["spec"].shape,
+        shape=containers["standard_vm"].shape,
     )
 
     # Player 2 gets a standard VM at (4,0)
     p2_container = ServerContainer(
-        spec=containers["standard_vm"]["spec"],
+        spec=containers["standard_vm"],
         position=(4, 0),
         uid="p2_test_rack",
-        shape=containers["standard_vm"]["spec"].shape,
+        shape=containers["standard_vm"].shape,
     )
 
     return [p1_container], [p2_container]

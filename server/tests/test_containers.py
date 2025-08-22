@@ -22,10 +22,10 @@ class TestServerContainers:
 
         # Create a standard VM at position (1, 1)
         standard_vm = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(1, 1),
             uid="vm1",
-            shape=containers["standard_vm"]["spec"].shape,
+            shape=containers["standard_vm"].shape,
         )
 
         # Should be able to place it
@@ -45,7 +45,7 @@ class TestServerContainers:
 
         # Place first VM
         vm1 = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(1, 1),
             uid="vm1",
             shape=SHAPES["2x2"],
@@ -54,7 +54,7 @@ class TestServerContainers:
 
         # Try to place overlapping VM
         vm2 = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(2, 2),  # This would overlap with vm1
             uid="vm2",
             shape=SHAPES["2x2"],
@@ -63,7 +63,7 @@ class TestServerContainers:
 
         # Try non-overlapping VM
         vm3 = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(4, 1),  # No overlap
             uid="vm3",
             shape=SHAPES["2x2"],
@@ -83,7 +83,7 @@ class TestServerContainers:
         # Add a container
         containers = create_server_containers()
         vm = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(1, 1),
             uid="vm1",
             shape=SHAPES["2x2"],
@@ -110,10 +110,10 @@ class TestServerContainers:
 
         # Add a container orchestrator
         container = ServerContainer(
-            spec=containers["container_orchestrator"]["spec"],
+            spec=containers["container_orchestrator"],
             position=(1, 1),
             uid="container1",
-            shape=containers["container_orchestrator"]["spec"].shape,
+            shape=containers["container_orchestrator"].shape,
         )
         validator.add_container(container)
 
@@ -133,10 +133,10 @@ class TestServerContainers:
 
         # Add a container orchestrator (3x2, 6 slots)
         container = ServerContainer(
-            spec=containers["container_orchestrator"]["spec"],
+            spec=containers["container_orchestrator"],
             position=(1, 1),
             uid="container1",
-            shape=containers["container_orchestrator"]["spec"].shape,
+            shape=containers["container_orchestrator"].shape,
         )
         validator.add_container(container)
 
@@ -162,13 +162,13 @@ class TestServerContainers:
 
         # Place two adjacent VMs
         vm1 = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(0, 0),
             uid="vm1",
             shape=SHAPES["2x2"],
         )
         vm2 = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(2, 0),  # Adjacent to vm1
             uid="vm2",
             shape=SHAPES["2x2"],
@@ -193,7 +193,7 @@ class TestServerContainers:
 
         # Create a container
         vm1 = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(1, 1),
             uid="p1_vm",
             shape=SHAPES["2x2"],
@@ -224,7 +224,7 @@ class TestServerContainers:
         # Should pass validation with containers
         # (In real usage, p2 would also need a container)
         vm2 = ServerContainer(
-            spec=containers["standard_vm"]["spec"],
+            spec=containers["standard_vm"],
             position=(1, 1),
             uid="p2_vm",
             shape=SHAPES["2x2"],
