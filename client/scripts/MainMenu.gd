@@ -2,102 +2,69 @@ extends Control
 
 const APITypes = preload("res://scripts/api_types.gd")
 
+@onready var new_game_button = $"MenuPanel_ButtonContainer#NewGameButton"
+@onready var quit_button = $"MenuPanel_ButtonContainer#QuitButton"
+@onready var version_label = $VersionLabel
+@onready var music_player = $BackgroundMusic
+
 func _ready():
 	# Set window size for consistency
 	if not OS.has_feature("headless"):  # Only set window size if we have a display
 		DisplayServer.window_set_size(Vector2i(2560, 1600))  # Match background image size
 		get_window().min_size = Vector2i(2560, 1600)  # Prevent resizing smaller
 		get_window().max_size = Vector2i(2560, 1600)  # Prevent resizing larger for fixed size
-#		DisplayServer.window_set_position(DisplayServer.window_get_position() - Vector2i(268, 100))
 	_setup_ui()
 
+	# Start playing background music
+	if music_player and not music_player.playing:
+		music_player.play()
+
 func _setup_ui():
-	# Dark background
-	var bg = ColorRect.new()
-	bg.color = Color(0.02, 0.02, 0.03, 1.0)
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	# Style the buttons
+	var button_normal_style = StyleBoxFlat.new()
+	button_normal_style.bg_color = Color(0.2, 0.25, 0.35, 0.9)
+	button_normal_style.border_color = Color(0.3, 0.6, 1.0, 0.6)
+	button_normal_style.set_border_width_all(2)
+	button_normal_style.set_corner_radius_all(6)
 
-	# Center container
-	var center_container = VBoxContainer.new()
-	center_container.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	center_container.position = Vector2(-200, -200)
-	center_container.add_theme_constant_override("separation", 20)
-	add_child(center_container)
+	var button_hover_style = StyleBoxFlat.new()
+	button_hover_style.bg_color = Color(0.25, 0.35, 0.5, 0.95)
+	button_hover_style.border_color = Color(0.4, 0.7, 1.0, 1.0)
+	button_hover_style.set_border_width_all(3)
+	button_hover_style.set_corner_radius_all(6)
 
-	# Title
-	var title = Label.new()
-	title.name = "TitleLabel"
-	title.text = "SENTRY AUTOBATTLER"
-	title.add_theme_font_size_override("font_size", 48)
-	title.add_theme_color_override("font_color", Color(0.3, 0.8, 1.0))
-	center_container.add_child(title)
+	var button_pressed_style = StyleBoxFlat.new()
+	button_pressed_style.bg_color = Color(0.15, 0.2, 0.3, 0.95)
+	button_pressed_style.border_color = Color(0.3, 0.5, 0.8, 1.0)
+	button_pressed_style.set_border_width_all(2)
+	button_pressed_style.set_corner_radius_all(6)
 
-	# Subtitle
-	var subtitle = Label.new()
-	subtitle.text = "Server Room Battles"
-	subtitle.add_theme_font_size_override("font_size", 20)
-	subtitle.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
-	center_container.add_child(subtitle)
+	# Apply styles to all buttons
+	var buttons = [new_game_button, quit_button]
+	for button in buttons:
+		button.add_theme_stylebox_override("normal", button_normal_style)
+		button.add_theme_stylebox_override("hover", button_hover_style)
+		button.add_theme_stylebox_override("pressed", button_pressed_style)
+		button.add_theme_font_size_override("font_size", 24)
+		button.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0))
+		button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_pressed_color", Color(0.8, 0.9, 1.0))
+		button.add_theme_color_override("font_disabled_color", Color(0.4, 0.4, 0.5))
 
-	# Spacer
-	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 50)
-	center_container.add_child(spacer)
-
-	# Buttons container
-	var button_container = VBoxContainer.new()
-	button_container.add_theme_constant_override("separation", 10)
-	center_container.add_child(button_container)
-
-	# Start Game button
-	var start_btn = Button.new()
-	start_btn.name = "NewGameButton"
-	start_btn.text = "START NEW GAME"
-	start_btn.custom_minimum_size = Vector2(400, 60)
-	start_btn.add_theme_font_size_override("font_size", 24)
-	start_btn.pressed.connect(_on_start_game)
-	button_container.add_child(start_btn)
-
-	# Continue button (disabled if no save)
-	var continue_btn = Button.new()
-	continue_btn.name = "ContinueButton"
-	continue_btn.text = "CONTINUE"
-	continue_btn.custom_minimum_size = Vector2(400, 60)
-	continue_btn.add_theme_font_size_override("font_size", 24)
-	continue_btn.disabled = true  # TODO: Check for saved game
-	button_container.add_child(continue_btn)
-
-	# Settings button
-	var settings_btn = Button.new()
-	settings_btn.name = "SettingsButton"
-	settings_btn.text = "SETTINGS"
-	settings_btn.custom_minimum_size = Vector2(400, 60)
-	settings_btn.add_theme_font_size_override("font_size", 24)
-	settings_btn.pressed.connect(_on_settings)
-	button_container.add_child(settings_btn)
-
-	# Exit button
-	var exit_btn = Button.new()
-	exit_btn.name = "QuitButton"
-	exit_btn.text = "EXIT"
-	exit_btn.custom_minimum_size = Vector2(400, 60)
-	exit_btn.add_theme_font_size_override("font_size", 24)
-	exit_btn.pressed.connect(_on_exit)
-	button_container.add_child(exit_btn)
-
-	# Version label
-	var version_label = Label.new()
-	version_label.name = "VersionLabel"
-	version_label.text = "v0.1.0 - Alpha"
 	version_label.add_theme_font_size_override("font_size", 14)
-	version_label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.5))
-	version_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	version_label.position = Vector2(-120, -30)
-	add_child(version_label)
+	version_label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.5, 0.8))
+	new_game_button.pressed.connect(_on_start_game)
+	quit_button.pressed.connect(_on_exit)
 
 func _on_start_game():
 	print("Starting new game...")
+
+	# Fade out music before transitioning
+	if music_player and music_player.playing:
+		var tween = get_tree().create_tween()
+		tween.tween_property(music_player, "volume_db", -80.0, 1.0)  # Fade to silence over 1 second
+		await tween.finished
+		music_player.stop()
 
 	# Reset game state
 	GameStateManager.start_new_game()
