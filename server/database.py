@@ -5,7 +5,7 @@ Database connection and session management for PostgreSQL
 import logging
 import os
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Dict, Optional, Tuple
 from urllib.parse import parse_qs, urlparse, urlunparse
 
 from models import Base
@@ -14,6 +14,55 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 logger = logging.getLogger(__name__)
+
+
+def parse_asyncpg_url(database_url: str) -> Tuple[str, Dict[str, Any]]:
+    """Parse database URL and extract SSL parameters for asyncpg.
+
+    Returns:
+        Tuple of (clean_url, connect_args) where:
+        - clean_url: URL without sslmode parameter
+        - connect_args: Dict with SSL configuration for asyncpg
+    """
+    parsed_url = urlparse(database_url)
+    query_params = parse_qs(parsed_url.query)
+
+    # Check for sslmode in query parameters
+    sslmode = query_params.get("sslmode", [None])[0]
+
+    # Remove sslmode from URL as asyncpg doesn't accept it directly
+    if "sslmode" in query_params:
+        del query_params["sslmode"]
+        # Reconstruct query string without sslmode
+        if query_params:
+            # Only create query string if there are remaining params
+            new_query = "&".join([f"{k}={v[0]}" for k, v in query_params.items()])
+        else:
+            new_query = ""
+        # Reconstruct URL without sslmode
+        clean_url = urlunparse(
+            (
+                parsed_url.scheme,
+                parsed_url.netloc,
+                parsed_url.path,
+                parsed_url.params,
+                new_query,
+                parsed_url.fragment,
+            )
+        )
+    else:
+        clean_url = database_url
+
+    # Prepare connect_args based on SSL requirements
+    connect_args = {}
+    if sslmode:
+        if sslmode == "require":
+            connect_args["ssl"] = True
+        elif sslmode == "disable":
+            connect_args["ssl"] = False
+        # Other modes like 'prefer', 'allow' can be added as needed
+
+    return clean_url, connect_args
 
 
 def get_database_url(
@@ -120,48 +169,17 @@ class DatabaseManager:
                 else AsyncAdaptedQueuePool
             )
 
-            # Parse the URL to extract and handle SSL parameters
-            parsed_url = urlparse(self.async_database_url)
-            query_params = parse_qs(parsed_url.query)
+            # Use shared function to handle SSL parameters
+            clean_url, ssl_args = parse_asyncpg_url(self.async_database_url)
 
-            # Check for sslmode in query parameters
-            sslmode = query_params.get("sslmode", [None])[0]
-
-            # Remove sslmode from URL as asyncpg doesn't accept it directly
-            if "sslmode" in query_params:
-                del query_params["sslmode"]
-                # Reconstruct query string without sslmode
-                new_query = "&".join([f"{k}={v[0]}" for k, v in query_params.items()])
-                # Reconstruct URL without sslmode
-                clean_url = urlunparse(
-                    (
-                        parsed_url.scheme,
-                        parsed_url.netloc,
-                        parsed_url.path,
-                        parsed_url.params,
-                        new_query,
-                        parsed_url.fragment,
-                    )
-                )
-            else:
-                clean_url = self.async_database_url
-
-            # Prepare connect_args based on SSL requirements
+            # Prepare connect_args with SSL and other settings
             connect_args = {
                 "server_settings": {"jit": "off"},
                 "timeout": 2,  # Connection timeout in seconds
                 "command_timeout": 5,  # Command timeout in seconds
             }
-
-            # Add SSL configuration if sslmode was specified
-            if sslmode:
-                if sslmode == "require":
-                    connect_args["ssl"] = True
-                elif sslmode == "disable":
-                    connect_args["ssl"] = False
-                # For other modes like 'prefer', 'allow', etc., default to True for safety
-                elif sslmode in ["prefer", "allow", "verify-ca", "verify-full"]:
-                    connect_args["ssl"] = True
+            # Merge SSL args
+            connect_args.update(ssl_args)
 
             self.engine = create_async_engine(
                 clean_url,

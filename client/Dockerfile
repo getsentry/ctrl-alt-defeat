@@ -12,6 +12,11 @@ COPY . .
 ARG API_URL="https://ctrl-alt-defeat-backend.sentry.gg"
 ENV API_URL=${API_URL}
 
+# Replace the API URL directly in the source code before export
+RUN sed -i "s|var BASE_URL = \"http://localhost:8000\"|var BASE_URL = \"${API_URL}\"|g" /app/scripts/BattleServerAPI.gd && \
+    echo "Updated BattleServerAPI.gd with API URL:" && \
+    grep "var BASE_URL" /app/scripts/BattleServerAPI.gd
+
 # Create export directory
 RUN mkdir -p /app/web-build
 
@@ -22,6 +27,10 @@ RUN godot --headless --export-release "Web" /app/web-build/index.html || \
     (echo "Export failed - checking available presets:" && \
      godot --headless --export-list && \
      exit 1)
+
+# Verify export created files
+RUN echo "Files created by export:" && \
+    ls -la /app/web-build/
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine

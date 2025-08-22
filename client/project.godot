@@ -10,8 +10,8 @@ config_version=5
 
 [application]
 
-config/name="Sentry Autobattler"
-config/description="Backpack Battles-style autobattler with Sentry product themes"
+config/name="Ctrl Alt Defeat"
+config/description="Inventory Based AutoBattler"
 run/main_scene="res://scenes/MainMenu.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
@@ -27,8 +27,6 @@ window/size/viewport_width=2560
 window/size/viewport_height=1600
 window/size/initial_position_type=2
 window/size/resizable=false
-window/stretch/mode="viewport"
-window/stretch/aspect="keep"
 
 [editor_plugins]
 

@@ -11,7 +11,7 @@ from pathlib import Path
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -24,9 +24,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Import database URL builder
+# Import database URL builder and SSL parser
 sys.path.append(str(Path(__file__).parent.parent))
-from database import get_database_url  # noqa: E402
+from database import get_database_url, parse_asyncpg_url  # noqa: E402
 
 # Get database URL from environment with support for DB_HOST and DB_NAME
 DATABASE_URL = get_database_url(
@@ -70,13 +70,17 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode with async engine."""
-    configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = ASYNC_DATABASE_URL
+    # Use shared function to handle SSL parameters
+    clean_url, connect_args = parse_asyncpg_url(ASYNC_DATABASE_URL)
 
-    connectable = async_engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+    poolclass = (
+        pool.NullPool
+        if os.environ.get("TEST_MODE") == "true"
+        else pool.AsyncAdaptedQueuePool
+    )
+    # Create engine with proper SSL configuration
+    connectable = create_async_engine(
+        clean_url, poolclass=poolclass, connect_args=connect_args
     )
 
     async with connectable.connect() as connection:
