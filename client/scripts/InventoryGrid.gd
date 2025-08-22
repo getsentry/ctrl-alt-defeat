@@ -210,6 +210,9 @@ func _add_container(container: APITypes.ServerContainer):
 	# Set up the visual
 	container_visual.setup(container_data, cell_size, cell_spacing)
 
+	# Enable tooltips for containers too
+	container_visual.enable_tooltip = true
+
 	# Update grid cells to show server pattern and mark as active
 	for cy in range(height):
 		for cx in range(width):
@@ -252,6 +255,9 @@ func _add_item(item: APITypes.InventoryItem):
 
 	# Set up the visual with item data and grid settings
 	item_visual.setup(item, cell_size, cell_spacing)
+
+	# Enable tooltips for all items
+	item_visual.enable_tooltip = true
 
 	# Mark grid cells as occupied
 	for offset in item.shape:

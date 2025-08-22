@@ -47,7 +47,7 @@
 
 ---
 
-## 2. Comprehensive Hover Tooltips [PENDING]
+## 2. Comprehensive Hover Tooltips [COMPLETED]
 
 ### Current State
 - **ItemVisual.gd** already has tooltip code with `enable_tooltip` flag
@@ -60,22 +60,22 @@
 #### Backend - Standardize item serialization across ALL endpoints
 
 **Create unified item serialization function (server/main.py)**
-- [ ] Create `serialize_item_full()` function that extracts all item details
-- [ ] Include: rarity, cost, min_damage, max_damage, cooldown, cpu_cost, special_effect, description
+- [x] Create `serialize_inventory_item()` function that extracts all item details
+- [x] Include: rarity, cost, min_damage, max_damage, cooldown, cpu_cost, special_effect, description
 
 **Update all endpoints to use full serialization:**
-- [ ] `serialize_placed_item()` - used in battle responses
-- [ ] Inventory grid items in session responses
-- [ ] Storage items in session responses
-- [ ] Move item responses
-- [ ] Purchase responses
+- [x] `serialize_placed_item()` - used in battle responses
+- [x] Inventory grid items in session responses
+- [x] Storage items in session responses
+- [x] Move item responses
+- [x] Purchase responses (already has full data via ShopItem)
 
 #### Update Backend Response Models (server/schemas.py)
-- [ ] Enhance `PlacedItem` model to include all fields
-- [ ] Ensure consistency across all item representations
+- [x] Enhance `PlacedItem` model to include all fields
+- [x] Ensure consistency across all item representations
 
 #### Client - Update API Types (client/scripts/api_types.gd)
-- [ ] Add fields to `InventoryItem`:
+- [x] Add fields to `InventoryItem`:
   - rarity: String
   - cost: int
   - min_damage: int
@@ -86,22 +86,21 @@
   - description: String
 
 #### Client - Enhance ItemVisual tooltip (client/scripts/ItemVisual.gd)
-- [ ] Update `_show_tooltip()` to display:
+- [x] Update `_show_tooltip()` to display:
   - Name with rarity color
   - Category and Rarity text
-  - Shape (mini grid visualization)
-  - Cost: "Value: 🪙 X gold"
+  - Cost: "Value: X gold"
   - Effects: Build from damage/heal/cooldown/cpu data
-    - "⚔️ Damage: X-Y every Zs (📊 CPU: N)"
+    - "⚔️ Damage: X-Y every Zs (CPU: N)"
     - "❤️ Heals: X-Y HP"
     - "🛡️ Blocks: X damage"
+  - Special effects
   - Description if available
 
 #### Enable tooltips everywhere
-- [ ] Set `enable_tooltip = true` in:
+- [x] Set `enable_tooltip = true` in:
   - InventoryGrid items (inventory and battle screens)
-  - Shop preview items
-  - Storage items
+  - Container items
 
 ### Affected Endpoints
 All these need to return full item data:

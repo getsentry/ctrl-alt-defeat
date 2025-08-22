@@ -220,46 +220,169 @@ func _show_tooltip():
 	# Create content
 	var vbox = VBoxContainer.new()
 	vbox.position = Vector2(8, 8)
+	vbox.add_theme_constant_override("separation", 4)
 
-	# Item name
+	# Item name with rarity color
 	var name_label = Label.new()
 	var item_name = ""
+	var rarity = ""
+
 	if item_data is Dictionary:
 		item_name = item_data.get("name", item_data.get("item_type", "Unknown"))
+		rarity = item_data.get("rarity", "common")
 	elif "name" in item_data:
 		item_name = item_data.name
+		rarity = item_data.rarity if "rarity" in item_data else "common"
 	elif "item_type" in item_data:
 		item_name = item_data.item_type
 
 	name_label.text = item_name
 	name_label.add_theme_font_size_override("font_size", 14)
-	name_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+
+	# Color based on rarity
+	var rarity_colors = {
+		"common": Color(1.0, 1.0, 1.0),
+		"uncommon": Color(0.3, 1.0, 0.3),
+		"rare": Color(0.3, 0.6, 1.0),
+		"epic": Color(0.7, 0.3, 1.0),
+		"legendary": Color(1.0, 0.5, 0.0),
+		"godly": Color(1.0, 0.2, 0.2)
+	}
+	name_label.add_theme_color_override("font_color", rarity_colors.get(rarity, Color(1.0, 1.0, 1.0)))
 	vbox.add_child(name_label)
 
-	# Category/Type
+	# Category and Rarity
 	var category = ""
 	if item_data is Dictionary:
 		category = item_data.get("category", "")
 	elif "category" in item_data:
 		category = item_data.category
 
-	if category:
-		var category_label = Label.new()
-		category_label.text = category.capitalize()
-		category_label.add_theme_font_size_override("font_size", 11)
-		category_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
-		vbox.add_child(category_label)
+	if category or rarity:
+		var info_label = Label.new()
+		var info_text = ""
+		if category:
+			info_text = category.capitalize()
+		if rarity and rarity != "common":
+			if info_text:
+				info_text += " • "
+			info_text += rarity.capitalize()
+		info_label.text = info_text
+		info_label.add_theme_font_size_override("font_size", 11)
+		info_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+		vbox.add_child(info_label)
 
-	# Effects/Description (if available)
+	# Cost
+	var cost = 0
+	if item_data is Dictionary:
+		cost = item_data.get("cost", 0)
+	elif "cost" in item_data:
+		cost = item_data.cost
+
+	if cost > 0:
+		var cost_label = Label.new()
+		cost_label.text = "Value: " + str(cost) + " gold"
+		cost_label.add_theme_font_size_override("font_size", 10)
+		cost_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+		vbox.add_child(cost_label)
+
+	# Add separator
+	var separator = HSeparator.new()
+	separator.add_theme_color_override("separator", Color(0.3, 0.3, 0.4, 0.5))
+	vbox.add_child(separator)
+
+	# Effects based on data
+	var has_effects = false
+
+	# Damage effect
+	var min_damage = 0
+	var max_damage = 0
+	var cooldown = 0.0
+	var cpu_cost = 0
+
+	if item_data is Dictionary:
+		min_damage = item_data.get("min_damage", 0)
+		max_damage = item_data.get("max_damage", 0)
+		cooldown = item_data.get("cooldown", 0.0)
+		cpu_cost = item_data.get("cpu_cost", 0)
+	elif "min_damage" in item_data:
+		min_damage = item_data.min_damage
+		max_damage = item_data.max_damage
+		cooldown = item_data.cooldown
+		cpu_cost = item_data.cpu_cost
+
+	if min_damage > 0 or max_damage > 0:
+		var damage_label = Label.new()
+		var damage_text = "⚔️ Damage: " + str(min_damage) + "-" + str(max_damage)
+		if cooldown > 0:
+			damage_text += " every " + str(cooldown) + "s"
+		if cpu_cost > 0:
+			damage_text += " (CPU: " + str(cpu_cost) + ")"
+		damage_label.text = damage_text
+		damage_label.add_theme_font_size_override("font_size", 10)
+		damage_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.5))
+		vbox.add_child(damage_label)
+		has_effects = true
+
+	# Heal effect
+	var min_heal = 0
+	var max_heal = 0
+	if item_data is Dictionary:
+		min_heal = item_data.get("min_heal", 0)
+		max_heal = item_data.get("max_heal", 0)
+	elif "min_heal" in item_data:
+		min_heal = item_data.min_heal
+		max_heal = item_data.max_heal
+
+	if min_heal > 0 or max_heal > 0:
+		var heal_label = Label.new()
+		var heal_text = "❤️ Heals: " + str(min_heal) + "-" + str(max_heal) + " HP"
+		if cooldown > 0:
+			heal_text += " every " + str(cooldown) + "s"
+		heal_label.text = heal_text
+		heal_label.add_theme_font_size_override("font_size", 10)
+		heal_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5))
+		vbox.add_child(heal_label)
+		has_effects = true
+
+	# Block effect
+	var block_amount = 0
+	if item_data is Dictionary:
+		block_amount = item_data.get("block_amount", 0)
+	elif "block_amount" in item_data:
+		block_amount = item_data.block_amount
+
+	if block_amount > 0:
+		var block_label = Label.new()
+		block_label.text = "🛡️ Blocks: " + str(block_amount) + " damage"
+		block_label.add_theme_font_size_override("font_size", 10)
+		block_label.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
+		vbox.add_child(block_label)
+		has_effects = true
+
+	# Special effect
+	var special_effect = ""
+	if item_data is Dictionary:
+		special_effect = item_data.get("special_effect", "")
+	elif "special_effect" in item_data:
+		special_effect = item_data.special_effect
+
+	if special_effect:
+		var special_label = Label.new()
+		special_label.text = "✨ Special: " + special_effect
+		special_label.add_theme_font_size_override("font_size", 10)
+		special_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.2))
+		vbox.add_child(special_label)
+		has_effects = true
+
+	# Description (if available and no effects shown)
 	var description = ""
 	if item_data is Dictionary:
-		description = item_data.get("description", item_data.get("effect", ""))
+		description = item_data.get("description", "")
 	elif "description" in item_data:
 		description = item_data.description
-	elif "effect" in item_data:
-		description = item_data.effect
 
-	if description:
+	if description and not has_effects:
 		var desc_label = Label.new()
 		desc_label.text = description
 		desc_label.add_theme_font_size_override("font_size", 10)

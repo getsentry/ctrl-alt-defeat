@@ -33,6 +33,18 @@ class InventoryItem extends Resource:
 	var category: String = ""
 	var position: Position
 	var shape: Array = []  # Array of [x, y] offsets
+	# Additional fields for tooltips
+	var rarity: String = ""
+	var cost: int = 0
+	var min_damage: int = 0
+	var max_damage: int = 0
+	var min_heal: int = 0
+	var max_heal: int = 0
+	var cooldown: float = 0.0
+	var cpu_cost: int = 0
+	var special_effect: String = ""
+	var block_amount: int = 0
+	var description: String = ""
 
 	func _init(data: Dictionary):
 		# Required fields per server PlacedItem schema
@@ -49,6 +61,19 @@ class InventoryItem extends Resource:
 		if data.has("position"):
 			position = Position.new(data["position"])
 		shape = data.get("shape", [])  # Shape as list of [x, y] offsets
+
+		# Parse additional tooltip fields (optional for backwards compatibility)
+		rarity = data.get("rarity", "")
+		cost = data.get("cost", 0)
+		min_damage = data.get("min_damage", 0)
+		max_damage = data.get("max_damage", 0)
+		min_heal = data.get("min_heal", 0)
+		max_heal = data.get("max_heal", 0)
+		cooldown = data.get("cooldown", 0.0)
+		cpu_cost = data.get("cpu_cost", 0)
+		special_effect = data.get("special_effect", "")
+		block_amount = data.get("block_amount", 0)
+		description = data.get("description", "")
 
 	func to_dict() -> Dictionary:
 		return {

@@ -287,9 +287,32 @@ async def start_session(
 
     # Save the updated session
     await session_manager.update_session(session)
+
+    # Enhance inventory items with full details for tooltips
+    enhanced_session = GameSession(
+        player_id=session.player_id,
+        player_name=session.player_name,
+        round=session.round,
+        gold=session.gold,
+        lives=session.lives,
+        wins=session.wins,
+        losses=session.losses,
+        last_battle_result=session.last_battle_result,
+        current_shop=session.current_shop,
+        game_seed=session.game_seed,
+        shop_refresh_count=session.shop_refresh_count,
+        inventory_grid=[
+            serialize_inventory_item(item) for item in session.inventory_grid
+        ],
+        inventory_storage=[
+            serialize_inventory_item(item) for item in session.inventory_storage
+        ],
+        server_containers=session.server_containers,
+    )
+
     return StartSessionResponse(
         player_id=player_id,
-        session=session,
+        session=enhanced_session,
     )
 
 
@@ -334,6 +357,101 @@ async def refresh_shop(request: ShopRefreshRequest) -> ShopRefreshResponse:
 
     # Shop already contains ShopItem models
     return ShopRefreshResponse(shop=session.current_shop, gold=session.gold)
+
+
+def serialize_inventory_item(item_data: Dict) -> Dict:
+    """Serialize an inventory item with full details for tooltips"""
+    # If we have the item spec, add full details
+    item_type = item_data.get("item_type", "")
+    if item_type in ITEM_CATALOG:
+        item_spec = ITEM_CATALOG[item_type]
+
+        # Extract damage, heal, cooldown, and CPU info from triggers
+        min_damage = 0
+        max_damage = 0
+        min_heal = 0
+        max_heal = 0
+        cooldown = 0.0
+        cpu_cost = 0
+        special_effect = ""
+        block_amount = 0
+
+        # Look through triggers for effects
+        if hasattr(item_spec, "triggers") and item_spec.triggers:
+            for trigger in item_spec.triggers:
+                # Get cooldown and CPU cost from timer triggers
+                if hasattr(trigger, "cooldown"):
+                    cooldown = trigger.cooldown
+                if hasattr(trigger, "cpu_cost"):
+                    cpu_cost = trigger.cpu_cost
+
+                # Look through effects
+                if hasattr(trigger, "effects"):
+                    for effect in trigger.effects:
+                        # Attack effects
+                        if hasattr(effect, "min_damage") and hasattr(
+                            effect, "max_damage"
+                        ):
+                            min_damage = max(min_damage, effect.min_damage)
+                            max_damage = max(max_damage, effect.max_damage)
+                            if hasattr(effect, "special") and effect.special:
+                                special_effect = effect.special
+                        # Heal effects
+                        elif hasattr(effect, "min_heal") and hasattr(
+                            effect, "max_heal"
+                        ):
+                            min_heal = max(min_heal, effect.min_heal)
+                            max_heal = max(max_heal, effect.max_heal)
+                        # Block effects
+                        elif hasattr(effect, "block_amount"):
+                            block_amount = max(block_amount, effect.block_amount)
+
+        # Get rarity and calculate cost
+        rarity = item_spec.rarity if hasattr(item_spec, "rarity") else "common"
+        cost = get_shop_cost(rarity, 1)
+
+        # Build description from effects
+        description = ""
+        if min_damage > 0:
+            description = f"Deals {min_damage}-{max_damage} damage"
+            if cooldown > 0:
+                description += f" every {cooldown}s"
+            if cpu_cost > 0:
+                description += f" (costs {cpu_cost} CPU)"
+        elif min_heal > 0:
+            description = f"Heals {min_heal}-{max_heal} HP"
+            if cooldown > 0:
+                description += f" every {cooldown}s"
+        elif block_amount > 0:
+            description = f"Blocks {block_amount} damage when attacked"
+
+        if special_effect:
+            if description:
+                description += f". Special: {special_effect}"
+            else:
+                description = f"Special: {special_effect}"
+
+        # Add the new fields to the existing data
+        enhanced_item = dict(item_data)
+        enhanced_item.update(
+            {
+                "rarity": rarity,
+                "cost": cost,
+                "min_damage": min_damage,
+                "max_damage": max_damage,
+                "min_heal": min_heal,
+                "max_heal": max_heal,
+                "cooldown": cooldown,
+                "cpu_cost": cpu_cost,
+                "special_effect": special_effect,
+                "block_amount": block_amount,
+                "description": description,
+            }
+        )
+        return enhanced_item
+
+    # Return original if we don't have the spec
+    return item_data
 
 
 def get_shop_cost(rarity: str, tier: int) -> int:
@@ -834,7 +952,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
     # Serialize player and enemy inventories for client display
     def serialize_placed_item(item: PlacedItem) -> Dict:
-        """Convert PlacedItem to client-compatible format"""
+        """Convert PlacedItem to client-compatible format with full details"""
         shape_data = [[0, 0]]  # Default 1x1 shape
         if item.spec.shape:
             # ItemShape has 'squares' attribute, not 'occupied_squares'
@@ -842,6 +960,72 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                 shape_data = [list(s) for s in item.spec.shape.squares]
             elif hasattr(item.spec.shape, "get_occupied_squares"):
                 shape_data = [list(s) for s in item.spec.shape.get_occupied_squares()]
+
+        # Extract damage, heal, cooldown, and CPU info from triggers
+        min_damage = 0
+        max_damage = 0
+        min_heal = 0
+        max_heal = 0
+        cooldown = 0.0
+        cpu_cost = 0
+        special_effect = ""
+        block_amount = 0
+
+        # Look through triggers for effects
+        if hasattr(item.spec, "triggers") and item.spec.triggers:
+            for trigger in item.spec.triggers:
+                # Get cooldown and CPU cost from timer triggers
+                if hasattr(trigger, "cooldown"):
+                    cooldown = trigger.cooldown
+                if hasattr(trigger, "cpu_cost"):
+                    cpu_cost = trigger.cpu_cost
+
+                # Look through effects
+                if hasattr(trigger, "effects"):
+                    for effect in trigger.effects:
+                        # Attack effects
+                        if hasattr(effect, "min_damage") and hasattr(
+                            effect, "max_damage"
+                        ):
+                            min_damage = max(min_damage, effect.min_damage)
+                            max_damage = max(max_damage, effect.max_damage)
+                            if hasattr(effect, "special") and effect.special:
+                                special_effect = effect.special
+                        # Heal effects
+                        elif hasattr(effect, "min_heal") and hasattr(
+                            effect, "max_heal"
+                        ):
+                            min_heal = max(min_heal, effect.min_heal)
+                            max_heal = max(max_heal, effect.max_heal)
+                        # Block effects
+                        elif hasattr(effect, "block_amount"):
+                            block_amount = max(block_amount, effect.block_amount)
+
+        # Get rarity and calculate cost
+        rarity = item.spec.rarity if hasattr(item.spec, "rarity") else "common"
+        cost = get_shop_cost(rarity, 1)
+
+        # Try to get description from JSON config if available
+        description = ""
+        # For now, we'll build a description from the effects
+        if min_damage > 0:
+            description = f"Deals {min_damage}-{max_damage} damage"
+            if cooldown > 0:
+                description += f" every {cooldown}s"
+            if cpu_cost > 0:
+                description += f" (costs {cpu_cost} CPU)"
+        elif min_heal > 0:
+            description = f"Heals {min_heal}-{max_heal} HP"
+            if cooldown > 0:
+                description += f" every {cooldown}s"
+        elif block_amount > 0:
+            description = f"Blocks {block_amount} damage when attacked"
+
+        if special_effect:
+            if description:
+                description += f". Special: {special_effect}"
+            else:
+                description = f"Special: {special_effect}"
 
         return {
             "id": item.uid,
@@ -851,6 +1035,17 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             "position": list(item.position),
             "category": item.spec.category,
             "shape": shape_data,
+            "rarity": rarity,
+            "cost": cost,
+            "min_damage": min_damage,
+            "max_damage": max_damage,
+            "min_heal": min_heal,
+            "max_heal": max_heal,
+            "cooldown": cooldown,
+            "cpu_cost": cpu_cost,
+            "special_effect": special_effect,
+            "block_amount": block_amount,
+            "description": description,
         }
 
     def serialize_container(container: ServerContainer) -> Dict:
@@ -928,6 +1123,18 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                 position=item["position"],
                 category=item["category"],
                 shape=item["shape"],
+                # Add all the new tooltip fields
+                rarity=item.get("rarity", ""),
+                cost=item.get("cost", 0),
+                min_damage=item.get("min_damage", 0),
+                max_damage=item.get("max_damage", 0),
+                min_heal=item.get("min_heal", 0),
+                max_heal=item.get("max_heal", 0),
+                cooldown=item.get("cooldown", 0.0),
+                cpu_cost=item.get("cpu_cost", 0),
+                special_effect=item.get("special_effect", ""),
+                block_amount=item.get("block_amount", 0),
+                description=item.get("description", ""),
             )
             for item in battle_result.get("player_inventory", {}).get("items", [])
         ],
@@ -954,6 +1161,18 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                 position=item["position"],
                 category=item["category"],
                 shape=item["shape"],
+                # Add all the new tooltip fields
+                rarity=item.get("rarity", ""),
+                cost=item.get("cost", 0),
+                min_damage=item.get("min_damage", 0),
+                max_damage=item.get("max_damage", 0),
+                min_heal=item.get("min_heal", 0),
+                max_heal=item.get("max_heal", 0),
+                cooldown=item.get("cooldown", 0.0),
+                cpu_cost=item.get("cpu_cost", 0),
+                special_effect=item.get("special_effect", ""),
+                block_amount=item.get("block_amount", 0),
+                description=item.get("description", ""),
             )
             for item in battle_result.get("enemy_inventory", {}).get("items", [])
         ],
@@ -1521,8 +1740,12 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     if current_location == to_loc:
         # No-op, just return success
         return MoveItemResponse(
-            inventory_grid=session.inventory_grid,
-            inventory_storage=session.inventory_storage,
+            inventory_grid=[
+                serialize_inventory_item(item) for item in session.inventory_grid
+            ],
+            inventory_storage=[
+                serialize_inventory_item(item) for item in session.inventory_storage
+            ],
             item=ItemInfo(
                 id=item_found["id"],
                 item_type=item_found.get("item_type", ""),
@@ -1563,8 +1786,12 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
         final_position = list(to_loc)
 
     return MoveItemResponse(
-        inventory_grid=session.inventory_grid,
-        inventory_storage=session.inventory_storage,
+        inventory_grid=[
+            serialize_inventory_item(item) for item in session.inventory_grid
+        ],
+        inventory_storage=[
+            serialize_inventory_item(item) for item in session.inventory_storage
+        ],
         item=ItemInfo(
             id=item_found["id"],
             item_type=item_found.get("item_type", ""),

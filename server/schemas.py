@@ -141,6 +141,18 @@ class PlacedItem(BaseModel):
     position: List[int] = Field(description="[x, y] grid position")
     category: str = Field(description="Item category")
     shape: List[List[int]] = Field(description="Shape as list of [x, y] offsets")
+    # Additional fields for tooltips
+    rarity: str = Field(default="", description="Item rarity tier")
+    cost: int = Field(default=0, description="Item value/cost")
+    min_damage: int = Field(default=0, description="Minimum damage dealt")
+    max_damage: int = Field(default=0, description="Maximum damage dealt")
+    min_heal: int = Field(default=0, description="Minimum healing amount")
+    max_heal: int = Field(default=0, description="Maximum healing amount")
+    cooldown: float = Field(default=0.0, description="Activation cooldown in seconds")
+    cpu_cost: int = Field(default=0, description="CPU cost to activate")
+    special_effect: str = Field(default="", description="Special effect description")
+    block_amount: int = Field(default=0, description="Damage blocked")
+    description: str = Field(default="", description="Item description")
 
 
 class ServerContainer(BaseModel):
