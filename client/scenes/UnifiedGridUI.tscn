@@ -400,7 +400,7 @@ autoplay = "default"
 frame_progress = 0.933819
 
 [node name="InventoryPanel" type="Panel" parent="."]
-modulate = Color(1, 1, 1, 0.2)
+modulate = Color(1, 1, 1, 1)
 layout_mode = 1
 anchors_preset = -1
 offset_left = 22.0
