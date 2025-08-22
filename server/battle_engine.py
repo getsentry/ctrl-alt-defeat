@@ -843,7 +843,7 @@ class BattleSimulator:
                 self.actions.append(
                     BattleAction(
                         timestamp=self._time_ms(),
-                        source="memory_leak",  # DOT source
+                        source="core_dumper",  # DOT source
                         action="dot",
                         target=None,
                         damage=damage,

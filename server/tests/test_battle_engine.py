@@ -69,8 +69,8 @@ class TestGameDesignCompliance:
     def test_item_specifications(self):
         """Test Section 2: All items match specifications"""
         # Test Null Pointer (Section 2.1)
-        np = ITEM_CATALOG["null_pointer"]
-        assert np.name == "Null Pointer Exception"
+        np = ITEM_CATALOG["null_blade"]
+        assert np.name == "Null blade"
         # Check it has a timer trigger with attack effect
         assert len(np.triggers) == 1
         assert isinstance(np.triggers[0], TimerTrigger)
@@ -84,7 +84,7 @@ class TestGameDesignCompliance:
         # Special attribute is optional
 
         # Test Memory Leak (Section 2.1)
-        ml = ITEM_CATALOG["memory_leak"]
+        ml = ITEM_CATALOG["core_dumper"]
         assert len(ml.triggers) == 1
         assert isinstance(ml.triggers[0], TimerTrigger)
         assert ml.triggers[0].cooldown == 3.0
@@ -148,7 +148,7 @@ class TestGameDesignCompliance:
         sim = BattleSimulator()
 
         # Create a weak item that won't end battle quickly
-        item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_pointer"]), position=(0, 0))
+        item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
         item.spec.min_damage = 1
         item.spec.max_damage = 1
 
@@ -168,7 +168,7 @@ class TestGameDesignCompliance:
 
     def test_critical_hits(self):
         """Test Section 7.2: Base 5% crit chance, 2x damage"""
-        item = ITEM_CATALOG["null_pointer"]
+        item = ITEM_CATALOG["null_blade"]
         # Check attack effect has crit chance
         attack_effect = item.triggers[0].effects[0]
         assert attack_effect.crit_chance == 0.2  # Null pointer has 20% crit in JSON
@@ -195,19 +195,17 @@ class TestGameDesignCompliance:
         """Test Section 4.2: Orthogonal adjacency only"""
         sim = BattleSimulator()
 
-        center = PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["null_pointer"]), position=(1, 1)
-        )
+        center = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 1))
 
         # Orthogonally adjacent
-        top = PlacedItem(spec=deepcopy(ITEM_CATALOG["memory_leak"]), position=(1, 0))
-        right = PlacedItem(spec=deepcopy(ITEM_CATALOG["memory_leak"]), position=(2, 1))
-        bottom = PlacedItem(spec=deepcopy(ITEM_CATALOG["memory_leak"]), position=(1, 2))
-        left = PlacedItem(spec=deepcopy(ITEM_CATALOG["memory_leak"]), position=(0, 1))
+        top = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 0))
+        right = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(2, 1))
+        bottom = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 2))
+        left = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 1))
 
         # Diagonally adjacent (should NOT count)
         diagonal = PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["memory_leak"]), position=(0, 0)
+            spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 0)
         )
 
         all_items = [center, top, right, bottom, left, diagonal]
@@ -223,10 +221,10 @@ class TestGameDesignCompliance:
 
         # Test Bug Swarm: 3+ problems = +20% damage
         problem1 = PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["null_pointer"]), position=(1, 1)
+            spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(1, 1)
         )
-        problem2 = PlacedItem(spec=ITEM_CATALOG["memory_leak"], position=(1, 0))
-        problem3 = PlacedItem(spec=ITEM_CATALOG["race_condition"], position=(0, 1))
+        problem2 = PlacedItem(spec=ITEM_CATALOG["core_dumper"], position=(1, 0))
+        problem3 = PlacedItem(spec=ITEM_CATALOG["deadlock_twins"], position=(0, 1))
 
         items = [problem1, problem2, problem3]
         sim._calculate_adjacency(items)
@@ -239,7 +237,7 @@ class TestGameDesignCompliance:
         sim = BattleSimulator()
 
         # Create simple test items
-        item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_pointer"]), position=(0, 0))
+        item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
 
         p1_containers, p2_containers = get_test_containers()
         result = sim.simulate_battle(
@@ -332,7 +330,7 @@ class TestGameDesignCompliance:
         BattleSimulator()
 
         # Memory Leak stacking
-        ml = PlacedItem(spec=deepcopy(ITEM_CATALOG["memory_leak"]), position=(0, 0))
+        ml = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 0))
         assert ml.memory_leak_stacks == 0
         # After activation would increment
 
@@ -358,9 +356,9 @@ class TestBattleSimulation:
         """Test a simple 1v1 battle"""
         sim = BattleSimulator()
 
-        item1 = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_pointer"]), position=(0, 0))
+        item1 = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
 
-        item2 = PlacedItem(spec=ITEM_CATALOG["memory_leak"], position=(4, 0))
+        item2 = PlacedItem(spec=ITEM_CATALOG["core_dumper"], position=(4, 0))
 
         p1_containers, p2_containers = get_test_containers()
         result = sim.simulate_battle(
@@ -447,7 +445,7 @@ class TestBattleSimulation:
         lb = PlacedItem(spec=ITEM_CATALOG["load_balancer_module"], position=(0, 0))
 
         np = PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["null_pointer"]), position=(1, 0)  # Adjacent
+            spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(1, 0)  # Adjacent
         )
 
         items = [lb, np]

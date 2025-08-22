@@ -202,12 +202,12 @@ class TestServerContainers:
         # Create items placed in the VM
         p1_items = [
             PlacedItem(
-                spec=items["null_pointer"],
+                spec=items["null_blade"],
                 position=(1, 1),  # Inside VM
                 uid="item1",
             ),
             PlacedItem(
-                spec=items["memory_leak"],
+                spec=items["core_dumper"],
                 position=(2, 1),  # Inside VM
                 uid="item2",
             ),

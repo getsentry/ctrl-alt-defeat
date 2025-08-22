@@ -275,7 +275,7 @@ class FullIntegrationTest:
                 "player_id": player_id,
                 "round_number": 1,
                 "seed": 42,
-                "test_ai_difficulty": "easy"
+                "test_ai_difficulty": 1
             }
         )
         assert response.status_code == 200

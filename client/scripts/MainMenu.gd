@@ -16,6 +16,9 @@ func _ready():
 		get_window().max_size = Vector2i(1680, 1050)  # Prevent resizing larger for fixed size
 	_setup_ui()
 
+	# Load saved player name if it exists
+	_load_saved_name()
+
 	# Start playing background music
 	if music_player and not music_player.playing:
 		music_player.play()
@@ -72,6 +75,9 @@ func _on_start_game():
 	if player_name == "":
 		player_name = "Player"
 
+	# Save the player name for next time
+	_save_player_name(player_name)
+
 	# Reset game state and set player name
 	GameStateManager.start_new_game()
 	GameStateManager.player_name = player_name
@@ -104,3 +110,26 @@ func _show_error_message(message: String):
 	get_tree().root.add_child(error_dialog)
 	error_dialog.popup_centered()
 	error_dialog.connect("confirmed", func(): error_dialog.queue_free())
+
+func _save_player_name(player_name: String):
+	"""Save player name to user settings (works in browser localStorage too)"""
+	var config = ConfigFile.new()
+	config.set_value("player", "name", player_name)
+	var save_result = config.save("user://player_settings.cfg")
+	if save_result == OK:
+		print("Saved player name: ", player_name)
+	else:
+		print("Failed to save player name")
+
+func _load_saved_name():
+	"""Load saved player name from user settings"""
+	var config = ConfigFile.new()
+	var load_result = config.load("user://player_settings.cfg")
+
+	if load_result == OK:
+		var saved_name = config.get_value("player", "name", "")
+		if saved_name != "":
+			name_input.text = saved_name
+			print("Loaded saved player name: ", saved_name)
+	else:
+		print("No saved player name found")

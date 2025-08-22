@@ -67,7 +67,7 @@ items = [
     ("bug_icon", (150, 50, 50, 200), "!", "bug_icon"),
     ("shield_icon", (50, 100, 200, 200), "S", "shield_icon"),
     ("gear_icon", (50, 150, 50, 200), "G", "gear_icon"),
-    ("memory_leak", (150, 50, 150, 200), "M", "memory_leak"),
+    ("core_dumper", (150, 50, 150, 200), "M", "core_dumper"),
     ("database", (200, 120, 50, 200), "D", "database"),
     ("firewall", (200, 100, 50, 200), "F", "firewall"),
     ("coffee", (120, 80, 40, 200), "C", "coffee"),

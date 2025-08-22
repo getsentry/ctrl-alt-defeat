@@ -49,13 +49,17 @@ class SessionManager:
                 return None
 
     async def create_session(
-        self, player_id: str, game_seed: Optional[int] = None
+        self,
+        player_id: str,
+        game_seed: Optional[int] = None,
+        player_name: Optional[str] = None,
     ) -> GameSessionPydantic:
         """Create a new game session
 
         Args:
             player_id: The user ID (as string) for this session, or a temporary ID for guest users
             game_seed: Optional seed for deterministic gameplay
+            player_name: Optional player name to use for this session
         """
         # Generate seed if not provided
         if game_seed is None:
@@ -69,10 +73,12 @@ class SessionManager:
             async with db_manager.get_session() as db:
                 import uuid
 
+                display_name = player_name if player_name else f"Player_{player_id[:8]}"
+
                 username = f"Guest_{uuid.uuid4().hex[:8]}_{random.randint(1000, 9999)}"
                 user = User(
                     username=username,
-                    display_name=f"Player_{player_id[:8]}",
+                    display_name=display_name,
                     account_type="guest",
                     account_status="active",
                     total_games_played=0,
@@ -86,6 +92,13 @@ class SessionManager:
 
             # Update player_id to be the actual user ID
             player_id = str(user.id)
+        else:
+            if player_name and user.display_name != player_name:
+                user.display_name = player_name
+                async with db_manager.get_session() as db:
+                    db.add(user)
+                    await db.commit()
+                    await db.refresh(user)
 
         # Create session with starting values
         from main import generate_shop_items

@@ -26,7 +26,7 @@ class TestMatchmakingService:
 
         # Test data
         test_inventory = [
-            {"id": "item1", "item_type": "null_pointer", "position": [2, 3]}
+            {"id": "item1", "item_type": "null_blade", "position": [2, 3]}
         ]
         test_containers = [
             {"id": "container_a", "type": "standard_vm", "position": [2, 3]}

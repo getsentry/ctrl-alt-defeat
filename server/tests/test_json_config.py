@@ -25,8 +25,8 @@ def test_json_config():
     sim = BattleSimulator(seed=12345)
 
     # Get some items from JSON config
-    null_pointer = loader.get_item("null_pointer")
-    memory_leak = loader.get_item("memory_leak")
+    null_blade = loader.get_item("null_blade")
+    core_dumper = loader.get_item("core_dumper")
     loader.get_item("firewall")  # Verify it exists
     health_check = loader.get_item("health_check")
 
@@ -51,14 +51,14 @@ def test_json_config():
 
     # Create items
     p1_items = [
-        PlacedItem(spec=null_pointer, position=(0, 0), uid="p1_null"),
-        PlacedItem(spec=memory_leak, position=(1, 0), uid="p1_leak"),
+        PlacedItem(spec=null_blade, position=(0, 0), uid="p1_null"),
+        PlacedItem(spec=core_dumper, position=(1, 0), uid="p1_leak"),
     ]
 
     # Place items that fit within the edge_node container (2x1 horizontal at 4,0)
     # Use smaller items that fit in the available squares
     p2_items = [
-        PlacedItem(spec=null_pointer, position=(4, 0), uid="p2_null2"),  # 1x1 item
+        PlacedItem(spec=core_dumper, position=(4, 0), uid="p2_null2"),  # 1x1 item
         PlacedItem(spec=health_check, position=(5, 0), uid="p2_health"),  # 1x1 item
     ]
 
@@ -80,7 +80,7 @@ def test_json_config():
     print("\n📋 Testing specific items from JSON:")
 
     # Test a problem item
-    ddos = loader.get_item("ddos_attack")
+    ddos = loader.get_item("denier_of_service")
     if ddos:
         print(f"✅ DDoS Attack: {ddos.name} ({ddos.rarity})")
         print(f"   Shape: {ddos.shape.name if ddos.shape else 'None'}")

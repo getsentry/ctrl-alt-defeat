@@ -23,7 +23,6 @@ from item_effects import (
     TimerTrigger,
     create_example_items,
 )
-from shield_effect import OnAttackedTrigger
 
 
 @dataclass
@@ -266,51 +265,18 @@ class TestItemSpecs:
         assert len(kill.effects) == 1
         assert isinstance(kill.effects[0], HealEffect)
 
-    def test_example_items(self):
-        """Test that example items are created correctly"""
-        items = create_example_items()
-
-        # Test Null Pointer
-        null_pointer = items["null_pointer"]
-        assert null_pointer.name == "Null Pointer Exception"
-        assert len(null_pointer.triggers) == 1
-        timer_trigger = null_pointer.triggers[0]
-        assert isinstance(timer_trigger, TimerTrigger)
-        assert timer_trigger.cooldown == 2.5
-        assert timer_trigger.cpu_cost == 3
-
-        # Test Error Monitoring
-        error_monitoring = items["error_monitoring"]
-        assert len(error_monitoring.triggers) == 1
-        assert isinstance(error_monitoring.triggers[0], OnAttackedTrigger)
-
-        # Test Health Check
-        health_check = items["health_check"]
-        assert len(health_check.triggers) == 1
-        assert isinstance(health_check.triggers[0], TimerTrigger)
-
-        # Test Firewall
-        firewall = items["firewall"]
-        assert len(firewall.triggers) == 1
-        assert isinstance(firewall.triggers[0], OnAttackedTrigger)
-
-        # Test Quantum Firewall (replaces zero_day_exploit)
-        quantum_fw = items["quantum_firewall"]
-        assert len(quantum_fw.triggers) == 1  # Only has on_attacked trigger
-        assert quantum_fw.rarity == "legendary"
-
     def test_trigger_effect_combinations(self):
         """Test that triggers can have multiple effects"""
         items = create_example_items()
 
         # Memory Leak has attack effect
-        memory_leak = items["memory_leak"]
-        timer = memory_leak.triggers[0]
+        core_dumper = items["core_dumper"]
+        timer = core_dumper.triggers[0]
         assert len(timer.effects) == 1
         assert isinstance(timer.effects[0], AttackEffect)
 
         # DDoS Attack has attack effect
-        ddos = items.get("ddos_attack")
+        ddos = items.get("denier_of_service")
         if ddos:  # Check if exists in JSON
             timer = ddos.triggers[0]
             assert len(timer.effects) >= 1

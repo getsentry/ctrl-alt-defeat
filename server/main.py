@@ -276,8 +276,10 @@ async def start_session(
             }
         )
 
-    # Create session using SessionManager
-    session = await session_manager.create_session(player_id, game_seed)
+    # Create session using SessionManager with player name from request
+    session = await session_manager.create_session(
+        player_id, game_seed, request.player_name
+    )
 
     # Update session with shop and inventory
     session.current_shop = generate_shop_items(1, seed=game_seed)
@@ -1227,44 +1229,48 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
     """Get predefined ghost player inventory for each round"""
 
+    containers = generate_ai_containers()
+    containers_catalog = create_server_containers()
+    vm_info = containers_catalog["standard_vm"]
+
     # Define ghost player inventories for rounds 1-10
     ghost_inventories = {
         1: [  # Very basic
-            ("null_pointer", (0, 3)),
+            ("null_blade", (0, 3)),
         ],
         2: [  # Still easy
-            ("null_pointer", (0, 3)),
+            ("null_blade", (0, 3)),
             ("firewall", (4, 3)),
         ],
         3: [  # Adding defense
-            ("null_pointer", (0, 3)),
-            ("memory_leak", (2, 3)),
+            ("null_blade", (0, 3)),
+            ("core_dumper", (2, 3)),
             ("firewall", (4, 3)),
         ],
         4: [  # More items
-            ("null_pointer", (0, 3)),
-            ("memory_leak", (2, 3)),
+            ("null_blade", (0, 3)),
+            ("core_dumper", (2, 3)),
             ("firewall", (4, 3)),
             ("health_check", (5, 3)),
         ],
         5: [  # Medium difficulty
-            ("null_pointer", (0, 3)),
-            ("memory_leak", (2, 3)),
-            ("race_condition", (0, 4)),
+            ("null_blade", (0, 3)),
+            ("core_dumper", (2, 3)),
+            ("deadlock_twins", (6, 3)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
         ],
         6: [  # Adding infrastructure
-            ("null_pointer", (0, 3)),
-            ("memory_leak", (2, 3)),
-            ("race_condition", (0, 4)),
+            ("null_blade", (0, 3)),
+            ("core_dumper", (2, 3)),
+            ("deadlock_twins", (6, 3)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
-            ("auto_scaler", (5, 4)),  # Inside third container
+            ("auto_scaler", (5, 4)),
         ],
         7: [  # Stronger items
-            ("null_pointer", (1, 3)),
-            ("memory_leak", (2, 3)),
+            ("null_blade", (1, 3)),
+            ("core_dumper", (2, 3)),
             ("buffer_overflow", (1, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
@@ -1272,20 +1278,20 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             ("health_check", (6, 3)),  # Moved to empty spot
         ],
         8: [  # Good mix
-            ("null_pointer", (1, 3)),
-            ("memory_leak", (2, 3)),
+            ("null_blade", (1, 3)),
+            ("core_dumper", (2, 3)),
             ("buffer_overflow", (1, 4)),
-            ("race_condition", (2, 4)),
+            ("deadlock_twins", (2, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
             ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
             ("quantum_processor", (6, 3)),  # Moved to empty spot
         ],
         9: [  # Near endgame
-            ("null_pointer", (1, 3)),
-            ("memory_leak", (2, 3)),
+            ("null_blade", (1, 3)),
+            ("core_dumper", (2, 3)),
             ("buffer_overflow", (1, 4)),
-            ("race_condition", (2, 4)),
+            ("deadlock_twins", (2, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
             ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
@@ -1293,10 +1299,10 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             ("load_balancer_module", (3, 3)),
         ],
         10: [  # Final boss
-            ("null_pointer", (1, 3)),
-            ("memory_leak", (2, 3)),
+            ("null_blade", (1, 3)),
+            ("core_dumper", (2, 3)),
             ("buffer_overflow", (1, 4)),
-            ("race_condition", (2, 4)),
+            ("deadlock_twins", (2, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
             ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
@@ -1305,6 +1311,15 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             ("health_check", (3, 4)),
         ],
     }
+    if round_number >= 5:
+        containers.append(
+            ServerContainer(
+                spec=vm_info["spec"],
+                position=(6, 3),
+                uid="ai_vm3",
+                shape=vm_info["external_shape"],
+            ),
+        )
 
     # Get inventory for this round (cap at 10)
     round_items = ghost_inventories.get(min(round_number, 10), ghost_inventories[1])
@@ -1320,7 +1335,7 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
             )
             items.append(placed_item)
 
-    return items
+    return items, containers
 
 
 def get_test_ai_items(difficulty: int, round_number: int) -> List[PlacedItem]:
@@ -1339,7 +1354,7 @@ def get_test_ai_items(difficulty: int, round_number: int) -> List[PlacedItem]:
         # Moderate - a few basic items
         # Place on P2 containers which cover (1-2,3-4), (3-4,3-4), (5-6,3-4)
         items = []
-        item_types = ["null_pointer", "firewall"]
+        item_types = ["null_blade", "firewall"]
         positions = [(1, 3), (3, 3)]  # Use first two container positions
         for i, item_type in enumerate(item_types):
             if item_type in ITEM_CATALOG:
@@ -1351,16 +1366,10 @@ def get_test_ai_items(difficulty: int, round_number: int) -> List[PlacedItem]:
                     )
                 )
         return items
-    elif difficulty == "hard":
-        # Use normal ghost player difficulty
-        return get_ghost_player_items(round_number)
-    else:
-        # Default to normal difficulty
-        return get_ghost_player_items(round_number)
 
 
 def generate_ai_opponent(
-    round_number: int, test_difficulty: Optional[str] = None
+    round_number: int, test_difficulty: Optional[int] = None
 ) -> Tuple[List[PlacedItem], List[ServerContainer]]:
     """
     Generate AI opponent items and containers based on round
@@ -1368,15 +1377,16 @@ def generate_ai_opponent(
     """
     if TEST_MODE and test_difficulty:
         items = get_test_ai_items(test_difficulty, round_number)
+        containers = generate_ai_containers()
     else:
-        items = get_ghost_player_items(round_number)
+        items, containers = get_ghost_player_items(round_number)
 
     # Generate containers for AI based on item positions
-    containers = generate_ai_containers(items)
+
     return items, containers
 
 
-def generate_ai_containers(items: List[PlacedItem]) -> List[ServerContainer]:
+def generate_ai_containers() -> List[ServerContainer]:
     """Generate server containers that cover all AI item positions"""
     containers_catalog = create_server_containers()
     vm_info = containers_catalog["standard_vm"]

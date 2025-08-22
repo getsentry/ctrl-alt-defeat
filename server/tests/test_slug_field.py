@@ -38,9 +38,9 @@ class TestSlugField:
     def test_slug_matches_expected_format(self):
         """Test that slugs match expected format from names"""
         test_cases = [
-            ("Memory Leak", "memory_leak"),
+            ("Memory Leak", "core_dumper"),
             ("Null Pointer Exception", "null_pointer_exception"),
-            ("DDoS Attack", "ddos_attack"),
+            ("DDoS Attack", "denier_of_service"),
             ("AI Companion Core", "ai_companion_core"),
         ]
 

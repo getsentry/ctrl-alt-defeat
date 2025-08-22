@@ -374,7 +374,7 @@ class TestGameLifecycle:
         # Run 5 deterministic battles
         test_battles = [
             (3, 1, 1000),  # Battle 1
-            (1, 3, 1001),  # Battle 2
+            (1, None, 1001),  # Battle 2
             (4, 1, 1002),  # Battle 3
             (2, 2, 1003),  # Battle 4
             (5, 1, 1004),  # Battle 5

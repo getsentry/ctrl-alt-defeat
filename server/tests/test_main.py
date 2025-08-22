@@ -31,7 +31,7 @@ class TestAIOpponentGeneration:
     def test_ai_opponent_passes_validation(self):
         """Test that AI opponent items and containers pass battle validation"""
         # Generate AI opponent for various rounds
-        for round_num in [1, 3, 5, 7, 10]:
+        for round_num in range(1, 11):
             items, containers = generate_ai_opponent(round_number=round_num)
 
             # Create a battle simulator
@@ -39,7 +39,9 @@ class TestAIOpponentGeneration:
 
             # Should be able to validate placement
             # This would raise ValueError if validation fails
-            assert simulator._validate_placement_with_containers(items, containers)
+            assert simulator._validate_placement_with_containers(
+                items, containers
+            ), f"Failed validation for round {round_num}"
 
     def test_ai_containers_cover_item_positions(self):
         """Test that generated containers cover all AI item positions"""

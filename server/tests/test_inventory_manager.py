@@ -66,7 +66,7 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # Place an item on container A
-        item1 = {"id": "item1", "item_type": "null_pointer", "position": (2, 3)}
+        item1 = {"id": "item1", "item_type": "null_blade", "position": (2, 3)}
         grid.place_item(item1, (2, 3))
 
         assert len(grid.items) == 1
@@ -85,7 +85,7 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # Place first item
-        item1 = {"id": "item1", "item_type": "null_pointer"}
+        item1 = {"id": "item1", "item_type": "null_blade"}
         grid.place_item(item1, (2, 3))
 
         # Try to place overlapping item
@@ -98,7 +98,7 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # Place and remove by position
-        item1 = {"id": "item1", "item_type": "null_pointer"}
+        item1 = {"id": "item1", "item_type": "null_blade"}
         grid.place_item(item1, (2, 3))
         removed = grid.remove_item_at((2, 3))
 
@@ -115,9 +115,9 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # Place several items
-        item1 = {"id": "item1", "item_type": "null_pointer"}
+        item1 = {"id": "item1", "item_type": "null_blade"}
         item2 = {"id": "item2", "item_type": "firewall"}
-        item3 = {"id": "item3", "item_type": "memory_leak"}
+        item3 = {"id": "item3", "item_type": "core_dumper"}
 
         grid.place_item(item1, (2, 3))
         grid.place_item(item2, (4, 3))
@@ -139,7 +139,7 @@ class TestInventoryGrid:
         # Place a 2x1 item
         item = {
             "id": "multi1",
-            "item_type": "ddos_attack",
+            "item_type": "denier_of_service",
             "shape": [(0, 0), (1, 0)],  # 2x1 shape
         }
         grid.place_item(item, (2, 3))
@@ -167,7 +167,7 @@ class TestInventoryStorage:
         """Test adding items to storage"""
         storage = InventoryStorage()
 
-        item1 = {"id": "item1", "item_type": "null_pointer"}
+        item1 = {"id": "item1", "item_type": "null_blade"}
         item2 = {"id": "item2", "item_type": "firewall"}
 
         storage.add_item(item1)
@@ -181,7 +181,7 @@ class TestInventoryStorage:
         """Test removing items from storage"""
         storage = InventoryStorage()
 
-        item1 = {"id": "item1", "item_type": "null_pointer"}
+        item1 = {"id": "item1", "item_type": "null_blade"}
         item2 = {"id": "item2", "item_type": "firewall"}
 
         storage.add_item(item1)
@@ -201,7 +201,7 @@ class TestInventoryStorage:
         """Test finding items in storage"""
         storage = InventoryStorage()
 
-        item1 = {"id": "item1", "item_type": "null_pointer"}
+        item1 = {"id": "item1", "item_type": "null_blade"}
         item2 = {"id": "item2", "item_type": "firewall"}
 
         storage.add_item(item1)
@@ -219,7 +219,7 @@ class TestInventoryStorage:
 
         # Add many items
         for i in range(100):
-            item = {"id": f"item{i}", "item_type": "null_pointer"}
+            item = {"id": f"item{i}", "item_type": "null_blade"}
             storage.add_item(item)
 
         assert len(storage.items) == 100
@@ -241,7 +241,7 @@ class TestInventoryManager:
         """Test placing item on grid through manager"""
         manager = InventoryManager()
 
-        item = {"id": "item1", "item_type": "null_pointer"}
+        item = {"id": "item1", "item_type": "null_blade"}
         success = manager.place_item(item, placement=(2, 3))
 
         assert success is True
@@ -252,7 +252,7 @@ class TestInventoryManager:
         """Test placing item in storage through manager"""
         manager = InventoryManager()
 
-        item = {"id": "item1", "item_type": "null_pointer"}
+        item = {"id": "item1", "item_type": "null_blade"}
         success = manager.place_item(item, placement="storage")
 
         assert success is True
@@ -264,7 +264,7 @@ class TestInventoryManager:
         manager = InventoryManager()
 
         # Add item to storage
-        item = {"id": "item1", "item_type": "null_pointer"}
+        item = {"id": "item1", "item_type": "null_blade"}
         manager.place_item(item, placement="storage")
 
         # Move to grid - should not raise exception
@@ -280,7 +280,7 @@ class TestInventoryManager:
         manager = InventoryManager()
 
         # Add item to grid
-        item = {"id": "item1", "item_type": "null_pointer"}
+        item = {"id": "item1", "item_type": "null_blade"}
         manager.place_item(item, placement=(2, 3))
 
         # Move to storage - should not raise exception
@@ -296,9 +296,9 @@ class TestInventoryManager:
         manager = InventoryManager()
 
         # Add items to both grid and storage
-        grid_item1 = {"id": "grid1", "item_type": "null_pointer"}
+        grid_item1 = {"id": "grid1", "item_type": "null_blade"}
         grid_item2 = {"id": "grid2", "item_type": "firewall"}
-        storage_item = {"id": "storage1", "item_type": "memory_leak"}
+        storage_item = {"id": "storage1", "item_type": "core_dumper"}
 
         manager.place_item(grid_item1, placement=(2, 3))
         manager.place_item(grid_item2, placement=(4, 4))
@@ -317,7 +317,7 @@ class TestInventoryManager:
         """Test selling items from grid"""
         manager = InventoryManager()
 
-        item = {"id": "item1", "item_type": "null_pointer", "cost": 10}
+        item = {"id": "item1", "item_type": "null_blade", "cost": 10}
         manager.place_item(item, placement=(2, 3))
 
         removed = manager.remove_item(location=(2, 3))
@@ -329,7 +329,7 @@ class TestInventoryManager:
         """Test selling items from storage"""
         manager = InventoryManager()
 
-        item = {"id": "item1", "item_type": "null_pointer", "cost": 10}
+        item = {"id": "item1", "item_type": "null_blade", "cost": 10}
         manager.place_item(item, placement="storage")
 
         removed = manager.remove_item(item_id="item1")
@@ -342,7 +342,7 @@ class TestInventoryManager:
         manager = InventoryManager()
 
         # Add various items
-        grid_item = {"id": "grid1", "item_type": "null_pointer"}
+        grid_item = {"id": "grid1", "item_type": "null_blade"}
         storage_item = {"id": "storage1", "item_type": "firewall"}
 
         manager.place_item(grid_item, placement=(2, 3))
@@ -362,7 +362,7 @@ class TestInventoryManager:
         manager1 = InventoryManager()
 
         # Set up some state
-        grid_item = {"id": "grid1", "item_type": "null_pointer"}
+        grid_item = {"id": "grid1", "item_type": "null_blade"}
         storage_item = {"id": "storage1", "item_type": "firewall"}
         manager1.place_item(grid_item, placement=(2, 3))
         manager1.place_item(storage_item, placement="storage")

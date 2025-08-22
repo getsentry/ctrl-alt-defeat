@@ -30,7 +30,7 @@ class TestFullBattleScenarios:
         p1_items = [
             PlacedItem(
                 spec=ItemSpec(
-                    id="null_pointer",
+                    id="null_blade",
                     name="Null Pointer Exception",
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
@@ -55,7 +55,7 @@ class TestFullBattleScenarios:
             ),
             PlacedItem(
                 spec=ItemSpec(
-                    id="memory_leak",
+                    id="core_dumper",
                     name="Memory Leak",
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
@@ -80,7 +80,7 @@ class TestFullBattleScenarios:
             ),
             PlacedItem(
                 spec=ItemSpec(
-                    id="race_condition",
+                    id="deadlock_twins",
                     name="Race Condition",
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
