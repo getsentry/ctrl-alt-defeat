@@ -791,11 +791,17 @@ func _show_container_preview(container_data: Dictionary, grid_pos: Vector2i):
 	inventory_grid.add_child(container_preview)
 
 func _on_ready_for_battle():
-	# Save current inventory state
-	var inventory_state = get_inventory_state()
-
 	# Get the actual inventory from the grid
 	var grid_state = inventory_grid.get_inventory_state()
+
+	# Check if player has any items
+	if grid_state.items.size() == 0:
+		print("Cannot start battle without any items!")
+		_show_error_message("You need at least one item to start a battle!")
+		return
+
+	# Save current inventory state
+	var inventory_state = get_inventory_state()
 
 	print("DEBUG: Saving inventory before battle:")
 	print("  Items to save: %d" % grid_state.items.size())
@@ -887,3 +893,12 @@ func _on_refresh_shop():
 			GameStateManager.current_shop = response.shop
 		else:
 			print("Failed to refresh shop from server")
+
+func _show_error_message(message: String):
+	# Create error dialog
+	var error_dialog = AcceptDialog.new()
+	error_dialog.dialog_text = message
+	error_dialog.title = "Notice"
+	add_child(error_dialog)
+	error_dialog.popup_centered()
+	error_dialog.connect("confirmed", func(): error_dialog.queue_free())

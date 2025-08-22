@@ -14,6 +14,7 @@ signal buff_applied(player: int, buff_name: String)
 signal debuff_applied(player: int, debuff_name: String)
 signal player_died(player: int)
 signal battle_ended(winner: int)
+signal log_message(message: String, color: Color)
 
 var events: Array = []
 var current_event_index: int = 0
@@ -100,29 +101,45 @@ func _process_event(event: APITypes.BattleAction):
 
 	# More descriptive logging based on action type
 	var item_name = _get_item_name(source)
+	var log_msg = ""
+	var log_color = Color.WHITE
+
 	match action:
 		"a":
-			print("[%.1fs] Player %d activates %s" % [event_time, player, item_name])
+			log_msg = "[%.1fs] Player %d activates %s" % [event_time, player, item_name]
+			log_color = Color(0.7, 0.7, 1.0)  # Light blue for activations
 		"d", "damage":
 			var attacker = 1 if player == 2 else 2  # Player who TAKES damage is opposite of attacker
-			print("[%.1fs] Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player])
+			log_msg = "[%.1fs] Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player]
+			log_color = Color(1.0, 0.5, 0.5) if player == 1 else Color(1.0, 0.7, 0.7)  # Red for damage
 		"h", "heal":
-			print("[%.1fs] Player %d's %s heals %d HP" % [event_time, player, item_name, event.damage])
+			log_msg = "[%.1fs] Player %d's %s heals %d HP" % [event_time, player, item_name, event.damage]
+			log_color = Color(0.5, 1.0, 0.5)  # Green for healing
 		"x", "player_defeated":
-			print("[%.1fs] Player %d DIES!" % [event_time, player])
+			log_msg = "[%.1fs] Player %d DIES!" % [event_time, player]
+			log_color = Color(1.0, 0.2, 0.2)  # Dark red for death
 		"s", "battle_start":
-			print("[%.1fs] Battle starts!" % [event_time])
+			log_msg = "[%.1fs] Battle starts!" % [event_time]
+			log_color = Color(1.0, 1.0, 0.5)  # Yellow for battle start
 		"b", "block":
 			var attacker = 1 if player == 2 else 2
-			print("[%.1fs] Player %d's attack BLOCKED by Player %d's %s (%d damage blocked)" % [event_time, attacker, player, item_name, event.damage])
+			log_msg = "[%.1fs] Player %d's attack BLOCKED by Player %d's %s (%d damage blocked)" % [event_time, attacker, player, item_name, event.damage]
+			log_color = Color(0.5, 0.8, 1.0)  # Light blue for blocks
 		"m", "miss":
 			var attacker = 1 if player == 2 else 2
-			print("[%.1fs] Player %d's %s MISSES Player %d" % [event_time, attacker, item_name, player])
+			log_msg = "[%.1fs] Player %d's %s MISSES Player %d" % [event_time, attacker, item_name, player]
+			log_color = Color(0.7, 0.7, 0.7)  # Gray for misses
 		"c", "critical_hit":
 			var attacker = 1 if player == 2 else 2
-			print("[%.1fs] CRITICAL! Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player])
+			log_msg = "[%.1fs] CRITICAL! Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player]
+			log_color = Color(1.0, 0.8, 0.2)  # Orange for crits
 		_:
-			print("[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage])
+			log_msg = "[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage]
+			log_color = Color.WHITE
+
+	# Emit both to console and UI
+	print(log_msg)
+	log_message.emit(log_msg, log_color)
 
 	match action:
 		"s", "battle_start":  # Start

@@ -184,6 +184,7 @@ func _connect_event_signals():
 	event_processor.item_activated.connect(_on_item_activated)
 	event_processor.player_died.connect(_on_player_died)
 	event_processor.battle_ended.connect(_on_battle_ended)
+	event_processor.log_message.connect(_on_log_message)
 
 func _load_battle_from_state():
 	# Load battle data from GameStateManager - always typed BattleResult
@@ -209,6 +210,9 @@ func _start_battle_playback():
 	print("Starting battle playback...")
 	battle_active = true
 	current_time = 0.0
+
+	# Clear battle log
+	battle_log_container.clear()
 
 	# Initialize player stats
 	var quota = GameStateManager.get_round_quota()
@@ -283,6 +287,15 @@ func _show_attack_animation(from_player: bool):
 func _add_to_log(text: String):
 	battle_log_container.append_text(text + "\n")
 
+func _on_log_message(message: String, color: Color):
+	# Add colored message to battle log
+	battle_log_container.push_color(color)
+	battle_log_container.append_text(message + "\n")
+	battle_log_container.pop()
+
+	# Auto-scroll to bottom
+	battle_log_container.scroll_to_line(battle_log_container.get_line_count() - 1)
+
 func _on_start_battle():
 	if not battle_active:
 		battle_active = true
@@ -304,16 +317,15 @@ func _on_back_to_inventory():
 
 # Event handler functions for battle events
 func _on_battle_started():
-	_add_to_log("[color=green]Battle Started![/color]")
+	# Log is handled by BattleEventProcessor
+	pass
 
 func _on_damage_dealt(player: int, amount: int, remaining_hp: int, source: String):
 	# Player parameter indicates who TAKES damage
 	if player == 1:
 		player_data.health = remaining_hp
-		_add_to_log("[color=red]Enemy's %s[/color] deals [color=yellow]%d[/color] damage to [color=aqua]You[/color]! (HP: %d/%d)" % [source, amount, remaining_hp, player_data.max_health])
 	else:
 		enemy_data.health = remaining_hp
-		_add_to_log("[color=aqua]Your %s[/color] deals [color=yellow]%d[/color] damage to [color=red]Enemy[/color]! (HP: %d/%d)" % [source, amount, remaining_hp, enemy_data.max_health])
 
 	_show_damage_number(player, amount)
 	_update_stats_display()
@@ -321,42 +333,28 @@ func _on_damage_dealt(player: int, amount: int, remaining_hp: int, source: Strin
 func _on_healing_done(player: int, amount: int, remaining_hp: int):
 	if player == 1:
 		player_data.health = remaining_hp
-		_add_to_log("[color=aqua]You[/color] heal for [color=green]%d[/color]" % amount)
 	else:
 		enemy_data.health = remaining_hp
-		_add_to_log("[color=red]Enemy[/color] heals for [color=green]%d[/color]" % amount)
 
 	_show_heal_effect(player, amount)
 	_update_stats_display()
 
 func _on_block_activated(player: int, amount: int):
-	var who = "You" if player == 1 else "Enemy"
-	_add_to_log("[color=cyan]%s[/color] blocks [color=yellow]%d[/color] damage!" % [who, amount])
+	# Log is handled by BattleEventProcessor
 	_show_block_effect(player)
 
 func _on_item_activated(item_id: String, player: int):
-	# Log item activation
-	if player == 1:
-		_add_to_log("[color=aqua]Your %s[/color] activates!" % item_id)
-	else:
-		_add_to_log("[color=red]Enemy's %s[/color] activates!" % item_id)
-
+	# Log is handled by BattleEventProcessor
 	# Show item activation visual
 	_show_item_activation(item_id, player)
 
 func _on_player_died(player: int):
-	if player == 1:
-		_add_to_log("[color=red]You have been defeated![/color]")
-	else:
-		_add_to_log("[color=green]Enemy destroyed![/color]")
+	# Log is handled by BattleEventProcessor
+	pass
 
 func _on_battle_ended(winner: int):
 	battle_active = false
-
-	if winner == 1:
-		_add_to_log("[color=green]VICTORY![/color]")
-	else:
-		_add_to_log("[color=red]DEFEAT![/color]")
+	# Log is handled by BattleEventProcessor
 
 	# Wait a moment then go to post-battle screen
 	await get_tree().create_timer(2.0).timeout
