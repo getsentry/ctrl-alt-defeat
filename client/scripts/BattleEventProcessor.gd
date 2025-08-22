@@ -6,7 +6,7 @@ const APITypes = preload("res://scripts/api_types.gd")
 
 signal event_processed(event: APITypes.BattleAction)
 signal battle_started()
-signal damage_dealt(player: int, amount: int, remaining_hp: int)
+signal damage_dealt(player: int, amount: int, remaining_hp: int, source: String)
 signal healing_done(player: int, amount: int, remaining_hp: int)
 signal block_activated(player: int, amount: int)
 signal item_activated(item_id: String, player: int)
@@ -30,6 +30,9 @@ var player2_max_hp: int = 100
 var player1_cpu: float = 10.0
 var player2_cpu: float = 10.0
 
+# Item lookup maps for better logging
+var item_lookup: Dictionary = {}  # UUID -> item name
+
 func _ready():
 	set_process(false)
 
@@ -37,6 +40,9 @@ func load_battle_events(battle_data: APITypes.BattleResult):
 	# Load events directly from typed battle result
 	events = battle_data.actions
 	print("Loaded %d battle events" % events.size())
+
+	# Build item lookup from both inventories
+	_build_item_lookup(battle_data.player_inventory, battle_data.enemy_inventory)
 
 	# Set battle duration from typed result
 	battle_duration = battle_data.duration if battle_data.duration > 0 else 20.0
@@ -90,26 +96,52 @@ func _process_event(event: APITypes.BattleAction):
 	var action = event.action
 	var player = event.player
 	var event_time = event.timestamp / 1000.0
+	var source = event.source if event.source else "none"
 
-	print("Processing event: %s at time %.1f" % [action, event_time])
+	# More descriptive logging based on action type
+	var item_name = _get_item_name(source)
+	match action:
+		"a":
+			print("[%.1fs] Player %d activates %s" % [event_time, player, item_name])
+		"d", "damage":
+			var attacker = 1 if player == 2 else 2  # Player who TAKES damage is opposite of attacker
+			print("[%.1fs] Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player])
+		"h", "heal":
+			print("[%.1fs] Player %d's %s heals %d HP" % [event_time, player, item_name, event.damage])
+		"x", "player_defeated":
+			print("[%.1fs] Player %d DIES!" % [event_time, player])
+		"s", "battle_start":
+			print("[%.1fs] Battle starts!" % [event_time])
+		"b", "block":
+			var attacker = 1 if player == 2 else 2
+			print("[%.1fs] Player %d's attack BLOCKED by Player %d's %s (%d damage blocked)" % [event_time, attacker, player, item_name, event.damage])
+		"m", "miss":
+			var attacker = 1 if player == 2 else 2
+			print("[%.1fs] Player %d's %s MISSES Player %d" % [event_time, attacker, item_name, player])
+		"c", "critical_hit":
+			var attacker = 1 if player == 2 else 2
+			print("[%.1fs] CRITICAL! Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player])
+		_:
+			print("[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage])
 
 	match action:
-		"s":  # Start
+		"s", "battle_start":  # Start
 			battle_started.emit()
 
 		"a":  # Activate
 			var item_id = event.source
 			item_activated.emit(item_id, player)
 
-		"d":  # Damage
+		"d", "damage":  # Damage
 			var damage = event.damage
+			var damage_source = event.source if event.source else "Unknown"
 			# Calculate remaining HP based on current HP
 			var remaining = (player1_hp if player == 1 else player2_hp) - damage
 			if player == 1:
 				player1_hp = remaining
 			else:
 				player2_hp = remaining
-			damage_dealt.emit(player, damage, remaining)
+			damage_dealt.emit(player, damage, remaining, damage_source)
 
 		"h":  # Heal
 			# Get heal amount from damage field
@@ -121,7 +153,7 @@ func _process_event(event: APITypes.BattleAction):
 				player2_hp = min(remaining, player2_max_hp)
 			healing_done.emit(player, amount, remaining)
 
-		"b":  # Block
+		"b", "block":  # Block
 			var amount = event.damage
 			block_activated.emit(player, amount)
 
@@ -141,14 +173,14 @@ func _process_event(event: APITypes.BattleAction):
 			# Visual indicator that item couldn't activate due to CPU
 			pass
 
-		"x":  # Death
+		"x", "player_defeated":  # Death
 			player_died.emit(player)
 			if player == 1:
 				player1_hp = 0
 			else:
 				player2_hp = 0
 
-		"m":  # Miss
+		"m", "miss":  # Miss
 			# Show miss animation
 			pass
 
@@ -158,11 +190,12 @@ func _process_event(event: APITypes.BattleAction):
 
 		"dt":  # DoT (damage over time)
 			var damage = event.damage
+			var dot_source = event.source if event.source else "DoT"
 			if player == 1:
 				player1_hp = max(0, player1_hp - damage)
 			else:
 				player2_hp = max(0, player2_hp - damage)
-			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp)
+			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp, dot_source)
 
 		"r":  # Reflect
 			# Show reflect animation
@@ -178,7 +211,17 @@ func _finish_battle():
 	var winner = 1 if player1_hp > player2_hp else 2
 	battle_ended.emit(winner)
 
-	print("Battle finished. Winner: Player %d" % winner)
+func get_current_time() -> float:
+	"""Get current playback time in seconds"""
+	if not is_playing:
+		return 0.0
+	return (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
+
+func get_progress() -> float:
+	"""Get battle progress as percentage (0-1)"""
+	if battle_duration <= 0:
+		return 0.0
+	return min(get_current_time() / battle_duration, 1.0)
 
 func skip_to_end():
 	# Fast forward to the end
@@ -192,14 +235,42 @@ func skip_to_end():
 
 	_finish_battle()
 
-func get_current_time() -> float:
-	if not is_playing:
-		return 0.0
-	return (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
+func _build_item_lookup(player_inventory: APITypes.InventoryState, enemy_inventory: APITypes.InventoryState):
+	"""Build lookup table from item UUID to item name"""
+	item_lookup.clear()
 
-func get_progress() -> float:
-	if events.is_empty() or battle_duration <= 0:
-		return 0.0
+	# Add player items
+	for item in player_inventory.items:
+		if item.id and item.name:
+			item_lookup[item.id] = item.name
+		elif item.id and item.item_type:
+			item_lookup[item.id] = item.item_type
 
-	var current_time = get_current_time()
-	return min(1.0, current_time / battle_duration)
+	# Add enemy items
+	for item in enemy_inventory.items:
+		if item.id and item.name:
+			item_lookup[item.id] = item.name
+		elif item.id and item.item_type:
+			item_lookup[item.id] = item.item_type
+
+	print("Built item lookup with %d items" % item_lookup.size())
+
+func _get_item_name(source: String) -> String:
+	"""Get readable item name from UUID or source string"""
+	# Check if it's a UUID in our lookup
+	if item_lookup.has(source):
+		return item_lookup[source]
+
+	# If it starts with "ghost_" it's probably already a name
+	if source.begins_with("ghost_"):
+		return source.replace("ghost_", "").replace("_", " ").capitalize()
+
+	# If it's "system" or similar, return as-is
+	if source in ["system", "none", ""]:
+		return source
+
+	# Otherwise return first 8 chars of UUID for brevity
+	if source.length() > 8:
+		return source.substr(0, 8) + "..."
+
+	return source

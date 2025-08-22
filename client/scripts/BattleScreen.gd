@@ -14,6 +14,7 @@ var battle_log: Array = []
 var current_time: float = 0.0
 var battle_active: bool = false
 var max_battle_duration: float = 20.0  # 20 second battles max
+var battle_speed_multiplier: float = 5.0  # Configurable speed (10x by default)
 
 # UI References
 var player_inventory: Control
@@ -153,15 +154,20 @@ func _create_player_stats():
 	player_health_bar = ProgressBar.new()
 	player_health_bar.position = Vector2(10, 50)
 	player_health_bar.size = Vector2(160, 20)
+	player_health_bar.max_value = 100
 	player_health_bar.value = 100
+	player_health_bar.show_percentage = false  # Don't show percentage text
 	player_health_bar.modulate = Color(0.3, 1.0, 0.3)
 	player_stats_panel.add_child(player_health_bar)
 
 	player_health_label = Label.new()
 	player_health_label.text = "100/100"
-	player_health_label.position = Vector2(65, 48)
-	player_health_label.add_theme_font_size_override("font_size", 12)
-	player_health_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))  # Match bar color
+	player_health_label.position = Vector2(65, 52)  # Center it vertically on the bar
+	player_health_label.add_theme_font_size_override("font_size", 11)
+	player_health_label.add_theme_color_override("font_color", Color.WHITE)
+	player_health_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	player_health_label.add_theme_constant_override("shadow_offset_x", 1)
+	player_health_label.add_theme_constant_override("shadow_offset_y", 1)
 	player_stats_panel.add_child(player_health_label)
 
 	# Stamina (CPU)
@@ -174,15 +180,20 @@ func _create_player_stats():
 	player_stamina_bar = ProgressBar.new()
 	player_stamina_bar.position = Vector2(10, 95)
 	player_stamina_bar.size = Vector2(160, 20)
-	player_stamina_bar.value = 100
+	player_stamina_bar.max_value = 10
+	player_stamina_bar.value = 10
+	player_stamina_bar.show_percentage = false
 	player_stamina_bar.modulate = Color(0.3, 0.6, 1.0)
 	player_stats_panel.add_child(player_stamina_bar)
 
 	player_stamina_label = Label.new()
 	player_stamina_label.text = "10/10"
-	player_stamina_label.position = Vector2(70, 93)
-	player_stamina_label.add_theme_font_size_override("font_size", 12)
-	player_stamina_label.add_theme_color_override("font_color", Color(0.3, 0.6, 1.0))  # Match bar color
+	player_stamina_label.position = Vector2(70, 97)
+	player_stamina_label.add_theme_font_size_override("font_size", 11)
+	player_stamina_label.add_theme_color_override("font_color", Color.WHITE)
+	player_stamina_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	player_stamina_label.add_theme_constant_override("shadow_offset_x", 1)
+	player_stamina_label.add_theme_constant_override("shadow_offset_y", 1)
 	player_stats_panel.add_child(player_stamina_label)
 
 	# Buffs - removed to save space in smaller panel
@@ -218,15 +229,20 @@ func _create_enemy_stats():
 	enemy_health_bar = ProgressBar.new()
 	enemy_health_bar.position = Vector2(10, 50)
 	enemy_health_bar.size = Vector2(160, 20)
+	enemy_health_bar.max_value = 100
 	enemy_health_bar.value = 100
+	enemy_health_bar.show_percentage = false
 	enemy_health_bar.modulate = Color(1.0, 0.3, 0.3)
 	enemy_stats_panel.add_child(enemy_health_bar)
 
 	enemy_health_label = Label.new()
 	enemy_health_label.text = "100/100"
-	enemy_health_label.position = Vector2(65, 48)
-	enemy_health_label.add_theme_font_size_override("font_size", 12)
-	enemy_health_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))  # Match bar color
+	enemy_health_label.position = Vector2(65, 52)
+	enemy_health_label.add_theme_font_size_override("font_size", 11)
+	enemy_health_label.add_theme_color_override("font_color", Color.WHITE)
+	enemy_health_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	enemy_health_label.add_theme_constant_override("shadow_offset_x", 1)
+	enemy_health_label.add_theme_constant_override("shadow_offset_y", 1)
 	enemy_stats_panel.add_child(enemy_health_label)
 
 	# Stamina (CPU)
@@ -239,15 +255,20 @@ func _create_enemy_stats():
 	enemy_stamina_bar = ProgressBar.new()
 	enemy_stamina_bar.position = Vector2(10, 95)
 	enemy_stamina_bar.size = Vector2(160, 20)
-	enemy_stamina_bar.value = 100
+	enemy_stamina_bar.max_value = 10
+	enemy_stamina_bar.value = 10
+	enemy_stamina_bar.show_percentage = false
 	enemy_stamina_bar.modulate = Color(1.0, 0.6, 0.3)
 	enemy_stats_panel.add_child(enemy_stamina_bar)
 
 	enemy_stamina_label = Label.new()
 	enemy_stamina_label.text = "10/10"
-	enemy_stamina_label.position = Vector2(70, 93)
-	enemy_stamina_label.add_theme_font_size_override("font_size", 12)
-	enemy_stamina_label.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3))  # Match bar color
+	enemy_stamina_label.position = Vector2(70, 97)
+	enemy_stamina_label.add_theme_font_size_override("font_size", 11)
+	enemy_stamina_label.add_theme_color_override("font_color", Color.WHITE)
+	enemy_stamina_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	enemy_stamina_label.add_theme_constant_override("shadow_offset_x", 1)
+	enemy_stamina_label.add_theme_constant_override("shadow_offset_y", 1)
 	enemy_stats_panel.add_child(enemy_stamina_label)
 
 	# Buffs - removed to save space in smaller panel
@@ -280,6 +301,14 @@ func _create_battle_log():
 	log_panel.add_child(battle_log_container)
 
 func _create_control_buttons():
+	# Time label for battle progress
+	time_label = Label.new()
+	time_label.text = "0.0s / 20.0s"
+	time_label.position = Vector2(720, 430)
+	time_label.add_theme_font_size_override("font_size", 14)
+	time_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.9))
+	add_child(time_label)
+
 	var start_btn = Button.new()
 	start_btn.name = "StartBattle"
 	start_btn.text = "Start Battle"
@@ -297,17 +326,21 @@ func _create_control_buttons():
 
 func _update_stats_display():
 	# Update player stats
-	player_health_bar.value = (player_data.health / float(player_data.max_health)) * 100
+	player_health_bar.max_value = player_data.max_health
+	player_health_bar.value = player_data.health
 	player_health_label.text = "%d/%d" % [player_data.health, player_data.max_health]
 
-	player_stamina_bar.value = (player_data.stamina / player_data.max_stamina) * 100
+	player_stamina_bar.max_value = player_data.max_stamina
+	player_stamina_bar.value = player_data.stamina
 	player_stamina_label.text = "%.0f/%.0f" % [player_data.stamina, player_data.max_stamina]
 
 	# Update enemy stats
-	enemy_health_bar.value = (enemy_data.health / float(enemy_data.max_health)) * 100
+	enemy_health_bar.max_value = enemy_data.max_health
+	enemy_health_bar.value = enemy_data.health
 	enemy_health_label.text = "%d/%d" % [enemy_data.health, enemy_data.max_health]
 
-	enemy_stamina_bar.value = (enemy_data.stamina / enemy_data.max_stamina) * 100
+	enemy_stamina_bar.max_value = enemy_data.max_stamina
+	enemy_stamina_bar.value = enemy_data.stamina
 	enemy_stamina_label.text = "%.0f/%.0f" % [enemy_data.stamina, enemy_data.max_stamina]
 
 	# Buffs removed from display to save space
@@ -358,8 +391,8 @@ func _start_battle_playback():
 
 	_update_stats_display()
 
-	# Start event playback
-	event_processor.start_playback(GameStateManager.battle_speed)
+	# Start event playback with configurable speed
+	event_processor.start_playback(battle_speed_multiplier)
 
 func _process(delta):
 	if battle_active and event_processor.is_playing:
@@ -434,13 +467,14 @@ func _on_back_to_inventory():
 func _on_battle_started():
 	_add_to_log("[color=green]Battle Started![/color]")
 
-func _on_damage_dealt(player: int, amount: int, remaining_hp: int):
+func _on_damage_dealt(player: int, amount: int, remaining_hp: int, source: String):
+	# Player parameter indicates who TAKES damage
 	if player == 1:
 		player_data.health = remaining_hp
-		_add_to_log("[color=red]You[/color] take [color=yellow]%d[/color] damage!" % amount)
+		_add_to_log("[color=red]Enemy's %s[/color] deals [color=yellow]%d[/color] damage to [color=aqua]You[/color]! (HP: %d/%d)" % [source, amount, remaining_hp, player_data.max_health])
 	else:
 		enemy_data.health = remaining_hp
-		_add_to_log("[color=aqua]You[/color] deal [color=yellow]%d[/color] damage!" % amount)
+		_add_to_log("[color=aqua]Your %s[/color] deals [color=yellow]%d[/color] damage to [color=red]Enemy[/color]! (HP: %d/%d)" % [source, amount, remaining_hp, enemy_data.max_health])
 
 	_show_damage_number(player, amount)
 	_update_stats_display()
@@ -462,6 +496,12 @@ func _on_block_activated(player: int, amount: int):
 	_show_block_effect(player)
 
 func _on_item_activated(item_id: String, player: int):
+	# Log item activation
+	if player == 1:
+		_add_to_log("[color=aqua]Your %s[/color] activates!" % item_id)
+	else:
+		_add_to_log("[color=red]Enemy's %s[/color] activates!" % item_id)
+
 	# Show item activation visual
 	_show_item_activation(item_id, player)
 
