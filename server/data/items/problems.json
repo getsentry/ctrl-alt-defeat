@@ -1,12 +1,12 @@
 {
   "category": "problems",
   "items": {
-    "null_pointer": {
-      "name": "Null Pointer Exception",
+    "null_blade": {
+      "name": "Null blade",
       "description": "Classic bug that crashes systems",
       "category": "problem",
       "class": "neutral",
-      "shape": "1x1",
+      "shape": "1x2",
       "rarity": "common",
       "cost": 3,
       "triggers": [
@@ -25,10 +25,10 @@
           ]
         }
       ],
-      "slug": "null_pointer_exception"
+      "slug": "null_blade"
     },
-    "memory_leak": {
-      "name": "Memory Leak",
+    "core_dumper": {
+      "name": "Core Dumper",
       "description": "Slowly drains resources over time",
       "category": "problem",
       "class": "neutral",
@@ -51,10 +51,10 @@
           ]
         }
       ],
-      "slug": "memory_leak"
+      "slug": "core_dumper"
     },
-    "race_condition": {
-      "name": "Race Condition",
+    "deadlock_twins": {
+      "name": "Deadlock Twins",
       "description": "Unpredictable timing-based bug",
       "category": "problem",
       "class": "neutral",
@@ -77,10 +77,10 @@
           ]
         }
       ],
-      "slug": "race_condition"
+      "slug": "deadlock_twins"
     },
-    "infinite_loop": {
-      "name": "Infinite Loop",
+    "mobius_lash": {
+      "name": "Mobius Lash",
       "description": "Consumes CPU indefinitely",
       "category": "problem",
       "class": "neutral",
@@ -107,10 +107,10 @@
           ]
         }
       ],
-      "slug": "infinite_loop"
+      "slug": "mobius_lash"
     },
-    "sql_injection": {
-      "name": "SQL Injection",
+    "sql_injector": {
+      "name": "SQL Injector",
       "description": "Exploits database vulnerabilities",
       "category": "problem",
       "class": "neutral",
@@ -133,10 +133,10 @@
           ]
         }
       ],
-      "slug": "sql_injection"
+      "slug": "sql_injector"
     },
-    "ddos_attack": {
-      "name": "DDoS Attack",
+    "denier_of_service": {
+      "name": "Denier of Service",
       "description": "Overwhelming distributed attack",
       "category": "problem",
       "class": "neutral",
@@ -159,10 +159,10 @@
           ]
         }
       ],
-      "slug": "ddos_attack"
+      "slug": "denier_of_service"
     },
-    "zero_day_exploit": {
-      "name": "Zero Day Exploit",
+    "day_zero": {
+      "name": "Day Zero",
       "description": "Unknown vulnerability with no patch",
       "category": "problem",
       "class": "neutral",
@@ -197,14 +197,14 @@
           ]
         }
       ],
-      "slug": "zero_day_exploit"
+      "slug": "day_zero"
     },
-    "network_scanner": {
-      "name": "Network Scanner",
-      "description": "Advanced Sentaur surveillance tool for ranged reconnaissance",
+    "nullshot": {
+      "name": "Nullshot",
+      "description": "Dead Click",
       "category": "problem",
       "class": "sentaur",
-      "shape": "2x1",
+      "shape": "1x2",
       "rarity": "common",
       "cost": 4,
       "triggers": [
@@ -224,7 +224,7 @@
           ]
         }
       ],
-      "slug": "network_scanner"
+      "slug": "nullshot"
     },
     "neural_interface_blade": {
       "name": "Neural Interface Blade",
@@ -266,9 +266,9 @@
       ],
       "slug": "neural_interface_blade"
     },
-    "distributed_scanner_array": {
-      "name": "Distributed Scanner Array",
-      "description": "Advanced Sentaur surveillance network with enhanced coverage",
+    "querystorm": {
+      "name": "Querystorm",
+      "description": "N+1 query",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
@@ -304,7 +304,7 @@
           ]
         }
       ],
-      "slug": "distributed_scanner_array"
+      "slug": "querystorm"
     },
     "quantum_sniper": {
       "name": "Quantum Sniper",

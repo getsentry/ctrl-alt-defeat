@@ -5,6 +5,7 @@ class_name InventoryGrid
 # Used by UnifiedGridUI for the main game and BattleScreen for replays
 
 const APITypes = preload("res://scripts/api_types.gd")
+const ItemVisual = preload("res://scripts/ItemVisual.gd")
 
 # Grid configuration - can be customized per instance
 var grid_width: int = 9
@@ -15,7 +16,7 @@ var cell_spacing: float = 1.0
 # Visual settings
 var grid_color = Color(0.15, 0.15, 0.2, 0.8)
 var border_color = Color(0.3, 0.6, 1.0, 0.8)
-var item_color = Color(0.2, 0.5, 1.0, 0.9)
+var item_color = Color(0.2, 0.5, 1.0, 1.0)  # Full opacity
 var server_color = Color(0.3, 0.4, 0.5, 0.3)
 
 # Mode settings
@@ -190,25 +191,24 @@ func _add_container(container: APITypes.ServerContainer):
 	var width = container.width
 	var height = container.height
 
-	# Create container visual
-	var container_visual = Control.new()
+	# Create container visual using ItemVisual
+	var container_visual = ItemVisual.new()
 	container_visual.position = grid_to_pixel(Vector2i(x, y))
-	container_visual.size = Vector2(
-		width * (cell_size + cell_spacing) - cell_spacing,
-		height * (cell_size + cell_spacing) - cell_spacing
-	)
 	container_visual.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Add border for the container
-	var border = Panel.new()
-	border.size = container_visual.size
-	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var border_style = StyleBoxFlat.new()
-	border_style.bg_color = Color(0, 0, 0, 0)
-	border_style.border_color = Color(0.3, 0.6, 1.0, 0.8)
-	border_style.set_border_width_all(3)
-	border.add_theme_stylebox_override("panel", border_style)
-	container_visual.add_child(border)
+	# Set up container data with shape based on width/height
+	var container_data = container.to_dict() if container is Resource else container
+	container_data["is_container"] = true
+
+	# Generate shape array for the container
+	var shape = []
+	for cy in range(height):
+		for cx in range(width):
+			shape.append([cx, cy])
+	container_data["shape"] = shape
+
+	# Set up the visual
+	container_visual.setup(container_data, cell_size, cell_spacing)
 
 	# Update grid cells to show server pattern and mark as active
 	for cy in range(height):
@@ -243,54 +243,15 @@ func _add_item(item: APITypes.InventoryItem):
 	var x = item.position.x
 	var y = item.position.y
 
-	# Create item visual
-	var item_visual = Control.new()
+	# Create item visual using the ItemVisual class
+	var item_visual = ItemVisual.new()
 	item_visual.position = grid_to_pixel(Vector2i(x, y))
 	item_visual.mouse_filter = Control.MOUSE_FILTER_PASS if not read_only else Control.MOUSE_FILTER_IGNORE
 	item_visual.set_meta("item_data", item)
 	item_visual.set_meta("grid_pos", Vector2i(x, y))
 
-	# Calculate size from shape
-	var max_x = 0
-	var max_y = 0
-	for offset in item.shape:
-		if offset is Array and offset.size() >= 2:
-			max_x = max(max_x, offset[0])
-			max_y = max(max_y, offset[1])
-
-	var width = max_x + 1
-	var height = max_y + 1
-	item_visual.size = Vector2(
-		width * (cell_size + cell_spacing) - cell_spacing,
-		height * (cell_size + cell_spacing) - cell_spacing
-	)
-
-	# Create visual for each cell in the shape
-	for offset in item.shape:
-		if offset is Array and offset.size() >= 2:
-			var cell = Panel.new()
-			cell.position = Vector2(
-				offset[0] * (cell_size + cell_spacing),
-				offset[1] * (cell_size + cell_spacing)
-			)
-			cell.size = Vector2(cell_size, cell_size)
-			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-			var style = StyleBoxFlat.new()
-			style.bg_color = item_color
-			style.border_color = Color(0.4, 0.7, 1.0, 1.0)
-			style.set_border_width_all(2)
-			style.set_corner_radius_all(4)
-			cell.add_theme_stylebox_override("panel", style)
-			item_visual.add_child(cell)
-
-	# Add item name label
-	var label = Label.new()
-	label.text = item.name if item.name else item.item_type
-	label.add_theme_font_size_override("font_size", 10)
-	label.add_theme_color_override("font_color", Color.WHITE)
-	label.position = Vector2(2, 2)
-	item_visual.add_child(label)
+	# Set up the visual with item data and grid settings
+	item_visual.setup(item, cell_size, cell_spacing)
 
 	# Mark grid cells as occupied
 	for offset in item.shape:
@@ -337,6 +298,9 @@ func _start_drag(item_visual: Control):
 	original_grid_pos = item_visual.get_meta("grid_pos")
 	drag_offset = item_visual.position - get_local_mouse_position()
 
+	# Ensure the item visual stays at its proper size while dragging
+	item_visual.z_index = 10  # Bring to front
+
 	# Clear item from grid
 	var item_data = item_visual.get_meta("item_data")
 	for offset in item_data.shape:
@@ -346,7 +310,7 @@ func _start_drag(item_visual: Control):
 			if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
 				item_grid[cell_y][cell_x] = null
 
-	# Move to top for dragging
+	# Move to top for dragging (visual hierarchy)
 	move_child(item_visual, get_child_count() - 1)
 
 func _end_drag():
@@ -391,6 +355,7 @@ func _place_item_at(item_visual: Control, grid_pos: Vector2i):
 	"""Place item visual at grid position"""
 	item_visual.position = grid_to_pixel(grid_pos)
 	item_visual.set_meta("grid_pos", grid_pos)
+	item_visual.z_index = 0  # Reset z-index after placing
 
 	# Mark grid cells as occupied
 	var item_data = item_visual.get_meta("item_data")
@@ -439,6 +404,7 @@ func place_shop_item(item_data: Dictionary, grid_pos: Vector2i) -> bool:
 	var item_dict = {
 		"id": item_data.get("id", ""),
 		"item_type": item_data.get("item_type", ""),
+		"slug": item_data.get("slug", ""),  # Include slug for texture loading
 		"name": item_data.get("name", ""),
 		"category": item_data.get("category", ""),
 		"rarity": item_data.get("rarity", "common"),
@@ -513,7 +479,9 @@ func _remove_item(item_visual: Control):
 func _process(_delta):
 	"""Update dragging and hover preview"""
 	if dragging_object:
-		dragging_object.position = get_local_mouse_position() + drag_offset
+		# Update position smoothly
+		var target_pos = get_local_mouse_position() + drag_offset
+		dragging_object.position = target_pos
 
 		# Update hover preview - check if valid first
 		if not hover_preview or not is_instance_valid(hover_preview):

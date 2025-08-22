@@ -268,6 +268,7 @@ async def start_session(
         server_containers.append(
             {
                 "id": container["id"],
+                "slug": container["slug"],
                 "type": container["type"],
                 "position": list(container["position"]),  # Convert tuple to list
                 "width": container["width"],
@@ -827,6 +828,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
         return {
             "id": item.uid,
+            "slug": item.spec.slug,
             "item_type": item.spec.id,
             "name": item.spec.name,
             "position": list(item.position),
@@ -856,6 +858,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
         return {
             "id": container.uid,
+            "slug": container.spec.slug,
             "type": (
                 container.spec.id if hasattr(container.spec, "id") else "standard_vm"
             ),
@@ -902,6 +905,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
         items=[
             PlacedItemSchema(
                 id=item["id"],
+                slug=item["slug"],
                 item_type=item["item_type"],
                 name=item["name"],
                 position=item["position"],
@@ -913,6 +917,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
         servers=[
             ServerContainerSchema(
                 id=server["id"],
+                slug=server["slug"],
                 type=server["type"],
                 position=server["position"],
                 width=server["width"],
@@ -926,6 +931,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
         items=[
             PlacedItemSchema(
                 id=item["id"],
+                slug=item["slug"],
                 item_type=item["item_type"],
                 name=item["name"],
                 position=item["position"],
@@ -937,6 +943,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
         servers=[
             ServerContainerSchema(
                 id=server["id"],
+                slug=server["slug"],
                 type=server["type"],
                 position=server["position"],
                 width=server["width"],
@@ -985,37 +992,37 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
     # Define ghost player inventories for rounds 1-10
     ghost_inventories = {
         1: [  # Very basic
-            ("null_pointer", (1, 3)),
+            ("null_pointer", (0, 3)),
         ],
         2: [  # Still easy
-            ("null_pointer", (1, 3)),
+            ("null_pointer", (0, 3)),
             ("firewall", (4, 3)),
         ],
         3: [  # Adding defense
-            ("null_pointer", (1, 3)),
+            ("null_pointer", (0, 3)),
             ("memory_leak", (2, 3)),
             ("firewall", (4, 3)),
         ],
         4: [  # More items
-            ("null_pointer", (1, 3)),
+            ("null_pointer", (0, 3)),
             ("memory_leak", (2, 3)),
             ("firewall", (4, 3)),
             ("health_check", (5, 3)),
         ],
         5: [  # Medium difficulty
-            ("null_pointer", (1, 3)),
+            ("null_pointer", (0, 3)),
             ("memory_leak", (2, 3)),
-            ("race_condition", (1, 4)),
+            ("race_condition", (0, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
         ],
         6: [  # Adding infrastructure
-            ("null_pointer", (1, 3)),
+            ("null_pointer", (0, 3)),
             ("memory_leak", (2, 3)),
-            ("race_condition", (1, 4)),
+            ("race_condition", (0, 4)),
             ("firewall", (4, 3)),
             ("error_monitoring", (5, 3)),
-            ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
+            ("auto_scaler", (5, 4)),  # Inside third container
         ],
         7: [  # Stronger items
             ("null_pointer", (1, 3)),
@@ -1136,24 +1143,24 @@ def generate_ai_containers(items: List[PlacedItem]) -> List[ServerContainer]:
     containers_catalog = create_server_containers()
     vm_info = containers_catalog["standard_vm"]
 
-    # Create a minimal set of containers that cover all item positions
-    # For simplicity, create 3 standard VMs at fixed positions
+    # Create containers that properly cover the AI item positions
+    # Standard VMs are 2x2, so adjust positions to avoid gaps
     containers = [
         ServerContainer(
             spec=vm_info["spec"],
-            position=(1, 3),
+            position=(0, 3),  # Covers (0,3), (1,3), (0,4), (1,4)
             uid="ai_vm1",
             shape=vm_info["external_shape"],
         ),
         ServerContainer(
             spec=vm_info["spec"],
-            position=(3, 3),
+            position=(2, 3),  # Covers (2,3), (3,3), (2,4), (3,4)
             uid="ai_vm2",
             shape=vm_info["external_shape"],
         ),
         ServerContainer(
             spec=vm_info["spec"],
-            position=(5, 3),
+            position=(4, 3),  # Covers (4,3), (5,3), (4,4), (5,4)
             uid="ai_vm3",
             shape=vm_info["external_shape"],
         ),
@@ -1256,6 +1263,7 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
         # Use list format for position to match session initialization
         new_container = {
             "id": item.id,
+            "slug": item.slug,
             "type": item.item_type,
             "position": list(request.target_position),  # Store as list [x, y]
             "width": item.width if hasattr(item, "width") else 2,

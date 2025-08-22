@@ -1,6 +1,8 @@
 extends Control
 
 const APITypes = preload("res://scripts/api_types.gd")
+const ItemVisual = preload("res://scripts/ItemVisual.gd")
+const InventoryGrid = preload("res://scripts/InventoryGrid.gd")
 
 # Game state is pulled from GameStateManager - no local copies
 
@@ -420,16 +422,6 @@ func _create_controls():
 			battle_btn.pressed.connect(_on_ready_for_battle)
 			add_child(battle_btn)
 
-	if not read_only_mode and not hide_shop:
-		# HelpText node is already in scene, no need to create
-		if not has_node("HelpText"):
-			# Fallback if not in scene
-			var help = Label.new()
-			help.text = "Drag servers to create grid → Place items on any grid cells → Items can span servers"
-			help.position = Vector2(300, 605)
-			help.add_theme_font_size_override("font_size", 12)
-			help.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
-			add_child(help)
 
 func _load_shop_from_state():
 	# Load shop from GameStateManager
@@ -489,19 +481,12 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	item_style.set_corner_radius_all(4)
 	shop_item.add_theme_stylebox_override("panel", item_style)
 
-	# Check if it's a container
-	var is_container = data.get("is_container", false)
-
-	# Item visual
-	var item_visual = ColorRect.new()
-	item_visual.size = Vector2(40, 40)
+	# Use ItemVisual for rendering - use same cell size as inventory grid (45px)
+	var item_visual = ItemVisual.new()
 	item_visual.position = Vector2(10, 15)
-
-	# Use different color for containers
-	if is_container:
-		item_visual.color = Color(0.5, 0.3, 0.7)  # Purple for containers
-	else:
-		item_visual.color = _get_color_for_category(data.get("category", "problem"))
+	item_visual.show_border = false  # Cleaner look in shop
+	item_visual.enable_tooltip = false  # Disable tooltips for now to avoid interference
+	item_visual.setup(data, 45, 1)  # Use same 45px cell size as inventory grid
 	shop_item.add_child(item_visual)
 
 	# Name label
@@ -512,7 +497,8 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	shop_item.add_child(name_label)
 
 	# Size label for containers
-	if is_container:
+	var is_container_item = data.get("is_container", false)
+	if is_container_item:
 		var size_label = Label.new()
 		size_label.text = "%dx%d slots" % [data.get("internal_width", 2), data.get("internal_height", 2)]
 		size_label.position = Vector2(60, 25)
@@ -540,14 +526,14 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	var handler_data = data.duplicate()
 	# Add display-specific fields if not present
 	if not handler_data.has("width"):
-		handler_data["width"] = data.get("internal_width", 2) if is_container else 1
+		handler_data["width"] = data.get("internal_width", 2) if is_container_item else 1
 	if not handler_data.has("height"):
-		handler_data["height"] = data.get("internal_height", 2) if is_container else 1
+		handler_data["height"] = data.get("internal_height", 2) if is_container_item else 1
 	if not handler_data.has("color"):
-		handler_data["color"] = Color(0.5, 0.3, 0.7) if is_container else _get_color_for_category(data.get("category", "problem"))
+		handler_data["color"] = Color(0.5, 0.3, 0.7) if is_container_item else _get_color_for_category(data.get("category", "problem"))
 	if not handler_data.has("type"):
-		handler_data["type"] = "server" if is_container else "item"  # Mark containers as servers
-	if is_container and not handler_data.has("pattern"):
+		handler_data["type"] = "server" if is_container_item else "item"  # Mark containers as servers
+	if is_container_item and not handler_data.has("pattern"):
 		handler_data["pattern"] = _create_pattern_from_size(data.get("internal_width", 2), data.get("internal_height", 2))
 
 	# Connect input handling for dragging
@@ -609,45 +595,12 @@ func _start_shop_drag(shop_item: Panel, item_data: Dictionary):
 	dragging_shop_item = shop_item
 	dragging_shop_data = item_data
 
-	# Create drag preview
-	drag_preview = Control.new()
+	# Create drag preview using ItemVisual for consistency
+	drag_preview = ItemVisual.new()
 	drag_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	# Determine size based on shape or default
-	var shape = item_data.get("shape", [[0, 0]])
-	var max_x = 0
-	var max_y = 0
-	for offset in shape:
-		if offset is Array and offset.size() >= 2:
-			max_x = max(max_x, offset[0])
-			max_y = max(max_y, offset[1])
-
-	var width = max_x + 1
-	var height = max_y + 1
-	drag_preview.size = Vector2(
-		width * (inventory_grid.cell_size + inventory_grid.cell_spacing) - inventory_grid.cell_spacing,
-		height * (inventory_grid.cell_size + inventory_grid.cell_spacing) - inventory_grid.cell_spacing
-	)
-
-	# Create visual for each cell in the shape
-	for offset in shape:
-		if offset is Array and offset.size() >= 2:
-			var cell = Panel.new()
-			cell.position = Vector2(
-				offset[0] * (inventory_grid.cell_size + inventory_grid.cell_spacing),
-				offset[1] * (inventory_grid.cell_size + inventory_grid.cell_spacing)
-			)
-			cell.size = Vector2(inventory_grid.cell_size, inventory_grid.cell_size)
-			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-			var style = StyleBoxFlat.new()
-			style.bg_color = _get_color_for_category(item_data.get("category", "problem"))
-			style.bg_color.a = 0.7  # Semi-transparent
-			style.border_color = Color(0.4, 0.7, 1.0, 1.0)
-			style.set_border_width_all(2)
-			style.set_corner_radius_all(4)
-			cell.add_theme_stylebox_override("panel", style)
-			drag_preview.add_child(cell)
+	# Keep drag preview fully opaque
+	# drag_preview.modulate.a = 0.7  # Removed transparency
+	drag_preview.setup(item_data, inventory_grid.cell_size, inventory_grid.cell_spacing)
 
 	# Add to scene
 	add_child(drag_preview)

@@ -34,6 +34,7 @@ class InventoryGrid:
         self.containers = [
             {
                 "id": "container_a",
+                "slug": "standard_vm",
                 "position": (2, 3),
                 "width": 2,
                 "height": 2,
@@ -41,6 +42,7 @@ class InventoryGrid:
             },
             {
                 "id": "container_b",
+                "slug": "standard_vm",
                 "position": (4, 3),
                 "width": 2,
                 "height": 2,
@@ -48,6 +50,7 @@ class InventoryGrid:
             },
             {
                 "id": "container_c",
+                "slug": "standard_vm",
                 "position": (6, 3),
                 "width": 2,
                 "height": 2,

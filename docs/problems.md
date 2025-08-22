@@ -142,7 +142,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 
 ## Sentaur Class Problems
 
-### Network Scanner
+### Nullshot
 - **Shape:** 2x1 (2 slots horizontal)
 - **Damage:** 5-9 (2.3 DPS)
 - **Cooldown:** 3.0s
@@ -151,7 +151,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 - **Cost:** 4 Gold
 - **Rarity:** Common
 - **Class:** Sentaur
-- **Description:** Advanced surveillance tool for ranged reconnaissance
+- **Description:** Dead Click
 - **Backpack Battles Equivalent:** Bow
 
 ~~### Distributed Scanner Array

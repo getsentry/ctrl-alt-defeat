@@ -28,6 +28,7 @@ class Position extends Resource:
 class InventoryItem extends Resource:
 	var id: String = ""
 	var item_type: String = ""
+	var slug: String = ""
 	var name: String = ""
 	var category: String = ""
 	var position: Position
@@ -36,9 +37,13 @@ class InventoryItem extends Resource:
 	func _init(data: Dictionary):
 		# Required fields per server PlacedItem schema
 		if not data.has("id"):
+			print("InventoryItem missing id", data)
 			return  # Invalid data
 		id = data["id"]
 		item_type = data.get("item_type", "")
+		if not data.has("slug"):
+			print("Slug missing from InventoryItem", data)
+		slug = data["slug"]
 		name = data.get("name", "")
 		category = data.get("category", "")
 		if data.has("position"):
@@ -49,6 +54,7 @@ class InventoryItem extends Resource:
 		return {
 			"id": id,
 			"item_type": item_type,
+			"slug": slug,
 			"name": name,
 			"category": category,
 			"position": position.to_dict() if position else {"x": 0, "y": 0},
@@ -59,6 +65,7 @@ class InventoryItem extends Resource:
 class ServerContainer extends Resource:
 	var id: String = ""
 	var type: String = ""
+	var slug: String = ""
 	var position: Position
 	var width: int = 2
 	var height: int = 2
@@ -67,6 +74,9 @@ class ServerContainer extends Resource:
 		# Server sends all these fields
 		id = data["id"]
 		type = data.get("type", "")
+		if not data.has("slug"):
+			print("slug missing from ServerContainer", data)
+		slug = data["slug"]
 		position = Position.new(data["position"])
 		width = data.get("width", 2)
 		height = data.get("height", 2)
@@ -75,6 +85,7 @@ class ServerContainer extends Resource:
 		return {
 			"id": id,
 			"type": type,
+			"slug": slug,
 			"position": position.to_dict() if position else {"x": 0, "y": 0},
 			"width": width,
 			"height": height

@@ -135,6 +135,7 @@ class PlacedItem(BaseModel):
     """Item placed on the grid during battle"""
 
     id: str = Field(description="Unique item instance ID")
+    slug: str = Field(description="Unique item slug")
     item_type: str = Field(description="Item type identifier")
     name: str = Field(description="Display name")
     position: List[int] = Field(description="[x, y] grid position")
@@ -146,6 +147,7 @@ class ServerContainer(BaseModel):
     """Server container information"""
 
     id: str = Field(description="Container instance ID")
+    slug: str = Field(description="Container slug")
     type: str = Field(description="Container type")
     position: List[int] = Field(description="[x, y] position")
     width: int = Field(description="Container width")

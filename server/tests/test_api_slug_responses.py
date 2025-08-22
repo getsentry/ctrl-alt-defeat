@@ -360,3 +360,163 @@ class TestAPISlugResponses:
                 assert (
                     " " not in container.slug
                 ), f"Container slug {container.slug} should not have spaces"
+
+    def test_battle_response_includes_inventory_slugs(self, auth_client):
+        """Test that battle responses include player and enemy inventories with slugs"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "TestPlayer"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        player_id = data["player_id"]
+        session = data["session"]
+
+        # Check starting containers
+        print(f"Starting containers: {session.get('server_containers', [])}")
+
+        # Just purchase an item without a container (items can be placed on main grid in round 1)
+        shop = session["current_shop"]
+        item = next(
+            (item for item in shop if item and not item.get("is_container")), None
+        )
+        print(f"Item found: {item}")
+        if item:
+            # Place item on first container at (2,3)
+            response = auth_client.post(
+                "/purchase/item",
+                json={
+                    "player_id": player_id,
+                    "item_id": item["id"],
+                    "target_position": [2, 3],
+                },
+            )
+            if response.status_code != 200:
+                print(f"Item purchase failed: {response.json()}")
+            assert response.status_code == 200
+        else:
+            print("No non-container item in shop")
+
+        # Now submit battle
+        response = auth_client.post("/battle/simulate", json={"player_id": player_id})
+        if response.status_code != 200:
+            print(f"Battle failed with: {response.json()}")
+        assert response.status_code == 200
+        data = response.json()
+
+        # Check battle_result inventories
+        battle_result = data.get("battle_result")
+        if battle_result:
+            # Check player inventory items
+            player_inv = battle_result.get("player_inventory", {})
+            for item in player_inv.get("items", []):
+                assert (
+                    "slug" in item or "item_type" in item
+                ), f"Player item missing slug: {item}"
+                # Items should have slug, not just ID
+                if "id" in item and item["id"].startswith("40423f4c"):
+                    assert False, f"Item using UUID instead of slug: {item}"
+
+            # Check enemy inventory items
+            enemy_inv = battle_result.get("enemy_inventory", {})
+            for item in enemy_inv.get("items", []):
+                assert (
+                    "slug" in item or "item_type" in item
+                ), f"Enemy item missing slug: {item}"
+
+    def test_server_containers_include_slugs(self, auth_client):
+        """Test that server_containers in responses include slugs"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "TestPlayer"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        player_id = data["player_id"]
+        session = data["session"]
+
+        # Check if session has server_containers
+        server_containers = session.get("server_containers", [])
+        print(f"Session containers: {server_containers}")
+        for container in server_containers:
+            assert "slug" in container, f"Server container missing slug: {container}"
+            assert container["slug"] != "", "Server container has empty slug"
+            # Container slug should be meaningful, not just an ID
+            assert not container["slug"].startswith(
+                "container_"
+            ), f"Container using generic ID instead of slug: {container}"
+            assert not container["slug"].startswith(
+                "ai_vm"
+            ), f"Container using AI ID instead of slug: {container}"
+
+        # Purchase a container to test response
+        shop = session["current_shop"]
+        container_item = next(
+            (item for item in shop if item and item.get("is_container")), None
+        )
+
+        if container_item:
+            response = auth_client.post(
+                "/purchase/item",
+                json={
+                    "player_id": player_id,
+                    "item_id": container_item["id"],
+                    "target_position": [2, 2],
+                },
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                # Check server_containers in purchase response
+                new_containers = data.get("server_containers", [])
+                for container in new_containers:
+                    assert (
+                        "slug" in container
+                    ), f"New server container missing slug: {container}"
+                    assert (
+                        container["slug"] != ""
+                    ), "New server container has empty slug"
+                    # Should use proper slug like "standard_vm" not "container_a"
+                    assert not container["slug"].startswith(
+                        "container_"
+                    ), f"Container using generic ID instead of slug: {container}"
+
+    def test_battle_response_server_containers_have_slugs(self, auth_client):
+        """Test that battle response includes server containers with proper slugs"""
+        # Start session
+        response = auth_client.post(
+            "/session/start", json={"player_name": "TestPlayer"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        player_id = data["player_id"]
+
+        # Submit battle
+        response = auth_client.post("/battle/simulate", json={"player_id": player_id})
+        assert response.status_code == 200
+        data = response.json()
+
+        # Check battle_result containers
+        battle_result = data.get("battle_result")
+        if battle_result:
+            # Check player inventory servers/containers
+            player_inv = battle_result.get("player_inventory", {})
+            for container in player_inv.get("servers", []):
+                assert (
+                    "slug" in container
+                ), f"Player container missing slug: {container}"
+                assert container["slug"] != "", "Player container has empty slug"
+                # Should be actual container type slug
+                assert not container["slug"].startswith(
+                    "container_"
+                ), f"Container using ID instead of type slug: {container}"
+
+            # Check enemy inventory servers/containers
+            enemy_inv = battle_result.get("enemy_inventory", {})
+            for container in enemy_inv.get("servers", []):
+                assert "slug" in container, f"Enemy container missing slug: {container}"
+                assert container["slug"] != "", "Enemy container has empty slug"
+                # AI containers should have proper slugs too
+                assert not container["slug"].startswith(
+                    "ai_vm"
+                ), f"AI container using ID instead of type slug: {container}"

@@ -94,6 +94,7 @@ class SessionManager:
         server_containers = [
             {
                 "id": "container_a",
+                "slug": "standard_vm",
                 "type": "standard_vm",
                 "position": [2, 3],
                 "width": 2,
@@ -101,6 +102,7 @@ class SessionManager:
             },
             {
                 "id": "container_b",
+                "slug": "standard_vm",
                 "type": "standard_vm",
                 "position": [4, 3],
                 "width": 2,
@@ -108,6 +110,7 @@ class SessionManager:
             },
             {
                 "id": "container_c",
+                "slug": "standard_vm",
                 "type": "standard_vm",
                 "position": [6, 3],
                 "width": 2,

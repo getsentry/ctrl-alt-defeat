@@ -112,7 +112,7 @@ func _setup_inventories():
 	player_inventory.set_colors(
 		Color(0.1, 0.1, 0.15, 0.8),  # grid color
 		Color(0.3, 0.6, 1.0, 0.8),   # border color
-		Color(0.2, 0.5, 1.0, 0.9)    # item color
+		Color(0.2, 0.5, 1.0, 1.0)    # item color - full opacity
 	)
 	player_panel.add_child(player_inventory)
 
@@ -133,7 +133,7 @@ func _setup_inventories():
 	enemy_inventory.set_colors(
 		Color(0.15, 0.1, 0.1, 0.8),  # grid color
 		Color(1.0, 0.3, 0.3, 0.8),   # border color
-		Color(1.0, 0.3, 0.3, 0.9)    # item color
+		Color(1.0, 0.3, 0.3, 1.0)    # item color - full opacity
 	)
 	enemy_panel.add_child(enemy_inventory)
 
@@ -193,7 +193,16 @@ func _load_battle_from_state():
 	event_processor.load_battle_events(battle_result)
 
 	# Load inventories - these are guaranteed to exist in BattleResult
+	print("Loading player inventory with %d items and %d containers" % [
+		battle_result.player_inventory.items.size(),
+		battle_result.player_inventory.containers.size()
+	])
 	player_inventory.load_inventory_state(battle_result.player_inventory)
+
+	print("Loading enemy inventory with %d items and %d containers" % [
+		battle_result.enemy_inventory.items.size(),
+		battle_result.enemy_inventory.containers.size()
+	])
 	enemy_inventory.load_inventory_state(battle_result.enemy_inventory)
 
 func _start_battle_playback():
