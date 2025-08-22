@@ -60,13 +60,17 @@ func reset_for_test():
 	_auth_token = ""  # Force re-authentication
 	_user_id = 0
 
-func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
+func start_session(player_name: String = "", game_seed: int = -1) -> APITypes.SessionStartResponse:
 	# First authenticate as guest if we don't have a token
 	if _auth_token == "":
 		var auth_success = await _authenticate_guest()
 		if not auth_success:
 			push_error("Failed to authenticate with server")
 			return null
+
+	# Use provided name or get from GameStateManager or default
+	if player_name == "":
+		player_name = GameStateManager.player_name if GameStateManager.player_name != "" else "Player"
 
 	# Start a new game session
 	var url = BASE_URL + "/session/start"
@@ -76,7 +80,7 @@ func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
 	]
 
 	var body_dict = {
-		"player_name": "Player"
+		"player_name": player_name
 	}
 
 	# Use seed if provided (for testing)

@@ -151,6 +151,8 @@ class BattleResult extends Resource:
 	var seed: int = 0
 	var player_inventory: InventoryState
 	var enemy_inventory: InventoryState
+	var opponent_name: String = "AI Opponent"
+	var opponent_type: String = "ai"  # "ai" or "player_ghost"
 
 	func _init(data: Dictionary):
 		# Required fields - fail if missing
@@ -168,6 +170,10 @@ class BattleResult extends Resource:
 		# Parse inventories - required in battle results
 		player_inventory = InventoryState.new(data["player_inventory"])
 		enemy_inventory = InventoryState.new(data["enemy_inventory"])
+
+		# Parse opponent info - optional for backwards compatibility
+		opponent_name = data.get("opponent_name", "AI Opponent")
+		opponent_type = data.get("opponent_type", "ai")
 
 # Session update - matches server SessionUpdate schema
 class SessionUpdate extends Resource:

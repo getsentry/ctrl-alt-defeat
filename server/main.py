@@ -576,6 +576,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     # Try matchmaking first (unless in test mode with specified AI difficulty)
     opponent_data = None
     opponent_type = "ai"
+    opponent_name = f"AI Opponent (Round {current_round})"
     match_history_id = None  # Track for updating after battle
 
     if not TEST_MODE or request.test_ai_difficulty is None:
@@ -614,6 +615,9 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
                     if opponent_data:
                         opponent_type = "player_ghost"
+                        opponent_name = opponent_data.get(
+                            "player_name", "Unknown Player"
+                        )
                         opponent_build_id = opponent_data.get("build_id")
         except Exception:
             # Log error but continue with AI opponent
@@ -654,6 +658,19 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             current_round, request.test_ai_difficulty
         )
         opponent_type = "ai"
+
+        # Give AI a descriptive name based on difficulty
+        if TEST_MODE and request.test_ai_difficulty:
+            difficulty_names = {
+                1: "Rookie Bot",
+                2: "Standard AI",
+                3: "Expert System",
+                4: "Elite AI",
+                5: "Nightmare Bot",
+            }
+            opponent_name = difficulty_names.get(
+                request.test_ai_difficulty, f"AI Level {request.test_ai_difficulty}"
+            )
 
     # Simulate battle - use request seed or derive from game seed
     if request.seed is not None:
@@ -963,6 +980,8 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
         seed=battle_result["seed"],
         player_inventory=player_inventory,
         enemy_inventory=enemy_inventory,
+        opponent_name=opponent_name,
+        opponent_type=opponent_type,
     )
 
     # Create SessionUpdate model

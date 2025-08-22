@@ -81,6 +81,13 @@ func _setup_ui_references():
 	# Battle log - correct path
 	battle_log_container = $BattleLog/LogScroll/LogText
 
+	# Name labels
+	var player_name_label = $Player1NameLabel
+	var opponent_name_label = $Player2NameLabel
+
+	# Set player name from GameStateManager
+	player_name_label.text = GameStateManager.player_name if GameStateManager.player_name != "" else "Player"
+
 	var speed_button = $ControlButtons/SpeedButton
 	speed_button.pressed.connect(_on_toggle_speed)
 
@@ -205,6 +212,16 @@ func _load_battle_from_state():
 		battle_result.enemy_inventory.containers.size()
 	])
 	enemy_inventory.load_inventory_state(battle_result.enemy_inventory)
+
+	# Set opponent name and style based on type
+	var opponent_name_label = $Player2NameLabel
+	opponent_name_label.text = battle_result.opponent_name
+
+	# Different color for ghost players vs AI
+	if battle_result.opponent_type == "player_ghost":
+		opponent_name_label.add_theme_color_override("font_color", Color(0.8, 0.5, 1.0))  # Purple for ghost players
+	else:
+		opponent_name_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))  # Red for AI
 
 func _start_battle_playback():
 	print("Starting battle playback...")

@@ -184,6 +184,8 @@ class BattleResult(BaseModel):
     seed: int = Field(description="Battle RNG seed")
     player_inventory: InventoryData = Field(description="Player's battle inventory")
     enemy_inventory: InventoryData = Field(description="Enemy's battle inventory")
+    opponent_name: str = Field(default="AI Opponent", description="Opponent's name")
+    opponent_type: str = Field(default="ai", description="Type: ai or player_ghost")
 
 
 class SessionUpdate(BaseModel):

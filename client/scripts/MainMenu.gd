@@ -6,6 +6,7 @@ const APITypes = preload("res://scripts/api_types.gd")
 @onready var quit_button = $"MenuPanel_ButtonContainer#QuitButton"
 @onready var version_label = $VersionLabel
 @onready var music_player = $BackgroundMusic
+@onready var name_input = $NameInputContainer/NameInput
 
 func _ready():
 	# Set window size for consistency
@@ -66,11 +67,17 @@ func _on_start_game():
 		await tween.finished
 		music_player.stop()
 
-	# Reset game state
+	# Get player name from input (default to "Player" if empty)
+	var player_name = name_input.text.strip_edges()
+	if player_name == "":
+		player_name = "Player"
+
+	# Reset game state and set player name
 	GameStateManager.start_new_game()
+	GameStateManager.player_name = player_name
 
 	# Start new session with server
-	var session_response = await BattleServerAPI.start_session()
+	var session_response = await BattleServerAPI.start_session(player_name)
 
 	# Check if server connection failed
 	if session_response == null:
