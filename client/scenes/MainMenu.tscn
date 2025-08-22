@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=7 format=3 uid="uid://c0b2a7t7l6ib8"]
 
-[ext_resource type="Script" path="res://scripts/MainMenu.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://bf5ujancn6o07" path="res://scripts/MainMenu.gd" id="1_main"]
+[ext_resource type="Texture2D" uid="uid://c32y670spfpwh" path="res://assets/ui/backgrounds/main_menu_background.png" id="2_0ykhv"]
+[ext_resource type="Texture2D" uid="uid://c54wpcuis6nbr" path="res://assets/sprites/backgrounds/ctrl_alt_defeat_logo.png" id="3_l72w3"]
+[ext_resource type="Texture2D" uid="uid://fe2xqisr404b" path="res://assets/characters/player_main.png" id="4_826wr"]
+[ext_resource type="Texture2D" uid="uid://c4g3exoq4quim" path="res://assets/characters/robot.png" id="5_ucygd"]
+[ext_resource type="Texture2D" uid="uid://d1km7nycan2ch" path="res://assets/ui/buttons/new_game_button.png" id="6_826wr"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -10,3 +15,107 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_main")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_0ykhv")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="LogoContainer" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -1084.0
+offset_top = 88.0
+offset_right = 104.0
+offset_bottom = 854.0
+grow_horizontal = 2
+texture = ExtResource("3_l72w3")
+
+[node name="PlayerCharacter" type="TextureRect" parent="."]
+z_index = 1
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -210.0
+offset_top = -905.0
+offset_right = 814.0
+offset_bottom = 631.0
+grow_vertical = 0
+texture = ExtResource("4_826wr")
+
+[node name="RobotCharacter" type="TextureRect" parent="."]
+z_index = 1
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -936.0
+offset_top = -820.0
+offset_right = 88.0
+offset_bottom = 716.0
+grow_horizontal = 0
+grow_vertical = 0
+scale = Vector2(0.809621, 0.809621)
+texture = ExtResource("5_ucygd")
+
+[node name="MenuPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 282.0
+offset_top = -518.0
+offset_right = 682.0
+offset_bottom = -218.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuPanel_ButtonContainer#NewGameButton" type="Button" parent="."]
+custom_minimum_size = Vector2(400, 60)
+layout_mode = 2
+offset_left = 865.0
+offset_top = 927.0
+offset_right = 1350.0
+offset_bottom = 1094.0
+scale = Vector2(1.47363, 1.47363)
+icon = ExtResource("6_826wr")
+
+[node name="MenuPanel_ButtonContainer#QuitButton" type="Button" parent="."]
+visible = false
+custom_minimum_size = Vector2(400, 60)
+layout_mode = 2
+offset_left = 1094.0
+offset_top = 1220.0
+offset_right = 1494.0
+offset_bottom = 1280.0
+text = "EXIT"
+
+[node name="VersionLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -40.0
+offset_right = -20.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "v0.1.0 - Alpha"
+horizontal_alignment = 2
+vertical_alignment = 2
