@@ -6,7 +6,7 @@ Servers are placed in the main grid and provide internal storage space
 from dataclasses import dataclass, field
 from typing import List, Optional, Set, Tuple
 
-from grid_system import SHAPES, ItemShape, Rotation
+from grid_system import ItemShape, Rotation
 from item_effects import ItemSpec
 
 
@@ -37,13 +37,6 @@ class ServerContainer:
         # The container's shape IS its internal space
         # If it's T-shaped, you get T-shaped internal space
         return set(self.get_occupied_squares())
-
-
-def create_server_containers() -> dict[str, ItemSpec]:
-    """Create server containers from JSON configuration"""
-    from config_loader import create_server_containers_from_config
-
-    return create_server_containers_from_config()
 
 
 class PlacementValidator:
@@ -161,48 +154,3 @@ class PlacementValidator:
                 seen_uids.add(container.uid)
 
         return containers
-
-
-if __name__ == "__main__":
-    # Demo the container system
-    print("Server Container System Demo\n")
-
-    # Create containers
-    containers = create_server_containers()
-
-    # Create a validator
-    validator = PlacementValidator()
-
-    # Add a standard VM at position (1, 1)
-    standard_vm = ServerContainer(
-        spec=containers["standard_vm"],
-        position=(1, 1),
-        uid="vm1",
-        shape=containers["standard_vm"].shape,
-    )
-
-    if validator.add_container(standard_vm):
-        print(f"Added standard VM at {standard_vm.position}")
-        print(f"  Occupies main grid squares: {standard_vm.get_occupied_squares()}")
-        print(f"  Provides internal squares: {standard_vm.get_internal_squares()}")
-
-    # Try to place an item
-    if validator.validate_item_placement((1, 1), SHAPES["1x1"] if SHAPES else None):
-        print("\nCan place 1x1 item at (1, 1) - inside the VM!")
-
-    if not validator.validate_item_placement((0, 0), SHAPES["1x1"] if SHAPES else None):
-        print("Cannot place 1x1 item at (0, 0) - no container there!")
-
-    # Add an edge node
-    edge_node = ServerContainer(
-        spec=containers["edge_node"],
-        position=(4, 2),
-        uid="edge1",
-        shape=containers["edge_node"].shape,
-    )
-
-    if validator.add_container(edge_node):
-        print(f"\nAdded edge node at {edge_node.position}")
-        print(
-            f"  Provides {len(edge_node.get_internal_squares())} internal squares (horizontal 2x1)"
-        )

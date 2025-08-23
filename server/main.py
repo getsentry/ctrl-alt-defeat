@@ -16,6 +16,7 @@ import auth_endpoints
 import sentry_sdk
 from auth import TokenData, get_current_user
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
+from config_loader import config_loader
 
 # Import session management and schemas
 from database import db_manager
@@ -53,7 +54,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
-from server_containers import ServerContainer, create_server_containers
+from server_containers import ServerContainer
 from session_manager import SessionManager
 from utils import utc_now
 
@@ -578,8 +579,7 @@ def generate_shop_items(
                 used_item_types.pop(0)
 
             # Check if it's a container
-            containers_catalog = create_server_containers()
-            is_container = item_type in containers_catalog
+            is_container = config_loader.has_container(item_type)
             if is_container:
                 # Get container info and shape
                 shape_data = None
@@ -760,11 +760,11 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
         # Create containers from opponent data
         p2_containers = []
-        containers_catalog = create_server_containers()
         for container_data in opponent_data["containers"]:
+            # HACK: Not sure what type is, we need to fix this to just use the spec id
             container_type = container_data.get("type", "standard_vm")
-            if container_type in containers_catalog:
-                container_info = containers_catalog[container_type]
+            if config_loader.has_container(container_type):
+                container_info = config_loader.get_container(container_type)
                 p2_containers.append(
                     ServerContainer(
                         spec=container_info,
@@ -806,10 +806,10 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     p1_containers = []
     for container_data in session.server_containers:
         # Create ServerContainer from session data
-        containers_catalog = create_server_containers()
+        # HACK: Not sure what type is, we need to fix this to just use the spec id
         container_type = container_data.get("type", "standard_vm")
-        if container_type in containers_catalog:
-            container_info = containers_catalog[container_type]
+        if config_loader.has_container(container_type):
+            container_info = config_loader.get_container(container_type)
             p1_containers.append(
                 ServerContainer(
                     spec=container_info,
@@ -1231,8 +1231,7 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
     """Get predefined ghost player inventory for each round"""
 
     containers = generate_ai_containers()
-    containers_catalog = create_server_containers()
-    vm_info = containers_catalog["standard_vm"]
+    vm_info = config_loader.get_container("standard_vm")
 
     # Define ghost player inventories for rounds 1-10
     ghost_inventories = {
@@ -1389,8 +1388,7 @@ def generate_ai_opponent(
 
 def generate_ai_containers() -> List[ServerContainer]:
     """Generate server containers that cover all AI item positions"""
-    containers_catalog = create_server_containers()
-    vm_info = containers_catalog["standard_vm"]
+    vm_info = config_loader.get_container("standard_vm")
 
     # Create containers that properly cover the AI item positions
     # Standard VMs are 2x2, so adjust positions to avoid gaps

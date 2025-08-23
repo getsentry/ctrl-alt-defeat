@@ -6,29 +6,30 @@ from copy import deepcopy
 
 import pytest
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem, Player
+from config_loader import config_loader
 from grid_system import SHAPES
 from item_effects import ItemSpec, PassiveTrigger, TimerTrigger
-from server_containers import ServerContainer, create_server_containers
+from server_containers import ServerContainer
 
 
 def get_test_containers():
     """Get standard test containers for both players"""
-    containers = create_server_containers()
+    vm = config_loader.get_container("standard_vm")
 
     # Player 1 gets a standard VM at (0,0)
     p1_container = ServerContainer(
-        spec=containers["standard_vm"],
+        spec=vm,
         position=(0, 0),
         uid="p1_test_rack",
-        shape=containers["standard_vm"].shape,
+        shape=vm.shape,
     )
 
     # Player 2 gets a standard VM at (4,0)
     p2_container = ServerContainer(
-        spec=containers["standard_vm"],
+        spec=vm,
         position=(4, 0),
         uid="p2_test_rack",
-        shape=containers["standard_vm"].shape,
+        shape=vm.shape,
     )
 
     return [p1_container], [p2_container]

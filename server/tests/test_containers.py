@@ -3,13 +3,10 @@ Test the server container system
 """
 
 from battle_engine import BattleSimulator, PlacedItem
+from config_loader import config_loader
 from grid_system import SHAPES
 from item_effects import create_example_items
-from server_containers import (
-    PlacementValidator,
-    ServerContainer,
-    create_server_containers,
-)
+from server_containers import PlacementValidator, ServerContainer
 
 
 class TestServerContainers:
@@ -18,14 +15,14 @@ class TestServerContainers:
     def test_container_placement(self):
         """Test that containers can be placed and provide grid space"""
         validator = PlacementValidator(main_grid_size=(7, 9))
-        containers = create_server_containers()
+        vm = config_loader.get_container("standard_vm")
 
         # Create a standard VM at position (1, 1)
         standard_vm = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(1, 1),
             uid="vm1",
-            shape=containers["standard_vm"].shape,
+            shape=vm.shape,
         )
 
         # Should be able to place it
@@ -41,11 +38,10 @@ class TestServerContainers:
     def test_container_overlap(self):
         """Test that containers cannot overlap each other"""
         validator = PlacementValidator()
-        containers = create_server_containers()
-
+        vm = config_loader.get_container("standard_vm")
         # Place first VM
         vm1 = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(1, 1),
             uid="vm1",
             shape=SHAPES["2x2"],
@@ -54,7 +50,7 @@ class TestServerContainers:
 
         # Try to place overlapping VM
         vm2 = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(2, 2),  # This would overlap with vm1
             uid="vm2",
             shape=SHAPES["2x2"],
@@ -63,7 +59,7 @@ class TestServerContainers:
 
         # Try non-overlapping VM
         vm3 = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(4, 1),  # No overlap
             uid="vm3",
             shape=SHAPES["2x2"],
@@ -81,9 +77,9 @@ class TestServerContainers:
         assert not validator.validate_item_placement((0, 0), SHAPES["1x1"])
 
         # Add a container
-        containers = create_server_containers()
+        vm = config_loader.get_container("standard_vm")
         vm = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(1, 1),
             uid="vm1",
             shape=SHAPES["2x2"],
@@ -106,14 +102,14 @@ class TestServerContainers:
     def test_items_cannot_overlap(self):
         """Test that items cannot overlap each other"""
         validator = PlacementValidator()
-        containers = create_server_containers()
+        vm = config_loader.get_container("container_orchestrator")
 
         # Add a container orchestrator
         container = ServerContainer(
-            spec=containers["container_orchestrator"],
+            spec=vm,
             position=(1, 1),
             uid="container1",
-            shape=containers["container_orchestrator"].shape,
+            shape=vm.shape,
         )
         validator.add_container(container)
 
@@ -129,14 +125,13 @@ class TestServerContainers:
     def test_multi_square_items_on_servers(self):
         """Test that multi-square items work with servers"""
         validator = PlacementValidator()
-        containers = create_server_containers()
-
+        vm = config_loader.get_container("container_orchestrator")
         # Add a container orchestrator (3x2, 6 slots)
         container = ServerContainer(
-            spec=containers["container_orchestrator"],
+            spec=vm,
             position=(1, 1),
             uid="container1",
-            shape=containers["container_orchestrator"].shape,
+            shape=vm.shape,
         )
         validator.add_container(container)
 
@@ -158,17 +153,17 @@ class TestServerContainers:
     def test_item_spanning_containers(self):
         """Test that items can span multiple containers"""
         validator = PlacementValidator()
-        containers = create_server_containers()
+        vm = config_loader.get_container("standard_vm")
 
         # Place two adjacent VMs
         vm1 = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(0, 0),
             uid="vm1",
             shape=SHAPES["2x2"],
         )
         vm2 = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(2, 0),  # Adjacent to vm1
             uid="vm2",
             shape=SHAPES["2x2"],
@@ -189,11 +184,11 @@ class TestServerContainers:
         """Test that battle engine validates with containers"""
         sim = BattleSimulator(seed=12345)
         items = create_example_items()
-        containers = create_server_containers()
+        vm = config_loader.get_container("standard_vm")
 
         # Create a container
         vm1 = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(1, 1),
             uid="p1_vm",
             shape=SHAPES["2x2"],
@@ -224,7 +219,7 @@ class TestServerContainers:
         # Should pass validation with containers
         # (In real usage, p2 would also need a container)
         vm2 = ServerContainer(
-            spec=containers["standard_vm"],
+            spec=vm,
             position=(1, 1),
             uid="p2_vm",
             shape=SHAPES["2x2"],

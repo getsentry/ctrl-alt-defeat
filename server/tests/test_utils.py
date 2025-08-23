@@ -1,14 +1,13 @@
 """
 Common utilities for tests
 """
-
-from server_containers import ServerContainer, create_server_containers
+from config_loader import config_loader
+from server_containers import ServerContainer
 
 
 def get_test_containers():
     """Get standard test containers for both players"""
-    containers = create_server_containers()
-    vm = containers["standard_vm"]
+    vm = config_loader.get_container("standard_vm")
 
     # Player 1 gets a standard VM at (0,0) - 2x2 container
     p1_container = ServerContainer(
@@ -31,8 +30,7 @@ def get_test_containers():
 
 def get_large_test_containers():
     """Get larger test containers for tests that need more space"""
-    containers = create_server_containers()
-    orchestrator = containers["container_orchestrator"]
+    orchestrator = config_loader.get_container("container_orchestrator")
 
     # Player 1 gets a container orchestrator at (0,0) - 3x2 container (6 slots)
     p1_container = ServerContainer(
@@ -55,8 +53,7 @@ def get_large_test_containers():
 
 def get_battle_containers():
     """Get containers that cover all positions used in battles and AI"""
-    containers = create_server_containers()
-    vm = containers["standard_vm"]
+    vm = config_loader.get_container("standard_vm")
 
     def make_container(position, uid):
         return ServerContainer(

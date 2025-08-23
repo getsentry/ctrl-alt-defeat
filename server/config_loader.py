@@ -244,6 +244,9 @@ class ConfigLoader:
         """Get a container by ID"""
         return self.containers[container_id]
 
+    def has_container(self, container_id: str) -> bool:
+        return container_id in self.containers
+
     def get_item(self, item_id: str) -> ItemSpec:
         """Get an item by ID"""
         return self.items.get(item_id)
@@ -259,13 +262,7 @@ class ConfigLoader:
 
 # Global instance
 config_loader = ConfigLoader()
-
-
-def create_server_containers_from_config() -> dict[str, ItemSpec]:
-    """Create server containers from configuration"""
-    if not config_loader.containers:
-        config_loader.load_containers()
-    return config_loader.containers
+config_loader.load_all()
 
 
 def create_items_from_config():
