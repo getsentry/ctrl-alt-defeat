@@ -21,12 +21,11 @@ class ServerContainer:
     spec: ItemSpec
     position: Tuple[int, int]  # Position in main grid
     uid: str
-    shape: ItemShape
     rotation: Rotation = field(default=Rotation.NONE)
 
     def get_occupied_squares(self) -> List[Tuple[int, int]]:
         """Get all main grid squares this container occupies"""
-        rotated_shape = self.shape.rotate(self.rotation)
+        rotated_shape = self.spec.shape.rotate(self.rotation)
         return [
             (self.position[0] + dx, self.position[1] + dy)
             for dx, dy in rotated_shape.squares

@@ -770,7 +770,6 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                         spec=container_info,
                         position=tuple(container_data["position"]),
                         uid=container_data["id"],
-                        shape=container_info.shape,
                     )
                 )
     else:
@@ -815,7 +814,6 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                     spec=container_info,
                     position=tuple(container_data["position"]),
                     uid=container_data["id"],
-                    shape=container_info.shape,
                 )
             )
 
@@ -1053,23 +1051,9 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
     def serialize_container(container: ServerContainer) -> Dict:
         """Convert ServerContainer to client-compatible format"""
-        width = 2  # Default width
-        height = 2  # Default height
-
-        if hasattr(container, "shape"):
-            if hasattr(container.shape, "width"):
-                width = container.shape.width
-            elif hasattr(container.shape, "squares"):
-                # Calculate from squares
-                max_x = max(s[0] for s in container.shape.squares) + 1
-                width = max_x
-
-            if hasattr(container.shape, "height"):
-                height = container.shape.height
-            elif hasattr(container.shape, "squares"):
-                # Calculate from squares
-                max_y = max(s[1] for s in container.shape.squares) + 1
-                height = max_y
+        # XXX: We shouldn't be using max x and y here, makes no sense. We should return positions
+        width = max(s[0] for s in container.spec.shape.squares) + 1
+        height = max(s[1] for s in container.spec.shape.squares) + 1
 
         return {
             "id": container.uid,
@@ -1317,7 +1301,6 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
                 spec=vm_info,
                 position=(6, 3),
                 uid="ai_vm3",
-                shape=vm_info.shape,
             ),
         )
 
@@ -1397,19 +1380,16 @@ def generate_ai_containers() -> List[ServerContainer]:
             spec=vm_info,
             position=(0, 3),  # Covers (0,3), (1,3), (0,4), (1,4)
             uid="ai_vm1",
-            shape=vm_info.shape,
         ),
         ServerContainer(
             spec=vm_info,
             position=(2, 3),  # Covers (2,3), (3,3), (2,4), (3,4)
             uid="ai_vm2",
-            shape=vm_info.shape,
         ),
         ServerContainer(
             spec=vm_info,
             position=(4, 3),  # Covers (4,3), (5,3), (4,4), (5,4)
             uid="ai_vm3",
-            shape=vm_info.shape,
         ),
     ]
     return containers

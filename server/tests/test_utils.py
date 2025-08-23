@@ -14,7 +14,6 @@ def get_test_containers():
         spec=vm,
         position=(0, 0),
         uid="p1_test_vm",
-        shape=vm.shape,
     )
 
     # Player 2 gets a standard VM at (4,0) - 2x2 container
@@ -22,7 +21,6 @@ def get_test_containers():
         spec=vm,
         position=(4, 0),
         uid="p2_test_vm",
-        shape=vm.shape,
     )
 
     return [p1_container], [p2_container]
@@ -37,7 +35,6 @@ def get_large_test_containers():
         spec=orchestrator,
         position=(0, 0),
         uid="p1_test_orchestrator",
-        shape=orchestrator.shape,
     )
 
     # Player 2 gets a container orchestrator at (3,0)
@@ -45,7 +42,6 @@ def get_large_test_containers():
         spec=orchestrator,
         position=(3, 0),
         uid="p2_test_orchestrator",
-        shape=orchestrator.shape,
     )
 
     return [p1_container], [p2_container]
@@ -60,7 +56,6 @@ def get_battle_containers():
             spec=vm,
             position=position,
             uid=uid,
-            shape=vm.shape,
         )
 
     # P1 needs containers at multiple positions for tests

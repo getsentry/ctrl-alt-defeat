@@ -22,7 +22,6 @@ class TestServerContainers:
             spec=vm,
             position=(1, 1),
             uid="vm1",
-            shape=vm.shape,
         )
 
         # Should be able to place it
@@ -44,7 +43,6 @@ class TestServerContainers:
             spec=vm,
             position=(1, 1),
             uid="vm1",
-            shape=SHAPES["2x2"],
         )
         assert validator.add_container(vm1)
 
@@ -53,7 +51,6 @@ class TestServerContainers:
             spec=vm,
             position=(2, 2),  # This would overlap with vm1
             uid="vm2",
-            shape=SHAPES["2x2"],
         )
         assert not validator.add_container(vm2)  # Should fail
 
@@ -62,7 +59,6 @@ class TestServerContainers:
             spec=vm,
             position=(4, 1),  # No overlap
             uid="vm3",
-            shape=SHAPES["2x2"],
         )
         assert validator.add_container(vm3)  # Should succeed
 
@@ -82,7 +78,6 @@ class TestServerContainers:
             spec=vm,
             position=(1, 1),
             uid="vm1",
-            shape=SHAPES["2x2"],
         )
         validator.add_container(vm)
 
@@ -109,7 +104,6 @@ class TestServerContainers:
             spec=vm,
             position=(1, 1),
             uid="container1",
-            shape=vm.shape,
         )
         validator.add_container(container)
 
@@ -131,7 +125,6 @@ class TestServerContainers:
             spec=vm,
             position=(1, 1),
             uid="container1",
-            shape=vm.shape,
         )
         validator.add_container(container)
 
@@ -160,13 +153,11 @@ class TestServerContainers:
             spec=vm,
             position=(0, 0),
             uid="vm1",
-            shape=SHAPES["2x2"],
         )
         vm2 = ServerContainer(
             spec=vm,
             position=(2, 0),  # Adjacent to vm1
             uid="vm2",
-            shape=SHAPES["2x2"],
         )
 
         validator.add_container(vm1)
@@ -191,7 +182,6 @@ class TestServerContainers:
             spec=vm,
             position=(1, 1),
             uid="p1_vm",
-            shape=SHAPES["2x2"],
         )
 
         # Create items placed in the VM
@@ -222,7 +212,6 @@ class TestServerContainers:
             spec=vm,
             position=(1, 1),
             uid="p2_vm",
-            shape=SHAPES["2x2"],
         )
 
         # Run battle with container validation

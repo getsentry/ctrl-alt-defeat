@@ -21,7 +21,6 @@ def get_test_containers():
         spec=vm,
         position=(0, 0),
         uid="p1_test_rack",
-        shape=vm.shape,
     )
 
     # Player 2 gets a standard VM at (4,0)
@@ -29,7 +28,6 @@ def get_test_containers():
         spec=vm,
         position=(4, 0),
         uid="p2_test_rack",
-        shape=vm.shape,
     )
 
     return [p1_container], [p2_container]
