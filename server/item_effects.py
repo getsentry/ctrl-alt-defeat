@@ -302,6 +302,7 @@ class ItemSpec:
     name: str
     category: str  # "problem", "defense", "infrastructure"
     player_class: str
+    cost: int
 
     # Shape for multi-square items (required for all items)
     shape: ItemShape
@@ -315,13 +316,3 @@ class ItemSpec:
 
     # Adjacency bonuses this item provides to neighbors
     adjacency_bonus: Optional[dict] = None
-
-
-# ============= EXAMPLE ITEMS =============
-
-
-def create_example_items():
-    """Create example items from JSON configuration or fallback to hardcoded"""
-    from config_loader import create_items_from_config
-
-    return create_items_from_config()

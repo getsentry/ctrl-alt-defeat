@@ -26,6 +26,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
@@ -51,6 +52,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     TimerTrigger(
@@ -103,6 +105,7 @@ class TestShieldBlocking:
                         shape=ItemShape([(0, 0)], "1x1"),
                         slug="test_slug",
                         category="defense",
+                        cost=1,
                         player_class="neutral",
                         triggers=[
                             OnAttackedTrigger(
@@ -127,6 +130,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     TimerTrigger(
@@ -188,6 +192,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
@@ -213,6 +218,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     TimerTrigger(
@@ -258,6 +264,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
@@ -276,6 +283,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
@@ -295,6 +303,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     TimerTrigger(
@@ -344,6 +353,7 @@ class TestShieldBlocking:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="defense",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(

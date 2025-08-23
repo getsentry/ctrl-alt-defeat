@@ -24,6 +24,7 @@ class TestTimerScheduling:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     TimerTrigger(
@@ -73,6 +74,7 @@ class TestTimerScheduling:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     TimerTrigger(
@@ -150,6 +152,7 @@ class TestTimerScheduling:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     TimerTrigger(
@@ -172,6 +175,7 @@ class TestTimerScheduling:
                 shape=ItemShape([(0, 0)], "1x1"),
                 slug="test_slug",
                 category="problem",
+                cost=1,
                 player_class="neutral",
                 triggers=[
                     TimerTrigger(

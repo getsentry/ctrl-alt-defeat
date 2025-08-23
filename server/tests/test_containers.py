@@ -2,10 +2,9 @@
 Test the server container system
 """
 
-from battle_engine import BattleSimulator, PlacedItem
+from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
 from config_loader import config_loader
 from grid_system import SHAPES
-from item_effects import create_example_items
 from server_containers import PlacementValidator, ServerContainer
 
 
@@ -174,7 +173,6 @@ class TestServerContainers:
     def test_battle_with_containers(self):
         """Test that battle engine validates with containers"""
         sim = BattleSimulator(seed=12345)
-        items = create_example_items()
         vm = config_loader.get_container("standard_vm")
 
         # Create a container
@@ -187,12 +185,12 @@ class TestServerContainers:
         # Create items placed in the VM
         p1_items = [
             PlacedItem(
-                spec=items["null_blade"],
+                spec=ITEM_CATALOG["null_blade"],
                 position=(1, 1),  # Inside VM
                 uid="item1",
             ),
             PlacedItem(
-                spec=items["core_dumper"],
+                spec=ITEM_CATALOG["core_dumper"],
                 position=(2, 1),  # Inside VM
                 uid="item2",
             ),
@@ -200,7 +198,7 @@ class TestServerContainers:
 
         p2_items = [
             PlacedItem(
-                spec=items["error_monitoring"],
+                spec=ITEM_CATALOG["error_monitoring"],
                 position=(1, 1),  # Would need its own VM
                 uid="item3",
             )

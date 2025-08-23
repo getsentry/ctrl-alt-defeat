@@ -10,6 +10,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, TypedDict
 
+from config_loader import config_loader
 from event_system import Event, EventData, EventManager, EventType
 from grid_system import ItemShape, Rotation
 from item_effects import (
@@ -27,7 +28,6 @@ from item_effects import (
     ReflectEffect,
     StatModEffect,
     TimerTrigger,
-    create_example_items,
 )
 from schemas import BattleAction
 from server_containers import PlacementValidator, ServerContainer
@@ -115,8 +115,7 @@ class Player:
     recorded_attacks: List[Dict] = field(default_factory=list)
 
 
-# Use the new items from item_effects.py
-ITEM_CATALOG = create_example_items()
+ITEM_CATALOG = config_loader.items
 
 
 class BattleResult(TypedDict):

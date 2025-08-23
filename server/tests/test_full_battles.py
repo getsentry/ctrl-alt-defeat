@@ -35,6 +35,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -61,6 +62,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -87,6 +89,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -117,6 +120,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="defense",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
@@ -138,6 +142,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="defense",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
@@ -159,6 +164,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="infrastructure",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -178,6 +184,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -236,6 +243,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -257,6 +265,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -278,6 +287,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -303,6 +313,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -324,6 +335,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="defense",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
@@ -343,6 +355,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="infrastructure",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         PassiveTrigger(
@@ -383,6 +396,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -404,6 +418,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="defense",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         DamageTakenTrigger(
@@ -427,6 +442,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="defense",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         DamageTakenTrigger(
@@ -454,6 +470,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="infrastructure",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         BattleStartTrigger(
@@ -474,6 +491,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -495,6 +513,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -541,6 +560,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     rarity="rare",
                     triggers=[
@@ -563,6 +583,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="defense",
+                    cost=1,
                     player_class="neutral",
                     rarity="rare",
                     triggers=[
@@ -587,6 +608,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     rarity="legendary",
                     triggers=[
@@ -657,6 +679,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -678,6 +701,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="infrastructure",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -700,6 +724,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -721,6 +746,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="infrastructure",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -771,6 +797,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="expensive1",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -792,6 +819,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="expensive2",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -817,6 +845,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="cpu_infrastructure",
                     category="infrastructure",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         PassiveTrigger(
@@ -837,6 +866,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="efficient1",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(
@@ -858,6 +888,7 @@ class TestFullBattleScenarios:
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="efficient2",
                     category="problem",
+                    cost=1,
                     player_class="neutral",
                     triggers=[
                         TimerTrigger(

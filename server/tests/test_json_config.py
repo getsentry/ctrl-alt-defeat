@@ -94,11 +94,9 @@ def test_json_config():
     # Test a container
     orchestrator = loader.get_container("container_orchestrator")
     if orchestrator:
-        print(f"\n✅ Container Orchestrator: {orchestrator['spec'].name}")
-        print(
-            f"   Shape: {orchestrator['spec'].shape.name if orchestrator['spec'].shape else 'None'}"
-        )
-        print(f"   Cost: {orchestrator.get('cost', 'N/A')}")
+        print(f"\n✅ Container Orchestrator: {orchestrator.name}")
+        print(f"   Shape: {orchestrator.shape.name if orchestrator.shape else 'None'}")
+        print(f"   Cost: {orchestrator.cost}")
 
     print("\n" + "=" * 50)
     print("✨ JSON Configuration System Test Complete!")

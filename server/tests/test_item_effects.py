@@ -4,6 +4,7 @@ Tests for the improved item effects system
 
 from dataclasses import dataclass
 
+from battle_engine import ITEM_CATALOG
 from grid_system import ItemShape
 from item_effects import (
     AttackEffect,
@@ -21,7 +22,6 @@ from item_effects import (
     StatModEffect,
     StunEffect,
     TimerTrigger,
-    create_example_items,
 )
 
 
@@ -225,6 +225,7 @@ class TestItemSpecs:
             shape=ItemShape([(0, 0)], "1x1"),
             slug="test_slug",
             category="problem",
+            cost=1,
             player_class="neutral",
             triggers=[
                 BattleStartTrigger(
@@ -268,23 +269,15 @@ class TestItemSpecs:
 
     def test_trigger_effect_combinations(self):
         """Test that triggers can have multiple effects"""
-        items = create_example_items()
-
         # Memory Leak has attack effect
-        core_dumper = items["core_dumper"]
+        core_dumper = ITEM_CATALOG["core_dumper"]
         timer = core_dumper.triggers[0]
         assert len(timer.effects) == 1
         assert isinstance(timer.effects[0], AttackEffect)
 
         # DDoS Attack has attack effect
-        ddos = items.get("denier_of_service")
+        ddos = ITEM_CATALOG["denier_of_service"]
         if ddos:  # Check if exists in JSON
             timer = ddos.triggers[0]
             assert len(timer.effects) >= 1
             assert isinstance(timer.effects[0], AttackEffect)
-
-
-if __name__ == "__main__":
-    import pytest
-
-    pytest.main([__file__, "-v"])

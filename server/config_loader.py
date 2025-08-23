@@ -119,13 +119,14 @@ class ConfigLoader:
         # Create ItemSpec for the container
         spec = ItemSpec(
             id=container_id,
-            name=config.get("name", "Unknown Container"),
-            category="infrastructure",
+            name=config["name"],
+            category="container",
+            cost=config["cost"],
             player_class=config["class"],
             slug=config["slug"],
             shape=shape,
             triggers=triggers,
-            rarity=config.get("rarity", "common"),
+            rarity=config["rarity"],
         )
 
         return spec
@@ -144,13 +145,14 @@ class ConfigLoader:
 
         return ItemSpec(
             id=item_id,
-            name=config.get("name", "Unknown Item"),
-            category=config.get("category", "problem"),
+            name=config["name"],
+            category=config["category"],
+            cost=config["cost"],
             player_class=config["class"],
             slug=config["slug"],
             shape=shape,
             triggers=triggers,
-            rarity=config.get("rarity", "common"),
+            rarity=config["rarity"],
         )
 
     def _parse_shape(self, shape_str: str) -> ItemShape:
@@ -263,10 +265,3 @@ class ConfigLoader:
 # Global instance
 config_loader = ConfigLoader()
 config_loader.load_all()
-
-
-def create_items_from_config():
-    """Create items from configuration (includes containers)"""
-    if not config_loader.items:
-        config_loader.load_all()  # Load all to include containers
-    return config_loader.items
