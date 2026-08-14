@@ -3,6 +3,7 @@ extends Control
 # Preload the BattleEventProcessor class since class_name might not be available yet
 const BattleEventProcessor = preload("res://scripts/BattleEventProcessor.gd")
 const APITypes = preload("res://scripts/api_types.gd")
+const Presentation = preload("res://scripts/Presentation.gd")
 
 # Event processor for battle replay
 var event_processor
@@ -14,7 +15,28 @@ var battle_log: Array = []
 var current_time: float = 0.0
 var battle_active: bool = false
 var max_battle_duration: float = 20.0  # 20 second battles max
-var battle_speed_multiplier: float = 1.0  # Configurable speed (10x by default)
+var battle_speed_multiplier: float = _starting_playback_speed()
+
+
+const TEST_PLAYBACK_SPEED := 50.0
+
+
+static func _starting_playback_speed() -> float:
+	"""Playback speed for the battle timeline.
+
+	The server returns the whole battle at once. This is how fast the client
+	replays it, so at 1x a 15 second battle takes 15 seconds of real time.
+
+	Headless means a test run, where watching the battle has no value, so it
+	plays at TEST_PLAYBACK_SPEED. Set BATTLE_PLAYBACK_SPEED to override either
+	default, for instance to slow a failing test down and watch it.
+	"""
+	var override := OS.get_environment("BATTLE_PLAYBACK_SPEED")
+	if override != "" and override.is_valid_float():
+		return maxf(float(override), 0.1)
+	if DisplayServer.get_name() == "headless":
+		return TEST_PLAYBACK_SPEED
+	return 1.0
 
 # UI References
 var player_inventory: Control
@@ -50,6 +72,8 @@ func _ready():
 
 	# Wait for child nodes to be ready
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 
 	# Load battle data from GameStateManager
 	if GameStateManager.last_battle_events.size() > 0:
@@ -59,7 +83,11 @@ func _ready():
 		assert(false, "Battle started with no events - server did not return battle actions")
 
 	# Start battle playback automatically
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(Presentation.delay(0.5)).timeout
+	# Leaving the screen during that wait frees this node while the coroutine is
+	# still suspended. Resuming on a freed node crashes the engine.
+	if not is_inside_tree():
+		return
 	_start_battle_playback()
 
 func _setup_ui_references():
@@ -281,7 +309,39 @@ func _simulate_attack(is_player: bool):
 			_add_to_log("[color=red]Enemy[/color] attacks for [color=yellow]%d[/color] damage!" % damage)
 			_show_attack_animation(false)
 
+var _effect_tweens: Array[Tween] = []
+
+
+func _effect_tween() -> Tween:
+	"""A tween for a cosmetic effect, tracked so _exit_tree() can kill it."""
+	var tween = create_tween()
+	_effect_tweens = _effect_tweens.filter(func(t): return is_instance_valid(t) and t.is_running())
+	_effect_tweens.append(tween)
+	return tween
+
+
+func _exit_tree():
+	"""Stop everything that would otherwise resume against a freed node.
+
+	Battle playback, the effect tweens and their queue_free callbacks all
+	outlive this node otherwise, and leaving the screen mid-battle then takes
+	the engine down.
+	"""
+	battle_active = false
+
+	for tween in _effect_tweens:
+		if is_instance_valid(tween):
+			tween.kill()
+	_effect_tweens.clear()
+
+	if is_instance_valid(event_processor):
+		event_processor.stop_playback()
+		event_processor.set_process(false)
+
+
 func _show_attack_animation(from_player: bool):
+	if not Presentation.animations_enabled():
+		return
 	# Simple visual effect for attacks
 	var effect = ColorRect.new()
 	effect.size = Vector2(30, 30)
@@ -295,7 +355,7 @@ func _show_attack_animation(from_player: bool):
 	add_child(effect)
 
 	# Animate the effect
-	var tween = create_tween()
+	var tween = _effect_tween()
 	var target_pos = Vector2(800, 250)  # Center between inventories
 	tween.tween_property(effect, "position", target_pos, 0.3)
 	tween.tween_property(effect, "modulate:a", 0.0, 0.2)
@@ -374,10 +434,16 @@ func _on_battle_ended(winner: int):
 	# Log is handled by BattleEventProcessor
 
 	# Wait a moment then go to post-battle screen
-	await get_tree().create_timer(2.0).timeout
+	await get_tree().create_timer(Presentation.delay(2.0)).timeout
+	# Leaving the screen during that wait frees this node while the coroutine is
+	# still suspended. Changing scene from a freed node crashes the engine.
+	if not is_inside_tree():
+		return
 	_go_to_post_battle()
 
 func _show_damage_number(player: int, amount: int):
+	if not Presentation.animations_enabled():
+		return
 	var label = Label.new()
 	label.text = "-%d" % amount
 	label.add_theme_font_size_override("font_size", 24)
@@ -391,12 +457,14 @@ func _show_damage_number(player: int, amount: int):
 	add_child(label)
 
 	# Animate floating up and fading
-	var tween = create_tween()
+	var tween = _effect_tween()
 	tween.parallel().tween_property(label, "position:y", label.position.y - 50, 1.0)
 	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.0)
 	tween.tween_callback(label.queue_free)
 
 func _show_heal_effect(player: int, amount: int):
+	if not Presentation.animations_enabled():
+		return
 	var label = Label.new()
 	label.text = "+%d" % amount
 	label.add_theme_font_size_override("font_size", 24)
@@ -409,12 +477,14 @@ func _show_heal_effect(player: int, amount: int):
 
 	add_child(label)
 
-	var tween = create_tween()
+	var tween = _effect_tween()
 	tween.parallel().tween_property(label, "position:y", label.position.y - 50, 1.0)
 	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.0)
 	tween.tween_callback(label.queue_free)
 
 func _show_block_effect(player: int):
+	if not Presentation.animations_enabled():
+		return
 	var effect = ColorRect.new()
 	effect.size = Vector2(60, 60)
 	effect.color = Color(0.3, 0.6, 1.0, 0.6)
@@ -426,7 +496,7 @@ func _show_block_effect(player: int):
 
 	add_child(effect)
 
-	var tween = create_tween()
+	var tween = _effect_tween()
 	tween.tween_property(effect, "scale", Vector2(1.5, 1.5), 0.3)
 	tween.tween_property(effect, "modulate:a", 0.0, 0.2)
 	tween.tween_callback(effect.queue_free)

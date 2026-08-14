@@ -30,13 +30,13 @@ func test_server_starting_containers_format():
 		}
 	]
 
-	GameStateManager.starting_containers = server_containers
+	GameStateManager.server_containers = server_containers
 
 	# Verify they were stored correctly
-	assert_eq(GameStateManager.starting_containers.size(), 3, "Should have 3 starting containers")
+	assert_eq(GameStateManager.server_containers.size(), 3, "Should have 3 starting containers")
 
 	# Check first container
-	var first = GameStateManager.starting_containers[0]
+	var first = GameStateManager.server_containers[0]
 	assert_eq(first.type, "standard_vm", "Should be standard_vm type")
 	assert_eq(first.position.x, 1, "Should be at x=1")
 	assert_eq(first.position.y, 3, "Should be at y=3")
@@ -62,12 +62,12 @@ func test_standard_vm_mapping():
 	GameStateManager.start_new_game()
 
 	# Set containers with standard_vm type
-	GameStateManager.starting_containers = [
+	GameStateManager.server_containers = [
 		{"type": "standard_vm", "position": {"x": 1, "y": 1}}
 	]
 
 	# The client should map this to cube_2x2
-	var container_type = GameStateManager.starting_containers[0].type
+	var container_type = GameStateManager.server_containers[0].type
 	assert_eq(container_type, "standard_vm", "Raw data should still say standard_vm")
 
 	# But UnifiedGridUI should map it
@@ -83,11 +83,11 @@ func test_multiple_containers_side_by_side():
 		{"type": "standard_vm", "position": {"x": 5, "y": 3}, "width": 2, "height": 2}
 	]
 
-	GameStateManager.starting_containers = containers
+	GameStateManager.server_containers = containers
 
 	# Verify positioning doesn't overlap
 	var positions_used = []
-	for container in GameStateManager.starting_containers:
+	for container in GameStateManager.server_containers:
 		var x = container.position.x
 		var y = container.position.y
 		var w = container.width

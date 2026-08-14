@@ -59,45 +59,38 @@ func _save_current_state():
 	var state = inventory_grid.get_inventory_state()
 	GameStateManager.save_inventory_state(state.items, state.servers)
 
-func _process(_delta):
-	# Update drag preview position if dragging from shop
-	if drag_preview:
-		drag_preview.global_position = get_global_mouse_position() - drag_preview.size / 2
-
-		# Show hover preview on the inventory grid
-		if dragging_shop_item and inventory_grid:
-			var mouse_pos = inventory_grid.get_local_mouse_position()
-			var grid_pos = inventory_grid.pixel_to_grid(mouse_pos)
-
-			# Check if this is a container
-			if dragging_shop_data.get("is_container", false):
-				# Show container preview differently - show the full area it will occupy
-				_show_container_preview(dragging_shop_data, grid_pos)
-			else:
-				# Update the inventory grid's hover preview for regular items
-				inventory_grid.show_hover_preview_for_shop(dragging_shop_data, grid_pos)
-
 func _input(event):
 	# Handle shop item dragging
 	if dragging_shop_item:
 		if event is InputEventMouseButton:
 			if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-				_end_shop_drag()
+				_end_shop_drag(event.global_position)
 		elif event is InputEventMouseMotion:
 			# Update drag preview position
 			if drag_preview:
 				drag_preview.global_position = event.global_position - drag_preview.size / 2
 
+			var grid_pos = _global_to_grid(event.global_position)
+
 			# Show container preview if dragging a container
 			if dragging_shop_data.get("is_container", false):
-				var mouse_pos = inventory_grid.get_local_mouse_position()
-				var grid_pos = inventory_grid.pixel_to_grid(mouse_pos)
 				_show_container_preview(dragging_shop_data, grid_pos)
 			else:
 				# For normal items, use the inventory grid's hover preview
-				var mouse_pos = inventory_grid.get_local_mouse_position()
-				var grid_pos = inventory_grid.pixel_to_grid(mouse_pos)
 				inventory_grid.show_hover_preview_for_shop(dragging_shop_data, grid_pos)
+
+
+func _global_to_grid(global_pos: Vector2) -> Vector2i:
+	"""Convert a global screen position to an inventory grid cell.
+
+	Takes the position from the InputEvent rather than the cursor, so drag and
+	drop works headless as well as on screen. Control has no to_local(), so the
+	conversion goes through the global transform.
+	"""
+	if not inventory_grid or not inventory_grid.is_inside_tree():
+		return Vector2i(-1, -1)
+	var local_pos = inventory_grid.get_global_transform().affine_inverse() * global_pos
+	return inventory_grid.pixel_to_grid(local_pos)
 
 # Grid managers
 var inventory_grid: InventoryGrid  # Main inventory grid
@@ -565,14 +558,13 @@ func _start_shop_drag(shop_item: Panel, item_data: Dictionary):
 	# Add to scene
 	add_child(drag_preview)
 
-func _end_shop_drag():
+func _end_shop_drag(drop_position: Vector2):
 	"""End dragging a shop item and try to purchase/place it"""
 	if not dragging_shop_item or not drag_preview:
 		return
 
 	# Check if we're over the inventory grid
-	var mouse_pos = inventory_grid.get_local_mouse_position()
-	var grid_pos = inventory_grid.pixel_to_grid(mouse_pos)
+	var grid_pos = _global_to_grid(drop_position)
 
 	# Check if this is a container/server
 	var is_container = dragging_shop_data.get("is_container", false)

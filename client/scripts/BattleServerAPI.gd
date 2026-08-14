@@ -61,6 +61,13 @@ func reset_for_test():
 	_user_id = 0
 
 func start_session(player_name: String = "", game_seed: int = -1) -> APITypes.SessionStartResponse:
+	# BATTLE_TEST_SEED fixes the game seed, which makes the shop deterministic.
+	# The server only accepts a seed in TEST_MODE.
+	if game_seed < 0:
+		var seed_override := OS.get_environment("BATTLE_TEST_SEED")
+		if seed_override != "" and seed_override.is_valid_int():
+			game_seed = int(seed_override)
+
 	# First authenticate as guest if we don't have a token
 	if _auth_token == "":
 		var auth_success = await _authenticate_guest()

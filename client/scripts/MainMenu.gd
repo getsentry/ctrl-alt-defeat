@@ -1,6 +1,7 @@
 extends Control
 
 const APITypes = preload("res://scripts/api_types.gd")
+const Presentation = preload("res://scripts/Presentation.gd")
 
 @onready var new_game_button = $"MenuPanel_ButtonContainer#NewGameButton"
 @onready var quit_button = $"MenuPanel_ButtonContainer#QuitButton"
@@ -65,9 +66,10 @@ func _on_start_game():
 
 	# Fade out music before transitioning
 	if music_player and music_player.playing:
-		var tween = get_tree().create_tween()
-		tween.tween_property(music_player, "volume_db", -80.0, 1.0)  # Fade to silence over 1 second
-		await tween.finished
+		if Presentation.animations_enabled():
+			var tween = get_tree().create_tween()
+			tween.tween_property(music_player, "volume_db", -80.0, 1.0)  # Fade to silence over 1 second
+			await tween.finished
 		music_player.stop()
 
 	# Get player name from input (default to "Player" if empty)

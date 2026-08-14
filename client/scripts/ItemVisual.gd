@@ -238,6 +238,13 @@ func _show_tooltip():
 
 	# Let the scene determine its own size
 	await get_tree().process_frame
+
+	# The item can be freed during that wait. Everything below reads
+	# get_viewport() and global_position, which are only valid inside the tree.
+	if not is_inside_tree() or not is_instance_valid(tooltip_panel):
+		_hide_tooltip()
+		return
+
 	tooltip_panel.size = tooltip_panel.get_combined_minimum_size()
 
 	# Position tooltip to the left of the item to avoid covering it
@@ -262,13 +269,19 @@ func _show_tooltip():
 
 func _hide_tooltip():
 	"""Remove the tooltip"""
-	if tooltip_panel:
+	# is_instance_valid, not a truthiness check: tooltip_panel can be a
+	# reference to an already freed node, and calling queue_free() on that
+	# takes the engine down.
+	if is_instance_valid(tooltip_panel):
 		tooltip_panel.queue_free()
-		tooltip_panel = null
+	tooltip_panel = null
 
 func _notification(what):
 	"""Handle cleanup when node is removed"""
-	if what == NOTIFICATION_PREDELETE:
+	# The tooltip is parented to the tree root, not to this node, so it has to
+	# be taken down explicitly. Leaving the tree counts: the item is gone from
+	# the screen, so its tooltip must go too.
+	if what == NOTIFICATION_PREDELETE or what == NOTIFICATION_EXIT_TREE:
 		_hide_tooltip()
 
 func _refresh_visual():

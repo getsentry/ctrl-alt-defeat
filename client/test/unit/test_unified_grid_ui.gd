@@ -9,6 +9,16 @@ func before_each():
 	GameStateManager.start_new_game()
 	GameStateManager.gold = 20  # Give some gold for testing
 
+	# The 3 starting containers the server sends with a new session.
+	GameStateManager.save_inventory_state([], [
+		{"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
+			"position": [2, 3], "width": 2, "height": 2},
+		{"id": "container_b", "slug": "standard_vm", "type": "standard_vm",
+			"position": [4, 3], "width": 2, "height": 2},
+		{"id": "container_c", "slug": "standard_vm", "type": "standard_vm",
+			"position": [6, 3], "width": 2, "height": 2}
+	])
+
 	ui = ui_scene.instantiate()
 	add_child(ui)
 	await get_tree().process_frame
@@ -38,10 +48,12 @@ func test_starting_containers_placed():
 	# Verify 3 starting containers are placed
 	await get_tree().create_timer(0.1).timeout  # Let placement happen
 
+	# InventoryGrid owns the grid that containers mark.
+	# UnifiedGridUI.active_grid is built but never written to.
 	var container_count = 0
 	for y in range(ui.ROOM_HEIGHT):
 		for x in range(ui.ROOM_WIDTH):
-			if ui.active_grid[y][x] == 1:
+			if ui.inventory_grid.active_grid[y][x]:
 				container_count += 1
 
 	# Each 2x2 container = 4 cells, 3 containers = 12 cells
@@ -69,11 +81,14 @@ func test_stats_display():
 	var stats_label = ui.stats_label
 	assert_not_null(stats_label, "Stats label should exist")
 
-	if stats_label:
-		var stats_text = stats_label.text
-		assert_true("Gold" in stats_text, "Stats should show gold")
-		assert_true("Round" in stats_text, "Stats should show round")
-		assert_true("Health" in stats_text, "Stats should show health")
+	var stats_text = stats_label.text
+	assert_true("Gold" in stats_text, "Stats should show gold")
+	assert_true("Round" in stats_text, "Stats should show round")
+	assert_true("Lives" in stats_text, "Stats should show lives")
+	assert_true("Wins" in stats_text, "Stats should show wins")
+	assert_true("Losses" in stats_text, "Stats should show losses")
+
+	assert_true("Gold: 20" in stats_text, "Stats should show the current gold amount")
 
 func test_refresh_shop_button():
 	# Find refresh button
@@ -124,11 +139,17 @@ func test_start_battle_button():
 	assert_not_null(battle_btn, "Start battle button should exist")
 
 func test_drag_and_drop_initialization():
-	# Verify drag and drop variables are initialized
-	assert_null(ui.dragging_object, "Should not be dragging initially")
-	assert_eq(ui.drag_offset, Vector2.ZERO, "Drag offset should be zero")
-	assert_null(ui.hover_preview, "No hover preview initially")
-	assert_false(ui.valid_placement, "Placement should not be valid initially")
+	# UnifiedGridUI drags shop items. InventoryGrid drags items already on the
+	# grid. Neither should be dragging when the screen opens.
+	assert_null(ui.dragging_shop_item, "Should not be dragging a shop item initially")
+	assert_eq(ui.dragging_shop_data, {}, "Shop drag data should be empty")
+
+	assert_null(ui.inventory_grid.dragging_object, "Should not be dragging initially")
+	assert_eq(ui.inventory_grid.drag_offset, Vector2.ZERO, "Drag offset should be zero")
+	assert_false(ui.inventory_grid.valid_placement, "Placement should not be valid initially")
+
+	assert_not_null(ui.hover_preview, "Hover preview should be ready")
+	assert_false(ui.hover_preview.visible, "Hover preview should be hidden initially")
 
 func test_grid_cell_creation():
 	# Verify grid cells are created
@@ -189,36 +210,51 @@ func test_read_only_mode():
 
 	ui._on_shop_item_input(event, shop_item, item_data)
 
-	assert_null(ui.dragging_object, "Should not start dragging in read-only mode")
+	assert_null(ui.dragging_shop_item, "Should not start dragging in read-only mode")
+
+	shop_item.queue_free()
 
 	shop_item.queue_free()
 
 func test_inventory_state_save_and_load():
-	# Test saving and loading inventory state
-	var test_state = {
-		"items": [{"id": "item1", "position": [2, 3]}],
-		"servers": [{"id": "server1", "position": [0, 0]}]
-	}
+	# load_inventory_state() takes an APITypes.InventoryState.
+	var test_state = APITypes.InventoryState.new({
+		"items": [{
+			"id": "item1", "slug": "test_item", "item_type": "test_item",
+			"name": "Test Item", "category": "attack",
+			"position": [2, 3], "shape": [[0, 0]]
+		}],
+		"servers": [{
+			"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
+			"position": [2, 3], "width": 2, "height": 2
+		}]
+	})
 
 	ui.load_inventory_state(test_state)
 	await get_tree().process_frame
 
 	var saved_state = ui.get_inventory_state()
-	assert_eq(saved_state["items"].size(), test_state["items"].size(),
-		"Should save correct number of items")
-	assert_eq(saved_state["servers"].size(), test_state["servers"].size(),
-		"Should save correct number of servers")
+	assert_eq(saved_state["items"].size(), 1, "Should save correct number of items")
+	assert_eq(saved_state["servers"].size(), 1, "Should save correct number of servers")
+	assert_eq(saved_state["items"][0]["id"], "item1", "Should keep the item that was loaded")
 
 func test_grid_coordinate_validation():
-	# Test that invalid coordinates are rejected
-	assert_false(ui._can_place_item_on_grid(-1, 0, 1, 1),
+	# Placement is validated by _can_place_container().
+	var container = {"width": 2, "height": 2}
+
+	assert_false(ui._can_place_container(container, Vector2i(-1, 0)),
 		"Should reject negative X coordinate")
-	assert_false(ui._can_place_item_on_grid(0, -1, 1, 1),
+	assert_false(ui._can_place_container(container, Vector2i(0, -1)),
 		"Should reject negative Y coordinate")
-	assert_false(ui._can_place_item_on_grid(ui.ROOM_WIDTH, 0, 1, 1),
+	assert_false(ui._can_place_container(container, Vector2i(ui.ROOM_WIDTH, 0)),
 		"Should reject X beyond grid width")
-	assert_false(ui._can_place_item_on_grid(0, ui.ROOM_HEIGHT, 1, 1),
+	assert_false(ui._can_place_container(container, Vector2i(0, ui.ROOM_HEIGHT)),
 		"Should reject Y beyond grid height")
+	assert_false(ui._can_place_container(container, Vector2i(ui.ROOM_WIDTH - 1, 0)),
+		"Should reject a container that would hang off the right edge")
+
+	assert_true(ui._can_place_container(container, Vector2i(0, 0)),
+		"Should accept an empty in-bounds position")
 
 func test_pattern_creation():
 	# Test pattern creation from dimensions

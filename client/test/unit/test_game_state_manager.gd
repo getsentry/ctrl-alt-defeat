@@ -18,34 +18,33 @@ func test_start_new_game():
 	assert_false(GameStateManager.game_over, "Should not be game over")
 	assert_false(GameStateManager.victory, "Should not be victory")
 
-func test_starting_containers_property_exists():
-	# This tests the bug fix - GameStateManager should have starting_containers
-	assert_true("starting_containers" in GameStateManager,
-		"GameStateManager should have starting_containers property")
+func test_server_containers_property_exists():
+	assert_true("server_containers" in GameStateManager,
+		"GameStateManager should have server_containers property")
 
-func test_can_set_and_get_starting_containers():
+func test_can_set_and_get_server_containers():
 	var test_containers = [
-		{"type": "cube_2x2", "position": Vector2i(1, 3)},
-		{"type": "cube_2x2", "position": Vector2i(4, 3)}
+		{"type": "cube_2x2", "position": [1, 3]},
+		{"type": "cube_2x2", "position": [4, 3]}
 	]
 
-	GameStateManager.starting_containers = test_containers
+	GameStateManager.server_containers = test_containers
 
-	assert_eq(GameStateManager.starting_containers.size(), 2,
+	assert_eq(GameStateManager.server_containers.size(), 2,
 		"Should have 2 containers after setting")
-	assert_eq(GameStateManager.starting_containers[0].type, "cube_2x2",
+	assert_eq(GameStateManager.server_containers[0].type, "cube_2x2",
 		"First container should be cube_2x2")
 
-func test_start_new_game_clears_starting_containers():
+func test_start_new_game_clears_server_containers():
 	# Setup: add some containers
-	GameStateManager.starting_containers = [{"type": "test"}]
-	assert_eq(GameStateManager.starting_containers.size(), 1, "Setup failed")
+	GameStateManager.server_containers = [{"type": "test"}]
+	assert_eq(GameStateManager.server_containers.size(), 1, "Setup failed")
 
 	# Test: start_new_game should clear them
 	GameStateManager.start_new_game()
 
-	assert_eq(GameStateManager.starting_containers.size(), 0,
-		"starting_containers should be empty after start_new_game()")
+	assert_eq(GameStateManager.server_containers.size(), 0,
+		"server_containers should be empty after start_new_game()")
 
 func test_inventory_persistence():
 	GameStateManager.start_new_game()

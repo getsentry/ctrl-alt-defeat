@@ -110,7 +110,8 @@ func _notification(what):
 	# Tests are never expected to re-enter the tree.  Tests are removed from the
 	# tree after they are run.
 	if(what == NOTIFICATION_EXIT_TREE):
-		_awaiter.queue_free()
+		if(is_instance_valid(_awaiter)):
+			_awaiter.queue_free()
 
 
 #region Private

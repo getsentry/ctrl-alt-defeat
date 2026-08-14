@@ -23,221 +23,196 @@ func before_each():
 		"player_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "srv1", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
+				{"id": "srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
 			]
 		},
 		"enemy_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "srv2", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
+				{"id": "srv2", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
 			]
 		}
 	}
 
 	var APITypes = preload("res://scripts/api_types.gd")
 	GameStateManager.last_battle_result = APITypes.BattleResult.new(battle_data)
+	# BattleScreen._ready() asserts when last_battle_events is empty.
+	GameStateManager.last_battle_events = GameStateManager.last_battle_result.actions
 
 	battle_screen = battle_scene.instantiate()
 	add_child(battle_screen)
 	await get_tree().process_frame
 
 func after_each():
-	if battle_screen:
-		battle_screen.queue_free()
-		battle_screen = null
-		await get_tree().process_frame
+	# _ready() starts playback on a timer. Stop it before freeing the screen, or
+	# the tweens and timers it started fire on freed nodes and crash the engine.
+	if is_instance_valid(battle_screen):
+		battle_screen.battle_active = false
+		if is_instance_valid(battle_screen.event_processor):
+			battle_screen.event_processor.stop_playback()
+			battle_screen.event_processor.set_process(false)
 
-	# Clear any remaining test data
-	GameStateManager.last_battle_result = null
-
-	# Clean up any leaked resources
+	battle_screen = null
 	for child in get_children():
-		child.queue_free()
+		if is_instance_valid(child):
+			# remove_child() first so is_inside_tree() is false straight away.
+			# queue_free() alone defers, and _ready()'s pending timer can still
+			# resume on a node that is about to die.
+			remove_child(child)
+			child.queue_free()
 	await get_tree().process_frame
+	await get_tree().process_frame
+
+	GameStateManager.last_battle_result = null
+	GameStateManager.last_battle_events = []
 
 func test_battle_screen_loads():
 	assert_not_null(battle_screen, "BattleScreen should load")
 	assert_true(battle_screen.visible, "BattleScreen should be visible")
 
 func test_ui_elements_exist():
-	# Check for essential UI elements
-	var title = battle_screen.find_child("BattleTitle", true, false)
-	var round_label = battle_screen.find_child("RoundLabel", true, false)
+	# The essential elements: the clock, both player name labels, the battle log.
+	assert_not_null(battle_screen.time_label, "Time label should exist")
+	assert_not_null(battle_screen.battle_log_container, "Battle log should exist")
+	assert_not_null(
+		battle_screen.find_child("Player1NameLabel", true, false),
+		"Player 1 name label should exist"
+	)
+	assert_not_null(
+		battle_screen.find_child("Player2NameLabel", true, false),
+		"Player 2 name label should exist"
+	)
 
-	assert_not_null(title, "Battle title should exist")
-	assert_not_null(round_label, "Round label should exist")
+func test_round_label_exists():
+	pending("BattleScreen shows no round number.")
 
 func test_health_bars_initialized():
-	# Check health bars exist and are initialized
-	var p1_health = battle_screen.find_child("P1HealthBar", true, false)
-	var p2_health = battle_screen.find_child("P2HealthBar", true, false)
-
-	if not p1_health:
-		# Look for any ProgressBar children
-		for child in battle_screen.get_children():
-			if child is ProgressBar and "1" in child.name:
-				p1_health = child
-			elif child is ProgressBar and "2" in child.name:
-				p2_health = child
+	# Both bars are named HealthBar, so find_child cannot tell them apart.
+	# Use the script's references.
+	var p1_health = battle_screen.player_health_bar
+	var p2_health = battle_screen.enemy_health_bar
 
 	assert_not_null(p1_health, "Player 1 health bar should exist")
 	assert_not_null(p2_health, "Player 2 health bar should exist")
+	assert_true(p1_health is ProgressBar, "Player 1 health bar should be a ProgressBar")
+	assert_true(p2_health is ProgressBar, "Player 2 health bar should be a ProgressBar")
+	assert_gt(p1_health.max_value, 0.0, "Player 1 health bar should be initialised")
+	assert_gt(p2_health.max_value, 0.0, "Player 2 health bar should be initialised")
 
 func test_control_buttons():
-	# Test playback control buttons
-	var play_btn = battle_screen.find_child("PlayButton", true, false)
-	var pause_btn = battle_screen.find_child("PauseButton", true, false)
-	var skip_btn = battle_screen.find_child("SkipButton", true, false)
+	# Playback control is a single speed toggle.
+	var controls = battle_screen.find_child("ControlButtons", true, false)
+	assert_not_null(controls, "Should have a playback control bar")
 
-	# At least play/skip should exist
-	var has_controls = play_btn != null or skip_btn != null
-	assert_true(has_controls, "Should have playback controls")
+	var speed_btn = battle_screen.find_child("SpeedButton", true, false)
+	assert_not_null(speed_btn, "Should have playback controls")
+	assert_true(
+		speed_btn.pressed.is_connected(battle_screen._on_toggle_speed),
+		"Speed button should be connected to _on_toggle_speed"
+	)
+
+func test_play_pause_and_skip_buttons():
+	pending("BattleScreen has no play, pause or skip button, only a speed toggle.")
 
 func test_battle_event_processor():
-	# Verify BattleEventProcessor is created
-	var processor = battle_screen.find_child("BattleEventProcessor", true, false)
-	if not processor:
-		# Might be created as a property
-		if battle_screen.has_method("get_event_processor"):
-			processor = battle_screen.get_event_processor()
+	# The processor is made in _ready() and added as a child.
+	var processor = battle_screen.event_processor
 
-	# Event processor should exist (even if not as child node)
-	# This is critical for battle playback
-	assert_true(battle_screen != null, "Battle screen should exist for event processing")
+	assert_not_null(processor, "Battle screen should create an event processor")
+	assert_true(processor is BattleEventProcessor,
+		"Event processor should be a BattleEventProcessor")
+	assert_eq(processor.get_parent(), battle_screen,
+		"Event processor should be a child of the battle screen")
+
+	# It must be wired to the battle screen, or nothing is drawn during playback
+	assert_true(processor.battle_ended.is_connected(battle_screen._on_battle_ended),
+		"Event processor should tell the battle screen when the battle ends")
+	assert_true(processor.damage_dealt.is_connected(battle_screen._on_damage_dealt),
+		"Event processor should tell the battle screen about damage")
+
+	# And it must have been given the battle to play
+	assert_gt(processor.events.size(), 0, "Event processor should have loaded the events")
 
 func test_grid_display():
-	# Test that grids are displayed for both players
-	var p1_grid = battle_screen.find_child("P1Grid", true, false)
-	var p2_grid = battle_screen.find_child("P2Grid", true, false)
+	# The grids sit under Player1Inventory and Player2Inventory, not at the top.
+	var grids = _find_all_grid_containers(battle_screen)
 
-	# Grids might be created differently
-	var grid_count = 0
-	for child in battle_screen.get_children():
-		if "Grid" in child.name or child is GridContainer:
-			grid_count += 1
+	assert_gte(grids.size(), 1, "Should have at least one grid display")
+	assert_eq(grids.size(), 2, "Should have one grid for each player")
 
-	assert_gte(grid_count, 1, "Should have at least one grid display")
+func _find_all_grid_containers(node: Node) -> Array:
+	var found = []
+	for child in node.get_children():
+		if child is GridContainer:
+			found.append(child)
+		found.append_array(_find_all_grid_containers(child))
+	return found
 
 func test_battle_loads_from_game_state():
-	# Battle should load data from GameStateManager
 	await get_tree().create_timer(0.1).timeout
 
-	# Check if battle data was loaded
-	# This depends on implementation
-	var has_battle_data = GameStateManager.last_battle_result.size() > 0
-	assert_true(has_battle_data, "Should have battle data from GameStateManager")
+	assert_not_null(GameStateManager.last_battle_result,
+		"Should have battle data from GameStateManager")
+	assert_gt(GameStateManager.last_battle_result.actions.size(), 0,
+		"Battle data should contain actions")
+	assert_eq(GameStateManager.last_battle_result.winner, 1,
+		"Battle data should keep the winner from the fixture")
 
 func test_timer_display():
-	# Test that battle timer is displayed
-	var timer_label = battle_screen.find_child("TimerLabel", true, false)
-	if not timer_label:
-		# Look for any label with time format
-		for child in battle_screen.get_children():
-			if child is Label and ":" in child.text:
-				timer_label = child
-				break
-
-	# Timer display is optional but useful
-	if timer_label:
-		assert_not_null(timer_label, "Timer should be displayed")
-	else:
-		assert_true(true, "Timer display is optional")
+	var timer_label = battle_screen.time_label
+	assert_not_null(timer_label, "Timer should be displayed")
+	assert_true(timer_label is Label, "Timer should be a Label")
 
 func test_animation_speed_control():
-	# Test speed control if available
-	var speed_control = battle_screen.find_child("SpeedControl", true, false)
-	if not speed_control:
-		# Look for speed buttons
-		for child in battle_screen.get_children():
-			if child is Button and ("1x" in child.text or "2x" in child.text):
-				speed_control = child
-				break
+	# Speed control is $ControlButtons/SpeedButton.
+	var speed_control = battle_screen.find_child("SpeedButton", true, false)
+	assert_not_null(speed_control, "Speed control exists")
 
-	# Speed control is optional
-	if speed_control:
-		assert_not_null(speed_control, "Speed control exists")
-	else:
-		assert_true(true, "Speed control is optional")
+	# Pressing it should change the playback multiplier
+	var before = battle_screen.battle_speed_multiplier
+	battle_screen._on_toggle_speed()
+	await get_tree().process_frame
+	assert_ne(battle_screen.battle_speed_multiplier, before,
+		"Speed control should change the playback speed")
 
 func test_skip_to_end_functionality():
-	# Test skip button functionality
-	var skip_btn = battle_screen.find_child("SkipButton", true, false)
-	if not skip_btn:
-		for child in battle_screen.get_children():
-			if child is Button and "Skip" in child.text:
-				skip_btn = child
-				break
-
-	if skip_btn:
-		watch_signals(skip_btn)
-		skip_btn.pressed.emit()
-		assert_signal_emitted(skip_btn, "pressed", "Skip button should emit signal")
-	else:
-		assert_true(true, "Skip button is optional")
+	pending("BattleScreen has no skip button.")
 
 func test_battle_result_display():
-	# Test that results are shown at the end
-	# Simulate battle end
-	if battle_screen.has_method("_on_battle_ended"):
-		battle_screen._on_battle_ended(1)  # Player 1 wins
-		await get_tree().process_frame
+	# BattleScreen shows no result itself. _on_battle_ended() waits 2 seconds and
+	# then changes to PostBattleScreen, which draws the result. Calling it here
+	# would swap the scene tree out from under the run, so check the routing.
+	# The result text is covered by test_post_battle_screen.gd.
+	assert_true(battle_screen.has_method("_on_battle_ended"),
+		"Battle end should be handled")
+	assert_true(battle_screen.has_method("_go_to_post_battle"),
+		"Battle end should lead to the post-battle screen")
+	assert_true(ResourceLoader.exists("res://scenes/PostBattleScreen.tscn"),
+		"The post-battle screen it routes to should exist")
 
-		# Look for result display
-		var result_label = battle_screen.find_child("ResultLabel", true, false)
-		if result_label:
-			assert_true("Victory" in result_label.text or "Won" in result_label.text,
-				"Should show victory message")
-		else:
-			assert_true(true, "Result display handled differently")
-	else:
-		assert_true(true, "Battle end method not exposed for testing")
+func test_battle_ended_stops_playback():
+	# _on_battle_ended() sets battle_active = false, then waits 2 seconds and
+	# calls change_scene_to_file(). A test cannot call it: the scene swap fires
+	# later, during another test or teardown, and takes the engine down.
+	# Testing this needs the scene change split out of _on_battle_ended().
+	pending("_on_battle_ended() changes scene on a timer. Not safe to call in a test.")
 
 func test_continue_button_after_battle():
-	# Test continue button appears after battle
-	if battle_screen.has_method("_on_battle_ended"):
-		battle_screen._on_battle_ended(1)
-		await get_tree().process_frame
-
-		var continue_btn = battle_screen.find_child("ContinueButton", true, false)
-		if not continue_btn:
-			for child in battle_screen.get_children():
-				if child is Button and "Continue" in child.text:
-					continue_btn = child
-					break
-
-		if continue_btn:
-			assert_true(continue_btn.visible, "Continue button should be visible after battle")
-		else:
-			assert_true(true, "Continue button handled differently")
-	else:
-		assert_true(true, "Battle end method not exposed for testing")
+	# There is no Continue button on BattleScreen. Moving on is automatic, via
+	# the scene change in _go_to_post_battle().
+	pending("BattleScreen has no Continue button. It changes scene automatically.")
 
 func test_inventory_display():
-	# Test that inventories are displayed
-	var p1_inventory = battle_screen.find_child("P1Inventory", true, false)
-	var p2_inventory = battle_screen.find_child("P2Inventory", true, false)
+	var p1_inventory = battle_screen.find_child("Player1Inventory", true, false)
+	var p2_inventory = battle_screen.find_child("Player2Inventory", true, false)
 
-	# Inventory display is important for understanding the battle
-	var has_inventory_display = p1_inventory != null or p2_inventory != null
-
-	# At minimum, some visual representation should exist
-	assert_true(battle_screen != null, "Battle screen should exist for inventory display")
+	assert_not_null(p1_inventory, "Player 1 inventory should be displayed")
+	assert_not_null(p2_inventory, "Player 2 inventory should be displayed")
 
 func test_event_log_display():
-	# Test that battle events are logged/displayed
-	var event_log = battle_screen.find_child("EventLog", true, false)
-	if not event_log:
-		# Look for RichTextLabel or TextEdit
-		for child in battle_screen.get_children():
-			if child is RichTextLabel or child is TextEdit:
-				event_log = child
-				break
-
-	# Event log is optional but helpful
-	if event_log:
-		assert_not_null(event_log, "Event log exists for debugging")
-	else:
-		assert_true(true, "Event log is optional")
+	var event_log = battle_screen.battle_log_container
+	assert_not_null(event_log, "Event log exists for debugging")
+	assert_true(event_log is RichTextLabel, "Event log should be a RichTextLabel")
 
 func test_responsive_layout():
 	# Test that battle screen adapts to window size

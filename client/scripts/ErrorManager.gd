@@ -1,4 +1,5 @@
 extends Node
+const Presentation = preload("res://scripts/Presentation.gd")
 # Centralized error handling and user feedback
 
 signal error_displayed(message: String)
@@ -78,12 +79,13 @@ func _display_error_ui(message: String, duration: float):
 	current_error_ui = panel
 
 	# Animate in
-	var tween = get_tree().create_tween()
-	panel.modulate.a = 0
-	tween.tween_property(panel, "modulate:a", 0.9, 0.3)
+	if Presentation.animations_enabled():
+		var tween = get_tree().create_tween()
+		panel.modulate.a = 0
+		tween.tween_property(panel, "modulate:a", 0.9, 0.3)
 
 	# Auto-hide after duration
-	await get_tree().create_timer(duration).timeout
+	await get_tree().create_timer(Presentation.delay(duration)).timeout
 	_hide_error_ui()
 
 func _hide_error_ui():
@@ -92,6 +94,11 @@ func _hide_error_ui():
 		return
 
 	# Animate out
+	if not Presentation.animations_enabled():
+		current_error_ui.queue_free()
+		current_error_ui = null
+		return
+
 	var tween = get_tree().create_tween()
 	tween.tween_property(current_error_ui, "modulate:a", 0.0, 0.3)
 	tween.tween_callback(func():

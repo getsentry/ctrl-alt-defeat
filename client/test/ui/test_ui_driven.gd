@@ -21,25 +21,36 @@ func before_all():
 		assert_true(false, "Test session must be started for proper test isolation")
 		return
 
+var _root_children_before: Array = []
+
 func before_each():
 	# Reset game state for each test
 	GameStateManager.start_new_game()
 	BattleServerAPI.reset_for_test()  # Force new server session
+
+	# Remember what root held, so after_each can free exactly what the test adds
+	# and nothing else. root also holds the autoloads (GameStateManager,
+	# BattleServerAPI) and the GUT runner, which must survive.
+	_root_children_before = get_tree().root.get_children()
 	await get_tree().process_frame
 
 func after_each():
-	# Clean up current scene
-	if get_tree().current_scene:
-		get_tree().current_scene.queue_free()
-		await get_tree().process_frame
+	var scene = get_tree().current_scene
+	if scene and is_instance_valid(scene):
+		get_tree().current_scene = null
 
-	# Clean up any remaining nodes
+	# A test adds the main menu to root itself, then change_scene_to_file()
+	# swaps current_scene to the game UI. Both need freeing, or their timers and
+	# battle playback keep running into the next test and crash the engine.
 	for child in get_tree().root.get_children():
-		if child.name != "root" and not child.name.begins_with("@@"):
+		if child in _root_children_before:
+			continue
+		if is_instance_valid(child):
+			get_tree().root.remove_child(child)
 			child.queue_free()
 	await get_tree().process_frame
+	await get_tree().process_frame
 
-	# Reset game state
 	GameStateManager.start_new_game()
 	BattleServerAPI.reset_for_test()
 
@@ -64,13 +75,14 @@ func test_full_user_journey_through_ui():
 
 	# 2. Click New Game
 	print("   2. Starting new game...")
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	assert_not_null(new_game_btn, "New Game button must exist")
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout  # Wait for server response
+	var reached_game = await _wait_for_shop_ready()
 
 	# 3. Verify game UI loaded
 	var game_ui = get_tree().current_scene
+	assert_true(reached_game, "Should transition to game UI")
 	assert_eq(game_ui.name, "UnifiedGridUI", "Should transition to game UI")
 	assert_eq(GameStateManager.current_round, 1, "Should start at round 1")
 
@@ -78,7 +90,7 @@ func test_full_user_journey_through_ui():
 	print("   3. Verifying initial setup...")
 	# With GridManager, servers are in the inventory_grid
 	if game_ui.inventory_grid:
-		assert_gte(game_ui.inventory_grid.servers.size(), 3, "Should have at least 3 starting containers")
+		assert_gte(game_ui.inventory_grid.containers.size(), 3, "Should have at least 3 starting containers")
 	else:
 		# Fallback for legacy
 		assert_eq(game_ui.servers.size(), 3, "Should have 3 starting containers")
@@ -88,7 +100,8 @@ func test_full_user_journey_through_ui():
 
 	# 5. Purchase an item from shop
 	print("   4. Purchasing from shop...")
-	var shop_item = game_ui.shop_items[0]
+	var shop_item = _first_non_container_shop_item(game_ui)
+	assert_not_null(shop_item, "Shop should offer at least one non-container item")
 	var item_data = shop_item.get_meta("item_data")
 	var item_cost = item_data.get("cost", 3)
 
@@ -101,8 +114,8 @@ func test_full_user_journey_through_ui():
 
 	# Get UI references
 	var server_room_container = game_ui.server_room_container
-	var cell_size = game_ui.CELL_SIZE
-	var cell_spacing = game_ui.CELL_SPACING
+	var cell_size = game_ui.inventory_grid.cell_size
+	var cell_spacing = game_ui.inventory_grid.cell_spacing
 	var grid_global_pos = server_room_container.global_position
 	var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
 
@@ -138,12 +151,12 @@ func test_full_user_journey_through_ui():
 	mouse_up.position = drag_end
 
 	game_ui._input(mouse_up)
-	await get_tree().create_timer(1.0).timeout  # Wait for server response
+	await _wait_until(func(): return GameStateManager.gold < initial_gold)
 
 	assert_lt(GameStateManager.gold, initial_gold, "Gold should decrease after purchase")
 
-	assert_gt(game_ui.items.size(), 0, "Should have items in inventory after purchase")
-	print("   - Items in inventory: %d" % game_ui.items.size())
+	assert_gt(game_ui.inventory_grid.items.size(), 0, "Should have items in inventory after purchase")
+	print("   - Items in inventory: %d" % game_ui.inventory_grid.items.size())
 
 	# Get current inventory state for debugging
 	var inventory_state = game_ui.get_inventory_state() if game_ui.has_method("get_inventory_state") else {}
@@ -167,7 +180,7 @@ func test_full_user_journey_through_ui():
 
 	if battle_btn:
 		battle_btn.pressed.emit()
-		await get_tree().create_timer(3.0).timeout  # Wait for server
+		await _wait_for_scene_change("UnifiedGridUI")
 	else:
 		push_error("No battle button found")
 		assert_not_null(battle_btn, "Battle button should exist")
@@ -179,8 +192,7 @@ func test_full_user_journey_through_ui():
 
 	if current_scene.name == "BattleScreen":
 		print("   6. Battle in progress...")
-		# Wait longer for mock battle to complete naturally
-		await get_tree().create_timer(8.0).timeout  # Wait for mock battle + transition
+		await _wait_for_scene("PostBattleScreen", 20.0)
 	else:
 		# If we're not in BattleScreen, we should be in PostBattleScreen
 		assert_eq(current_scene.name, "PostBattleScreen", "Should be in either BattleScreen or PostBattleScreen")
@@ -204,7 +216,7 @@ func test_full_user_journey_through_ui():
 
 		if continue_btn:
 			continue_btn.pressed.emit()
-			await get_tree().create_timer(1.0).timeout
+			await _wait_for_shop_ready()
 
 	# 9. Verify we're back in game UI for next round
 	current_scene = get_tree().current_scene
@@ -287,9 +299,9 @@ func test_shop_purchase_and_item_placement():
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout  # Wait for server
+	await _wait_for_shop_ready()
 
 	var game_ui = get_tree().current_scene
 
@@ -302,7 +314,7 @@ func test_shop_purchase_and_item_placement():
 
 	# Get shop items from the game_ui's shop_items array
 	assert_gt(game_ui.shop_items.size(), 0, "Should have shop items")
-	var shop_item = game_ui.shop_items[0]
+	var shop_item = _first_non_container_shop_item(game_ui)
 
 	var initial_gold = GameStateManager.gold
 	var item_data = shop_item.get_meta("item_data")
@@ -336,8 +348,8 @@ func test_shop_purchase_and_item_placement():
 	assert_not_null(server_room_container, "Server room container should exist")
 
 	# Get cell size and spacing from UI constants
-	var cell_size = game_ui.CELL_SIZE
-	var cell_spacing = game_ui.CELL_SPACING
+	var cell_size = game_ui.inventory_grid.cell_size
+	var cell_spacing = game_ui.inventory_grid.cell_spacing
 	var grid_global_pos = server_room_container.global_position
 	var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
 
@@ -376,7 +388,7 @@ func test_shop_purchase_and_item_placement():
 	await get_tree().process_frame
 
 	# Wait for potential server response
-	await get_tree().create_timer(0.5).timeout
+	await _wait_for_server()
 
 	# Verify purchase
 	assert_lt(GameStateManager.gold, initial_gold, "Gold should decrease after purchase")
@@ -414,9 +426,9 @@ func test_battle_button_and_full_battle():
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout  # Wait for server
+	await _wait_for_shop_ready()
 
 	var game_ui = get_tree().current_scene
 	assert_eq(game_ui.name, "UnifiedGridUI", "Should be in game UI")
@@ -424,14 +436,14 @@ func test_battle_button_and_full_battle():
 	# Purchase an item first (battles require items)
 	print("   - Shop has %d items" % game_ui.shop_items.size())
 	if game_ui.shop_items.size() > 0:
-		var shop_item = game_ui.shop_items[0]
+		var shop_item = _first_non_container_shop_item(game_ui)
 		var target_grid_pos = _find_first_empty_grid_cell(game_ui)
 		print("   - Found empty cell at: %s" % target_grid_pos)
 		if target_grid_pos != Vector2(-1, -1):
 			# Quick purchase simulation
 			var server_room_container = game_ui.server_room_container
-			var cell_size = game_ui.CELL_SIZE
-			var cell_spacing = game_ui.CELL_SPACING
+			var cell_size = game_ui.inventory_grid.cell_size
+			var cell_spacing = game_ui.inventory_grid.cell_spacing
 			var grid_global_pos = server_room_container.global_position
 			var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
 
@@ -462,7 +474,7 @@ func test_battle_button_and_full_battle():
 			mouse_up.global_position = drag_end
 			mouse_up.position = drag_end
 			game_ui._input(mouse_up)
-			await get_tree().create_timer(1.0).timeout
+			await _wait_for_server()
 			print("   - Purchase completed")
 		else:
 			print("   - No empty cells for placement")
@@ -482,7 +494,7 @@ func test_battle_button_and_full_battle():
 
 	# Click battle button
 	battle_btn.pressed.emit()
-	await get_tree().create_timer(3.0).timeout  # Wait for server battle simulation
+	await _wait_for_server()  # Wait for server battle simulation
 
 	# Should transition to battle screen
 	var current_scene = get_tree().current_scene
@@ -493,13 +505,13 @@ func test_battle_button_and_full_battle():
 	if current_scene.name == "BattleScreen":
 		print("   - Battle is playing...")
 		# Mock battle takes time to complete and then 2s to transition
-		await get_tree().create_timer(5.0).timeout  # Wait for mock battle to complete
+		await _wait_for_scene("PostBattleScreen", 25.0)
 
 		# Look for skip button
 		var skip_btn = current_scene.find_child("SkipButton", true, false)
 		if skip_btn:
 			skip_btn.pressed.emit()
-			await get_tree().create_timer(1.0).timeout
+			await _wait_for_server()
 
 	# Should now be in post-battle
 	current_scene = get_tree().current_scene
@@ -516,7 +528,7 @@ func test_battle_button_and_full_battle():
 
 		if continue_btn:
 			continue_btn.pressed.emit()
-			await get_tree().create_timer(1.0).timeout
+			await _wait_for_shop_ready()
 
 			# Should be back in game UI
 			current_scene = get_tree().current_scene
@@ -535,9 +547,9 @@ func test_complete_round_cycle():
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout
+	await _wait_for_shop_ready()
 
 	var game_ui = get_tree().current_scene
 
@@ -551,14 +563,14 @@ func test_complete_round_cycle():
 	# Purchase an item first (battles require items)
 	print("   - Shop has %d items" % game_ui.shop_items.size())
 	if game_ui.shop_items.size() > 0:
-		var shop_item = game_ui.shop_items[0]
+		var shop_item = _first_non_container_shop_item(game_ui)
 		var target_grid_pos = _find_first_empty_grid_cell(game_ui)
 		print("   - Found empty cell at: %s" % target_grid_pos)
 		if target_grid_pos != Vector2(-1, -1):
 			# Quick purchase simulation
 			var server_room_container = game_ui.server_room_container
-			var cell_size = game_ui.CELL_SIZE
-			var cell_spacing = game_ui.CELL_SPACING
+			var cell_size = game_ui.inventory_grid.cell_size
+			var cell_spacing = game_ui.inventory_grid.cell_spacing
 			var grid_global_pos = server_room_container.global_position
 			var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
 
@@ -589,7 +601,7 @@ func test_complete_round_cycle():
 			mouse_up.global_position = drag_end
 			mouse_up.position = drag_end
 			game_ui._input(mouse_up)
-			await get_tree().create_timer(1.0).timeout
+			await _wait_for_server()
 			print("   - Item purchased")
 
 	# Start battle
@@ -602,20 +614,22 @@ func test_complete_round_cycle():
 	if battle_btn:
 		battle_btn.pressed.emit()
 		print("   - Started battle")
-		await get_tree().create_timer(3.0).timeout  # Wait for server
+		await _wait_for_scene_change("UnifiedGridUI", 20.0)
 
 		# Handle battle screen
 		var current_scene = get_tree().current_scene
 		if current_scene.name == "BattleScreen":
 			print("   - In battle screen, waiting for completion...")
 			# Wait longer for battle with empty inventory (mock battle)
-			await get_tree().create_timer(8.0).timeout
+			await _wait_for_scene("PostBattleScreen", 25.0)
 
-			# Try skip button if available
-			var skip_btn = current_scene.find_child("SkipButton", true, false)
+			# Try skip button if available. Re-read the scene: playback may have
+			# already moved on and freed the node this local pointed at.
+			current_scene = get_tree().current_scene
+			var skip_btn = current_scene.find_child("SkipButton", true, false) if is_instance_valid(current_scene) else null
 			if skip_btn:
 				skip_btn.pressed.emit()
-				await get_tree().create_timer(1.0).timeout
+				await _wait_for_server()
 
 			# Re-check current scene
 			current_scene = get_tree().current_scene
@@ -630,7 +644,7 @@ func test_complete_round_cycle():
 						break
 			if continue_btn:
 				continue_btn.pressed.emit()
-				await get_tree().create_timer(1.0).timeout
+				await _wait_for_shop_ready()
 
 		# Verify we're in next round
 		current_scene = get_tree().current_scene
@@ -659,9 +673,9 @@ func test_refresh_shop_button():
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout
+	await _wait_for_shop_ready()
 
 	var game_ui = get_tree().current_scene
 
@@ -679,7 +693,7 @@ func test_refresh_shop_button():
 
 		# Click refresh
 		refresh_btn.pressed.emit()
-		await get_tree().create_timer(1.0).timeout  # Wait for server
+		await _wait_for_server()
 
 		# Verify something changed (gold or shop items)
 		var gold_changed = GameStateManager.gold != initial_gold
@@ -702,9 +716,9 @@ func test_server_connection():
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout
+	await _wait_for_shop_ready()
 
 	# If we got here, server connection worked
 	var game_ui = get_tree().current_scene
@@ -726,9 +740,9 @@ func test_inventory_persistence_across_battle():
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout  # Wait for server
+	await _wait_for_shop_ready()
 
 	var game_ui = get_tree().current_scene
 	assert_eq(game_ui.name, "UnifiedGridUI", "Should be in game UI")
@@ -753,7 +767,7 @@ func test_inventory_persistence_across_battle():
 		# Quick purchase via drag/drop
 		var inventory_grid = game_ui.inventory_grid
 		var target_pixel = inventory_grid.grid_to_pixel(Vector2i(target_pos.x, target_pos.y))
-		var drop_pos = inventory_grid.global_position + target_pixel + Vector2(game_ui.CELL_SIZE/2, game_ui.CELL_SIZE/2)
+		var drop_pos = inventory_grid.global_position + target_pixel + Vector2(game_ui.inventory_grid.cell_size/2, game_ui.inventory_grid.cell_size/2)
 
 		# Simulate drag and drop
 		var mouse_down = InputEventMouseButton.new()
@@ -770,7 +784,7 @@ func test_inventory_persistence_across_battle():
 		mouse_up.global_position = drop_pos
 		mouse_up.position = drop_pos
 		game_ui._input(mouse_up)
-		await get_tree().create_timer(0.5).timeout
+		await _wait_for_server()
 
 		purchased_items.append(item_data.get("name", "Unknown"))
 		print("   - Purchased: %s" % item_data.get("name", "Unknown"))
@@ -800,13 +814,13 @@ func test_inventory_persistence_across_battle():
 
 	assert_not_null(battle_btn, "Battle button should exist")
 	battle_btn.pressed.emit()
-	await get_tree().create_timer(3.0).timeout  # Wait for battle to start
+	await _wait_for_scene_change("UnifiedGridUI", 20.0)
 
 	# Wait for battle to complete
 	var current_scene = get_tree().current_scene
 	if current_scene.name == "BattleScreen":
 		print("   - Battle in progress...")
-		await get_tree().create_timer(8.0).timeout  # Wait for battle to complete
+		await _wait_for_scene("PostBattleScreen", 25.0)
 		current_scene = get_tree().current_scene
 
 	# Handle post-battle screen
@@ -821,7 +835,7 @@ func test_inventory_persistence_across_battle():
 
 		if continue_btn:
 			continue_btn.pressed.emit()
-			await get_tree().create_timer(1.0).timeout
+			await _wait_for_shop_ready()
 
 	# Verify we're back in game UI
 	current_scene = get_tree().current_scene
@@ -859,9 +873,9 @@ func test_item_drag_and_move_persistence():
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout  # Wait for server
+	await _wait_for_shop_ready()
 
 	var game_ui = get_tree().current_scene
 	assert_eq(game_ui.name, "UnifiedGridUI", "Should be in game UI")
@@ -869,7 +883,7 @@ func test_item_drag_and_move_persistence():
 	# First, purchase an item to have something to move
 	print("   - Purchasing item to test move...")
 	assert_gt(game_ui.shop_items.size(), 0, "Should have shop items")
-	var shop_item = game_ui.shop_items[0]
+	var shop_item = _first_non_container_shop_item(game_ui)
 	var item_data = shop_item.get_meta("item_data")
 
 	# Find first empty cell for initial placement
@@ -880,8 +894,8 @@ func test_item_drag_and_move_persistence():
 	# Purchase item via drag and drop
 	var server_room_container = game_ui.server_room_container
 	var inventory_grid = game_ui.inventory_grid
-	var cell_size = game_ui.CELL_SIZE
-	var cell_spacing = game_ui.CELL_SPACING
+	var cell_size = game_ui.inventory_grid.cell_size
+	var cell_spacing = game_ui.inventory_grid.cell_spacing
 
 	# Simulate shop purchase drag
 	var shop_item_center = shop_item.global_position + shop_item.size / 2
@@ -913,7 +927,7 @@ func test_item_drag_and_move_persistence():
 	mouse_up.global_position = drop_pos
 	mouse_up.position = drop_pos
 	game_ui._input(mouse_up)
-	await get_tree().create_timer(1.0).timeout  # Wait for purchase
+	await _wait_for_server()
 
 	# Verify item was placed
 	assert_gt(inventory_grid.items.size(), 0, "Should have item in inventory")
@@ -980,7 +994,7 @@ func test_item_drag_and_move_persistence():
 
 	# Send mouse up to inventory grid to complete move
 	inventory_grid._input(mouse_up)
-	await get_tree().create_timer(1.5).timeout  # Wait for API call
+	await _wait_for_server()
 
 	# Verify item moved to new position
 	var final_pos = placed_item.get_meta("grid_pos")
@@ -1014,9 +1028,9 @@ func test_multiple_rounds():
 	get_tree().current_scene = main_menu
 	await get_tree().process_frame
 
-	var new_game_btn = main_menu.find_child("NewGameButton", true, false)
+	var new_game_btn = main_menu.new_game_button
 	new_game_btn.pressed.emit()
-	await get_tree().create_timer(2.0).timeout
+	await _wait_for_shop_ready()
 
 	var game_ui = get_tree().current_scene
 	var rounds_to_play = 3
@@ -1027,13 +1041,13 @@ func test_multiple_rounds():
 
 		# Purchase an item first (battles require items)
 		if game_ui.shop_items.size() > 0:
-			var shop_item = game_ui.shop_items[0]
+			var shop_item = _first_non_container_shop_item(game_ui)
 			var target_grid_pos = _find_first_empty_grid_cell(game_ui)
 			if target_grid_pos != Vector2(-1, -1):
 				# Quick purchase simulation
 				var server_room_container = game_ui.server_room_container
-				var cell_size = game_ui.CELL_SIZE
-				var cell_spacing = game_ui.CELL_SPACING
+				var cell_size = game_ui.inventory_grid.cell_size
+				var cell_spacing = game_ui.inventory_grid.cell_spacing
 				var grid_global_pos = server_room_container.global_position
 				var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
 
@@ -1064,7 +1078,7 @@ func test_multiple_rounds():
 				mouse_up.global_position = drag_end
 				mouse_up.position = drag_end
 				game_ui._input(mouse_up)
-				await get_tree().create_timer(1.0).timeout
+				await _wait_for_server()
 
 		# Find and click battle button
 		var battle_btn = null
@@ -1078,7 +1092,7 @@ func test_multiple_rounds():
 			break
 
 		battle_btn.pressed.emit()
-		await get_tree().create_timer(3.0).timeout
+		await _wait_for_scene_change("UnifiedGridUI", 20.0)
 
 		# Handle battle/post-battle screens
 		var current_scene = get_tree().current_scene
@@ -1086,12 +1100,14 @@ func test_multiple_rounds():
 		if current_scene.name == "BattleScreen":
 			print("   - Battle in progress for round %d..." % current_round)
 			# Wait longer for mock battle to complete
-			await get_tree().create_timer(8.0).timeout
-			# Skip battle if possible
-			var skip_btn = current_scene.find_child("SkipButton", true, false)
+			await _wait_for_scene("PostBattleScreen", 25.0)
+			# Skip battle if possible. Re-read the scene: playback may have already
+			# moved on and freed the node this local pointed at.
+			current_scene = get_tree().current_scene
+			var skip_btn = current_scene.find_child("SkipButton", true, false) if is_instance_valid(current_scene) else null
 			if skip_btn:
 				skip_btn.pressed.emit()
-			await get_tree().create_timer(1.0).timeout
+			await _wait_for_server()
 			current_scene = get_tree().current_scene
 
 		if current_scene.name == "PostBattleScreen":
@@ -1105,7 +1121,7 @@ func test_multiple_rounds():
 
 			if continue_btn:
 				continue_btn.pressed.emit()
-				await get_tree().create_timer(1.0).timeout
+				await _wait_for_shop_ready()
 
 		# Verify round advanced
 		game_ui = get_tree().current_scene
@@ -1119,3 +1135,90 @@ func test_multiple_rounds():
 	# We tried to play rounds
 	assert_gte(GameStateManager.current_round, 1, "Should have at least started the game")
 	print("   ✓ Multiple rounds tested with real server")
+
+
+# ============ Waiting helpers ============
+#
+# These replace fixed sleeps. A fixed sleep has to be long enough for the
+# slowest case, so it makes every run slow and still fails when the machine is
+# busy. These return as soon as the condition holds, and fail fast if it never
+# does.
+
+const DEFAULT_TIMEOUT := 10.0
+
+
+func _wait_until(condition: Callable, timeout: float = DEFAULT_TIMEOUT) -> bool:
+	"""Poll condition each frame. Return true when it holds, false on timeout."""
+	var deadline := Time.get_ticks_msec() + int(timeout * 1000)
+	while Time.get_ticks_msec() < deadline:
+		if condition.call():
+			return true
+		await get_tree().process_frame
+	return false
+
+
+func _wait_for_scene(scene_name: String, timeout: float = DEFAULT_TIMEOUT) -> bool:
+	"""Wait until the given scene is the current one."""
+	return await _wait_until(
+		func():
+			var scene = get_tree().current_scene
+			return scene != null and scene.name == scene_name,
+		timeout
+	)
+
+
+func _wait_for_server(timeout: float = DEFAULT_TIMEOUT) -> bool:
+	"""Wait for the in-flight request to BattleServerAPI to finish.
+
+	BattleServerAPI drives a single HTTPRequest node, so its client status tells
+	us when the call is done. This replaces guessing at a duration.
+	"""
+	await get_tree().process_frame
+	return await _wait_until(
+		func():
+			var req = BattleServerAPI.http_request
+			return req == null or req.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED,
+		timeout
+	)
+
+
+func _wait_for_shop_ready(timeout: float = DEFAULT_TIMEOUT) -> bool:
+	"""Wait for UnifiedGridUI to be current AND finished loading.
+
+	The scene becomes current before its _ready() has fetched the session, so
+	waiting on the name alone gives you an empty grid and an empty shop.
+	"""
+	return await _wait_until(
+		func():
+			var scene = get_tree().current_scene
+			if scene == null or scene.name != "UnifiedGridUI":
+				return false
+			if scene.inventory_grid == null:
+				return false
+			return scene.inventory_grid.containers.size() > 0 and scene.shop_items.size() > 0,
+		timeout
+	)
+
+
+func _wait_for_scene_change(from_name: String, timeout: float = DEFAULT_TIMEOUT) -> bool:
+	"""Wait until the current scene is no longer the given one."""
+	return await _wait_until(
+		func():
+			var scene = get_tree().current_scene
+			return scene != null and scene.name != from_name,
+		timeout
+	)
+
+
+func _first_non_container_shop_item(game_ui):
+	"""Pick a shop item that can go on an existing server container.
+
+	The shop is generated randomly, so slot 0 is sometimes a container. A
+	container cannot be dropped onto another container, so a test that always
+	took slot 0 failed whenever the roll produced one.
+	"""
+	for shop_item in game_ui.shop_items:
+		var data = shop_item.get_meta("item_data")
+		if not data.get("is_container", false):
+			return shop_item
+	return null

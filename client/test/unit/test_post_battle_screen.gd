@@ -1,7 +1,24 @@
 extends GutTest
-# Tests for PostBattleScreen to ensure no node errors
+# Tests for PostBattleScreen
+#
+# set_battle_result() takes an APITypes.BattleResult, built here by
+# _make_battle_result(). Gold earned is read from
+# GameStateManager.last_gold_earned, not from the battle result.
 
 const APITypes = preload("res://scripts/api_types.gd")
+
+
+func _make_battle_result(winner: int) -> APITypes.BattleResult:
+	return APITypes.BattleResult.new({
+		"winner": winner,
+		"duration": 15.0,
+		"player1_quota": 80,
+		"player2_quota": 0,
+		"seed": 12345,
+		"actions": [],
+		"player_inventory": {"items": [], "servers": []},
+		"enemy_inventory": {"items": [], "servers": []}
+	})
 
 func test_post_battle_screen_creation():
 	# Test that PostBattleScreen can be created without errors
@@ -25,23 +42,10 @@ func test_victory_display():
 	add_child(screen)
 	await get_tree().process_frame
 
-	# Set up victory data
-	var victory_data = {
-		"battle_result": {
-			"winner": 1,  # Player won
-			"duration": 15.0
-		},
-		"session_update": {
-			"round": 2,
-			"gold": 25,
-			"gold_earned": 12,
-			"wins": 1,
-			"losses": 0
-		},
-		"health_lost": 0
-	}
+	# Gold earned comes from GameStateManager, set by update_after_battle()
+	GameStateManager.last_gold_earned = 12
 
-	screen.set_battle_result(victory_data)
+	screen.set_battle_result(_make_battle_result(1))  # Player won
 	screen._display_results()
 
 	# Check victory display
@@ -57,94 +61,51 @@ func test_defeat_display():
 	add_child(screen)
 	await get_tree().process_frame
 
-	# Set up defeat data
-	var defeat_data = {
-		"battle_result": {
-			"winner": 2,  # Enemy won
-			"duration": 20.0
-		},
-		"session_update": {
-			"round": 3,
-			"gold": 30,
-			"gold_earned": 10,
-			"wins": 2,
-			"losses": 1
-		},
-		"health_lost": 15
-	}
+	GameStateManager.last_gold_earned = 10
 
-	screen.set_battle_result(defeat_data)
+	screen.set_battle_result(_make_battle_result(2))  # Enemy won
 	screen._display_results()
 
-	# Check defeat display
+	# set_battle_result() subtracts a fixed 1 health on a defeat. It takes no
+	# amount from the battle result, so the label always reads "-1 Health".
 	assert_eq(screen.title_label.text, "DEFEAT", "Should show DEFEAT")
 	assert_eq(screen.gold_label.text, "+10 Gold", "Should show gold earned")
 	assert_true(screen.health_label.visible, "Health lost should be visible on defeat")
-	assert_eq(screen.health_label.text, "-15 Health", "Should show health lost")
+	assert_eq(screen.health_label.text, "-1 Health", "Should show health lost")
 
 	screen.queue_free()
 
 func test_game_state_update():
-	# Test that battle results update GameStateManager
+	# GameStateManager.update_after_battle() applies these when the battle
+	# response arrives, before this screen loads. set_battle_result() only reads
+	# them back. Covered by
+	# test_game_state_manager.gd::test_battle_result_updates_state.
+	pending("Round, gold, wins and shop are updated by GameStateManager.update_after_battle().")
+
+func test_health_loss_on_defeat():
+	# set_battle_result() subtracts a fixed 1 health on a defeat.
 	var screen = preload("res://scripts/PostBattleScreen.gd").new()
 
-	# Store initial state
 	GameStateManager.start_new_game()
-	var initial_round = GameStateManager.current_round
-	var initial_gold = GameStateManager.gold
 	var initial_health = GameStateManager.player_health
 
-	# Set battle result
-	var result_data = {
-		"battle_result": {
-			"winner": 1
-		},
-		"session_update": {
-			"round": initial_round + 1,
-			"gold": initial_gold + 15,
-			"gold_earned": 15,
-			"wins": 1,
-			"losses": 0
-		},
-		"health_lost": 0,
-		"new_shop": [
-			{"id": "item1", "name": "Test Item", "cost": 5}
-		]
-	}
+	screen.set_battle_result(_make_battle_result(2))  # Enemy won
 
-	screen.set_battle_result(result_data)
-
-	# Verify GameStateManager was updated
-	assert_eq(GameStateManager.current_round, initial_round + 1, "Round should be updated")
-	assert_eq(GameStateManager.gold, initial_gold + 15, "Gold should be updated")
-	assert_eq(GameStateManager.wins, 1, "Wins should be updated")
-	assert_eq(GameStateManager.current_shop.size(), 1, "Shop should be updated")
+	assert_eq(GameStateManager.player_health, initial_health - 1,
+		"Health should be reduced on a defeat")
 
 	screen.queue_free()
 
-func test_health_loss_on_defeat():
-	# Test that health is properly reduced on defeat
+func test_no_health_loss_on_victory():
 	var screen = preload("res://scripts/PostBattleScreen.gd").new()
 
 	GameStateManager.start_new_game()
 	var initial_health = GameStateManager.player_health
 
-	var defeat_data = {
-		"battle_result": {
-			"winner": 2  # Enemy won
-		},
-		"session_update": {
-			"round": 1,
-			"gold": 20,
-			"losses": 1
-		},
-		"health_lost": 10
-	}
+	screen.set_battle_result(_make_battle_result(1))  # Player won
 
-	screen.set_battle_result(defeat_data)
-
-	# Verify health was reduced
-	assert_eq(GameStateManager.player_health, initial_health - 10, "Health should be reduced by health_lost")
+	assert_eq(GameStateManager.player_health, initial_health,
+		"Health should not change on a win")
 
 	screen.queue_free()
 
@@ -157,12 +118,7 @@ func test_game_over_button_state():
 	# Set game over state
 	GameStateManager.player_lives = 0
 
-	var result_data = {
-		"battle_result": {"winner": 2},
-		"session_update": {"round": 5}
-	}
-
-	screen.set_battle_result(result_data)
+	screen.set_battle_result(_make_battle_result(2))
 	screen._display_results()
 
 	# Check button text changed
@@ -180,12 +136,7 @@ func test_round_display():
 
 	GameStateManager.current_round = 5
 
-	var result_data = {
-		"battle_result": {"winner": 1},
-		"session_update": {"round": 5}
-	}
-
-	screen.set_battle_result(result_data)
+	screen.set_battle_result(_make_battle_result(1))
 	screen._display_results()
 
 	# Round label should show completed round (current - 1)
@@ -213,14 +164,17 @@ func test_empty_result_handling():
 	screen.set_battle_result(APITypes.BattleResult.new(minimal_data))
 	screen._display_results()
 
-	# Should not crash
-	assert_true(true, "Should handle empty results without crashing")
+	# A battle with no actions still shows a result
+	assert_eq(screen.title_label.text, "VICTORY!",
+		"An empty battle should still show its outcome")
 
-	# Try with null (shouldn't happen but test anyway)
-	screen.result_data = {}
+	# _display_results() returns early when there is no result at all
+	screen.result_data = null
+	screen.title_label.text = "unchanged"
 	screen._display_results()
 
-	assert_true(true, "Should handle null results without crashing")
+	assert_eq(screen.title_label.text, "unchanged",
+		"A null result should leave the display alone, not crash")
 
 	screen.queue_free()
 
@@ -232,12 +186,7 @@ func test_current_health_display():
 
 	GameStateManager.player_health = 75
 
-	var result_data = {
-		"battle_result": {"winner": 1},
-		"session_update": {}
-	}
-
-	screen.set_battle_result(result_data)
+	screen.set_battle_result(_make_battle_result(1))
 	screen._display_results()
 
 	assert_eq(screen.current_health_label.text, "Health: 75 / 100", "Should show current health")
