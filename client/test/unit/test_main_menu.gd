@@ -8,7 +8,7 @@ extends GutTest
 #
 # The menu has two buttons: New Game and Quit.
 
-const Presentation = preload("res://scripts/Presentation.gd")
+const Presentation = preload("res://scripts/presentation.gd")
 
 var main_menu_scene = preload("res://scenes/MainMenu.tscn")
 var main_menu

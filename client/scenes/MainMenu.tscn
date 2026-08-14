@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://c0b2a7t7l6ib8"]
 
-[ext_resource type="Script" uid="uid://bf5ujancn6o07" path="res://scripts/MainMenu.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://bf5ujancn6o07" path="res://scripts/main_menu.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://c32y670spfpwh" path="res://assets/ui/backgrounds/main_menu_background.png" id="2_0ykhv"]
 [ext_resource type="Texture2D" uid="uid://c54wpcuis6nbr" path="res://assets/sprites/backgrounds/ctrl_alt_defeat_logo.png" id="3_l72w3"]
 [ext_resource type="Texture2D" uid="uid://fe2xqisr404b" path="res://assets/characters/player_main.png" id="4_826wr"]

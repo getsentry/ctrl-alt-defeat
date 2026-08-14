@@ -1,7 +1,7 @@
 extends Control
 
 const APITypes = preload("res://scripts/api_types.gd")
-const Presentation = preload("res://scripts/Presentation.gd")
+const Presentation = preload("res://scripts/presentation.gd")
 
 @onready var new_game_button = $"MenuPanel_ButtonContainer#NewGameButton"
 @onready var quit_button = $"MenuPanel_ButtonContainer#QuitButton"

@@ -5,7 +5,7 @@ extends GutTest
 # The recording is what keeps the skipping honest: a headless run draws nothing,
 # so without it a broken call site would look exactly like a working one.
 
-const Presentation = preload("res://scripts/Presentation.gd")
+const Presentation = preload("res://scripts/presentation.gd")
 
 
 func before_each():

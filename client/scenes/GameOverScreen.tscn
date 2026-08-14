@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bgameover123456"]
 
-[ext_resource type="Script" path="res://scripts/GameOverScreen.gd" id="1_gameover"]
+[ext_resource type="Script" path="res://scripts/game_over_screen.gd" id="1_gameover"]
 
 [node name="GameOverScreen" type="Control"]
 anchor_right = 1.0

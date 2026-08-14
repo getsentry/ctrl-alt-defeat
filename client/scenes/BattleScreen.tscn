@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://b7t4s8m6l2n3x"]
 
-[ext_resource type="Script" uid="uid://xk1kc0lapshy" path="res://scripts/BattleScreen.gd" id="1_wqk2m"]
+[ext_resource type="Script" uid="uid://xk1kc0lapshy" path="res://scripts/battle_screen.gd" id="1_wqk2m"]
 [ext_resource type="Texture2D" uid="uid://fe2xqisr404b" path="res://assets/characters/player_main.png" id="2_e26j6"]
 [ext_resource type="Texture2D" uid="uid://cynagqb4r7a81" path="res://assets/ui/backgrounds/battle_background.png" id="2_oihk3"]
 [ext_resource type="Texture2D" uid="uid://cc2w1tv4jsrlh" path="res://assets/characters/enemy_battle.png" id="3_6vv1o"]

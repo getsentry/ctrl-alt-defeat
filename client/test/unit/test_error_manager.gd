@@ -4,8 +4,8 @@ extends GutTest
 # It is the only feedback a player gets when the server is unreachable, so the
 # message has to be understandable and the toast has to clear itself.
 
-const ErrorManagerScript = preload("res://scripts/ErrorManager.gd")
-const Presentation = preload("res://scripts/Presentation.gd")
+const ErrorManagerScript = preload("res://scripts/error_manager.gd")
+const Presentation = preload("res://scripts/presentation.gd")
 
 var manager
 var host_scene

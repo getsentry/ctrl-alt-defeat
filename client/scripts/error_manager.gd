@@ -1,5 +1,5 @@
 extends Node
-const Presentation = preload("res://scripts/Presentation.gd")
+const Presentation = preload("res://scripts/presentation.gd")
 # Centralized error handling and user feedback
 
 signal error_displayed(message: String)

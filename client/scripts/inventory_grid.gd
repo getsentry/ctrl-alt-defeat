@@ -5,7 +5,7 @@ class_name InventoryGrid
 # Used by UnifiedGridUI for the main game and BattleScreen for replays
 
 const APITypes = preload("res://scripts/api_types.gd")
-const ItemVisual = preload("res://scripts/ItemVisual.gd")
+const ItemVisual = preload("res://scripts/item_visual.gd")
 
 # Grid configuration - can be customized per instance
 var grid_width: int = 9

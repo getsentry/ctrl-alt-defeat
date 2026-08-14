@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bxpost123456"]
 
-[ext_resource type="Script" path="res://scripts/PostBattleScreen.gd" id="1_postbattle"]
+[ext_resource type="Script" path="res://scripts/post_battle_screen.gd" id="1_postbattle"]
 
 [node name="PostBattleScreen" type="Control"]
 anchor_right = 1.0

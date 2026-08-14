@@ -295,7 +295,7 @@ func get_item_data():
 # Static helper function for creating shop item previews
 static func create_shop_preview(item_data: Dictionary, size: Vector2 = Vector2(60, 60)) -> Control:
 	"""Create a simplified visual for shop display"""
-	var ItemVisualClass = preload("res://scripts/ItemVisual.gd")
+	var ItemVisualClass = preload("res://scripts/item_visual.gd")
 	var preview = ItemVisualClass.new()
 	preview.show_border = false  # Cleaner look in shop
 	preview.enable_tooltip = false  # Shop items have their own hover behavior

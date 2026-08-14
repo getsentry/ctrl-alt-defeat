@@ -2,7 +2,7 @@ extends GutTest
 # Comprehensive tests for BattleScreen
 
 const APITypes = preload("res://scripts/api_types.gd")
-const Presentation = preload("res://scripts/Presentation.gd")
+const Presentation = preload("res://scripts/presentation.gd")
 
 var battle_scene = preload("res://scenes/BattleScreen.tscn")
 var battle_screen

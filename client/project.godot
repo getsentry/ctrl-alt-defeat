@@ -18,8 +18,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-GameStateManager="*res://scripts/GameStateManager.gd"
-BattleServerAPI="*res://scripts/BattleServerAPI.gd"
+GameStateManager="*res://scripts/game_state_manager.gd"
+BattleServerAPI="*res://scripts/battle_server_api.gd"
 
 [display]
 

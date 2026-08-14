@@ -4,7 +4,7 @@ extends GutTest
 # It is used by the shop, both inventory grids and both battle inventories, so a
 # regression here is visible everywhere at once.
 
-const ItemVisual = preload("res://scripts/ItemVisual.gd")
+const ItemVisual = preload("res://scripts/item_visual.gd")
 const APITypes = preload("res://scripts/api_types.gd")
 
 var visual

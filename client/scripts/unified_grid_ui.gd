@@ -1,8 +1,8 @@
 extends Control
 
 const APITypes = preload("res://scripts/api_types.gd")
-const ItemVisual = preload("res://scripts/ItemVisual.gd")
-const InventoryGrid = preload("res://scripts/InventoryGrid.gd")
+const ItemVisual = preload("res://scripts/item_visual.gd")
+const InventoryGrid = preload("res://scripts/inventory_grid.gd")
 
 # Game state is pulled from GameStateManager - no local copies
 

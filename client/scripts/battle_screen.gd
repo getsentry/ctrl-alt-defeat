@@ -1,9 +1,9 @@
 extends Control
 
 # Preload the BattleEventProcessor class since class_name might not be available yet
-const BattleEventProcessor = preload("res://scripts/BattleEventProcessor.gd")
+const BattleEventProcessor = preload("res://scripts/battle_event_processor.gd")
 const APITypes = preload("res://scripts/api_types.gd")
-const Presentation = preload("res://scripts/Presentation.gd")
+const Presentation = preload("res://scripts/presentation.gd")
 
 # Event processor for battle replay
 var event_processor

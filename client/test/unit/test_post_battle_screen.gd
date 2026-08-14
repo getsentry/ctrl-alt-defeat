@@ -22,7 +22,7 @@ func _make_battle_result(winner: int) -> APITypes.BattleResult:
 
 func test_post_battle_screen_creation():
 	# Test that PostBattleScreen can be created without errors
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 	add_child(screen)
 	await get_tree().process_frame
 
@@ -38,7 +38,7 @@ func test_post_battle_screen_creation():
 
 func test_victory_display():
 	# Test displaying victory results
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 	add_child(screen)
 	await get_tree().process_frame
 
@@ -57,7 +57,7 @@ func test_victory_display():
 
 func test_defeat_display():
 	# Test displaying defeat results
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 	add_child(screen)
 	await get_tree().process_frame
 
@@ -84,7 +84,7 @@ func test_game_state_update():
 
 func test_health_loss_on_defeat():
 	# set_battle_result() subtracts a fixed 1 health on a defeat.
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 
 	GameStateManager.start_new_game()
 	var initial_health = GameStateManager.player_health
@@ -97,7 +97,7 @@ func test_health_loss_on_defeat():
 	screen.queue_free()
 
 func test_no_health_loss_on_victory():
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 
 	GameStateManager.start_new_game()
 	var initial_health = GameStateManager.player_health
@@ -111,7 +111,7 @@ func test_no_health_loss_on_victory():
 
 func test_game_over_button_state():
 	# Test that continue button changes when game is over
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 	add_child(screen)
 	await get_tree().process_frame
 
@@ -130,7 +130,7 @@ func test_game_over_button_state():
 
 func test_round_display():
 	# Test that round number is displayed correctly
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 	add_child(screen)
 	await get_tree().process_frame
 
@@ -146,7 +146,7 @@ func test_round_display():
 
 func test_empty_result_handling():
 	# Test that empty/null results don't crash
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 	add_child(screen)
 	await get_tree().process_frame
 
@@ -180,7 +180,7 @@ func test_empty_result_handling():
 
 func test_current_health_display():
 	# Test that current health is displayed correctly
-	var screen = preload("res://scripts/PostBattleScreen.gd").new()
+	var screen = preload("res://scripts/post_battle_screen.gd").new()
 	add_child(screen)
 	await get_tree().process_frame
 
