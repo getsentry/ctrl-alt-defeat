@@ -100,19 +100,6 @@ class MoveItemRequest(BaseModel):
 # ============ Response Models ============
 
 
-class ItemCatalogEntry(BaseModel):
-    """Simplified item info for client catalog"""
-
-    name: str
-    category: str
-    rarity: str
-    min_damage: int = Field(default=0, description="Minimum damage dealt")
-    max_damage: int = Field(default=0, description="Maximum damage dealt")
-    cooldown: float = Field(default=0, description="Cooldown in seconds")
-    cpu_cost: int = Field(default=0, description="CPU cost to trigger")
-    special_effect: str = Field(default="", description="Special effect description")
-
-
 class StartSessionResponse(BaseModel):
     """Response when starting a new game session"""
 

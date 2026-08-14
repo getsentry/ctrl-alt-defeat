@@ -97,17 +97,10 @@ var inventory_grid: InventoryGrid  # Main inventory grid
 var storage_grid: InventoryGrid    # Storage grid
 
 # Game state tracking
-var active_grid: Array = []  # Tracks which cells have server grids
-var item_grid: Array = []    # Tracks items placed on the grid
 var servers: Array = []       # Server objects (for tracking)
 var items: Array = []         # Item objects
 
-# Legacy references - these now point to GridManager
 var server_room_container: Node  # Points to inventory_grid
-var storage_container: Node      # Points to storage_grid
-var grid_container: Node         # Points to inventory_grid
-var grid_cells: Array = []       # Grid cell tracking
-var server_visuals: Array = []   # Server visual tracking
 
 # Shop
 var shop_items: Array = []
@@ -140,7 +133,6 @@ func _ready():
 	# State is read directly from GameStateManager, no local copies
 
 	# Initialize UI first
-	_initialize_grids()
 	_setup_ui()
 
 	# Ensure GridManagers are ready
@@ -209,24 +201,6 @@ func get_inventory_state() -> Dictionary:
 	if inventory_grid:
 		return inventory_grid.get_inventory_state()
 	return {"servers": [], "items": []}
-
-func _initialize_grids():
-	# Legacy arrays kept for compatibility but not actively used
-	active_grid = []
-	item_grid = []
-	grid_cells = []
-
-	for y in range(ROOM_HEIGHT):
-		var active_row = []
-		var item_row = []
-		var cell_row = []
-		for x in range(ROOM_WIDTH):
-			active_row.append(false)
-			item_row.append(null)
-			cell_row.append(null)
-		active_grid.append(active_row)
-		item_grid.append(item_row)
-		grid_cells.append(cell_row)
 
 func _setup_ui():
 	# Check if nodes already exist in the scene
@@ -309,7 +283,6 @@ func _create_server_room():
 
 	# Set legacy references for compatibility
 	server_room_container = inventory_grid
-	grid_container = inventory_grid
 
 func _create_storage_area():
 	if hide_storage:
@@ -334,7 +307,6 @@ func _create_storage_area():
 		storage_bg.add_child(storage_grid)
 
 		# Set legacy reference
-		storage_container = storage_grid
 
 		# Storage is always active (no servers needed)
 		for y in range(STORAGE_HEIGHT):
@@ -826,25 +798,6 @@ func _on_ready_for_battle():
 
 	# Go to battle visualization screen
 	get_tree().change_scene_to_file("res://scenes/BattleScreen.tscn")
-
-	# Old simulation code (can be removed once battle is fully integrated)
-	var active_items = 0
-	var total_attack = 0
-	var total_defense = 0
-
-	# Count items on grid (not in storage)
-	for y in range(ROOM_HEIGHT):
-		for x in range(ROOM_WIDTH):
-			if item_grid[y][x] != null and not item_grid[y][x] in items:
-				continue  # Skip duplicates
-			if item_grid[y][x] != null:
-				var item_data = item_grid[y][x].get_meta("item_data")
-				total_attack += item_data.get("attack", 0)
-				total_defense += item_data.get("defense", 0)
-				active_items += 1
-
-	print("Battle: %d servers, %d active items" % [servers.size(), active_items])
-	print("Stats: ATK %d, DEF %d" % [total_attack, total_defense])
 
 func _get_stats_text() -> String:
 	return "Round %d | Gold: %d | Lives: %d | Wins: %d | Losses: %d" % [

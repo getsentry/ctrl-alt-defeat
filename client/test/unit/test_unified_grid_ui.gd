@@ -37,11 +37,11 @@ func test_grid_dimensions():
 	assert_eq(ui.ROOM_WIDTH, 9, "Room should be 9 cells wide")
 	assert_eq(ui.ROOM_HEIGHT, 7, "Room should be 7 cells tall")
 
-	# Check grid arrays are initialized
-	assert_eq(ui.active_grid.size(), 7, "Active grid should have 7 rows")
-	assert_eq(ui.item_grid.size(), 7, "Item grid should have 7 rows")
+	# InventoryGrid owns the grid arrays
+	assert_eq(ui.inventory_grid.active_grid.size(), 7, "Active grid should have 7 rows")
+	assert_eq(ui.inventory_grid.item_grid.size(), 7, "Item grid should have 7 rows")
 
-	for row in ui.active_grid:
+	for row in ui.inventory_grid.active_grid:
 		assert_eq(row.size(), 9, "Each row should have 9 columns")
 
 func test_starting_containers_placed():
@@ -69,7 +69,7 @@ func test_shop_panel_exists():
 		assert_true(shop_panel.visible, "Shop should be visible by default")
 
 func test_storage_area_exists():
-	var storage = ui.storage_container
+	var storage = ui.storage_grid
 	assert_not_null(storage, "Storage area should exist")
 
 	if ui.hide_storage:
@@ -152,11 +152,11 @@ func test_drag_and_drop_initialization():
 	assert_false(ui.hover_preview.visible, "Hover preview should be hidden initially")
 
 func test_grid_cell_creation():
-	# Verify grid cells are created
-	assert_gt(ui.grid_cells.size(), 0, "Grid cells should be created")
+	# InventoryGrid owns the cell visuals
+	assert_gt(ui.inventory_grid.grid_cells.size(), 0, "Grid cells should be created")
 
 	var total_cells = 0
-	for row in ui.grid_cells:
+	for row in ui.inventory_grid.grid_cells:
 		total_cells += row.size()
 
 	assert_eq(total_cells, ui.ROOM_WIDTH * ui.ROOM_HEIGHT,
