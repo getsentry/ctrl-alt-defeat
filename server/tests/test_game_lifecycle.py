@@ -32,15 +32,14 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
         (7, 4),  # Container C bottom-right - only safe for 1x1
     ]
 
-    # Track occupied positions from existing inventory
+    # Track occupied positions from existing inventory.
+    # Grid items carry no shape, so this helper only ever buys single-square
+    # items and every placed item occupies exactly the square it sits on.
     occupied_positions = set()
     for item in session.get("inventory_grid", []):
         pos = tuple(item.get("position", []))
         if pos:
-            # Add all squares occupied by this item
-            item_shape = item.get("shape", [[0, 0]])
-            for offset in item_shape:
-                occupied_positions.add((pos[0] + offset[0], pos[1] + offset[1]))
+            occupied_positions.add((pos[0], pos[1]))
 
     items_purchased = 0
     purchased_item_ids = set()  # Track which items we've already purchased
@@ -56,9 +55,12 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
             if item["id"] in purchased_item_ids:
                 continue
 
-            # Find next available position that fits item's shape
-            target_position = None
+            # Only single-square items, so occupancy stays trackable between rounds
             item_shape = item.get("shape", [[0, 0]])
+            if len(item_shape) != 1:
+                continue
+
+            target_position = None
 
             for pos in container_positions:
                 if pos in occupied_positions:
@@ -128,10 +130,11 @@ def purchase_items_for_battle(client, player_id, session, num_items=3):
                 if item["id"] in purchased_item_ids:
                     continue
 
-                # Get THIS item's shape
+                # Only single-square items, as above
                 item_shape = item.get("shape", [[0, 0]])
+                if len(item_shape) != 1:
+                    continue
 
-                # Find next available position that fits this item's shape
                 target_position = None
                 for pos in container_positions:
                     if pos in occupied_positions:

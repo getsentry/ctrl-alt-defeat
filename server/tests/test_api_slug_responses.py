@@ -500,12 +500,14 @@ class TestAPISlugResponses:
                 break
 
         if item_to_buy:
+            # The endpoint is /purchase/item, and [2, 3] is the top-left of the
+            # first starting container. [0, 0] is bare floor and cannot hold an item.
             response = auth_client.post(
-                "/shop/purchase",
+                "/purchase/item",
                 json={
                     "player_id": player_id,
                     "item_id": item_to_buy["id"],
-                    "target_position": [0, 0],
+                    "target_position": [2, 3],
                 },
             )
             assert response.status_code == 200, f"Purchase failed: {response.json()}"

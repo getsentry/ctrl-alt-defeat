@@ -299,31 +299,33 @@ class TestGameDesignCompliance:
         # Item can't activate with 20 CPU cost when max is 10
 
     def test_infrastructure_effects(self):
-        """Test Section 2.3: Infrastructure passive effects"""
+        """Infrastructure items apply their stat mods before the battle"""
         sim = BattleSimulator()
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
 
-        # Test Auto Scaler
+        quantum = PlacedItem(
+            spec=deepcopy(ITEM_CATALOG["quantum_processor"]), position=(0, 0)
+        )
+        sim._apply_infrastructure([quantum], player)
+
+        assert player.max_cpu == 20  # 10 base + 10 from JSON
+        assert player.cpu_regen == 5.0  # 2 base + 3 from JSON
+
+    def test_only_infrastructure_items_apply_stat_mods(self):
+        """
+        _apply_infrastructure skips anything whose category is not
+        "infrastructure". auto_scaler is a protocol, so it must not change CPU.
+        """
+        sim = BattleSimulator()
+        player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
+
         autoscaler = PlacedItem(
             spec=deepcopy(ITEM_CATALOG["auto_scaler"]), position=(0, 0)
         )
         sim._apply_infrastructure([autoscaler], player)
-        assert player.max_cpu == 15  # 10 base + 5 from JSON
-        assert player.cpu_regen == 3.0  # 2 base + 1 from JSON
 
-        # Test Quantum Processor
-        player2 = Player(id=1, quota=25, max_quota=25, cpu=10.0)
-        quantum = PlacedItem(
-            spec=deepcopy(ITEM_CATALOG["quantum_processor"]), position=(0, 0)
-        )
-        sim._apply_infrastructure([quantum], player2)
-        assert player2.max_cpu == 20  # 10 base + 10 from JSON
-        assert player2.cpu_regen == 5.0  # 2 base + 3 from JSON
-
-        # Test Health Check (simple infrastructure item)
-        Player(id=1, quota=25, max_quota=25, cpu=10.0)
-        PlacedItem(spec=deepcopy(ITEM_CATALOG["health_check"]), position=(0, 0))
-        # Health check is not infrastructure category, it's a timer-based healing item
+        assert player.max_cpu == 10, "A protocol should not raise max CPU"
+        assert player.cpu_regen == 2.0, "A protocol should not raise CPU regen"
         # So no passive effects to test here
 
     def test_special_item_effects(self):

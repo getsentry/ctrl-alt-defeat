@@ -49,22 +49,9 @@ TEST_MODE=true \
 ../.venv/bin/python -m pytest tests/ -q
 ```
 
-Expected: **about 178 passed, 3 to 5 failed, 2 skipped, in 18 seconds.**
+Expected: **183 passed, 0 failed, 2 skipped, in about 11 seconds.**
 
-The server suite is not deterministic. Two failures are constant:
-
-- `test_api_slug_responses.py::test_battle_response_server_containers_have_slugs`
-- `test_battle_engine.py::TestGameDesignCompliance::test_infrastructure_effects`
-
-Three more come and go between runs, so the total moves between 3 and 5:
-
-- `test_game_lifecycle.py::test_lives_and_rounds_mechanic`
-- `test_game_lifecycle.py::test_gold_economy_through_rounds`
-- `test_shield_blocking.py::test_shield_blocks_damage`
-
-`test_shield_blocking.py` passes every time on its own, so at least that one is
-order or shared-state dependent rather than a real defect. None of this is
-related to the client work.
+The suite is deterministic. If you see a failure, it is real.
 
 The API shape work (canonical position format, plus
 `tests/test_position_format.py` and `tests/test_position_contract.py`) sits in a
