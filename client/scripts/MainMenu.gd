@@ -66,7 +66,7 @@ func _on_start_game():
 
 	# Fade out music before transitioning
 	if music_player and music_player.playing:
-		if Presentation.animations_enabled():
+		if Presentation.request("music_fade_out"):
 			var tween = get_tree().create_tween()
 			tween.tween_property(music_player, "volume_db", -80.0, 1.0)  # Fade to silence over 1 second
 			await tween.finished

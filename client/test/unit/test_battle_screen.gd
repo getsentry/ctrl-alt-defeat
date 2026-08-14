@@ -2,6 +2,7 @@ extends GutTest
 # Comprehensive tests for BattleScreen
 
 const APITypes = preload("res://scripts/api_types.gd")
+const Presentation = preload("res://scripts/Presentation.gd")
 
 var battle_scene = preload("res://scenes/BattleScreen.tscn")
 var battle_screen
@@ -232,3 +233,143 @@ func test_responsive_layout():
 
 	# Restore
 	DisplayServer.window_set_size(original_size)
+
+
+func _wait_for_playback_start() -> bool:
+	"""_ready() starts playback a frame later, which is what fills player_data."""
+	for i in range(120):
+		if battle_screen.player_data.has("max_health"):
+			return true
+		await get_tree().process_frame
+	return false
+
+# ============ Cosmetic effects ============
+#
+# Headless draws no animations, so these check that the screen still asks for
+# the right effect. Without them a broken effect call site would be invisible.
+
+func test_damage_asks_for_a_damage_number():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	Presentation.clear_requests()
+
+	battle_screen._on_damage_dealt(1, 7, 18, "test_item")
+
+	assert_eq(Presentation.request_count("damage_number"), 1,
+		"Taking damage should ask for a damage number")
+	var data = Presentation.requests("damage_number")[0]["data"]
+	assert_eq(data["player"], 1, "Should be for the player who took the damage")
+	assert_eq(data["amount"], 7, "Should carry the amount of damage")
+
+
+func test_healing_asks_for_a_heal_effect():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	Presentation.clear_requests()
+
+	battle_screen._on_healing_done(1, 5, 30)
+
+	assert_eq(Presentation.request_count("heal_effect"), 1,
+		"Healing should ask for a heal effect")
+	assert_eq(Presentation.requests("heal_effect")[0]["data"]["amount"], 5,
+		"Should carry the amount healed")
+
+
+func test_block_asks_for_a_block_effect():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	Presentation.clear_requests()
+
+	battle_screen._on_block_activated(2, 4)
+
+	assert_eq(Presentation.request_count("block_effect"), 1,
+		"Blocking should ask for a block effect")
+	assert_eq(Presentation.requests("block_effect")[0]["data"]["player"], 2,
+		"Should be for the player who blocked")
+
+
+func test_effects_draw_nothing_headless():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	# The point of skipping: no stray nodes are left behind for the teardown to
+	# trip over.
+	var children_before = battle_screen.get_child_count()
+
+	battle_screen._on_damage_dealt(1, 7, 18, "test_item")
+	battle_screen._on_healing_done(1, 5, 30)
+	battle_screen._on_block_activated(2, 4)
+	await get_tree().process_frame
+
+	assert_eq(battle_screen.get_child_count(), children_before,
+		"A skipped effect should add no nodes")
+
+
+func test_damage_updates_health_even_though_it_does_not_animate():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	# Skipping the animation must not skip the state change it accompanies.
+	battle_screen.player_data["health"] = 25
+
+	battle_screen._on_damage_dealt(1, 7, 18, "test_item")
+
+	assert_eq(battle_screen.player_data["health"], 18,
+		"Health should follow the event, with or without animation")
+
+
+# ============ Stat readouts ============
+
+func test_both_players_have_a_full_stat_readout():
+	# Each side shows a health bar, a health number, a stamina bar and a
+	# stamina number. Only the bars were covered before.
+	for side in ["Player1Container", "Player2Container"]:
+		var panel = battle_screen.find_child(side, true, false)
+		assert_not_null(panel, "%s should exist" % side)
+		for stat in ["HealthBar", "HealthValue", "StaminaBar", "StaminaValue"]:
+			assert_not_null(panel.find_child(stat, true, false),
+				"%s should show %s" % [side, stat])
+
+
+func test_stat_readouts_show_numbers_once_the_battle_starts():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+
+	assert_ne(battle_screen.player_health_label.text, "",
+		"Player health should read as a number, not blank")
+	assert_true("/" in battle_screen.player_health_label.text,
+		"Health should read as current out of max")
+	assert_ne(battle_screen.player_stamina_label.text, "",
+		"Player stamina should read as a number, not blank")
+
+
+func test_health_bar_tracks_the_health_number():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+
+	var quota = GameStateManager.get_round_quota()
+	assert_eq(battle_screen.player_health_bar.max_value, float(quota),
+		"The bar should be scaled to the round quota")
+	assert_eq(battle_screen.player_health_bar.value, float(battle_screen.player_data["health"]),
+		"The bar should agree with the underlying health")
+
+
+func test_player_names_are_filled_in():
+	GameStateManager.player_name = "Tester"
+	var label = battle_screen.find_child("Player1NameLabel", true, false)
+	assert_ne(label.text, "", "Player 1 should be named")
+
+
+# ============ Battle log ============
+
+func test_battle_log_fills_up_during_playback():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+
+	# Let a few events play at the headless speed
+	for i in range(30):
+		if battle_screen.battle_log_container.get_parsed_text().strip_edges() != "":
+			break
+		await get_tree().process_frame
+
+	assert_ne(battle_screen.battle_log_container.get_parsed_text().strip_edges(), "",
+		"The battle log should show what happened")
+
+
+func test_log_message_appends_to_the_log():
+	battle_screen.battle_log_container.clear()
+
+	battle_screen._on_log_message("A thing happened", Color.WHITE)
+
+	assert_true("A thing happened" in battle_screen.battle_log_container.get_parsed_text(),
+		"A logged message should appear in the log")

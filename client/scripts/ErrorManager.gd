@@ -79,7 +79,7 @@ func _display_error_ui(message: String, duration: float):
 	current_error_ui = panel
 
 	# Animate in
-	if Presentation.animations_enabled():
+	if Presentation.request("error_toast_in", {"message": message}):
 		var tween = get_tree().create_tween()
 		panel.modulate.a = 0
 		tween.tween_property(panel, "modulate:a", 0.9, 0.3)
@@ -94,7 +94,7 @@ func _hide_error_ui():
 		return
 
 	# Animate out
-	if not Presentation.animations_enabled():
+	if not Presentation.request("error_toast_out"):
 		current_error_ui.queue_free()
 		current_error_ui = null
 		return

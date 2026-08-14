@@ -280,3 +280,54 @@ func test_color_for_categories():
 		"Problem and defense should have different colors")
 	assert_ne(colors["defense"], colors["infrastructure"],
 		"Defense and infrastructure should have different colors")
+
+
+# ============ Shop price labels ============
+
+func test_shop_shows_a_price_for_every_item():
+	for i in range(1, 6):
+		var price_label = ui.shop_container.get_node_or_null("ShopPrice" + str(i))
+		assert_not_null(price_label, "Shop slot %d should have a price label" % i)
+
+	var shop_data = GameStateManager.current_shop
+	for i in range(min(shop_data.size(), 5)):
+		if shop_data[i] == null:
+			continue
+		var price_label = ui.shop_container.get_node_or_null("ShopPrice" + str(i + 1))
+		assert_true(price_label.visible, "Slot %d holds an item, so its price should show" % (i + 1))
+		assert_eq(price_label.text, str(shop_data[i]["cost"]) + "g",
+			"Slot %d should show the item's cost" % (i + 1))
+
+
+func test_empty_shop_slot_hides_its_price():
+	ui._display_shop_items([null, null, null, null, null])
+	await get_tree().process_frame
+
+	for i in range(1, 6):
+		var price_label = ui.shop_container.get_node_or_null("ShopPrice" + str(i))
+		assert_false(price_label.visible, "An empty slot should show no price")
+
+
+func test_shop_price_follows_the_item_cost():
+	var item = {
+		"id": "priced_item", "item_type": "null_blade", "name": "Null Blade",
+		"slug": "null_blade", "category": "problem", "rarity": "common",
+		"cost": 7, "is_container": false, "shape": [[0, 0]]
+	}
+	ui._display_shop_items([item, null, null, null, null])
+	await get_tree().process_frame
+
+	assert_eq(ui.shop_container.get_node_or_null("ShopPrice1").text, "7g",
+		"The price label should follow the item's cost")
+
+
+# ============ Ready and refresh buttons ============
+
+func test_ready_and_refresh_buttons_are_wired():
+	var ready_btn = ui.find_child("ReadyButton", true, false)
+	var refresh_btn = ui.find_child("RefreshButton", true, false)
+
+	assert_not_null(ready_btn, "There should be a ready button")
+	assert_not_null(refresh_btn, "There should be a refresh button")
+	assert_gt(ready_btn.pressed.get_connections().size(), 0, "Ready should do something")
+	assert_gt(refresh_btn.pressed.get_connections().size(), 0, "Refresh should do something")

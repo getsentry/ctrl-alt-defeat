@@ -8,6 +8,8 @@ extends GutTest
 #
 # The menu has two buttons: New Game and Quit.
 
+const Presentation = preload("res://scripts/Presentation.gd")
+
 var main_menu_scene = preload("res://scenes/MainMenu.tscn")
 var main_menu
 
@@ -50,6 +52,7 @@ func test_new_game_button_click():
 	GameStateManager.current_round = 7
 	GameStateManager.gold = 999
 	GameStateManager.player_lives = 2
+	Presentation.clear_requests()
 
 	main_menu.new_game_button.pressed.emit()
 	await get_tree().process_frame
@@ -57,6 +60,13 @@ func test_new_game_button_click():
 	assert_eq(GameStateManager.current_round, 1, "Should reset to round 1")
 	assert_eq(GameStateManager.gold, 12, "Should have starting gold")
 	assert_eq(GameStateManager.player_lives, 5, "Should have full lives")
+
+
+func test_new_game_asks_to_fade_the_music():
+	# _on_start_game() only fades when music_player.playing is true, and headless
+	# has no audio driver, so playback never starts and the branch is never
+	# reached. Testing this needs an audio-capable run.
+	pending("Headless has no audio driver, so the music fade cannot be reached.")
 
 
 func test_quit_button_functionality():
@@ -75,10 +85,14 @@ func test_version_label_exists():
 
 
 func test_title_displayed():
-	# The game name is artwork, not a text label.
+	# The game name is artwork, not a text label, so the check is on the art.
 	var logo = main_menu.find_child("LogoContainer", true, false)
 	assert_not_null(logo, "Title should be displayed")
 	assert_not_null(logo.texture, "Title artwork should have a texture")
+	assert_true(logo.visible, "Title artwork should be visible")
+	assert_gt(logo.texture.get_width(), 0, "Title artwork should have loaded")
+	assert_true("logo" in logo.texture.resource_path,
+		"Title artwork should be the logo asset, got: " + logo.texture.resource_path)
 
 
 func test_name_input_exists():

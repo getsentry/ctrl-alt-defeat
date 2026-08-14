@@ -90,7 +90,11 @@ func test_battle_result_updates_state():
 			"game_over": false,
 			"victory": false
 		},
-		"new_shop": [],
+		"new_shop": [{
+			"id": "shop_item_1", "item_type": "null_blade", "name": "Null Blade",
+			"category": "problem", "slug": "null_blade", "rarity": "common",
+			"cost": 3, "is_container": false, "shape": [[0, 0]]
+		}],
 		"battle_id": "test-battle-123"
 	})
 
@@ -99,6 +103,99 @@ func test_battle_result_updates_state():
 	assert_eq(GameStateManager.current_round, 2, "Round should be 2")
 	assert_eq(GameStateManager.gold, initial_gold + 10, "Gold should increase")
 	assert_eq(GameStateManager.wins, 1, "Should have 1 win")
+	assert_eq(GameStateManager.losses, 0, "Should have 0 losses")
+	assert_eq(GameStateManager.player_lives, 5, "Lives should come from the session update")
+	assert_false(GameStateManager.game_over, "Should not be game over")
+	assert_false(GameStateManager.victory, "Should not be victory")
+
+	assert_eq(GameStateManager.last_gold_earned, 10, "Gold earned should be kept for the post-battle screen")
+	assert_eq(GameStateManager.current_shop.size(), 1, "Shop should be replaced with the new one")
+	assert_eq(GameStateManager.current_shop[0]["item_type"], "null_blade", "Shop should hold the new item")
+	assert_not_null(GameStateManager.last_battle_result, "Battle result should be kept for the post-battle screen")
+	assert_eq(GameStateManager.last_battle_result.winner, 1, "Battle result should keep the winner")
+	assert_eq(GameStateManager.battle_health, GameStateManager.get_round_quota(),
+		"Battle health should be re-quoted for the new round")
+
+
+func test_battle_result_stores_events_for_playback():
+	# BattleScreen reads last_battle_events and asserts when it is empty.
+	GameStateManager.start_new_game()
+
+	var mock_response = APITypes.BattleResponse.new({
+		"battle_result": {
+			"winner": 1, "duration": 10.0, "player1_quota": 100, "player2_quota": 0,
+			"seed": 12345,
+			"actions": [
+				{"timestamp": 0, "source": "system", "action": "battle_start",
+					"player": 0, "target": null, "damage": null, "details": null},
+				{"timestamp": 1500, "source": "enemy", "action": "damage",
+					"player": 2, "target": "player", "damage": 20, "details": null}
+			],
+			"player_inventory": {"items": [], "servers": []},
+			"enemy_inventory": {"items": [], "servers": []}
+		},
+		"session_update": {
+			"round": 2, "gold": 20, "gold_earned": 10, "wins": 1, "losses": 0,
+			"lives": 5, "game_over": false, "victory": false
+		},
+		"new_shop": [],
+		"battle_id": "test-battle-123"
+	})
+
+	GameStateManager.update_after_battle(mock_response)
+
+	assert_eq(GameStateManager.last_battle_events.size(), 2, "Battle events should be stored for playback")
+	assert_eq(GameStateManager.last_battle_events[0].action, "battle_start", "Events should keep their order")
+	assert_eq(GameStateManager.last_battle_events[1].damage, 20, "Events should keep their damage")
+
+
+func test_defeat_updates_losses_and_lives():
+	GameStateManager.start_new_game()
+
+	var mock_response = APITypes.BattleResponse.new({
+		"battle_result": {
+			"winner": 2, "duration": 10.0, "player1_quota": 0, "player2_quota": 50,
+			"actions": [], "seed": 1,
+			"player_inventory": {"items": [], "servers": []},
+			"enemy_inventory": {"items": [], "servers": []}
+		},
+		"session_update": {
+			"round": 1, "gold": 12, "gold_earned": 0, "wins": 0, "losses": 1,
+			"lives": 4, "game_over": false, "victory": false
+		},
+		"new_shop": [],
+		"battle_id": "test-battle-456"
+	})
+
+	GameStateManager.update_after_battle(mock_response)
+
+	assert_eq(GameStateManager.losses, 1, "A defeat should count as a loss")
+	assert_eq(GameStateManager.player_lives, 4, "A defeat should cost a life")
+	assert_eq(GameStateManager.last_gold_earned, 0, "A defeat should earn no gold")
+
+
+func test_game_over_comes_from_the_session_update():
+	GameStateManager.start_new_game()
+
+	var mock_response = APITypes.BattleResponse.new({
+		"battle_result": {
+			"winner": 2, "duration": 10.0, "player1_quota": 0, "player2_quota": 50,
+			"actions": [], "seed": 1,
+			"player_inventory": {"items": [], "servers": []},
+			"enemy_inventory": {"items": [], "servers": []}
+		},
+		"session_update": {
+			"round": 5, "gold": 0, "gold_earned": 0, "wins": 2, "losses": 5,
+			"lives": 0, "game_over": true, "victory": false
+		},
+		"new_shop": [],
+		"battle_id": "test-battle-789"
+	})
+
+	GameStateManager.update_after_battle(mock_response)
+
+	assert_true(GameStateManager.game_over, "Game over should come from the server")
+	assert_true(GameStateManager.is_game_over(), "is_game_over() should agree")
 
 func test_game_over_conditions():
 	GameStateManager.start_new_game()

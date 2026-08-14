@@ -116,22 +116,22 @@ func _display_final_stats():
 	var is_victory = GameStateManager.current_round > 10 and GameStateManager.player_health > 0
 
 	# Update title for victory
-	var title = get_node("GameOverTitle")
+	var title = find_child("GameOverTitle", true, false)
 	if title and is_victory:
 		title.text = "VICTORY!"
 		title.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
 
-		var subtitle = get_node("VictorySubtitle")
+		var subtitle = find_child("VictorySubtitle", true, false)
 		if subtitle:
 			subtitle.text = "You defended the server room!"
 			subtitle.visible = true
 
 	# Display stats
-	var round_label = get_node("FinalRoundLabel")
+	var round_label = find_child("FinalRoundLabel", true, false)
 	if round_label:
 		round_label.text = "Final Round: %d" % GameStateManager.current_round
 
-	var wins_label = get_node("WinsLabel")
+	var wins_label = find_child("WinsLabel", true, false)
 	if wins_label:
 		var total_battles = GameStateManager.wins + GameStateManager.losses
 		var win_rate = 0
@@ -143,13 +143,13 @@ func _display_final_stats():
 			win_rate
 		]
 
-	var gold_label = get_node("TotalGoldLabel")
+	var gold_label = find_child("TotalGoldLabel", true, false)
 	if gold_label:
 		# Estimate total gold earned (rough calculation)
 		var total_gold = GameStateManager.current_round * 12
 		gold_label.text = "Total Gold Earned: %d" % total_gold
 
-	var score_label = get_node("ScoreLabel")
+	var score_label = find_child("ScoreLabel", true, false)
 	if score_label:
 		# Calculate score: rounds * 100 + wins * 50 + bonus for victory
 		var score = GameStateManager.current_round * 100 + GameStateManager.wins * 50
@@ -172,7 +172,7 @@ func _on_new_game():
 		_show_error_message("Failed to connect to server. Please try again.")
 		return
 
-	GameStateMananger.update_from_session(session_response.session)
+	GameStateManager.update_from_session(session_response.session)
 
 	# Go to shop
 	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")

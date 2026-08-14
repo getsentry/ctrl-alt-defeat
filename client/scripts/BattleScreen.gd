@@ -340,7 +340,7 @@ func _exit_tree():
 
 
 func _show_attack_animation(from_player: bool):
-	if not Presentation.animations_enabled():
+	if not Presentation.request("attack_animation", {"from_player": from_player}):
 		return
 	# Simple visual effect for attacks
 	var effect = ColorRect.new()
@@ -442,7 +442,7 @@ func _on_battle_ended(winner: int):
 	_go_to_post_battle()
 
 func _show_damage_number(player: int, amount: int):
-	if not Presentation.animations_enabled():
+	if not Presentation.request("damage_number", {"player": player, "amount": amount}):
 		return
 	var label = Label.new()
 	label.text = "-%d" % amount
@@ -463,7 +463,7 @@ func _show_damage_number(player: int, amount: int):
 	tween.tween_callback(label.queue_free)
 
 func _show_heal_effect(player: int, amount: int):
-	if not Presentation.animations_enabled():
+	if not Presentation.request("heal_effect", {"player": player, "amount": amount}):
 		return
 	var label = Label.new()
 	label.text = "+%d" % amount
@@ -483,7 +483,7 @@ func _show_heal_effect(player: int, amount: int):
 	tween.tween_callback(label.queue_free)
 
 func _show_block_effect(player: int):
-	if not Presentation.animations_enabled():
+	if not Presentation.request("block_effect", {"player": player}):
 		return
 	var effect = ColorRect.new()
 	effect.size = Vector2(60, 60)
