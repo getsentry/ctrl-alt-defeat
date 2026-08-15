@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, TypedDict
 
 from config_loader import config_loader
+from containers import Container, PlacementValidator
 from event_system import Event, EventData, EventManager, EventType
 from grid_system import ItemShape, Rotation
 from item_effects import (
@@ -30,7 +31,6 @@ from item_effects import (
     TimerTrigger,
 )
 from schemas import BattleAction
-from server_containers import PlacementValidator, ServerContainer
 
 # Import shield effect if available
 try:
@@ -129,8 +129,8 @@ class BattleResult(TypedDict):
     seed: int  # RNG seed used for the battle
     player1_items: List[PlacedItem]  # Player 1's loadout
     player2_items: List[PlacedItem]  # Player 2's loadout
-    player1_containers: List[ServerContainer]  # Player 1's containers
-    player2_containers: List[ServerContainer]  # Player 2's containers
+    player1_containers: List[Container]  # Player 1's containers
+    player2_containers: List[Container]  # Player 2's containers
 
 
 class BattleSimulator:
@@ -159,8 +159,8 @@ class BattleSimulator:
         p1_items: List[PlacedItem],
         p2_items: List[PlacedItem],
         round_number: int = 1,
-        p1_containers: List[ServerContainer] = None,
-        p2_containers: List[ServerContainer] = None,
+        p1_containers: Optional[List[Container]] = None,
+        p2_containers: Optional[List[Container]] = None,
     ) -> BattleResult:
         """
         Simulate battle following Section 1.3 Item Activation Flow
@@ -883,7 +883,7 @@ class BattleSimulator:
             self.event_manager.cancel_timer(trigger_uid)
 
     def _validate_placement_with_containers(
-        self, items: List[PlacedItem], containers: List[ServerContainer] = None
+        self, items: List[PlacedItem], containers: Optional[List[Container]] = None
     ) -> bool:
         """
         Validate that items are properly placed:
@@ -891,8 +891,7 @@ class BattleSimulator:
         2. Regular items MUST be placed on server-provided squares
         3. Regular items cannot overlap each other
         """
-        # Grid is 9 wide x 7 tall
-        validator = PlacementValidator(main_grid_size=(9, 7))
+        validator = PlacementValidator()
 
         # First, place all containers (servers)
         if containers:
@@ -905,10 +904,6 @@ class BattleSimulator:
 
         # Now validate regular items
         for item in items:
-            # Skip if this is a container itself
-            if isinstance(item, ServerContainer):
-                continue
-
             # Get all squares this item occupies
             item_squares = item.get_occupied_squares()
 

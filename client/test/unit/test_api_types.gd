@@ -43,8 +43,7 @@ func _container(overrides: Dictionary = {}) -> Dictionary:
 		"slug": "standard_vm",
 		"type": "standard_vm",
 		"position": [2, 3],
-		"width": 2,
-		"height": 2
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
 	}
 	data.merge(overrides, true)
 	return data
@@ -110,8 +109,7 @@ func test_a_whole_container_survives_parsing():
 	assert_eq(container.type, "standard_vm", "type should survive parsing")
 	assert_eq(container.position.x, 4, "x should survive parsing")
 	assert_eq(container.position.y, 3, "y should survive parsing")
-	assert_eq(container.width, 2, "width should survive parsing")
-	assert_eq(container.height, 2, "height should survive parsing")
+	assert_eq(container.shape, [[0, 0], [1, 0], [0, 1], [1, 1]], "shape should survive parsing")
 
 
 # ============ Round trips lose nothing ============
@@ -134,7 +132,7 @@ func test_a_round_trip_through_to_dict_loses_nothing():
 	var reloaded_container = APITypes.ServerContainer.new(container.to_dict())
 
 	assert_eq(reloaded_container.id, container.id, "container id should survive a round trip")
-	assert_eq(reloaded_container.width, container.width, "container width should survive a round trip")
+	assert_eq(reloaded_container.shape, container.shape, "container shape should survive a round trip")
 	assert_eq(reloaded_container.position.x, container.position.x, "container x should survive a round trip")
 
 

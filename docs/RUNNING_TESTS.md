@@ -49,7 +49,7 @@ TEST_MODE=true \
 ../.venv/bin/python -m pytest tests/ -q
 ```
 
-Expected: **183 passed, 0 failed, 2 skipped, in about 11 seconds.**
+Expected: **216 passed, 0 failed, 2 skipped, in about 20 seconds.**
 
 The suite is deterministic. If you see a failure, it is real.
 
@@ -93,7 +93,7 @@ BATTLE_SERVER_URL="http://localhost:8081" BATTLE_TEST_SEED=424242 godot --headle
   -gconfig= -gdir=res://test -ginclude_subdirs -gexit -glog=1
 ```
 
-Expected: **179 tests, 169 passed, 0 failed, 10 pending, about 11 seconds.**
+Expected: **241 tests, 231 passed, 0 failed, 10 pending, about 8 seconds.**
 
 ### Test environment variables
 

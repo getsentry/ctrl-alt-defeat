@@ -51,8 +51,7 @@ func _container(overrides: Dictionary = {}) -> Dictionary:
 		"slug": "standard_vm",
 		"type": "standard_vm",
 		"position": [2, 3],
-		"width": 2,
-		"height": 2
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
 	}
 	data.merge(overrides, true)
 	return data
@@ -184,7 +183,7 @@ func test_an_item_may_straddle_two_touching_containers():
 
 
 func test_a_multi_square_item_cannot_hang_off_the_edge():
-	grid.load_inventory_state(_state([], [_container({"position": [7, 3], "width": 2, "height": 2})]))
+	grid.load_inventory_state(_state([], [_container({"position": [7, 3]})]))
 	var wide = _item({"shape": [[0, 0], [1, 0]]})
 
 	assert_false(grid.can_place_item(wide, Vector2i(8, 3)),

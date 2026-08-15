@@ -5,8 +5,8 @@ Tests for AI opponent generation with containers
 import pytest
 
 from battle_engine import BattleSimulator
+from containers import Container
 from main import generate_ai_opponent
-from server_containers import ServerContainer
 from tests.conftest import SHOP_SEED
 from tests.test_utils import find_bad_positions
 
@@ -27,9 +27,9 @@ class TestAIOpponentGeneration:
         assert containers is not None
         assert len(containers) > 0
 
-        # Containers should be ServerContainer instances
+        # Containers should be Container instances
         for container in containers:
-            assert isinstance(container, ServerContainer)
+            assert isinstance(container, Container)
 
     def test_ai_opponent_passes_validation(self):
         """Test that AI opponent items and containers pass battle validation"""
@@ -54,7 +54,7 @@ class TestAIOpponentGeneration:
         # Get all container squares
         container_squares = set()
         for container in containers:
-            for square in container.get_occupied_squares():
+            for square in container.covered_squares():
                 container_squares.add(square)
 
         # Check that all item positions are on container squares
@@ -191,8 +191,7 @@ class TestBattleAPIResponse:
             assert "id" in container
             assert "type" in container
             assert "position" in container
-            assert "width" in container
-            assert "height" in container
+            assert "shape" in container
 
         # Verify enemy inventory is included
         assert "enemy_inventory" in battle_result
@@ -223,8 +222,7 @@ class TestBattleAPIResponse:
             assert "id" in container
             assert "type" in container
             assert "position" in container
-            assert "width" in container
-            assert "height" in container
+            assert "shape" in container
             assert isinstance(container["position"], list)
             assert len(container["position"]) == 2
 
@@ -436,6 +434,48 @@ class TestBattleAPIResponse:
         # Should only have the grid item, not the storage item
         assert len(player_items) == 1
         assert player_items[0]["position"] == [2, 3]
+
+
+class TestContainerPurchase:
+    """A bought container keeps the shape of its type"""
+
+    # Seed 9 puts a packet_buffer, which is 1x2 rather than 2x2, in round 1.
+    NON_SQUARE_CONTAINER_SEED = 9
+
+    def test_a_bought_container_keeps_its_own_shape(self, auth_client):
+        response = auth_client.post(
+            "/session/start",
+            json={"player_name": "Tester", "seed": self.NON_SQUARE_CONTAINER_SEED},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        player_id = data["player_id"]
+
+        shop = data["session"]["current_shop"]
+        container = next(
+            item
+            for item in shop
+            if item and item["is_container"] and item["item_type"] == "packet_buffer"
+        )
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": container["id"],
+                "target_position": [0, 0],
+            },
+        )
+        assert response.status_code == 200, response.text
+
+        bought = next(
+            c
+            for c in response.json()["server_containers"]
+            if c["id"] == container["id"]
+        )
+        assert bought["shape"] == container["shape"], (
+            "A container should cover the squares of its own shape, " "not a 2x2 block"
+        )
 
 
 class TestMoveItemAPI:
@@ -1142,7 +1182,7 @@ class TestOpenApiDeclaresThePositionShape:
         from main import app
 
         schema = TestClient(app).get("/openapi.json").json()
-        position = schema["components"]["schemas"]["ServerContainer"]["properties"][
+        position = schema["components"]["schemas"]["Container"]["properties"][
             "position"
         ]
         assert position["type"] == "array"

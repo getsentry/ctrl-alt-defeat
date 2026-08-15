@@ -302,7 +302,8 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 	# Create a failed purchase response with proper fields
 	response = APITypes.PurchaseResponse.new({
 		"purchased_item": {},
-		"gold": GameStateManager.gold  # Keep current gold
+		"gold": GameStateManager.gold,  # Keep current gold
+		"server_containers": []  # Nothing was bought, so nothing changed
 	})
 	purchase_completed.emit(response)
 	error_occurred.emit(error_msg)

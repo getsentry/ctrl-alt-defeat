@@ -425,7 +425,7 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	var is_container_item = data.get("is_container", false)
 	if is_container_item:
 		var size_label = Label.new()
-		size_label.text = "%dx%d slots" % [data.get("internal_width", 2), data.get("internal_height", 2)]
+		size_label.text = "%d slots" % data["shape"].size()
 		size_label.position = Vector2(60, 25)
 		size_label.add_theme_font_size_override("font_size", 10)
 		size_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
@@ -450,31 +450,15 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	# Prepare full item data for the handler - include all original fields
 	var handler_data = data.duplicate()
 	# Add display-specific fields if not present
-	if not handler_data.has("width"):
-		handler_data["width"] = data.get("internal_width", 2) if is_container_item else 1
-	if not handler_data.has("height"):
-		handler_data["height"] = data.get("internal_height", 2) if is_container_item else 1
 	if not handler_data.has("color"):
 		handler_data["color"] = Color(0.5, 0.3, 0.7) if is_container_item else _get_color_for_category(data.get("category", "problem"))
 	if not handler_data.has("type"):
 		handler_data["type"] = "server" if is_container_item else "item"  # Mark containers as servers
-	if is_container_item and not handler_data.has("pattern"):
-		handler_data["pattern"] = _create_pattern_from_size(data.get("internal_width", 2), data.get("internal_height", 2))
 
 	# Connect input handling for dragging
 	shop_item.gui_input.connect(_on_shop_item_input.bind(shop_item, handler_data))
 
 	return shop_item
-
-func _create_pattern_from_size(width: int, height: int) -> Array:
-	# Create a pattern array for a container of given size
-	var pattern = []
-	for y in range(height):
-		var row = []
-		for x in range(width):
-			row.append(1)  # All cells are active in container
-		pattern.append(row)
-	return pattern
 
 func _get_color_for_category(category: String) -> Color:
 	match category:
@@ -501,7 +485,7 @@ func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Diction
 var dragging_shop_item: Panel = null
 var dragging_shop_data: Dictionary = {}
 var drag_preview: Control = null
-var container_preview: Panel = null  # Preview for container placement
+var container_preview: Control = null  # Holds one preview panel per covered square
 
 func _start_shop_drag(shop_item: Panel, item_data: Dictionary):
 	"""Start dragging a shop item"""
@@ -649,73 +633,48 @@ func _mark_shop_item_sold(shop_item: Panel):
 	sold_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 	shop_item.add_child(sold_label)
 
+# The grid squares a container of this shape would cover at grid_pos.
+func _container_squares(container_data: Dictionary, grid_pos: Vector2i) -> Array:
+	var squares: Array = []
+	for offset in container_data["shape"]:
+		squares.append(Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1])))
+	return squares
+
 func _can_place_container(container_data: Dictionary, grid_pos: Vector2i) -> bool:
 	"""Check if a container can be placed at the given position"""
-	var width = container_data.get("width", 2)
-	var height = container_data.get("height", 2)
+	var squares = _container_squares(container_data, grid_pos)
 
 	# Check if it fits within the main grid bounds
-	if grid_pos.x < 0 or grid_pos.y < 0:
-		return false
-	if grid_pos.x + width > ROOM_WIDTH or grid_pos.y + height > ROOM_HEIGHT:
-		return false
+	for square in squares:
+		if square.x < 0 or square.y < 0:
+			return false
+		if square.x >= ROOM_WIDTH or square.y >= ROOM_HEIGHT:
+			return false
 
 	# Check for overlap with existing containers
 	for container_dict in inventory_grid.containers:
-		var cont_pos: Vector2i
-		var cont_width: int = 2
-		var cont_height: int = 2
-
-		# Containers are stored as {"visual": ..., "data": ServerContainer, "position": Vector2i}
-		if container_dict is Dictionary and container_dict.has("data"):
-			var cont_data = container_dict["data"]
-			if cont_data is APITypes.ServerContainer:
-				cont_pos = Vector2i(cont_data.position.x, cont_data.position.y)
-				cont_width = cont_data.width
-				cont_height = cont_data.height
-			else:
-				# Fallback to position stored in the dict
-				cont_pos = container_dict.get("position", Vector2i.ZERO)
-				if cont_data is Dictionary:
-					cont_width = cont_data.get("width", 2)
-					cont_height = cont_data.get("height", 2)
-		else:
-			continue  # Skip unknown formats
-
-		# Check for overlap
-		if grid_pos.x < cont_pos.x + cont_width and grid_pos.x + width > cont_pos.x:
-			if grid_pos.y < cont_pos.y + cont_height and grid_pos.y + height > cont_pos.y:
+		var cont_data: APITypes.ServerContainer = container_dict["data"]
+		for square in cont_data.covered_squares():
+			if square in squares:
 				return false  # Overlapping
 
 	return true
 
 func _add_container_from_purchase(response: APITypes.PurchaseResponse, grid_pos: Vector2i):
 	"""Add a purchased container to the inventory grid"""
-	if response and response.server_containers.size() > 0:
-		# Build containers array from response
-		var containers = []
-		for container_data in response.server_containers:
-			containers.append(APITypes.ServerContainer.new(container_data))
+	# The server sends every container the player owns, so this replaces the set.
+	var containers = []
+	for container_data in response.server_containers:
+		containers.append(APITypes.ServerContainer.new(container_data))
+	GameStateManager.server_containers = containers
 
-		# Update GameStateManager
-		GameStateManager.server_containers = containers
+	var current_state = GameStateManager.get_inventory_state()
+	var new_inventory_state = APITypes.InventoryState.new({
+		"servers": response.server_containers,
+		"items": current_state.get("items", [])
+	})
 
-		# Get current items from GameStateManager
-		var current_state = GameStateManager.get_inventory_state()
-		var items = []
-		if current_state.has("items"):
-			for item_data in current_state["items"]:
-				if item_data is Dictionary:
-					items.append(APITypes.InventoryItem.new(item_data))
-
-		# Create a complete inventory state with new containers and existing items
-		var new_inventory_state = APITypes.InventoryState.new({
-			"servers": response.server_containers,  # Use raw server response data
-			"items": current_state.get("items", [])  # Use raw item data
-		})
-
-		# Reload the entire inventory state
-		inventory_grid.load_inventory_state(new_inventory_state)
+	inventory_grid.load_inventory_state(new_inventory_state)
 
 func _show_container_preview(container_data: Dictionary, grid_pos: Vector2i):
 	"""Show preview for container placement"""
@@ -730,27 +689,23 @@ func _show_container_preview(container_data: Dictionary, grid_pos: Vector2i):
 		inventory_grid.hide_hover_preview()
 		return
 
-	# Create container preview
-	container_preview = Panel.new()
-	container_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var width = container_data.get("width", 2)
-	var height = container_data.get("height", 2)
-
-	# Position and size based on grid
-	container_preview.position = inventory_grid.grid_to_pixel(grid_pos)
-	container_preview.size = Vector2(
-		width * (inventory_grid.cell_size + inventory_grid.cell_spacing) - inventory_grid.cell_spacing,
-		height * (inventory_grid.cell_size + inventory_grid.cell_spacing) - inventory_grid.cell_spacing
-	)
-
 	# Style for valid placement
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.3, 0.6, 1.0, 0.3)  # Blue for containers
 	style.border_color = Color(0.3, 0.6, 1.0, 0.8)
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(4)
-	container_preview.add_theme_stylebox_override("panel", style)
+
+	# One panel per covered square, so the preview follows the container's shape
+	container_preview = Control.new()
+	container_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for square in _container_squares(container_data, grid_pos):
+		var cell = Panel.new()
+		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.position = inventory_grid.grid_to_pixel(square)
+		cell.size = Vector2(inventory_grid.cell_size, inventory_grid.cell_size)
+		cell.add_theme_stylebox_override("panel", style)
+		container_preview.add_child(cell)
 
 	inventory_grid.add_child(container_preview)
 

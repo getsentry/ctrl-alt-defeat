@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from containers import Container
 from utils import Position
 
 
@@ -49,7 +50,7 @@ class GameSession(BaseModel):
     # Inventory fields
     inventory_grid: List[Dict] = []  # Items placed on the grid
     inventory_storage: List[Dict] = []  # Items in storage (not used in battle)
-    server_containers: List[Dict] = []  # Server container positions and info
+    server_containers: List[Container] = []  # Containers the player owns
 
 
 class StartSessionRequest(BaseModel):
@@ -115,9 +116,8 @@ class PurchaseResponse(BaseModel):
 
     purchased_item: ShopItem = Field(description="The item that was purchased")
     gold: int = Field(description="Remaining gold after purchase")
-    server_containers: Optional[List[Dict[str, Any]]] = Field(
-        default=None,
-        description="Updated server containers list (when purchasing a container)",
+    server_containers: List[Container] = Field(
+        description="The containers the player owns after the purchase"
     )
 
 
@@ -145,22 +145,11 @@ class PlacedItem(BaseModel):
     description: str = Field(default="", description="Item description")
 
 
-class ServerContainer(BaseModel):
-    """Server container information"""
-
-    id: str = Field(description="Container instance ID")
-    slug: str = Field(description="Container slug")
-    type: str = Field(description="Container type")
-    position: Position = Field(description="[x, y] position")
-    width: int = Field(description="Container width")
-    height: int = Field(description="Container height")
-
-
 class InventoryData(BaseModel):
     """Player or enemy inventory during battle"""
 
     items: List[PlacedItem] = Field(description="Items on the grid")
-    servers: List[ServerContainer] = Field(description="Server containers")
+    servers: List[Container] = Field(description="Server containers")
 
 
 class BattleAction(BaseModel):

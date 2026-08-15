@@ -20,13 +20,13 @@ static func create_test_battle_result(winner: int = 1, duration: float = 10.0) -
 		"player_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "test_srv1", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
+				{"id": "test_srv1", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 			]
 		},
 		"enemy_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "test_srv2", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
+				{"id": "test_srv2", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 			]
 		}
 	}
@@ -94,7 +94,7 @@ static func create_test_inventory_state() -> Dictionary:
 			{"id": "item1", "item_type": "test_item", "name": "Test Item", "position": [2, 3], "shape": [[0, 0]]}
 		],
 		"servers": [
-			{"id": "srv1", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
+			{"id": "srv1", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 		]
 	}
 

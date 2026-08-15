@@ -33,13 +33,12 @@ class TestInventoryGrid:
 
         # Check container positions (centered horizontally)
         expected_positions = [(2, 3), (4, 3), (6, 3)]
-        actual_positions = [c["position"] for c in grid.containers]
+        actual_positions = [c.position for c in grid.containers]
         assert actual_positions == expected_positions
 
-        # Check each container is 2x2
+        # Check each container covers a 2x2 block
         for container in grid.containers:
-            assert container["width"] == 2
-            assert container["height"] == 2
+            assert sorted(container.shape) == [(0, 0), (0, 1), (1, 0), (1, 1)]
 
     def test_is_valid_placement(self):
         """Test validation of item placement on servers"""
@@ -395,11 +394,11 @@ class TestStoredPositions:
     def test_default_containers_are_pairs(self):
         grid = InventoryGrid()
         for container in grid.containers:
-            assert isinstance(container["position"], tuple), (
-                f"Container {container['id']} stores a "
-                f"{type(container['position']).__name__}, not a pair"
+            assert isinstance(container.position, tuple), (
+                f"Container {container.id} stores a "
+                f"{type(container.position).__name__}, not a pair"
             )
-            assert len(container["position"]) == 2
+            assert len(container.position) == 2
 
     def test_placed_item_position_is_a_pair(self):
         grid = InventoryGrid()
@@ -442,8 +441,7 @@ class TestStoredPositions:
                         "slug": "standard_vm",
                         "type": "standard_vm",
                         "position": [2, 3],
-                        "width": 2,
-                        "height": 2,
+                        "shape": [[0, 0], [1, 0], [0, 1], [1, 1]],
                     }
                 ],
             }
@@ -451,5 +449,6 @@ class TestStoredPositions:
 
         assert manager.grid.items[0]["position"] == (2, 3)
         assert isinstance(manager.grid.items[0]["position"], tuple)
-        assert manager.grid.containers[0]["position"] == (2, 3)
+        assert manager.grid.containers[0].position == (2, 3)
+        assert manager.grid.containers[0].shape == [(0, 0), (1, 0), (0, 1), (1, 1)]
         assert manager.grid.get_item_at((2, 3))["id"] == "item_1"

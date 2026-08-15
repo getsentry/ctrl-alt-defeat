@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from containers import Container, to_json
 from models import MatchmakingHistory, PlayerBuild
 from utils import utc_now
 
@@ -29,7 +30,7 @@ class MatchmakingService:
         losses: int,
         lives: int,
         inventory_grid: List[Dict],
-        server_containers: List[Dict],
+        server_containers: List[Container],
         battle_won: bool,
         opponent_type: str = "ai",
         opponent_difficulty: Optional[int] = None,
@@ -74,7 +75,7 @@ class MatchmakingService:
             win_percent=win_percent,
             current_lives=lives,
             inventory_snapshot=inventory_grid,
-            server_containers=server_containers,
+            server_containers=to_json(server_containers),
             total_item_value=total_item_value,
             total_item_count=total_item_count,
             battle_won=battle_won,

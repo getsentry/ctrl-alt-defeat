@@ -188,24 +188,14 @@ func _add_container(container: APITypes.ServerContainer):
 
 	var x = container.position.x
 	var y = container.position.y
-	var width = container.width
-	var height = container.height
 
 	# Create container visual using ItemVisual
 	var container_visual = ItemVisual.new()
 	container_visual.position = grid_to_pixel(Vector2i(x, y))
 	container_visual.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Set up container data with shape based on width/height
-	var container_data = container.to_dict() if container is Resource else container
+	var container_data = container.to_dict()
 	container_data["is_container"] = true
-
-	# Generate shape array for the container
-	var shape = []
-	for cy in range(height):
-		for cx in range(width):
-			shape.append([cx, cy])
-	container_data["shape"] = shape
 
 	# Enable tooltips for containers too (must be before setup)
 	container_visual.enable_tooltip = true
@@ -214,22 +204,21 @@ func _add_container(container: APITypes.ServerContainer):
 	container_visual.setup(container_data, cell_size, cell_spacing)
 
 	# Update grid cells to show server pattern and mark as active
-	for cy in range(height):
-		for cx in range(width):
-			var grid_x = x + cx
-			var grid_y = y + cy
-			if grid_x >= 0 and grid_x < grid_width and grid_y >= 0 and grid_y < grid_height:
-				# Mark as active for placement
-				active_grid[grid_y][grid_x] = true
+	for square in container.covered_squares():
+		var grid_x = square.x
+		var grid_y = square.y
+		if grid_x >= 0 and grid_x < grid_width and grid_y >= 0 and grid_y < grid_height:
+			# Mark as active for placement
+			active_grid[grid_y][grid_x] = true
 
-				# Update visual
-				var cell = grid_cells[grid_y][grid_x]
-				if cell:
-					var style = StyleBoxFlat.new()
-					style.bg_color = Color(0.2, 0.3, 0.5, 0.3)
-					style.border_color = Color(0.3, 0.5, 0.8, 0.6)
-					style.set_border_width_all(1)
-					cell.add_theme_stylebox_override("panel", style)
+			# Update visual
+			var cell = grid_cells[grid_y][grid_x]
+			if cell:
+				var style = StyleBoxFlat.new()
+				style.bg_color = Color(0.2, 0.3, 0.5, 0.3)
+				style.border_color = Color(0.3, 0.5, 0.8, 0.6)
+				style.set_border_width_all(1)
+				cell.add_theme_stylebox_override("panel", style)
 
 	add_child(container_visual)
 	containers.append({

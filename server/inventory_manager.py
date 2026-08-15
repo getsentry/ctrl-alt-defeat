@@ -3,8 +3,9 @@ Inventory management system for the autobattler game
 Manages both the 9x7 grid with server containers and unlimited storage
 """
 
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Set, Union
 
+from containers import Container, starting_containers, to_json
 from utils import Position, to_position
 
 
@@ -27,38 +28,19 @@ class InventoryGrid:
     """
 
     def __init__(self):
-        """Initialize the grid with 3 adjacent 2x2 server containers"""
+        """Initialize the grid with the starting server containers"""
         self.width = 9
         self.height = 7
         self.items = []  # List of placed items
+        self.containers: List[Container] = starting_containers()
 
-        # Initialize with 3 server containers centered horizontally.
-        self.containers = [
-            {
-                "id": "container_a",
-                "slug": "standard_vm",
-                "position": (2, 3),
-                "width": 2,
-                "height": 2,
-                "type": "standard_vm",
-            },
-            {
-                "id": "container_b",
-                "slug": "standard_vm",
-                "position": (4, 3),
-                "width": 2,
-                "height": 2,
-                "type": "standard_vm",
-            },
-            {
-                "id": "container_c",
-                "slug": "standard_vm",
-                "position": (6, 3),
-                "width": 2,
-                "height": 2,
-                "type": "standard_vm",
-            },
-        ]
+    def _container_squares(self) -> Set[Position]:
+        """Every grid square covered by a container"""
+        return {
+            square
+            for container in self.containers
+            for square in container.covered_squares()
+        }
 
     def is_valid_placement(
         self, position: Position, shape: Optional[List[Sequence[int]]] = None
@@ -67,6 +49,8 @@ class InventoryGrid:
         # If no shape provided, assume single square
         if shape is None:
             shape = [(0, 0)]
+
+        covered = self._container_squares()
 
         # Check all squares the item would occupy
         base_x, base_y = position
@@ -78,17 +62,8 @@ class InventoryGrid:
             if x < 0 or x >= self.width or y < 0 or y >= self.height:
                 return False
 
-            # Check if position is on a server container
-            on_container = False
-            for container in self.containers:
-                cx, cy = container["position"]
-                cw, ch = container["width"], container["height"]
-
-                if cx <= x < cx + cw and cy <= y < cy + ch:
-                    on_container = True
-                    break
-
-            if not on_container:
+            # Items sit on containers, never on bare grid
+            if (x, y) not in covered:
                 return False
 
         return True
@@ -316,11 +291,11 @@ class InventoryManager:
             return None
 
     def get_state(self) -> Dict:
-        """Get the full inventory state for persistence"""
+        """Get the full inventory state, ready to store as JSON"""
         return {
             "grid": self.grid.items.copy(),
             "storage": self.storage.items.copy(),
-            "containers": self.grid.containers.copy(),
+            "containers": to_json(self.grid.containers),
         }
 
     def restore_state(self, state: Dict) -> None:
@@ -333,4 +308,6 @@ class InventoryManager:
         self.grid.items = [_with_pair_position(i) for i in state.get("grid", [])]
         self.storage.items = list(state.get("storage", []))
         if "containers" in state:
-            self.grid.containers = [_with_pair_position(c) for c in state["containers"]]
+            self.grid.containers = [
+                Container.model_validate(c) for c in state["containers"]
+            ]

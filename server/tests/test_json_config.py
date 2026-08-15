@@ -5,7 +5,7 @@ Test that JSON configuration system works correctly
 
 from battle_engine import BattleSimulator, PlacedItem
 from config_loader import ConfigLoader
-from server_containers import ServerContainer
+from containers import Container
 
 
 def test_json_config():
@@ -30,22 +30,9 @@ def test_json_config():
     loader.get_item("firewall")  # Verify it exists
     health_check = loader.get_item("health_check")
 
-    # Get containers from JSON config
-    standard_vm = loader.get_container("standard_vm")
-    edge_node = loader.get_container("edge_node")
-
-    # Create container instances
-    p1_container = ServerContainer(
-        spec=standard_vm,
-        position=(0, 0),
-        uid="p1_vm",
-    )
-
-    p2_container = ServerContainer(
-        spec=edge_node,
-        position=(4, 0),
-        uid="p2_edge",
-    )
+    # Create container instances from JSON config
+    p1_container = Container.of("standard_vm", (0, 0), "p1_vm")
+    p2_container = Container.of("edge_node", (4, 0), "p2_edge")
 
     # Create items
     p1_items = [

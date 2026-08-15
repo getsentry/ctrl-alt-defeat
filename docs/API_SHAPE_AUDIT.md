@@ -85,7 +85,11 @@ lookup and prints a warning.
 
 ---
 
-## 4. The container object: 5 forms
+## 4. The container object: 5 forms — **fixed**
+
+One `Container` model now carries `id`, `slug`, `type`, `position` and
+`shape`. Forms A, B, C and E are gone, and D6 below with them. Form D is
+the shop item, which the `Item` work covers.
 
 | # | Form | Fields | Where |
 |---|---|---|---|
@@ -137,7 +141,6 @@ branches are therefore dead code.
 | D3 | `item_activated` never fires. The server emits no `"activate"` or `"a"` action. | `BattleEventProcessor.gd:148` | No activation animation. |
 | D4 | Buff and debuff names are always empty. Client reads `details["buff"]`; server writes `details["buff_name"]`. Also the `"bf"` and `"df"` branches never match. | `BattleEventProcessor.gd:180` vs `battle_engine.py:651` | Buff labels are blank. |
 | D5 | Grid items lose `shape` and `category` after a reload. | `main.py:366` | Multi-square items render as 1×1. |
-| D6 | Bought containers are always 2×2. | `main.py:1496` | Wrong grid space. |
 | D7 | `/health` calls `db_manager.execute`, which does not exist. | `main.py:211` | Production reports `degraded`. |
 | D8 | `/session/{player_id}` needs no auth token. | `main.py:323` | Any player can read any session. |
 

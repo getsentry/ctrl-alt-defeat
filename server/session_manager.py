@@ -10,6 +10,7 @@ from typing import List, Optional
 
 from sqlalchemy import delete, select, text
 
+from containers import starting_containers, to_json
 from database import db_manager  # noqa: F401
 from models import BattleHistory, GameSession, User
 from schemas import GameSession as GameSessionPydantic
@@ -104,34 +105,6 @@ class SessionManager:
         # Create session with starting values
         from main import generate_shop_items
 
-        # Initialize server containers (3 standard VMs)
-        server_containers = [
-            {
-                "id": "container_a",
-                "slug": "standard_vm",
-                "type": "standard_vm",
-                "position": [2, 3],
-                "width": 2,
-                "height": 2,
-            },
-            {
-                "id": "container_b",
-                "slug": "standard_vm",
-                "type": "standard_vm",
-                "position": [4, 3],
-                "width": 2,
-                "height": 2,
-            },
-            {
-                "id": "container_c",
-                "slug": "standard_vm",
-                "type": "standard_vm",
-                "position": [6, 3],
-                "width": 2,
-                "height": 2,
-            },
-        ]
-
         session = GameSessionPydantic(
             player_id=player_id,  # This is now the actual user.id
             player_name=user.display_name or user.username,
@@ -146,7 +119,7 @@ class SessionManager:
             game_seed=game_seed,
             shop_refresh_count=0,
             inventory_storage=[],
-            server_containers=server_containers,
+            server_containers=starting_containers(),
         )
 
         # Save to database
@@ -170,7 +143,7 @@ class SessionManager:
                 existing_session.losses = session.losses
                 existing_session.inventory_grid = session.inventory_grid
                 existing_session.inventory_storage = session.inventory_storage
-                existing_session.server_containers = session.server_containers
+                existing_session.server_containers = to_json(session.server_containers)
                 existing_session.current_shop = session.current_shop
                 existing_session.last_battle_result = session.last_battle_result
                 existing_session.game_seed = game_seed
@@ -190,7 +163,7 @@ class SessionManager:
                     losses=session.losses,
                     inventory_grid=session.inventory_grid,
                     inventory_storage=session.inventory_storage,
-                    server_containers=session.server_containers,
+                    server_containers=to_json(session.server_containers),
                     current_shop=[
                         item.model_dump() if item else None
                         for item in session.current_shop
@@ -239,7 +212,7 @@ class SessionManager:
                 db_session.losses = session.losses
                 db_session.inventory_grid = session.inventory_grid
                 db_session.inventory_storage = session.inventory_storage
-                db_session.server_containers = session.server_containers
+                db_session.server_containers = to_json(session.server_containers)
                 db_session.current_shop = [
                     item.model_dump() if item else None for item in session.current_shop
                 ]

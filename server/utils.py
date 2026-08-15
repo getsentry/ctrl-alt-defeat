@@ -3,7 +3,7 @@ Utility functions for the server
 """
 
 from datetime import datetime, timezone
-from typing import Sequence, Tuple
+from typing import List, Sequence, Tuple
 
 
 def utc_now():
@@ -17,6 +17,10 @@ def utc_now():
 # check the length. JSON has no tuple, so it travels the wire as [x, y] and
 # Pydantic converts in both directions.
 Position = Tuple[int, int]
+
+# The squares an item or container occupies, as offsets from its anchor. Shapes
+# are not always rectangular, so this cannot be reduced to a width and a height.
+Shape = List[Position]
 
 
 def to_position(value: Sequence[int]) -> Position:

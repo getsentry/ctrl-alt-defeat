@@ -24,13 +24,13 @@ func before_each():
 		"player_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
+				{"id": "srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 			]
 		},
 		"enemy_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "srv2", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "width": 2, "height": 2}
+				{"id": "srv2", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 			]
 		}
 	}

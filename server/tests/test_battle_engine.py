@@ -7,10 +7,9 @@ from copy import deepcopy
 import pytest
 
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem, Player
-from config_loader import config_loader
+from containers import Container
 from grid_system import SHAPES
 from item_effects import ItemSpec, PassiveTrigger, TimerTrigger
-from server_containers import ServerContainer
 
 # A battle with no seed uses the clock, which makes every run a different
 # battle. Tests pin it so a failure is reproducible.
@@ -19,21 +18,11 @@ TEST_SEED = 424242
 
 def get_test_containers():
     """Get standard test containers for both players"""
-    vm = config_loader.get_container("standard_vm")
-
     # Player 1 gets a standard VM at (0,0)
-    p1_container = ServerContainer(
-        spec=vm,
-        position=(0, 0),
-        uid="p1_test_rack",
-    )
+    p1_container = Container.of("standard_vm", (0, 0), "p1_test_rack")
 
     # Player 2 gets a standard VM at (4,0)
-    p2_container = ServerContainer(
-        spec=vm,
-        position=(4, 0),
-        uid="p2_test_rack",
-    )
+    p2_container = Container.of("standard_vm", (4, 0), "p2_test_rack")
 
     return [p1_container], [p2_container]
 

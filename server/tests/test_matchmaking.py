@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from containers import Container
 from matchmaking import MatchmakingService
 from models import PlayerBuild
 
@@ -29,9 +30,7 @@ class TestMatchmakingService:
         test_inventory = [
             {"id": "item1", "item_type": "null_blade", "position": [2, 3]}
         ]
-        test_containers = [
-            {"id": "container_a", "type": "standard_vm", "position": [2, 3]}
-        ]
+        test_containers = [Container.of("standard_vm", (2, 3), "container_a")]
 
         # Save build
         build = await service.save_player_build(
@@ -58,7 +57,7 @@ class TestMatchmakingService:
         assert build.win_percent == 60.0  # 3/5 * 100
         assert build.battle_won is True
         assert build.inventory_snapshot == test_inventory
-        assert build.server_containers == test_containers
+        assert build.server_containers == [c.model_dump() for c in test_containers]
 
         # Verify database operations were called
         mock_db.add.assert_called_once()

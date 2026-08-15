@@ -91,8 +91,7 @@ class ServerContainer extends Resource:
 	var type: String = ""
 	var slug: String = ""
 	var position: Position
-	var width: int = 2
-	var height: int = 2
+	var shape: Array = []  # Array of [x, y] offsets
 
 	func _init(data: Dictionary):
 		# Server sends all these fields
@@ -102,8 +101,7 @@ class ServerContainer extends Resource:
 			print("slug missing from ServerContainer", data)
 		slug = data["slug"]
 		position = Position.new(data["position"])
-		width = data.get("width", 2)
-		height = data.get("height", 2)
+		shape = data["shape"]
 
 	func to_dict() -> Dictionary:
 		return {
@@ -111,9 +109,15 @@ class ServerContainer extends Resource:
 			"type": type,
 			"slug": slug,
 			"position": position.to_array() if position else null,
-			"width": width,
-			"height": height
+			"shape": shape
 		}
+
+	# The grid squares this container covers.
+	func covered_squares() -> Array:
+		var squares: Array = []
+		for offset in shape:
+			squares.append(Vector2i(position.x + int(offset[0]), position.y + int(offset[1])))
+		return squares
 
 # Inventory state (used in battles and saved state)
 class InventoryState extends Resource:
@@ -279,20 +283,13 @@ class ShopRefreshResponse extends Resource:
 class PurchaseResponse extends Resource:
 	var purchased_item: Dictionary = {}  # ShopItem
 	var gold: int = 0
-	var server_containers: Array = []  # Array of server containers (when purchasing a container)
+	var server_containers: Array = []  # The containers the player owns after the purchase
 
 	func _init(data: Dictionary):
-		# Required fields per server schema
 		# Server doesn't send success - HTTP 200 means success
 		purchased_item = data["purchased_item"]
 		gold = data["gold"]
-		# Optional field for container purchases
-		# TODO: This is probably unnecessary, just expect it to always be there.
-		# TODO: Probably fetch the whole session down instead and refresh from that
-		if data.has("server_containers") and data["server_containers"] != null:
-			server_containers = data["server_containers"]
-		else:
-			server_containers = []  # Initialize as empty array if not provided
+		server_containers = data["server_containers"]
 
 # Battle response - matches server BattleResponse schema
 class BattleResponse extends Resource:

@@ -11,22 +11,19 @@ func test_server_starting_containers_format():
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [1, 3],
-			"width": 2,
-			"height": 2
+			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
 		},
 		{
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [3, 3],
-			"width": 2,
-			"height": 2
+			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
 		},
 		{
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [5, 3],
-			"width": 2,
-			"height": 2
+			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
 		}
 	]
 
@@ -40,8 +37,7 @@ func test_server_starting_containers_format():
 	assert_eq(first.type, "standard_vm", "Should be standard_vm type")
 	assert_eq(first.position[0], 1, "Should be at x=1")
 	assert_eq(first.position[1], 3, "Should be at y=3")
-	assert_eq(first.width, 2, "Should be 2 wide")
-	assert_eq(first.height, 2, "Should be 2 high")
+	assert_eq(first.shape, [[0, 0], [1, 0], [0, 1], [1, 1]], "Should cover a 2x2 block")
 
 func test_container_position_handling():
 	# A position is an [x, y] array.
@@ -72,9 +68,9 @@ func test_multiple_containers_side_by_side():
 	GameStateManager.start_new_game()
 
 	var containers = [
-		{"type": "standard_vm", "position": [1, 3], "width": 2, "height": 2},
-		{"type": "standard_vm", "position": [3, 3], "width": 2, "height": 2},
-		{"type": "standard_vm", "position": [5, 3], "width": 2, "height": 2}
+		{"type": "standard_vm", "position": [1, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
+		{"type": "standard_vm", "position": [3, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
+		{"type": "standard_vm", "position": [5, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 	]
 
 	GameStateManager.server_containers = containers
@@ -84,16 +80,13 @@ func test_multiple_containers_side_by_side():
 	for container in GameStateManager.server_containers:
 		var x = container.position[0]
 		var y = container.position[1]
-		var w = container.width
-		var h = container.height
 
 		# Check all squares this container occupies
-		for dy in range(h):
-			for dx in range(w):
-				var pos = Vector2i(x + dx, y + dy)
-				assert_false(pos in positions_used,
-					"Position %s should not be occupied by multiple containers" % pos)
-				positions_used.append(pos)
+		for offset in container.shape:
+			var pos = Vector2i(x + offset[0], y + offset[1])
+			assert_false(pos in positions_used,
+				"Position %s should not be occupied by multiple containers" % pos)
+			positions_used.append(pos)
 
 	# Should occupy 12 total squares (3 containers * 2x2 each)
 	assert_eq(positions_used.size(), 12, "3 2x2 containers should occupy 12 squares")

@@ -100,10 +100,13 @@ class TestGameSessionInventory:
         for container in containers:
             assert "id" in container
             assert "position" in container
-            assert "width" in container
-            assert "height" in container
-            assert container["width"] == 2
-            assert container["height"] == 2
+            # A standard VM covers a 2x2 block
+            assert sorted(tuple(s) for s in container["shape"]) == [
+                (0, 0),
+                (0, 1),
+                (1, 0),
+                (1, 1),
+            ]
 
     def test_session_model_creation(self, auth_client):
         """Test creating GameSession model directly"""

@@ -24,6 +24,7 @@ import auth_endpoints
 from auth import TokenData, get_current_user
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
 from config_loader import config_loader
+from containers import Container, starting_containers
 
 # Import session management and schemas
 from database import db_manager
@@ -44,9 +45,11 @@ from schemas import (
     MoveItemResponse,
 )
 from schemas import PlacedItem as PlacedItemSchema
-from schemas import PurchaseRequest, PurchaseResponse, SellRequest, SellResponse
-from schemas import ServerContainer as ServerContainerSchema
 from schemas import (
+    PurchaseRequest,
+    PurchaseResponse,
+    SellRequest,
+    SellResponse,
     SessionUpdate,
     ShopItem,
     ShopRefreshRequest,
@@ -55,7 +58,6 @@ from schemas import (
     StartSessionRequest,
     StartSessionResponse,
 )
-from server_containers import ServerContainer
 from session_manager import SessionManager
 from utils import Position, to_position, utc_now
 
@@ -260,23 +262,9 @@ async def start_session(
         request.seed if request.seed is not None else random.randint(0, 2**31 - 1)
     )
 
-    # Initialize inventory with 3 server containers
+    # Initialize inventory with the starting server containers
     inventory_manager = InventoryManager()
     inventory_state = inventory_manager.get_state()
-
-    # Convert container positions to list format for consistency
-    server_containers = []
-    for container in inventory_state["containers"]:
-        server_containers.append(
-            {
-                "id": container["id"],
-                "slug": container["slug"],
-                "type": container["type"],
-                "position": to_position(container["position"]),
-                "width": container["width"],
-                "height": container["height"],
-            }
-        )
 
     # Create session using SessionManager with player name from request
     session = await session_manager.create_session(
@@ -287,7 +275,7 @@ async def start_session(
     session.current_shop = generate_shop_items(1, seed=game_seed)
     session.inventory_grid = inventory_state["grid"]
     session.inventory_storage = inventory_state["storage"]
-    session.server_containers = server_containers
+    session.server_containers = starting_containers()
 
     # Save the updated session
     await session_manager.update_session(session)
@@ -761,19 +749,10 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                 opponent_items.append(placed_item)
 
         # Create containers from opponent data
-        p2_containers = []
-        for container_data in opponent_data["containers"]:
-            # HACK: Not sure what type is, we need to fix this to just use the spec id
-            container_type = container_data.get("type", "standard_vm")
-            if config_loader.has_container(container_type):
-                container_info = config_loader.get_container(container_type)
-                p2_containers.append(
-                    ServerContainer(
-                        spec=container_info,
-                        position=tuple(container_data["position"]),
-                        uid=container_data["id"],
-                    )
-                )
+        p2_containers = [
+            Container.model_validate(container_data)
+            for container_data in opponent_data["containers"]
+        ]
     else:
         # Fall back to AI opponent
         opponent_items, p2_containers = generate_ai_opponent(
@@ -804,20 +783,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
         )
 
     # Get containers from session for player
-    p1_containers = []
-    for container_data in session.server_containers:
-        # Create ServerContainer from session data
-        # HACK: Not sure what type is, we need to fix this to just use the spec id
-        container_type = container_data.get("type", "standard_vm")
-        if config_loader.has_container(container_type):
-            container_info = config_loader.get_container(container_type)
-            p1_containers.append(
-                ServerContainer(
-                    spec=container_info,
-                    position=tuple(container_data["position"]),
-                    uid=container_data["id"],
-                )
-            )
+    p1_containers = session.server_containers
 
     # Add performance monitoring for battle simulation
     with sentry_sdk.start_span(op="battle.simulation") as span:
@@ -1052,33 +1018,13 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             "description": description,
         }
 
-    def serialize_container(container: ServerContainer) -> Dict:
-        """Convert ServerContainer to client-compatible format"""
-        # XXX: We shouldn't be using max x and y here, makes no sense. We should return positions
-        width = max(s[0] for s in container.spec.shape.squares) + 1
-        height = max(s[1] for s in container.spec.shape.squares) + 1
-
-        return {
-            "id": container.uid,
-            "slug": container.spec.slug,
-            "type": (
-                container.spec.id if hasattr(container.spec, "id") else "standard_vm"
-            ),
-            "position": container.position,
-            "width": width,
-            "height": height,
-        }
-
     # Add serialized inventories to battle result for client display
     if "player1_items" in battle_result:
         player_inventory = {
             "items": [
                 serialize_placed_item(item) for item in battle_result["player1_items"]
             ],
-            "servers": [
-                serialize_container(c)
-                for c in battle_result.get("player1_containers", [])
-            ],
+            "servers": battle_result.get("player1_containers", []),
         }
         battle_result["player_inventory"] = player_inventory
 
@@ -1087,10 +1033,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             "items": [
                 serialize_placed_item(item) for item in battle_result["player2_items"]
             ],
-            "servers": [
-                serialize_container(c)
-                for c in battle_result.get("player2_containers", [])
-            ],
+            "servers": battle_result.get("player2_containers", []),
         }
         battle_result["enemy_inventory"] = enemy_inventory
 
@@ -1128,17 +1071,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             )
             for item in battle_result.get("player_inventory", {}).get("items", [])
         ],
-        servers=[
-            ServerContainerSchema(
-                id=server["id"],
-                slug=server["slug"],
-                type=server["type"],
-                position=server["position"],
-                width=server["width"],
-                height=server["height"],
-            )
-            for server in battle_result.get("player_inventory", {}).get("servers", [])
-        ],
+        servers=battle_result.get("player_inventory", {}).get("servers", []),
     )
 
     enemy_inventory = InventoryData(
@@ -1166,17 +1099,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             )
             for item in battle_result.get("enemy_inventory", {}).get("items", [])
         ],
-        servers=[
-            ServerContainerSchema(
-                id=server["id"],
-                slug=server["slug"],
-                type=server["type"],
-                position=server["position"],
-                width=server["width"],
-                height=server["height"],
-            )
-            for server in battle_result.get("enemy_inventory", {}).get("servers", [])
-        ],
+        servers=battle_result.get("enemy_inventory", {}).get("servers", []),
     )
 
     # Create BattleResult model
@@ -1218,7 +1141,6 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
     """Get predefined ghost player inventory for each round"""
 
     containers = generate_ai_containers()
-    vm_info = config_loader.get_container("standard_vm")
 
     # Define ghost player inventories for rounds 1-10
     ghost_inventories = {
@@ -1299,13 +1221,7 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
         ],
     }
     if round_number >= 5:
-        containers.append(
-            ServerContainer(
-                spec=vm_info,
-                position=(6, 3),
-                uid="ai_vm3",
-            ),
-        )
+        containers.append(Container.of("standard_vm", (6, 3), "ai_vm4"))
 
     # Get inventory for this round (cap at 10)
     round_items = ghost_inventories.get(min(round_number, 10), ghost_inventories[1])
@@ -1356,7 +1272,7 @@ def get_test_ai_items(difficulty: int, round_number: int) -> List[PlacedItem]:
 
 def generate_ai_opponent(
     round_number: int, test_difficulty: Optional[int] = None
-) -> Tuple[List[PlacedItem], List[ServerContainer]]:
+) -> Tuple[List[PlacedItem], List[Container]]:
     """
     Generate AI opponent items and containers based on round
     Returns: (items, containers) tuple
@@ -1372,30 +1288,14 @@ def generate_ai_opponent(
     return items, containers
 
 
-def generate_ai_containers() -> List[ServerContainer]:
+def generate_ai_containers() -> List[Container]:
     """Generate server containers that cover all AI item positions"""
-    vm_info = config_loader.get_container("standard_vm")
-
-    # Create containers that properly cover the AI item positions
     # Standard VMs are 2x2, so adjust positions to avoid gaps
-    containers = [
-        ServerContainer(
-            spec=vm_info,
-            position=(0, 3),  # Covers (0,3), (1,3), (0,4), (1,4)
-            uid="ai_vm1",
-        ),
-        ServerContainer(
-            spec=vm_info,
-            position=(2, 3),  # Covers (2,3), (3,3), (2,4), (3,4)
-            uid="ai_vm2",
-        ),
-        ServerContainer(
-            spec=vm_info,
-            position=(4, 3),  # Covers (4,3), (5,3), (4,4), (5,4)
-            uid="ai_vm3",
-        ),
+    return [
+        Container.of("standard_vm", (0, 3), "ai_vm1"),  # Covers (0,3)-(1,4)
+        Container.of("standard_vm", (2, 3), "ai_vm2"),  # Covers (2,3)-(3,4)
+        Container.of("standard_vm", (4, 3), "ai_vm3"),  # Covers (4,3)-(5,4)
     ]
-    return containers
 
 
 def place_item_in_inventory(
@@ -1490,33 +1390,14 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
             )
 
         # Add the container to the session's server_containers
-        # Use list format for position to match session initialization
-        new_container = {
-            "id": item.id,
-            "slug": item.slug,
-            "type": item.item_type,
-            "position": request.target_position,
-            "width": item.width if hasattr(item, "width") else 2,
-            "height": item.height if hasattr(item, "height") else 2,
-        }
+        new_container = Container.of(
+            item.item_type, request.target_position, container_id=item.id
+        )
 
-        # Check if position overlaps with existing containers
+        # Check if the container overlaps any the player already owns
+        new_squares = set(new_container.covered_squares())
         for existing in session.server_containers:
-            ex_x, ex_y = existing["position"]
-            ex_w = existing.get("width", 2)
-            ex_h = existing.get("height", 2)
-
-            new_x, new_y = new_container["position"]
-            new_w = new_container["width"]
-            new_h = new_container["height"]
-
-            # Check for overlap
-            if not (
-                new_x + new_w <= ex_x
-                or ex_x + ex_w <= new_x
-                or new_y + new_h <= ex_y
-                or ex_y + ex_h <= new_y
-            ):
+            if new_squares & set(existing.covered_squares()):
                 raise HTTPException(
                     status_code=400, detail="Container overlaps with existing container"
                 )
@@ -1590,7 +1471,11 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
     await session_manager.update_session(session)
 
     # Item is already a ShopItem model
-    return PurchaseResponse(purchased_item=item, gold=session.gold)
+    return PurchaseResponse(
+        purchased_item=item,
+        gold=session.gold,
+        server_containers=session.server_containers,
+    )
 
 
 @app.post("/sell/item", response_model=SellResponse)

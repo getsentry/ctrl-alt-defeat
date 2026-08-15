@@ -12,11 +12,11 @@ func before_each():
 	# The 3 starting containers the server sends with a new session.
 	GameStateManager.save_inventory_state([], [
 		{"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
-			"position": [2, 3], "width": 2, "height": 2},
+			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
 		{"id": "container_b", "slug": "standard_vm", "type": "standard_vm",
-			"position": [4, 3], "width": 2, "height": 2},
+			"position": [4, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
 		{"id": "container_c", "slug": "standard_vm", "type": "standard_vm",
-			"position": [6, 3], "width": 2, "height": 2}
+			"position": [6, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 	])
 
 	ui = ui_scene.instantiate()
@@ -226,7 +226,7 @@ func test_inventory_state_save_and_load():
 		}],
 		"servers": [{
 			"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
-			"position": [2, 3], "width": 2, "height": 2
+			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
 		}]
 	})
 
@@ -240,7 +240,7 @@ func test_inventory_state_save_and_load():
 
 func test_grid_coordinate_validation():
 	# Placement is validated by _can_place_container().
-	var container = {"width": 2, "height": 2}
+	var container = {"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 
 	assert_false(ui._can_place_container(container, Vector2i(-1, 0)),
 		"Should reject negative X coordinate")
@@ -256,16 +256,57 @@ func test_grid_coordinate_validation():
 	assert_true(ui._can_place_container(container, Vector2i(0, 0)),
 		"Should accept an empty in-bounds position")
 
-func test_pattern_creation():
-	# Test pattern creation from dimensions
-	var pattern = ui._create_pattern_from_size(2, 3)
-	assert_eq(pattern.size(), 3, "Pattern should have 3 rows")
-	assert_eq(pattern[0].size(), 2, "Each row should have 2 columns")
+func test_a_container_covers_only_the_squares_of_its_shape():
+	# An L shape covers 3 of the 4 squares in its 2x2 bounding box.
+	var l_shape = {"shape": [[0, 0], [0, 1], [1, 1]]}
 
-	# Check all values are 1
-	for row in pattern:
-		for cell in row:
-			assert_eq(cell, 1, "Pattern cells should be 1")
+	var squares = ui._container_squares(l_shape, Vector2i(2, 3))
+
+	assert_eq(squares, [Vector2i(2, 3), Vector2i(2, 4), Vector2i(3, 4)],
+		"Only the squares of the shape are covered")
+
+func test_the_preview_draws_one_cell_per_covered_square():
+	# An L shape covers 3 squares, so the preview has 3 cells, not a 2x2 block.
+	var l_shape = {"shape": [[0, 0], [0, 1], [1, 1]]}
+
+	ui._show_container_preview(l_shape, Vector2i(0, 0))
+
+	assert_not_null(ui.container_preview, "The preview should be built")
+	assert_eq(ui.container_preview.get_child_count(), 3,
+		"One cell per covered square")
+
+func test_the_preview_cells_sit_on_the_covered_squares():
+	var l_shape = {"shape": [[0, 0], [0, 1], [1, 1]]}
+
+	ui._show_container_preview(l_shape, Vector2i(0, 0))
+
+	var drawn_at = []
+	for cell in ui.container_preview.get_children():
+		drawn_at.append(cell.position)
+
+	var expected = []
+	for square in ui._container_squares(l_shape, Vector2i(0, 0)):
+		expected.append(ui.inventory_grid.grid_to_pixel(square))
+
+	assert_eq(drawn_at, expected, "Each cell sits on its own grid square")
+
+func test_the_preview_is_hidden_where_a_container_cannot_go():
+	# (2, 3) is already covered by container_a.
+	var vm = {"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+
+	ui._show_container_preview(vm, Vector2i(2, 3))
+
+	assert_null(ui.container_preview, "No preview on an occupied square")
+
+func test_the_preview_replaces_the_previous_one():
+	var vm = {"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+
+	ui._show_container_preview(vm, Vector2i(0, 0))
+	var first = ui.container_preview
+	ui._show_container_preview(vm, Vector2i(0, 5))
+
+	assert_ne(ui.container_preview, first, "A new preview replaces the old one")
+	assert_eq(ui.container_preview.get_child_count(), 4, "The new preview is drawn")
 
 func test_color_for_categories():
 	# Test category color assignment
