@@ -3,7 +3,7 @@ Test shield blocking mechanics
 Shields should have 30% chance to block attacks and can have additional effects
 """
 
-from battle_engine import BattleSimulator, PlacedItem
+from battle_engine import BattleItem, BattleSimulator
 from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
@@ -23,7 +23,7 @@ class TestShieldBlocking:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a shield with 100% block chance for testing
-        shield = PlacedItem(
+        shield = BattleItem(
             spec=ItemSpec(
                 id="test_shield",
                 name="Test Shield",
@@ -49,7 +49,7 @@ class TestShieldBlocking:
         )
 
         # Create an attacker
-        attacker = PlacedItem(
+        attacker = BattleItem(
             spec=ItemSpec(
                 id="attacker",
                 name="Attacker",
@@ -102,7 +102,7 @@ class TestShieldBlocking:
         shields = []
         for i in range(10):
             shields.append(
-                PlacedItem(
+                BattleItem(
                     spec=ItemSpec(
                         id=f"shield_{i}",
                         name=f"Shield {i}",
@@ -127,7 +127,7 @@ class TestShieldBlocking:
             )
 
         # Create a fast weak attacker to trigger many shield checks
-        attacker = PlacedItem(
+        attacker = BattleItem(
             spec=ItemSpec(
                 id="fast_attacker",
                 name="Fast Attacker",
@@ -189,7 +189,7 @@ class TestShieldBlocking:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a shield that steals CPU
-        shield = PlacedItem(
+        shield = BattleItem(
             spec=ItemSpec(
                 id="cpu_steal_shield",
                 name="CPU Steal Shield",
@@ -215,7 +215,7 @@ class TestShieldBlocking:
         )
 
         # Create an attacker with high CPU cost
-        attacker = PlacedItem(
+        attacker = BattleItem(
             spec=ItemSpec(
                 id="expensive_attacker",
                 name="Expensive Attacker",
@@ -261,7 +261,7 @@ class TestShieldBlocking:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create two shields, both with 100% block chance
-        shield1 = PlacedItem(
+        shield1 = BattleItem(
             spec=ItemSpec(
                 id="shield1",
                 name="Shield 1",
@@ -280,7 +280,7 @@ class TestShieldBlocking:
             uid="shield1",
         )
 
-        shield2 = PlacedItem(
+        shield2 = BattleItem(
             spec=ItemSpec(
                 id="shield2",
                 name="Shield 2",
@@ -300,7 +300,7 @@ class TestShieldBlocking:
         )
 
         # Attacker deals 20 damage
-        attacker = PlacedItem(
+        attacker = BattleItem(
             spec=ItemSpec(
                 id="attacker",
                 name="Attacker",
@@ -350,7 +350,7 @@ class TestShieldBlocking:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a shield
-        shield = PlacedItem(
+        shield = BattleItem(
             spec=ItemSpec(
                 id="shield",
                 name="Shield",

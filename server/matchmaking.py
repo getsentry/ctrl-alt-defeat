@@ -9,9 +9,9 @@ from typing import Dict, List, Optional
 from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from containers import Container, to_json
+from containers import Container
 from models import MatchmakingHistory, PlayerBuild
-from utils import utc_now
+from utils import dump_all, utc_now
 
 
 class MatchmakingService:
@@ -75,7 +75,7 @@ class MatchmakingService:
             win_percent=win_percent,
             current_lives=lives,
             inventory_snapshot=inventory_grid,
-            server_containers=to_json(server_containers),
+            server_containers=dump_all(server_containers),
             total_item_value=total_item_value,
             total_item_count=total_item_count,
             battle_won=battle_won,

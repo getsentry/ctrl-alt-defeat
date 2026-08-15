@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import pytest
 
-from battle_engine import BattleSimulator, PlacedItem
+from battle_engine import BattleItem, BattleSimulator
 from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
@@ -21,7 +21,7 @@ class TestDeterministicBattles:
     def test_same_seed_same_result(self):
         """Test that same seed produces identical battle results"""
         # Create test items
-        attacker = PlacedItem(
+        attacker = BattleItem(
             spec=ItemSpec(
                 id="attacker",
                 name="Test Attacker",
@@ -49,7 +49,7 @@ class TestDeterministicBattles:
             uid="attacker1",
         )
 
-        defender = PlacedItem(
+        defender = BattleItem(
             spec=ItemSpec(
                 id="defender",
                 name="Test Defender",
@@ -116,7 +116,7 @@ class TestDeterministicBattles:
     def test_different_seed_different_result(self):
         """Test that different seeds produce different results (probabilistically)"""
         # Create test items with RNG-heavy mechanics
-        rng_item = PlacedItem(
+        rng_item = BattleItem(
             spec=ItemSpec(
                 id="rng_heavy",
                 name="RNG Heavy",
@@ -175,7 +175,7 @@ class TestDeterministicBattles:
     def test_shield_blocking_deterministic(self):
         """Test that shield blocking is deterministic with same seed"""
         # Shield with 50% block chance
-        shield = PlacedItem(
+        shield = BattleItem(
             spec=ItemSpec(
                 id="shield",
                 name="Test Shield",
@@ -199,7 +199,7 @@ class TestDeterministicBattles:
         )
 
         # Fast attacker to trigger many shield checks
-        attacker = PlacedItem(
+        attacker = BattleItem(
             spec=ItemSpec(
                 id="attacker",
                 name="Fast Attacker",
@@ -254,7 +254,7 @@ class TestDeterministicBattles:
         """Test complex battle with multiple items and effects is deterministic"""
         # Create a complex battle setup
         p1_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="item1",
                     name="Item 1",
@@ -281,7 +281,7 @@ class TestDeterministicBattles:
                 position=(0, 0),
                 uid="p1_1",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="item2",
                     name="Item 2",
@@ -304,7 +304,7 @@ class TestDeterministicBattles:
         ]
 
         p2_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="item3",
                     name="Item 3",
@@ -331,7 +331,7 @@ class TestDeterministicBattles:
                 position=(4, 0),  # P2 container position
                 uid="p2_1",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="item4",
                     name="Item 4",
@@ -396,7 +396,7 @@ class TestDeterministicBattles:
     def test_seed_in_result(self):
         """Test that seed is included in battle result"""
         sim = BattleSimulator(seed=77777)
-        item = PlacedItem(
+        item = BattleItem(
             spec=ItemSpec(
                 id="test",
                 name="Test",

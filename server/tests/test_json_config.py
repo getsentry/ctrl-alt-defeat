@@ -3,7 +3,7 @@
 Test that JSON configuration system works correctly
 """
 
-from battle_engine import BattleSimulator, PlacedItem
+from battle_engine import BattleItem, BattleSimulator
 from config_loader import ConfigLoader
 from containers import Container
 
@@ -36,15 +36,15 @@ def test_json_config():
 
     # Create items
     p1_items = [
-        PlacedItem(spec=null_blade, position=(0, 0), uid="p1_null"),
-        PlacedItem(spec=core_dumper, position=(1, 0), uid="p1_leak"),
+        BattleItem(spec=null_blade, position=(0, 0), uid="p1_null"),
+        BattleItem(spec=core_dumper, position=(1, 0), uid="p1_leak"),
     ]
 
     # Place items that fit within the edge_node container (2x1 horizontal at 4,0)
     # Use smaller items that fit in the available squares
     p2_items = [
-        PlacedItem(spec=core_dumper, position=(4, 0), uid="p2_null2"),  # 1x1 item
-        PlacedItem(spec=health_check, position=(5, 0), uid="p2_health"),  # 1x1 item
+        BattleItem(spec=core_dumper, position=(4, 0), uid="p2_null2"),  # 1x1 item
+        BattleItem(spec=health_check, position=(5, 0), uid="p2_health"),  # 1x1 item
     ]
 
     # Run battle

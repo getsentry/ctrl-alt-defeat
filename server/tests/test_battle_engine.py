@@ -6,7 +6,7 @@ from copy import deepcopy
 
 import pytest
 
-from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem, Player
+from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator, Player
 from containers import Container
 from grid_system import SHAPES
 from item_effects import ItemSpec, PassiveTrigger, TimerTrigger
@@ -141,7 +141,7 @@ class TestGameDesignCompliance:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a weak item that won't end battle quickly
-        item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
+        item = BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
         item.spec.min_damage = 1
         item.spec.max_damage = 1
 
@@ -188,16 +188,16 @@ class TestGameDesignCompliance:
         """Test Section 4.2: Orthogonal adjacency only"""
         sim = BattleSimulator(seed=TEST_SEED)
 
-        center = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 1))
+        center = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 1))
 
         # Orthogonally adjacent
-        top = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 0))
-        right = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(2, 1))
-        bottom = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 2))
-        left = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 1))
+        top = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 0))
+        right = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(2, 1))
+        bottom = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 2))
+        left = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 1))
 
         # Diagonally adjacent (should NOT count)
-        diagonal = PlacedItem(
+        diagonal = BattleItem(
             spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 0)
         )
 
@@ -213,11 +213,11 @@ class TestGameDesignCompliance:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Test Bug Swarm: 3+ problems = +20% damage
-        problem1 = PlacedItem(
+        problem1 = BattleItem(
             spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(1, 1)
         )
-        problem2 = PlacedItem(spec=ITEM_CATALOG["core_dumper"], position=(1, 0))
-        problem3 = PlacedItem(spec=ITEM_CATALOG["deadlock_twins"], position=(0, 1))
+        problem2 = BattleItem(spec=ITEM_CATALOG["core_dumper"], position=(1, 0))
+        problem3 = BattleItem(spec=ITEM_CATALOG["deadlock_twins"], position=(0, 1))
 
         items = [problem1, problem2, problem3]
         sim._calculate_adjacency(items)
@@ -230,7 +230,7 @@ class TestGameDesignCompliance:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create simple test items
-        item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
+        item = BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
 
         p1_containers, p2_containers = get_test_containers()
         result = sim.simulate_battle(
@@ -260,7 +260,7 @@ class TestGameDesignCompliance:
         # Create item with high CPU cost
         from item_effects import AttackEffect
 
-        item = PlacedItem(
+        item = BattleItem(
             spec=ItemSpec(
                 id="test",
                 name="Test",
@@ -297,7 +297,7 @@ class TestGameDesignCompliance:
         sim = BattleSimulator(seed=TEST_SEED)
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
 
-        quantum = PlacedItem(
+        quantum = BattleItem(
             spec=deepcopy(ITEM_CATALOG["quantum_processor"]), position=(0, 0)
         )
         sim._apply_infrastructure([quantum], player)
@@ -313,7 +313,7 @@ class TestGameDesignCompliance:
         sim = BattleSimulator(seed=TEST_SEED)
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
 
-        autoscaler = PlacedItem(
+        autoscaler = BattleItem(
             spec=deepcopy(ITEM_CATALOG["auto_scaler"]), position=(0, 0)
         )
         sim._apply_infrastructure([autoscaler], player)
@@ -327,12 +327,12 @@ class TestGameDesignCompliance:
         BattleSimulator(seed=TEST_SEED)
 
         # Memory Leak stacking
-        ml = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 0))
+        ml = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 0))
         assert ml.memory_leak_stacks == 0
         # After activation would increment
 
         # Error Monitoring is now an on-attacked shield, not battle start block
-        em = PlacedItem(
+        em = BattleItem(
             spec=deepcopy(ITEM_CATALOG["error_monitoring"]), position=(0, 0)
         )
         Player(id=1, quota=25, max_quota=25, cpu=10.0)
@@ -353,9 +353,9 @@ class TestBattleSimulation:
         """Test a simple 1v1 battle"""
         sim = BattleSimulator(seed=TEST_SEED)
 
-        item1 = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
+        item1 = BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
 
-        item2 = PlacedItem(spec=ITEM_CATALOG["core_dumper"], position=(4, 0))
+        item2 = BattleItem(spec=ITEM_CATALOG["core_dumper"], position=(4, 0))
 
         p1_containers, p2_containers = get_test_containers()
         result = sim.simulate_battle(
@@ -380,7 +380,7 @@ class TestBattleSimulation:
         # Create overpowered item
         from item_effects import AttackEffect
 
-        op_item = PlacedItem(
+        op_item = BattleItem(
             spec=ItemSpec(
                 id="op",
                 name="OP",
@@ -441,9 +441,9 @@ class TestBattleSimulation:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Load Balancer Module gives adjacent items +15% speed
-        lb = PlacedItem(spec=ITEM_CATALOG["load_balancer_module"], position=(0, 0))
+        lb = BattleItem(spec=ITEM_CATALOG["load_balancer_module"], position=(0, 0))
 
-        np = PlacedItem(
+        np = BattleItem(
             spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(1, 0)  # Adjacent
         )
 

@@ -5,7 +5,7 @@ A container covers the squares of its shape, offset from its position. Shapes
 are not always rectangular, so a container has no width and no height.
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -59,11 +59,6 @@ def starting_containers() -> List[Container]:
         Container.of(container_type, position, container_id)
         for container_id, container_type, position in STARTING_CONTAINERS
     ]
-
-
-def to_json(containers: List[Container]) -> List[Dict]:
-    """Containers as plain dicts, for the database and the matchmaking snapshot"""
-    return [container.model_dump() for container in containers]
 
 
 class PlacementValidator:

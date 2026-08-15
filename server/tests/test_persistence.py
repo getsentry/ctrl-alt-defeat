@@ -8,7 +8,7 @@ import pytest
 import pytest_asyncio
 
 from database import db_manager
-from schemas import ShopItem
+from items import Item
 from session_manager import SessionManager
 
 
@@ -153,33 +153,15 @@ class TestSessionPersistence:
 
         # Add inventory items
         session.inventory_grid = [
-            {"id": "item1", "item_type": "null_blade", "position": [0, 0], "cost": 3},
-            {"id": "item2", "item_type": "firewall", "position": [1, 0], "cost": 5},
+            Item.of("null_blade", "item1").placed_at((0, 0)),
+            Item.of("firewall", "item2").placed_at((1, 0)),
         ]
 
-        session.inventory_storage = [
-            {"id": "item3", "item_type": "core_dumper", "cost": 4}
-        ]
+        session.inventory_storage = [Item.of("core_dumper", "item3")]
 
         session.current_shop = [
-            ShopItem(
-                id="shop1",
-                item_type="buffer_overflow",
-                name="Buffer Overflow",
-                category="attack",
-                rarity="rare",
-                cost=8,
-                shape=[[0, 0]],
-            ),
-            ShopItem(
-                id="shop2",
-                item_type="deadlock_twins",
-                name="Race Condition",
-                category="attack",
-                rarity="uncommon",
-                cost=6,
-                shape=[[0, 0]],
-            ),
+            Item.of("deadlock_twins", "shop1"),
+            Item.of("core_dumper", "shop2"),
         ]
 
         # Update
@@ -188,7 +170,7 @@ class TestSessionPersistence:
         # Retrieve and verify
         retrieved = await manager.get_session(session.player_id)
         assert len(retrieved.inventory_grid) == 2
-        assert retrieved.inventory_grid[0]["item_type"] == "null_blade"
+        assert retrieved.inventory_grid[0].item_type == "null_blade"
         assert len(retrieved.inventory_storage) == 1
         assert len(retrieved.current_shop) == 2
 

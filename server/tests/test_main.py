@@ -518,8 +518,6 @@ class TestMoveItemAPI:
         result = response.json()
 
         # Success is indicated by 200 status
-        assert result["item"]["id"] == item_uid
-        assert result["item"]["position"] == [4, 3]
 
         # Verify item is at new position in inventory
         found = False
@@ -565,9 +563,10 @@ class TestMoveItemAPI:
         result = response.json()
 
         # Success is indicated by 200 status
-        assert result["item"]["position"] is None  # No position in storage
         assert len(result["inventory_storage"]) == 1
         assert len(result["inventory_grid"]) == 0
+        # An item in the chest has no position field at all
+        assert "position" not in result["inventory_storage"][0]
 
     def test_move_item_storage_to_grid(self, auth_client):
         """Test moving an item from storage to grid"""
@@ -605,9 +604,9 @@ class TestMoveItemAPI:
         result = response.json()
 
         # Success is indicated by 200 status
-        assert result["item"]["position"] == [2, 3]
         assert len(result["inventory_storage"]) == 0
         assert len(result["inventory_grid"]) == 1
+        assert result["inventory_grid"][0]["position"] == [2, 3]
 
     def test_move_item_storage_to_storage_noop(self, auth_client):
         """Test that moving from storage to storage is a no-op"""
@@ -644,8 +643,8 @@ class TestMoveItemAPI:
         assert response.status_code == 200  # Should succeed as no-op
         result = response.json()
         # Success is indicated by 200 status
-        assert result["item"]["position"] is None  # Still in storage
         assert len(result["inventory_storage"]) == 1
+        assert "position" not in result["inventory_storage"][0]
 
     def test_move_item_to_invalid_position(self, auth_client):
         """Test moving an item to a position not on a container"""
@@ -787,7 +786,7 @@ class TestMoveItemAPI:
         result = response.json()
 
         # Success is indicated by 200 status
-        assert result["item"]["position"] == [2, 3]
+        assert result["inventory_grid"][0]["position"] == [2, 3]
 
     def test_move_item_preserves_metadata(self, auth_client):
         """Test that moving an item preserves all its metadata"""
@@ -882,7 +881,7 @@ class TestMoveItemAPI:
         # Should succeed if item fits, or fail with appropriate message
         if response.status_code == 200:
             result = response.json()
-            assert result["item"]["position"] == [6, 3]
+            assert result["inventory_grid"][0]["position"] == [6, 3]
         else:
             # If it doesn't fit, should get appropriate error
             assert response.status_code == 400
@@ -1002,10 +1001,10 @@ class TestPositionContractOverHttp:
         assert_positions_are_canonical(response.json(), "POST /move/item")
 
         # The moved item must report the position we asked for
-        assert response.json()["item"]["position"] == SECOND_SQUARE
+        assert response.json()["inventory_grid"][0]["position"] == SECOND_SQUARE
 
     def test_move_to_storage_reports_null_position(self, auth_client):
-        """Storage has no position, so the field is null rather than [0, 0]."""
+        """An item in the chest carries no position at all."""
         start = auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
@@ -1023,7 +1022,7 @@ class TestPositionContractOverHttp:
             },
         )
         assert response.status_code == 200, response.text
-        assert response.json()["item"]["position"] is None
+        assert "position" not in response.json()["inventory_storage"][0]
         assert_positions_are_canonical(response.json(), "POST /move/item (storage)")
 
     def test_battle_positions_are_canonical(self, auth_client):

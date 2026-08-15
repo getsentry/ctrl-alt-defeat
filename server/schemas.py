@@ -7,28 +7,8 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 
 from containers import Container
+from items import Item, PlacedItem
 from utils import Position
-
-
-class ShopItem(BaseModel):
-    """Item available in the shop"""
-
-    id: str = Field(description="Unique item instance ID")
-    item_type: str = Field(description="Item type identifier")
-    name: str = Field(description="Display name")
-    category: str = Field(description="Item category")
-    slug: str = Field(default="", description="URL-friendly identifier")
-    rarity: str = Field(description="Item rarity tier")
-    cost: int = Field(description="Gold cost to purchase")
-    is_container: bool = Field(
-        default=False, description="Whether this is a server container"
-    )
-    min_damage: int = Field(default=0, description="Minimum damage")
-    max_damage: int = Field(default=0, description="Maximum damage")
-    cooldown: float = Field(default=0, description="Cooldown in seconds")
-    cpu_cost: int = Field(default=0, description="CPU cost")
-    special_effect: str = Field(default="", description="Special effect")
-    shape: List[List[int]] = Field(description="Item shape as list of [x, y] offsets")
 
 
 class GameSession(BaseModel):
@@ -42,14 +22,12 @@ class GameSession(BaseModel):
     wins: int = 0
     losses: int = 0
     last_battle_result: Optional[Dict]
-    current_shop: List[
-        Optional[ShopItem]
-    ] = []  # Shop can have empty slots after purchases
+    current_shop: List[Optional[Item]] = []  # Shop can have empty slots after purchases
     game_seed: int  # Master seed for all RNG in this game session (always set)
     shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
     # Inventory fields
-    inventory_grid: List[Dict] = []  # Items placed on the grid
-    inventory_storage: List[Dict] = []  # Items in storage (not used in battle)
+    inventory_grid: List[PlacedItem] = []  # Items on the grid, each with a position
+    inventory_storage: List[Item] = []  # Items in the chest, not used in battle
     server_containers: List[Container] = []  # Containers the player owns
 
 
@@ -114,35 +92,11 @@ class StartSessionResponse(BaseModel):
 class PurchaseResponse(BaseModel):
     """Response after purchasing an item"""
 
-    purchased_item: ShopItem = Field(description="The item that was purchased")
+    purchased_item: Item = Field(description="The item that was purchased")
     gold: int = Field(description="Remaining gold after purchase")
     server_containers: List[Container] = Field(
         description="The containers the player owns after the purchase"
     )
-
-
-class PlacedItem(BaseModel):
-    """Item placed on the grid during battle"""
-
-    id: str = Field(description="Unique item instance ID")
-    slug: str = Field(description="Unique item slug")
-    item_type: str = Field(description="Item type identifier")
-    name: str = Field(description="Display name")
-    position: Position = Field(description="[x, y] grid position")
-    category: str = Field(description="Item category")
-    shape: List[List[int]] = Field(description="Shape as list of [x, y] offsets")
-    # Additional fields for tooltips
-    rarity: str = Field(default="", description="Item rarity tier")
-    cost: int = Field(default=0, description="Item value/cost")
-    min_damage: int = Field(default=0, description="Minimum damage dealt")
-    max_damage: int = Field(default=0, description="Maximum damage dealt")
-    min_heal: int = Field(default=0, description="Minimum healing amount")
-    max_heal: int = Field(default=0, description="Maximum healing amount")
-    cooldown: float = Field(default=0.0, description="Activation cooldown in seconds")
-    cpu_cost: int = Field(default=0, description="CPU cost to activate")
-    special_effect: str = Field(default="", description="Special effect description")
-    block_amount: int = Field(default=0, description="Damage blocked")
-    description: str = Field(default="", description="Item description")
 
 
 class InventoryData(BaseModel):
@@ -197,9 +151,7 @@ class BattleResponse(BaseModel):
 
     battle_result: BattleResult = Field(description="Complete battle details")
     session_update: SessionUpdate = Field(description="Session state changes")
-    new_shop: List[Optional[ShopItem]] = Field(
-        description="New shop items for next round"
-    )
+    new_shop: List[Optional[Item]] = Field(description="New shop items for next round")
     battle_id: str = Field(description="Unique battle identifier")
 
 
@@ -216,7 +168,7 @@ class HealthResponse(BaseModel):
 class ShopRefreshResponse(BaseModel):
     """Response after refreshing shop"""
 
-    shop: List[Optional[ShopItem]] = Field(description="New shop items")
+    shop: List[Optional[Item]] = Field(description="New shop items")
     gold: int = Field(description="Remaining gold after refresh cost")
 
 
@@ -225,26 +177,14 @@ class SellResponse(BaseModel):
 
     gold_gained: int = Field(description="Gold gained from sale")
     gold: int = Field(description="Total gold after sale")
-    sold_item: Dict[str, Any] = Field(description="The item that was sold")
-
-
-class ItemInfo(BaseModel):
-    """Basic item information for move responses"""
-
-    id: str = Field(description="Item unique ID")
-    item_type: str = Field(description="Item type identifier")
-    position: Optional[Position] = Field(
-        description="Current position or None if in storage"
-    )
-    name: Optional[str] = Field(description="Item name")
+    sold_item: Item = Field(description="The item that was sold")
 
 
 class MoveItemResponse(BaseModel):
     """Response after moving an item"""
 
-    inventory_grid: List[Dict[str, Any]] = Field(description="Updated grid inventory")
-    inventory_storage: List[Dict[str, Any]] = Field(description="Updated storage")
-    item: ItemInfo = Field(description="Moved item information")
+    inventory_grid: List[PlacedItem] = Field(description="Updated grid inventory")
+    inventory_storage: List[Item] = Field(description="Updated chest contents")
 
 
 class LeaderboardEntry(BaseModel):

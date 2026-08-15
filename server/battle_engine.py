@@ -56,11 +56,11 @@ ACTION_CODES = {
     "DEATH": "x",  # Player defeated
 }
 
-# PlacedItem will reference the new ItemSpec from item_effects.py
+# BattleItem will reference the new ItemSpec from item_effects.py
 
 
 @dataclass
-class PlacedItem:
+class BattleItem:
     """An item placed in the server room/rack (Section 4)"""
 
     spec: ItemSpec
@@ -127,8 +127,8 @@ class BattleResult(TypedDict):
     player2_quota: int  # Player 2's remaining quota
     actions: List[BattleAction]  # Battle action timeline with BattleAction objects
     seed: int  # RNG seed used for the battle
-    player1_items: List[PlacedItem]  # Player 1's loadout
-    player2_items: List[PlacedItem]  # Player 2's loadout
+    player1_items: List[BattleItem]  # Player 1's loadout
+    player2_items: List[BattleItem]  # Player 2's loadout
     player1_containers: List[Container]  # Player 1's containers
     player2_containers: List[Container]  # Player 2's containers
 
@@ -156,8 +156,8 @@ class BattleSimulator:
 
     def simulate_battle(
         self,
-        p1_items: List[PlacedItem],
-        p2_items: List[PlacedItem],
+        p1_items: List[BattleItem],
+        p2_items: List[BattleItem],
         round_number: int = 1,
         p1_containers: Optional[List[Container]] = None,
         p2_containers: Optional[List[Container]] = None,
@@ -325,7 +325,7 @@ class BattleSimulator:
         else:
             return 150
 
-    def _calculate_adjacency(self, items: List[PlacedItem]):
+    def _calculate_adjacency(self, items: List[BattleItem]):
         """Calculate adjacency bonuses (Section 4.2 & 4.3)"""
         for item in items:
             if item.uid in self.consumed_items:
@@ -377,8 +377,8 @@ class BattleSimulator:
                 item.cpu_discount = max(1, item.cpu_discount + 1)
 
     def _get_adjacent_items(
-        self, item: PlacedItem, all_items: List[PlacedItem]
-    ) -> List[PlacedItem]:
+        self, item: BattleItem, all_items: List[BattleItem]
+    ) -> List[BattleItem]:
         """Get orthogonally adjacent items supporting multi-square items"""
         adjacent = []
 
@@ -409,7 +409,7 @@ class BattleSimulator:
 
         return adjacent
 
-    def _apply_infrastructure(self, items: List[PlacedItem], player: Player):
+    def _apply_infrastructure(self, items: List[BattleItem], player: Player):
         """Apply infrastructure passive effects (Section 2.3)"""
         for item in items:
             if item.spec.category != "infrastructure":
@@ -426,7 +426,7 @@ class BattleSimulator:
                                 player.cpu_regen += effect.value
 
     def _setup_item_handlers(
-        self, items: List[PlacedItem], owner: Player, enemy: Player
+        self, items: List[BattleItem], owner: Player, enemy: Player
     ):
         """Set up event handlers for items based on their triggers"""
         for item in items:
@@ -544,7 +544,7 @@ class BattleSimulator:
     def _schedule_timer_trigger(
         self,
         trigger: TimerTrigger,
-        item: PlacedItem,
+        item: BattleItem,
         owner: Player,
         enemy: Player,
         trigger_uid: str,
@@ -592,7 +592,7 @@ class BattleSimulator:
         self.event_manager.schedule_timer(next_time, trigger_uid, activate)
 
     def _apply_effects(
-        self, effects: List[Effect], item: PlacedItem, owner: Player, enemy: Player
+        self, effects: List[Effect], item: BattleItem, owner: Player, enemy: Player
     ):
         """Apply a list of effects from a trigger"""
         for effect in effects:
@@ -692,7 +692,7 @@ class BattleSimulator:
                 self._consume_item(item, owner)
 
     def _process_attack(
-        self, attack_data: dict, item: PlacedItem, owner: Player, enemy: Player
+        self, attack_data: dict, item: BattleItem, owner: Player, enemy: Player
     ):
         """Process an attack effect"""
         # Check accuracy
@@ -851,7 +851,7 @@ class BattleSimulator:
                     )
                 )
 
-    def _consume_item(self, item: PlacedItem, owner: Player):
+    def _consume_item(self, item: BattleItem, owner: Player):
         """Consume an item (remove it from battle)"""
         if item.uid in self.consumed_items:
             return  # Already consumed
@@ -883,7 +883,7 @@ class BattleSimulator:
             self.event_manager.cancel_timer(trigger_uid)
 
     def _validate_placement_with_containers(
-        self, items: List[PlacedItem], containers: Optional[List[Container]] = None
+        self, items: List[BattleItem], containers: Optional[List[Container]] = None
     ) -> bool:
         """
         Validate that items are properly placed:

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Union
 
 # Avoid circular imports
 if TYPE_CHECKING:
-    from battle_engine import PlacedItem, Player
+    from battle_engine import BattleItem, Player
 
 
 class EventType(Enum):
@@ -52,9 +52,9 @@ class Event:
 
     event_type: EventType
     source: Optional[
-        Union["Player", "PlacedItem"]
+        Union["Player", "BattleItem"]
     ]  # The entity that triggered the event
-    target: Optional[Union["Player", "PlacedItem"]]  # The entity affected by the event
+    target: Optional[Union["Player", "BattleItem"]]  # The entity affected by the event
     data: EventData = field(default_factory=EventData)  # Type-safe event data
     timestamp: float = 0.0
 

@@ -22,13 +22,13 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 
 import auth_endpoints
 from auth import TokenData, get_current_user
-from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
-from config_loader import config_loader
+from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
 from containers import Container, starting_containers
 
 # Import session management and schemas
 from database import db_manager
 from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
+from items import Item, PlacedItem
 from matchmaking import MatchmakingService
 from schemas import (
     BattleHistoryEntry,
@@ -38,20 +38,15 @@ from schemas import (
     GameSession,
     HealthResponse,
     InventoryData,
-    ItemInfo,
     LeaderboardEntry,
     LeaderboardResponse,
     MoveItemRequest,
     MoveItemResponse,
-)
-from schemas import PlacedItem as PlacedItemSchema
-from schemas import (
     PurchaseRequest,
     PurchaseResponse,
     SellRequest,
     SellResponse,
     SessionUpdate,
-    ShopItem,
     ShopRefreshRequest,
     ShopRefreshResponse,
     SimpleBattleRequest,
@@ -59,7 +54,7 @@ from schemas import (
     StartSessionResponse,
 )
 from session_manager import SessionManager
-from utils import Position, to_position, utc_now
+from utils import Position, utc_now
 
 # Test mode allows seeds and special AI configurations for testing
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
@@ -280,32 +275,10 @@ async def start_session(
     # Save the updated session
     await session_manager.update_session(session)
 
-    # Enhance inventory items with full details for tooltips
-    enhanced_session = GameSession(
-        player_id=session.player_id,
-        player_name=session.player_name,
-        round=session.round,
-        gold=session.gold,
-        lives=session.lives,
-        wins=session.wins,
-        losses=session.losses,
-        last_battle_result=session.last_battle_result,
-        current_shop=session.current_shop,
-        game_seed=session.game_seed,
-        shop_refresh_count=session.shop_refresh_count,
-        inventory_grid=[
-            serialize_inventory_item(item) for item in session.inventory_grid
-        ],
-        inventory_storage=[
-            serialize_inventory_item(item) for item in session.inventory_storage
-        ],
-        server_containers=session.server_containers,
-    )
-
     return StartSessionResponse(
         player_id=player_id,
         player_name=session.player_name,
-        session=enhanced_session,
+        session=session,
     )
 
 
@@ -352,107 +325,6 @@ async def refresh_shop(request: ShopRefreshRequest) -> ShopRefreshResponse:
     return ShopRefreshResponse(shop=session.current_shop, gold=session.gold)
 
 
-def serialize_inventory_item(item_data: Dict) -> Dict:
-    """Serialize an inventory item with full details for tooltips"""
-    # If we have the item spec, add full details
-    item_type = item_data.get("item_type", "")
-    if item_type in ITEM_CATALOG:
-        item_spec = ITEM_CATALOG[item_type]
-
-        # Extract damage, heal, cooldown, and CPU info from triggers
-        min_damage = 0
-        max_damage = 0
-        min_heal = 0
-        max_heal = 0
-        cooldown = 0.0
-        cpu_cost = 0
-        special_effect = ""
-        block_amount = 0
-
-        # Look through triggers for effects
-        if hasattr(item_spec, "triggers") and item_spec.triggers:
-            for trigger in item_spec.triggers:
-                # Get cooldown and CPU cost from timer triggers
-                if hasattr(trigger, "cooldown"):
-                    cooldown = trigger.cooldown
-                if hasattr(trigger, "cpu_cost"):
-                    cpu_cost = trigger.cpu_cost
-
-                # Look through effects
-                if hasattr(trigger, "effects"):
-                    for effect in trigger.effects:
-                        # Attack effects
-                        if hasattr(effect, "min_damage") and hasattr(
-                            effect, "max_damage"
-                        ):
-                            min_damage = max(min_damage, effect.min_damage)
-                            max_damage = max(max_damage, effect.max_damage)
-                            if hasattr(effect, "special") and effect.special:
-                                special_effect = effect.special
-                        # Heal effects
-                        elif hasattr(effect, "min_heal") and hasattr(
-                            effect, "max_heal"
-                        ):
-                            min_heal = max(min_heal, effect.min_heal)
-                            max_heal = max(max_heal, effect.max_heal)
-                        # Block effects
-                        elif hasattr(effect, "block_amount"):
-                            block_amount = max(block_amount, effect.block_amount)
-
-        # Get rarity and calculate cost
-        rarity = item_spec.rarity if hasattr(item_spec, "rarity") else "common"
-        cost = get_shop_cost(rarity, 1)
-
-        # Build description from effects
-        description = ""
-        if min_damage > 0:
-            description = f"Deals {min_damage}-{max_damage} damage"
-            if cooldown > 0:
-                description += f" every {cooldown}s"
-            if cpu_cost > 0:
-                description += f" (costs {cpu_cost} CPU)"
-        elif min_heal > 0:
-            description = f"Heals {min_heal}-{max_heal} HP"
-            if cooldown > 0:
-                description += f" every {cooldown}s"
-        elif block_amount > 0:
-            description = f"Blocks {block_amount} damage when attacked"
-
-        if special_effect:
-            if description:
-                description += f". Special: {special_effect}"
-            else:
-                description = f"Special: {special_effect}"
-
-        # Add the new fields to the existing data
-        enhanced_item = dict(item_data)
-        enhanced_item.update(
-            {
-                "rarity": rarity,
-                "cost": cost,
-                "min_damage": min_damage,
-                "max_damage": max_damage,
-                "min_heal": min_heal,
-                "max_heal": max_heal,
-                "cooldown": cooldown,
-                "cpu_cost": cpu_cost,
-                "special_effect": special_effect,
-                "block_amount": block_amount,
-                "description": description,
-            }
-        )
-        return enhanced_item
-
-    # Return original if we don't have the spec
-    return item_data
-
-
-def get_shop_cost(rarity: str, tier: int) -> int:
-    """Get cost based on rarity and tier"""
-    base_costs = {"common": 3, "uncommon": 5, "rare": 8, "epic": 12, "legendary": 20}
-    return base_costs.get(rarity, 3) * tier
-
-
 def get_rarity_weights(round_number: int) -> Dict[str, float]:
     """Get rarity weights based on round number"""
     # Rarity table: Common, Rare, Epic, Legendary, Godly
@@ -496,7 +368,7 @@ def pick_rarity(weights: Dict[str, float], rng=random) -> str:
 
 def generate_shop_items(
     round_number: int, seed: Optional[int] = None
-) -> List[Optional[ShopItem]]:
+) -> List[Optional[Item]]:
     """Generate random shop items based on round and rarity"""
     # Use deterministic RNG if seed provided
     if seed is not None:
@@ -567,76 +439,7 @@ def generate_shop_items(
             if len(used_item_types) > 3:
                 used_item_types.pop(0)
 
-            # Check if it's a container
-            is_container = config_loader.has_container(item_type)
-            if is_container:
-                # Get container info and shape
-                shape_data = None
-                if item_spec.shape:
-                    shape_data = [[x, y] for x, y in item_spec.shape.squares]
-
-                item_info = ShopItem(
-                    id=str(uuid.uuid4()),
-                    item_type=item_type,
-                    name=item_spec.name,
-                    category="container",  # Mark as container category for UI
-                    slug=item_spec.slug,
-                    rarity=item_spec.rarity,
-                    cost=get_shop_cost(item_spec.rarity, 1),
-                    is_container=True,
-                    min_damage=0,
-                    max_damage=0,
-                    cooldown=0,
-                    cpu_cost=0,
-                    special_effect="",
-                    shape=shape_data,
-                )
-            else:
-                # Regular item
-                # Extract damage values from attack effects if present
-                min_dmg = 0
-                max_dmg = 0
-                cooldown = 0
-                cpu_cost = 0
-                special = ""
-
-                # Look for timer trigger with attack effect
-                if hasattr(item_spec, "triggers") and item_spec.triggers:
-                    for trigger in item_spec.triggers:
-                        if hasattr(trigger, "cooldown"):
-                            cooldown = trigger.cooldown
-                            cpu_cost = getattr(trigger, "cpu_cost", 0)
-                            if hasattr(trigger, "effects"):
-                                for effect in trigger.effects:
-                                    if hasattr(effect, "min_damage"):
-                                        min_dmg = effect.min_damage
-                                        max_dmg = effect.max_damage
-                                    if hasattr(effect, "special"):
-                                        special = effect.special
-
-                # Get shape data
-                shape_data = None
-                if item_spec.shape:
-                    shape_data = [[x, y] for x, y in item_spec.shape.squares]
-
-                item_info = ShopItem(
-                    id=str(uuid.uuid4()),
-                    item_type=item_type,
-                    name=item_spec.name,
-                    category=item_spec.category,
-                    slug=item_spec.slug,
-                    rarity=item_spec.rarity,
-                    cost=get_shop_cost(item_spec.rarity, 1),
-                    is_container=False,
-                    min_damage=min_dmg,
-                    max_damage=max_dmg,
-                    cooldown=cooldown,
-                    cpu_cost=cpu_cost,
-                    special_effect=special or "",
-                    shape=shape_data,
-                )
-
-            items.append(item_info)
+            items.append(Item.of(item_type, str(uuid.uuid4())))
 
     return items
 
@@ -671,17 +474,17 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             status_code=400, detail="Cannot battle with empty inventory"
         )
 
-    # Convert session inventory to PlacedItems
-    player_items = []
-    for item_data in session.inventory_grid:
-        if item_data["item_type"] in ITEM_CATALOG:
-            item_spec = ITEM_CATALOG[item_data["item_type"]]
-            placed_item = PlacedItem(
-                spec=item_spec,
-                position=tuple(item_data["position"]),
-                uid=item_data["id"],
-            )
-            player_items.append(placed_item)
+    # Hand the grid items to the battle engine
+    player_items = [
+        BattleItem(
+            spec=ITEM_CATALOG[item.item_type],
+            position=item.position,
+            uid=item.id,
+            rotation=item.rotation,
+        )
+        for item in session.inventory_grid
+        if item.item_type in ITEM_CATALOG
+    ]
 
     # Try matchmaking first (unless in test mode with specified AI difficulty)
     opponent_data = None
@@ -738,15 +541,17 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     if opponent_data and opponent_type == "player_ghost":
         # Use the matched player's build
         opponent_items = []
-        for item_data in opponent_data["inventory"]:
-            if item_data["item_type"] in ITEM_CATALOG:
-                item_spec = ITEM_CATALOG[item_data["item_type"]]
-                placed_item = PlacedItem(
-                    spec=item_spec,
-                    position=tuple(item_data["position"]),
-                    uid=item_data["id"],
+        for entry in opponent_data["inventory"]:
+            item = PlacedItem.model_validate(entry)
+            if item.item_type in ITEM_CATALOG:
+                opponent_items.append(
+                    BattleItem(
+                        spec=ITEM_CATALOG[item.item_type],
+                        position=item.position,
+                        uid=item.id,
+                        rotation=item.rotation,
+                    )
                 )
-                opponent_items.append(placed_item)
 
         # Create containers from opponent data
         p2_containers = [
@@ -905,7 +710,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     # Save updated session
     await session_manager.update_session(session)
 
-    # Store battle in history (use clean result without PlacedItem objects)
+    # Store battle in history (use clean result without BattleItem objects)
     await session_manager.save_battle_history(
         player1_id=request.player_id,
         player2_id=None,  # AI opponent for now
@@ -921,118 +726,20 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     victory = session.wins >= 10  # Won round 10
 
     # Serialize player and enemy inventories for client display
-    def serialize_placed_item(item: PlacedItem) -> Dict:
-        """Convert PlacedItem to client-compatible format with full details"""
-        shape_data = [[0, 0]]  # Default 1x1 shape
-        if item.spec.shape:
-            # ItemShape has 'squares' attribute, not 'occupied_squares'
-            if hasattr(item.spec.shape, "squares"):
-                shape_data = [list(s) for s in item.spec.shape.squares]
-            elif hasattr(item.spec.shape, "get_occupied_squares"):
-                shape_data = [list(s) for s in item.spec.shape.get_occupied_squares()]
+    def to_placed(item: BattleItem) -> PlacedItem:
+        """The battle engine's item, as the item the client already knows"""
+        return Item.of(item.spec.id, item.uid).placed_at(item.position, item.rotation)
 
-        # Extract damage, heal, cooldown, and CPU info from triggers
-        min_damage = 0
-        max_damage = 0
-        min_heal = 0
-        max_heal = 0
-        cooldown = 0.0
-        cpu_cost = 0
-        special_effect = ""
-        block_amount = 0
-
-        # Look through triggers for effects
-        if hasattr(item.spec, "triggers") and item.spec.triggers:
-            for trigger in item.spec.triggers:
-                # Get cooldown and CPU cost from timer triggers
-                if hasattr(trigger, "cooldown"):
-                    cooldown = trigger.cooldown
-                if hasattr(trigger, "cpu_cost"):
-                    cpu_cost = trigger.cpu_cost
-
-                # Look through effects
-                if hasattr(trigger, "effects"):
-                    for effect in trigger.effects:
-                        # Attack effects
-                        if hasattr(effect, "min_damage") and hasattr(
-                            effect, "max_damage"
-                        ):
-                            min_damage = max(min_damage, effect.min_damage)
-                            max_damage = max(max_damage, effect.max_damage)
-                            if hasattr(effect, "special") and effect.special:
-                                special_effect = effect.special
-                        # Heal effects
-                        elif hasattr(effect, "min_heal") and hasattr(
-                            effect, "max_heal"
-                        ):
-                            min_heal = max(min_heal, effect.min_heal)
-                            max_heal = max(max_heal, effect.max_heal)
-                        # Block effects
-                        elif hasattr(effect, "block_amount"):
-                            block_amount = max(block_amount, effect.block_amount)
-
-        # Get rarity and calculate cost
-        rarity = item.spec.rarity if hasattr(item.spec, "rarity") else "common"
-        cost = get_shop_cost(rarity, 1)
-
-        # Try to get description from JSON config if available
-        description = ""
-        # For now, we'll build a description from the effects
-        if min_damage > 0:
-            description = f"Deals {min_damage}-{max_damage} damage"
-            if cooldown > 0:
-                description += f" every {cooldown}s"
-            if cpu_cost > 0:
-                description += f" (costs {cpu_cost} CPU)"
-        elif min_heal > 0:
-            description = f"Heals {min_heal}-{max_heal} HP"
-            if cooldown > 0:
-                description += f" every {cooldown}s"
-        elif block_amount > 0:
-            description = f"Blocks {block_amount} damage when attacked"
-
-        if special_effect:
-            if description:
-                description += f". Special: {special_effect}"
-            else:
-                description = f"Special: {special_effect}"
-
-        return {
-            "id": item.uid,
-            "slug": item.spec.slug,
-            "item_type": item.spec.id,
-            "name": item.spec.name,
-            "position": item.position,
-            "category": item.spec.category,
-            "shape": shape_data,
-            "rarity": rarity,
-            "cost": cost,
-            "min_damage": min_damage,
-            "max_damage": max_damage,
-            "min_heal": min_heal,
-            "max_heal": max_heal,
-            "cooldown": cooldown,
-            "cpu_cost": cpu_cost,
-            "special_effect": special_effect,
-            "block_amount": block_amount,
-            "description": description,
-        }
-
-    # Add serialized inventories to battle result for client display
     if "player1_items" in battle_result:
         player_inventory = {
-            "items": [
-                serialize_placed_item(item) for item in battle_result["player1_items"]
-            ],
+            "items": [to_placed(item) for item in battle_result["player1_items"]],
             "servers": battle_result.get("player1_containers", []),
         }
         battle_result["player_inventory"] = player_inventory
 
     if "player2_items" in battle_result:
         enemy_inventory = {
-            "items": [
-                serialize_placed_item(item) for item in battle_result["player2_items"]
-            ],
+            "items": [to_placed(item) for item in battle_result["player2_items"]],
             "servers": battle_result.get("player2_containers", []),
         }
         battle_result["enemy_inventory"] = enemy_inventory
@@ -1045,60 +752,15 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
     battle_actions = battle_result["actions"]
 
-    # Convert inventories to InventoryData models
+    # The items are already the client's type, so the inventories pass straight
+    # through.
     player_inventory = InventoryData(
-        items=[
-            PlacedItemSchema(
-                id=item["id"],
-                slug=item["slug"],
-                item_type=item["item_type"],
-                name=item["name"],
-                position=item["position"],
-                category=item["category"],
-                shape=item["shape"],
-                # Add all the new tooltip fields
-                rarity=item.get("rarity", ""),
-                cost=item.get("cost", 0),
-                min_damage=item.get("min_damage", 0),
-                max_damage=item.get("max_damage", 0),
-                min_heal=item.get("min_heal", 0),
-                max_heal=item.get("max_heal", 0),
-                cooldown=item.get("cooldown", 0.0),
-                cpu_cost=item.get("cpu_cost", 0),
-                special_effect=item.get("special_effect", ""),
-                block_amount=item.get("block_amount", 0),
-                description=item.get("description", ""),
-            )
-            for item in battle_result.get("player_inventory", {}).get("items", [])
-        ],
+        items=battle_result.get("player_inventory", {}).get("items", []),
         servers=battle_result.get("player_inventory", {}).get("servers", []),
     )
 
     enemy_inventory = InventoryData(
-        items=[
-            PlacedItemSchema(
-                id=item["id"],
-                slug=item["slug"],
-                item_type=item["item_type"],
-                name=item["name"],
-                position=item["position"],
-                category=item["category"],
-                shape=item["shape"],
-                # Add all the new tooltip fields
-                rarity=item.get("rarity", ""),
-                cost=item.get("cost", 0),
-                min_damage=item.get("min_damage", 0),
-                max_damage=item.get("max_damage", 0),
-                min_heal=item.get("min_heal", 0),
-                max_heal=item.get("max_heal", 0),
-                cooldown=item.get("cooldown", 0.0),
-                cpu_cost=item.get("cpu_cost", 0),
-                special_effect=item.get("special_effect", ""),
-                block_amount=item.get("block_amount", 0),
-                description=item.get("description", ""),
-            )
-            for item in battle_result.get("enemy_inventory", {}).get("items", [])
-        ],
+        items=battle_result.get("enemy_inventory", {}).get("items", []),
         servers=battle_result.get("enemy_inventory", {}).get("servers", []),
     )
 
@@ -1137,7 +799,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     )
 
 
-def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
+def get_ghost_player_items(round_number: int) -> List[BattleItem]:
     """Get predefined ghost player inventory for each round"""
 
     containers = generate_ai_containers()
@@ -1230,7 +892,7 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
     for item_type, position in round_items:
         if item_type in ITEM_CATALOG:
             item_spec = ITEM_CATALOG[item_type]
-            placed_item = PlacedItem(
+            placed_item = BattleItem(
                 spec=item_spec,
                 position=position,
                 uid=f"ghost_{item_type}_{position[0]}_{position[1]}",
@@ -1240,13 +902,13 @@ def get_ghost_player_items(round_number: int) -> List[PlacedItem]:
     return items, containers
 
 
-def get_test_ai_items(difficulty: int, round_number: int) -> List[PlacedItem]:
+def get_test_ai_items(difficulty: int, round_number: int) -> List[BattleItem]:
     """Get test AI items based on difficulty for testing"""
     if difficulty == 1:
         # Very weak - just one defensive item
         # Place on P2 container at (1,3)
         return [
-            PlacedItem(
+            BattleItem(
                 spec=ITEM_CATALOG["firewall"],
                 position=(1, 3),
                 uid="test_firewall",
@@ -1261,7 +923,7 @@ def get_test_ai_items(difficulty: int, round_number: int) -> List[PlacedItem]:
         for i, item_type in enumerate(item_types):
             if item_type in ITEM_CATALOG:
                 items.append(
-                    PlacedItem(
+                    BattleItem(
                         spec=ITEM_CATALOG[item_type],
                         position=positions[i],
                         uid=f"test_{item_type}_{i}",
@@ -1272,7 +934,7 @@ def get_test_ai_items(difficulty: int, round_number: int) -> List[PlacedItem]:
 
 def generate_ai_opponent(
     round_number: int, test_difficulty: Optional[int] = None
-) -> Tuple[List[PlacedItem], List[Container]]:
+) -> Tuple[List[BattleItem], List[Container]]:
     """
     Generate AI opponent items and containers based on round
     Returns: (items, containers) tuple
@@ -1300,16 +962,16 @@ def generate_ai_containers() -> List[Container]:
 
 def place_item_in_inventory(
     manager: InventoryManager,
-    item: Dict[str, Any],
+    item: Item,
     to_location: Union[str, Position],
 ) -> None:
     """
-    Shared logic for placing an item in inventory (grid or storage)
+    Shared logic for placing an item in inventory (grid or chest)
 
     Args:
         manager: InventoryManager instance
-        item: Item dictionary with id, item_type, etc.
-        to_location: Either "storage" or an (x, y])position
+        item: The item to place
+        to_location: Either "storage" or an (x, y) position
 
     Raises:
         HTTPException: If placement fails with appropriate error message
@@ -1326,8 +988,7 @@ def place_item_in_inventory(
         success = manager.place_item(item, placement=to_location)
         if not success:
             # Determine specific error - need to check with shape
-            item_shape = item.get("shape", [(0, 0)])
-            if not manager.grid.is_valid_placement(to_location, item_shape):
+            if not manager.grid.is_valid_placement(to_location, item.shape):
                 raise HTTPException(
                     status_code=HTTPStatus.BAD_REQUEST,
                     detail=(
@@ -1432,16 +1093,6 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
         }
     )
 
-    # Prepare item for placement
-    inventory_item = {
-        "id": item.id,
-        "item_type": item.item_type,
-        "name": item.name,
-        "slug": item.slug,
-        "cost": item.cost,
-        "rarity": item.rarity,
-    }
-
     # Determine placement location
     if request.to_storage:
         to_location = "storage"
@@ -1454,7 +1105,7 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
         )
 
     # Use shared placement logic
-    place_item_in_inventory(manager, inventory_item, to_location)
+    place_item_in_inventory(manager, item, to_location)
 
     # Update session with new inventory state
     new_state = manager.get_state()
@@ -1504,9 +1155,9 @@ async def sell_item(request: SellRequest) -> SellResponse:
     # Search in both storage and grid for the item
     # First try storage
     for item in session.inventory_storage:
-        if item["id"] == request.item_uid:
+        if item.id == request.item_uid:
             item_found = item
-            item_cost = item.get("cost", 3)
+            item_cost = item.cost
             # Remove from storage using item_id
             removed = manager.remove_item(item_id=request.item_uid)
             if not removed:
@@ -1519,9 +1170,9 @@ async def sell_item(request: SellRequest) -> SellResponse:
     # If not found in storage, try grid
     if not item_found:
         for item in session.inventory_grid:
-            if item["id"] == request.item_uid:
+            if item.id == request.item_uid:
                 item_found = item
-                item_cost = item.get("cost", 3)
+                item_cost = item.cost
                 # Remove from grid using item_id (remove_item handles both storage and grid)
                 removed = manager.remove_item(item_id=request.item_uid)
                 if not removed:
@@ -1578,21 +1229,17 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     item_found = None
     current_location = None
 
-    # Check storage
     for item in session.inventory_storage:
-        if item["id"] == request.item_uid:
+        if item.id == request.item_uid:
             item_found = item
             current_location = "storage"
             break
 
-    # Check grid if not found in storage
     if not item_found:
         for item in session.inventory_grid:
-            if item["id"] == request.item_uid:
+            if item.id == request.item_uid:
                 item_found = item
-                # Get actual position from item
-                if "position" in item:
-                    current_location = to_position(item["position"])
+                current_location = item.position
                 break
 
     if not item_found:
@@ -1604,20 +1251,9 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
 
     # Check for same position move (no-op)
     if current_location == to_loc:
-        # No-op, just return success
         return MoveItemResponse(
-            inventory_grid=[
-                serialize_inventory_item(item) for item in session.inventory_grid
-            ],
-            inventory_storage=[
-                serialize_inventory_item(item) for item in session.inventory_storage
-            ],
-            item=ItemInfo(
-                id=item_found["id"],
-                item_type=item_found.get("item_type", ""),
-                position=to_loc if to_loc != "storage" else None,
-                name=item_found.get("name"),
-            ),
+            inventory_grid=session.inventory_grid,
+            inventory_storage=session.inventory_storage,
         )
 
     # Attempt the move using InventoryManager
@@ -1646,24 +1282,9 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     # Save updated session
     await session_manager.update_session(session)
 
-    # Determine final position for response
-    final_position = None
-    if to_loc != "storage":
-        final_position = to_loc
-
     return MoveItemResponse(
-        inventory_grid=[
-            serialize_inventory_item(item) for item in session.inventory_grid
-        ],
-        inventory_storage=[
-            serialize_inventory_item(item) for item in session.inventory_storage
-        ],
-        item=ItemInfo(
-            id=item_found["id"],
-            item_type=item_found.get("item_type", ""),
-            position=final_position,
-            name=item_found.get("name"),
-        ),
+        inventory_grid=session.inventory_grid,
+        inventory_storage=session.inventory_storage,
     )
 
 

@@ -5,8 +5,10 @@ Manages both the 9x7 grid with server containers and unlimited storage
 
 from typing import Dict, List, Optional, Sequence, Set, Union
 
-from containers import Container, starting_containers, to_json
-from utils import Position, to_position
+from containers import Container, starting_containers
+from grid_system import Rotation
+from items import Item, PlacedItem
+from utils import Position
 
 
 class InvalidPlacementError(Exception):
@@ -31,7 +33,7 @@ class InventoryGrid:
         """Initialize the grid with the starting server containers"""
         self.width = 9
         self.height = 7
-        self.items = []  # List of placed items
+        self.items: List[PlacedItem] = []
         self.containers: List[Container] = starting_containers()
 
     def _container_squares(self) -> Set[Position]:
@@ -68,62 +70,34 @@ class InventoryGrid:
 
         return True
 
-    def get_item_at(self, position: Position) -> Optional[Dict]:
-        """Get the item at a specific position"""
+    def get_item_at(self, position: Position) -> Optional[PlacedItem]:
+        """Get the item covering a specific square"""
         for item in self.items:
-            item_pos = item.get("position")
-            if item_pos is None:
-                continue
-            base_x, base_y = item_pos
-
-            # Check if this is a multi-square item
-            if "shape" in item:
-                # Multi-square item
-                base_x, base_y = item_pos
-                for dx, dy in item["shape"]:
-                    if (base_x + dx, base_y + dy) == position:
-                        return item
-            else:
-                # Single square item
-                if (base_x, base_y) == position:
-                    return item
+            if position in item.covered_squares():
+                return item
         return None
 
-    def _get_occupied_squares(self, item: Dict, position: Position) -> List[Position]:
-        """Get all squares that would be occupied by an item at a position"""
-        if "shape" in item:
-            # Multi-square item
-            base_x, base_y = position
-            return [(base_x + dx, base_y + dy) for dx, dy in item["shape"]]
-        else:
-            # Single square item
-            return [position]
-
-    def place_item(self, item: Dict, position: Position) -> None:
+    def place_item(self, item: Item, position: Position) -> None:
         """Place an item on the grid"""
-        # Check all squares the item would occupy
-        occupied_squares = self._get_occupied_squares(item, position)
+        placed = item.placed_at(position, getattr(item, "rotation", Rotation.NONE))
 
-        # First check if the entire shape fits on containers
-        shape = item.get("shape", [(0, 0)])  # Default to single square
-        if not self.is_valid_placement(position, shape):
+        # The whole shape has to sit on containers
+        if not self.is_valid_placement(position, placed.shape):
             raise InvalidPlacementError(
                 f"Item at position {position} does not fit entirely on server containers"
             )
 
-        # Then check for overlaps with existing items
-        for square in occupied_squares:
+        # And it cannot land on another item
+        for square in placed.covered_squares():
             existing_item = self.get_item_at(square)
             if existing_item is not None:
-                item_id = existing_item.get("id", "unknown")
                 raise InvalidPlacementError(
-                    f"Position {square} is already occupied by item {item_id}"
+                    f"Position {square} is already occupied by item {existing_item.id}"
                 )
 
-        item["position"] = position
-        self.items.append(item)
+        self.items.append(placed)
 
-    def remove_item_at(self, position: Position) -> Dict:
+    def remove_item_at(self, position: Position) -> PlacedItem:
         """Remove and return the item at a position"""
         item = self.get_item_at(position)
         if item is None:
@@ -132,7 +106,7 @@ class InventoryGrid:
         self.items.remove(item)
         return item
 
-    def get_battle_items(self) -> List[Dict]:
+    def get_battle_items(self) -> List[PlacedItem]:
         """Get all items formatted for battle"""
         return self.items.copy()
 
@@ -144,38 +118,30 @@ class InventoryStorage:
 
     def __init__(self):
         """Initialize empty storage"""
-        self.items = []
+        self.items: List[Item] = []
 
-    def add_item(self, item: Dict) -> None:
-        """Add an item to storage"""
-        self.items.append(item)
+    def add_item(self, item: Item) -> None:
+        """Add an item to storage, taking it off the grid if it was on it"""
+        self.items.append(item.stored() if isinstance(item, PlacedItem) else item)
 
-    def remove_item(self, item_id: str) -> Dict:
+    def remove_item(self, item_id: str) -> Item:
         """Remove and return an item by ID"""
         for item in self.items:
-            if item["id"] == item_id:
+            if item.id == item_id:
                 self.items.remove(item)
                 return item
         raise ItemNotFoundError(f"Item with ID {item_id} not found in storage")
 
-    def find_item(self, item_id: str) -> Optional[Dict]:
+    def find_item(self, item_id: str) -> Optional[Item]:
         """Find an item by ID"""
         for item in self.items:
-            if item["id"] == item_id:
+            if item.id == item_id:
                 return item
         return None
 
-    def get_all(self) -> List[Dict]:
+    def get_all(self) -> List[Item]:
         """Get all items in storage"""
         return self.items.copy()
-
-
-def _with_pair_position(entry: Dict) -> Dict:
-    """Copy an entry with its position as an (x, y) pair."""
-    restored = dict(entry)
-    if restored.get("position") is not None:
-        restored["position"] = to_position(restored["position"])
-    return restored
 
 
 class InventoryManager:
@@ -188,7 +154,7 @@ class InventoryManager:
         self.grid = InventoryGrid()
         self.storage = InventoryStorage()
 
-    def place_item(self, item: Dict, placement: Union[str, Position]) -> bool:
+    def place_item(self, item: Item, placement: Union[str, Position]) -> bool:
         """
         Place an item either in storage or on the grid
 
@@ -233,7 +199,7 @@ class InventoryManager:
         else:
             # Remove from grid position
             item = self.grid.remove_item_at(from_location)
-            if item["id"] != item_id:
+            if item.id != item_id:
                 # Wrong item, put it back
                 self.grid.place_item(item, from_location)
                 raise ItemNotFoundError(
@@ -254,13 +220,13 @@ class InventoryManager:
                 self.grid.place_item(item, from_location)
             raise
 
-    def get_battle_inventory(self) -> List[Dict]:
+    def get_battle_inventory(self) -> List[PlacedItem]:
         """Get only grid items for battle (storage items not used)"""
         return self.grid.get_battle_items()
 
     def remove_item(
         self, location: Optional[Position] = None, item_id: Optional[str] = None
-    ) -> Optional[Dict]:
+    ) -> Optional[Item]:
         """
         Remove an item from either grid or storage
 
@@ -283,30 +249,29 @@ class InventoryManager:
 
                 # Try grid
                 for grid_item in self.grid.items:
-                    if grid_item["id"] == item_id:
-                        return self.grid.remove_item_at(grid_item["position"])
+                    if grid_item.id == item_id:
+                        return self.grid.remove_item_at(grid_item.position)
 
             return None
         except (ItemNotFoundError, Exception):
             return None
 
     def get_state(self) -> Dict:
-        """Get the full inventory state, ready to store as JSON"""
+        """The full inventory state, as typed items and containers"""
         return {
             "grid": self.grid.items.copy(),
             "storage": self.storage.items.copy(),
-            "containers": to_json(self.grid.containers),
+            "containers": self.grid.containers.copy(),
         }
 
     def restore_state(self, state: Dict) -> None:
         """Restore inventory from saved state
 
-        Saved state has been through JSON, where a position decodes as a list,
-        so positions are turned back into pairs here. This is the only place
-        untyped state enters the grid.
+        Saved state has been through JSON, so the items arrive as plain data and
+        the models turn them back into items here.
         """
-        self.grid.items = [_with_pair_position(i) for i in state.get("grid", [])]
-        self.storage.items = list(state.get("storage", []))
+        self.grid.items = [PlacedItem.model_validate(i) for i in state.get("grid", [])]
+        self.storage.items = [Item.model_validate(i) for i in state.get("storage", [])]
         if "containers" in state:
             self.grid.containers = [
                 Container.model_validate(c) for c in state["containers"]

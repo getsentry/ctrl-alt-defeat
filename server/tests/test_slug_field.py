@@ -1,8 +1,8 @@
 """Test that slug field is properly included in all item responses"""
 
 from config_loader import config_loader
+from items import Item
 from main import generate_shop_items
-from schemas import ShopItem
 
 
 class TestSlugField:
@@ -31,8 +31,8 @@ class TestSlugField:
 
         for item in shop:
             if item:  # Skip None slots
-                assert isinstance(item, ShopItem), "Should be ShopItem instance"
-                assert hasattr(item, "slug"), "ShopItem should have slug attribute"
+                assert isinstance(item, Item), "Should be an Item instance"
+                assert hasattr(item, "slug"), "An Item should have a slug attribute"
                 assert item.slug != "", f"Item {item.name} has empty slug"
 
     def test_slug_matches_expected_format(self):

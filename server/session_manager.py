@@ -10,11 +10,11 @@ from typing import List, Optional
 
 from sqlalchemy import delete, select, text
 
-from containers import starting_containers, to_json
+from containers import starting_containers
 from database import db_manager  # noqa: F401
 from models import BattleHistory, GameSession, User
 from schemas import GameSession as GameSessionPydantic
-from utils import utc_now
+from utils import dump_all, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -141,10 +141,10 @@ class SessionManager:
                 existing_session.lives = session.lives
                 existing_session.wins = session.wins
                 existing_session.losses = session.losses
-                existing_session.inventory_grid = session.inventory_grid
-                existing_session.inventory_storage = session.inventory_storage
-                existing_session.server_containers = to_json(session.server_containers)
-                existing_session.current_shop = session.current_shop
+                existing_session.inventory_grid = dump_all(session.inventory_grid)
+                existing_session.inventory_storage = dump_all(session.inventory_storage)
+                existing_session.server_containers = dump_all(session.server_containers)
+                existing_session.current_shop = dump_all(session.current_shop)
                 existing_session.last_battle_result = session.last_battle_result
                 existing_session.game_seed = game_seed
                 existing_session.shop_refresh_count = session.shop_refresh_count
@@ -161,13 +161,10 @@ class SessionManager:
                     lives=session.lives,
                     wins=session.wins,
                     losses=session.losses,
-                    inventory_grid=session.inventory_grid,
-                    inventory_storage=session.inventory_storage,
-                    server_containers=to_json(session.server_containers),
-                    current_shop=[
-                        item.model_dump() if item else None
-                        for item in session.current_shop
-                    ],
+                    inventory_grid=dump_all(session.inventory_grid),
+                    inventory_storage=dump_all(session.inventory_storage),
+                    server_containers=dump_all(session.server_containers),
+                    current_shop=dump_all(session.current_shop),
                     last_battle_result=session.last_battle_result,
                     game_seed=game_seed,
                     shop_refresh_count=session.shop_refresh_count,
@@ -210,12 +207,10 @@ class SessionManager:
                 db_session.lives = session.lives
                 db_session.wins = session.wins
                 db_session.losses = session.losses
-                db_session.inventory_grid = session.inventory_grid
-                db_session.inventory_storage = session.inventory_storage
-                db_session.server_containers = to_json(session.server_containers)
-                db_session.current_shop = [
-                    item.model_dump() if item else None for item in session.current_shop
-                ]
+                db_session.inventory_grid = dump_all(session.inventory_grid)
+                db_session.inventory_storage = dump_all(session.inventory_storage)
+                db_session.server_containers = dump_all(session.server_containers)
+                db_session.current_shop = dump_all(session.current_shop)
                 db_session.last_battle_result = session.last_battle_result
                 db_session.shop_refresh_count = session.shop_refresh_count
                 db_session.last_activity = utc_now()

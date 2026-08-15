@@ -3,7 +3,9 @@ Utility functions for the server
 """
 
 from datetime import datetime, timezone
-from typing import List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
+
+from pydantic import BaseModel
 
 
 def utc_now():
@@ -21,6 +23,19 @@ Position = Tuple[int, int]
 # The squares an item or container occupies, as offsets from its anchor. Shapes
 # are not always rectangular, so this cannot be reduced to a width and a height.
 Shape = List[Position]
+
+
+def dump_all(models: Sequence[Optional[BaseModel]]) -> List[Optional[Dict]]:
+    """
+    Models as plain data, for the database and the matchmaking snapshot.
+
+    JSON mode, so an enum travels as its value and a position as [x, y]. The
+    models turn both back on the way in. An empty shop slot is None and stays
+    None.
+    """
+    return [
+        model.model_dump(mode="json") if model is not None else None for model in models
+    ]
 
 
 def to_position(value: Sequence[int]) -> Position:

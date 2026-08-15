@@ -2,7 +2,7 @@
 Test the server container system
 """
 
-from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
+from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
 from containers import Container, PlacementValidator
 from grid_system import SHAPES
 
@@ -172,12 +172,12 @@ class TestContainers:
 
         # Create items placed in the VM
         p1_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ITEM_CATALOG["null_blade"],
                 position=(1, 1),  # Inside VM
                 uid="item1",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ITEM_CATALOG["core_dumper"],
                 position=(2, 1),  # Inside VM
                 uid="item2",
@@ -185,7 +185,7 @@ class TestContainers:
         ]
 
         p2_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ITEM_CATALOG["error_monitoring"],
                 position=(1, 1),  # Would need its own VM
                 uid="item3",

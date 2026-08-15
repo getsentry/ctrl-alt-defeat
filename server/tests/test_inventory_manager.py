@@ -14,7 +14,9 @@ from inventory_manager import (
     InventoryStorage,
     ItemNotFoundError,
 )
+from items import Item
 from tests.test_utils import find_bad_positions
+from utils import dump_all
 
 
 class TestInventoryGrid:
@@ -69,30 +71,31 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # Place an item on container A
-        item1 = {"id": "item1", "item_type": "null_blade", "position": (2, 3)}
+        item1 = Item.of("null_blade", "item1")
         grid.place_item(item1, (2, 3))
 
         assert len(grid.items) == 1
-        assert grid.items[0]["position"] == (2, 3)
-        assert grid.get_item_at((2, 3)) == item1
+        assert grid.items[0].position == (2, 3)
+        assert grid.get_item_at((2, 3)).id == "item1"
 
         # Place another item on container B
-        item2 = {"id": "item2", "item_type": "firewall", "position": (4, 4)}
-        grid.place_item(item2, (4, 4))
+        # firewall is 1x2, so it covers (4, 3) and (4, 4)
+        item2 = Item.of("firewall", "item2")
+        grid.place_item(item2, (4, 3))
 
         assert len(grid.items) == 2
-        assert grid.get_item_at((4, 4)) == item2
+        assert grid.get_item_at((4, 4)).id == "item2"
 
     def test_overlap_detection(self):
         """Test that items cannot overlap"""
         grid = InventoryGrid()
 
         # Place first item
-        item1 = {"id": "item1", "item_type": "null_blade"}
+        item1 = Item.of("null_blade", "item1")
         grid.place_item(item1, (2, 3))
 
         # Try to place overlapping item
-        item2 = {"id": "item2", "item_type": "firewall"}
+        item2 = Item.of("firewall", "item2")
         with pytest.raises(InvalidPlacementError):
             grid.place_item(item2, (2, 3))
 
@@ -101,11 +104,11 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # Place and remove by position
-        item1 = {"id": "item1", "item_type": "null_blade"}
+        item1 = Item.of("null_blade", "item1")
         grid.place_item(item1, (2, 3))
         removed = grid.remove_item_at((2, 3))
 
-        assert removed == item1
+        assert removed.id == item1.id
         assert len(grid.items) == 0
         assert grid.get_item_at((2, 3)) is None
 
@@ -118,9 +121,9 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # Place several items
-        item1 = {"id": "item1", "item_type": "null_blade"}
-        item2 = {"id": "item2", "item_type": "firewall"}
-        item3 = {"id": "item3", "item_type": "core_dumper"}
+        item1 = Item.of("null_blade", "item1")
+        item2 = Item.of("firewall", "item2")
+        item3 = Item.of("core_dumper", "item3")
 
         grid.place_item(item1, (2, 3))
         grid.place_item(item2, (4, 3))
@@ -129,32 +132,28 @@ class TestInventoryGrid:
         battle_items = grid.get_battle_items()
 
         assert len(battle_items) == 3
-        # Check items have positions
+        # Every battle item knows where it is and what it is
         for item in battle_items:
-            assert "position" in item
-            assert "item_type" in item
-            assert "id" in item
+            assert item.position is not None
+            assert item.item_type
+            assert item.id
 
     def test_multi_square_items(self):
         """Test placing items that occupy multiple squares"""
         grid = InventoryGrid()
 
-        # Place a 2x1 item
-        item = {
-            "id": "multi1",
-            "item_type": "denier_of_service",
-            "shape": [(0, 0), (1, 0)],  # 2x1 shape
-        }
+        # null_blade is 1x2, so it covers two squares
+        item = Item.of("null_blade", "multi1")
         grid.place_item(item, (2, 3))
 
         # Both squares should be occupied
-        assert grid.get_item_at((2, 3)) == item
-        assert grid.get_item_at((3, 3)) == item
+        assert grid.get_item_at((2, 3)).id == "multi1"
+        assert grid.get_item_at((2, 4)).id == "multi1"
 
         # Cannot place another item on either square
-        item2 = {"id": "item2", "item_type": "firewall"}
+        item2 = Item.of("firewall", "item2")
         with pytest.raises(InvalidPlacementError):
-            grid.place_item(item2, (3, 3))
+            grid.place_item(item2, (2, 4))
 
 
 class TestInventoryStorage:
@@ -170,8 +169,8 @@ class TestInventoryStorage:
         """Test adding items to storage"""
         storage = InventoryStorage()
 
-        item1 = {"id": "item1", "item_type": "null_blade"}
-        item2 = {"id": "item2", "item_type": "firewall"}
+        item1 = Item.of("null_blade", "item1")
+        item2 = Item.of("firewall", "item2")
 
         storage.add_item(item1)
         storage.add_item(item2)
@@ -184,8 +183,8 @@ class TestInventoryStorage:
         """Test removing items from storage"""
         storage = InventoryStorage()
 
-        item1 = {"id": "item1", "item_type": "null_blade"}
-        item2 = {"id": "item2", "item_type": "firewall"}
+        item1 = Item.of("null_blade", "item1")
+        item2 = Item.of("firewall", "item2")
 
         storage.add_item(item1)
         storage.add_item(item2)
@@ -204,8 +203,8 @@ class TestInventoryStorage:
         """Test finding items in storage"""
         storage = InventoryStorage()
 
-        item1 = {"id": "item1", "item_type": "null_blade"}
-        item2 = {"id": "item2", "item_type": "firewall"}
+        item1 = Item.of("null_blade", "item1")
+        item2 = Item.of("firewall", "item2")
 
         storage.add_item(item1)
         storage.add_item(item2)
@@ -222,7 +221,7 @@ class TestInventoryStorage:
 
         # Add many items
         for i in range(100):
-            item = {"id": f"item{i}", "item_type": "null_blade"}
+            item = Item.of("null_blade", f"item{i}")
             storage.add_item(item)
 
         assert len(storage.items) == 100
@@ -244,18 +243,18 @@ class TestInventoryManager:
         """Test placing item on grid through manager"""
         manager = InventoryManager()
 
-        item = {"id": "item1", "item_type": "null_blade"}
+        item = Item.of("null_blade", "item1")
         success = manager.place_item(item, placement=(2, 3))
 
         assert success is True
         assert len(manager.grid.items) == 1
-        assert manager.grid.get_item_at((2, 3)) == item
+        assert manager.grid.get_item_at((2, 3)).id == item.id
 
     def test_place_item_in_storage(self):
         """Test placing item in storage through manager"""
         manager = InventoryManager()
 
-        item = {"id": "item1", "item_type": "null_blade"}
+        item = Item.of("null_blade", "item1")
         success = manager.place_item(item, placement="storage")
 
         assert success is True
@@ -267,7 +266,7 @@ class TestInventoryManager:
         manager = InventoryManager()
 
         # Add item to storage
-        item = {"id": "item1", "item_type": "null_blade"}
+        item = Item.of("null_blade", "item1")
         manager.place_item(item, placement="storage")
 
         # Move to grid - should not raise exception
@@ -276,14 +275,14 @@ class TestInventoryManager:
         # Verify move succeeded
         assert len(manager.storage.items) == 0
         assert len(manager.grid.items) == 1
-        assert manager.grid.get_item_at((2, 3)) == item
+        assert manager.grid.get_item_at((2, 3)).id == item.id
 
     def test_move_item_from_grid_to_storage(self):
         """Test moving items from grid to storage"""
         manager = InventoryManager()
 
         # Add item to grid
-        item = {"id": "item1", "item_type": "null_blade"}
+        item = Item.of("null_blade", "item1")
         manager.place_item(item, placement=(2, 3))
 
         # Move to storage - should not raise exception
@@ -299,19 +298,19 @@ class TestInventoryManager:
         manager = InventoryManager()
 
         # Add items to both grid and storage
-        grid_item1 = {"id": "grid1", "item_type": "null_blade"}
-        grid_item2 = {"id": "grid2", "item_type": "firewall"}
-        storage_item = {"id": "storage1", "item_type": "core_dumper"}
+        grid_item1 = Item.of("null_blade", "grid1")
+        grid_item2 = Item.of("firewall", "grid2")
+        storage_item = Item.of("core_dumper", "storage1")
 
         manager.place_item(grid_item1, placement=(2, 3))
-        manager.place_item(grid_item2, placement=(4, 4))
+        manager.place_item(grid_item2, placement=(4, 3))
         manager.place_item(storage_item, placement="storage")
 
         battle_items = manager.get_battle_inventory()
 
         # Only grid items should be included
         assert len(battle_items) == 2
-        item_ids = [item["id"] for item in battle_items]
+        item_ids = [item.id for item in battle_items]
         assert "grid1" in item_ids
         assert "grid2" in item_ids
         assert "storage1" not in item_ids
@@ -320,24 +319,24 @@ class TestInventoryManager:
         """Test selling items from grid"""
         manager = InventoryManager()
 
-        item = {"id": "item1", "item_type": "null_blade", "cost": 10}
+        item = Item.of("null_blade", "item1")
         manager.place_item(item, placement=(2, 3))
 
         removed = manager.remove_item(location=(2, 3))
 
-        assert removed == item
+        assert removed.id == item.id
         assert len(manager.grid.items) == 0
 
     def test_sell_item_from_storage(self):
         """Test selling items from storage"""
         manager = InventoryManager()
 
-        item = {"id": "item1", "item_type": "null_blade", "cost": 10}
+        item = Item.of("null_blade", "item1")
         manager.place_item(item, placement="storage")
 
         removed = manager.remove_item(item_id="item1")
 
-        assert removed == item
+        assert removed.id == item.id
         assert len(manager.storage.items) == 0
 
     def test_get_inventory_state(self):
@@ -345,8 +344,8 @@ class TestInventoryManager:
         manager = InventoryManager()
 
         # Add various items
-        grid_item = {"id": "grid1", "item_type": "null_blade"}
-        storage_item = {"id": "storage1", "item_type": "firewall"}
+        grid_item = Item.of("null_blade", "grid1")
+        storage_item = Item.of("firewall", "storage1")
 
         manager.place_item(grid_item, placement=(2, 3))
         manager.place_item(storage_item, placement="storage")
@@ -365,8 +364,8 @@ class TestInventoryManager:
         manager1 = InventoryManager()
 
         # Set up some state
-        grid_item = {"id": "grid1", "item_type": "null_blade"}
-        storage_item = {"id": "storage1", "item_type": "firewall"}
+        grid_item = Item.of("null_blade", "grid1")
+        storage_item = Item.of("firewall", "storage1")
         manager1.place_item(grid_item, placement=(2, 3))
         manager1.place_item(storage_item, placement="storage")
 
@@ -380,8 +379,8 @@ class TestInventoryManager:
         # Verify restoration
         assert len(manager2.grid.items) == 1
         assert len(manager2.storage.items) == 1
-        assert manager2.grid.get_item_at((2, 3))["id"] == "grid1"
-        assert manager2.storage.find_item("storage1")["id"] == "storage1"
+        assert manager2.grid.get_item_at((2, 3)).id == "grid1"
+        assert manager2.storage.find_item("storage1").id == "storage1"
 
 
 if __name__ == "__main__":
@@ -402,17 +401,21 @@ class TestStoredPositions:
 
     def test_placed_item_position_is_a_pair(self):
         grid = InventoryGrid()
-        item = {"id": "item_1", "item_type": "test"}
-        grid.place_item(item, (2, 3))
-        assert item["position"] == (2, 3)
-        assert isinstance(item["position"], tuple)
+        grid.place_item(Item.of("null_blade", "item_1"), (2, 3))
+
+        placed = grid.get_item_at((2, 3))
+        assert placed.position == (2, 3)
+        assert isinstance(placed.position, tuple)
 
     def test_inventory_state_encodes_positions_as_arrays(self):
         """State goes to the database as JSON, where a pair becomes an array."""
         manager = InventoryManager()
-        manager.place_item({"id": "item_1", "item_type": "test"}, (2, 3))
+        manager.place_item(Item.of("null_blade", "item_1"), (2, 3))
 
-        encoded = json.loads(json.dumps(manager.get_state()))
+        state = manager.get_state()
+        encoded = json.loads(
+            json.dumps({key: dump_all(value) for key, value in state.items()})
+        )
 
         assert encoded["grid"][0]["position"] == [2, 3]
         assert not find_bad_positions(
@@ -421,19 +424,19 @@ class TestStoredPositions:
 
     def test_lookups_take_a_pair(self):
         grid = InventoryGrid()
-        grid.place_item({"id": "item_1", "item_type": "test"}, (2, 3))
+        grid.place_item(Item.of("null_blade", "item_1"), (2, 3))
 
-        assert grid.get_item_at((2, 3))["id"] == "item_1"
+        assert grid.get_item_at((2, 3)).id == "item_1"
 
     def test_restoring_from_the_database_converts_positions(self):
         """
         Saved state has been through JSON, so its positions arrive as lists.
-        restore_state is the one place that turns them back into pairs.
+        The models turn them back into pairs on the way in.
         """
         manager = InventoryManager()
         manager.restore_state(
             {
-                "grid": [{"id": "item_1", "item_type": "test", "position": [2, 3]}],
+                "grid": dump_all([Item.of("null_blade", "item_1").placed_at((2, 3))]),
                 "storage": [],
                 "containers": [
                     {
@@ -447,8 +450,8 @@ class TestStoredPositions:
             }
         )
 
-        assert manager.grid.items[0]["position"] == (2, 3)
-        assert isinstance(manager.grid.items[0]["position"], tuple)
+        assert manager.grid.items[0].position == (2, 3)
+        assert isinstance(manager.grid.items[0].position, tuple)
         assert manager.grid.containers[0].position == (2, 3)
         assert manager.grid.containers[0].shape == [(0, 0), (1, 0), (0, 1), (1, 1)]
-        assert manager.grid.get_item_at((2, 3))["id"] == "item_1"
+        assert manager.grid.get_item_at((2, 3)).id == "item_1"

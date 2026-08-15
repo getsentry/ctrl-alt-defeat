@@ -2,7 +2,7 @@
 Test ConsumeEffect and item consumption mechanics
 """
 
-from battle_engine import BattleSimulator, PlacedItem
+from battle_engine import BattleItem, BattleSimulator
 from grid_system import ItemShape
 from item_effects import (
     BattleStartTrigger,
@@ -29,7 +29,7 @@ class TestConsumeEffect:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a health potion
-        potion = PlacedItem(
+        potion = BattleItem(
             spec=ItemSpec(
                 id="test_potion",
                 name="Test Potion",
@@ -54,7 +54,7 @@ class TestConsumeEffect:
         # Create a damage dealer to trigger the potion
         from item_effects import AttackEffect, TimerTrigger
 
-        attacker = PlacedItem(
+        attacker = BattleItem(
             spec=ItemSpec(
                 id="attacker",
                 name="Attacker",
@@ -106,7 +106,7 @@ class TestConsumeEffect:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create item that consumes itself on battle start
-        consumable = PlacedItem(
+        consumable = BattleItem(
             spec=ItemSpec(
                 id="test_consumable",
                 name="Test Consumable",
@@ -158,7 +158,7 @@ class TestConsumeEffect:
         from item_effects import AttackEffect, TimerTrigger
 
         # Create 3 adjacent problem items for Bug Swarm synergy
-        problem1 = PlacedItem(
+        problem1 = BattleItem(
             spec=ItemSpec(
                 id="p1",
                 name="Problem 1",
@@ -181,7 +181,7 @@ class TestConsumeEffect:
             uid="p1",
         )
 
-        problem2 = PlacedItem(
+        problem2 = BattleItem(
             spec=ItemSpec(
                 id="p2",
                 name="Problem 2",
@@ -205,7 +205,7 @@ class TestConsumeEffect:
         )
 
         # This one will consume itself
-        problem3 = PlacedItem(
+        problem3 = BattleItem(
             spec=ItemSpec(
                 id="p3",
                 name="Problem 3",
@@ -264,7 +264,7 @@ class TestConsumeEffect:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create two potions with different thresholds
-        potion1 = PlacedItem(
+        potion1 = BattleItem(
             spec=ItemSpec(
                 id="potion1",
                 name="Potion 1",
@@ -286,7 +286,7 @@ class TestConsumeEffect:
             uid="pot1",
         )
 
-        potion2 = PlacedItem(
+        potion2 = BattleItem(
             spec=ItemSpec(
                 id="potion2",
                 name="Potion 2",
@@ -311,7 +311,7 @@ class TestConsumeEffect:
         # Strong attacker to trigger both potions
         from item_effects import AttackEffect, TimerTrigger
 
-        attacker = PlacedItem(
+        attacker = BattleItem(
             spec=ItemSpec(
                 id="attacker",
                 name="Attacker",

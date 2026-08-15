@@ -2,7 +2,7 @@
 Test timer item behavior with CPU throttling
 """
 
-from battle_engine import BattleSimulator, PlacedItem
+from battle_engine import BattleItem, BattleSimulator
 from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 
@@ -21,7 +21,7 @@ class TestTimerScheduling:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a high CPU cost item with 1 second cooldown
-        item = PlacedItem(
+        item = BattleItem(
             spec=ItemSpec(
                 id="test",
                 name="Test Item",
@@ -71,7 +71,7 @@ class TestTimerScheduling:
 
         # Create item that costs 7 CPU with 1 second cooldown
         # This will sometimes succeed and sometimes fail
-        item = PlacedItem(
+        item = BattleItem(
             spec=ItemSpec(
                 id="test",
                 name="Test Item",
@@ -149,7 +149,7 @@ class TestTimerScheduling:
         sim = BattleSimulator(seed=123)  # Fixed seed for deterministic behavior
 
         # Create two items with different cooldowns (low damage to ensure long battle)
-        item1 = PlacedItem(
+        item1 = BattleItem(
             spec=ItemSpec(
                 id="item1",
                 name="Fast Item",
@@ -172,7 +172,7 @@ class TestTimerScheduling:
             uid="item1",
         )
 
-        item2 = PlacedItem(
+        item2 = BattleItem(
             spec=ItemSpec(
                 id="item2",
                 name="Slow Item",

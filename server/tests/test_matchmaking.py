@@ -9,6 +9,7 @@ import pytest
 from containers import Container
 from matchmaking import MatchmakingService
 from models import PlayerBuild
+from utils import dump_all
 
 
 class TestMatchmakingService:
@@ -57,7 +58,7 @@ class TestMatchmakingService:
         assert build.win_percent == 60.0  # 3/5 * 100
         assert build.battle_won is True
         assert build.inventory_snapshot == test_inventory
-        assert build.server_containers == [c.model_dump() for c in test_containers]
+        assert build.server_containers == dump_all(test_containers)
 
         # Verify database operations were called
         mock_db.add.assert_called_once()

@@ -22,11 +22,10 @@ class TestShopShape:
                 assert isinstance(
                     item.shape, list
                 ), f"Shape should be a list for {item.name}"
-                if len(item.shape) > 0:
-                    assert isinstance(
-                        item.shape[0], list
-                    ), "Shape should be list of [x,y] pairs"
-                    assert len(item.shape[0]) == 2, "Each coordinate should be [x,y]"
+                assert len(item.shape) > 0, f"{item.name} should cover a square"
+                for square in item.shape:
+                    assert isinstance(square, tuple), "A shape holds (x, y) pairs"
+                    assert len(square) == 2, "Each offset is an (x, y) pair"
 
     def test_container_shapes(self):
         """Test that containers have appropriate shapes"""

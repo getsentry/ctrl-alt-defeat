@@ -3,7 +3,7 @@ Test full battle scenarios with realistic item loadouts
 These tests simulate complete battles between two players with different strategies
 """
 
-from battle_engine import BattleSimulator, PlacedItem
+from battle_engine import BattleItem, BattleSimulator
 from grid_system import ItemShape
 from item_effects import (
     AttackEffect,
@@ -28,7 +28,7 @@ class TestFullBattleScenarios:
         """Test aggressive damage dealer vs defensive tank build"""
         # Player 1: Aggressive build (high damage, low defense)
         p1_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="null_blade",
                     name="Null Pointer Exception",
@@ -55,7 +55,7 @@ class TestFullBattleScenarios:
                 position=(0, 0),
                 uid="p1_null",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="core_dumper",
                     name="Memory Leak",
@@ -82,7 +82,7 @@ class TestFullBattleScenarios:
                 position=(1, 0),  # Adjacent for Bug Swarm
                 uid="p1_leak",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="deadlock_twins",
                     name="Race Condition",
@@ -113,7 +113,7 @@ class TestFullBattleScenarios:
 
         # Player 2: Defensive build (shields, healing, moderate damage)
         p2_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="error_shield",
                     name="Error Monitoring Shield",
@@ -135,7 +135,7 @@ class TestFullBattleScenarios:
                 position=(3, 0),
                 uid="p2_shield1",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="firewall",
                     name="Firewall",
@@ -157,7 +157,7 @@ class TestFullBattleScenarios:
                 position=(4, 0),  # Adjacent shields
                 uid="p2_shield2",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="health_check",
                     name="Health Check",
@@ -177,7 +177,7 @@ class TestFullBattleScenarios:
                 position=(3, 1),
                 uid="p2_heal",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="counter_attack",
                     name="Counter Attack",
@@ -236,7 +236,7 @@ class TestFullBattleScenarios:
         """Test builds that rely on item synergies"""
         # Player 1: Bug Swarm synergy (3+ problems adjacent)
         p1_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="bug1",
                     name="Bug 1",
@@ -258,7 +258,7 @@ class TestFullBattleScenarios:
                 position=(0, 0),  # Top-left of P1 container
                 uid="p1_bug1",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="bug2",
                     name="Bug 2",
@@ -280,7 +280,7 @@ class TestFullBattleScenarios:
                 position=(1, 0),  # Adjacent (right)
                 uid="p1_bug2",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="bug3",
                     name="Bug 3",
@@ -306,7 +306,7 @@ class TestFullBattleScenarios:
 
         # Player 2: Mixed synergy (Full Stack: problem + defense + infrastructure)
         p2_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="problem",
                     name="Problem",
@@ -328,7 +328,7 @@ class TestFullBattleScenarios:
                 position=(4, 0),  # P2 container top-left
                 uid="p2_problem",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="defense",
                     name="Defense",
@@ -348,7 +348,7 @@ class TestFullBattleScenarios:
                 position=(5, 0),  # Adjacent in P2
                 uid="p2_defense",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="infrastructure",
                     name="Infrastructure",
@@ -389,7 +389,7 @@ class TestFullBattleScenarios:
         """Test battle with consumable items (potions)"""
         # Player 1: Standard damage with health potions
         p1_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="attacker",
                     name="Attacker",
@@ -411,7 +411,7 @@ class TestFullBattleScenarios:
                 position=(0, 0),
                 uid="p1_attack",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="health_potion",
                     name="Health Potion",
@@ -435,7 +435,7 @@ class TestFullBattleScenarios:
                 position=(1, 0),
                 uid="p1_pot1",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="emergency_heal",
                     name="Emergency Heal",
@@ -463,7 +463,7 @@ class TestFullBattleScenarios:
 
         # Player 2: Burst damage with CPU booster
         p2_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="cpu_booster",
                     name="CPU Booster",
@@ -484,7 +484,7 @@ class TestFullBattleScenarios:
                 position=(3, 0),
                 uid="p2_boost",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="heavy_hitter",
                     name="Heavy Hitter",
@@ -506,7 +506,7 @@ class TestFullBattleScenarios:
                 position=(4, 0),
                 uid="p2_heavy",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="quick_strike",
                     name="Quick Strike",
@@ -553,7 +553,7 @@ class TestFullBattleScenarios:
         """Test late game battle with high-powered items and high health"""
         # Player 1: Strong upgraded items
         p1_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="upgraded_weapon",
                     name="Upgraded Weapon",
@@ -576,7 +576,7 @@ class TestFullBattleScenarios:
                 position=(0, 0),
                 uid="p1_weapon",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="upgraded_shield",
                     name="Upgraded Shield",
@@ -601,7 +601,7 @@ class TestFullBattleScenarios:
 
         # Player 2: Single very powerful item
         p2_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="legendary_weapon",
                     name="Legendary Weapon",
@@ -672,7 +672,7 @@ class TestFullBattleScenarios:
         """Test that fatigue prevents infinite battles"""
         # Both players: Defensive builds with healing
         p1_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="weak_attack",
                     name="Weak Attack",
@@ -694,7 +694,7 @@ class TestFullBattleScenarios:
                 position=(0, 0),
                 uid="p1_weak",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="healer",
                     name="Healer",
@@ -717,7 +717,7 @@ class TestFullBattleScenarios:
         ]
 
         p2_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="weak_attack2",
                     name="Weak Attack 2",
@@ -739,7 +739,7 @@ class TestFullBattleScenarios:
                 position=(4, 0),
                 uid="p2_weak",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="healer2",
                     name="Healer 2",
@@ -790,7 +790,7 @@ class TestFullBattleScenarios:
         """Test battle where CPU management is critical"""
         # Player 1: High CPU consumption build
         p1_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="expensive1",
                     name="Expensive 1",
@@ -812,7 +812,7 @@ class TestFullBattleScenarios:
                 position=(0, 0),
                 uid="p1_exp1",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="expensive2",
                     name="Expensive 2",
@@ -838,7 +838,7 @@ class TestFullBattleScenarios:
 
         # Player 2: Efficient build with CPU infrastructure
         p2_items = [
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="cpu_infrastructure",
                     name="CPU Infrastructure",
@@ -859,7 +859,7 @@ class TestFullBattleScenarios:
                 position=(3, 0),
                 uid="p2_cpu",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="efficient1",
                     name="Efficient 1",
@@ -881,7 +881,7 @@ class TestFullBattleScenarios:
                 position=(4, 0),
                 uid="p2_eff1",
             ),
-            PlacedItem(
+            BattleItem(
                 spec=ItemSpec(
                     id="efficient2",
                     name="Efficient 2",
