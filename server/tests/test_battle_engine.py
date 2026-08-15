@@ -5,11 +5,16 @@ Comprehensive tests for battle engine to ensure it matches Game Design Document
 from copy import deepcopy
 
 import pytest
+
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem, Player
 from config_loader import config_loader
 from grid_system import SHAPES
 from item_effects import ItemSpec, PassiveTrigger, TimerTrigger
 from server_containers import ServerContainer
+
+# A battle with no seed uses the clock, which makes every run a different
+# battle. Tests pin it so a failure is reproducible.
+TEST_SEED = 424242
 
 
 def get_test_containers():
@@ -38,7 +43,7 @@ class TestGameDesignCompliance:
 
     def test_player_quota_scaling(self):
         """Test Section 1.1: Player Quota scaling by round"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Test each tier from the document
         assert sim._get_round_quota(1) == 25  # Rounds 1-3
@@ -128,7 +133,7 @@ class TestGameDesignCompliance:
 
     def test_battle_duration(self):
         """Test Section 6.2: Battle max duration 60s"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
         assert sim.max_duration == 60.0
 
         # Test timeout with no items (should end at 60s)
@@ -144,7 +149,7 @@ class TestGameDesignCompliance:
 
     def test_fatigue_mechanic(self):
         """Test Section 7.1: Fatigue after 30s"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a weak item that won't end battle quickly
         item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
@@ -176,7 +181,7 @@ class TestGameDesignCompliance:
 
     def test_block_mechanics(self):
         """Test Section 7.3: Block reduces damage 1:1"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
         player = Player(id=1, quota=100, max_quota=100, cpu=10.0)
         attacker = Player(id=2, quota=100, max_quota=100, cpu=10.0)
 
@@ -192,7 +197,7 @@ class TestGameDesignCompliance:
 
     def test_adjacency_rules(self):
         """Test Section 4.2: Orthogonal adjacency only"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         center = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 1))
 
@@ -216,7 +221,7 @@ class TestGameDesignCompliance:
 
     def test_synergies(self):
         """Test Section 4.3: Synergy effects"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Test Bug Swarm: 3+ problems = +20% damage
         problem1 = PlacedItem(
@@ -233,7 +238,7 @@ class TestGameDesignCompliance:
 
     def test_compact_action_format(self):
         """Test Section 10.2: Compact action log format - now using BattleAction models"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create simple test items
         item = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
@@ -261,7 +266,7 @@ class TestGameDesignCompliance:
 
     def test_cpu_throttling(self):
         """Test Section 1.2: Items skip when CPU exhausted"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create item with high CPU cost
         from item_effects import AttackEffect
@@ -300,7 +305,7 @@ class TestGameDesignCompliance:
 
     def test_infrastructure_effects(self):
         """Infrastructure items apply their stat mods before the battle"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
 
         quantum = PlacedItem(
@@ -316,7 +321,7 @@ class TestGameDesignCompliance:
         _apply_infrastructure skips anything whose category is not
         "infrastructure". auto_scaler is a protocol, so it must not change CPU.
         """
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
 
         autoscaler = PlacedItem(
@@ -330,7 +335,7 @@ class TestGameDesignCompliance:
 
     def test_special_item_effects(self):
         """Test specific item special effects from Section 2"""
-        BattleSimulator()
+        BattleSimulator(seed=TEST_SEED)
 
         # Memory Leak stacking
         ml = PlacedItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 0))
@@ -357,7 +362,7 @@ class TestBattleSimulation:
 
     def test_basic_battle(self):
         """Test a simple 1v1 battle"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         item1 = PlacedItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
 
@@ -381,7 +386,7 @@ class TestBattleSimulation:
 
     def test_battle_ends_on_death(self):
         """Test battle ends when player quota reaches 0"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create overpowered item
         from item_effects import AttackEffect
@@ -423,7 +428,7 @@ class TestBattleSimulation:
 
     def test_timeout_battle(self):
         """Test battle times out at 60s"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # No items = no damage = timeout
         p1_containers, p2_containers = get_test_containers()
@@ -444,7 +449,7 @@ class TestBattleSimulation:
     )
     def test_adjacency_in_battle(self):
         """Test adjacency effects work in battle"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Load Balancer Module gives adjacent items +15% speed
         lb = PlacedItem(spec=ITEM_CATALOG["load_balancer_module"], position=(0, 0))

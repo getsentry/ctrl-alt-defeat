@@ -1,5 +1,7 @@
 """Test that all API endpoints that return items include slug fields"""
 
+from tests.conftest import SHOP_SEED
+
 
 class TestAPISlugResponses:
     """Test that all API responses include slug fields for items"""
@@ -107,48 +109,38 @@ class TestAPISlugResponses:
                 assert purchased["slug"] != "", "Purchased item has empty slug"
 
     def test_sell_item_response_includes_slug(self, auth_client):
-        """Test that /shop/sell returns item with slug"""
-        # Start session
+        """Test that /sell/item returns the sold item with its slug"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={"player_name": "TestPlayer", "seed": SHOP_SEED}
         )
         assert response.status_code == 200
         data = response.json()
         player_id = data["player_id"]
-        session = data["session"]
 
-        # Get an item from shop to purchase first
-        shop = session["current_shop"]
-        item_to_buy = next((item for item in shop if item), None)
+        item_to_buy = data["session"]["current_shop"][0]
 
-        if item_to_buy:
-            # Purchase item first
-            response = auth_client.post(
-                "/purchase/item",
-                json={
-                    "player_id": player_id,
-                    "item_id": item_to_buy["id"],
-                    "target_position": [0, 0],
-                },
-            )
+        # [2, 3] is the corner of the first starting container. [0, 0] is bare
+        # floor and cannot hold an item.
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item_to_buy["id"],
+                "target_position": [2, 3],
+            },
+        )
+        assert response.status_code == 200, f"Purchase failed: {response.json()}"
+        purchased_item = response.json()["purchased_item"]
 
-            if response.status_code == 200:
-                purchased_item = response.json().get("purchased_item")
-                if purchased_item:
-                    # Now sell the item
-                    response = auth_client.post(
-                        "/sell/item",
-                        json={"player_id": player_id, "item_uid": purchased_item["id"]},
-                    )
+        response = auth_client.post(
+            "/sell/item",
+            json={"player_id": player_id, "item_uid": purchased_item["id"]},
+        )
+        assert response.status_code == 200, f"Sell failed: {response.json()}"
 
-                    assert (
-                        response.status_code == 200
-                    ), f"Purchase failed: {response.json()}"
-                    data = response.json()
-                    sold_item = data.get("item")
-                    if sold_item:
-                        assert "slug" in sold_item, "Sold item missing slug"
-                        assert sold_item["slug"] != "", "Sold item has empty slug"
+        sold_item = response.json()["sold_item"]
+        assert "slug" in sold_item, "Sold item missing slug"
+        assert sold_item["slug"] != "", "Sold item has empty slug"
 
     def test_move_item_response_includes_slugs(self, auth_client):
         """Test that /inventory/move returns inventory with slugs"""
@@ -205,50 +197,38 @@ class TestAPISlugResponses:
 
     def test_battle_response_new_shop_has_slugs(self, auth_client):
         """Test that battle response includes new shop with slugs"""
-        # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={"player_name": "TestPlayer", "seed": SHOP_SEED}
         )
         assert response.status_code == 200
         data = response.json()
         player_id = data["player_id"]
-        session = data["session"]
 
-        # Purchase an item from shop to have something for battle
-        shop = session["current_shop"]
-        item_to_buy = next((item for item in shop if item), None)
+        item_to_buy = data["session"]["current_shop"][0]
 
-        if item_to_buy:
-            # Purchase item
-            response = auth_client.post(
-                "/purchase/item",
-                json={
-                    "player_id": player_id,
-                    "item_id": item_to_buy["id"],
-                    "target_position": [0, 0],
-                },
-            )
+        # [2, 3] is the corner of the first starting container.
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item_to_buy["id"],
+                "target_position": [2, 3],
+            },
+        )
+        assert response.status_code == 200, f"Purchase failed: {response.json()}"
 
-            if response.status_code == 200:
-                # Simulate battle
-                response = auth_client.post(
-                    "/battle/simulate", json={"player_id": player_id}
-                )
+        response = auth_client.post("/battle/simulate", json={"player_id": player_id})
+        assert response.status_code == 200, f"Battle failed: {response.json()}"
 
-                assert (
-                    response.status_code == 200
-                ), f"Purchase failed: {response.json()}"
-                data = response.json()
-                new_shop = data.get("new_shop", [])
-
-                for item in new_shop:
-                    if item:
-                        assert (
-                            "slug" in item
-                        ), f"New shop item {item.get('name')} missing slug after battle"
-                        assert (
-                            item["slug"] != ""
-                        ), f"New shop item {item.get('name')} has empty slug"
+        new_shop = response.json()["new_shop"]
+        assert new_shop, "A battle should refill the shop"
+        for item in new_shop:
+            if item is None:
+                continue
+            assert "slug" in item, f"New shop item {item.get('name')} missing slug"
+            assert (
+                item["slug"] != ""
+            ), f"New shop item {item.get('name')} has empty slug"
 
     def test_session_update_inventory_has_slugs(self, auth_client):
         """Test that session updates include inventory items with slugs"""

@@ -3,7 +3,9 @@ Inventory management system for the autobattler game
 Manages both the 9x7 grid with server containers and unlimited storage
 """
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Union
+
+from utils import Position, to_position
 
 
 class InvalidPlacementError(Exception):
@@ -30,7 +32,7 @@ class InventoryGrid:
         self.height = 7
         self.items = []  # List of placed items
 
-        # Initialize with 3 server containers centered horizontally
+        # Initialize with 3 server containers centered horizontally.
         self.containers = [
             {
                 "id": "container_a",
@@ -59,7 +61,7 @@ class InventoryGrid:
         ]
 
     def is_valid_placement(
-        self, position: Tuple[int, int], shape: List[Tuple[int, int]] = None
+        self, position: Position, shape: Optional[List[Sequence[int]]] = None
     ) -> bool:
         """Check if a position is valid for item placement, considering its shape"""
         # If no shape provided, assume single square
@@ -91,15 +93,13 @@ class InventoryGrid:
 
         return True
 
-    def get_item_at(self, position: Tuple[int, int]) -> Optional[Dict]:
+    def get_item_at(self, position: Position) -> Optional[Dict]:
         """Get the item at a specific position"""
         for item in self.items:
-            # Convert position to tuple if it's a list (from database)
             item_pos = item.get("position")
             if item_pos is None:
                 continue
-            if isinstance(item_pos, list):
-                item_pos = tuple(item_pos)
+            base_x, base_y = item_pos
 
             # Check if this is a multi-square item
             if "shape" in item:
@@ -110,13 +110,11 @@ class InventoryGrid:
                         return item
             else:
                 # Single square item
-                if item_pos == position:
+                if (base_x, base_y) == position:
                     return item
         return None
 
-    def _get_occupied_squares(
-        self, item: Dict, position: Tuple[int, int]
-    ) -> List[Tuple[int, int]]:
+    def _get_occupied_squares(self, item: Dict, position: Position) -> List[Position]:
         """Get all squares that would be occupied by an item at a position"""
         if "shape" in item:
             # Multi-square item
@@ -126,7 +124,7 @@ class InventoryGrid:
             # Single square item
             return [position]
 
-    def place_item(self, item: Dict, position: Tuple[int, int]) -> None:
+    def place_item(self, item: Dict, position: Position) -> None:
         """Place an item on the grid"""
         # Check all squares the item would occupy
         occupied_squares = self._get_occupied_squares(item, position)
@@ -147,11 +145,10 @@ class InventoryGrid:
                     f"Position {square} is already occupied by item {item_id}"
                 )
 
-        # Place the item
         item["position"] = position
         self.items.append(item)
 
-    def remove_item_at(self, position: Tuple[int, int]) -> Dict:
+    def remove_item_at(self, position: Position) -> Dict:
         """Remove and return the item at a position"""
         item = self.get_item_at(position)
         if item is None:
@@ -198,6 +195,14 @@ class InventoryStorage:
         return self.items.copy()
 
 
+def _with_pair_position(entry: Dict) -> Dict:
+    """Copy an entry with its position as an (x, y) pair."""
+    restored = dict(entry)
+    if restored.get("position") is not None:
+        restored["position"] = to_position(restored["position"])
+    return restored
+
+
 class InventoryManager:
     """
     High-level inventory management coordinating grid and storage
@@ -208,7 +213,7 @@ class InventoryManager:
         self.grid = InventoryGrid()
         self.storage = InventoryStorage()
 
-    def place_item(self, item: Dict, placement: Union[str, Tuple[int, int]]) -> bool:
+    def place_item(self, item: Dict, placement: Union[str, Position]) -> bool:
         """
         Place an item either in storage or on the grid
 
@@ -232,8 +237,8 @@ class InventoryManager:
     def move_item(
         self,
         item_id: str,
-        from_location: Union[str, Tuple[int, int]],
-        to_location: Union[str, Tuple[int, int]],
+        from_location: Union[str, Position],
+        to_location: Union[str, Position],
     ) -> None:
         """
         Move an item between storage and grid
@@ -279,7 +284,7 @@ class InventoryManager:
         return self.grid.get_battle_items()
 
     def remove_item(
-        self, location: Optional[Tuple[int, int]] = None, item_id: Optional[str] = None
+        self, location: Optional[Position] = None, item_id: Optional[str] = None
     ) -> Optional[Dict]:
         """
         Remove an item from either grid or storage
@@ -319,19 +324,13 @@ class InventoryManager:
         }
 
     def restore_state(self, state: Dict) -> None:
-        """Restore inventory from saved state"""
-        # Clear current state
-        self.grid.items = []
-        self.storage.items = []
+        """Restore inventory from saved state
 
-        # Restore grid items
-        if "grid" in state:
-            self.grid.items = state["grid"].copy()
-
-        # Restore storage items
-        if "storage" in state:
-            self.storage.items = state["storage"].copy()
-
-        # Restore containers if provided
+        Saved state has been through JSON, where a position decodes as a list,
+        so positions are turned back into pairs here. This is the only place
+        untyped state enters the grid.
+        """
+        self.grid.items = [_with_pair_position(i) for i in state.get("grid", [])]
+        self.storage.items = list(state.get("storage", []))
         if "containers" in state:
-            self.grid.containers = state["containers"].copy()
+            self.grid.containers = [_with_pair_position(c) for c in state["containers"]]

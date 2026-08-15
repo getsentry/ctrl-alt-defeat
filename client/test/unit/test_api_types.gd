@@ -294,3 +294,46 @@ func test_session_start_response_resolves_the_session():
 	assert_eq(response.session.server_containers.size(), 2, "Starting containers should be parsed")
 	assert_eq(response.session.server_containers[1].position.x, 4,
 		"Container positions should survive parsing")
+
+# ============ Positions ============
+
+func test_position_reads_and_writes_an_array():
+	var pos = APITypes.Position.new([2, 3])
+
+	assert_eq(pos.x, 2, "x comes from index 0")
+	assert_eq(pos.y, 3, "y comes from index 1")
+	assert_eq(pos.to_array(), [2, 3], "to_array() gives back [x, y]")
+	assert_eq(pos.to_vector2(), Vector2(2, 3), "to_vector2() converts for drawing")
+
+
+func test_position_takes_nothing_but_an_array():
+	# GUT catches the push_error, so the test carries on past it.
+	var from_mapping = APITypes.Position.new({"x": 2, "y": 3})
+	assert_eq(from_mapping.x, 0, "A mapping does not set x")
+	assert_eq(from_mapping.y, 0, "A mapping does not set y")
+
+	var wrong_length = APITypes.Position.new([2, 3, 4])
+	assert_eq(wrong_length.x, 0, "A three-item array does not set x")
+	assert_eq(wrong_length.y, 0, "A three-item array does not set y")
+
+
+func test_a_position_serialises_only_as_an_array():
+	var pos = APITypes.Position.new([2, 3])
+	assert_false(pos.has_method("to_dict"),
+		"A position serialises with to_array(), not to_dict()")
+
+
+func test_positions_survive_a_container_round_trip():
+	var container = APITypes.ServerContainer.new(_container({"position": [4, 3]}))
+	var as_dict = container.to_dict()
+
+	assert_typeof(as_dict["position"], TYPE_ARRAY, "A container writes its position as an array")
+	assert_eq(as_dict["position"], [4, 3], "The position survives unchanged")
+
+
+func test_positions_survive_an_item_round_trip():
+	var item = APITypes.InventoryItem.new(_item({"position": [6, 4]}))
+	var as_dict = item.to_dict()
+
+	assert_typeof(as_dict["position"], TYPE_ARRAY, "An item writes its position as an array")
+	assert_eq(as_dict["position"], [6, 4], "The position survives unchanged")

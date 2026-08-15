@@ -18,7 +18,7 @@ from item_effects import (
 )
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
-from .test_utils import get_large_test_containers, get_test_containers
+from .helpers import get_large_test_containers, get_test_containers
 
 
 class TestFullBattleScenarios:

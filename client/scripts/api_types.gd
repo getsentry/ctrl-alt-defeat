@@ -1,24 +1,23 @@
 extends Resource
 class_name APITypes
 
-# Position type - server always sends as [x, y] array
+# A position is an [x, y] array, in both directions.
 class Position extends Resource:
 	var x: int = 0
 	var y: int = 0
 
 	func _init(data):
-		# Handle both Array [x, y] and Dictionary {x: _, y: _} formats
-		if data is Array:
-			x = int(data[0])
-			y = int(data[1])
-		elif data is Dictionary:
-			x = int(data.get("x", 0))
-			y = int(data.get("y", 0))
-		else:
-			push_error("Position received invalid data type: " + str(typeof(data)))
+		if not data is Array:
+			push_error("Position must be an [x, y] array, got: " + str(data))
+			return
+		if data.size() != 2:
+			push_error("Position must have exactly 2 items, got: " + str(data))
+			return
+		x = int(data[0])
+		y = int(data[1])
 
-	func to_dict() -> Dictionary:
-		return {"x": x, "y": y}
+	func to_array() -> Array:
+		return [x, y]
 
 	func to_vector2() -> Vector2:
 		return Vector2(x, y)
@@ -82,7 +81,7 @@ class InventoryItem extends Resource:
 			"slug": slug,
 			"name": name,
 			"category": category,
-			"position": position.to_dict() if position else {"x": 0, "y": 0},
+			"position": position.to_array() if position else null,
 			"shape": shape
 		}
 
@@ -111,7 +110,7 @@ class ServerContainer extends Resource:
 			"id": id,
 			"type": type,
 			"slug": slug,
-			"position": position.to_dict() if position else {"x": 0, "y": 0},
+			"position": position.to_array() if position else null,
 			"width": width,
 			"height": height
 		}

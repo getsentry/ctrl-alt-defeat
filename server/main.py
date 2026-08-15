@@ -12,16 +12,21 @@ import uuid
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import auth_endpoints
 import sentry_sdk
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
+
+import auth_endpoints
 from auth import TokenData, get_current_user
 from battle_engine import ITEM_CATALOG, BattleSimulator, PlacedItem
 from config_loader import config_loader
 
 # Import session management and schemas
 from database import db_manager
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
 from matchmaking import MatchmakingService
 from schemas import (
@@ -50,13 +55,9 @@ from schemas import (
     StartSessionRequest,
     StartSessionResponse,
 )
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-from sentry_sdk.integrations.starlette import StarletteIntegration
 from server_containers import ServerContainer
 from session_manager import SessionManager
-from utils import utc_now
+from utils import Position, to_position, utc_now
 
 # Test mode allows seeds and special AI configurations for testing
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
@@ -271,7 +272,7 @@ async def start_session(
                 "id": container["id"],
                 "slug": container["slug"],
                 "type": container["type"],
-                "position": list(container["position"]),  # Convert tuple to list
+                "position": to_position(container["position"]),
                 "width": container["width"],
                 "height": container["height"],
             }
@@ -706,8 +707,9 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             # Get the database session and user_id
             async with db_manager.get_session() as db:
                 # Get the actual database GameSession model
-                from models import GameSession as DBGameSession
                 from sqlalchemy import select
+
+                from models import GameSession as DBGameSession
 
                 db_session_result = await db.execute(
                     select(DBGameSession).where(
@@ -883,8 +885,9 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
     if not TEST_MODE:
         try:
             async with db_manager.get_session() as db:
-                from models import GameSession as DBGameSession
                 from sqlalchemy import select
+
+                from models import GameSession as DBGameSession
 
                 db_session_result = await db.execute(
                     select(DBGameSession).where(
@@ -1033,7 +1036,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             "slug": item.spec.slug,
             "item_type": item.spec.id,
             "name": item.spec.name,
-            "position": list(item.position),
+            "position": item.position,
             "category": item.spec.category,
             "shape": shape_data,
             "rarity": rarity,
@@ -1061,7 +1064,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
             "type": (
                 container.spec.id if hasattr(container.spec, "id") else "standard_vm"
             ),
-            "position": list(container.position),
+            "position": container.position,
             "width": width,
             "height": height,
         }
@@ -1398,7 +1401,7 @@ def generate_ai_containers() -> List[ServerContainer]:
 def place_item_in_inventory(
     manager: InventoryManager,
     item: Dict[str, Any],
-    to_location: Union[str, Tuple[int, int]],
+    to_location: Union[str, Position],
 ) -> None:
     """
     Shared logic for placing an item in inventory (grid or storage)
@@ -1406,7 +1409,7 @@ def place_item_in_inventory(
     Args:
         manager: InventoryManager instance
         item: Item dictionary with id, item_type, etc.
-        to_location: Either "storage" or (x, y) tuple
+        to_location: Either "storage" or an (x, y])position
 
     Raises:
         HTTPException: If placement fails with appropriate error message
@@ -1492,22 +1495,18 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
             "id": item.id,
             "slug": item.slug,
             "type": item.item_type,
-            "position": list(request.target_position),  # Store as list [x, y]
+            "position": request.target_position,
             "width": item.width if hasattr(item, "width") else 2,
             "height": item.height if hasattr(item, "height") else 2,
         }
 
         # Check if position overlaps with existing containers
         for existing in session.server_containers:
-            # Position is stored as a list [x, y]
-            ex_pos = existing.get("position", [0, 0])
-            ex_x = ex_pos[0] if isinstance(ex_pos, list) else ex_pos.get("x", 0)
-            ex_y = ex_pos[1] if isinstance(ex_pos, list) else ex_pos.get("y", 0)
+            ex_x, ex_y = existing["position"]
             ex_w = existing.get("width", 2)
             ex_h = existing.get("height", 2)
 
-            new_x = new_container["position"][0]
-            new_y = new_container["position"][1]
+            new_x, new_y = new_container["position"]
             new_w = new_container["width"]
             new_h = new_container["height"]
 
@@ -1566,7 +1565,7 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
     if request.to_storage:
         to_location = "storage"
     elif request.target_position and len(request.target_position) == 2:
-        to_location = tuple(request.target_position)
+        to_location = request.target_position
     else:
         raise HTTPException(
             status_code=400,
@@ -1708,11 +1707,7 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
                 item_found = item
                 # Get actual position from item
                 if "position" in item:
-                    pos = item["position"]
-                    if isinstance(pos, list):
-                        current_location = tuple(pos)
-                    else:
-                        current_location = pos
+                    current_location = to_position(item["position"])
                 break
 
     if not item_found:
@@ -1720,10 +1715,7 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
             status_code=HTTPStatus.NOT_FOUND, detail="Item not found in inventory"
         )
 
-    # Convert to_location to proper type
     to_loc = request.to_location
-    if isinstance(to_loc, list):
-        to_loc = tuple(to_loc)
 
     # Check for same position move (no-op)
     if current_location == to_loc:
@@ -1738,7 +1730,7 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
             item=ItemInfo(
                 id=item_found["id"],
                 item_type=item_found.get("item_type", ""),
-                position=list(to_loc) if to_loc != "storage" else None,
+                position=to_loc if to_loc != "storage" else None,
                 name=item_found.get("name"),
             ),
         )
@@ -1754,9 +1746,9 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
         # Parse the error message to provide cleaner output
         error_msg = str(e)
         if "not on a server container" in error_msg:
-            detail = f"Position {list(to_loc)} is not on a server container"
+            detail = f"Position {to_loc} is not on a server container"
         elif "already occupied" in error_msg:
-            detail = f"Position {list(to_loc)} is already occupied"
+            detail = f"Position {to_loc} is already occupied"
         else:
             detail = error_msg
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=detail)
@@ -1772,7 +1764,7 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     # Determine final position for response
     final_position = None
     if to_loc != "storage":
-        final_position = list(to_loc)
+        final_position = to_loc
 
     return MoveItemResponse(
         inventory_grid=[

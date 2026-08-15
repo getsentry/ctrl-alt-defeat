@@ -6,12 +6,13 @@ Same seed + same items = same result every time
 from copy import deepcopy
 
 import pytest
+
 from battle_engine import BattleSimulator, PlacedItem
 from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
-from .test_utils import get_test_containers
+from .helpers import get_test_containers
 
 
 class TestDeterministicBattles:

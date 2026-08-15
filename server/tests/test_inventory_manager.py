@@ -3,7 +3,10 @@ Tests for the inventory management system
 Tests written first, following TDD principles
 """
 
+import json
+
 import pytest
+
 from inventory_manager import (
     InvalidPlacementError,
     InventoryGrid,
@@ -11,6 +14,7 @@ from inventory_manager import (
     InventoryStorage,
     ItemNotFoundError,
 )
+from tests.test_utils import find_bad_positions
 
 
 class TestInventoryGrid:
@@ -383,3 +387,69 @@ class TestInventoryManager:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestStoredPositions:
+    """Stored state holds (x, y) pairs, and encodes to arrays"""
+
+    def test_default_containers_are_pairs(self):
+        grid = InventoryGrid()
+        for container in grid.containers:
+            assert isinstance(container["position"], tuple), (
+                f"Container {container['id']} stores a "
+                f"{type(container['position']).__name__}, not a pair"
+            )
+            assert len(container["position"]) == 2
+
+    def test_placed_item_position_is_a_pair(self):
+        grid = InventoryGrid()
+        item = {"id": "item_1", "item_type": "test"}
+        grid.place_item(item, (2, 3))
+        assert item["position"] == (2, 3)
+        assert isinstance(item["position"], tuple)
+
+    def test_inventory_state_encodes_positions_as_arrays(self):
+        """State goes to the database as JSON, where a pair becomes an array."""
+        manager = InventoryManager()
+        manager.place_item({"id": "item_1", "item_type": "test"}, (2, 3))
+
+        encoded = json.loads(json.dumps(manager.get_state()))
+
+        assert encoded["grid"][0]["position"] == [2, 3]
+        assert not find_bad_positions(
+            encoded
+        ), "Encoded state should carry [x, y] arrays"
+
+    def test_lookups_take_a_pair(self):
+        grid = InventoryGrid()
+        grid.place_item({"id": "item_1", "item_type": "test"}, (2, 3))
+
+        assert grid.get_item_at((2, 3))["id"] == "item_1"
+
+    def test_restoring_from_the_database_converts_positions(self):
+        """
+        Saved state has been through JSON, so its positions arrive as lists.
+        restore_state is the one place that turns them back into pairs.
+        """
+        manager = InventoryManager()
+        manager.restore_state(
+            {
+                "grid": [{"id": "item_1", "item_type": "test", "position": [2, 3]}],
+                "storage": [],
+                "containers": [
+                    {
+                        "id": "container_a",
+                        "slug": "standard_vm",
+                        "type": "standard_vm",
+                        "position": [2, 3],
+                        "width": 2,
+                        "height": 2,
+                    }
+                ],
+            }
+        )
+
+        assert manager.grid.items[0]["position"] == (2, 3)
+        assert isinstance(manager.grid.items[0]["position"], tuple)
+        assert manager.grid.containers[0]["position"] == (2, 3)
+        assert manager.grid.get_item_at((2, 3))["id"] == "item_1"

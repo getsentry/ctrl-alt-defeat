@@ -8,7 +8,11 @@ from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
-from .test_utils import get_test_containers
+from .helpers import get_test_containers
+
+# A battle with no seed uses the clock, which makes every run a different
+# battle. Tests pin it so a failure is reproducible.
+TEST_SEED = 424242
 
 
 class TestShieldBlocking:
@@ -16,7 +20,7 @@ class TestShieldBlocking:
 
     def test_shield_blocks_damage(self):
         """Test that shields can block incoming damage"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a shield with 100% block chance for testing
         shield = PlacedItem(
@@ -92,7 +96,7 @@ class TestShieldBlocking:
 
     def test_shield_30_percent_chance(self):
         """Test that shields have 30% base block chance"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create multiple shields with 30% block chance
         shields = []
@@ -182,7 +186,7 @@ class TestShieldBlocking:
 
     def test_shield_cpu_steal(self):
         """Test that shields can steal CPU from attackers"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a shield that steals CPU
         shield = PlacedItem(
@@ -254,7 +258,7 @@ class TestShieldBlocking:
 
     def test_multiple_shields_stack(self):
         """Test that multiple shields can all attempt to block"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create two shields, both with 100% block chance
         shield1 = PlacedItem(
@@ -343,7 +347,7 @@ class TestShieldBlocking:
 
     def test_shield_with_no_damage(self):
         """Test that shields don't activate when no damage is dealt"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a shield
         shield = PlacedItem(

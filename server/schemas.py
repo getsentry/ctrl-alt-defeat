@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from utils import Position
+
 
 class ShopItem(BaseModel):
     """Item available in the shop"""
@@ -78,7 +80,7 @@ class PurchaseRequest(BaseModel):
 
     player_id: str
     item_id: str
-    target_position: Optional[List[int]] = None  # [x, y] position on grid
+    target_position: Optional[Position] = None  # [x, y] position on grid
     to_storage: bool = False  # Place in storage instead of grid
 
 
@@ -94,7 +96,7 @@ class MoveItemRequest(BaseModel):
 
     player_id: str
     item_uid: str  # Unique instance ID of the item to move
-    to_location: Union[str, List[int]]  # "storage" or [x, y] coordinates
+    to_location: Union[str, Position]  # "storage" or [x, y] coordinates
 
 
 # ============ Response Models ============
@@ -126,7 +128,7 @@ class PlacedItem(BaseModel):
     slug: str = Field(description="Unique item slug")
     item_type: str = Field(description="Item type identifier")
     name: str = Field(description="Display name")
-    position: List[int] = Field(description="[x, y] grid position")
+    position: Position = Field(description="[x, y] grid position")
     category: str = Field(description="Item category")
     shape: List[List[int]] = Field(description="Shape as list of [x, y] offsets")
     # Additional fields for tooltips
@@ -149,7 +151,7 @@ class ServerContainer(BaseModel):
     id: str = Field(description="Container instance ID")
     slug: str = Field(description="Container slug")
     type: str = Field(description="Container type")
-    position: List[int] = Field(description="[x, y] position")
+    position: Position = Field(description="[x, y] position")
     width: int = Field(description="Container width")
     height: int = Field(description="Container height")
 
@@ -242,7 +244,7 @@ class ItemInfo(BaseModel):
 
     id: str = Field(description="Item unique ID")
     item_type: str = Field(description="Item type identifier")
-    position: Optional[List[int]] = Field(
+    position: Optional[Position] = Field(
         description="Current position or None if in storage"
     )
     name: Optional[str] = Field(description="Item name")

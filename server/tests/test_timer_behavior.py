@@ -6,7 +6,11 @@ from battle_engine import BattleSimulator, PlacedItem
 from grid_system import ItemShape
 from item_effects import AttackEffect, ItemSpec, TimerTrigger
 
-from .test_utils import get_test_containers
+from .helpers import get_test_containers
+
+# A battle with no seed uses the clock, which makes every run a different
+# battle. Tests pin it so a failure is reproducible.
+TEST_SEED = 424242
 
 
 class TestTimerScheduling:
@@ -14,7 +18,7 @@ class TestTimerScheduling:
 
     def test_timer_maintains_schedule_when_throttled(self):
         """Timer items should stay on schedule even if CPU isn't available"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a high CPU cost item with 1 second cooldown
         item = PlacedItem(

@@ -14,7 +14,11 @@ from item_effects import (
     TimerTrigger,
 )
 
-from .test_utils import get_test_containers
+from .helpers import get_test_containers
+
+# A battle with no seed uses the clock, which makes every run a different
+# battle. Tests pin it so a failure is reproducible.
+TEST_SEED = 424242
 
 
 class TestConsumeEffect:
@@ -22,7 +26,7 @@ class TestConsumeEffect:
 
     def test_health_potion_consumes_on_use(self):
         """Test that health potion is consumed after activation"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create a health potion
         potion = PlacedItem(
@@ -99,7 +103,7 @@ class TestConsumeEffect:
 
     def test_consumed_item_stops_triggering(self):
         """Test that consumed items don't trigger anymore"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create item that consumes itself on battle start
         consumable = PlacedItem(
@@ -150,7 +154,7 @@ class TestConsumeEffect:
 
     def test_consumed_item_affects_adjacency(self):
         """Test that consuming an item updates adjacency bonuses"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
         from item_effects import AttackEffect, TimerTrigger
 
         # Create 3 adjacent problem items for Bug Swarm synergy
@@ -237,7 +241,7 @@ class TestConsumeEffect:
         # Run battle
         p1_containers, p2_containers = get_test_containers()
         # Need a larger container for 3 items
-        from .test_utils import get_large_test_containers
+        from .helpers import get_large_test_containers
 
         p1_containers, p2_containers = get_large_test_containers()
         sim.simulate_battle(
@@ -257,7 +261,7 @@ class TestConsumeEffect:
 
     def test_multiple_consume_effects(self):
         """Test that multiple items can be consumed in same battle"""
-        sim = BattleSimulator()
+        sim = BattleSimulator(seed=TEST_SEED)
 
         # Create two potions with different thresholds
         potion1 = PlacedItem(

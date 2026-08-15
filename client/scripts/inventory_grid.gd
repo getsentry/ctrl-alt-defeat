@@ -559,7 +559,7 @@ func get_inventory_state() -> Dictionary:
 		else:
 			item_dict = item_data if item_data is Dictionary else {}
 
-		item_dict["position"] = {"x": grid_pos.x, "y": grid_pos.y}
+		item_dict["position"] = [grid_pos.x, grid_pos.y]
 
 		state.items.append(item_dict)
 

@@ -3,9 +3,12 @@ Tests for AI opponent generation with containers
 """
 
 import pytest
+
 from battle_engine import BattleSimulator
 from main import generate_ai_opponent
 from server_containers import ServerContainer
+from tests.conftest import SHOP_SEED
+from tests.test_utils import find_bad_positions
 
 
 class TestAIOpponentGeneration:
@@ -858,3 +861,290 @@ class TestMoveItemAPI:
         )
         assert response.status_code == 404
         assert "Session not found" in response.json()["detail"]
+
+
+# ============ Position contract ============
+#
+# Every endpoint that returns a position must return it as [x, y]. The check
+# walks the response tree rather than naming fields, so an endpoint added later
+# is covered without touching these tests.
+
+# The three starting containers sit at (2,3), (4,3) and (6,3), each 2x2.
+FREE_SQUARE = [2, 3]
+SECOND_SQUARE = [4, 3]
+
+
+def assert_positions_are_canonical(payload, endpoint: str):
+    """Fail with a readable message if any position in the payload is wrong"""
+    problems = find_bad_positions(payload)
+    assert not problems, "{} returned {} bad position(s):\n  {}".format(
+        endpoint, len(problems), "\n  ".join(problems)
+    )
+
+
+def buy_an_item(client, session, position):
+    """Buy the first shop item and place it at the given square."""
+    return client.post(
+        "/purchase/item",
+        json={
+            "player_id": session["player_id"],
+            "item_id": session["current_shop"][0]["id"],
+            "target_position": position,
+        },
+    )
+
+
+class TestPositionContractOverHttp:
+    """Every endpoint must return positions as [x, y]"""
+
+    def test_session_start_positions_are_canonical(self, auth_client):
+        response = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        assert response.status_code == 200
+        assert_positions_are_canonical(response.json(), "POST /session/start")
+
+    def test_session_start_containers_use_lists(self, auth_client):
+        """Starting containers report their position as a list"""
+        response = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        containers = response.json()["session"]["server_containers"]
+        assert len(containers) == 3
+        for container in containers:
+            assert isinstance(container["position"], list)
+            assert len(container["position"]) == 2
+
+    def test_get_session_positions_are_canonical(self, auth_client):
+        """
+        GET /session/{player_id} reads state straight from the database, so it
+        shows what was actually stored.
+        """
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        player_id = start.json()["player_id"]
+
+        response = auth_client.get(f"/session/{player_id}")
+        assert response.status_code == 200
+        assert_positions_are_canonical(response.json(), "GET /session/{player_id}")
+
+    def test_purchase_positions_are_canonical(self, auth_client):
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        session = start.json()["session"]
+
+        response = buy_an_item(auth_client, session, FREE_SQUARE)
+        assert response.status_code == 200, response.text
+        assert_positions_are_canonical(response.json(), "POST /purchase/item")
+
+    def test_move_positions_are_canonical(self, auth_client):
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        session = start.json()["session"]
+        player_id = session["player_id"]
+
+        bought = buy_an_item(auth_client, session, FREE_SQUARE)
+        assert bought.status_code == 200, bought.text
+        item_uid = bought.json()["purchased_item"]["id"]
+
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": SECOND_SQUARE,
+            },
+        )
+        assert response.status_code == 200, response.text
+        assert_positions_are_canonical(response.json(), "POST /move/item")
+
+        # The moved item must report the position we asked for
+        assert response.json()["item"]["position"] == SECOND_SQUARE
+
+    def test_move_to_storage_reports_null_position(self, auth_client):
+        """Storage has no position, so the field is null rather than [0, 0]."""
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        session = start.json()["session"]
+
+        bought = buy_an_item(auth_client, session, FREE_SQUARE)
+        item_uid = bought.json()["purchased_item"]["id"]
+
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": session["player_id"],
+                "item_uid": item_uid,
+                "to_location": "storage",
+            },
+        )
+        assert response.status_code == 200, response.text
+        assert response.json()["item"]["position"] is None
+        assert_positions_are_canonical(response.json(), "POST /move/item (storage)")
+
+    def test_battle_positions_are_canonical(self, auth_client):
+        """The battle response holds both inventories, so it carries the most positions"""
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        session = start.json()["session"]
+
+        bought = buy_an_item(auth_client, session, FREE_SQUARE)
+        assert bought.status_code == 200, bought.text
+
+        response = auth_client.post(
+            "/battle/simulate", json={"player_id": session["player_id"]}
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert_positions_are_canonical(payload, "POST /battle/simulate")
+
+        # Both inventories must actually be present, or the walk proves nothing
+        battle = payload["battle_result"]
+        assert battle["player_inventory"]["items"], "No player items to check"
+
+    def test_a_full_turn_keeps_every_position_canonical(self, auth_client):
+        """
+        Play one complete turn the way the client does:
+        start, buy, move, refresh the shop, battle.
+        Every response is checked.
+        """
+        responses = []
+
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        assert start.status_code == 200
+        session = start.json()["session"]
+        player_id = session["player_id"]
+        responses.append(("POST /session/start", start.json()))
+
+        bought = buy_an_item(auth_client, session, FREE_SQUARE)
+        assert bought.status_code == 200, bought.text
+        responses.append(("POST /purchase/item", bought.json()))
+        item_uid = bought.json()["purchased_item"]["id"]
+
+        moved = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": player_id,
+                "item_uid": item_uid,
+                "to_location": SECOND_SQUARE,
+            },
+        )
+        assert moved.status_code == 200, moved.text
+        responses.append(("POST /move/item", moved.json()))
+
+        refreshed = auth_client.post("/shop/refresh", json={"player_id": player_id})
+        assert refreshed.status_code == 200, refreshed.text
+        responses.append(("POST /shop/refresh", refreshed.json()))
+
+        fetched = auth_client.get(f"/session/{player_id}")
+        assert fetched.status_code == 200
+        responses.append(("GET /session/{player_id}", fetched.json()))
+
+        battle = auth_client.post("/battle/simulate", json={"player_id": player_id})
+        assert battle.status_code == 200, battle.text
+        responses.append(("POST /battle/simulate", battle.json()))
+
+        for endpoint, payload in responses:
+            assert_positions_are_canonical(payload, endpoint)
+
+
+class TestPositionContractRejectsBadInput:
+    """A bad position must fail at the boundary with a 422, not corrupt state"""
+
+    def test_purchase_rejects_a_dictionary_position(self, auth_client):
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        session = start.json()["session"]
+        shop_item = next(
+            item
+            for item in session["current_shop"]
+            if item and not item.get("is_container", False)
+        )
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": session["player_id"],
+                "item_id": shop_item["id"],
+                "target_position": {"x": 2, "y": 3},
+            },
+        )
+        assert response.status_code == 422, response.text
+
+    def test_purchase_rejects_a_three_item_position(self, auth_client):
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        session = start.json()["session"]
+        shop_item = next(
+            item
+            for item in session["current_shop"]
+            if item and not item.get("is_container", False)
+        )
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": session["player_id"],
+                "item_id": shop_item["id"],
+                "target_position": [2, 3, 4],
+            },
+        )
+        assert response.status_code == 422, response.text
+
+    def test_move_rejects_a_dictionary_position(self, auth_client):
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        session = start.json()["session"]
+
+        response = auth_client.post(
+            "/move/item",
+            json={
+                "player_id": session["player_id"],
+                "item_uid": "does-not-matter",
+                "to_location": {"x": 2, "y": 3},
+            },
+        )
+        assert response.status_code == 422, response.text
+
+
+class TestOpenApiDeclaresThePositionShape:
+    """
+    The generated schema is the contract the client reads, so a position has to
+    be declared as a two-item array for the client to rely on it.
+    """
+
+    def test_placed_item_position_is_a_bounded_array(self):
+        from fastapi.testclient import TestClient
+
+        from main import app
+
+        schema = TestClient(app).get("/openapi.json").json()
+        position = schema["components"]["schemas"]["PlacedItem"]["properties"][
+            "position"
+        ]
+        assert position["type"] == "array"
+        assert position["minItems"] == 2
+        assert position["maxItems"] == 2
+
+    def test_server_container_position_is_a_bounded_array(self):
+        from fastapi.testclient import TestClient
+
+        from main import app
+
+        schema = TestClient(app).get("/openapi.json").json()
+        position = schema["components"]["schemas"]["ServerContainer"]["properties"][
+            "position"
+        ]
+        assert position["type"] == "array"
+        assert position["minItems"] == 2
+        assert position["maxItems"] == 2
