@@ -8,10 +8,11 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict, Optional, Tuple
 from urllib.parse import parse_qs, urlparse, urlunparse
 
-from models import Base
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+
+from models import Base
 
 logger = logging.getLogger(__name__)
 

@@ -93,6 +93,7 @@ class TestShopRefresh:
     def test_shop_refresh_deterministic_with_seed(self, auth_client):
         """Test that shop generation is deterministic with the same seed"""
         from fastapi.testclient import TestClient
+
         from main import app
 
         # Create two different guest accounts

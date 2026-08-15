@@ -3,6 +3,7 @@ Tests for the GameSession model with inventory management
 """
 
 import pytest
+
 from inventory_manager import InventoryManager
 from main import GameSession
 

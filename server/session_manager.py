@@ -8,10 +8,11 @@ import random
 from datetime import timedelta
 from typing import List, Optional
 
+from sqlalchemy import delete, select, text
+
 from database import db_manager  # noqa: F401
 from models import BattleHistory, GameSession, User
 from schemas import GameSession as GameSessionPydantic
-from sqlalchemy import delete, select, text
 from utils import utc_now
 
 logger = logging.getLogger(__name__)

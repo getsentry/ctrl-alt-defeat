@@ -6,6 +6,7 @@ import random
 
 import pytest
 import pytest_asyncio
+
 from database import db_manager
 from schemas import ShopItem
 from session_manager import SessionManager
@@ -225,9 +226,10 @@ class TestSessionPersistence:
         # Cleanup - delete session and battle history
         await manager.delete_session(session.player_id)
         # Also clean up battle history
+        from sqlalchemy import delete
+
         from database import db_manager
         from models import BattleHistory
-        from sqlalchemy import delete
 
         async with db_manager.get_session() as db:
             await db.execute(
