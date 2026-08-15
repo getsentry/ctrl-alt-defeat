@@ -1003,7 +1003,7 @@ class TestPositionContractOverHttp:
         # The moved item must report the position we asked for
         assert response.json()["inventory_grid"][0]["position"] == SECOND_SQUARE
 
-    def test_move_to_storage_reports_null_position(self, auth_client):
+    def test_an_item_in_the_chest_carries_no_position(self, auth_client):
         """An item in the chest carries no position at all."""
         start = auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}

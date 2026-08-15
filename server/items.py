@@ -24,6 +24,8 @@ RARITY_COST = {
     "rare": 8,
     "epic": 12,
     "legendary": 20,
+    "godly": 30,
+    "unique": 30,
 }
 
 
@@ -133,13 +135,12 @@ class Item(BaseModel):
             item_type=item_type,
             name=spec.name,
             slug=spec.slug,
-            # A container is its own category, so the shop can tell them apart.
-            category="container"
-            if config_loader.has_container(item_type)
-            else spec.category,
+            category=spec.category,
             rarity=spec.rarity,
             cost=shop_cost(spec.rarity, tier),
-            is_container=config_loader.has_container(item_type),
+            # The catalogue gives a container its own category, so the flag
+            # follows from it rather than from a second lookup.
+            is_container=spec.category == "container",
             shape=shape_of(spec),
             description=describe(stats),
             **stats.model_dump(),
@@ -170,9 +171,11 @@ class PlacedItem(Item):
 
     def covered_squares(self) -> Shape:
         """The grid squares this item covers, once turned"""
-        turned = ItemShape(squares=list(self.shape)).rotate(self.rotation)
+        squares = self.shape
+        if self.rotation is not Rotation.NONE:
+            squares = ItemShape(squares=list(squares)).rotate(self.rotation).squares
         x, y = self.position
-        return [(x + dx, y + dy) for dx, dy in turned.squares]
+        return [(x + dx, y + dy) for dx, dy in squares]
 
     def stored(self) -> Item:
         """The same item, taken off the grid and put in the chest"""

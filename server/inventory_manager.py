@@ -45,13 +45,11 @@ class InventoryGrid:
         }
 
     def is_valid_placement(
-        self, position: Position, shape: Optional[List[Sequence[int]]] = None
+        self, position: Position, shape: Sequence[Sequence[int]]
     ) -> bool:
-        """Check if a position is valid for item placement, considering its shape"""
-        # If no shape provided, assume single square
-        if shape is None:
-            shape = [(0, 0)]
-
+        """
+        Check if an item of this shape fits at this position.
+        """
         covered = self._container_squares()
 
         # Check all squares the item would occupy

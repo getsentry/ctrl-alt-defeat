@@ -18,6 +18,8 @@ from items import Item
 from tests.test_utils import find_bad_positions
 from utils import dump_all
 
+ONE_SQUARE = [(0, 0)]
+
 
 class TestInventoryGrid:
     """Test the 9x7 grid management with server containers"""
@@ -47,24 +49,40 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # Valid placements (on servers)
-        assert grid.is_valid_placement((2, 3)) is True  # Container A top-left
-        assert grid.is_valid_placement((3, 4)) is True  # Container A bottom-right
-        assert grid.is_valid_placement((4, 3)) is True  # Container B top-left
-        assert grid.is_valid_placement((5, 4)) is True  # Container B bottom-right
-        assert grid.is_valid_placement((6, 3)) is True  # Container C top-left
-        assert grid.is_valid_placement((7, 4)) is True  # Container C bottom-right
+        assert (
+            grid.is_valid_placement((2, 3), ONE_SQUARE) is True
+        )  # Container A top-left
+        assert (
+            grid.is_valid_placement((3, 4), ONE_SQUARE) is True
+        )  # Container A bottom-right
+        assert (
+            grid.is_valid_placement((4, 3), ONE_SQUARE) is True
+        )  # Container B top-left
+        assert (
+            grid.is_valid_placement((5, 4), ONE_SQUARE) is True
+        )  # Container B bottom-right
+        assert (
+            grid.is_valid_placement((6, 3), ONE_SQUARE) is True
+        )  # Container C top-left
+        assert (
+            grid.is_valid_placement((7, 4), ONE_SQUARE) is True
+        )  # Container C bottom-right
 
         # Invalid placements (not on servers)
-        assert grid.is_valid_placement((0, 0)) is False  # Empty space
-        assert grid.is_valid_placement((1, 3)) is False  # Left of containers
-        assert grid.is_valid_placement((8, 3)) is False  # Right of containers
-        assert grid.is_valid_placement((4, 2)) is False  # Above containers
-        assert grid.is_valid_placement((4, 5)) is False  # Below containers
+        assert grid.is_valid_placement((0, 0), ONE_SQUARE) is False  # Empty space
+        assert (
+            grid.is_valid_placement((1, 3), ONE_SQUARE) is False
+        )  # Left of containers
+        assert (
+            grid.is_valid_placement((8, 3), ONE_SQUARE) is False
+        )  # Right of containers
+        assert grid.is_valid_placement((4, 2), ONE_SQUARE) is False  # Above containers
+        assert grid.is_valid_placement((4, 5), ONE_SQUARE) is False  # Below containers
 
         # Out of bounds
-        assert grid.is_valid_placement((-1, 0)) is False
-        assert grid.is_valid_placement((9, 0)) is False
-        assert grid.is_valid_placement((0, 7)) is False
+        assert grid.is_valid_placement((-1, 0), ONE_SQUARE) is False
+        assert grid.is_valid_placement((9, 0), ONE_SQUARE) is False
+        assert grid.is_valid_placement((0, 7), ONE_SQUARE) is False
 
     def test_place_item(self):
         """Test placing items on the grid"""

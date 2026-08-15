@@ -727,7 +727,14 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
     # Serialize player and enemy inventories for client display
     def to_placed(item: BattleItem) -> PlacedItem:
-        """The battle engine's item, as the item the client already knows"""
+        """
+        The battle engine's item, as the item the client already knows.
+
+        This rebuilds from the catalogue, so anything held on the instance
+        rather than on the type is dropped. That is safe while an item is only
+        ever a plain catalogue entry, and it stops being safe as soon as one
+        carries sockets or an upgrade.
+        """
         return Item.of(item.spec.id, item.uid).placed_at(item.position, item.rotation)
 
     if "player1_items" in battle_result:
