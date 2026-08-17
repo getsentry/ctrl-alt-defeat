@@ -7,6 +7,8 @@ import os
 # Enable TEST_MODE for testing
 os.environ["TEST_MODE"] = "true"
 
+from tests.conftest import SHOP_SEED  # noqa: E402
+
 
 class TestShopRefresh:
     def test_shop_always_has_five_items(self, auth_client):
@@ -201,3 +203,47 @@ if __name__ == "__main__":
     test.test_shop_refresh_deterministic_with_seed()
     test.test_shop_reset_on_new_round()
     print("✅ All shop refresh tests passed!")
+
+
+class TestRefreshCountAcrossRounds:
+    """The roll counter belongs to a round, not to a winning streak"""
+
+    def test_losing_a_battle_still_resets_the_roll_count(self, auth_client):
+        """A loss used to carry the count into the next round.
+
+        Rolls cost more once you have had four in a round, so carrying the
+        count charged the higher price from the first roll of the next round,
+        on top of the life the player had just lost.
+        """
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
+        )
+        assert response.status_code == 200
+
+        # Roll a few times so the count is definitely not zero
+        for _ in range(3):
+            assert auth_client.post("/shop/refresh", json={"round": 1}).status_code == 200
+        assert auth_client.get("/session").json()["shop_refresh_count"] == 3
+
+        # One cheap item, because a battle needs a non-empty grid, then lose
+        # it. Difficulty 2 fields two items against our one; difficulty 3 is
+        # unimplemented and returns None, which crashes the battle endpoint.
+        shop = auth_client.get("/session").json()["current_shop"]
+        cheapest = min(
+            (i for i in shop if i and not i["is_container"]), key=lambda i: i["cost"]
+        )
+        assert (
+            auth_client.post(
+                "/purchase/item",
+                json={"item_id": cheapest["id"], "target_position": [2, 3]},
+            ).status_code
+            == 200
+        )
+
+        response = auth_client.post(
+            "/battle/simulate", json={"seed": 7, "test_ai_difficulty": 2}
+        )
+        assert response.status_code == 200
+        assert response.json()["battle_result"]["winner"] == 2, "expected a loss"
+
+        assert auth_client.get("/session").json()["shop_refresh_count"] == 0

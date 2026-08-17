@@ -641,9 +641,9 @@ async def simulate_battle(
         return ROUND_GOLD[index]
 
     session.round += 1  # Advance to next round
+    session.shop_refresh_count = 0
     if battle_result["winner"] == 1:  # Player won
         session.wins += 1
-        session.shop_refresh_count = 0  # Reset refresh counter for new round
     else:
         session.losses += 1
         session.lives -= 1  # Lose a life on defeat
