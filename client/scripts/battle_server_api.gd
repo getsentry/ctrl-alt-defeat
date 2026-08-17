@@ -24,23 +24,6 @@ var _user_id: int = 0
 
 # Testing support - using real server for tests
 
-# Action codes from server (matching Python ACTION_CODES)
-const ACTION_CODES = {
-	"START": "s",
-	"ACTIVATE": "a",
-	"DAMAGE": "d",
-	"MISS": "m",
-	"CRIT": "c",
-	"HEAL": "h",
-	"BLOCK": "b",
-	"CPU_FAIL": "cf",
-	"BUFF": "bf",
-	"DEBUFF": "df",
-	"DOT": "dt",
-	"REFLECT": "r",
-	"DEATH": "x"
-}
-
 func _ready():
 	# Check for environment variable to override server URL (for testing)
 	var env_url = OS.get_environment("BATTLE_SERVER_URL")

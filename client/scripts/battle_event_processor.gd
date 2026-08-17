@@ -105,34 +105,46 @@ func _process_event(event: APITypes.BattleAction):
 	var log_color = Color.WHITE
 
 	match action:
-		"a":
-			log_msg = "[%.1fs] Player %d activates %s" % [event_time, player, item_name]
-			log_color = Color(0.7, 0.7, 1.0)  # Light blue for activations
-		"d", "damage":
+		"damage":
 			var attacker = 1 if player == 2 else 2  # Player who TAKES damage is opposite of attacker
 			log_msg = "[%.1fs] Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player]
 			log_color = Color(1.0, 0.5, 0.5) if player == 1 else Color(1.0, 0.7, 0.7)  # Red for damage
-		"h", "heal":
+		"heal":
 			log_msg = "[%.1fs] Player %d's %s heals %d HP" % [event_time, player, item_name, event.damage]
 			log_color = Color(0.5, 1.0, 0.5)  # Green for healing
-		"x", "player_defeated":
+		"player_defeated":
 			log_msg = "[%.1fs] Player %d DIES!" % [event_time, player]
 			log_color = Color(1.0, 0.2, 0.2)  # Dark red for death
-		"s", "battle_start":
+		"battle_start":
 			log_msg = "[%.1fs] Battle starts!" % [event_time]
 			log_color = Color(1.0, 1.0, 0.5)  # Yellow for battle start
-		"b", "block":
+		"block":
 			var attacker = 1 if player == 2 else 2
 			log_msg = "[%.1fs] Player %d's attack BLOCKED by Player %d's %s (%d damage blocked)" % [event_time, attacker, player, item_name, event.damage]
 			log_color = Color(0.5, 0.8, 1.0)  # Light blue for blocks
-		"m", "miss":
+		"miss":
 			var attacker = 1 if player == 2 else 2
 			log_msg = "[%.1fs] Player %d's %s MISSES Player %d" % [event_time, attacker, item_name, player]
 			log_color = Color(0.7, 0.7, 0.7)  # Gray for misses
-		"c", "critical_hit":
+		"critical_hit":
 			var attacker = 1 if player == 2 else 2
 			log_msg = "[%.1fs] CRITICAL! Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player]
 			log_color = Color(1.0, 0.8, 0.2)  # Orange for crits
+		"buff":
+			log_msg = "[%.1fs] Player %d's %s grants %s" % [event_time, player, item_name, event.details["buff_name"]]
+			log_color = Color(0.6, 1.0, 0.8)  # Mint for buffs
+		"debuff":
+			log_msg = "[%.1fs] Player %d is afflicted with %s" % [event_time, player, event.details["debuff_name"]]
+			log_color = Color(0.8, 0.5, 1.0)  # Purple for debuffs
+		"dot":
+			log_msg = "[%.1fs] Player %d takes %d damage from %s" % [event_time, player, event.damage, event.details["debuff_name"]]
+			log_color = Color(0.8, 0.4, 0.6)  # Sickly pink for damage over time
+		"consume":
+			log_msg = "[%.1fs] Player %d's %s is used up" % [event_time, player, item_name]
+			log_color = Color(0.7, 0.7, 0.7)  # Gray, the item is spent
+		"cpu_fail":
+			log_msg = "[%.1fs] Player %d's %s could not run: not enough CPU" % [event_time, player, item_name]
+			log_color = Color(1.0, 0.6, 0.2)  # Amber for a throttle
 		_:
 			log_msg = "[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage]
 			log_color = Color.WHITE
@@ -142,14 +154,10 @@ func _process_event(event: APITypes.BattleAction):
 	log_message.emit(log_msg, log_color)
 
 	match action:
-		"s", "battle_start":  # Start
+		"battle_start":
 			battle_started.emit()
 
-		"a":  # Activate
-			var item_id = event.source
-			item_activated.emit(item_id, player)
-
-		"d", "damage":  # Damage
+		"damage":
 			var damage = event.damage
 			var damage_source = event.source if event.source else "Unknown"
 			# Calculate remaining HP based on current HP
@@ -160,7 +168,7 @@ func _process_event(event: APITypes.BattleAction):
 				player2_hp = remaining
 			damage_dealt.emit(player, damage, remaining, damage_source)
 
-		"h":  # Heal
+		"heal":
 			# Get heal amount from damage field
 			var amount = event.damage
 			var remaining = (player1_hp if player == 1 else player2_hp) + amount
@@ -170,42 +178,36 @@ func _process_event(event: APITypes.BattleAction):
 				player2_hp = min(remaining, player2_max_hp)
 			healing_done.emit(player, amount, remaining)
 
-		"b", "block":  # Block
+		"block":
 			var amount = event.damage
 			block_activated.emit(player, amount)
 
-		"bf":  # Buff
-			var buff_name = ""
-			if not event.details.is_empty():
-				buff_name = event.details.get("buff", "")
-			buff_applied.emit(player, buff_name)
+		"buff":
+			buff_applied.emit(player, event.details["buff_name"])
 
-		"df":  # Debuff
-			var debuff_name = ""
-			if not event.details.is_empty():
-				debuff_name = event.details.get("debuff", "")
-			debuff_applied.emit(player, debuff_name)
+		"debuff":
+			debuff_applied.emit(player, event.details["debuff_name"])
 
-		"cf":  # CPU Fail
-			# Visual indicator that item couldn't activate due to CPU
+		"cpu_fail":
+			# Nothing to show yet: the item simply did not activate
 			pass
 
-		"x", "player_defeated":  # Death
+		"player_defeated":
 			player_died.emit(player)
 			if player == 1:
 				player1_hp = 0
 			else:
 				player2_hp = 0
 
-		"m", "miss":  # Miss
+		"miss":
 			# Show miss animation
 			pass
 
-		"c":  # Crit
+		"critical_hit":
 			# Show critical hit effect
 			pass
 
-		"dt":  # DoT (damage over time)
+		"dot":
 			var damage = event.damage
 			var dot_source = event.source if event.source else "DoT"
 			if player == 1:
@@ -213,10 +215,6 @@ func _process_event(event: APITypes.BattleAction):
 			else:
 				player2_hp = max(0, player2_hp - damage)
 			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp, dot_source)
-
-		"r":  # Reflect
-			# Show reflect animation
-			pass
 
 	event_processed.emit(event)
 

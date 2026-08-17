@@ -250,3 +250,114 @@ func test_a_defeat_puts_health_at_zero():
 	processor.skip_to_end()
 
 	assert_eq(processor.player2_hp, 0, "A defeated player should be on zero")
+
+
+func test_healing_reaches_the_health_bar():
+	GameStateManager.current_round = 1
+	var quota = GameStateManager.get_round_quota()
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "damage", "damage": 6, "player": 1}),
+		_action({"timestamp": 100, "action": "heal", "damage": 4, "player": 1})
+	]))
+	watch_signals(processor)
+
+	processor.skip_to_end()
+
+	assert_eq(processor.player1_hp, quota - 2, "A heal should put health back")
+	assert_signal_emitted(processor, "healing_done", "A heal should be announced")
+
+
+func test_a_heal_cannot_take_health_past_full():
+	GameStateManager.current_round = 1
+	var quota = GameStateManager.get_round_quota()
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "heal", "damage": 99, "player": 1})
+	]))
+
+	processor.skip_to_end()
+
+	assert_eq(processor.player1_hp, quota, "Health should stop at full")
+
+
+func test_a_buff_is_announced_by_name():
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "buff", "player": 1,
+			"details": {"buff_name": "speed", "actual_value": 0.2}})
+	]))
+	watch_signals(processor)
+
+	processor.skip_to_end()
+
+	# The name comes from the server's details, which the client used to read
+	# under the wrong key.
+	assert_signal_emitted_with_parameters(processor, "buff_applied", [1, "speed"])
+
+
+func test_a_debuff_is_announced_by_name():
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "debuff", "player": 2,
+			"details": {"debuff_name": "memory_leaked", "actual_value": 1}})
+	]))
+	watch_signals(processor)
+
+	processor.skip_to_end()
+
+	assert_signal_emitted_with_parameters(
+		processor, "debuff_applied", [2, "memory_leaked"])
+
+
+func test_damage_over_time_wears_health_down():
+	GameStateManager.current_round = 1
+	var quota = GameStateManager.get_round_quota()
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "dot", "damage": 3, "player": 2,
+			"details": {"debuff_name": "memory_leaked"}})
+	]))
+
+	processor.skip_to_end()
+
+	assert_eq(processor.player2_hp, quota - 3, "Damage over time should still hurt")
+
+
+# ============ The client knows every action the server can send ============
+
+func test_the_client_handles_every_action_the_server_declares():
+	# The server publishes its action names as an enum in its OpenAPI schema.
+	# Anything in there that the client does not recognise falls through to the
+	# generic log line, which is exactly how heals, buffs and debuffs were lost.
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.request(OS.get_environment("BATTLE_SERVER_URL") + "/openapi.json")
+	var result = await http.request_completed
+	assert_eq(result[1], 200, "Should be able to read the server's schema")
+	http.queue_free()
+
+	var schema = JSON.parse_string(result[3].get_string_from_utf8())
+	var declared = schema["components"]["schemas"]["BattleActionName"]["enum"]
+	assert_gt(declared.size(), 0, "The server should declare its action names")
+
+	# What a well-formed action of each kind carries. Anything not listed here
+	# needs no details.
+	var details_for = {
+		"buff": {"buff_name": "speed", "actual_value": 0.2},
+		"debuff": {"debuff_name": "memory_leaked", "actual_value": 1},
+		"dot": {"debuff_name": "memory_leaked"},
+		"cpu_fail": {"reason": "Insufficient CPU"}
+	}
+
+	for action_name in declared:
+		var messages: Array = []
+		var record = func(message: String, _colour: Color): messages.append(message)
+		processor.log_message.connect(record)
+
+		processor.load_battle_events(_battle([_action({
+			"action": action_name, "player": 1, "damage": 1,
+			"details": details_for.get(action_name, null)
+		})]))
+		processor.skip_to_end()
+		processor.log_message.disconnect(record)
+
+		assert_eq(messages.size(), 1, "One action should log one line")
+		assert_false("Action=" in messages[0],
+			"The client should recognise '%s', not fall through to the generic line"
+				% action_name)

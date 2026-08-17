@@ -2,6 +2,7 @@
 Pydantic schemas for API request/response models
 """
 
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -106,12 +107,36 @@ class InventoryData(BaseModel):
     servers: List[Container] = Field(description="Server containers")
 
 
+class BattleActionName(str, Enum):
+    """
+    Everything that can happen in a battle.
+
+    The client matches these names, so the set is the contract between the two.
+    Adding one here without teaching the client about it leaves the client
+    silently ignoring it, which is how heals once reached the log but never the
+    health bar.
+    """
+
+    BATTLE_START = "battle_start"
+    DAMAGE = "damage"
+    CRITICAL_HIT = "critical_hit"
+    MISS = "miss"
+    HEAL = "heal"
+    BLOCK = "block"
+    BUFF = "buff"
+    DEBUFF = "debuff"
+    DOT = "dot"
+    CONSUME = "consume"
+    CPU_FAIL = "cpu_fail"
+    PLAYER_DEFEATED = "player_defeated"
+
+
 class BattleAction(BaseModel):
     """Single action in battle timeline"""
 
     timestamp: int = Field(description="Time in milliseconds")
     source: str = Field(description="Item that triggered the action")
-    action: str = Field(description="Action type")
+    action: BattleActionName = Field(description="What happened")
     target: Optional[str] = Field(description="Target item")
     damage: Optional[int] = Field(description="Damage dealt")
     player: int = Field(description="Player 1 or 2")

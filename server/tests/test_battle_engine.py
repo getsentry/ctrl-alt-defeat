@@ -5,11 +5,13 @@ Comprehensive tests for battle engine to ensure it matches Game Design Document
 from copy import deepcopy
 
 import pytest
+from pydantic import ValidationError
 
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator, Player
 from containers import Container
 from grid_system import SHAPES
 from item_effects import ItemSpec, PassiveTrigger, TimerTrigger
+from schemas import BattleAction
 
 # A battle with no seed uses the clock, which makes every run a different
 # battle. Tests pin it so a failure is reproducible.
@@ -224,6 +226,37 @@ class TestGameDesignCompliance:
 
         # problem1 is adjacent to 2 other problems, so 3 total = bug swarm
         assert problem1.damage_mult == 1.2  # +20% damage
+
+    def test_an_action_name_the_client_does_not_know_cannot_be_built(self):
+        fields = dict(
+            timestamp=0, source="x", target=None, damage=1, player=1, details=None
+        )
+
+        assert BattleAction(action="heal", **fields).action == "heal"
+
+        with pytest.raises(ValidationError):
+            BattleAction(action="h", **fields)
+        with pytest.raises(ValidationError):
+            BattleAction(action="something_new", **fields)
+
+    def test_a_buff_names_itself_the_way_the_client_reads_it(self):
+        sim = BattleSimulator(seed=0)
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            [
+                BattleItem(
+                    spec=deepcopy(ITEM_CATALOG["system_restore"]), position=(0, 0)
+                )
+            ],
+            [BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(4, 0))],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
+
+        buffs = [a for a in result["actions"] if a.action == "buff"]
+        assert buffs, "Seed 0 should produce a buff"
+        assert buffs[0].details["buff_name"] == "speed"
 
     def test_compact_action_format(self):
         """Test Section 10.2: Compact action log format - now using BattleAction models"""

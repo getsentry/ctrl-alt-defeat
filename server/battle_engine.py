@@ -39,23 +39,6 @@ except ImportError:
     OnAttackedTrigger = None
     ShieldBlockEffect = None
 
-# Compact action codes for minimal payload (Section 10.2)
-ACTION_CODES = {
-    "START": "s",  # Battle start
-    "ACTIVATE": "a",  # Item activates
-    "DAMAGE": "d",  # Damage dealt to player
-    "MISS": "m",  # Attack missed
-    "CRIT": "c",  # Critical hit
-    "HEAL": "h",  # Healing
-    "BLOCK": "b",  # Damage blocked
-    "CPU_FAIL": "cf",  # CPU throttled
-    "BUFF": "bf",  # Buff applied
-    "DEBUFF": "df",  # Debuff applied
-    "DOT": "dt",  # Damage over time (poison)
-    "REFLECT": "r",  # Damage reflected
-    "DEATH": "x",  # Player defeated
-}
-
 # BattleItem will reference the new ItemSpec from item_effects.py
 
 
@@ -847,7 +830,7 @@ class BattleSimulator:
                         target=None,
                         damage=damage,
                         player=player.id,
-                        details={"debuff": "memory_leaked"},
+                        details={"debuff_name": "memory_leaked"},
                     )
                 )
 
