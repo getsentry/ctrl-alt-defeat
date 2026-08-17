@@ -752,7 +752,7 @@ func test_server_connection():
 	var game_ui = get_tree().current_scene
 	if game_ui and game_ui.name == "UnifiedGridUI":
 		assert_true(BattleServerAPI.player_id != "", "Should have player ID from server")
-		assert_true(BattleServerAPI.session_data.size() > 0, "Should have session data from server")
+		assert_gt(GameStateManager.current_shop.size(), 0, "Should have a shop from the server")
 		print("   ✓ Server connection successful")
 	else:
 		# Connection might have failed

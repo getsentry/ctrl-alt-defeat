@@ -14,7 +14,6 @@ var BASE_URL = "http://localhost:8000"
 
 var http_request: HTTPRequest
 var player_id: String = ""
-var session_data: Dictionary = {}
 var last_response_code: int = 0
 var last_response_body: PackedByteArray
 
@@ -39,7 +38,6 @@ func _ready():
 func reset_for_test():
 	# Reset everything to force a completely new session
 	player_id = ""
-	session_data = {}
 	_auth_token = ""  # Force re-authentication
 	_user_id = 0
 
@@ -101,14 +99,6 @@ func start_session(player_name: String = "", game_seed: int = -1) -> APITypes.Se
 			# Store player_id
 			player_id = response.player_id
 
-			# Store session data for internal use
-			session_data = {
-				"player_id": response.player_id,
-				"round": response.session.round,
-				"gold": response.session.gold,
-				"current_shop": response.session.current_shop
-			}
-
 			session_started.emit(response)
 			return response
 
@@ -157,7 +147,7 @@ func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResponse:
 
 	var body_dict = {}
 
-	print("Sending battle request for round %d" % session_data.get("round", 1))
+	print("Sending battle request for round %d" % GameStateManager.current_round)
 
 	var body = JSON.stringify(body_dict)
 
@@ -175,11 +165,6 @@ func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResponse:
 
 			# Create typed BattleResponse per server schema
 			var battle_response = APITypes.BattleResponse.new(data)
-
-			# Update session data from typed session_update
-			var session_update = battle_response.session_update
-			session_data["round"] = session_update.round
-			session_data["gold"] = session_update.gold
 
 			# Emit battle_result signal but return full response
 			battle_completed.emit(battle_response.battle_result)
@@ -228,8 +213,6 @@ func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 		if parse_result == OK:
 			var data = json.data
 			var response = APITypes.ShopRefreshResponse.new(data)
-			session_data["current_shop"] = response.shop
-			session_data["gold"] = response.gold
 			shop_refreshed.emit(response)
 			return response
 
@@ -273,7 +256,6 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 			var data = json.data
 			response = APITypes.PurchaseResponse.new(data)
 			# HTTP 200 means success
-			session_data["gold"] = response.gold
 			print("DEBUG: Purchase successful, gold now: %d" % response.gold)
 			purchase_completed.emit(response)
 			return response
@@ -314,7 +296,6 @@ func sell_item(item_id: String) -> APITypes.SellResponse:
 		if parse_result == OK:
 			var data = json.data
 			response = APITypes.SellResponse.new(data)
-			session_data["gold"] = response.gold
 			sell_completed.emit(response)
 			return response
 

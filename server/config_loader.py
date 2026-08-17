@@ -246,9 +246,6 @@ class ConfigLoader:
         """Get a container by ID"""
         return self.containers[container_id]
 
-    def has_container(self, container_id: str) -> bool:
-        return container_id in self.containers
-
     def get_item(self, item_id: str) -> ItemSpec:
         """Get an item by ID"""
         return self.items.get(item_id)

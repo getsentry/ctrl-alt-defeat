@@ -343,9 +343,6 @@ func _show_attack_animation(from_player: bool):
 	tween.tween_property(effect, "modulate:a", 0.0, 0.2)
 	tween.tween_callback(effect.queue_free)
 
-func _add_to_log(text: String):
-	battle_log_container.append_text(text + "\n")
-
 func _on_log_message(message: String, color: Color):
 	# Add colored message to battle log
 	battle_log_container.push_color(color)

@@ -5,7 +5,20 @@ const Presentation = preload("res://scripts/presentation.gd")
 signal error_displayed(message: String)
 signal error_cleared()
 
-var error_queue: Array[Dictionary] = []
+
+# An error waiting to be shown.
+class QueuedError extends RefCounted:
+	var message: String
+	var duration: float
+	var raised_at: int  # milliseconds since start, for ordering a burst
+
+	func _init(text: String, seconds: float):
+		message = text
+		duration = seconds
+		raised_at = Time.get_ticks_msec()
+
+
+var error_queue: Array[QueuedError] = []
 var current_error_ui = null
 var error_display_time: float = 3.0
 
@@ -19,11 +32,7 @@ func show_error(message: String, duration: float = 3.0):
 	print("[ERROR] " + message)
 
 	# Add to queue
-	error_queue.append({
-		"message": message,
-		"duration": duration,
-		"timestamp": Time.get_ticks_msec()
-	})
+	error_queue.append(QueuedError.new(message, duration))
 
 	# Process queue if not already showing an error
 	if current_error_ui == null:
@@ -47,8 +56,8 @@ func _process_error_queue():
 	if error_queue.is_empty():
 		return
 
-	var error_data = error_queue.pop_front()
-	_display_error_ui(error_data.message, error_data.duration)
+	var queued: QueuedError = error_queue.pop_front()
+	_display_error_ui(queued.message, queued.duration)
 
 func _display_error_ui(message: String, duration: float):
 	"""Create and display error UI overlay"""

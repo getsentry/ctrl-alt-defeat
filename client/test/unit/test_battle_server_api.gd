@@ -9,17 +9,14 @@ extends GutTest
 const APITypes = preload("res://scripts/api_types.gd")
 
 var _saved_player_id: String
-var _saved_session_data: Dictionary
 
 
 func before_each():
 	_saved_player_id = BattleServerAPI.player_id
-	_saved_session_data = BattleServerAPI.session_data.duplicate(true)
 
 
 func after_each():
 	BattleServerAPI.player_id = _saved_player_id
-	BattleServerAPI.session_data = _saved_session_data
 
 
 # ============ Where it points ============
@@ -60,12 +57,12 @@ func test_reset_clears_everything_from_the_last_run():
 	# Without a full reset a test would inherit the previous test's guest
 	# account and session.
 	BattleServerAPI.player_id = "99"
-	BattleServerAPI.session_data = {"round": 5, "gold": 40}
+	BattleServerAPI._auth_token = "stale"
+	BattleServerAPI._user_id = 7
 
 	BattleServerAPI.reset_for_test()
 
 	assert_eq(BattleServerAPI.player_id, "", "Resetting should drop the player id")
-	assert_eq(BattleServerAPI.session_data, {}, "Resetting should drop the cached session")
 	assert_eq(BattleServerAPI._auth_token, "", "Resetting should drop the token")
 	assert_eq(BattleServerAPI._user_id, 0, "Resetting should drop the user")
 
