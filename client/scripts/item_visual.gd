@@ -239,14 +239,6 @@ func _notification(what):
 	if what == NOTIFICATION_PREDELETE or what == NOTIFICATION_EXIT_TREE:
 		_hide_tooltip()
 
-func _refresh_visual():
-	"""Refresh the visual after color changes"""
-	_create_visual()
-
-func get_item_data():
-	"""Get the item data associated with this visual"""
-	return item_data
-
 # Static helper function for creating shop item previews
 static func create_shop_preview(item_data: Dictionary, size: Vector2 = Vector2(60, 60)) -> Control:
 	"""Create a simplified visual for shop display"""

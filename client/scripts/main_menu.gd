@@ -97,10 +97,6 @@ func _on_start_game():
 	# Go to shop/inventory screen
 	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")
 
-func _on_settings():
-	print("Settings not implemented yet")
-	# TODO: Create settings menu
-
 func _on_exit():
 	get_tree().quit()
 

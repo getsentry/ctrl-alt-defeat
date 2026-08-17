@@ -20,15 +20,6 @@ const STORAGE_HEIGHT = 2
 var actual_cell_size: float = CELL_SIZE
 var actual_cell_spacing: float = CELL_SPACING
 
-func get_cell_size() -> float:
-	return actual_cell_size
-
-func get_cell_spacing() -> float:
-	return actual_cell_spacing
-
-func get_cell_total() -> float:
-	return actual_cell_size + actual_cell_spacing
-
 # Signal handlers for InventoryGrid
 func _on_item_placed(item_data, grid_pos: Vector2i):
 	"""Called when an item is placed in the inventory grid"""
@@ -575,51 +566,6 @@ func _end_shop_drag(drop_position: Vector2):
 		drag_preview = null
 	dragging_shop_item = null
 	dragging_shop_data = null
-
-func _try_purchase_from_shop(shop_item: Panel, item_data: APITypes.Item):
-	# Don't allow purchasing sold items
-	if shop_item.modulate.a < 1.0:
-		print("This item has already been sold")
-		return
-
-	# Check if player has enough gold
-	var cost = item_data.cost
-	if GameStateManager.gold < cost:
-		print("Not enough gold! Need %d, have %d" % [cost, GameStateManager.gold])
-		return
-
-	# For now, just add the item to storage or first available spot
-	# TODO: Let player choose placement
-	if item_data.is_container:
-		# Add server container to inventory
-		print("Purchasing server container: ", item_data.name)
-		# TODO: Call server API to purchase and place container
-	else:
-		# Try to place item in first available spot
-		print("Purchasing item: ", item_data.name)
-		var item_id = item_data.id
-		if item_id:
-			# Debug: Check if we have any active grid spots
-			var active_count = 0
-			for y in range(inventory_grid.grid_height):
-				for x in range(inventory_grid.grid_width):
-					if inventory_grid.active_grid[y][x]:
-						active_count += 1
-			print("DEBUG: Found %d active grid cells" % active_count)
-			print("DEBUG: Number of containers: %d" % inventory_grid.containers.size())
-
-			# Try to find first valid placement spot
-			for y in range(inventory_grid.grid_height):
-				for x in range(inventory_grid.grid_width):
-					if inventory_grid.active_grid[y][x] and not inventory_grid.item_grid[y][x]:
-						# Found empty spot on a server, try to place here
-						print("DEBUG: Purchasing item %s at position [%d, %d]" % [item_id, x, y])
-						BattleServerAPI.purchase_item(item_id, [x, y])
-						_mark_shop_item_sold(shop_item)
-						return
-			# No space found
-			print("No space available for item!")
-
 
 func _mark_shop_item_sold(shop_item: Panel):
 	"""Mark a shop item as sold"""

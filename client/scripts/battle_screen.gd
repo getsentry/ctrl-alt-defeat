@@ -293,22 +293,6 @@ func _process(delta):
 
 		_update_stats_display()
 
-func _simulate_attack(is_player: bool):
-	if is_player:
-		if player_data.stamina >= 3:
-			player_data.stamina -= 3
-			var damage = randi_range(5, 10)
-			enemy_data.health = max(0, enemy_data.health - damage)
-			_add_to_log("[color=aqua]Player[/color] attacks for [color=yellow]%d[/color] damage!" % damage)
-			_show_attack_animation(true)
-	else:
-		if enemy_data.stamina >= 3:
-			enemy_data.stamina -= 3
-			var damage = randi_range(4, 8)
-			player_data.health = max(0, player_data.health - damage)
-			_add_to_log("[color=red]Enemy[/color] attacks for [color=yellow]%d[/color] damage!" % damage)
-			_show_attack_animation(false)
-
 var _effect_tweens: Array[Tween] = []
 
 
@@ -372,25 +356,6 @@ func _on_log_message(message: String, color: Color):
 
 	# Auto-scroll to bottom
 	battle_log_container.scroll_to_line(battle_log_container.get_line_count() - 1)
-
-func _on_start_battle():
-	if not battle_active:
-		battle_active = true
-		current_time = 0.0
-		_add_to_log("[color=green]Battle Started![/color]")
-
-func _end_battle():
-	battle_active = false
-
-	if player_data.health <= 0:
-		_add_to_log("[color=red]DEFEAT! You have been eliminated.[/color]")
-	elif enemy_data.health <= 0:
-		_add_to_log("[color=green]VICTORY! Enemy destroyed![/color]")
-	else:
-		_add_to_log("[color=yellow]TIME OUT! Battle ended.[/color]")
-
-func _on_back_to_inventory():
-	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")
 
 # Event handler functions for battle events
 func _on_battle_started():

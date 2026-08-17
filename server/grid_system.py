@@ -46,15 +46,6 @@ class ItemShape:
 
         return ItemShape(rotated_squares, self.name)
 
-    def get_bounds(self) -> Tuple[int, int]:
-        """Get width and height of the shape"""
-        if not self.squares:
-            return 0, 0
-        max_x = max(x for x, y in self.squares)
-        max_y = max(y for x, y in self.squares)
-        return max_x + 1, max_y + 1
-
-
 # Common item shapes
 SHAPES = {
     "1x1": ItemShape([(0, 0)], "1x1"),

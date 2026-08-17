@@ -151,27 +151,6 @@ func get_round_quota() -> int:
 	else:
 		return 150
 
-func get_gold_per_round() -> int:
-	# Get gold reward based on round
-	# From Game Design Document section 5.1
-	if current_round <= 3:
-		return 12
-	elif current_round <= 6:
-		return 14
-	elif current_round <= 9:
-		return 16
-	elif current_round <= 12:
-		return 18
-	else:
-		return 20
-
-func calculate_health_loss(enemy_remaining_hp: int) -> int:
-	# Calculate health loss based on remaining enemy HP
-	# Simple formula: 10 base + % of remaining enemy HP
-	var base_loss = 10
-	var percent_loss = int(enemy_remaining_hp * 0.2)  # 20% of remaining HP
-	return min(base_loss + percent_loss, 20)  # Cap at 20 damage
-
 func update_gold(amount: int) -> bool:
 	# Safely update gold with validation
 	if gold + amount < 0:
