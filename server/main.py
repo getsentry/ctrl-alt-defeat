@@ -205,9 +205,8 @@ async def shutdown_event():
 async def health_check() -> HealthResponse:
     """Health check endpoint for monitoring"""
     try:
-        # Check database connection
-        await db_manager.execute("SELECT 1")
-        db_status = "healthy"
+        reachable = await db_manager.health_check()
+        db_status = "healthy" if reachable else "unhealthy"
     except Exception as e:
         db_status = f"unhealthy: {str(e)}"
         if not TEST_MODE:

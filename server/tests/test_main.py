@@ -478,6 +478,35 @@ class TestContainerPurchase:
         )
 
 
+class TestHealthEndpoint:
+    """
+    Test /health, which the deploy platform watches.
+
+    It used to call db_manager.execute, which does not exist, so the exception
+    was caught and reported as an unhealthy database. The server had never once
+    said it was healthy.
+    """
+
+    def test_a_reachable_database_reports_healthy(self, auth_client):
+        response = auth_client.get("/health")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["database"] == "healthy", body["database"]
+        assert body["status"] == "healthy", body
+
+    def test_an_unreachable_database_reports_degraded(self, auth_client, monkeypatch):
+        async def cannot_reach():
+            return False
+
+        monkeypatch.setattr("main.db_manager.health_check", cannot_reach)
+
+        body = auth_client.get("/health").json()
+
+        assert body["database"] == "unhealthy"
+        assert body["status"] == "degraded"
+
+
 class TestSellItemAPI:
     """
     Test the /sell/item endpoint.
