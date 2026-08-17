@@ -473,3 +473,54 @@ class TestStoredPositions:
         assert manager.grid.containers[0].position == (2, 3)
         assert manager.grid.containers[0].shape == [(0, 0), (1, 0), (0, 1), (1, 1)]
         assert manager.grid.get_item_at((2, 3)).id == "item_1"
+
+
+class TestFailuresReachTheCaller:
+    """
+    A placement reports False only when the placement itself is wrong. Any other
+    fault travels up, so it is not reported to the player as a full grid.
+    """
+
+    def test_an_invalid_placement_reports_false(self):
+        manager = InventoryManager()
+
+        placed = manager.place_item(Item.of("null_blade", "item1"), placement=(0, 0))
+
+        assert placed is False, "Bare floor is not a placement"
+
+    def test_a_fault_that_is_not_a_placement_problem_is_raised(self, monkeypatch):
+        manager = InventoryManager()
+
+        def explode(*_args, **_kwargs):
+            raise RuntimeError("the grid is on fire")
+
+        monkeypatch.setattr(manager.grid, "place_item", explode)
+
+        with pytest.raises(RuntimeError, match="on fire"):
+            manager.place_item(Item.of("null_blade", "item1"), placement=(2, 3))
+
+    def test_removing_an_item_that_is_not_there_reports_nothing(self):
+        manager = InventoryManager()
+
+        assert manager.remove_item(item_id="no_such_item") is None
+
+    def test_a_fault_while_removing_is_raised(self, monkeypatch):
+        manager = InventoryManager()
+        manager.place_item(Item.of("null_blade", "item1"), placement=(2, 3))
+
+        def explode(*_args, **_kwargs):
+            raise RuntimeError("the grid is on fire")
+
+        monkeypatch.setattr(manager.grid, "remove_item_at", explode)
+
+        with pytest.raises(RuntimeError, match="on fire"):
+            manager.remove_item(location=(2, 3))
+
+    def test_a_failed_move_puts_the_item_back(self):
+        manager = InventoryManager()
+        manager.place_item(Item.of("null_blade", "item1"), placement=(2, 3))
+
+        with pytest.raises(InvalidPlacementError):
+            manager.move_item("item1", from_location=(2, 3), to_location=(0, 0))
+
+        assert manager.grid.get_item_at((2, 3)).id == "item1", "The item is back"

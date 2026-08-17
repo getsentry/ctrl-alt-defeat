@@ -170,7 +170,7 @@ class InventoryManager:
                 # Placement is grid coordinates
                 self.grid.place_item(item, placement)
             return True
-        except (InvalidPlacementError, Exception):
+        except InvalidPlacementError:
             return False
 
     def move_item(
@@ -210,8 +210,9 @@ class InventoryManager:
                 self.storage.add_item(item)
             else:
                 self.grid.place_item(item, to_location)
-        except (InvalidPlacementError, Exception):
-            # Restore item to original location on failure
+        except Exception:
+            # Whatever went wrong, the item goes back where it came from, and
+            # the caller still hears about it.
             if from_location == "storage":
                 self.storage.add_item(item)
             else:
@@ -251,7 +252,7 @@ class InventoryManager:
                         return self.grid.remove_item_at(grid_item.position)
 
             return None
-        except (ItemNotFoundError, Exception):
+        except ItemNotFoundError:
             return None
 
     def get_state(self) -> Dict:
