@@ -41,6 +41,7 @@ class Item extends Resource:
 	var cost: int = 0
 	# What the shop is charging today. Equal to cost unless it is on sale.
 	var price: int = 0
+	var sell_value: int = 0
 	# Only ever true of a shop offer. Buying it ends the sale.
 	var on_sale: bool = false
 	var is_container: bool = false
@@ -64,6 +65,7 @@ class Item extends Resource:
 		rarity = data["rarity"]
 		cost = int(data["cost"])
 		price = int(data["price"])
+		sell_value = int(data["sell_value"])
 		on_sale = data["on_sale"]
 		is_container = data["is_container"]
 		shape = data["shape"]
@@ -87,6 +89,7 @@ class Item extends Resource:
 			"rarity": rarity,
 			"cost": cost,
 			"price": price,
+			"sell_value": sell_value,
 			"on_sale": on_sale,
 			"is_container": is_container,
 			"shape": shape,

@@ -153,11 +153,12 @@ class Item(BaseModel):
         one number while the server charges another."""
         return sale_price(self.cost) if self.on_sale else self.cost
 
+    @computed_field
     @property
     def sell_value(self) -> int:
         """What selling it pays, whether or not it was bought on sale.
 
-        Not sent: nothing on the client shows it yet.
+        Sent for the prompt on the sell chest.
         """
         return sale_price(self.cost)
 

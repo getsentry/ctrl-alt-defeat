@@ -46,6 +46,10 @@ var grid_cells: Array = []   # Array[Array[Panel]]: the cell's background panel
 var items: Array[Control] = []  # The item visuals on the grid
 var containers: Array[PlacedContainer] = []
 
+# Where an item can be dropped to sell it. The parent owns the chest and
+# hands it over; the grid only needs somewhere to test the pointer against.
+var sell_zone: Control = null
+
 # Drag and drop state
 var dragging_object = null
 var drag_offset = Vector2.ZERO
@@ -59,6 +63,8 @@ signal item_clicked(item)
 signal item_placed(item_data, grid_pos)
 signal item_removed(item_data, grid_pos)
 signal item_sold(item_data)
+signal drag_started(item_data)
+signal drag_ended()
 signal item_moved(item_id, from_pos, to_pos)
 
 func _ready():
@@ -284,11 +290,6 @@ func _on_item_input(event: InputEvent, item_visual: Control):
 			else:
 				# End dragging
 				_end_drag()
-		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			# Right click to sell
-			var item_data = item_visual.get_meta("item_data")
-			item_sold.emit(item_data)
-			_remove_item(item_visual)
 
 func _start_drag(item_visual: Control):
 	"""Start dragging an item"""
@@ -297,6 +298,7 @@ func _start_drag(item_visual: Control):
 		return
 
 	dragging_object = item_visual
+	drag_started.emit(item_visual.get_meta("item_data"))
 	original_position = item_visual.position
 	original_grid_pos = item_visual.get_meta("grid_pos")
 	drag_offset = item_visual.position - get_local_mouse_position()
@@ -326,6 +328,15 @@ func _end_drag():
 	var temp_object = dragging_object
 	dragging_object = null
 	hover_preview.visible = false
+	drag_ended.emit()
+
+	# Dropped on the chest, so sell it rather than place it. The cells were
+	# already cleared when the drag began.
+	if sell_zone and sell_zone.get_global_rect().has_point(get_global_mouse_position()):
+		items.erase(temp_object)
+		temp_object.queue_free()
+		item_sold.emit(item_data)
+		return
 
 	# Check if we're trying to move to the same position - no-op
 	if grid_pos == original_grid_pos:

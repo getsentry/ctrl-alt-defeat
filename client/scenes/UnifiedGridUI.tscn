@@ -1,8 +1,9 @@
-[gd_scene load_steps=57 format=3 uid="uid://b6i7wck4p6ind"]
+[gd_scene load_steps=58 format=3 uid="uid://b6i7wck4p6ind"]
 
 [ext_resource type="Script" uid="uid://bsjwiwbja4ewd" path="res://scripts/unified_grid_ui.gd" id="1_unified"]
 [ext_resource type="Texture2D" uid="uid://c3y3cdghsx4wu" path="res://assets/ui/backgrounds/inventory_background.png" id="2_bg"]
 [ext_resource type="Texture2D" uid="uid://dt8utxaf3hedf" path="res://assets/characters/player_character_animation.png" id="3_nenkm"]
+[ext_resource type="Texture2D" uid="uid://p6rkneqswoo6" path="res://assets/ui/sell_chest.svg" id="6_chest"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_b08fh"]
 atlas = ExtResource("3_nenkm")
@@ -414,6 +415,35 @@ offset_left = 661.0
 offset_top = 779.0
 offset_right = 1053.0
 offset_bottom = 1008.0
+
+[node name="SellChest" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 1090.0
+offset_top = 800.0
+offset_right = 1330.0
+offset_bottom = 1000.0
+
+[node name="Chest" type="TextureRect" parent="SellChest"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 232.0
+offset_bottom = 144.0
+texture = ExtResource("6_chest")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Prompt" type="Label" parent="SellChest"]
+layout_mode = 0
+offset_top = 146.0
+offset_right = 240.0
+offset_bottom = 196.0
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 20
+text = "Drop here to sell"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
 
 [node name="ShopContainer" type="Control" parent="."]
 anchors_preset = 0

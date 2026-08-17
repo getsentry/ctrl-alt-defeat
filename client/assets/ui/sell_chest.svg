@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150" width="240" height="150">
+  <!-- The chest the player drops an item on to sell it. Lid ajar, so it
+       reads as somewhere to put something rather than a closed box. -->
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9c7043"/>
+      <stop offset="1" stop-color="#6b4a2b"/>
+    </linearGradient>
+    <linearGradient id="lid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b08551"/>
+      <stop offset="1" stop-color="#87603a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- shadow on the floor -->
+  <ellipse cx="120" cy="140" rx="88" ry="9" fill="#000000" opacity="0.25"/>
+
+  <!-- body -->
+  <rect x="38" y="62" width="164" height="72" rx="6" fill="url(#wood)"
+        stroke="#4a3320" stroke-width="3"/>
+
+  <!-- the dark of the inside, showing under the raised lid -->
+  <path d="M42 66 L198 66 L192 58 L48 58 Z" fill="#2b1d12"/>
+
+  <!-- lid, tilted back -->
+  <path d="M46 58 Q120 22 194 58 L188 50 Q120 16 52 50 Z"
+        fill="url(#lid)" stroke="#4a3320" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- iron bands -->
+  <g fill="#4f4237" stroke="#33291f" stroke-width="2">
+    <rect x="66" y="62" width="14" height="72"/>
+    <rect x="160" y="62" width="14" height="72"/>
+  </g>
+
+  <!-- lock plate -->
+  <rect x="106" y="82" width="28" height="26" rx="3"
+        fill="#c8a049" stroke="#7a5f22" stroke-width="2"/>
+  <circle cx="120" cy="93" r="4" fill="#3a2c14"/>
+  <rect x="118" y="93" width="4" height="9" fill="#3a2c14"/>
+
+  <!-- plank seams -->
+  <g stroke="#5c3f26" stroke-width="2" opacity="0.7">
+    <path d="M38 88 L202 88"/>
+    <path d="M38 112 L202 112"/>
+  </g>
+</svg>

@@ -34,7 +34,7 @@ func _on_item_removed(item_data, grid_pos: Vector2i):
 
 
 func _on_item_sold(item_data: APITypes.PlacedItem):
-	"""Called when an item is sold (right-clicked)"""
+	"""Called when an item is dropped on the sell chest"""
 	# The grid has already taken the item off, so put it back if the server
 	# refuses the sale. Otherwise the player loses the item and gets nothing.
 	var response = await BattleServerAPI.sell_item(item_data.id)
@@ -48,6 +48,15 @@ func _on_item_sold(item_data: APITypes.PlacedItem):
 	_update_stats()
 	_save_current_state()
 	print("Sold %s for %d gold" % [item_data.name, response.gold_gained])
+
+func _on_drag_started(item_data: APITypes.PlacedItem):
+	"""Name the price while the item is in hand, as the shop does."""
+	sell_chest.get_node("Prompt").text = "Drop here to sell for %d" % item_data.sell_value
+
+
+func _on_drag_ended():
+	sell_chest.get_node("Prompt").text = "Drop here to sell"
+
 
 func _on_item_moved(item_id: String, from_pos: Vector2i, to_pos: Vector2i):
 	"""Called after an item has been successfully moved within the inventory"""
@@ -115,6 +124,7 @@ var hover_preview: Panel = null  # For shop preview
 
 # UI References
 var shop_container: Control
+var sell_chest: Control
 var stats_label: Label
 var gold_preview_label: Label
 
@@ -234,6 +244,7 @@ func _create_shop_panel():
 	if hide_shop:
 		return
 	shop_container = $ShopContainer
+	sell_chest = $SellChest
 
 func _create_server_room():
 	# Panel already exists, just style it
@@ -266,6 +277,9 @@ func _create_server_room():
 	inventory_grid.item_removed.connect(_on_item_removed)
 	inventory_grid.item_sold.connect(_on_item_sold)
 	inventory_grid.item_moved.connect(_on_item_moved)
+	inventory_grid.drag_started.connect(_on_drag_started)
+	inventory_grid.drag_ended.connect(_on_drag_ended)
+	inventory_grid.sell_zone = sell_chest
 
 	# Set legacy references for compatibility
 	server_room_container = inventory_grid

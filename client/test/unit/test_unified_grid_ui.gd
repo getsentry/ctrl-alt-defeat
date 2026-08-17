@@ -382,3 +382,23 @@ func test_ready_and_refresh_buttons_are_wired():
 	assert_not_null(refresh_btn, "There should be a refresh button")
 	assert_gt(ready_btn.pressed.get_connections().size(), 0, "Ready should do something")
 	assert_gt(refresh_btn.pressed.get_connections().size(), 0, "Refresh should do something")
+
+
+# ============ Sell chest ============
+
+func test_the_chest_names_the_price_while_an_item_is_held():
+	var item = TestHelpers.placed_item({"name": "Null Blade", "sell_value": 4})
+	ui._on_drag_started(item)
+	assert_eq(ui.sell_chest.get_node("Prompt").text, "Drop here to sell for 4")
+
+
+func test_the_chest_stops_naming_a_price_once_the_item_is_down():
+	ui._on_drag_started(TestHelpers.placed_item({"sell_value": 4}))
+	ui._on_drag_ended()
+	assert_eq(ui.sell_chest.get_node("Prompt").text, "Drop here to sell")
+
+
+func test_the_grid_knows_where_the_chest_is():
+	# Without this the grid has nothing to test a drop against and every
+	# item goes back to its square.
+	assert_eq(ui.inventory_grid.sell_zone, ui.sell_chest)
