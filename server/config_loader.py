@@ -153,6 +153,8 @@ class ConfigLoader:
             shape=shape,
             triggers=triggers,
             rarity=config["rarity"],
+            color=config["color"],
+            pattern=config["pattern"],
         )
 
     def _parse_shape(self, shape_str: str) -> ItemShape:

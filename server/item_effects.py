@@ -314,5 +314,11 @@ class ItemSpec:
     # Item properties
     rarity: str = "common"  # common, uncommon, rare, epic, legendary, godly
 
+    # How the client draws this item while it has no artwork. Both are names,
+    # not values: see item_looks.py for the ones that exist. A container has
+    # neither, because it is drawn as the ground the items sit on.
+    color: str = ""
+    pattern: str = ""
+
     # Adjacency bonuses this item provides to neighbors
     adjacency_bonus: Optional[dict] = None

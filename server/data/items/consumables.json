@@ -4,6 +4,8 @@
     "health_potion": {
       "name": "Health Potion",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "solid",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "common",
@@ -31,6 +33,8 @@
     "cpu_booster": {
       "name": "CPU Booster",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "stripe_d_bold",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "uncommon",
@@ -55,6 +59,8 @@
     "emergency_patch": {
       "name": "Emergency Patch",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "dot_large_grid",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "rare",
@@ -86,6 +92,8 @@
     "data_packets": {
       "name": "Data Packets",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "stripe_v_bold",
       "class": "sentaur",
       "shape": "1x1",
       "rarity": "common",
@@ -112,6 +120,8 @@
     "ai_companion_core": {
       "name": "AI Companion Core",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "check_large",
       "class": "sentaur",
       "shape": "2x1",
       "rarity": "epic",
@@ -155,6 +165,8 @@
     "surveillance_drone": {
       "name": "Surveillance Drone",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "stripe_h_bold",
       "class": "sentaur",
       "shape": "1x1",
       "rarity": "uncommon",
@@ -179,6 +191,8 @@
     "data_crawler": {
       "name": "Data Crawler",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "hatch_diag",
       "class": "sentaur",
       "shape": "1x1",
       "rarity": "uncommon",
@@ -203,6 +217,8 @@
     "cache_spider": {
       "name": "Cache Spider",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "dot_small_stagger",
       "class": "sentaur",
       "shape": "1x1",
       "rarity": "uncommon",
@@ -226,6 +242,8 @@
     "healing_nanobots": {
       "name": "Healing Nanobots",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "chevron_up",
       "class": "sentaur",
       "shape": "1x1",
       "rarity": "common",
@@ -253,6 +271,8 @@
     "system_restore": {
       "name": "System Restore",
       "category": "consumable",
+      "color": "pink",
+      "pattern": "stripe_a_bold",
       "class": "sentaur",
       "shape": "1x1",
       "rarity": "rare",

@@ -4,6 +4,8 @@
     "error_monitoring": {
       "name": "Error Monitoring Shield",
       "category": "defense",
+      "color": "blue",
+      "pattern": "solid",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "common",
@@ -26,6 +28,8 @@
     "firewall": {
       "name": "Firewall",
       "category": "defense",
+      "color": "blue",
+      "pattern": "stripe_d_bold",
       "class": "neutral",
       "shape": "1x2",
       "rarity": "uncommon",
@@ -48,6 +52,8 @@
     "rate_limiter": {
       "name": "Rate Limiter",
       "category": "defense",
+      "color": "blue",
+      "pattern": "dot_large_grid",
       "class": "neutral",
       "shape": "2x1",
       "rarity": "rare",
@@ -76,6 +82,8 @@
     "encryption_layer": {
       "name": "Encryption Layer",
       "category": "defense",
+      "color": "blue",
+      "pattern": "stripe_v_bold",
       "class": "neutral",
       "shape": "2x2",
       "rarity": "epic",
@@ -106,6 +114,8 @@
     "quantum_firewall": {
       "name": "Quantum Firewall",
       "category": "defense",
+      "color": "blue",
+      "pattern": "check_large",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "legendary",
@@ -128,6 +138,8 @@
     "adaptive_mesh_armor": {
       "name": "Adaptive Mesh Armor",
       "category": "defense",
+      "color": "blue",
+      "pattern": "stripe_h_bold",
       "class": "sentaur",
       "shape": "2x1",
       "rarity": "uncommon",

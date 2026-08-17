@@ -4,6 +4,8 @@
     "emergency_hotfix": {
       "name": "Emergency Hotfix",
       "category": "patch",
+      "color": "yellow",
+      "pattern": "solid",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "rare",
@@ -24,6 +26,8 @@
     "memory_injection": {
       "name": "Memory Injection",
       "category": "patch",
+      "color": "yellow",
+      "pattern": "stripe_d_bold",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "epic",
@@ -46,6 +50,8 @@
     "security_hardening": {
       "name": "Security Hardening",
       "category": "patch",
+      "color": "yellow",
+      "pattern": "dot_large_grid",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "epic",
@@ -68,6 +74,8 @@
     "virus_payload": {
       "name": "Virus Payload",
       "category": "patch",
+      "color": "yellow",
+      "pattern": "stripe_v_bold",
       "class": "neutral",
       "shape": "1x1",
       "rarity": "epic",
@@ -91,6 +99,8 @@
     "performance_boost": {
       "name": "Performance Boost",
       "category": "patch",
+      "color": "yellow",
+      "pattern": "check_large",
       "class": "neutral",
       "shape": "1x2",
       "rarity": "legendary",
@@ -113,6 +123,8 @@
     "system_restore": {
       "name": "System Restore",
       "category": "patch",
+      "color": "yellow",
+      "pattern": "stripe_h_bold",
       "class": "neutral",
       "shape": "2x2",
       "rarity": "godly",
