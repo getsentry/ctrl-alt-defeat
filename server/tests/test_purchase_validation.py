@@ -4,6 +4,8 @@ Tests for purchase validation and placement
 
 import pytest
 
+from tests.conftest import SHOP_SEED
+
 
 class TestPurchaseValidation:
     """Test purchase request validation and item placement"""
@@ -188,9 +190,10 @@ class TestPurchaseValidation:
 
     def test_purchase_insufficient_gold(self, auth_client):
         """Test purchasing when player doesn't have enough gold"""
-        # Start session with deterministic seed
+        # Start session with a seed whose shop is all non-container items, so
+        # every one of them can go to storage and gold is what runs out.
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
         )
         data = response.json()
 

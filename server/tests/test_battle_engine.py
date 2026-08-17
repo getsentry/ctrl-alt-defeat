@@ -55,39 +55,39 @@ class TestGameDesignCompliance:
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
 
         # Starting CPU is 10
-        assert player.max_cpu == 10
+        assert player.max_cpu == 3
         assert player.cpu == 10.0  # Starts full per battle_engine initialization
 
         # CPU regeneration is 2/second
-        assert player.cpu_regen == 2.0
+        assert player.cpu_regen == 1.0
 
     def test_item_specifications(self):
         """Test Section 2: All items match specifications"""
-        # Test Null Pointer (Section 2.1)
+        # Null blade, from Wooden Sword (Section 2.3)
         np = ITEM_CATALOG["null_blade"]
         assert np.name == "Null blade"
         # Check it has a timer trigger with attack effect
         assert len(np.triggers) == 1
         assert isinstance(np.triggers[0], TimerTrigger)
-        assert np.triggers[0].cooldown == 2.5
-        assert np.triggers[0].cpu_cost == 3
+        assert np.triggers[0].cooldown == 1.4
+        assert np.triggers[0].cpu_cost == 1.0
         # Check attack effect
         attack_effect = np.triggers[0].effects[0]
-        assert attack_effect.min_damage == 4
-        assert attack_effect.max_damage == 8
-        assert attack_effect.accuracy == 0.85
+        assert attack_effect.min_damage == 1
+        assert attack_effect.max_damage == 3
+        assert attack_effect.accuracy == 0.9
         # Special attribute is optional
 
-        # Test Memory Leak (Section 2.1)
+        # Core Dumper, from Axe (Section 2.3)
         ml = ITEM_CATALOG["core_dumper"]
         assert len(ml.triggers) == 1
         assert isinstance(ml.triggers[0], TimerTrigger)
-        assert ml.triggers[0].cooldown == 3.0
-        assert ml.triggers[0].cpu_cost == 2
+        assert ml.triggers[0].cooldown == 2.0
+        assert ml.triggers[0].cpu_cost == 1.4
         attack_effect = ml.triggers[0].effects[0]
-        assert attack_effect.min_damage == 2
-        assert attack_effect.max_damage == 4
-        assert attack_effect.accuracy == 0.95
+        assert attack_effect.min_damage == 3
+        assert attack_effect.max_damage == 6
+        assert attack_effect.accuracy == 0.85
         # Special attribute is optional
 
         # Test Error Monitoring (Section 2.2)
@@ -335,8 +335,8 @@ class TestGameDesignCompliance:
         )
         sim._apply_infrastructure([quantum], player)
 
-        assert player.max_cpu == 20  # 10 base + 10 from JSON
-        assert player.cpu_regen == 5.0  # 2 base + 3 from JSON
+        assert player.max_cpu == 13  # 3 base + 10 from JSON
+        assert player.cpu_regen == 4.0  # 1 base + 3 from JSON
 
     def test_only_infrastructure_items_apply_stat_mods(self):
         """
@@ -351,8 +351,8 @@ class TestGameDesignCompliance:
         )
         sim._apply_infrastructure([autoscaler], player)
 
-        assert player.max_cpu == 10, "A protocol should not raise max CPU"
-        assert player.cpu_regen == 2.0, "A protocol should not raise CPU regen"
+        assert player.max_cpu == 3, "A protocol should not raise max CPU"
+        assert player.cpu_regen == 1.0, "A protocol should not raise CPU regen"
         # So no passive effects to test here
 
     def test_special_item_effects(self):

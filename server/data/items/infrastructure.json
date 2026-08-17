@@ -6,8 +6,12 @@
       "category": "infrastructure",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "*#*"
+      ],
+      "source": "Goobling",
       "rarity": "common",
-      "cost": 3,
+      "cost": 2,
       "triggers": [
         {
           "type": "timer",
@@ -29,6 +33,10 @@
       "category": "infrastructure",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "*##*"
+      ],
+      "source": "Gloves of Haste",
       "rarity": "rare",
       "cost": 4,
       "triggers": [
@@ -51,8 +59,13 @@
       "category": "infrastructure",
       "class": "neutral",
       "shape": "2x2",
-      "rarity": "epic",
-      "cost": 8,
+      "map": [
+        "*##*",
+        "*##*"
+      ],
+      "source": "Goobert",
+      "rarity": "rare",
+      "cost": 6,
       "triggers": [
         {
           "type": "damage_taken",
@@ -78,8 +91,16 @@
       "category": "infrastructure",
       "class": "neutral",
       "shape": "1x1",
-      "rarity": "legendary",
-      "cost": 15,
+      "map": [
+        "..*..",
+        ".*.*.",
+        "*.#.*",
+        ".*.*.",
+        "..*.."
+      ],
+      "source": "Prismatic Orb",
+      "rarity": "godly",
+      "cost": 14,
       "triggers": [
         {
           "type": "passive",
@@ -103,13 +124,18 @@
           ]
         }
       ],
-      "slug": "quantum_processor"
+      "slug": "quantum_processor",
+      "icontype": "magic, vampiric, holy, dark"
     },
     "quantum_probability_core": {
       "name": "Quantum Probability Core",
       "category": "infrastructure",
       "class": "sentaur",
       "shape": "1x1",
+      "map": [
+        "#"
+      ],
+      "source": "Lucky Clover",
       "rarity": "rare",
       "cost": 2,
       "triggers": [
@@ -126,15 +152,22 @@
           ]
         }
       ],
-      "slug": "quantum_probability_core"
+      "slug": "quantum_probability_core",
+      "icontype": "nature"
     },
     "neural_link_collar": {
       "name": "Neural Link Collar",
       "category": "infrastructure",
       "class": "sentaur",
       "shape": "2x1",
+      "map": [
+        "***",
+        "*#*",
+        "***"
+      ],
+      "source": "Acorn Collar",
       "rarity": "epic",
-      "cost": 6,
+      "cost": 8,
       "triggers": [
         {
           "type": "passive",
@@ -149,7 +182,8 @@
           ]
         }
       ],
-      "slug": "neural_link_collar"
+      "slug": "neural_link_collar",
+      "icontype": "nature"
     }
   }
 }

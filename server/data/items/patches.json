@@ -6,8 +6,14 @@
       "category": "patch",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Health Potion",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 4,
       "triggers": [
         {
           "type": "battle_start",
@@ -26,8 +32,14 @@
       "category": "patch",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Mana Potion",
       "rarity": "epic",
-      "cost": 12,
+      "cost": 6,
       "triggers": [
         {
           "type": "battle_start",
@@ -41,15 +53,22 @@
           ]
         }
       ],
-      "slug": "memory_injection"
+      "slug": "memory_injection",
+      "icontype": "magic"
     },
     "security_hardening": {
       "name": "Security Hardening",
       "category": "patch",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Stone Skin Potion",
       "rarity": "epic",
-      "cost": 12,
+      "cost": 6,
       "triggers": [
         {
           "type": "battle_start",
@@ -70,8 +89,14 @@
       "category": "patch",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Pestilence Flask",
       "rarity": "epic",
-      "cost": 12,
+      "cost": 7,
       "triggers": [
         {
           "type": "battle_start",
@@ -93,8 +118,14 @@
       "category": "patch",
       "class": "neutral",
       "shape": "1x2",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Heroic Potion",
       "rarity": "legendary",
-      "cost": 20,
+      "cost": 6,
       "triggers": [
         {
           "type": "battle_start",
@@ -115,8 +146,14 @@
       "category": "patch",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Divine Potion",
       "rarity": "godly",
-      "cost": 25,
+      "cost": 7,
       "triggers": [
         {
           "type": "battle_start",
@@ -132,7 +169,8 @@
           ]
         }
       ],
-      "slug": "system_restore"
+      "slug": "system_restore",
+      "icontype": "holy"
     }
   }
 }

@@ -190,7 +190,7 @@ class TimerTrigger(Trigger):
     """Activates on a timer"""
 
     cooldown: float
-    cpu_cost: int
+    cpu_cost: float
     effects: List[Effect] = field(default_factory=list)
 
     # Runtime state
@@ -224,7 +224,7 @@ class DamageTakenTrigger(Trigger):
 
     threshold: Optional[float] = None  # Only activate below X% health
     cooldown: float = 0.0  # Optional cooldown
-    cpu_cost: int = 0
+    cpu_cost: float = 0.0
     effects: List[Effect] = field(default_factory=list)
 
     # Runtime state

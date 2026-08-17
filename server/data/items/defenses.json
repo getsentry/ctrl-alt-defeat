@@ -6,8 +6,13 @@
       "category": "defense",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Wooden Buckler",
       "rarity": "common",
-      "cost": 3,
+      "cost": 4,
       "triggers": [
         {
           "type": "on_attacked",
@@ -21,15 +26,21 @@
           ]
         }
       ],
-      "slug": "error_monitoring_shield"
+      "slug": "error_monitoring_shield",
+      "sockets": 1
     },
     "firewall": {
       "name": "Firewall",
       "category": "defense",
       "class": "neutral",
       "shape": "1x2",
-      "rarity": "uncommon",
-      "cost": 5,
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Wooden Buckler",
+      "rarity": "common",
+      "cost": 4,
       "triggers": [
         {
           "type": "on_attacked",
@@ -43,15 +54,23 @@
           ]
         }
       ],
-      "slug": "firewall"
+      "slug": "firewall",
+      "sockets": 1
     },
     "rate_limiter": {
       "name": "Rate Limiter",
       "category": "defense",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Hero Shield",
       "rarity": "rare",
-      "cost": 6,
+      "cost": 10,
       "triggers": [
         {
           "type": "on_attacked",
@@ -71,13 +90,19 @@
           ]
         }
       ],
-      "slug": "rate_limiter"
+      "slug": "rate_limiter",
+      "sockets": 1
     },
     "encryption_layer": {
       "name": "Encryption Layer",
       "category": "defense",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Frozen Buckler",
       "rarity": "epic",
       "cost": 8,
       "triggers": [
@@ -101,15 +126,22 @@
           ]
         }
       ],
-      "slug": "encryption_layer"
+      "slug": "encryption_layer",
+      "sockets": 1,
+      "icontype": "ice"
     },
     "quantum_firewall": {
       "name": "Quantum Firewall",
       "category": "defense",
       "class": "neutral",
       "shape": "1x1",
-      "rarity": "legendary",
-      "cost": 12,
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Spiked Shield",
+      "rarity": "rare",
+      "cost": 8,
       "triggers": [
         {
           "type": "on_attacked",
@@ -123,15 +155,22 @@
           ]
         }
       ],
-      "slug": "quantum_firewall"
+      "slug": "quantum_firewall",
+      "sockets": 1
     },
     "adaptive_mesh_armor": {
       "name": "Adaptive Mesh Armor",
       "category": "defense",
       "class": "sentaur",
       "shape": "2x1",
-      "rarity": "uncommon",
-      "cost": 5,
+      "map": [
+        "##",
+        "##",
+        "##"
+      ],
+      "source": "Leather Armor",
+      "rarity": "rare",
+      "cost": 7,
       "triggers": [
         {
           "type": "on_attacked",
@@ -151,7 +190,8 @@
           ]
         }
       ],
-      "slug": "adaptive_mesh_armor"
+      "slug": "adaptive_mesh_armor",
+      "sockets": 2
     }
   }
 }

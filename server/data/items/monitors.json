@@ -6,8 +6,14 @@
       "category": "monitor",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        "##",
+        "##",
+        "##"
+      ],
+      "source": "Leather Armor",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 7,
       "triggers": [
         {
           "type": "battle_start",
@@ -21,15 +27,22 @@
           ]
         }
       ],
-      "slug": "basic_firewall"
+      "slug": "basic_firewall",
+      "sockets": 2
     },
     "cryogenic_shield": {
       "name": "Cryogenic Shield",
       "category": "monitor",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        "##",
+        "##",
+        "##"
+      ],
+      "source": "Ice Armor",
       "rarity": "epic",
-      "cost": 12,
+      "cost": 11,
       "triggers": [
         {
           "type": "battle_start",
@@ -43,15 +56,25 @@
           ]
         }
       ],
-      "slug": "cryogenic_shield"
+      "slug": "cryogenic_shield",
+      "sockets": 2,
+      "icontype": "ice"
     },
     "sanctified_firewall": {
       "name": "Sanctified Firewall",
       "category": "monitor",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Holy Armor",
       "rarity": "legendary",
-      "cost": 20,
+      "cost": 12,
       "triggers": [
         {
           "type": "battle_start",
@@ -71,15 +94,25 @@
           ]
         }
       ],
-      "slug": "sanctified_firewall"
+      "slug": "sanctified_firewall",
+      "sockets": 3,
+      "icontype": "holy"
     },
     "corrupted_kernel": {
       "name": "Corrupted Kernel",
       "category": "monitor",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Corrupted Armor",
       "rarity": "godly",
-      "cost": 25,
+      "cost": 20,
       "triggers": [
         {
           "type": "battle_start",
@@ -99,7 +132,9 @@
           ]
         }
       ],
-      "slug": "corrupted_kernel"
+      "slug": "corrupted_kernel",
+      "sockets": 3,
+      "icontype": "dark"
     }
   }
 }

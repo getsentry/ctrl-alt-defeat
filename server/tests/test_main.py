@@ -6,7 +6,7 @@ Tests for AI opponent generation with containers
 from battle_engine import BattleSimulator
 from containers import Container
 from main import generate_ai_opponent
-from tests.conftest import SHOP_SEED
+from tests.conftest import MULTI_SQUARE_SHOP_SEED, SHOP_SEED
 from tests.test_utils import find_bad_positions
 
 
@@ -100,7 +100,8 @@ class TestBattleAPIResponse:
         """Test that battle response includes both player and enemy inventories"""
         # Start a new session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start",
+            json={"player_name": "test_player", "seed": MULTI_SQUARE_SHOP_SEED},
         )
         assert response.status_code == 200
         data = response.json()
@@ -423,8 +424,8 @@ class TestBattleAPIResponse:
 class TestContainerPurchase:
     """A bought container keeps the shape of its type"""
 
-    # Seed 9 puts a packet_buffer, which is 1x2 rather than 2x2, in round 1.
-    NON_SQUARE_CONTAINER_SEED = 9
+    # Seed 11 puts a packet_buffer, which is 1x2 rather than 2x2, in round 1.
+    NON_SQUARE_CONTAINER_SEED = 11
 
     def test_a_bought_container_keeps_its_own_shape(self, auth_client):
         response = auth_client.post(
@@ -776,7 +777,7 @@ class TestMoveItemAPI:
         """Test moving an item to a position not on a container"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
         )
         data = response.json()
 
@@ -871,7 +872,7 @@ class TestMoveItemAPI:
         """Test moving an item to the same position (no-op)"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
         )
         data = response.json()
 
@@ -955,7 +956,8 @@ class TestMoveItemAPI:
         covers.
         """
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
+            "/session/start",
+            json={"player_name": "test_player", "seed": MULTI_SQUARE_SHOP_SEED},
         )
         data = response.json()
 

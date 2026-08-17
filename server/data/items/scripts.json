@@ -6,6 +6,13 @@
       "category": "script",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        ".*..",
+        "*#*.",
+        "*##*",
+        ".**."
+      ],
+      "source": "Banana",
       "rarity": "common",
       "cost": 3,
       "triggers": [
@@ -21,15 +28,23 @@
           ]
         }
       ],
-      "slug": "health_check_script"
+      "slug": "health_check_script",
+      "icontype": "nature"
     },
     "firewall_script": {
       "name": "Firewall Script",
       "category": "script",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Garlic",
       "rarity": "common",
-      "cost": 3,
+      "cost": 2,
       "triggers": [
         {
           "type": "timer",
@@ -45,15 +60,22 @@
           ]
         }
       ],
-      "slug": "firewall_script"
+      "slug": "firewall_script",
+      "icontype": "nature"
     },
     "cache_optimizer": {
       "name": "Cache Optimizer",
       "category": "script",
       "class": "neutral",
       "shape": "1x2",
+      "map": [
+        ".*.",
+        "*#*",
+        ".*."
+      ],
+      "source": "Blueberries",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 2,
       "triggers": [
         {
           "type": "timer",
@@ -69,15 +91,24 @@
           ]
         }
       ],
-      "slug": "cache_optimizer"
+      "slug": "cache_optimizer",
+      "icontype": "nature, magic"
     },
     "load_balancer_script": {
       "name": "Load Balancer Script",
       "category": "script",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Pineapple",
       "rarity": "legendary",
-      "cost": 20,
+      "cost": 6,
       "triggers": [
         {
           "type": "passive",
@@ -90,15 +121,23 @@
           ]
         }
       ],
-      "slug": "load_balancer_script"
+      "slug": "load_balancer_script",
+      "icontype": "nature"
     },
     "ai_assistant_bot": {
       "name": "AI Assistant Bot",
       "category": "script",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Gingerbread Jerry",
       "rarity": "unique",
-      "cost": 25,
+      "cost": 8,
       "triggers": [
         {
           "type": "timer",
@@ -115,15 +154,23 @@
           ]
         }
       ],
-      "slug": "ai_assistant_bot"
+      "slug": "ai_assistant_bot",
+      "icontype": "treasure, magic"
     },
     "ddos_protection_module": {
       "name": "DDoS Protection Module",
       "category": "script",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Pumpkin",
       "rarity": "unique",
-      "cost": 25,
+      "cost": 8,
       "triggers": [
         {
           "type": "on_big_damage",
@@ -138,15 +185,22 @@
           ]
         }
       ],
-      "slug": "ddos_protection_module"
+      "slug": "ddos_protection_module",
+      "sockets": 2,
+      "icontype": "treasure, nature, ranged"
     },
     "cryogenic_cooling_system": {
       "name": "Cryogenic Cooling System",
       "category": "script",
       "class": "neutral",
       "shape": "3x2",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Snowcake",
       "rarity": "unique",
-      "cost": 25,
+      "cost": 6,
       "triggers": [
         {
           "type": "passive",
@@ -159,7 +213,8 @@
           ]
         }
       ],
-      "slug": "cryogenic_cooling_system"
+      "slug": "cryogenic_cooling_system",
+      "icontype": "treasure, ice"
     }
   }
 }

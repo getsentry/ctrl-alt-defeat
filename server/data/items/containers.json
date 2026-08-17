@@ -4,6 +4,11 @@
       "name": "Standard VM",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Leather Bag",
       "rarity": "common",
       "cost": 4,
       "effects": [],
@@ -13,6 +18,10 @@
       "name": "Edge Node",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        "##"
+      ],
+      "source": "Fanny Pack",
       "rarity": "rare",
       "cost": 3,
       "effects": [
@@ -30,6 +39,12 @@
       "name": "Memory Cache",
       "class": "neutral",
       "shape": "3x1",
+      "map": [
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Stamina Sack",
       "rarity": "epic",
       "cost": 5,
       "effects": [
@@ -46,6 +61,10 @@
       "name": "Load Balancer",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "#"
+      ],
+      "source": "Protective Purse",
       "rarity": "godly",
       "cost": 2,
       "effects": [
@@ -62,6 +81,13 @@
       "name": "Patch Registry",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Potion Belt",
       "rarity": "legendary",
       "cost": 5,
       "effects": [
@@ -85,8 +111,13 @@
       "name": "Container Orchestrator",
       "class": "neutral",
       "shape": "3x2",
+      "map": [
+        "###",
+        "###"
+      ],
+      "source": "Holdall",
       "rarity": "epic",
-      "cost": 13,
+      "cost": 7,
       "effects": [
         {
           "type": "battle_start",
@@ -101,6 +132,11 @@
       "name": "Serverless Function",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Box of Prosperity",
       "rarity": "epic",
       "cost": 5,
       "effects": [
@@ -117,8 +153,13 @@
       "name": "Packet Buffer",
       "class": "sentaur",
       "shape": "1x2",
-      "rarity": "uncommon",
-      "cost": 4,
+      "map": [
+        ".##",
+        "##."
+      ],
+      "source": "Puzzlebag of Improvement",
+      "rarity": "rare",
+      "cost": 5,
       "effects": [
         {
           "type": "buff",
@@ -141,8 +182,14 @@
       "name": "Network Cache",
       "class": "sentaur",
       "shape": "2x2",
-      "rarity": "rare",
-      "cost": 7,
+      "map": [
+        "##",
+        "##",
+        "##"
+      ],
+      "source": "Ranger Bag",
+      "rarity": "unique",
+      "cost": 16,
       "effects": [
         {
           "type": "battle_start",
@@ -171,8 +218,14 @@
       "name": "Mesh Network Hub",
       "class": "sentaur",
       "shape": "3x1",
-      "rarity": "uncommon",
-      "cost": 5,
+      "map": [
+        "###",
+        "###",
+        "###"
+      ],
+      "source": "Vineweave Basket",
+      "rarity": "unique",
+      "cost": 20,
       "effects": [
         {
           "type": "buff",

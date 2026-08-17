@@ -69,8 +69,9 @@ class TestTimerScheduling:
         """Timer items should activate when CPU regenerates enough"""
         sim = BattleSimulator(seed=42)  # Fixed seed for deterministic behavior
 
-        # Create item that costs 7 CPU with 1 second cooldown
-        # This will sometimes succeed and sometimes fail
+        # Create item that costs 2 CPU with 1 second cooldown. That is more
+        # than the 1 CPU regenerated per second, so it succeeds, drains the
+        # pool, waits, and succeeds again.
         item = BattleItem(
             spec=ItemSpec(
                 id="test",
@@ -83,7 +84,7 @@ class TestTimerScheduling:
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,  # 1 second cooldown
-                        cpu_cost=7,  # More than half of max CPU
+                        cpu_cost=2,  # More than a second of regeneration
                         effects=[
                             AttackEffect(min_damage=5, max_damage=5, accuracy=1.0)
                         ],

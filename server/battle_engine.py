@@ -87,8 +87,8 @@ class Player:
 
     # Section 1.2: CPU Cycles (Stamina)
     cpu: float  # Current cycles
-    max_cpu: int = 10  # Base, increased by infrastructure
-    cpu_regen: float = 2.0  # Per second
+    max_cpu: int = 3
+    cpu_regen: float = 1.0  # Per second
 
     # Section 3: Buffs & Debuffs
     buffs: Dict[str, int] = field(default_factory=dict)
@@ -153,8 +153,12 @@ class BattleSimulator:
         quota = self._get_round_quota(round_number)
 
         # Initialize players
-        player1 = Player(id=1, quota=quota, max_quota=quota, cpu=10.0)
-        player2 = Player(id=2, quota=quota, max_quota=quota, cpu=10.0)
+        # Both start on a full pool. Naming the number here would let it drift
+        # from max_cpu, which is what happened when the pool was last changed.
+        player1 = Player(id=1, quota=quota, max_quota=quota, cpu=0.0)
+        player2 = Player(id=2, quota=quota, max_quota=quota, cpu=0.0)
+        player1.cpu = float(player1.max_cpu)
+        player2.cpu = float(player2.max_cpu)
 
         # Deep copy items to avoid mutation
         p1_items = deepcopy(p1_items)

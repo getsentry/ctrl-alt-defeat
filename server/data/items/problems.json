@@ -6,94 +6,122 @@
       "category": "problem",
       "class": "neutral",
       "shape": "1x2",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Wooden Sword",
       "rarity": "common",
       "cost": 3,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 2.5,
-          "cpu_cost": 3,
+          "cooldown": 1.4,
+          "cpu_cost": 1.0,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 4,
-              "max_damage": 8,
-              "accuracy": 0.85,
+              "min_damage": 1,
+              "max_damage": 3,
+              "accuracy": 0.9,
               "crit_chance": 0.2
             }
           ]
         }
       ],
-      "slug": "null_blade"
+      "slug": "null_blade",
+      "sockets": 1,
+      "icontype": "melee"
     },
     "core_dumper": {
       "name": "Core Dumper",
       "category": "problem",
       "class": "neutral",
       "shape": "1x1",
-      "rarity": "common",
-      "cost": 4,
+      "map": [
+        "##",
+        "#.",
+        "#."
+      ],
+      "source": "Axe",
+      "rarity": "rare",
+      "cost": 6,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 3.0,
-          "cpu_cost": 2,
+          "cooldown": 2.0,
+          "cpu_cost": 1.4,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 2,
-              "max_damage": 4,
-              "accuracy": 0.95,
+              "min_damage": 3,
+              "max_damage": 6,
+              "accuracy": 0.85,
               "special": "stacking"
             }
           ]
         }
       ],
-      "slug": "core_dumper"
+      "slug": "core_dumper",
+      "sockets": 2,
+      "icontype": "melee"
     },
     "deadlock_twins": {
       "name": "Deadlock Twins",
       "category": "problem",
       "class": "neutral",
       "shape": "1x1",
-      "rarity": "uncommon",
-      "cost": 5,
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Dagger",
+      "rarity": "rare",
+      "cost": 4,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 1.5,
-          "cpu_cost": 4,
+          "cooldown": 3.5,
+          "cpu_cost": 0.0,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 3,
-              "max_damage": 6,
-              "accuracy": 0.75,
+              "min_damage": 2,
+              "max_damage": 5,
+              "accuracy": 0.95,
               "crit_chance": 0.3
             }
           ]
         }
       ],
-      "slug": "deadlock_twins"
+      "slug": "deadlock_twins",
+      "sockets": 1,
+      "icontype": "melee"
     },
     "mobius_lash": {
       "name": "Mobius Lash",
       "category": "problem",
       "class": "neutral",
       "shape": "2x1",
-      "rarity": "rare",
-      "cost": 6,
+      "map": [
+        "##.",
+        ".#.",
+        ".##"
+      ],
+      "source": "Chain Whip",
+      "rarity": "legendary",
+      "cost": 8,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 4.0,
-          "cpu_cost": 1,
+          "cooldown": 2.4,
+          "cpu_cost": 2.1,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 1,
-              "max_damage": 3,
-              "accuracy": 1.0
+              "min_damage": 4,
+              "max_damage": 9,
+              "accuracy": 0.85
             },
             {
               "type": "cpu_drain",
@@ -103,74 +131,100 @@
           ]
         }
       ],
-      "slug": "mobius_lash"
+      "slug": "mobius_lash",
+      "sockets": 2,
+      "icontype": "holy, melee"
     },
     "sql_injector": {
       "name": "SQL Injector",
       "category": "problem",
       "class": "neutral",
       "shape": "1x2",
-      "rarity": "rare",
+      "map": [
+        "..*..",
+        ".***.",
+        "**#**",
+        "**#**",
+        ".***.",
+        "..*.."
+      ],
+      "source": "Villain Sword",
+      "rarity": "unique",
       "cost": 7,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 3.5,
-          "cpu_cost": 5,
+          "cooldown": 1.3,
+          "cpu_cost": 0.3,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 8,
-              "max_damage": 12,
-              "accuracy": 0.8,
+              "min_damage": 2,
+              "max_damage": 4,
+              "accuracy": 0.9,
               "pierce": true
             }
           ]
         }
       ],
-      "slug": "sql_injector"
+      "slug": "sql_injector",
+      "sockets": 1,
+      "icontype": "treasure, dark, melee"
     },
     "denier_of_service": {
       "name": "Denier of Service",
       "category": "problem",
       "class": "neutral",
       "shape": "2x2",
-      "rarity": "epic",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Ruby Whelp",
+      "rarity": "godly",
       "cost": 10,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 5.0,
-          "cpu_cost": 8,
+          "cooldown": 2.1,
+          "cpu_cost": 0.0,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 3,
-              "max_damage": 5,
+              "min_damage": 5,
+              "max_damage": 10,
               "accuracy": 0.9,
               "hits": 5
             }
           ]
         }
       ],
-      "slug": "denier_of_service"
+      "slug": "denier_of_service",
+      "sockets": 1,
+      "icontype": "fire, effect, ranged"
     },
     "day_zero": {
       "name": "Day Zero",
       "category": "problem",
       "class": "neutral",
       "shape": "1x1",
-      "rarity": "legendary",
-      "cost": 15,
+      "map": [
+        "*",
+        "#",
+        "*"
+      ],
+      "source": "Artifact Stone: Death",
+      "rarity": "unique",
+      "cost": 8,
       "triggers": [
         {
           "type": "battle_start",
           "effects": [
             {
               "type": "attack",
-              "min_damage": 15,
-              "max_damage": 20,
-              "accuracy": 1.0,
+              "min_damage": 7,
+              "max_damage": 9,
+              "accuracy": 0.9,
               "pierce": true
             }
           ]
@@ -190,52 +244,68 @@
           ]
         }
       ],
-      "slug": "day_zero"
+      "slug": "day_zero",
+      "icontype": "treasure, dark, ranged"
     },
     "nullshot": {
       "name": "Nullshot",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
-      "rarity": "common",
-      "cost": 4,
+      "map": [
+        ".#..",
+        "###*",
+        ".#.."
+      ],
+      "source": "Bow and Arrow",
+      "rarity": "epic",
+      "cost": 6,
       "triggers": [
         {
           "type": "timer",
           "cooldown": 3.0,
-          "cpu_cost": 3,
+          "cpu_cost": 1.2,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 5,
+              "min_damage": 6,
               "max_damage": 9,
-              "accuracy": 0.9,
+              "accuracy": 0.85,
               "crit_chance": 0.15,
               "range": "long"
             }
           ]
         }
       ],
-      "slug": "nullshot"
+      "slug": "nullshot",
+      "sockets": 1,
+      "icontype": "ranged"
     },
     "neural_interface_blade": {
       "name": "Neural Interface Blade",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
-      "rarity": "uncommon",
-      "cost": 6,
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Critwood Staff",
+      "rarity": "legendary",
+      "cost": 18,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 2.0,
-          "cpu_cost": 4,
+          "cooldown": 1.8,
+          "cpu_cost": 1.0,
           "effects": [
             {
               "type": "attack",
               "min_damage": 6,
-              "max_damage": 10,
-              "accuracy": 0.85,
+              "max_damage": 8,
+              "accuracy": 0.9,
               "crit_chance": 0.25,
               "range": "melee"
             }
@@ -255,25 +325,35 @@
           ]
         }
       ],
-      "slug": "neural_interface_blade"
+      "slug": "neural_interface_blade",
+      "sockets": 1,
+      "icontype": "magic, nature, ranged"
     },
     "querystorm": {
       "name": "Querystorm",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
-      "rarity": "rare",
-      "cost": 8,
+      "map": [
+        "..**.",
+        ".*##*",
+        ".*##*",
+        "*##**",
+        ".**.."
+      ],
+      "source": "Forest Dragon",
+      "rarity": "godly",
+      "cost": 18,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 2.5,
-          "cpu_cost": 5,
+          "cooldown": 2.1,
+          "cpu_cost": 0.0,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 8,
-              "max_damage": 14,
+              "min_damage": 5,
+              "max_damage": 10,
               "accuracy": 0.95,
               "crit_chance": 0.2,
               "range": "long",
@@ -294,20 +374,27 @@
           ]
         }
       ],
-      "slug": "querystorm"
+      "slug": "querystorm",
+      "sockets": 2,
+      "icontype": "nature,effect,ranged"
     },
     "quantum_sniper": {
       "name": "Quantum Sniper",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Shortbow",
       "rarity": "common",
       "cost": 4,
       "triggers": [
         {
           "type": "timer",
           "cooldown": 1.7,
-          "cpu_cost": 2,
+          "cpu_cost": 0.7,
           "effects": [
             {
               "type": "attack",
@@ -321,20 +408,27 @@
           ]
         }
       ],
-      "slug": "quantum_sniper"
+      "slug": "quantum_sniper",
+      "sockets": 1,
+      "icontype": "ranged"
     },
     "virus_injector": {
       "name": "Virus Injector",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Belladonna's Shade",
       "rarity": "legendary",
       "cost": 11,
       "triggers": [
         {
           "type": "timer",
           "cooldown": 1.7,
-          "cpu_cost": 2,
+          "cpu_cost": 0.7,
           "effects": [
             {
               "type": "attack",
@@ -355,25 +449,33 @@
           ]
         }
       ],
-      "slug": "virus_injector"
+      "slug": "virus_injector",
+      "sockets": 1,
+      "icontype": "nature, ranged"
     },
     "malware_propagator": {
       "name": "Malware Propagator",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
+      "map": [
+        ".#..",
+        "###*",
+        ".#.."
+      ],
+      "source": "Belladonna's Whisper",
       "rarity": "legendary",
-      "cost": 14,
+      "cost": 13,
       "triggers": [
         {
           "type": "timer",
           "cooldown": 3.0,
-          "cpu_cost": 3,
+          "cpu_cost": 1.2,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 9,
-              "max_damage": 12,
+              "min_damage": 11,
+              "max_damage": 14,
               "accuracy": 0.85,
               "ranged": true,
               "scaling_damage": "malware",
@@ -383,15 +485,23 @@
           ]
         }
       ],
-      "slug": "malware_propagator"
+      "slug": "malware_propagator",
+      "sockets": 1,
+      "icontype": "nature, ranged"
     },
     "probability_manipulator": {
       "name": "Probability Manipulator",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
+      "map": [
+        ".#..",
+        "###*",
+        ".#.."
+      ],
+      "source": "Fortuna's Grace",
       "rarity": "legendary",
-      "cost": 11,
+      "cost": 10,
       "triggers": [
         {
           "type": "battle_start",
@@ -407,8 +517,8 @@
         },
         {
           "type": "timer",
-          "cooldown": 3.0,
-          "cpu_cost": 3,
+          "cooldown": 2.8,
+          "cpu_cost": 1.2,
           "effects": [
             {
               "type": "attack",
@@ -423,25 +533,32 @@
           ]
         }
       ],
-      "slug": "probability_manipulator"
+      "slug": "probability_manipulator",
+      "sockets": 1,
+      "icontype": "nature, ranged"
     },
     "quantum_flux_rifle": {
       "name": "Quantum Flux Rifle",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x1",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Fortuna's Hope",
       "rarity": "epic",
       "cost": 8,
       "triggers": [
         {
           "type": "timer",
           "cooldown": 1.7,
-          "cpu_cost": 2,
+          "cpu_cost": 0.7,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 2,
-              "max_damage": 3,
+              "min_damage": 3,
+              "max_damage": 4,
               "accuracy": 1.0,
               "ranged": true,
               "description": "Perfect accuracy shot"
@@ -457,20 +574,29 @@
           ]
         }
       ],
-      "slug": "quantum_flux_rifle"
+      "slug": "quantum_flux_rifle",
+      "sockets": 1,
+      "icontype": "nature, ranged"
     },
     "data_leech_swarm": {
       "name": "Data Leech Swarm",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
+      "map": [
+        "..*.",
+        ".*#*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Squirrel Archer",
       "rarity": "epic",
       "cost": 9,
       "triggers": [
         {
           "type": "timer",
           "cooldown": 3.2,
-          "cpu_cost": 2,
+          "cpu_cost": 0.0,
           "effects": [
             {
               "type": "attack",
@@ -484,15 +610,22 @@
           ]
         }
       ],
-      "slug": "data_leech_swarm"
+      "slug": "data_leech_swarm",
+      "icontype": "nature, effect, ranged"
     },
     "spike_launcher": {
       "name": "Spike Launcher",
       "category": "problem",
       "class": "sentaur",
       "shape": "2x2",
+      "map": [
+        ".#..",
+        "###*",
+        ".#.."
+      ],
+      "source": "Tusk Piercer",
       "rarity": "legendary",
-      "cost": 11,
+      "cost": 10,
       "triggers": [
         {
           "type": "battle_start",
@@ -509,7 +642,7 @@
         {
           "type": "timer",
           "cooldown": 3.0,
-          "cpu_cost": 3,
+          "cpu_cost": 1.2,
           "effects": [
             {
               "type": "attack",
@@ -523,20 +656,27 @@
           ]
         }
       ],
-      "slug": "spike_launcher"
+      "slug": "spike_launcher",
+      "sockets": 1,
+      "icontype": "nature, ranged"
     },
     "spike_generator": {
       "name": "Spike Generator",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Tusk Poker",
       "rarity": "rare",
       "cost": 8,
       "triggers": [
         {
           "type": "timer",
           "cooldown": 1.7,
-          "cpu_cost": 2,
+          "cpu_cost": 0.7,
           "effects": [
             {
               "type": "attack",
@@ -557,25 +697,32 @@
           ]
         }
       ],
-      "slug": "spike_generator"
+      "slug": "spike_generator",
+      "sockets": 1,
+      "icontype": "nature, ranged"
     },
     "plasma_edge": {
       "name": "Plasma Edge",
       "category": "problem",
       "class": "sentaur",
       "shape": "1x2",
-      "rarity": "common",
-      "cost": 3,
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Torch",
+      "rarity": "rare",
+      "cost": 5,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 2.5,
-          "cpu_cost": 2,
+          "cooldown": 1.4,
+          "cpu_cost": 1.0,
           "effects": [
             {
               "type": "attack",
-              "min_damage": 4,
-              "max_damage": 6,
+              "min_damage": 2,
+              "max_damage": 3,
               "accuracy": 0.9,
               "crit_chance": 0.15,
               "description": "Energy slash with 15% crit chance"
@@ -583,7 +730,9 @@
           ]
         }
       ],
-      "slug": "plasma_edge"
+      "slug": "plasma_edge",
+      "sockets": 1,
+      "icontype": "melee"
     }
   }
 }

@@ -6,8 +6,14 @@
       "category": "consumable",
       "class": "neutral",
       "shape": "1x1",
-      "rarity": "common",
-      "cost": 2,
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Health Potion",
+      "rarity": "rare",
+      "cost": 4,
       "triggers": [
         {
           "type": "damage_taken",
@@ -33,8 +39,14 @@
       "category": "consumable",
       "class": "neutral",
       "shape": "1x1",
-      "rarity": "uncommon",
-      "cost": 3,
+      "map": [
+        "*.*",
+        ".#.",
+        "*.*"
+      ],
+      "source": "Mana Orb",
+      "rarity": "epic",
+      "cost": 6,
       "triggers": [
         {
           "type": "battle_start",
@@ -50,15 +62,22 @@
           ]
         }
       ],
-      "slug": "cpu_booster"
+      "slug": "cpu_booster",
+      "icontype": "magic"
     },
     "emergency_patch": {
       "name": "Emergency Patch",
       "category": "consumable",
       "class": "neutral",
       "shape": "1x1",
-      "rarity": "rare",
-      "cost": 4,
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Strong Health Potion",
+      "rarity": "epic",
+      "cost": 8,
       "triggers": [
         {
           "type": "damage_taken",
@@ -88,8 +107,14 @@
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
-      "rarity": "common",
-      "cost": 2,
+      "map": [
+        ".*+.",
+        "+##*",
+        ".*+."
+      ],
+      "source": "Piercing Arrow",
+      "rarity": "unique",
+      "cost": 10,
       "max_stack": 5,
       "triggers": [
         {
@@ -107,15 +132,21 @@
           ]
         }
       ],
-      "slug": "data_packets"
+      "slug": "data_packets",
+      "subclass": "Hunter"
     },
     "ai_companion_core": {
       "name": "AI Companion Core",
       "category": "consumable",
       "class": "sentaur",
       "shape": "2x1",
+      "map": [
+        "*##*",
+        "*##*"
+      ],
+      "source": "Carrot Goobert",
       "rarity": "epic",
-      "cost": 9,
+      "cost": 12,
       "triggers": [
         {
           "type": "battle_start",
@@ -150,15 +181,22 @@
           ]
         }
       ],
-      "slug": "ai_companion_core"
+      "slug": "ai_companion_core",
+      "icontype": "nature"
     },
     "surveillance_drone": {
       "name": "Surveillance Drone",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
-      "rarity": "uncommon",
-      "cost": 4,
+      "map": [
+        "#*",
+        "#*",
+        "*."
+      ],
+      "source": "Hedgehog",
+      "rarity": "epic",
+      "cost": 6,
       "triggers": [
         {
           "type": "battle_start",
@@ -174,14 +212,21 @@
           ]
         }
       ],
-      "slug": "surveillance_drone"
+      "slug": "surveillance_drone",
+      "icontype": "nature"
     },
     "data_crawler": {
       "name": "Data Crawler",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
-      "rarity": "uncommon",
+      "map": [
+        ".**.",
+        "*##*",
+        ".**."
+      ],
+      "source": "Rat",
+      "rarity": "common",
       "cost": 4,
       "triggers": [
         {
@@ -198,15 +243,23 @@
           ]
         }
       ],
-      "slug": "data_crawler"
+      "slug": "data_crawler",
+      "icontype": "nature"
     },
     "cache_spider": {
       "name": "Cache Spider",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
-      "rarity": "uncommon",
-      "cost": 4,
+      "map": [
+        ".*..",
+        "*#*.",
+        "*##*",
+        ".**."
+      ],
+      "source": "Squirrel",
+      "rarity": "rare",
+      "cost": 5,
       "triggers": [
         {
           "type": "battle_start",
@@ -221,15 +274,20 @@
           ]
         }
       ],
-      "slug": "cache_spider"
+      "slug": "cache_spider",
+      "icontype": "nature"
     },
     "healing_nanobots": {
       "name": "Healing Nanobots",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
+      "map": [
+        "#"
+      ],
+      "source": "Healing Herbs",
       "rarity": "common",
-      "cost": 3,
+      "cost": 4,
       "triggers": [
         {
           "type": "damage_taken",
@@ -248,15 +306,22 @@
           ]
         }
       ],
-      "slug": "healing_nanobots"
+      "slug": "healing_nanobots",
+      "icontype": "nature"
     },
     "system_restore": {
       "name": "System Restore",
       "category": "consumable",
       "class": "sentaur",
       "shape": "1x1",
+      "map": [
+        ".**.",
+        "*##*",
+        ".**."
+      ],
+      "source": "Carrot",
       "rarity": "rare",
-      "cost": 5,
+      "cost": 3,
       "triggers": [
         {
           "type": "damage_taken",
@@ -282,7 +347,8 @@
           ]
         }
       ],
-      "slug": "system_restore"
+      "slug": "system_restore",
+      "icontype": "nature"
     }
   }
 }

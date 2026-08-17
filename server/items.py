@@ -48,7 +48,7 @@ class ItemStats(BaseModel):
     max_heal: int = 0
     block_amount: int = 0
     cooldown: float = 0.0
-    cpu_cost: int = 0
+    cpu_cost: float = 0.0
     special_effect: str = ""
 
 
@@ -122,7 +122,7 @@ class Item(BaseModel):
     max_heal: int = Field(description="Maximum healing given")
     block_amount: int = Field(description="Damage blocked")
     cooldown: float = Field(description="Activation cooldown in seconds")
-    cpu_cost: int = Field(description="CPU cost to activate")
+    cpu_cost: float = Field(description="CPU cost to activate")
     special_effect: str = Field(description="Special effect name, empty if none")
 
     @classmethod

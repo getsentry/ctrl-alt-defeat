@@ -30,11 +30,27 @@ A Sentry-themed autobattler where players manage a "server rack" (backpack) fill
 - **Loss Penalty**: Lose health based on remaining enemy health
 
 ### 1.2 CPU Cycles (Stamina)
-- **Starting CPU**: 10 cycles/second
-- **CPU Pool**: Increases with infrastructure items
-- **CPU Usage**: Each item activation consumes CPU cycles
-- **CPU Regeneration**: 2 cycles/second base rate
+- **CPU Pool**: 3 cycles, increased by infrastructure items
+- **CPU Regeneration**: 1 cycle/second base rate
+- **CPU Usage**: Each item activation consumes CPU cycles, in fractions
 - **Throttling**: When CPU hits 0, items skip activations but maintain schedule
+
+**Regeneration is Backpack Battles': 1 per second.** Three things agree on it.
+Its wiki says the Mecha Bat's 1.5 stamina every 3 seconds is "about 50% of the
+player's default stamina allowance", which puts the allowance at 1 per second,
+and calls the Bloodthorne expensive at "a full 0.9 stamina/second". Players
+report the in-game indicator saying 1 per second. And the percentage buffs only
+work out against a base of 1: Just Stats gives "+10% base stamina regeneration"
+and is reported as taking it to 1.1, a Chipped Topaz's +8% to 1.08.
+
+**The pool of 3 is ours.** Backpack Battles never publishes it — its wiki's
+Game Mechanics page still lists "Stamina, passive gain, out of stamina" as
+unwritten. A pool of 3 fits the shape of the game, where an epic bag's whole
+effect is "+1 maximum stamina" and a legendary potion restores 2 when you run
+dry, but it is a choice rather than a copy. Change it freely.
+
+A typical weapon of ours drains 0.5 a second, so two run level with
+regeneration and a third has to wait. That is the intended pressure.
 
 ### 1.3 Item Activation Flow
 ```
@@ -83,24 +99,33 @@ Attack items that deal damage. All weapons:
 - **Ranged**: May have different accuracy/crit mechanics
 
 #### Examples:
-- **Null Pointer Exception** (Common Melee)
-  - Damage: 4-8
-  - Cooldown: 2.5s
-  - CPU Cost: 3
-  - Accuracy: 85%
+
+Every number here comes from the Backpack Battles item it is based on,
+including CPU cost, which that game calls stamina. CPU costs are fractional
+as a result.
+
+- **Null blade** (Common Melee, from Wooden Sword)
+  - Damage: 1-3
+  - Cooldown: 1.4s
+  - CPU Cost: 1.0
+  - Accuracy: 90%
+  - Sockets: 1
   - On Crit: 20% chance to "crash" for 15 damage
 
-- **Memory Leak** (Uncommon Melee)
-  - Damage: 2-4 (increases by +1 each activation)
-  - Cooldown: 3.0s
-  - CPU Cost: 2
-  - Accuracy: 95%
+- **Core Dumper** (Rare Melee, from Axe)
+  - Damage: 3-6 (increases by +1 each activation)
+  - Cooldown: 2.0s
+  - CPU Cost: 1.4
+  - Accuracy: 85%
+  - Sockets: 2
   - On Hit: Apply "memory_leaked" debuff
 
-- **SQL Injection** (Rare Ranged)
-  - Damage: 8-12
-  - Cooldown: 4.0s
-  - CPU Cost: 5
+- **SQL Injector** (Unique Ranged, from Villain Sword)
+  - Damage: 2-4
+  - Cooldown: 1.3s
+  - CPU Cost: 0.3
+  - Accuracy: 90%
+  - Sockets: 1
   - Special: Bypasses 50% of shields
 
 ### 2.4 Shields (Monitoring/Defense)

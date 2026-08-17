@@ -6,8 +6,12 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "#"
+      ],
+      "source": "Healing Herbs",
       "rarity": "common",
-      "cost": 3,
+      "cost": 4,
       "triggers": [
         {
           "type": "timer",
@@ -24,13 +28,20 @@
           ]
         }
       ],
-      "slug": "api_token"
+      "slug": "api_token",
+      "icontype": "nature"
     },
     "bitcoin_wallet": {
       "name": "Bitcoin Wallet",
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "**",
+        "##",
+        "**"
+      ],
+      "source": "Piggybank",
       "rarity": "common",
       "cost": 3,
       "triggers": [
@@ -51,8 +62,12 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "#"
+      ],
+      "source": "Pocket Sand",
       "rarity": "common",
-      "cost": 3,
+      "cost": 2,
       "triggers": [
         {
           "type": "passive",
@@ -65,15 +80,28 @@
           ]
         }
       ],
-      "slug": "captcha_module"
+      "slug": "captcha_module",
+      "icontype": "nature"
     },
     "script_compiler": {
       "name": "Script Compiler - Alchemy",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        "***",
+        "***",
+        "***",
+        "***",
+        "*#*",
+        "***",
+        "***",
+        "***",
+        "***"
+      ],
+      "source": "Amulet of Alchemy",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 6,
       "triggers": [
         {
           "type": "passive",
@@ -93,8 +121,14 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        ".*.",
+        "*.*",
+        ".#."
+      ],
+      "source": "Amulet of Darkness",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 6,
       "triggers": [
         {
           "type": "passive",
@@ -106,15 +140,21 @@
           ]
         }
       ],
-      "slug": "dark_web_access"
+      "slug": "dark_web_access",
+      "icontype": "dark"
     },
     "power_management_unit": {
       "name": "Power Management Unit",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        "*",
+        "#"
+      ],
+      "source": "Amulet of Energy",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 6,
       "triggers": [
         {
           "type": "passive",
@@ -134,8 +174,20 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        "....*",
+        "...**",
+        "..***",
+        ".****",
+        "#****",
+        ".****",
+        "..***",
+        "...**",
+        "....*"
+      ],
+      "source": "Amulet of Feasting",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 6,
       "triggers": [
         {
           "type": "passive",
@@ -156,8 +208,12 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "1x2",
+      "map": [
+        "#"
+      ],
+      "source": "Amulet of Life",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 6,
       "triggers": [
         {
           "type": "on_damage",
@@ -176,8 +232,14 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "*********",
+        "****#****",
+        "*********"
+      ],
+      "source": "Amulet of Steel",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 6,
       "triggers": [
         {
           "type": "passive",
@@ -202,8 +264,13 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        "*",
+        "#"
+      ],
+      "source": "Amulet of the Wild",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 6,
       "triggers": [
         {
           "type": "on_attack",
@@ -216,15 +283,20 @@
           ]
         }
       ],
-      "slug": "machine_learning_core"
+      "slug": "machine_learning_core",
+      "icontype": "nature"
     },
     "crypto_mining_rig": {
       "name": "Crypto Mining Rig",
       "category": "protocol",
       "class": "neutral",
       "shape": "2x1",
+      "map": [
+        "##"
+      ],
+      "source": "Box of Riches",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 5,
       "triggers": [
         {
           "type": "timer",
@@ -244,8 +316,12 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "#"
+      ],
+      "source": "Bunch of Coins",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 9,
       "triggers": [
         {
           "type": "passive",
@@ -265,8 +341,12 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "1x1",
+      "map": [
+        "#"
+      ],
+      "source": "Customer Card",
       "rarity": "rare",
-      "cost": 8,
+      "cost": 4,
       "triggers": [
         {
           "type": "round_start",
@@ -285,8 +365,12 @@
       "category": "protocol",
       "class": "neutral",
       "shape": "2x2",
+      "map": [
+        "#"
+      ],
+      "source": "Blood Amulet",
       "rarity": "legendary",
-      "cost": 20,
+      "cost": 8,
       "triggers": [
         {
           "type": "on_damage_dealt",
@@ -298,7 +382,8 @@
           ]
         }
       ],
-      "slug": "vampire_rootkit"
+      "slug": "vampire_rootkit",
+      "icontype": "vampiric"
     }
   }
 }
