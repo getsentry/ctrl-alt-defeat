@@ -99,13 +99,11 @@ var inventory_grid: InventoryGrid  # Main inventory grid
 var storage_grid: InventoryGrid    # Storage grid
 
 # Game state tracking
-var servers: Array = []       # Server objects (for tracking)
-var items: Array = []         # Item objects
 
 var server_room_container: Node  # Points to inventory_grid
 
 # Shop
-var shop_items: Array = []
+var shop_items: Array[Panel] = []
 
 # Mode settings
 var read_only_mode: bool = false
@@ -183,16 +181,6 @@ func load_inventory_state(inventory_data: APITypes.InventoryState):
 	# Delegate to InventoryGrid
 	if inventory_grid:
 		inventory_grid.load_inventory_state(inventory_data)
-
-	# Update our tracking arrays for compatibility
-	servers.clear()
-	for container_data in inventory_grid.containers:
-		servers.append({
-			"data": container_data.data,
-			"pos": container_data.position
-		})
-
-	items = inventory_grid.items.duplicate()
 
 func get_inventory_state() -> Dictionary:
 	# Delegate to InventoryGrid
@@ -578,8 +566,8 @@ func _mark_shop_item_sold(shop_item: Panel):
 	shop_item.add_child(sold_label)
 
 # The grid squares a container of this shape would cover at grid_pos.
-func _container_squares(container_data: APITypes.Item, grid_pos: Vector2i) -> Array:
-	var squares: Array = []
+func _container_squares(container_data: APITypes.Item, grid_pos: Vector2i) -> Array[Vector2i]:
+	var squares: Array[Vector2i] = []
 	for offset in container_data.shape:
 		squares.append(Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1])))
 	return squares

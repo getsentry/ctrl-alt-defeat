@@ -11,7 +11,6 @@ var event_processor
 # Battle state
 var player_data: Dictionary = {}
 var enemy_data: Dictionary = {}
-var battle_log: Array = []
 var current_time: float = 0.0
 var battle_active: bool = false
 var max_battle_duration: float = 20.0  # 20 second battles max
@@ -58,7 +57,6 @@ var enemy_health_label: Label
 var enemy_stamina_label: Label
 
 # Battle effects
-var attack_particles: Array = []
 
 func _ready():
 	print("BattleScreen starting...")

@@ -29,7 +29,7 @@ var shop_rerolls: int = 0
 
 # Battle state
 var last_battle_result: APITypes.BattleResult = null
-var last_battle_events: Array = []
+var last_battle_events: Array[APITypes.BattleAction] = []
 var last_gold_earned: int = 0
 
 # Settings

@@ -88,12 +88,8 @@ func test_full_user_journey_through_ui():
 
 	# 4. Verify starting setup
 	print("   3. Verifying initial setup...")
-	# With GridManager, servers are in the inventory_grid
-	if game_ui.inventory_grid:
-		assert_gte(game_ui.inventory_grid.containers.size(), 3, "Should have at least 3 starting containers")
-	else:
-		# Fallback for legacy
-		assert_eq(game_ui.servers.size(), 3, "Should have 3 starting containers")
+	assert_gte(game_ui.inventory_grid.containers.size(), 3,
+		"Should have at least 3 starting containers")
 	assert_gte(game_ui.shop_items.size(), 2, "Shop should have items from server")
 	var initial_gold = GameStateManager.gold
 	assert_gt(initial_gold, 0, "Should start with gold")
@@ -262,14 +258,7 @@ func _find_ui_element(node: Node, property_name: String, property_value) -> Node
 
 func _find_first_empty_grid_cell(game_ui) -> Vector2:
 	"""Find the first empty cell that's on an active server grid"""
-	# With GridManager, we check the inventory_grid
 	var inventory_grid = game_ui.inventory_grid
-	if not inventory_grid:
-		# Fallback to legacy approach
-		var servers = game_ui.servers
-		if servers.size() > 0:
-			return Vector2(2, 3)  # Default first server position
-		return Vector2(-1, -1)
 
 	# Check known server positions (from server initialization)
 	# Default containers are at (2,3), (4,3), (6,3), each 2x2
@@ -323,20 +312,11 @@ func test_shop_purchase_and_item_placement():
 	print("   - Full item_data: %s" % item_data)
 
 	# Record initial inventory state - items are in inventory_grid
-	var initial_inventory_count = 0
-	if game_ui.inventory_grid:
-		initial_inventory_count = game_ui.inventory_grid.items.size()
+	var initial_inventory_count = game_ui.inventory_grid.items.size()
 
-	# Debug: Print server info
-	if game_ui.inventory_grid:
-		print("   - Number of containers: %d" % game_ui.inventory_grid.containers.size())
-		for container_data in game_ui.inventory_grid.containers:
-			print("     Container at pos %s" % container_data.position)
-	else:
-		print("   - Number of servers: %d" % game_ui.servers.size())
-		for i in range(game_ui.servers.size()):
-			var server = game_ui.servers[i]
-			print("     Server %d at pos %s" % [i, server.get("pos", "unknown")])
+	print("   - Number of containers: %d" % game_ui.inventory_grid.containers.size())
+	for container_data in game_ui.inventory_grid.containers:
+		print("     Container at pos %s" % container_data.position)
 
 	# Find an empty grid cell to drop the item
 	var target_grid_pos = _find_first_empty_grid_cell(game_ui)

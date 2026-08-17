@@ -23,7 +23,7 @@ class Position extends Resource:
 		x = int(data[0])
 		y = int(data[1])
 
-	func to_array() -> Array:
+	func to_array() -> Array[int]:
 		return [x, y]
 
 	func to_vector2() -> Vector2:
@@ -111,8 +111,8 @@ class PlacedItem extends Item:
 		rotation = int(data["rotation"])
 
 	# The grid squares this item covers.
-	func covered_squares() -> Array:
-		var squares: Array = []
+	func covered_squares() -> Array[Vector2i]:
+		var squares: Array[Vector2i] = []
 		for offset in shape:
 			squares.append(Vector2i(position.x + int(offset[0]), position.y + int(offset[1])))
 		return squares
@@ -149,16 +149,16 @@ class ServerContainer extends Resource:
 		}
 
 	# The grid squares this container covers.
-	func covered_squares() -> Array:
-		var squares: Array = []
+	func covered_squares() -> Array[Vector2i]:
+		var squares: Array[Vector2i] = []
 		for offset in shape:
 			squares.append(Vector2i(position.x + int(offset[0]), position.y + int(offset[1])))
 		return squares
 
 # Inventory state (used in battles and saved state)
 class InventoryState extends Resource:
-	var items: Array = []  # Array of PlacedItem
-	var containers: Array = []  # Array of ServerContainer
+	var items: Array[PlacedItem] = []
+	var containers: Array[ServerContainer] = []
 
 	func _init(data: Dictionary):
 		items.clear()
@@ -200,7 +200,7 @@ class BattleResult extends Resource:
 	var duration: float = 0.0
 	var player1_quota: int = 0
 	var player2_quota: int = 0
-	var actions: Array = []  # Array of BattleAction
+	var actions: Array[BattleAction] = []
 	var seed: int = 0
 	var player_inventory: InventoryState
 	var enemy_inventory: InventoryState

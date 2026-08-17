@@ -16,7 +16,7 @@ signal player_died(player: int)
 signal battle_ended(winner: int)
 signal log_message(message: String, color: Color)
 
-var events: Array = []
+var events: Array[APITypes.BattleAction] = []
 var current_event_index: int = 0
 var start_time: float = 0.0
 var playback_speed: float = 1.0

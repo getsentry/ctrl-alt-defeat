@@ -5,7 +5,7 @@ const Presentation = preload("res://scripts/presentation.gd")
 signal error_displayed(message: String)
 signal error_cleared()
 
-var error_queue: Array = []
+var error_queue: Array[Dictionary] = []
 var current_error_ui = null
 var error_display_time: float = 3.0
 

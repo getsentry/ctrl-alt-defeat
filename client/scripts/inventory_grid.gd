@@ -29,7 +29,7 @@ var item_grid: Array = []    # 2D array tracking which cells have items
 var grid_cells: Array = []   # 2D array of visual cell references
 
 # Stored objects
-var items: Array = []         # Array of item visuals
+var items: Array[Control] = []         # Array of item visuals
 var containers: Array = []    # Array of server container visuals
 
 # Drag and drop state
