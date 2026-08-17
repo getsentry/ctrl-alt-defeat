@@ -46,6 +46,7 @@ class ItemShape:
 
         return ItemShape(rotated_squares, self.name)
 
+
 # Common item shapes
 SHAPES = {
     "1x1": ItemShape([(0, 0)], "1x1"),

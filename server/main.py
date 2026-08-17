@@ -999,8 +999,9 @@ def place_item_in_inventory(
         # Place on grid
         success = manager.place_item(item, placement=to_location)
         if not success:
-            # Determine specific error - need to check with shape
-            if not manager.grid.is_valid_placement(to_location, item.shape):
+            # Work out which of the two reasons it was
+            placed = item.placed_at(to_location)
+            if not manager.grid.can_hold(placed.covered_squares()):
                 raise HTTPException(
                     status_code=HTTPStatus.BAD_REQUEST,
                     detail=(

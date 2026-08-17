@@ -130,6 +130,7 @@ class ServerContainer extends Resource:
 	var slug: String = ""
 	var position: Position
 	var shape: Array = []  # Array[Array[int]]: the [x, y] offsets it covers
+	var rotation: int = 0  # Quarter turns clockwise, 0/90/180/270
 
 	func _init(data: Dictionary):
 		# Server sends all these fields
@@ -138,6 +139,7 @@ class ServerContainer extends Resource:
 		slug = data["slug"]
 		position = Position.new(data["position"])
 		shape = data["shape"]
+		rotation = int(data["rotation"])
 
 	func to_dict() -> Dictionary:
 		return {
@@ -145,7 +147,8 @@ class ServerContainer extends Resource:
 			"type": type,
 			"slug": slug,
 			"position": position.to_array() if position else null,
-			"shape": shape
+			"shape": shape,
+			"rotation": rotation
 		}
 
 	# The grid squares this container covers.

@@ -44,20 +44,17 @@ class InventoryGrid:
             for square in container.covered_squares()
         }
 
-    def is_valid_placement(
-        self, position: Position, shape: Sequence[Sequence[int]]
-    ) -> bool:
+    def can_hold(self, squares: Sequence[Position]) -> bool:
         """
-        Check if an item of this shape fits at this position.
+        Whether the grid can hold something covering these squares.
+
+        This takes the squares rather than a shape and a position, because a
+        turned item covers different squares from the ones its shape lists.
+        Asking with a shape is how a rotation gets lost.
         """
         covered = self._container_squares()
 
-        # Check all squares the item would occupy
-        base_x, base_y = position
-        for dx, dy in shape:
-            x = base_x + dx
-            y = base_y + dy
-
+        for x, y in squares:
             # Check bounds
             if x < 0 or x >= self.width or y < 0 or y >= self.height:
                 return False
@@ -79,8 +76,8 @@ class InventoryGrid:
         """Place an item on the grid"""
         placed = item.placed_at(position, getattr(item, "rotation", Rotation.NONE))
 
-        # The whole shape has to sit on containers
-        if not self.is_valid_placement(position, placed.shape):
+        # The whole item, as it is turned, has to sit on containers
+        if not self.can_hold(placed.covered_squares()):
             raise InvalidPlacementError(
                 f"Item at position {position} does not fit entirely on server containers"
             )

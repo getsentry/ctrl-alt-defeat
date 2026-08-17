@@ -12,21 +12,21 @@ func test_server_starting_containers_format():
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [1, 3],
-			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
+			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
 		},
 		{
 			"slug": "standard_vm",
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [3, 3],
-			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
+			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
 		},
 		{
 			"slug": "standard_vm",
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [5, 3],
-			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
+			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
 		}
 	]
 
@@ -71,9 +71,9 @@ func test_multiple_containers_side_by_side():
 	GameStateManager.start_new_game()
 
 	var containers = [
-		{"slug": "standard_vm", "type": "standard_vm", "position": [1, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
-		{"slug": "standard_vm", "type": "standard_vm", "position": [3, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
-		{"slug": "standard_vm", "type": "standard_vm", "position": [5, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+		{"slug": "standard_vm", "type": "standard_vm", "position": [1, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0},
+		{"slug": "standard_vm", "type": "standard_vm", "position": [3, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0},
+		{"slug": "standard_vm", "type": "standard_vm", "position": [5, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
 	]
 
 	GameStateManager.server_containers = containers

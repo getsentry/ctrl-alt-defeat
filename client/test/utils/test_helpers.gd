@@ -49,7 +49,7 @@ static func container(overrides: Dictionary = {}) -> Resource:
 		"slug": "standard_vm",
 		"type": "standard_vm",
 		"position": [2, 3],
-		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
 	}
 	data.merge(overrides, true)
 	return preload("res://scripts/api_types.gd").ServerContainer.new(data)
@@ -75,13 +75,13 @@ static func create_test_battle_result(winner: int = 1, duration: float = 10.0) -
 		"player_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "test_srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+				{"id": "test_srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
 			]
 		},
 		"enemy_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "test_srv2", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+				{"id": "test_srv2", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
 			]
 		}
 	}
@@ -149,7 +149,7 @@ static func create_test_inventory_state() -> Dictionary:
 			placed_item_data({"id": "item1", "name": "Test Item"})
 		],
 		"servers": [
-			{"id": "srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+			{"id": "srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
 		]
 	}
 

@@ -45,7 +45,7 @@ func _container(overrides: Dictionary = {}) -> Dictionary:
 		"slug": "standard_vm",
 		"type": "standard_vm",
 		"position": [2, 3],
-		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
 	}
 	data.merge(overrides, true)
 	return data

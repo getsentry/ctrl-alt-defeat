@@ -10,7 +10,7 @@ from typing import List, Optional, Set, Tuple
 from pydantic import BaseModel, Field
 
 from config_loader import config_loader
-from grid_system import ItemShape
+from grid_system import ItemShape, Rotation
 from utils import Position, Shape
 
 # The grid is 9 squares wide and 7 squares tall.
@@ -32,6 +32,9 @@ class Container(BaseModel):
     type: str = Field(description="Container type, a key in containers.json")
     position: Position = Field(description="[x, y] anchor on the grid")
     shape: Shape = Field(description="Covered squares, as [x, y] offsets")
+    rotation: Rotation = Field(
+        default=Rotation.NONE, description="Quarter turns clockwise from the shape"
+    )
 
     @classmethod
     def of(
@@ -48,9 +51,12 @@ class Container(BaseModel):
         )
 
     def covered_squares(self) -> Shape:
-        """The grid squares this container covers"""
+        """The grid squares this container covers, once turned"""
+        squares = self.shape
+        if self.rotation is not Rotation.NONE:
+            squares = ItemShape(squares=list(squares)).rotate(self.rotation).squares
         x, y = self.position
-        return [(x + dx, y + dy) for dx, dy in self.shape]
+        return [(x + dx, y + dy) for dx, dy in squares]
 
 
 def starting_containers() -> List[Container]:

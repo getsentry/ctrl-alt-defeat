@@ -4,7 +4,7 @@ Test the server container system
 
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
 from containers import Container, PlacementValidator
-from grid_system import SHAPES
+from grid_system import SHAPES, Rotation
 
 
 class TestContainers:
@@ -206,3 +206,37 @@ class TestContainers:
         )
 
         assert result["winner"] in [1, 2]
+
+
+class TestATurnedContainerCoversItsTurnedSquares:
+    """
+    A container covers different squares once it is turned, so everything that
+    asks which squares it holds has to ask it, never its shape.
+    """
+
+    def test_a_turn_moves_the_squares_it_covers(self):
+        # memory_cache is three wide and one tall.
+        upright = Container.of("memory_cache", (2, 3), "c1")
+        assert upright.covered_squares() == [(2, 3), (3, 3), (4, 3)]
+
+        turned = upright.model_copy(update={"rotation": Rotation.CLOCKWISE_90})
+        assert sorted(turned.covered_squares()) == [(2, 3), (2, 4), (2, 5)]
+
+    def test_the_validator_sees_the_turn(self):
+        validator = PlacementValidator()
+        # Three tall from (2, 5) reaches row 7, which the grid does not have.
+        turned = Container.of("memory_cache", (2, 5), "c1").model_copy(
+            update={"rotation": Rotation.CLOCKWISE_90}
+        )
+
+        assert not validator.add_container(turned), "It hangs off the bottom"
+
+    def test_two_containers_can_share_a_row_once_one_is_turned(self):
+        validator = PlacementValidator()
+        assert validator.add_container(Container.of("memory_cache", (2, 3), "flat"))
+
+        # Turned, it stands in a single column and clears the flat one.
+        turned = Container.of("memory_cache", (6, 2), "tall").model_copy(
+            update={"rotation": Rotation.CLOCKWISE_90}
+        )
+        assert validator.add_container(turned)

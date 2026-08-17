@@ -7,6 +7,7 @@ import json
 
 import pytest
 
+from grid_system import Rotation
 from inventory_manager import (
     InvalidPlacementError,
     InventoryGrid,
@@ -17,8 +18,6 @@ from inventory_manager import (
 from items import Item
 from tests.test_utils import find_bad_positions
 from utils import dump_all
-
-ONE_SQUARE = [(0, 0)]
 
 
 class TestInventoryGrid:
@@ -44,45 +43,29 @@ class TestInventoryGrid:
         for container in grid.containers:
             assert sorted(container.shape) == [(0, 0), (0, 1), (1, 0), (1, 1)]
 
-    def test_is_valid_placement(self):
+    def test_can_hold(self):
         """Test validation of item placement on servers"""
         grid = InventoryGrid()
 
         # Valid placements (on servers)
-        assert (
-            grid.is_valid_placement((2, 3), ONE_SQUARE) is True
-        )  # Container A top-left
-        assert (
-            grid.is_valid_placement((3, 4), ONE_SQUARE) is True
-        )  # Container A bottom-right
-        assert (
-            grid.is_valid_placement((4, 3), ONE_SQUARE) is True
-        )  # Container B top-left
-        assert (
-            grid.is_valid_placement((5, 4), ONE_SQUARE) is True
-        )  # Container B bottom-right
-        assert (
-            grid.is_valid_placement((6, 3), ONE_SQUARE) is True
-        )  # Container C top-left
-        assert (
-            grid.is_valid_placement((7, 4), ONE_SQUARE) is True
-        )  # Container C bottom-right
+        assert grid.can_hold([(2, 3)]) is True  # Container A top-left
+        assert grid.can_hold([(3, 4)]) is True  # Container A bottom-right
+        assert grid.can_hold([(4, 3)]) is True  # Container B top-left
+        assert grid.can_hold([(5, 4)]) is True  # Container B bottom-right
+        assert grid.can_hold([(6, 3)]) is True  # Container C top-left
+        assert grid.can_hold([(7, 4)]) is True  # Container C bottom-right
 
         # Invalid placements (not on servers)
-        assert grid.is_valid_placement((0, 0), ONE_SQUARE) is False  # Empty space
-        assert (
-            grid.is_valid_placement((1, 3), ONE_SQUARE) is False
-        )  # Left of containers
-        assert (
-            grid.is_valid_placement((8, 3), ONE_SQUARE) is False
-        )  # Right of containers
-        assert grid.is_valid_placement((4, 2), ONE_SQUARE) is False  # Above containers
-        assert grid.is_valid_placement((4, 5), ONE_SQUARE) is False  # Below containers
+        assert grid.can_hold([(0, 0)]) is False  # Empty space
+        assert grid.can_hold([(1, 3)]) is False  # Left of containers
+        assert grid.can_hold([(8, 3)]) is False  # Right of containers
+        assert grid.can_hold([(4, 2)]) is False  # Above containers
+        assert grid.can_hold([(4, 5)]) is False  # Below containers
 
         # Out of bounds
-        assert grid.is_valid_placement((-1, 0), ONE_SQUARE) is False
-        assert grid.is_valid_placement((9, 0), ONE_SQUARE) is False
-        assert grid.is_valid_placement((0, 7), ONE_SQUARE) is False
+        assert grid.can_hold([(-1, 0)]) is False
+        assert grid.can_hold([(9, 0)]) is False
+        assert grid.can_hold([(0, 7)]) is False
 
     def test_place_item(self):
         """Test placing items on the grid"""
@@ -524,3 +507,38 @@ class TestFailuresReachTheCaller:
             manager.move_item("item1", from_location=(2, 3), to_location=(0, 0))
 
         assert manager.grid.get_item_at((2, 3)).id == "item1", "The item is back"
+
+
+class TestATurnedItemIsCheckedAsItIsTurned:
+    """
+    A turned item covers different squares from the ones its shape lists, so
+    every check has to ask for the squares rather than the shape.
+    """
+
+    def test_a_turn_that_hangs_off_the_containers_is_refused(self):
+        manager = InventoryManager()
+        # null_blade is one wide and two tall, so a quarter turn makes it two
+        # wide. At (7, 3) that reaches (8, 3), which no container covers.
+        upright = Item.of("null_blade", "item1")
+        turned = upright.placed_at((7, 3), Rotation.CLOCKWISE_90)
+
+        assert turned.covered_squares() == [(7, 3), (8, 3)]
+        assert manager.place_item(turned, placement=(7, 3)) is False
+        assert manager.grid.items == [], "Nothing should have landed"
+
+    def test_the_same_item_upright_there_is_allowed(self):
+        manager = InventoryManager()
+        upright = Item.of("null_blade", "item1")
+
+        assert upright.placed_at((7, 3)).covered_squares() == [(7, 3), (7, 4)]
+        assert manager.place_item(upright, placement=(7, 3)) is True
+
+    def test_a_turned_item_keeps_its_turn_on_the_grid(self):
+        manager = InventoryManager()
+        turned = Item.of("null_blade", "item1").placed_at((2, 3), Rotation.CLOCKWISE_90)
+
+        manager.place_item(turned, placement=(2, 3))
+
+        placed = manager.grid.get_item_at((3, 3))
+        assert placed is not None, "The turned item reaches the square beside it"
+        assert placed.rotation is Rotation.CLOCKWISE_90

@@ -13,11 +13,11 @@ func before_each():
 	# The 3 starting containers the server sends with a new session.
 	GameStateManager.save_inventory_state([], [
 		{"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
-			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
+			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0},
 		{"id": "container_b", "slug": "standard_vm", "type": "standard_vm",
-			"position": [4, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
+			"position": [4, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0},
 		{"id": "container_c", "slug": "standard_vm", "type": "standard_vm",
-			"position": [6, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+			"position": [6, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
 	])
 
 	ui = ui_scene.instantiate()
@@ -221,7 +221,7 @@ func test_inventory_state_save_and_load():
 		"items": [TestHelpers.placed_item_data({"id": "item1", "name": "Test Item"})],
 		"servers": [{
 			"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
-			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
+			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
 		}]
 	})
 
@@ -236,7 +236,7 @@ func test_inventory_state_save_and_load():
 func test_grid_coordinate_validation():
 	# Placement is validated by _can_place_container().
 	var container = TestHelpers.item({"is_container": true,
-		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]})
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0})
 
 	assert_false(ui._can_place_container(container, Vector2i(-1, 0)),
 		"Should reject negative X coordinate")
@@ -292,7 +292,7 @@ func test_the_preview_cells_sit_on_the_covered_squares():
 func test_the_preview_is_hidden_where_a_container_cannot_go():
 	# (2, 3) is already covered by container_a.
 	var vm = TestHelpers.item({"is_container": true,
-		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]})
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0})
 
 	ui._show_container_preview(vm, Vector2i(2, 3))
 
@@ -300,7 +300,7 @@ func test_the_preview_is_hidden_where_a_container_cannot_go():
 
 func test_the_preview_replaces_the_previous_one():
 	var vm = TestHelpers.item({"is_container": true,
-		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]})
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0})
 
 	ui._show_container_preview(vm, Vector2i(0, 0))
 	var first = ui.container_preview
