@@ -1162,11 +1162,11 @@ async def sell_item(request: SellRequest) -> SellResponse:
     # Search in both storage and grid for the item
     # First try storage
     for item in session.inventory_storage:
-        if item.id == request.item_uid:
+        if item.id == request.item_id:
             item_found = item
             item_cost = item.cost
             # Remove from storage using item_id
-            removed = manager.remove_item(item_id=request.item_uid)
+            removed = manager.remove_item(item_id=request.item_id)
             if not removed:
                 raise HTTPException(
                     status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -1177,11 +1177,11 @@ async def sell_item(request: SellRequest) -> SellResponse:
     # If not found in storage, try grid
     if not item_found:
         for item in session.inventory_grid:
-            if item.id == request.item_uid:
+            if item.id == request.item_id:
                 item_found = item
                 item_cost = item.cost
                 # Remove from grid using item_id (remove_item handles both storage and grid)
-                removed = manager.remove_item(item_id=request.item_uid)
+                removed = manager.remove_item(item_id=request.item_id)
                 if not removed:
                     raise HTTPException(
                         status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -1237,14 +1237,14 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     current_location = None
 
     for item in session.inventory_storage:
-        if item.id == request.item_uid:
+        if item.id == request.item_id:
             item_found = item
             current_location = "storage"
             break
 
     if not item_found:
         for item in session.inventory_grid:
-            if item.id == request.item_uid:
+            if item.id == request.item_id:
                 item_found = item
                 current_location = item.position
                 break
@@ -1266,7 +1266,7 @@ async def move_item(request: MoveItemRequest) -> MoveItemResponse:
     # Attempt the move using InventoryManager
     try:
         manager.move_item(
-            item_id=request.item_uid, from_location=current_location, to_location=to_loc
+            item_id=request.item_id, from_location=current_location, to_location=to_loc
         )
     except ItemNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))

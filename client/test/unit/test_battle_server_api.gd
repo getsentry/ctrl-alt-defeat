@@ -73,8 +73,9 @@ func test_reset_clears_everything_from_the_last_run():
 # ============ It announces failures ============
 
 func test_a_failed_purchase_reports_back_and_changes_nothing():
-	# The UI waits on purchase_completed, so a failure must still arrive or the
-	# screen hangs waiting for a signal that never comes.
+	# A failure is nothing plus an error, the way every other call reports one.
+	# Inventing a response that says a purchase happened is how a caller ends up
+	# reading fields off an item nobody bought.
 	BattleServerAPI.player_id = "1"
 	BattleServerAPI.BASE_URL = "http://127.0.0.1:1"  # nothing listens here
 	GameStateManager.gold = 17
@@ -82,12 +83,28 @@ func test_a_failed_purchase_reports_back_and_changes_nothing():
 
 	var result = await BattleServerAPI.purchase_item("item_1", [2, 3])
 
-	assert_not_null(result, "A failed purchase should still return a response object")
-	assert_eq(result.gold, 17, "A failed purchase should not change the player's gold")
-	assert_signal_emitted(BattleServerAPI, "purchase_completed",
-		"A failed purchase should still tell the UI it finished")
+	assert_null(result, "A failed purchase should not hand back a response")
+	assert_eq(GameStateManager.gold, 17, "A failed purchase should not change the gold")
+	assert_signal_not_emitted(BattleServerAPI, "purchase_completed",
+		"Nothing was purchased, so nothing completed")
 	assert_signal_emitted(BattleServerAPI, "error_occurred",
 		"A failed purchase should report the error")
+
+
+func test_a_failed_sale_reports_back_and_changes_nothing():
+	BattleServerAPI.player_id = "1"
+	BattleServerAPI.BASE_URL = "http://127.0.0.1:1"  # nothing listens here
+	GameStateManager.gold = 17
+	watch_signals(BattleServerAPI)
+
+	var result = await BattleServerAPI.sell_item("item_1")
+
+	assert_null(result, "A failed sale should not hand back a response")
+	assert_eq(GameStateManager.gold, 17, "A failed sale should not change the gold")
+	assert_signal_not_emitted(BattleServerAPI, "sell_completed",
+		"Nothing was sold, so nothing completed")
+	assert_signal_emitted(BattleServerAPI, "error_occurred",
+		"A failed sale should report the error")
 
 	BattleServerAPI.BASE_URL = OS.get_environment("BATTLE_SERVER_URL")
 

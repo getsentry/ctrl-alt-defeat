@@ -45,7 +45,7 @@ signal item_clicked(item)
 signal item_placed(item_data, grid_pos)
 signal item_removed(item_data, grid_pos)
 signal item_sold(item_data)
-signal item_moved(item_uid, from_pos, to_pos)
+signal item_moved(item_id, from_pos, to_pos)
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_PASS
@@ -325,16 +325,16 @@ func _end_drag():
 
 	# Check if the new position is valid
 	if _can_place_item(item_data, grid_pos):
-		var item_uid = item_data.id
+		var item_id = item_data.id
 
 		# Call API to move item
-		var response = await BattleServerAPI.move_item(item_uid, [grid_pos.x, grid_pos.y])
+		var response = await BattleServerAPI.move_item(item_id, [grid_pos.x, grid_pos.y])
 		if response:
 			print("Move persisted on server")
 			# Move succeeded, place at new position
 			_place_item_at(temp_object, grid_pos)
 			# Emit signal for any listeners
-			item_moved.emit(item_uid, original_grid_pos, grid_pos)
+			item_moved.emit(item_id, original_grid_pos, grid_pos)
 		else:
 			print("Failed to persist move on server, reverting")
 			# Move failed, return to original position

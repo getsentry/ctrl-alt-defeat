@@ -134,7 +134,7 @@ class TestAPISlugResponses:
 
         response = auth_client.post(
             "/sell/item",
-            json={"player_id": player_id, "item_uid": purchased_item["id"]},
+            json={"player_id": player_id, "item_id": purchased_item["id"]},
         )
         assert response.status_code == 200, f"Sell failed: {response.json()}"
 

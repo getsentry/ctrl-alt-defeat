@@ -416,6 +416,54 @@ func test_shop_purchase_and_item_placement():
 		print("   - Warning: Could not find placed item position")
 
 
+func test_selling_an_item_pays_the_player():
+	"""Right-clicking a placed item should sell it, not destroy it"""
+	print("\n=== UI TEST: Sell ===")
+
+	var main_menu = load("res://scenes/MainMenu.tscn").instantiate()
+	get_tree().root.add_child(main_menu)
+	get_tree().current_scene = main_menu
+	await get_tree().process_frame
+
+	main_menu.new_game_button.pressed.emit()
+	await _wait_for_shop_ready()
+	var game_ui = get_tree().current_scene
+
+	# Buy one item onto the grid, the way the shop drop does.
+	var shop_item = _first_non_container_shop_item(game_ui)
+	var item_data = shop_item.get_meta("item_data")
+	var target = _find_first_empty_grid_cell(game_ui)
+	assert_ne(target, Vector2(-1, -1), "There should be a free cell to buy into")
+
+	game_ui.dragging_shop_item = shop_item
+	game_ui.dragging_shop_data = item_data
+	game_ui.drag_preview = ItemVisual.new()
+	game_ui.add_child(game_ui.drag_preview)
+	game_ui._end_shop_drag(
+		game_ui.inventory_grid.global_position
+		+ game_ui.inventory_grid.grid_to_pixel(Vector2i(target.x, target.y))
+		+ Vector2(game_ui.inventory_grid.cell_size / 2, game_ui.inventory_grid.cell_size / 2)
+	)
+	await _wait_for_server()
+
+	assert_eq(game_ui.inventory_grid.items.size(), 1, "Setup: one item is on the grid")
+	var gold_before_selling = GameStateManager.gold
+	var placed_visual = game_ui.inventory_grid.items[0]
+
+	# Right-click the item on the grid
+	var right_click = InputEventMouseButton.new()
+	right_click.button_index = MOUSE_BUTTON_RIGHT
+	right_click.pressed = true
+	game_ui.inventory_grid._on_item_input(right_click, placed_visual)
+	await _wait_for_server()
+
+	assert_eq(game_ui.inventory_grid.items.size(), 0, "The sold item leaves the grid")
+	assert_gt(GameStateManager.gold, gold_before_selling,
+		"Selling should pay the player, not take the item for nothing")
+	assert_eq(GameStateManager.gold, gold_before_selling + item_data.cost / 2,
+		"A sale pays half of what the item cost")
+
+
 func test_battle_button_and_full_battle():
 	"""Test clicking battle button and going through full battle"""
 	print("\n=== UI TEST: Full Battle Flow ===")
@@ -932,9 +980,9 @@ func test_item_drag_and_move_persistence():
 	assert_gt(inventory_grid.items.size(), 0, "Should have item in inventory")
 	var placed_item = inventory_grid.items[0]
 	var placed_item_data = placed_item.get_meta("item_data")
-	var item_uid = placed_item_data.id
-	assert_ne(item_uid, "", "Placed item should have ID")
-	print("   - Item placed with ID: %s" % item_uid)
+	var item_id = placed_item_data.id
+	assert_ne(item_id, "", "Placed item should have ID")
+	print("   - Item placed with ID: %s" % item_id)
 
 	# Now test moving the item to a different position
 	print("   - Testing item move within inventory...")

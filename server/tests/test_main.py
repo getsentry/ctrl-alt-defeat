@@ -478,6 +478,74 @@ class TestContainerPurchase:
         )
 
 
+class TestSellItemAPI:
+    """
+    Test the /sell/item endpoint.
+
+    Selling had never worked: the client sent item_id and the request model
+    wanted item_uid, so every sale was a 422.
+    """
+
+    def _buy_one(self, auth_client):
+        """Start a session and put one item on the grid. Returns the details."""
+        start = auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        ).json()
+        player_id = start["player_id"]
+        item = next(
+            i for i in start["session"]["current_shop"] if i and not i["is_container"]
+        )
+        bought = auth_client.post(
+            "/purchase/item",
+            json={
+                "player_id": player_id,
+                "item_id": item["id"],
+                "target_position": [2, 3],
+            },
+        )
+        assert bought.status_code == 200, bought.text
+        return player_id, item, bought.json()["gold"]
+
+    def test_selling_pays_half_and_takes_the_item(self, auth_client):
+        player_id, item, gold_after_buying = self._buy_one(auth_client)
+
+        response = auth_client.post(
+            "/sell/item", json={"player_id": player_id, "item_id": item["id"]}
+        )
+
+        assert response.status_code == 200, response.text
+        sold = response.json()
+        assert sold["gold_gained"] == item["cost"] // 2, "A sale pays half the cost"
+        assert sold["gold"] == gold_after_buying + sold["gold_gained"]
+        assert sold["sold_item"]["id"] == item["id"], "The sold item comes back"
+
+        session = auth_client.get(f"/session/{player_id}").json()
+        assert session["inventory_grid"] == [], "The item leaves the grid"
+        assert session["gold"] == sold["gold"], "The gold is kept on the session"
+
+    def test_selling_an_item_you_do_not_own_is_refused(self, auth_client):
+        player_id, _item, _gold = self._buy_one(auth_client)
+
+        response = auth_client.post(
+            "/sell/item", json={"player_id": player_id, "item_id": "no_such_item"}
+        )
+
+        assert response.status_code == 404, response.text
+        session = auth_client.get(f"/session/{player_id}").json()
+        assert len(session["inventory_grid"]) == 1, "The real item is untouched"
+
+    def test_the_request_names_the_item_the_way_everything_else_does(self):
+        """
+        item_id, not item_uid. The two names were the whole bug, so the contract
+        is worth pinning.
+        """
+        from schemas import MoveItemRequest, PurchaseRequest, SellRequest
+
+        for model in (PurchaseRequest, SellRequest, MoveItemRequest):
+            assert "item_id" in model.model_fields, model.__name__
+            assert "item_uid" not in model.model_fields, model.__name__
+
+
 class TestMoveItemAPI:
     """Test the /move/item endpoint functionality"""
 
@@ -503,14 +571,14 @@ class TestMoveItemAPI:
         )
         assert response.status_code == 200
         purchase_data = response.json()
-        item_uid = purchase_data["purchased_item"]["id"]
+        item_id = purchase_data["purchased_item"]["id"]
 
         # Move item to different position
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": [4, 3],  # Second container
             },
         )
@@ -522,7 +590,7 @@ class TestMoveItemAPI:
         # Verify item is at new position in inventory
         found = False
         for grid_item in result["inventory_grid"]:
-            if grid_item["id"] == item_uid:
+            if grid_item["id"] == item_id:
                 assert grid_item["position"] == [4, 3]
                 found = True
                 break
@@ -548,14 +616,14 @@ class TestMoveItemAPI:
                 "target_position": [2, 3],
             },
         )
-        item_uid = response.json()["purchased_item"]["id"]
+        item_id = response.json()["purchased_item"]["id"]
 
         # Move to storage
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": "storage",
             },
         )
@@ -589,14 +657,14 @@ class TestMoveItemAPI:
                 "to_storage": True,
             },
         )
-        item_uid = response.json()["purchased_item"]["id"]
+        item_id = response.json()["purchased_item"]["id"]
 
         # Move to grid
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": [2, 3],
             },
         )
@@ -629,14 +697,14 @@ class TestMoveItemAPI:
                 "to_storage": True,
             },
         )
-        item_uid = response.json()["purchased_item"]["id"]
+        item_id = response.json()["purchased_item"]["id"]
 
         # Try to move from storage to storage (should be no-op, not error)
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": "storage",
             },
         )
@@ -666,14 +734,14 @@ class TestMoveItemAPI:
                 "target_position": [2, 3],
             },
         )
-        item_uid = response.json()["purchased_item"]["id"]
+        item_id = response.json()["purchased_item"]["id"]
 
         # Try to move to invalid position (not on container)
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": [0, 0],  # Not on any container
             },
         )
@@ -723,7 +791,7 @@ class TestMoveItemAPI:
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item2_uid,
+                "item_id": item2_uid,
                 "to_location": [2, 3],  # Already occupied
             },
         )
@@ -744,7 +812,7 @@ class TestMoveItemAPI:
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": "fake-item-id-12345",
+                "item_id": "fake-item-id-12345",
                 "to_location": [4, 3],
             },
         )
@@ -771,14 +839,14 @@ class TestMoveItemAPI:
                 "target_position": [2, 3],
             },
         )
-        item_uid = response.json()["purchased_item"]["id"]
+        item_id = response.json()["purchased_item"]["id"]
 
         # Move to same position
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": [2, 3],
             },
         )
@@ -809,7 +877,7 @@ class TestMoveItemAPI:
             },
         )
         purchased = response.json()["purchased_item"]
-        item_uid = purchased["id"]
+        item_id = purchased["id"]
         original_type = purchased["item_type"]
         original_name = purchased["name"]
 
@@ -818,7 +886,7 @@ class TestMoveItemAPI:
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": [4, 3],
             },
         )
@@ -827,7 +895,7 @@ class TestMoveItemAPI:
         # Find moved item in grid
         moved_item = None
         for grid_item in result["inventory_grid"]:
-            if grid_item["id"] == item_uid:
+            if grid_item["id"] == item_id:
                 moved_item = grid_item
                 break
 
@@ -866,14 +934,14 @@ class TestMoveItemAPI:
                 "target_position": [2, 3],
             },
         )
-        item_uid = response.json()["purchased_item"]["id"]
+        item_id = response.json()["purchased_item"]["id"]
 
         # Move to different container
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": [6, 3],  # Third container
             },
         )
@@ -894,7 +962,7 @@ class TestMoveItemAPI:
             "/move/item",
             json={
                 "player_id": "invalid-player-id",
-                "item_uid": "some-item",
+                "item_id": "some-item",
                 "to_location": [4, 3],
             },
         )
@@ -987,13 +1055,13 @@ class TestPositionContractOverHttp:
 
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
         assert bought.status_code == 200, bought.text
-        item_uid = bought.json()["purchased_item"]["id"]
+        item_id = bought.json()["purchased_item"]["id"]
 
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": SECOND_SQUARE,
             },
         )
@@ -1011,13 +1079,13 @@ class TestPositionContractOverHttp:
         session = start.json()["session"]
 
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
-        item_uid = bought.json()["purchased_item"]["id"]
+        item_id = bought.json()["purchased_item"]["id"]
 
         response = auth_client.post(
             "/move/item",
             json={
                 "player_id": session["player_id"],
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": "storage",
             },
         )
@@ -1065,13 +1133,13 @@ class TestPositionContractOverHttp:
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
         assert bought.status_code == 200, bought.text
         responses.append(("POST /purchase/item", bought.json()))
-        item_uid = bought.json()["purchased_item"]["id"]
+        item_id = bought.json()["purchased_item"]["id"]
 
         moved = auth_client.post(
             "/move/item",
             json={
                 "player_id": player_id,
-                "item_uid": item_uid,
+                "item_id": item_id,
                 "to_location": SECOND_SQUARE,
             },
         )
@@ -1149,7 +1217,7 @@ class TestPositionContractRejectsBadInput:
             "/move/item",
             json={
                 "player_id": session["player_id"],
-                "item_uid": "does-not-matter",
+                "item_id": "does-not-matter",
                 "to_location": {"x": 2, "y": 3},
             },
         )

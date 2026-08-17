@@ -311,15 +311,12 @@ class ShopRefreshResponse extends Resource:
 
 # Purchase response - matches server PurchaseResponse
 class PurchaseResponse extends Resource:
-	var purchased_item: Item  # null when the purchase failed
+	var purchased_item: Item
 	var gold: int = 0
 	var server_containers: Array[ServerContainer] = []
 
 	func _init(data: Dictionary):
-		# The client builds this with no item when a purchase fails, so that the
-		# UI still hears that the attempt finished.
-		if not data["purchased_item"].is_empty():
-			purchased_item = Item.new(data["purchased_item"])
+		purchased_item = Item.new(data["purchased_item"])
 		gold = data["gold"]
 		for container_data in data["server_containers"]:
 			server_containers.append(ServerContainer.new(container_data))
@@ -339,10 +336,14 @@ class BattleResponse extends Resource:
 
 # Sell response
 class SellResponse extends Resource:
+	var gold_gained: int = 0
 	var gold: int = 0
+	var sold_item: Item
 
 	func _init(data: Dictionary):
-		gold = data["gold"]
+		gold_gained = int(data["gold_gained"])
+		gold = int(data["gold"])
+		sold_item = Item.new(data["sold_item"])
 
 # Move item response
 class MoveItemResponse extends Resource:

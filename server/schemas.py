@@ -67,14 +67,14 @@ class SellRequest(BaseModel):
     """Request to sell an item"""
 
     player_id: str
-    item_uid: str  # Unique ID of the placed item
+    item_id: str  # Unique ID of the placed item
 
 
 class MoveItemRequest(BaseModel):
     """Request to move an item to a new position or storage"""
 
     player_id: str
-    item_uid: str  # Unique instance ID of the item to move
+    item_id: str  # Unique instance ID of the item to move
     to_location: Union[str, Position]  # "storage" or [x, y] coordinates
 
 

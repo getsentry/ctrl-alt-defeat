@@ -299,17 +299,10 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 
 	var error_msg = "Purchase failed with code: " + str(last_response_code)
 	print("DEBUG: " + error_msg)
-	# Create a failed purchase response with proper fields
-	response = APITypes.PurchaseResponse.new({
-		"purchased_item": {},
-		"gold": GameStateManager.gold,  # Keep current gold
-		"server_containers": []  # Nothing was bought, so nothing changed
-	})
-	purchase_completed.emit(response)
 	error_occurred.emit(error_msg)
-	return response
+	return null
 
-func sell_item(item_id: String, from_storage: bool = false) -> APITypes.SellResponse:
+func sell_item(item_id: String) -> APITypes.SellResponse:
 	# Sell item on real server
 	if player_id == "":
 		push_error("Cannot sell item - no player ID")
@@ -323,8 +316,7 @@ func sell_item(item_id: String, from_storage: bool = false) -> APITypes.SellResp
 
 	var body_dict = {
 		"player_id": player_id,
-		"item_id": item_id,
-		"from_storage": from_storage
+		"item_id": item_id
 	}
 
 	var body = JSON.stringify(body_dict)
@@ -347,15 +339,10 @@ func sell_item(item_id: String, from_storage: bool = false) -> APITypes.SellResp
 			return response
 
 	var error_msg = "Sell failed with code: " + str(last_response_code)
-	# Create a failed sell response with proper fields
-	response = APITypes.SellResponse.new({
-		"gold": GameStateManager.gold  # Keep current gold
-	})
-	sell_completed.emit(response)
 	error_occurred.emit(error_msg)
-	return response
+	return null
 
-func move_item(item_uid: String, to_location) -> APITypes.MoveItemResponse:
+func move_item(item_id: String, to_location) -> APITypes.MoveItemResponse:
 	# Move item to new position on real server
 	if player_id == "":
 		push_error("Cannot move item - no player ID")
@@ -369,12 +356,12 @@ func move_item(item_uid: String, to_location) -> APITypes.MoveItemResponse:
 
 	var body_dict = {
 		"player_id": player_id,
-		"item_uid": item_uid,
+		"item_id": item_id,
 		"to_location": to_location  # Either "storage" or [x, y]
 	}
 
 	var body = JSON.stringify(body_dict)
-	print("DEBUG: Moving item %s to position %s" % [item_uid, to_location])
+	print("DEBUG: Moving item %s to position %s" % [item_id, to_location])
 	http_request.request(url, headers, HTTPClient.METHOD_POST, body)
 	var result = await http_request.request_completed
 

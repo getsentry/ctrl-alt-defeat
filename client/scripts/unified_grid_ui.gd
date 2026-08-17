@@ -44,12 +44,23 @@ func _on_item_removed(item_data, grid_pos: Vector2i):
 
 func _on_item_sold(item_data: APITypes.PlacedItem):
 	"""Called when an item is sold (right-clicked)"""
-	# TODO: Call server to sell item
-	print("Selling item: ", item_data.name)
+	# The grid has already taken the item off, so put it back if the server
+	# refuses the sale. Otherwise the player loses the item and gets nothing.
+	var response = await BattleServerAPI.sell_item(item_data.id)
+	if response == null:
+		print("Sell refused by the server, putting the item back")
+		inventory_grid._add_item(item_data)
+		_save_current_state()
+		return
 
-func _on_item_moved(item_uid: String, from_pos: Vector2i, to_pos: Vector2i):
+	GameStateManager.gold = response.gold
+	_update_stats()
+	_save_current_state()
+	print("Sold %s for %d gold" % [item_data.name, response.gold_gained])
+
+func _on_item_moved(item_id: String, from_pos: Vector2i, to_pos: Vector2i):
 	"""Called after an item has been successfully moved within the inventory"""
-	print("Item %s successfully moved from %s to %s" % [item_uid, from_pos, to_pos])
+	print("Item %s successfully moved from %s to %s" % [item_id, from_pos, to_pos])
 	# Save the current state to GameStateManager
 	_save_current_state()
 
@@ -524,7 +535,7 @@ func _end_shop_drag(drop_position: Vector2):
 				print("Purchasing container %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
 				var response = await BattleServerAPI.purchase_item(item_id, [grid_pos.x, grid_pos.y])
 				# Check if purchase was actually successful
-				if response and response.purchased_item != null:
+				if response != null:
 					# Add the container to our grid
 					_add_container_from_purchase(response, grid_pos)
 					_mark_shop_item_sold(dragging_shop_item)
