@@ -40,6 +40,8 @@ func test_inventory_survives_battle():
 			"player2_quota": 0,
 			"actions": [],
 			"seed": 12345,
+			"opponent_name": "AI Opponent",
+			"opponent_type": "ai",
 			"player_inventory": {"items": [], "servers": []},
 			"enemy_inventory": {"items": [], "servers": []}
 		},

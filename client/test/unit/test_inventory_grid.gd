@@ -31,34 +31,24 @@ func after_each():
 	await get_tree().process_frame
 
 
-func _item(overrides: Dictionary = {}) -> Dictionary:
-	var data = {
-		"id": "item_1",
-		"slug": "null_blade",
-		"item_type": "null_blade",
-		"name": "Null Blade",
-		"category": "problem",
-		"position": [2, 3],
-		"shape": [[0, 0]]
-	}
-	data.merge(overrides, true)
-	return data
+func _item(overrides: Dictionary = {}) -> Resource:
+	return TestHelpers.placed_item(overrides)
 
 
-func _container(overrides: Dictionary = {}) -> Dictionary:
-	var data = {
-		"id": "container_a",
-		"slug": "standard_vm",
-		"type": "standard_vm",
-		"position": [2, 3],
-		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
-	}
-	data.merge(overrides, true)
-	return data
+func _container(overrides: Dictionary = {}) -> Resource:
+	return TestHelpers.container(overrides)
 
 
 func _state(items: Array, containers: Array) -> APITypes.InventoryState:
-	return APITypes.InventoryState.new({"items": items, "servers": containers})
+	# The grid loads plain data, the same as it arrives from the server.
+	var item_data = []
+	for item in items:
+		item_data.append(item.to_dict())
+	var container_data = []
+	for container in containers:
+		container_data.append(container.to_dict())
+	return APITypes.InventoryState.new(
+		{"items": item_data, "servers": container_data})
 
 
 func _load_default_containers() -> void:

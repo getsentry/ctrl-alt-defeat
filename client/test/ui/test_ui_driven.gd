@@ -103,7 +103,7 @@ func test_full_user_journey_through_ui():
 	var shop_item = _first_non_container_shop_item(game_ui)
 	assert_not_null(shop_item, "Shop should offer at least one non-container item")
 	var item_data = shop_item.get_meta("item_data")
-	var item_cost = item_data.get("cost", 3)
+	var item_cost = item_data.cost
 
 	# Simulate purchase through UI - we need to trigger the shop item's input handler
 	print("   - Simulating purchase through UI...")
@@ -318,8 +318,8 @@ func test_shop_purchase_and_item_placement():
 
 	var initial_gold = GameStateManager.gold
 	var item_data = shop_item.get_meta("item_data")
-	var item_type = item_data.get("item_type", "")
-	print("   - Found shop item: %s (cost: %d, type: %s)" % [item_data.get("name", "Unknown"), item_data.get("cost", 0), item_type])
+	var item_type = item_data.item_type
+	print("   - Found shop item: %s (cost: %d, type: %s)" % [item_data.name, item_data.cost, item_type])
 	print("   - Full item_data: %s" % item_data)
 
 	# Record initial inventory state - items are in inventory_grid
@@ -411,7 +411,7 @@ func test_shop_purchase_and_item_placement():
 			var data = placed_item.get_meta("item_data")
 			print("   - Placed item data: %s" % data)
 			if item_type != "":
-				assert_eq(data.get("item_type", ""), item_type, "Placed item should match shop item type")
+				assert_eq(data.item_type, item_type, "Placed item should match shop item type")
 	else:
 		print("   - Warning: Could not find placed item position")
 
@@ -786,8 +786,8 @@ func test_inventory_persistence_across_battle():
 		game_ui._input(mouse_up)
 		await _wait_for_server()
 
-		purchased_items.append(item_data.get("name", "Unknown"))
-		print("   - Purchased: %s" % item_data.get("name", "Unknown"))
+		purchased_items.append(item_data.name)
+		print("   - Purchased: %s" % item_data.name)
 
 	# Get inventory state before battle
 	var pre_battle_inventory = game_ui.inventory_grid.get_inventory_state()
@@ -800,8 +800,8 @@ func test_inventory_persistence_across_battle():
 	for item in pre_battle_inventory.items:
 		if item is Dictionary:
 			item_details_before.append({
-				"name": item.get("name", "unknown"),
-				"position": item.get("position", [])
+				"name": item["name"],
+				"position": item["position"]
 			})
 
 	# Start battle
@@ -854,10 +854,9 @@ func test_inventory_persistence_across_battle():
 	for i in range(min(item_details_before.size(), post_battle_inventory.items.size())):
 		var before = item_details_before[i]
 		var after = post_battle_inventory.items[i]
-		if after is Dictionary:
-			if after.get("name") != before.name:
-				items_match = false
-				print("   - Item mismatch: %s != %s" % [after.get("name"), before.name])
+		if after["name"] != before.name:
+			items_match = false
+			print("   - Item mismatch: %s != %s" % [after["name"], before.name])
 
 	assert_true(items_match, "Item details should match after battle")
 
@@ -933,7 +932,7 @@ func test_item_drag_and_move_persistence():
 	assert_gt(inventory_grid.items.size(), 0, "Should have item in inventory")
 	var placed_item = inventory_grid.items[0]
 	var placed_item_data = placed_item.get_meta("item_data")
-	var item_uid = placed_item_data.id if placed_item_data.has("id") else ""
+	var item_uid = placed_item_data.id
 	assert_ne(item_uid, "", "Placed item should have ID")
 	print("   - Item placed with ID: %s" % item_uid)
 
@@ -1219,6 +1218,6 @@ func _first_non_container_shop_item(game_ui):
 	"""
 	for shop_item in game_ui.shop_items:
 		var data = shop_item.get_meta("item_data")
-		if not data.get("is_container", false):
+		if not data.is_container:
 			return shop_item
 	return null

@@ -78,6 +78,8 @@ func test_api_types_can_parse_server_data():
 		"player2_quota": 0,
 		"seed": 12345,
 		"actions": [],
+		"opponent_name": "AI Opponent",
+		"opponent_type": "ai",
 		"player_inventory": {"items": [], "servers": []},
 		"enemy_inventory": {"items": [], "servers": []}
 	}

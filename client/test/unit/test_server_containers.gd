@@ -8,18 +8,21 @@ func test_server_starting_containers_format():
 	# Simulate server response with starting containers
 	var server_containers = [
 		{
+			"slug": "standard_vm",
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [1, 3],
 			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
 		},
 		{
+			"slug": "standard_vm",
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [3, 3],
 			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
 		},
 		{
+			"slug": "standard_vm",
 			"type": "standard_vm",
 			"name": "Standard VM",
 			"position": [5, 3],
@@ -53,7 +56,7 @@ func test_standard_vm_mapping():
 
 	# Set containers with standard_vm type
 	GameStateManager.server_containers = [
-		{"type": "standard_vm", "position": [1, 1]}
+		{"slug": "standard_vm", "type": "standard_vm", "position": [1, 1]}
 	]
 
 	# The client should map this to cube_2x2
@@ -68,9 +71,9 @@ func test_multiple_containers_side_by_side():
 	GameStateManager.start_new_game()
 
 	var containers = [
-		{"type": "standard_vm", "position": [1, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
-		{"type": "standard_vm", "position": [3, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
-		{"type": "standard_vm", "position": [5, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+		{"slug": "standard_vm", "type": "standard_vm", "position": [1, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
+		{"slug": "standard_vm", "type": "standard_vm", "position": [3, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]},
+		{"slug": "standard_vm", "type": "standard_vm", "position": [5, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 	]
 
 	GameStateManager.server_containers = containers

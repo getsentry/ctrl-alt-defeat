@@ -1,6 +1,59 @@
 extends Resource
 class_name TestHelpers
 
+# One fully populated item. The server sends every field on every item, so a
+# fixture that leaves fields out would not be testing what the client receives.
+static func item_data(overrides: Dictionary = {}) -> Dictionary:
+	var data = {
+		"id": "item_1",
+		"item_type": "null_blade",
+		"name": "Null Blade",
+		"slug": "null_blade",
+		"category": "problem",
+		"rarity": "rare",
+		"cost": 8,
+		"is_container": false,
+		"shape": [[0, 0]],
+		"description": "Deals 2-5 damage",
+		"min_damage": 2,
+		"max_damage": 5,
+		"min_heal": 0,
+		"max_heal": 0,
+		"block_amount": 0,
+		"cooldown": 1.5,
+		"cpu_cost": 3,
+		"special_effect": ""
+	}
+	data.merge(overrides, true)
+	return data
+
+
+static func placed_item_data(overrides: Dictionary = {}) -> Dictionary:
+	var data = item_data({"position": [2, 3], "rotation": 0})
+	data.merge(overrides, true)
+	return data
+
+
+static func item(overrides: Dictionary = {}) -> Resource:
+	return preload("res://scripts/api_types.gd").Item.new(item_data(overrides))
+
+
+static func placed_item(overrides: Dictionary = {}) -> Resource:
+	return preload("res://scripts/api_types.gd").PlacedItem.new(
+		placed_item_data(overrides))
+
+
+static func container(overrides: Dictionary = {}) -> Resource:
+	var data = {
+		"id": "container_a",
+		"slug": "standard_vm",
+		"type": "standard_vm",
+		"position": [2, 3],
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
+	}
+	data.merge(overrides, true)
+	return preload("res://scripts/api_types.gd").ServerContainer.new(data)
+
 # Helper to create a valid BattleResult for testing
 static func create_test_battle_result(winner: int = 1, duration: float = 10.0) -> Resource:
 	var APITypes = preload("res://scripts/api_types.gd")
@@ -17,16 +70,18 @@ static func create_test_battle_result(winner: int = 1, duration: float = 10.0) -
 			{"timestamp": 5000, "source": "enemy_item", "action": "damage", "player": 2, "target": "player", "damage": 5, "details": null},
 			{"timestamp": 10000, "source": "system", "action": "battle_end", "player": winner, "target": null, "damage": null, "details": null}
 		],
+		"opponent_name": "AI Opponent",
+		"opponent_type": "ai",
 		"player_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "test_srv1", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+				{"id": "test_srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 			]
 		},
 		"enemy_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "test_srv2", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+				{"id": "test_srv2", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 			]
 		}
 	}
@@ -91,10 +146,10 @@ static func reset_game_state():
 static func create_test_inventory_state() -> Dictionary:
 	return {
 		"items": [
-			{"id": "item1", "item_type": "test_item", "name": "Test Item", "position": [2, 3], "shape": [[0, 0]]}
+			placed_item_data({"id": "item1", "name": "Test Item"})
 		],
 		"servers": [
-			{"id": "srv1", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+			{"id": "srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
 		]
 	}
 

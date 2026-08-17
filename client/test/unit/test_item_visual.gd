@@ -19,24 +19,18 @@ func after_each():
 	await get_tree().process_frame
 
 
-func _make(data: Dictionary, size: float = 45.0, spacing: float = 1.0) -> Control:
+func _make(data, size: float = 45.0, spacing: float = 1.0) -> Control:
 	visual = ItemVisual.new()
 	add_child(visual)
 	visual.setup(data, size, spacing)
 	return visual
 
 
-func _item(overrides: Dictionary = {}) -> Dictionary:
-	var data = {
-		"id": "item_1",
-		"item_type": "core_dumper",
-		"slug": "core_dumper",
-		"name": "Core Dumper",
-		"category": "problem",
-		"shape": [[0, 0]]
-	}
-	data.merge(overrides, true)
-	return data
+func _item(overrides: Dictionary = {}) -> Resource:
+	var defaults = {"item_type": "core_dumper", "slug": "core_dumper",
+		"name": "Core Dumper"}
+	defaults.merge(overrides, true)
+	return TestHelpers.item(defaults)
 
 
 # ============ Shape ============
@@ -44,13 +38,6 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 func test_reads_the_shape_from_the_item():
 	_make(_item({"shape": [[0, 0], [1, 0]]}))
 	assert_eq(visual.item_shape, [[0, 0], [1, 0]], "Should take the shape from the item")
-
-
-func test_defaults_to_a_single_cell():
-	var data = _item()
-	data.erase("shape")
-	_make(data)
-	assert_eq(visual.item_shape, [[0, 0]], "An item with no shape should be one cell")
 
 
 func test_size_follows_a_single_cell_shape():
@@ -110,11 +97,8 @@ func test_draws_one_cell_per_shape_square_without_artwork():
 func test_accepts_a_typed_inventory_item():
 	visual = ItemVisual.new()
 	add_child(visual)
-	var item = APITypes.InventoryItem.new({
-		"id": "item_1", "slug": "core_dumper", "item_type": "core_dumper",
-		"name": "Core Dumper", "category": "problem",
-		"position": [2, 3], "shape": [[0, 0]]
-	})
+	var item = TestHelpers.placed_item({"slug": "core_dumper",
+		"item_type": "core_dumper", "name": "Core Dumper"})
 
 	visual.setup(item, 45.0, 1.0)
 
@@ -125,7 +109,7 @@ func test_accepts_a_typed_inventory_item():
 # ============ Containers ============
 
 func test_container_is_drawn_in_its_own_colour():
-	_make(_item({"slug": "no_such_item_anywhere", "is_container": true}))
+	_make(TestHelpers.container({"slug": "no_such_item_anywhere"}))
 	var container_cell = visual.get_child(0)
 	var container_style = container_cell.get_theme_stylebox("panel")
 

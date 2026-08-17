@@ -54,50 +54,19 @@ func _setup_tooltip_internal(item_data):
 	var special_effect = ""
 	var description = ""
 
-	# Extract data from dictionary or object
-	if item_data is Dictionary:
-		item_name = item_data.get("name", item_data.get("item_type", "Unknown"))
-		category = item_data.get("category", "")
-		rarity = item_data.get("rarity", "common")
-		cost = item_data.get("cost", 0)
-		min_damage = item_data.get("min_damage", 0)
-		max_damage = item_data.get("max_damage", 0)
-		min_heal = item_data.get("min_heal", 0)
-		max_heal = item_data.get("max_heal", 0)
-		cooldown = item_data.get("cooldown", 0.0)
-		cpu_cost = item_data.get("cpu_cost", 0)
-		block_amount = item_data.get("block_amount", 0)
-		special_effect = item_data.get("special_effect", "")
-		description = item_data.get("description", "")
-	else:
-		# Handle typed objects
-		if "name" in item_data:
-			item_name = item_data.name
-		elif "item_type" in item_data:
-			item_name = item_data.item_type
-
-		if "category" in item_data:
-			category = item_data.category
-		if "rarity" in item_data:
-			rarity = item_data.rarity
-		if "cost" in item_data:
-			cost = item_data.cost
-		if "min_damage" in item_data:
-			min_damage = item_data.min_damage
-			max_damage = item_data.max_damage
-		if "min_heal" in item_data:
-			min_heal = item_data.min_heal
-			max_heal = item_data.max_heal
-		if "cooldown" in item_data:
-			cooldown = item_data.cooldown
-		if "cpu_cost" in item_data:
-			cpu_cost = item_data.cpu_cost
-		if "block_amount" in item_data:
-			block_amount = item_data.block_amount
-		if "special_effect" in item_data:
-			special_effect = item_data.special_effect
-		if "description" in item_data:
-			description = item_data.description
+	item_name = item_data.name
+	category = item_data.category
+	rarity = item_data.rarity
+	cost = item_data.cost
+	min_damage = item_data.min_damage
+	max_damage = item_data.max_damage
+	min_heal = item_data.min_heal
+	max_heal = item_data.max_heal
+	cooldown = item_data.cooldown
+	cpu_cost = item_data.cpu_cost
+	block_amount = item_data.block_amount
+	special_effect = item_data.special_effect
+	description = item_data.description
 
 	# Set name with rarity color
 	name_label.text = item_name

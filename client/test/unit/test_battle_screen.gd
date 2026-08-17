@@ -21,6 +21,8 @@ func before_each():
 			{"timestamp": 1500, "source": "enemy", "action": "damage", "player": 2, "target": "player", "damage": 20, "details": {"hp": 80}},
 			{"timestamp": 5000, "source": "player", "action": "death", "player": 2, "target": null, "damage": null, "details": null}
 		],
+		"opponent_name": "AI Opponent",
+		"opponent_type": "ai",
 		"player_inventory": {
 			"items": [],
 			"servers": [

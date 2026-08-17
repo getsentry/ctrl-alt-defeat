@@ -77,6 +77,8 @@ func test_battle_result_updates_state():
 			"player2_quota": 0,
 			"actions": [],
 			"seed": 12345,
+			"opponent_name": "AI Opponent",
+			"opponent_type": "ai",
 			"player_inventory": {"items": [], "servers": []},
 			"enemy_inventory": {"items": [], "servers": []}
 		},
@@ -90,11 +92,7 @@ func test_battle_result_updates_state():
 			"game_over": false,
 			"victory": false
 		},
-		"new_shop": [{
-			"id": "shop_item_1", "item_type": "null_blade", "name": "Null Blade",
-			"category": "problem", "slug": "null_blade", "rarity": "common",
-			"cost": 3, "is_container": false, "shape": [[0, 0]]
-		}],
+		"new_shop": [TestHelpers.item_data({"id": "shop_item_1", "cost": 3})],
 		"battle_id": "test-battle-123"
 	})
 
@@ -131,6 +129,8 @@ func test_battle_result_stores_events_for_playback():
 				{"timestamp": 1500, "source": "enemy", "action": "damage",
 					"player": 2, "target": "player", "damage": 20, "details": null}
 			],
+			"opponent_name": "AI Opponent",
+			"opponent_type": "ai",
 			"player_inventory": {"items": [], "servers": []},
 			"enemy_inventory": {"items": [], "servers": []}
 		},
@@ -156,6 +156,8 @@ func test_defeat_updates_losses_and_lives():
 		"battle_result": {
 			"winner": 2, "duration": 10.0, "player1_quota": 0, "player2_quota": 50,
 			"actions": [], "seed": 1,
+			"opponent_name": "AI Opponent",
+			"opponent_type": "ai",
 			"player_inventory": {"items": [], "servers": []},
 			"enemy_inventory": {"items": [], "servers": []}
 		},
@@ -181,6 +183,8 @@ func test_game_over_comes_from_the_session_update():
 		"battle_result": {
 			"winner": 2, "duration": 10.0, "player1_quota": 0, "player2_quota": 50,
 			"actions": [], "seed": 1,
+			"opponent_name": "AI Opponent",
+			"opponent_type": "ai",
 			"player_inventory": {"items": [], "servers": []},
 			"enemy_inventory": {"items": [], "servers": []}
 		},

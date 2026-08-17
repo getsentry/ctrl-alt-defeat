@@ -42,10 +42,10 @@ func _on_item_removed(item_data, grid_pos: Vector2i):
 	_save_current_state()
 
 
-func _on_item_sold(item_data):
+func _on_item_sold(item_data: APITypes.PlacedItem):
 	"""Called when an item is sold (right-clicked)"""
 	# TODO: Call server to sell item
-	print("Selling item: ", item_data.name if item_data.has("name") else "Unknown")
+	print("Selling item: ", item_data.name)
 
 func _on_item_moved(item_uid: String, from_pos: Vector2i, to_pos: Vector2i):
 	"""Called after an item has been successfully moved within the inventory"""
@@ -73,7 +73,7 @@ func _input(event):
 			var grid_pos = _global_to_grid(event.global_position)
 
 			# Show container preview if dragging a container
-			if dragging_shop_data.get("is_container", false):
+			if dragging_shop_data.is_container:
 				_show_container_preview(dragging_shop_data, grid_pos)
 			else:
 				# For normal items, use the inventory grid's hover preview
@@ -148,12 +148,8 @@ func _ready():
 	print("DEBUG: Loading saved inventory on UnifiedGridUI startup:")
 	print("  Items: %d" % saved_inventory.get("items", []).size())
 	print("  Servers: %d" % saved_inventory.get("servers", []).size())
-	if saved_inventory.get("items", []).size() > 0:
-		for item in saved_inventory.items:
-			if item is Dictionary:
-				print("    Item (dict): %s at %s" % [item.get("name", "unknown"), item.get("position", "?")])
-			else:
-				print("    Item (object): %s" % item)
+	for item in saved_inventory["items"]:
+		print("    Item: %s at %s" % [item["name"], item["position"]])
 	_load_saved_inventory(saved_inventory)
 
 
@@ -381,7 +377,7 @@ func _display_shop_items(shop_data: Array):
 			continue  # Empty slot
 
 		var item_data = shop_data[i]
-		print("  Slot %d: %s (cost: %d)" % [i, item_data.get("name", "Unknown"), item_data.get("cost", 0)])
+		print("  Slot %d: %s (cost: %d)" % [i, item_data.name, item_data.cost])
 
 		# Create shop item and add to the specific position container
 		var shop_item = _create_shop_item_from_data(item_data)
@@ -390,12 +386,12 @@ func _display_shop_items(shop_data: Array):
 		shop_items.append(shop_item)
 
 		# Update the price label
-		shop_positions[i].price.text = str(item_data.get("cost", 0)) + "g"
+		shop_positions[i].price.text = str(item_data.cost) + "g"
 		shop_positions[i].price.visible = true
 
 	print("Added %d shop items to container" % shop_items.size())
 
-func _create_shop_item_from_data(data: Dictionary) -> Control:
+func _create_shop_item_from_data(data: APITypes.Item) -> Control:
 	var shop_item = Panel.new()
 	shop_item.custom_minimum_size = Vector2(200, 140)
 	shop_item.size = Vector2(200, 140)
@@ -416,16 +412,16 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 
 	# Name label
 	var name_label = Label.new()
-	name_label.text = data.get("name", "Unknown")
+	name_label.text = data.name
 	name_label.position = Vector2(60, 10)
 	name_label.add_theme_font_size_override("font_size", 12)
 	shop_item.add_child(name_label)
 
 	# Size label for containers
-	var is_container_item = data.get("is_container", false)
+	var is_container_item = data.is_container
 	if is_container_item:
 		var size_label = Label.new()
-		size_label.text = "%d slots" % data["shape"].size()
+		size_label.text = "%d slots" % data.shape.size()
 		size_label.position = Vector2(60, 25)
 		size_label.add_theme_font_size_override("font_size", 10)
 		size_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
@@ -433,7 +429,7 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 
 	# Cost label - positioned below item
 	var cost_label = Label.new()
-	cost_label.text = "%d GOLD" % data.get("cost", 5)
+	cost_label.text = "%d GOLD" % data.cost
 	cost_label.position = Vector2(70, 100)
 	cost_label.add_theme_font_size_override("font_size", 18)
 	cost_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.0))  # Yellow
@@ -445,18 +441,9 @@ func _create_shop_item_from_data(data: Dictionary) -> Control:
 	# Store data and connect input
 	shop_item.set_meta("shop_item", true)
 	shop_item.set_meta("item_data", data)
-	shop_item.set_meta("cost", data.get("cost", 5))
+	shop_item.set_meta("cost", data.cost)
 
-	# Prepare full item data for the handler - include all original fields
-	var handler_data = data.duplicate()
-	# Add display-specific fields if not present
-	if not handler_data.has("color"):
-		handler_data["color"] = Color(0.5, 0.3, 0.7) if is_container_item else _get_color_for_category(data.get("category", "problem"))
-	if not handler_data.has("type"):
-		handler_data["type"] = "server" if is_container_item else "item"  # Mark containers as servers
-
-	# Connect input handling for dragging
-	shop_item.gui_input.connect(_on_shop_item_input.bind(shop_item, handler_data))
+	shop_item.gui_input.connect(_on_shop_item_input.bind(shop_item, data))
 
 	return shop_item
 
@@ -473,7 +460,7 @@ func _get_color_for_category(category: String) -> Color:
 		_:
 			return Color(0.5, 0.5, 0.5)
 
-func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Dictionary):
+func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: APITypes.Item):
 	if read_only_mode:
 		return
 	if event is InputEventMouseButton:
@@ -483,11 +470,11 @@ func _on_shop_item_input(event: InputEvent, shop_item: Panel, item_data: Diction
 				_start_shop_drag(shop_item, item_data)
 
 var dragging_shop_item: Panel = null
-var dragging_shop_data: Dictionary = {}
+var dragging_shop_data: APITypes.Item = null
 var drag_preview: Control = null
 var container_preview: Control = null  # Holds one preview panel per covered square
 
-func _start_shop_drag(shop_item: Panel, item_data: Dictionary):
+func _start_shop_drag(shop_item: Panel, item_data: APITypes.Item):
 	"""Start dragging a shop item"""
 	# Don't allow dragging sold items
 	if shop_item.modulate.a < 1.0:
@@ -495,7 +482,7 @@ func _start_shop_drag(shop_item: Panel, item_data: Dictionary):
 		return
 
 	# Check if player has enough gold
-	var cost = item_data.get("cost", 0)
+	var cost = item_data.cost
 	if GameStateManager.gold < cost:
 		print("Not enough gold! Need %d, have %d" % [cost, GameStateManager.gold])
 		return
@@ -523,7 +510,7 @@ func _end_shop_drag(drop_position: Vector2):
 	var grid_pos = _global_to_grid(drop_position)
 
 	# Check if this is a container/server
-	var is_container = dragging_shop_data.get("is_container", false)
+	var is_container = dragging_shop_data.is_container
 
 	if is_container:
 		# Containers need special handling - they can only go in the main grid area
@@ -532,12 +519,12 @@ func _end_shop_drag(drop_position: Vector2):
 			print("Placing container at position [%d, %d]" % [grid_pos.x, grid_pos.y])
 
 			# Tell the server about the container purchase
-			var item_id = dragging_shop_data.get("id", "")
+			var item_id = dragging_shop_data.id
 			if item_id:
 				print("Purchasing container %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
 				var response = await BattleServerAPI.purchase_item(item_id, [grid_pos.x, grid_pos.y])
 				# Check if purchase was actually successful
-				if response and response.purchased_item and not response.purchased_item.is_empty():
+				if response and response.purchased_item != null:
 					# Add the container to our grid
 					_add_container_from_purchase(response, grid_pos)
 					_mark_shop_item_sold(dragging_shop_item)
@@ -553,7 +540,7 @@ func _end_shop_drag(drop_position: Vector2):
 				print("Placed item at position [%d, %d]" % [grid_pos.x, grid_pos.y])
 
 				# Now tell the server about the purchase
-				var item_id = dragging_shop_data.get("id", "")
+				var item_id = dragging_shop_data.id
 				if item_id:
 					print("Purchasing item %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
 					BattleServerAPI.purchase_item(item_id, [grid_pos.x, grid_pos.y])
@@ -576,30 +563,30 @@ func _end_shop_drag(drop_position: Vector2):
 		drag_preview.queue_free()
 		drag_preview = null
 	dragging_shop_item = null
-	dragging_shop_data = {}
+	dragging_shop_data = null
 
-func _try_purchase_from_shop(shop_item: Panel, item_data: Dictionary):
+func _try_purchase_from_shop(shop_item: Panel, item_data: APITypes.Item):
 	# Don't allow purchasing sold items
 	if shop_item.modulate.a < 1.0:
 		print("This item has already been sold")
 		return
 
 	# Check if player has enough gold
-	var cost = item_data.get("cost", 0)
+	var cost = item_data.cost
 	if GameStateManager.gold < cost:
 		print("Not enough gold! Need %d, have %d" % [cost, GameStateManager.gold])
 		return
 
 	# For now, just add the item to storage or first available spot
 	# TODO: Let player choose placement
-	if item_data.get("type", "") == "server":
+	if item_data.is_container:
 		# Add server container to inventory
-		print("Purchasing server container: ", item_data.get("name", "Unknown"))
+		print("Purchasing server container: ", item_data.name)
 		# TODO: Call server API to purchase and place container
 	else:
 		# Try to place item in first available spot
-		print("Purchasing item: ", item_data.get("name", "Unknown"))
-		var item_id = item_data.get("id", "")
+		print("Purchasing item: ", item_data.name)
+		var item_id = item_data.id
 		if item_id:
 			# Debug: Check if we have any active grid spots
 			var active_count = 0
@@ -634,13 +621,13 @@ func _mark_shop_item_sold(shop_item: Panel):
 	shop_item.add_child(sold_label)
 
 # The grid squares a container of this shape would cover at grid_pos.
-func _container_squares(container_data: Dictionary, grid_pos: Vector2i) -> Array:
+func _container_squares(container_data: APITypes.Item, grid_pos: Vector2i) -> Array:
 	var squares: Array = []
-	for offset in container_data["shape"]:
+	for offset in container_data.shape:
 		squares.append(Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1])))
 	return squares
 
-func _can_place_container(container_data: Dictionary, grid_pos: Vector2i) -> bool:
+func _can_place_container(container_data: APITypes.Item, grid_pos: Vector2i) -> bool:
 	"""Check if a container can be placed at the given position"""
 	var squares = _container_squares(container_data, grid_pos)
 
@@ -676,7 +663,7 @@ func _add_container_from_purchase(response: APITypes.PurchaseResponse, grid_pos:
 
 	inventory_grid.load_inventory_state(new_inventory_state)
 
-func _show_container_preview(container_data: Dictionary, grid_pos: Vector2i):
+func _show_container_preview(container_data: APITypes.Item, grid_pos: Vector2i):
 	"""Show preview for container placement"""
 	# Remove old preview if it exists
 	if container_preview:
@@ -725,8 +712,7 @@ func _on_ready_for_battle():
 	print("DEBUG: Saving inventory before battle:")
 	print("  Items to save: %d" % grid_state.items.size())
 	for item in grid_state.items:
-		if item is Dictionary:
-			print("    - %s at %s" % [item.get("name", "?"), item.get("position", "?")])
+		print("    - %s at %s" % [item["name"], item["position"]])
 
 	# Save to GameStateManager so it persists across scene changes
 	GameStateManager.save_inventory_state(grid_state.items, grid_state.servers)
@@ -773,13 +759,9 @@ func _on_purchase_completed(response: APITypes.PurchaseResponse):
 		GameStateManager.gold = response.gold
 		_update_stats()
 
-		# Add the purchased item to inventory
-		var item_data = response.purchased_item
-		if item_data and item_data.has("position"):
-			# Create typed item for inventory grid
-			var typed_item = APITypes.InventoryItem.new(item_data)
-			inventory_grid._add_item(typed_item)
-			_save_current_state()
+		# The item is bought but not yet placed, so the grid gets it when the
+		# player drops it.
+		_save_current_state()
 
 func _on_refresh_shop():
 	if GameStateManager.gold >= 1:

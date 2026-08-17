@@ -23,20 +23,17 @@ var tooltip_panel: Panel = null
 var is_hovering: bool = false
 
 func setup(data, size: float = 45.0, spacing: float = 1.0):
-	"""Initialize the item visual with data"""
+	"""Initialize the visual from an APITypes.Item or APITypes.ServerContainer"""
 	item_data = data
 	cell_size = size
 	cell_spacing = spacing
-
-	# Extract shape
-	if data is Dictionary:
-		item_shape = data.get("shape", [[0, 0]])
-	elif "shape" in data:
-		item_shape = data.shape
-	else:
-		item_shape = [[0, 0]]
+	item_shape = data.shape
 
 	_create_visual()
+
+func _is_container() -> bool:
+	"""A container is drawn differently from an item that sits on one"""
+	return item_data is APITypes.ServerContainer
 
 func _create_visual():
 	"""Create the item visual representation"""
@@ -82,22 +79,7 @@ func _get_texture_path() -> String:
 	"""Get the texture path for this item based on slug"""
 	# Get the slug from the data
 	var slug = ""
-	if item_data is APITypes.InventoryItem:
-		slug = item_data.slug
-		print("ItemVisual: Got slug '%s' from InventoryItem" % slug)
-	elif item_data is Dictionary:
-		slug = item_data["slug"]
-		print("ItemVisual: Got slug '%s' from Dictionary" % slug)
-	else:
-		push_error("Unknown item_data type: " + str(typeof(item_data)))
-		return ""
-
-	# Check if it's a container/server
-	var is_container = false
-	if item_data is Dictionary:
-		is_container = item_data.get("is_container", false) or item_data.get("type", "") == "server"
-	elif "is_container" in item_data:
-		is_container = item_data.is_container
+	slug = item_data.slug
 
 	# Build path based on type
 	var texture_path = "res://assets/items/" + slug + ".png"
@@ -158,15 +140,8 @@ func _create_texture_visual(texture_path: String):
 
 func _create_colored_visual():
 	"""Create visual using colored cells (fallback)"""
-	# Determine if this is a container
-	var is_container = false
-	if item_data is Dictionary:
-		is_container = item_data.get("is_container", false) or item_data.get("type", "") == "server"
-	elif "is_container" in item_data:
-		is_container = item_data.is_container
-
 	# Use different colors for containers vs items
-	var color_to_use = container_color if is_container else item_color
+	var color_to_use = container_color if _is_container() else item_color
 
 	for offset in item_shape:
 		if offset is Array and offset.size() >= 2:
@@ -192,26 +167,6 @@ func _on_mouse_entered():
 		return
 
 	# Check if this is a server container without real item data
-	if item_data is Dictionary:
-		var is_server_container = item_data.get("type", "") == "server" or item_data.get("type", "") == "standard_vm"
-		var is_container = item_data.get("is_container", false)
-
-		# For containers, check if they have actual item information
-		if is_server_container or is_container:
-			# Server containers should have a proper name field to show tooltip
-			var has_real_name = item_data.has("name") and item_data["name"] != "" and item_data["name"] != "Unknown"
-			var has_real_type = item_data.has("item_type") and item_data["item_type"] != "" and item_data["item_type"] != "Unknown"
-
-			if not (has_real_name or has_real_type):
-				return  # Skip tooltip for empty server containers
-	else:
-		# For typed objects, check for meaningful data
-		var has_name = "name" in item_data and item_data.name != "" and item_data.name != "Unknown"
-		var has_type = "item_type" in item_data and item_data.item_type != "" and item_data.item_type != "Unknown"
-
-		if not (has_name or has_type):
-			return
-
 	is_hovering = true
 	_show_tooltip()
 

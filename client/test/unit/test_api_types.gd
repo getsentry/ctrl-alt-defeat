@@ -19,7 +19,9 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 		"item_type": "null_blade",
 		"name": "Null Blade",
 		"category": "problem",
+		"is_container": false,
 		"position": [2, 3],
+		"rotation": 0,
 		"shape": [[0, 0], [1, 0]],
 		"rarity": "rare",
 		"cost": 8,
@@ -57,6 +59,8 @@ func _battle_result(overrides: Dictionary = {}) -> Dictionary:
 		"player2_quota": 0,
 		"seed": 12345,
 		"actions": [],
+		"opponent_name": "AI Opponent",
+		"opponent_type": "ai",
 		"player_inventory": {"items": [], "servers": []},
 		"enemy_inventory": {"items": [], "servers": []}
 	}
@@ -81,7 +85,7 @@ func _action(overrides: Dictionary = {}) -> Dictionary:
 # ============ Parsing keeps everything ============
 
 func test_a_whole_item_survives_parsing():
-	var item = APITypes.InventoryItem.new(_item())
+	var item = APITypes.PlacedItem.new(_item())
 
 	assert_eq(item.id, "item_1", "id should survive parsing")
 	assert_eq(item.slug, "null_blade", "slug should survive parsing")
@@ -117,8 +121,8 @@ func test_a_whole_container_survives_parsing():
 func test_a_round_trip_through_to_dict_loses_nothing():
 	# Saved inventory goes out through to_dict() and comes back in on the next
 	# screen, so anything to_dict() drops is lost for the rest of the run.
-	var item = APITypes.InventoryItem.new(_item({"id": "abc", "position": [6, 4]}))
-	var reloaded_item = APITypes.InventoryItem.new(item.to_dict())
+	var item = APITypes.PlacedItem.new(_item({"id": "abc", "position": [6, 4]}))
+	var reloaded_item = APITypes.PlacedItem.new(item.to_dict())
 
 	assert_eq(reloaded_item.id, item.id, "item id should survive a round trip")
 	assert_eq(reloaded_item.name, item.name, "item name should survive a round trip")
@@ -138,9 +142,9 @@ func test_a_round_trip_through_to_dict_loses_nothing():
 
 func test_round_trip_is_stable_over_repeats():
 	# Saved state is re-loaded and re-saved every round, so drift would compound.
-	var item = APITypes.InventoryItem.new(_item({"position": [7, 4]}))
+	var item = APITypes.PlacedItem.new(_item({"position": [7, 4]}))
 	for i in range(5):
-		item = APITypes.InventoryItem.new(item.to_dict())
+		item = APITypes.PlacedItem.new(item.to_dict())
 
 	assert_eq(item.position.x, 7, "x should not drift over repeated round trips")
 	assert_eq(item.position.y, 4, "y should not drift over repeated round trips")
@@ -175,15 +179,19 @@ func test_inventory_state_handles_an_empty_inventory():
 	assert_eq(state.containers.size(), 0, "An empty inventory should have no containers")
 
 
-func test_inventory_state_accepts_already_parsed_objects():
-	# get_inventory_state() hands back objects, and they get reloaded as-is.
-	var item = APITypes.InventoryItem.new(_item())
+func test_inventory_state_survives_a_round_trip():
+	# An item goes out to the server as plain data and comes back the same.
+	var item = APITypes.PlacedItem.new(_item())
 	var container = APITypes.ServerContainer.new(_container())
 
-	var state = APITypes.InventoryState.new({"items": [item], "servers": [container]})
+	var state = APITypes.InventoryState.new({
+		"items": [item.to_dict()], "servers": [container.to_dict()]
+	})
 
-	assert_eq(state.items.size(), 1, "An already parsed item should be accepted")
-	assert_eq(state.containers.size(), 1, "An already parsed container should be accepted")
+	assert_eq(state.items.size(), 1, "The item should come back")
+	assert_eq(state.items[0].id, item.id, "and keep its id")
+	assert_eq(state.items[0].shape, item.shape, "and keep its shape")
+	assert_eq(state.containers.size(), 1, "The container should come back")
 
 
 # ============ Battle results ============
@@ -223,6 +231,8 @@ func test_battle_action_keeps_its_payload():
 
 func test_battle_result_carries_both_inventories():
 	var result = APITypes.BattleResult.new(_battle_result({
+		"opponent_name": "AI Opponent",
+		"opponent_type": "ai",
 		"player_inventory": {"items": [_item({"id": "mine"})], "servers": [_container()]},
 		"enemy_inventory": {"items": [_item({"id": "theirs"}), _item({"id": "theirs2"})], "servers": []}
 	}))
@@ -240,6 +250,8 @@ func test_battle_response_resolves_to_leaf_values():
 		"battle_result": _battle_result({
 			"winner": 1,
 			"actions": [_action({"timestamp": 250, "action": "damage", "damage": 4, "player": 2})],
+			"opponent_name": "AI Opponent",
+			"opponent_type": "ai",
 			"player_inventory": {"items": [_item({"id": "deep"})], "servers": []}
 		}),
 		"session_update": {
@@ -330,7 +342,7 @@ func test_positions_survive_a_container_round_trip():
 
 
 func test_positions_survive_an_item_round_trip():
-	var item = APITypes.InventoryItem.new(_item({"position": [6, 4]}))
+	var item = APITypes.PlacedItem.new(_item({"position": [6, 4]}))
 	var as_dict = item.to_dict()
 
 	assert_typeof(as_dict["position"], TYPE_ARRAY, "An item writes its position as an array")

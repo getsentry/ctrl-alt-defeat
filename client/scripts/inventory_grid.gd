@@ -194,14 +194,12 @@ func _add_container(container: APITypes.ServerContainer):
 	container_visual.position = grid_to_pixel(Vector2i(x, y))
 	container_visual.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var container_data = container.to_dict()
-	container_data["is_container"] = true
-
-	# Enable tooltips for containers too (must be before setup)
-	container_visual.enable_tooltip = true
+	# A container carries no name or description, so it has nothing to show in a
+	# tooltip yet.
+	container_visual.enable_tooltip = false
 
 	# Set up the visual
-	container_visual.setup(container_data, cell_size, cell_spacing)
+	container_visual.setup(container, cell_size, cell_spacing)
 
 	# Update grid cells to show server pattern and mark as active
 	for square in container.covered_squares():
@@ -227,7 +225,7 @@ func _add_container(container: APITypes.ServerContainer):
 		"position": Vector2i(x, y)
 	})
 
-func _add_item(item: APITypes.InventoryItem):
+func _add_item(item: APITypes.PlacedItem):
 	"""Add an item to the grid"""
 	if not item.position:
 		return
@@ -327,7 +325,7 @@ func _end_drag():
 
 	# Check if the new position is valid
 	if _can_place_item(item_data, grid_pos):
-		var item_uid = item_data.id if item_data is Dictionary and item_data.has("id") else (item_data.id if item_data is Resource else "")
+		var item_uid = item_data.id
 
 		# Call API to move item
 		var response = await BattleServerAPI.move_item(item_uid, [grid_pos.x, grid_pos.y])
@@ -390,33 +388,18 @@ func _can_place_item(item_data, grid_pos: Vector2i) -> bool:
 
 	return true
 
-func place_shop_item(item_data: Dictionary, grid_pos: Vector2i) -> bool:
+func place_shop_item(item: APITypes.Item, grid_pos: Vector2i) -> bool:
 	"""Place a shop item at the given position"""
-	if not can_place_item(item_data, grid_pos):
+	if not can_place_item(item, grid_pos):
 		return false
 
-	# Create a proper InventoryItem from the shop data
-	var item_dict = {
-		"id": item_data.get("id", ""),
-		"item_type": item_data.get("item_type", ""),
-		"slug": item_data.get("slug", ""),  # Include slug for texture loading
-		"name": item_data.get("name", ""),
-		"category": item_data.get("category", ""),
-		"rarity": item_data.get("rarity", "common"),
-		"position": [grid_pos.x, grid_pos.y],
-		"shape": item_data.get("shape", [[0, 0]])
-	}
-	var inventory_item = APITypes.InventoryItem.new(item_dict)
-
-	# Add the item to the grid
-	_add_item(inventory_item)
-
-	# Emit signal
-	item_placed.emit(inventory_item, grid_pos)
+	var placed = item.placed_at(grid_pos)
+	_add_item(placed)
+	item_placed.emit(placed, grid_pos)
 
 	return true
 
-func show_hover_preview_for_shop(item_data: Dictionary, grid_pos: Vector2i):
+func show_hover_preview_for_shop(item_data: APITypes.Item, grid_pos: Vector2i):
 	"""Show hover preview for a shop item being dragged"""
 	# Safety check - ensure hover_preview exists
 	if not hover_preview or not is_instance_valid(hover_preview):
@@ -429,8 +412,7 @@ func show_hover_preview_for_shop(item_data: Dictionary, grid_pos: Vector2i):
 		# Calculate hover size from shape
 		var max_x = 0
 		var max_y = 0
-		var shape = item_data.get("shape", [[0, 0]])
-		for offset in shape:
+		for offset in item_data.shape:
 			if offset is Array and offset.size() >= 2:
 				max_x = max(max_x, offset[0])
 				max_y = max(max_y, offset[1])
@@ -541,24 +523,13 @@ func get_inventory_state() -> Dictionary:
 		var item_data = item_visual.get_meta("item_data")
 		var grid_pos = item_visual.get_meta("grid_pos")
 
-		# Convert InventoryItem to dictionary for saving, preserving position
-		var item_dict
-		if item_data is APITypes.InventoryItem:
-			item_dict = item_data.to_dict()
-		else:
-			item_dict = item_data if item_data is Dictionary else {}
-
+		# Items go back to the server as plain data, at where they now sit
+		var item_dict = item_data.to_dict()
 		item_dict["position"] = [grid_pos.x, grid_pos.y]
-
 		state.items.append(item_dict)
 
-	# Save containers - convert to dictionaries for persistence
 	for container_data in containers:
-		var container = container_data.data
-		if container is APITypes.ServerContainer:
-			state.servers.append(container.to_dict())
-		else:
-			state.servers.append(container)
+		state.servers.append(container_data.data.to_dict())
 
 	return state
 

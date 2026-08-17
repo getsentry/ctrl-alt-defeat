@@ -50,13 +50,6 @@ func test_shows_the_item_name():
 	assert_eq(tooltip.name_label.text, "Null Blade", "Should show the item name")
 
 
-func test_falls_back_to_item_type_when_unnamed():
-	var data = _item()
-	data.erase("name")
-	tooltip.setup_tooltip(data)
-	assert_eq(tooltip.name_label.text, "null_blade", "Should fall back to the item type")
-
-
 func test_rarity_colours_the_name():
 	tooltip.setup_tooltip(_item({"rarity": "legendary"}))
 	var legendary = tooltip.name_label.get_theme_color("font_color")
@@ -157,13 +150,8 @@ func test_description_hidden_when_effects_say_it_better():
 # ============ Typed items ============
 
 func test_accepts_a_typed_inventory_item():
-	# Battle inventories hand over APITypes.InventoryItem, not a Dictionary.
-	var item = APITypes.InventoryItem.new({
-		"id": "item_1", "slug": "null_blade", "item_type": "null_blade",
-		"name": "Null Blade", "category": "problem", "position": [2, 3],
-		"shape": [[0, 0]], "rarity": "rare", "cost": 4,
-		"min_damage": 2, "max_damage": 5
-	})
+	# Battle inventories hand over an APITypes.PlacedItem, not a Dictionary.
+	var item = TestHelpers.placed_item({"cost": 4})
 
 	tooltip.setup_tooltip(item)
 

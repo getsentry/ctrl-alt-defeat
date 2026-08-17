@@ -43,11 +43,7 @@ func _action(overrides: Dictionary = {}) -> Dictionary:
 
 
 func _item(id: String, item_name: String) -> Dictionary:
-	return {
-		"id": id, "slug": "null_blade", "item_type": "null_blade",
-		"name": item_name, "category": "problem",
-		"position": [2, 3], "shape": [[0, 0]]
-	}
+	return TestHelpers.placed_item_data({"id": id, "name": item_name})
 
 
 func _battle(actions: Array, player_items: Array = [], enemy_items: Array = []) -> APITypes.BattleResult:
@@ -58,6 +54,8 @@ func _battle(actions: Array, player_items: Array = [], enemy_items: Array = []) 
 		"player2_quota": 0,
 		"seed": 1,
 		"actions": actions,
+		"opponent_name": "AI Opponent",
+		"opponent_type": "ai",
 		"player_inventory": {"items": player_items, "servers": []},
 		"enemy_inventory": {"items": enemy_items, "servers": []}
 	})

@@ -142,7 +142,7 @@ func test_drag_and_drop_initialization():
 	# UnifiedGridUI drags shop items. InventoryGrid drags items already on the
 	# grid. Neither should be dragging when the screen opens.
 	assert_null(ui.dragging_shop_item, "Should not be dragging a shop item initially")
-	assert_eq(ui.dragging_shop_data, {}, "Shop drag data should be empty")
+	assert_null(ui.dragging_shop_data, "Nothing should be dragged from the shop")
 
 	assert_null(ui.inventory_grid.dragging_object, "Should not be dragging initially")
 	assert_eq(ui.inventory_grid.drag_offset, Vector2.ZERO, "Drag offset should be zero")
@@ -165,11 +165,9 @@ func test_grid_cell_creation():
 func test_shop_item_display():
 	# Mock shop data
 	var mock_shop = [
-		{"id": "item1", "name": "Test Item", "cost": 5, "item_type": "test",
-		 "min_damage": 3, "max_damage": 5},
-		null,  # Empty slot
-		{"id": "item2", "name": "Another Item", "cost": 8, "item_type": "test2",
-		 "min_damage": 4, "max_damage": 6}
+		TestHelpers.item({"id": "item1", "name": "Test Item", "cost": 5}),
+		null,  # A slot whose item has been bought
+		TestHelpers.item({"id": "item2", "name": "Another Item", "cost": 8})
 	]
 
 	ui._display_shop_items(mock_shop)
@@ -201,7 +199,7 @@ func test_read_only_mode():
 
 	# Create a mock shop item
 	var shop_item = Panel.new()
-	var item_data = {"id": "test", "cost": 5}
+	var item_data = TestHelpers.item({"id": "test", "cost": 5})
 
 	# Try to start dragging - should be blocked
 	var event = InputEventMouseButton.new()
@@ -219,11 +217,7 @@ func test_read_only_mode():
 func test_inventory_state_save_and_load():
 	# load_inventory_state() takes an APITypes.InventoryState.
 	var test_state = APITypes.InventoryState.new({
-		"items": [{
-			"id": "item1", "slug": "test_item", "item_type": "test_item",
-			"name": "Test Item", "category": "attack",
-			"position": [2, 3], "shape": [[0, 0]]
-		}],
+		"items": [TestHelpers.placed_item_data({"id": "item1", "name": "Test Item"})],
 		"servers": [{
 			"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
 			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
@@ -240,7 +234,8 @@ func test_inventory_state_save_and_load():
 
 func test_grid_coordinate_validation():
 	# Placement is validated by _can_place_container().
-	var container = {"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+	var container = TestHelpers.item({"is_container": true,
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]})
 
 	assert_false(ui._can_place_container(container, Vector2i(-1, 0)),
 		"Should reject negative X coordinate")
@@ -258,7 +253,8 @@ func test_grid_coordinate_validation():
 
 func test_a_container_covers_only_the_squares_of_its_shape():
 	# An L shape covers 3 of the 4 squares in its 2x2 bounding box.
-	var l_shape = {"shape": [[0, 0], [0, 1], [1, 1]]}
+	var l_shape = TestHelpers.item({"is_container": true,
+		"shape": [[0, 0], [0, 1], [1, 1]]})
 
 	var squares = ui._container_squares(l_shape, Vector2i(2, 3))
 
@@ -267,7 +263,8 @@ func test_a_container_covers_only_the_squares_of_its_shape():
 
 func test_the_preview_draws_one_cell_per_covered_square():
 	# An L shape covers 3 squares, so the preview has 3 cells, not a 2x2 block.
-	var l_shape = {"shape": [[0, 0], [0, 1], [1, 1]]}
+	var l_shape = TestHelpers.item({"is_container": true,
+		"shape": [[0, 0], [0, 1], [1, 1]]})
 
 	ui._show_container_preview(l_shape, Vector2i(0, 0))
 
@@ -276,7 +273,8 @@ func test_the_preview_draws_one_cell_per_covered_square():
 		"One cell per covered square")
 
 func test_the_preview_cells_sit_on_the_covered_squares():
-	var l_shape = {"shape": [[0, 0], [0, 1], [1, 1]]}
+	var l_shape = TestHelpers.item({"is_container": true,
+		"shape": [[0, 0], [0, 1], [1, 1]]})
 
 	ui._show_container_preview(l_shape, Vector2i(0, 0))
 
@@ -292,14 +290,16 @@ func test_the_preview_cells_sit_on_the_covered_squares():
 
 func test_the_preview_is_hidden_where_a_container_cannot_go():
 	# (2, 3) is already covered by container_a.
-	var vm = {"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+	var vm = TestHelpers.item({"is_container": true,
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]})
 
 	ui._show_container_preview(vm, Vector2i(2, 3))
 
 	assert_null(ui.container_preview, "No preview on an occupied square")
 
 func test_the_preview_replaces_the_previous_one():
-	var vm = {"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}
+	var vm = TestHelpers.item({"is_container": true,
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]})
 
 	ui._show_container_preview(vm, Vector2i(0, 0))
 	var first = ui.container_preview
@@ -351,11 +351,9 @@ func test_empty_shop_slot_hides_its_price():
 
 func test_shop_price_follows_the_item_cost():
 	var item = {
-		"id": "priced_item", "item_type": "null_blade", "name": "Null Blade",
-		"slug": "null_blade", "category": "problem", "rarity": "common",
-		"cost": 7, "is_container": false, "shape": [[0, 0]]
+		"id": "priced_item", "cost": 7
 	}
-	ui._display_shop_items([item, null, null, null, null])
+	ui._display_shop_items([TestHelpers.item(item), null, null, null, null])
 	await get_tree().process_frame
 
 	assert_eq(ui.shop_container.get_node_or_null("ShopPrice1").text, "7g",

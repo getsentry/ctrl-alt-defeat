@@ -16,6 +16,8 @@ func _make_battle_result(winner: int) -> APITypes.BattleResult:
 		"player2_quota": 0,
 		"seed": 12345,
 		"actions": [],
+		"opponent_name": "AI Opponent",
+		"opponent_type": "ai",
 		"player_inventory": {"items": [], "servers": []},
 		"enemy_inventory": {"items": [], "servers": []}
 	})
@@ -158,6 +160,8 @@ func test_empty_result_handling():
 		"player2_quota": 0,
 		"seed": 0,
 		"actions": [],
+		"opponent_name": "AI Opponent",
+		"opponent_type": "ai",
 		"player_inventory": {"items": [], "servers": []},
 		"enemy_inventory": {"items": [], "servers": []}
 	}
