@@ -18,20 +18,13 @@ from item_effects import ItemSpec
 from utils import Position, Shape
 
 # What an item of each rarity costs in the shop.
-RARITY_COST = {
-    "common": 3,
-    "uncommon": 5,
-    "rare": 8,
-    "epic": 12,
-    "legendary": 20,
-    "godly": 30,
-    "unique": 30,
-}
+# Backpack Battles puts one shop item in ten on sale at half price.
+SALE_CHANCE = 0.10
 
 
-def shop_cost(rarity: str, tier: int) -> int:
-    """The gold price of an item of this rarity at this tier"""
-    return RARITY_COST.get(rarity, RARITY_COST["common"]) * tier
+def sale_price(cost: int) -> int:
+    """Half price, rounded up. Also what an item sells for."""
+    return -(-cost // 2)
 
 
 class ItemStats(BaseModel):
@@ -123,10 +116,13 @@ class Item(BaseModel):
     block_amount: int = Field(description="Damage blocked")
     cooldown: float = Field(description="Activation cooldown in seconds")
     cpu_cost: float = Field(description="CPU cost to activate")
+    on_sale: bool = Field(
+        default=False, description="Whether the shop is offering this at half price"
+    )
     special_effect: str = Field(description="Special effect name, empty if none")
 
     @classmethod
-    def of(cls, item_type: str, item_id: str, tier: int = 1) -> "Item":
+    def of(cls, item_type: str, item_id: str, on_sale: bool = False) -> "Item":
         """Build an item of a type declared in the item catalogue"""
         spec = config_loader.items[item_type]
         stats = stats_of(spec)
@@ -137,7 +133,8 @@ class Item(BaseModel):
             slug=spec.slug,
             category=spec.category,
             rarity=spec.rarity,
-            cost=shop_cost(spec.rarity, tier),
+            cost=spec.cost,
+            on_sale=on_sale,
             # The catalogue gives a container its own category, so the flag
             # follows from it rather than from a second lookup.
             is_container=spec.category == "container",
@@ -145,6 +142,16 @@ class Item(BaseModel):
             description=describe(stats),
             **stats.model_dump(),
         )
+
+    @property
+    def price(self) -> int:
+        """What buying it costs right now, sale included"""
+        return sale_price(self.cost) if self.on_sale else self.cost
+
+    @property
+    def sell_value(self) -> int:
+        """What selling it pays, whether or not it was bought on sale"""
+        return sale_price(self.cost)
 
     def _item_fields(self) -> dict:
         """Just the fields an Item has, so a placed item can be rebuilt"""

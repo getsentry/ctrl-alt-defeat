@@ -28,7 +28,7 @@ from containers import Container, starting_containers
 # Import session management and schemas
 from database import db_manager
 from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
-from items import Item, PlacedItem
+from items import SALE_CHANCE, Item, PlacedItem
 from matchmaking import MatchmakingService
 from schemas import (
     BattleHistoryEntry,
@@ -458,7 +458,15 @@ def generate_shop_items(
             if len(used_item_types) > 3:
                 used_item_types.pop(0)
 
-            items.append(Item.of(item_type, str(uuid.uuid4())))
+            # Roll the sale from the shop's own rng, so a seed gives the
+            # same five items at the same prices every time.
+            items.append(
+                Item.of(
+                    item_type,
+                    str(uuid.uuid4()),
+                    on_sale=rng.random() < SALE_CHANCE,
+                )
+            )
 
     return items
 
@@ -1043,8 +1051,8 @@ async def purchase_item(
     if not item:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Item not in shop")
 
-    # Check gold
-    cost = item.cost
+    # Check gold. A sale halves what it costs today.
+    cost = item.price
     if session.gold < cost:
         raise HTTPException(status_code=400, detail="Not enough gold")
 
@@ -1210,8 +1218,8 @@ async def sell_item(
     session.inventory_grid = new_state["grid"]
     session.inventory_storage = new_state["storage"]
 
-    # Calculate gold (50% of cost, rounded down)
-    gold_gained = item_cost // 2
+    # Half the price, rounded up, as Backpack Battles pays
+    gold_gained = item_found.sell_value
     session.gold += gold_gained
 
     # Save updated session

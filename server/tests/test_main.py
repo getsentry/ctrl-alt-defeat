@@ -424,8 +424,8 @@ class TestBattleAPIResponse:
 class TestContainerPurchase:
     """A bought container keeps the shape of its type"""
 
-    # Seed 11 puts a packet_buffer, which is 1x2 rather than 2x2, in round 1.
-    NON_SQUARE_CONTAINER_SEED = 11
+    # Seed 154 puts a packet_buffer, which is 1x2 rather than 2x2, in round 1.
+    NON_SQUARE_CONTAINER_SEED = 154
 
     def test_a_bought_container_keeps_its_own_shape(self, auth_client):
         response = auth_client.post(

@@ -131,7 +131,7 @@ SHOP_SEED = 424242
 # Same, but one of the five covers more than one square, and the first three
 # together cost less than the starting gold. Tests that need a multi-square
 # item, or that buy several items in a row, use this one.
-MULTI_SQUARE_SHOP_SEED = 1
+MULTI_SQUARE_SHOP_SEED = 2
 
 
 @pytest.fixture

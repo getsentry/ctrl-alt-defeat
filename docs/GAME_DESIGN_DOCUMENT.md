@@ -343,13 +343,12 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
 ### 5.2 Shop System
 - **Slots**: 5 items per refresh
 - **Reroll Cost**: 1 gold for the first four rolls of a round, 2 gold after
-- **Item Costs**:
-  - Common: 3-4g
-  - Uncommon: 5-7g
-  - Rare: 8-11g
-  - Epic: 12-16g
-  - Legendary: 18-25g
-  - Godly: 30+g
+- **Sales**: each item offered has a 10% chance of being half price, rounded
+  up. The roll comes from the shop's seed, so the same seed always offers the
+  same items at the same prices. An item bought on sale sells for what it cost.
+- **Item Costs**: each item's own cost, taken from the Backpack Battles item
+  it is based on. There is no price band per rarity: a Unique can cost 5 gold
+  and a Rare 16.
 
 ### 5.3 Recipe System (Item Combining)
 - **How it Works**: Place recipe items adjacent to each other in your server rack
