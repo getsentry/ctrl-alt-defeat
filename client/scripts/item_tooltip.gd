@@ -3,7 +3,6 @@ class_name ItemTooltip
 
 @onready var name_label = $MarginContainer/VBoxContainer/NameLabel
 @onready var info_label = $MarginContainer/VBoxContainer/InfoLabel
-@onready var cost_label = $MarginContainer/VBoxContainer/CostLabel
 @onready var damage_label = $MarginContainer/VBoxContainer/DamageLabel
 @onready var heal_label = $MarginContainer/VBoxContainer/HealLabel
 @onready var block_label = $MarginContainer/VBoxContainer/BlockLabel
@@ -43,7 +42,6 @@ func _setup_tooltip_internal(item_data: APITypes.Item):
 	var item_name = ""
 	var category = ""
 	var rarity = "common"
-	var cost = 0
 	var min_damage = 0
 	var max_damage = 0
 	var min_heal = 0
@@ -57,7 +55,6 @@ func _setup_tooltip_internal(item_data: APITypes.Item):
 	item_name = item_data.name
 	category = item_data.category
 	rarity = item_data.rarity
-	cost = item_data.cost
 	min_damage = item_data.min_damage
 	max_damage = item_data.max_damage
 	min_heal = item_data.min_heal
@@ -86,13 +83,6 @@ func _setup_tooltip_internal(item_data: APITypes.Item):
 		info_label.visible = true
 	else:
 		info_label.visible = false
-
-	# Set cost
-	if cost > 0:
-		cost_label.text = "Value: " + str(cost) + " gold"
-		cost_label.visible = true
-	else:
-		cost_label.visible = false
 
 	var has_effects = false
 

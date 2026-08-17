@@ -39,6 +39,10 @@ class Item extends Resource:
 	var category: String = ""
 	var rarity: String = ""
 	var cost: int = 0
+	# What the shop is charging today. Equal to cost unless it is on sale.
+	var price: int = 0
+	# Only ever true of a shop offer. Buying it ends the sale.
+	var on_sale: bool = false
 	var is_container: bool = false
 	var shape: Array = []  # Array[Array[int]]: the [x, y] offsets it covers
 	var description: String = ""
@@ -48,7 +52,7 @@ class Item extends Resource:
 	var max_heal: int = 0
 	var block_amount: int = 0
 	var cooldown: float = 0.0
-	var cpu_cost: int = 0
+	var cpu_cost: float = 0.0
 	var special_effect: String = ""
 
 	func _init(data: Dictionary):
@@ -59,6 +63,8 @@ class Item extends Resource:
 		category = data["category"]
 		rarity = data["rarity"]
 		cost = int(data["cost"])
+		price = int(data["price"])
+		on_sale = data["on_sale"]
 		is_container = data["is_container"]
 		shape = data["shape"]
 		description = data["description"]
@@ -68,7 +74,7 @@ class Item extends Resource:
 		max_heal = int(data["max_heal"])
 		block_amount = int(data["block_amount"])
 		cooldown = float(data["cooldown"])
-		cpu_cost = int(data["cpu_cost"])
+		cpu_cost = float(data["cpu_cost"])
 		special_effect = data["special_effect"]
 
 	func to_dict() -> Dictionary:
@@ -80,6 +86,8 @@ class Item extends Resource:
 			"category": category,
 			"rarity": rarity,
 			"cost": cost,
+			"price": price,
+			"on_sale": on_sale,
 			"is_container": is_container,
 			"shape": shape,
 			"description": description,

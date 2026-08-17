@@ -10,7 +10,7 @@ difference between the two types. So a position is never null, and nothing has
 to work out what a missing one means.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from config_loader import config_loader
 from grid_system import ItemShape, Rotation
@@ -146,14 +146,19 @@ class Item(BaseModel):
             **stats.model_dump(),
         )
 
+    @computed_field
     @property
     def price(self) -> int:
-        """What buying it costs right now, sale included"""
+        """What buying it costs right now. Sent, so the shop cannot show
+        one number while the server charges another."""
         return sale_price(self.cost) if self.on_sale else self.cost
 
     @property
     def sell_value(self) -> int:
-        """What selling it pays, whether or not it was bought on sale"""
+        """What selling it pays, whether or not it was bought on sale.
+
+        Not sent: nothing on the client shows it yet.
+        """
         return sale_price(self.cost)
 
     def _item_fields(self) -> dict:

@@ -1051,8 +1051,9 @@ async def purchase_item(
     if not item:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Item not in shop")
 
-    # Check gold. A sale halves what it costs today.
     cost = item.price
+    # The sale is the shop's, not the item's, so it ends here.
+    item = item.model_copy(update={"on_sale": False})
     if session.gold < cost:
         raise HTTPException(status_code=400, detail="Not enough gold")
 

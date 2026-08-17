@@ -25,6 +25,8 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 		"shape": [[0, 0], [1, 0]],
 		"rarity": "rare",
 		"cost": 8,
+		"price": 8,
+		"on_sale": false,
 		"min_damage": 2,
 		"max_damage": 5,
 		"min_heal": 0,
@@ -347,3 +349,33 @@ func test_positions_survive_an_item_round_trip():
 
 	assert_typeof(as_dict["position"], TYPE_ARRAY, "An item writes its position as an array")
 	assert_eq(as_dict["position"], [6, 4], "The position survives unchanged")
+
+
+func test_a_shop_sale_survives_parsing():
+	# price is what the shop charges today, cost is what the item is worth.
+	var item = APITypes.Item.new(_item({"cost": 8, "price": 4, "on_sale": true}))
+	assert_eq(item.cost, 8)
+	assert_eq(item.price, 4)
+	assert_true(item.on_sale)
+
+
+func test_an_item_not_on_sale_is_charged_its_cost():
+	var item = APITypes.Item.new(_item({"cost": 8, "price": 8, "on_sale": false}))
+	assert_eq(item.price, item.cost)
+	assert_false(item.on_sale)
+
+
+func test_a_fractional_cpu_cost_is_not_truncated():
+	# Stamina comes from Backpack Battles in fractions. Reading it as an int
+	# turned a 1.4 into a 1 and made every weapon cheaper to fire.
+	var item = APITypes.Item.new(_item({"cpu_cost": 1.4}))
+	assert_almost_eq(item.cpu_cost, 1.4, 0.001)
+
+
+func test_sale_fields_survive_a_round_trip():
+	var item = APITypes.Item.new(_item({"cost": 8, "price": 4, "on_sale": true}))
+	var reloaded = APITypes.Item.new(item.to_dict())
+	assert_eq(reloaded.price, 4)
+	assert_true(reloaded.on_sale)
+
+

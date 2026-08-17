@@ -4,7 +4,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 
 ## Basic Problems
 
-### Null Pointer
+### Null blade
 - **Shape:** 2x1 (2 slots horizontal)
 - **Damage:** 1-3 (1.4 DPS)
 - **Cooldown:** 1.4s
@@ -50,7 +50,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 
 ## Advanced Exploits
 
-### Memory Leak
+### Core Dumper
 - **Shape:** 3x1 (3 slots horizontal)
 - **Damage:** 3-6 (2.0 DPS)
 - **Cooldown:** 2.3s

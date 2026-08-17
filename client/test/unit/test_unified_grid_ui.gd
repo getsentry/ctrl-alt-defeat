@@ -351,17 +351,25 @@ func test_empty_shop_slot_hides_its_price():
 		assert_false(price_label.visible, "An empty slot should show no price")
 
 
-func test_shop_price_follows_the_item_cost():
-	var item = {
-		"id": "priced_item", "cost": 7
-	}
+func test_shop_price_label_shows_what_the_shop_charges():
 	var priced_shop: Array[APITypes.Item] = [
-		TestHelpers.item(item), null, null, null, null]
+		TestHelpers.item({"id": "priced_item", "cost": 7, "price": 7}),
+		null, null, null, null]
 	ui._display_shop_items(priced_shop)
 	await get_tree().process_frame
 
-	assert_eq(ui.shop_container.get_node_or_null("ShopPrice1").text, "7g",
-		"The price label should follow the item's cost")
+	assert_eq(ui.shop_container.get_node_or_null("ShopPrice1").text, "7g")
+
+
+func test_shop_price_label_shows_the_sale_price_not_the_cost():
+	var priced_shop: Array[APITypes.Item] = [
+		TestHelpers.item({"id": "on_sale", "cost": 8, "price": 4, "on_sale": true}),
+		null, null, null, null]
+	ui._display_shop_items(priced_shop)
+	await get_tree().process_frame
+
+	assert_eq(ui.shop_container.get_node_or_null("ShopPrice1").text, "4g",
+		"A sale should be charged, not just displayed on the panel")
 
 
 # ============ Ready and refresh buttons ============

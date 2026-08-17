@@ -12,6 +12,8 @@ static func item_data(overrides: Dictionary = {}) -> Dictionary:
 		"category": "problem",
 		"rarity": "rare",
 		"cost": 8,
+		"price": 8,
+		"on_sale": false,
 		"is_container": false,
 		"shape": [[0, 0]],
 		"description": "Deals 2-5 damage",

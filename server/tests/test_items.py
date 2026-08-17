@@ -41,10 +41,6 @@ class TestItemPricing:
         discounted = Item.of("null_blade", "test", on_sale=True)
         assert full.sell_value == discounted.sell_value == sale_price(full.cost)
 
-    def test_an_item_bought_on_sale_sells_for_what_it_cost(self):
-        item = Item.of("null_blade", "test", on_sale=True)
-        assert item.sell_value == item.price
-
     def test_cost_comes_from_the_catalogue(self):
         # Not from a rarity table. Costs are the source item's.
         from config_loader import config_loader
@@ -52,10 +48,17 @@ class TestItemPricing:
         item = Item.of("null_blade", "test")
         assert item.cost == config_loader.items["null_blade"].cost
 
-    def test_a_sale_survives_being_placed(self):
-        placed = Item.of("null_blade", "test", on_sale=True).placed_at((0, 0))
-        assert placed.on_sale is True
-        assert placed.price == placed.sell_value
+    def test_buying_ends_the_sale(self):
+        """A sale belongs to the shop offer, not to the item.
+
+        Once bought, the item is worth what it has always been worth. Leaving
+        the flag on meant a bought item reported the discounted price for the
+        rest of the game.
+        """
+        offer = Item.of("null_blade", "test", on_sale=True)
+        owned = offer.model_copy(update={"on_sale": False})
+        assert owned.price == owned.cost
+        assert owned.sell_value == sale_price(owned.cost)
 
 
 class TestShopSales:

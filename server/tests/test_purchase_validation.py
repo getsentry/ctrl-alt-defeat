@@ -285,3 +285,54 @@ class TestPurchaseValidation:
         for item in updated_shop:
             if item is not None:
                 assert item["id"] != shop_item["id"]
+
+
+# Seed 15 offers a bitcoin_wallet on sale: 3 gold normally, 2 today.
+SALE_SEED = 15
+
+
+class TestBuyingOnSale:
+    """A sale is the shop's, and ends when the item changes hands"""
+
+    def _sale_item(self, auth_client):
+        response = auth_client.post(
+            "/session/start", json={"player_name": "test_player", "seed": SALE_SEED}
+        )
+        assert response.status_code == 200
+        shop = response.json()["session"]["current_shop"]
+        item = next(i for i in shop if i and i["on_sale"] and i["cost"] > i["price"])
+        return item
+
+    def test_the_shop_charges_the_sale_price(self, auth_client):
+        item = self._sale_item(auth_client)
+        before = auth_client.get("/session").json()["gold"]
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={"item_id": item["id"], "target_position": [2, 3]},
+        )
+        assert response.status_code == 200, response.text
+
+        spent = before - response.json()["gold"]
+        assert spent == item["price"]
+        assert spent < item["cost"], "the sale should have saved something"
+
+    def test_a_bought_item_is_no_longer_on_sale(self, auth_client):
+        """Otherwise it reports the discounted price for the rest of the game."""
+        item = self._sale_item(auth_client)
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={"item_id": item["id"], "target_position": [2, 3]},
+        )
+        assert response.status_code == 200, response.text
+
+        bought = response.json()["purchased_item"]
+        assert bought["on_sale"] is False
+        assert bought["price"] == bought["cost"]
+
+        # And the copy that was kept, not just the one handed back
+        grid = auth_client.get("/session").json()["inventory_grid"]
+        stored = next(i for i in grid if i["id"] == item["id"])
+        assert stored["on_sale"] is False
+        assert stored["price"] == stored["cost"]

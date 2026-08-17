@@ -74,19 +74,6 @@ func test_info_row_hidden_without_category_or_rarity():
 	assert_false(tooltip.info_label.visible, "Info row should be hidden when there is nothing to say")
 
 
-# ============ Cost ============
-
-func test_shows_cost_when_the_item_has_value():
-	tooltip.setup_tooltip(_item({"cost": 5}))
-	assert_true(tooltip.cost_label.visible, "Cost should be shown")
-	assert_eq(tooltip.cost_label.text, "Value: 5 gold", "Should show the value in gold")
-
-
-func test_hides_cost_when_worthless():
-	tooltip.setup_tooltip(_item({"cost": 0}))
-	assert_false(tooltip.cost_label.visible, "A zero cost should not be shown")
-
-
 # ============ Effects ============
 
 func test_shows_damage_range():

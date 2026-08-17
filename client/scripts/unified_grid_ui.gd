@@ -341,6 +341,12 @@ func _load_shop_from_state():
 	_display_shop_items(GameStateManager.current_shop)
 
 
+const SALE_COLOR := Color(0.35, 0.9, 0.4)
+const FULL_PRICE_COLOR := Color(1.0, 1.0, 0.0)
+const STRUCK_PRICE_COLOR := Color(0.6, 0.6, 0.6)
+const PRICE_TAG_COLOR := Color(1, 0.85, 0.3)
+
+
 func _display_shop_items(shop_data: Array[APITypes.Item]):
 	# Clear existing shop items (but not the containers/labels)
 	for child in shop_container.get_children():
@@ -367,7 +373,9 @@ func _display_shop_items(shop_data: Array[APITypes.Item]):
 			continue  # Empty slot
 
 		var item_data = shop_data[i]
-		print("  Slot %d: %s (cost: %d)" % [i, item_data.name, item_data.cost])
+		print("  Slot %d: %s (%dg%s)" % [
+			i, item_data.name, item_data.price, " on sale" if item_data.on_sale else ""
+		])
 
 		# Create shop item and add to the specific position container
 		var shop_item = _create_shop_item_from_data(item_data)
@@ -375,8 +383,12 @@ func _display_shop_items(shop_data: Array[APITypes.Item]):
 		shop_positions[i].item.add_child(shop_item)
 		shop_items.append(shop_item)
 
-		# Update the price label
-		shop_positions[i].price.text = str(item_data.cost) + "g"
+		# A plain Label cannot strike anything through, so colour carries the
+		# sale here and the panel below shows both prices.
+		shop_positions[i].price.text = str(item_data.price) + "g"
+		shop_positions[i].price.add_theme_color_override(
+			"font_color", SALE_COLOR if item_data.on_sale else PRICE_TAG_COLOR
+		)
 		shop_positions[i].price.visible = true
 
 	print("Added %d shop items to container" % shop_items.size())
@@ -417,25 +429,64 @@ func _create_shop_item_from_data(data: APITypes.Item) -> Control:
 		size_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
 		shop_item.add_child(size_label)
 
-	# Cost label - positioned below item
-	var cost_label = Label.new()
-	cost_label.text = "%d GOLD" % data.cost
-	cost_label.position = Vector2(70, 100)
-	cost_label.add_theme_font_size_override("font_size", 18)
-	cost_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.0))  # Yellow
-	cost_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0))
-	cost_label.add_theme_constant_override("shadow_offset_x", 2)
-	cost_label.add_theme_constant_override("shadow_offset_y", 2)
-	shop_item.add_child(cost_label)
+	shop_item.add_child(_create_price_label(data))
+
+	if data.on_sale:
+		shop_item.add_child(_create_sale_badge())
 
 	# Store data and connect input
 	shop_item.set_meta("shop_item", true)
 	shop_item.set_meta("item_data", data)
-	shop_item.set_meta("cost", data.cost)
 
 	shop_item.gui_input.connect(_on_shop_item_input.bind(shop_item, data))
 
 	return shop_item
+
+func _create_price_label(data: APITypes.Item) -> RichTextLabel:
+	"""The price, with the old one struck through when the item is on sale."""
+	var label = RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.fit_content = true
+	label.scroll_active = false
+	label.position = Vector2(56, 100)
+	label.size = Vector2(140, 30)
+	label.add_theme_font_size_override("normal_font_size", 18)
+
+	if data.on_sale:
+		label.text = "[color=#%s][s]%d[/s][/color] [color=#%s]%d GOLD[/color]" % [
+			STRUCK_PRICE_COLOR.to_html(false), data.cost,
+			SALE_COLOR.to_html(false), data.price,
+		]
+	else:
+		label.text = "[color=#%s]%d GOLD[/color]" % [
+			FULL_PRICE_COLOR.to_html(false), data.cost,
+		]
+	return label
+
+
+func _create_sale_badge() -> Panel:
+	"""The SALE pill in the corner of the panel."""
+	var badge = Panel.new()
+	badge.position = Vector2(140, 8)
+	badge.size = Vector2(52, 20)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var style = StyleBoxFlat.new()
+	style.bg_color = SALE_COLOR
+	style.set_corner_radius_all(10)
+	badge.add_theme_stylebox_override("panel", style)
+
+	var text = Label.new()
+	text.text = "SALE"
+	text.size = badge.size
+	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	text.add_theme_font_size_override("font_size", 12)
+	text.add_theme_color_override("font_color", Color(0.05, 0.15, 0.05))
+	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(text)
+	return badge
+
 
 func _get_color_for_category(category: String) -> Color:
 	match category:
@@ -472,7 +523,7 @@ func _start_shop_drag(shop_item: Panel, item_data: APITypes.Item):
 		return
 
 	# Check if player has enough gold
-	var cost = item_data.cost
+	var cost = item_data.price
 	if GameStateManager.gold < cost:
 		print("Not enough gold! Need %d, have %d" % [cost, GameStateManager.gold])
 		return
