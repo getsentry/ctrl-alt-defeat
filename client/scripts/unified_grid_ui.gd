@@ -650,18 +650,16 @@ func _can_place_container(container_data: APITypes.Item, grid_pos: Vector2i) -> 
 func _add_container_from_purchase(response: APITypes.PurchaseResponse, grid_pos: Vector2i):
 	"""Add a purchased container to the inventory grid"""
 	# The server sends every container the player owns, so this replaces the set.
-	var containers = []
-	for container_data in response.server_containers:
-		containers.append(APITypes.ServerContainer.new(container_data))
-	GameStateManager.server_containers = containers
+	var as_data = []
+	for container in response.server_containers:
+		as_data.append(container.to_dict())
+	GameStateManager.server_containers = as_data
 
 	var current_state = GameStateManager.get_inventory_state()
-	var new_inventory_state = APITypes.InventoryState.new({
-		"servers": response.server_containers,
-		"items": current_state.get("items", [])
-	})
-
-	inventory_grid.load_inventory_state(new_inventory_state)
+	inventory_grid.load_inventory_state(APITypes.InventoryState.new({
+		"servers": as_data,
+		"items": current_state["items"]
+	}))
 
 func _show_container_preview(container_data: APITypes.Item, grid_pos: Vector2i):
 	"""Show preview for container placement"""

@@ -21,7 +21,7 @@ var victory: bool = false
 
 # Inventory state
 var current_inventory: Dictionary = {}  # Stores placed items and servers
-var server_containers: Array = []  # Server rack configurations
+var server_containers: Array = []
 
 # Shop state
 var current_shop: Array = []

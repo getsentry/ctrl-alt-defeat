@@ -10,7 +10,7 @@ class_name ItemTooltip
 @onready var special_label = $MarginContainer/VBoxContainer/SpecialLabel
 @onready var description_label = $MarginContainer/VBoxContainer/DescriptionLabel
 
-var pending_item_data = null
+var pending_item_data: APITypes.Item = null
 
 func _ready():
 	# If we have pending data, set it up now
@@ -28,7 +28,7 @@ const RARITY_COLORS = {
 	"godly": Color(1.0, 0.2, 0.2)
 }
 
-func setup_tooltip(item_data):
+func setup_tooltip(item_data: APITypes.Item):
 	"""Configure the tooltip with item data"""
 	# If nodes aren't ready yet, store the data for later
 	if not is_node_ready():
@@ -37,7 +37,7 @@ func setup_tooltip(item_data):
 
 	_setup_tooltip_internal(item_data)
 
-func _setup_tooltip_internal(item_data):
+func _setup_tooltip_internal(item_data: APITypes.Item):
 	"""Internal function to actually set up the tooltip"""
 	# Get item properties
 	var item_name = ""

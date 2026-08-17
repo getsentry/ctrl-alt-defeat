@@ -24,23 +24,19 @@ func after_each():
 	await get_tree().process_frame
 
 
-func _item(overrides: Dictionary = {}) -> Dictionary:
+func _item(overrides: Dictionary = {}) -> Resource:
+	# A real item, not a dictionary, because that is what the tooltip is handed.
+	return TestHelpers.item(overrides)
+
+
+func _plain_item(overrides: Dictionary = {}) -> Resource:
+	# An item that does nothing, so the effect rows have nothing to show.
 	var data = {
-		"id": "item_1",
-		"item_type": "null_blade",
-		"name": "Null Blade",
-		"slug": "null_blade",
-		"category": "problem",
-		"rarity": "common",
-		"cost": 0,
-		"min_damage": 0, "max_damage": 0,
-		"min_heal": 0, "max_heal": 0,
-		"block_amount": 0,
-		"cooldown": 0.0, "cpu_cost": 0,
-		"special_effect": "", "description": ""
+		"min_damage": 0, "max_damage": 0, "min_heal": 0, "max_heal": 0,
+		"block_amount": 0, "special_effect": "", "description": ""
 	}
 	data.merge(overrides, true)
-	return data
+	return _item(data)
 
 
 # ============ Name and identity ============
@@ -126,7 +122,7 @@ func test_shows_special_effect():
 
 
 func test_hides_every_effect_row_for_a_plain_item():
-	tooltip.setup_tooltip(_item())
+	tooltip.setup_tooltip(_plain_item())
 	assert_false(tooltip.damage_label.visible, "No damage row for a plain item")
 	assert_false(tooltip.heal_label.visible, "No heal row for a plain item")
 	assert_false(tooltip.block_label.visible, "No block row for a plain item")
@@ -136,7 +132,7 @@ func test_hides_every_effect_row_for_a_plain_item():
 # ============ Description ============
 
 func test_description_shown_when_there_are_no_effects():
-	tooltip.setup_tooltip(_item({"description": "Does nothing at all"}))
+	tooltip.setup_tooltip(_plain_item({"description": "Does nothing at all"}))
 	assert_true(tooltip.description_label.visible, "Description should fill the gap")
 	assert_eq(tooltip.description_label.text, "Does nothing at all", "Should show the description")
 

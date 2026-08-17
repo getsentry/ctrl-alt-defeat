@@ -313,7 +313,7 @@ class ShopRefreshResponse extends Resource:
 class PurchaseResponse extends Resource:
 	var purchased_item: Item  # null when the purchase failed
 	var gold: int = 0
-	var server_containers: Array = []  # The containers the player owns after the purchase
+	var server_containers: Array[ServerContainer] = []
 
 	func _init(data: Dictionary):
 		# The client builds this with no item when a purchase fails, so that the
@@ -321,7 +321,8 @@ class PurchaseResponse extends Resource:
 		if not data["purchased_item"].is_empty():
 			purchased_item = Item.new(data["purchased_item"])
 		gold = data["gold"]
-		server_containers = data["server_containers"]
+		for container_data in data["server_containers"]:
+			server_containers.append(ServerContainer.new(container_data))
 
 # Battle response - matches server BattleResponse schema
 class BattleResponse extends Resource:
