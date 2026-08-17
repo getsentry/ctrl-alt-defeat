@@ -30,7 +30,6 @@ var shop_rerolls: int = 0
 # Battle state
 var last_battle_result: APITypes.BattleResult = null
 var last_battle_events: Array = []
-var opponent_inventory: Dictionary = {}
 var last_gold_earned: int = 0
 
 # Settings
@@ -68,7 +67,6 @@ func start_new_game():
 	shop_rerolls = 0
 	last_battle_result = null  # Reset to null instead of clear
 	last_battle_events.clear()
-	opponent_inventory.clear()
 
 func save_inventory_state(items: Array, servers: Array):
 	# Save the current inventory configuration
