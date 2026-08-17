@@ -24,8 +24,8 @@ own channel, so none of them compete:
 
 | Channel | Tells the player | Comes from |
 |---|---|---|
-| Fill colour | which category this is | the item's `color` field |
-| Pattern | which item this is | the item's `pattern` field |
+| Fill colour | which category this is | the item's `color` field, a `#RRGGBB` value |
+| Pattern | which item this is | the item's `pattern` field, a name |
 | Icon | which category this is | the item's `category` field |
 
 A fourth mark, the outline, groups the cells of one item together. It carries no
@@ -182,9 +182,18 @@ The catalogue owns the data, not the client, for one reason: a required field
 makes a missing look a load failure. Nobody can add an item without a look, and
 the uniqueness test has the whole catalogue in one place to check.
 
-The client keeps its own copy of the name-to-`Color` map, because the client is
-what draws. `item_looks.py` is the source of truth for the names and the hex
-values, and the client copy must follow it.
+**The catalogue names a colour. The client is sent the value.** `Item.of` calls
+`hex_of()`, so `"red"` in the JSON leaves the server as `"#BE0032"`. The client
+therefore keeps no palette of its own, and a colour can be retuned by changing
+one line in `item_looks.py` — no new client build.
+
+**The pattern stays a name**, because the client draws it and cannot be sent a
+motif as a value. So the client does know the twenty pattern names. That half of
+the seam cannot be closed, but it matters less: a new pattern needs a new draw
+routine, which is a client change anyway.
+
+**The icons need nothing from the server.** The item already carries `category`,
+and the client keys the icon file off it.
 
 Containers have no `color` and no `pattern`. See [section 9](#9-containers).
 
@@ -295,12 +304,14 @@ container took part in the palette, the grid would become too busy to read.
 
 ## 10. Tests
 
-**Server** (`tests/test_item_looks.py`, done):
+**Server** (`tests/test_item_looks.py` and `tests/test_items.py`, done):
 - No two items share the same `color` and `pattern` pair. This is the guard that
   makes the "no collisions" promise hold as items are added.
 - Every `color` and every `pattern` name is one the client knows.
 - Every item's colour is the colour of its category.
 - Every item has both fields, and no container has either.
+- The colour reaches the client as a value and the pattern as a name, and both
+  survive an item being placed on the grid and put back in the chest.
 
 **Client** (not done):
 - The look of an item is a pure function of its fields, so it can be checked

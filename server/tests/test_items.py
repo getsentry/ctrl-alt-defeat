@@ -2,6 +2,7 @@
 Tests for items.py
 """
 
+from item_looks import CATEGORY_COLOR, PALETTE
 from items import SALE_CHANCE, Item, sale_price
 
 
@@ -91,3 +92,49 @@ class TestShopSales:
                     assert item.price == sale_price(item.cost)
                     return
         raise AssertionError("200 seeds produced no sale, which cannot be right")
+
+
+class TestTheLookOnTheWire:
+    """What the client receives, as against what the catalogue holds.
+
+    Item.of is the one place that reads a spec, so it is where the catalogue's
+    shorthand turns into what the client is actually sent.
+    """
+
+    def test_the_colour_is_sent_as_a_value(self):
+        """The catalogue says "red". The client is sent "#BE0032", so that it
+        needs no palette of its own and a colour can be retuned without
+        shipping a new client."""
+        item = Item.of("null_blade", "test_id")
+        assert item.color == PALETTE[CATEGORY_COLOR["problem"]]
+        assert item.color.startswith("#")
+
+    def test_the_pattern_is_sent_as_a_name(self):
+        """A pattern cannot be sent as a value. The client draws it, so it can
+        only be told which one to draw."""
+        item = Item.of("null_blade", "test_id")
+        assert item.pattern == "solid"
+
+    def test_two_items_of_a_category_share_the_colour(self):
+        one = Item.of("null_blade", "one")
+        another = Item.of("denier_of_service", "another")
+        assert one.category == another.category == "problem"
+        assert one.color == another.color
+        assert one.pattern != another.pattern
+
+    def test_a_container_has_no_look(self):
+        """A container is the ground the items sit on, and is drawn as such."""
+        container = Item.of("standard_vm", "test_id")
+        assert container.is_container
+        assert container.color == ""
+        assert container.pattern == ""
+
+    def test_a_placed_item_keeps_its_look(self):
+        placed = Item.of("null_blade", "test_id").placed_at((2, 3))
+        assert placed.color == PALETTE[CATEGORY_COLOR["problem"]]
+        assert placed.pattern == "solid"
+
+    def test_an_item_put_back_in_the_chest_keeps_its_look(self):
+        stored = Item.of("null_blade", "test_id").placed_at((2, 3)).stored()
+        assert stored.color == PALETTE[CATEGORY_COLOR["problem"]]
+        assert stored.pattern == "solid"

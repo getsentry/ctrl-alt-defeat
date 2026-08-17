@@ -15,7 +15,9 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, Iterator, Tuple
 
-from item_looks import CATEGORY_COLOR, PALETTE, PATTERNS
+import pytest
+
+from item_looks import CATEGORY_COLOR, PALETTE, PATTERNS, hex_of
 
 ITEMS_DIR = Path(__file__).parent.parent / "data" / "items"
 
@@ -57,6 +59,23 @@ class TestThePalette:
     def test_no_two_categories_share_a_colour(self):
         repeated = [c for c, n in Counter(CATEGORY_COLOR.values()).items() if n > 1]
         assert not repeated, f"Two categories wear the same colour: {repeated}"
+
+
+class TestHexOf:
+    """The catalogue names a colour; the client is sent the value"""
+
+    def test_gives_the_value_behind_a_name(self):
+        assert hex_of("red") == "#BE0032"
+
+    def test_refuses_a_name_that_is_not_in_the_palette(self):
+        with pytest.raises(KeyError, match="not a colour in the palette"):
+            hex_of("puce")
+
+    def test_refuses_an_empty_name(self):
+        # A container has no colour. The caller decides what that means rather
+        # than getting a value back for a colour that was never chosen.
+        with pytest.raises(KeyError):
+            hex_of("")
 
 
 class TestTheCatalogue:

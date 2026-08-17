@@ -63,3 +63,15 @@ PATTERNS = (
     "dot_small_grid",
     "stripe_a_fine",
 )
+
+
+def hex_of(name: str) -> str:
+    """The value behind a palette name.
+
+    An item carries the name, because that is what a person edits. What goes
+    to the client is the value, so that the client needs no copy of the
+    palette and a colour can be retuned without shipping a new client.
+    """
+    if name not in PALETTE:
+        raise KeyError(f"{name} is not a colour in the palette")
+    return PALETTE[name]

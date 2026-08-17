@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, computed_field
 from config_loader import config_loader
 from grid_system import ItemShape, Rotation
 from item_effects import ItemSpec
+from item_looks import hex_of
 from utils import Position, Shape
 
 # What an item of each rarity costs in the shop.
@@ -108,7 +109,7 @@ class Item(BaseModel):
     is_container: bool = Field(description="Whether this item is a container")
     shape: Shape = Field(description="Covered squares, as [x, y] offsets")
     description: str = Field(description="What the item does, in prose")
-    color: str = Field(description="Palette colour name, empty on a container")
+    color: str = Field(description="Fill colour as #RRGGBB, empty on a container")
     pattern: str = Field(description="Pattern name, empty on a container")
     min_damage: int = Field(description="Minimum damage dealt")
     max_damage: int = Field(description="Maximum damage dealt")
@@ -141,7 +142,10 @@ class Item(BaseModel):
             is_container=spec.category == "container",
             shape=shape_of(spec),
             description=describe(stats),
-            color=spec.color,
+            # The catalogue names a colour, the client is sent the value. That
+            # way the client keeps no palette and a colour can be retuned
+            # without shipping a new client.
+            color=hex_of(spec.color) if spec.color else "",
             pattern=spec.pattern,
             **stats.model_dump(),
         )
