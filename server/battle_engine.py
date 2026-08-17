@@ -297,20 +297,17 @@ class BattleSimulator:
             player2_containers=p2_containers,  # Include player 2 containers
         )
 
+    # Quota per round, from Backpack Battles. Eighteen rounds is the whole game
+    # there, so a higher round clamps to the last rather than extrapolating.
+    ROUND_QUOTA = (
+        25, 35, 45, 55, 70, 85, 100, 115, 130,
+        150, 170, 190, 210, 230, 260, 290, 320, 350,
+    )
+
     def _get_round_quota(self, round_num: int) -> int:
         """Get quota based on round number (Section 1.1)"""
-        if round_num <= 3:
-            return 25
-        elif round_num <= 6:
-            return 35
-        elif round_num <= 9:
-            return 50
-        elif round_num <= 12:
-            return 75
-        elif round_num <= 15:
-            return 100
-        else:
-            return 150
+        index = min(max(round_num, 1), len(self.ROUND_QUOTA)) - 1
+        return self.ROUND_QUOTA[index]
 
     def _calculate_adjacency(self, items: List[BattleItem]):
         """Calculate adjacency bonuses (Section 4.2 & 4.3)"""

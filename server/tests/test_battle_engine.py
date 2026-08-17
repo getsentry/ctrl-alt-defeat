@@ -36,19 +36,17 @@ class TestGameDesignCompliance:
         """Test Section 1.1: Player Quota scaling by round"""
         sim = BattleSimulator(seed=TEST_SEED)
 
-        # Test each tier from the document
-        assert sim._get_round_quota(1) == 25  # Rounds 1-3
-        assert sim._get_round_quota(3) == 25
-        assert sim._get_round_quota(4) == 35  # Rounds 4-6
-        assert sim._get_round_quota(6) == 35
-        assert sim._get_round_quota(7) == 50  # Rounds 7-9
-        assert sim._get_round_quota(9) == 50
-        assert sim._get_round_quota(10) == 75  # Rounds 10-12
-        assert sim._get_round_quota(12) == 75
-        assert sim._get_round_quota(13) == 100  # Rounds 13-15
-        assert sim._get_round_quota(15) == 100
-        assert sim._get_round_quota(16) == 150  # Round 16+
-        assert sim._get_round_quota(20) == 150
+        # One value per round, not tiers, exactly as the document lists them
+        expected = [
+            25, 35, 45, 55, 70, 85, 100, 115, 130,
+            150, 170, 190, 210, 230, 260, 290, 320, 350,
+        ]
+        for round_num, quota in enumerate(expected, start=1):
+            assert sim._get_round_quota(round_num) == quota
+
+        # Eighteen rounds is the whole game, so a higher round is not a case
+        # the source covers. It clamps rather than raising.
+        assert sim._get_round_quota(19) == 350
 
     def test_cpu_cycles_system(self):
         """Test Section 1.2: CPU Cycles (Stamina) system"""

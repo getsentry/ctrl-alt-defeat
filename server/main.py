@@ -310,11 +310,14 @@ async def refresh_shop(
 
     # Check if this is a paid refresh
     if len(session.current_shop) > 0:  # Not the first shop of the round
-        if session.gold < 1:
+        # Backpack Battles charges 1 gold for the first four rolls of a round
+        # and 2 gold from the fifth on.
+        price = 1 if session.shop_refresh_count < FREE_PRICE_REFRESHES else 2
+        if session.gold < price:
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST, detail="Not enough gold"
             )
-        session.gold -= 1
+        session.gold -= price
 
     # Increment refresh counter for this round
     session.shop_refresh_count += 1
@@ -329,6 +332,16 @@ async def refresh_shop(
 
     # Shop already contains ShopItem models
     return ShopRefreshResponse(shop=session.current_shop, gold=session.gold)
+
+
+# Gold on entering the shop, from Backpack Battles. Eighteen rounds is the
+# whole game there, so there is no nineteenth entry to copy; asking for one
+# clamps to the last rather than inventing a rule. Round 1's entry is also
+# what a new game starts with.
+ROUND_GOLD = (13, 13, 15, 10, 11, 11, 12, 22, 13, 18, 14, 14, 15, 15, 16, 16, 16, 16)
+
+# Rolling the shop costs 1 gold this many times a round, then 2 gold.
+FREE_PRICE_REFRESHES = 4
 
 
 def get_rarity_weights(round_number: int) -> Dict[str, float]:
@@ -615,25 +628,9 @@ async def simulate_battle(
 
     # Calculate gold reward based on round (same win or lose)
     def get_round_gold(round_num: int) -> int:
-        """Get gold per round based on the specification"""
-        if round_num == 1:
-            return 12  # Starting gold
-        elif 2 <= round_num <= 4:
-            return 9
-        elif 5 <= round_num <= 6:
-            return 10
-        elif round_num == 7:
-            return 11
-        elif round_num == 8:
-            return 21  # Big boost!
-        elif 9 <= round_num <= 10:
-            return 12
-        elif 11 <= round_num <= 12:
-            return 13
-        elif 13 <= round_num <= 14:
-            return 14
-        else:  # Round 15+
-            return 15
+        """Gold handed out on entering the shop, from Backpack Battles."""
+        index = min(max(round_num, 1), len(ROUND_GOLD)) - 1
+        return ROUND_GOLD[index]
 
     session.round += 1  # Advance to next round
     if battle_result["winner"] == 1:  # Player won

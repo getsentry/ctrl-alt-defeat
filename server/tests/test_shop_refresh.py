@@ -25,8 +25,9 @@ class TestShopRefresh:
         item_count = sum(1 for item in shop if item is not None)
         assert item_count == 5, f"Shop should have 5 items, but has {item_count}"
 
-        # Test multiple refreshes
-        for i in range(10):
+        # Eight refreshes is what 13 gold buys once the price steps up after
+        # the fourth, so this covers both prices without running dry.
+        for i in range(8):
             response = auth_client.post("/shop/refresh", json={"round": 1})
             assert response.status_code == 200
             shop = response.json()["shop"]

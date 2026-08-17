@@ -103,13 +103,13 @@ class SessionManager:
                     await db.refresh(user)
 
         # Create session with starting values
-        from main import generate_shop_items
+        from main import ROUND_GOLD, generate_shop_items
 
         session = GameSessionPydantic(
             player_id=player_id,  # This is now the actual user.id
             player_name=user.display_name or user.username,
             round=1,
-            gold=12,  # Starting gold from game design
+            gold=ROUND_GOLD[0],  # Round one's gold, per Backpack Battles
             lives=5,
             wins=0,
             losses=0,

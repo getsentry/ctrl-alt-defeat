@@ -39,7 +39,7 @@ class TestSessionPersistence:
         assert session.player_id.isdigit()
         assert session.game_seed == game_seed
         assert session.round == 1
-        assert session.gold == 12
+        assert session.gold == 13
         assert session.lives == 5
 
         # Cleanup - use actual player_id from session

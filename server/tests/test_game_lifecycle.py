@@ -481,16 +481,16 @@ class TestGameLifecycle:
 
         # Expected gold per round (from specification)
         expected_gold = {
-            1: 12,  # Starting gold
-            2: 9,
-            3: 9,
-            4: 9,
-            5: 10,
-            6: 10,
-            7: 11,
-            8: 21,  # Big boost!
-            9: 12,
-            10: 12,
+            1: 13,  # Starting gold
+            2: 13,
+            3: 15,
+            4: 10,
+            5: 11,
+            6: 11,
+            7: 12,
+            8: 22,  # Big boost, the round the subclass unlocks
+            9: 13,
+            10: 18,
         }
 
         # Play through rounds and check gold

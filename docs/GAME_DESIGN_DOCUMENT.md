@@ -328,21 +328,21 @@ Special items that provide periodic effects or triggered abilities.
 ## 5. Economy & Progression
 
 ### 5.1 Gold System
-- **Gold Per Round**:
-  - Round 1: 12g
-  - Rounds 2-4: 9g
-  - Rounds 5-6: 10g
-  - Round 7: 11g
-  - Round 8: 21g
-  - Rounds 9-10: 12g
-  - Rounds 11-12: 13g
-  - Rounds 13-14: 14g
-  - Round 15+: 15g
-- **Selling Items**: 50% of purchase price
+Gold handed out on entering the shop, from Backpack Battles. Round 1's figure
+is also what a new game starts with. Round 8 is the spike, where the subclass
+unlocks.
+
+| Round | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Gold | 13 | 13 | 15 | 10 | 11 | 11 | 12 | 22 | 13 | 18 | 14 | 14 | 15 | 15 | 16 | 16 | 16 | 16 |
+
+Eighteen rounds is the whole game, so there is no nineteenth figure.
+
+- **Selling Items**: half the purchase price, rounded up
 
 ### 5.2 Shop System
 - **Slots**: 5 items per refresh
-- **Reroll Cost**: 1 gold
+- **Reroll Cost**: 1 gold for the first four rolls of a round, 2 gold after
 - **Item Costs**:
   - Common: 3-4g
   - Uncommon: 5-7g
