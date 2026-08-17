@@ -315,8 +315,8 @@ func test_shop_purchase_and_item_placement():
 	var initial_inventory_count = game_ui.inventory_grid.items.size()
 
 	print("   - Number of containers: %d" % game_ui.inventory_grid.containers.size())
-	for container_data in game_ui.inventory_grid.containers:
-		print("     Container at pos %s" % container_data.position)
+	for placed in game_ui.inventory_grid.containers:
+		print("     Container at pos %s" % placed.position())
 
 	# Find an empty grid cell to drop the item
 	var target_grid_pos = _find_first_empty_grid_cell(game_ui)

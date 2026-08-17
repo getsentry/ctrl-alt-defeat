@@ -21,10 +21,10 @@ var victory: bool = false
 
 # Inventory state
 var current_inventory: Dictionary = {}  # Stores placed items and servers
-var server_containers: Array = []
+var server_containers: Array = []  # Array[Dictionary]: containers as plain data
 
 # Shop state
-var current_shop: Array = []
+var current_shop: Array[APITypes.Item] = []  # null in a slot whose item was bought
 var shop_rerolls: int = 0
 
 # Battle state
@@ -68,6 +68,7 @@ func start_new_game():
 	last_battle_result = null  # Reset to null instead of clear
 	last_battle_events.clear()
 
+# items is Array[Dictionary] and servers is Array[Dictionary], both plain data.
 func save_inventory_state(items: Array, servers: Array):
 	# Save the current inventory configuration
 	print("DEBUG GameStateManager: Saving inventory with %d items and %d servers" % [items.size(), servers.size()])

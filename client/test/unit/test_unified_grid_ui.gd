@@ -1,6 +1,7 @@
 extends GutTest
 # Comprehensive tests for UnifiedGridUI
 
+const APITypes = preload("res://scripts/api_types.gd")
 var ui_scene = preload("res://scenes/UnifiedGridUI.tscn")
 var ui
 
@@ -164,7 +165,7 @@ func test_grid_cell_creation():
 
 func test_shop_item_display():
 	# Mock shop data
-	var mock_shop = [
+	var mock_shop: Array[APITypes.Item] = [
 		TestHelpers.item({"id": "item1", "name": "Test Item", "cost": 5}),
 		null,  # A slot whose item has been bought
 		TestHelpers.item({"id": "item2", "name": "Another Item", "cost": 8})
@@ -341,7 +342,8 @@ func test_shop_shows_a_price_for_every_item():
 
 
 func test_empty_shop_slot_hides_its_price():
-	ui._display_shop_items([null, null, null, null, null])
+	var empty_shop: Array[APITypes.Item] = [null, null, null, null, null]
+	ui._display_shop_items(empty_shop)
 	await get_tree().process_frame
 
 	for i in range(1, 6):
@@ -353,7 +355,9 @@ func test_shop_price_follows_the_item_cost():
 	var item = {
 		"id": "priced_item", "cost": 7
 	}
-	ui._display_shop_items([TestHelpers.item(item), null, null, null, null])
+	var priced_shop: Array[APITypes.Item] = [
+		TestHelpers.item(item), null, null, null, null]
+	ui._display_shop_items(priced_shop)
 	await get_tree().process_frame
 
 	assert_eq(ui.shop_container.get_node_or_null("ShopPrice1").text, "7g",

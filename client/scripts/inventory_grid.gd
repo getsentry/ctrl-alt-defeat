@@ -4,6 +4,19 @@ class_name InventoryGrid
 # Grid component that handles all inventory display and interaction
 # Used by UnifiedGridUI for the main game and BattleScreen for replays
 
+
+# A container on the grid: what the server says it is, and what is drawn for it.
+class PlacedContainer extends RefCounted:
+	var container: APITypes.ServerContainer
+	var visual: ItemVisual
+
+	func _init(server_container: APITypes.ServerContainer, drawn: ItemVisual):
+		container = server_container
+		visual = drawn
+
+	func position() -> Vector2i:
+		return Vector2i(container.position.x, container.position.y)
+
 const APITypes = preload("res://scripts/api_types.gd")
 const ItemVisual = preload("res://scripts/item_visual.gd")
 
@@ -23,14 +36,15 @@ var server_color = Color(0.3, 0.4, 0.5, 0.3)
 var read_only: bool = false
 var title: String = ""
 
-# Grid data structures
-var active_grid: Array = []  # 2D array tracking which cells have servers
-var item_grid: Array = []    # 2D array tracking which cells have items
-var grid_cells: Array = []   # 2D array of visual cell references
+# The grid, as rows of columns, indexed [y][x]. Godot has no nested typed
+# collections, so the element type is written here.
+var active_grid: Array = []  # Array[Array[bool]]: is this cell on a container?
+var item_grid: Array = []    # Array[Array[Control]]: the item here, or null
+var grid_cells: Array = []   # Array[Array[Panel]]: the cell's background panel
 
 # Stored objects
-var items: Array[Control] = []         # Array of item visuals
-var containers: Array = []    # Array of server container visuals
+var items: Array[Control] = []  # The item visuals on the grid
+var containers: Array[PlacedContainer] = []
 
 # Drag and drop state
 var dragging_object = null
@@ -219,11 +233,7 @@ func _add_container(container: APITypes.ServerContainer):
 				cell.add_theme_stylebox_override("panel", style)
 
 	add_child(container_visual)
-	containers.append({
-		"visual": container_visual,
-		"data": container,
-		"position": Vector2i(x, y)
-	})
+	containers.append(PlacedContainer.new(container, container_visual))
 
 func _add_item(item: APITypes.PlacedItem):
 	"""Add an item to the grid"""
@@ -499,8 +509,8 @@ func clear_all():
 	items.clear()
 
 	# Remove all container visuals
-	for container_data in containers:
-		container_data.visual.queue_free()
+	for placed in containers:
+		placed.visual.queue_free()
 	containers.clear()
 
 	# Reset hover preview
@@ -528,8 +538,8 @@ func get_inventory_state() -> Dictionary:
 		item_dict["position"] = [grid_pos.x, grid_pos.y]
 		state.items.append(item_dict)
 
-	for container_data in containers:
-		state.servers.append(container_data.data.to_dict())
+	for placed in containers:
+		state.servers.append(placed.container.to_dict())
 
 	return state
 

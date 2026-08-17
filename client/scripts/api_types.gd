@@ -2,8 +2,8 @@ extends Resource
 class_name APITypes
 
 # A shop slot holds an item, or null once that item has been bought.
-static func parse_shop(slots: Array) -> Array:
-	var shop: Array = []
+static func parse_shop(slots: Array) -> Array[Item]:
+	var shop: Array[Item] = []
 	for slot in slots:
 		shop.append(Item.new(slot) if slot != null else null)
 	return shop
@@ -40,7 +40,7 @@ class Item extends Resource:
 	var rarity: String = ""
 	var cost: int = 0
 	var is_container: bool = false
-	var shape: Array = []  # Array of [x, y] offsets
+	var shape: Array = []  # Array[Array[int]]: the [x, y] offsets it covers
 	var description: String = ""
 	var min_damage: int = 0
 	var max_damage: int = 0
@@ -129,7 +129,7 @@ class ServerContainer extends Resource:
 	var type: String = ""
 	var slug: String = ""
 	var position: Position
-	var shape: Array = []  # Array of [x, y] offsets
+	var shape: Array = []  # Array[Array[int]]: the [x, y] offsets it covers
 
 	func _init(data: Dictionary):
 		# Server sends all these fields
@@ -258,7 +258,7 @@ class GameSession extends Resource:
 	var lives: int
 	var wins: int
 	var losses: int
-	var current_shop: Array  # Item, or null for a bought slot
+	var current_shop: Array[Item]  # null in a slot whose item was bought
 	var game_seed: int
 	var shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
 	# Inventory fields
@@ -302,7 +302,7 @@ class SessionStartResponse extends Resource:
 
 # Shop refresh response
 class ShopRefreshResponse extends Resource:
-	var shop: Array = []  # Item, or null for a bought slot
+	var shop: Array[Item] = []  # null in a slot whose item was bought
 	var gold: int = 0
 
 	func _init(data: Dictionary):
@@ -325,7 +325,7 @@ class PurchaseResponse extends Resource:
 class BattleResponse extends Resource:
 	var battle_result: BattleResult
 	var session_update: SessionUpdate  # Typed SessionUpdate
-	var new_shop: Array = []  # Item, or null for a bought slot
+	var new_shop: Array[Item] = []  # null in a slot whose item was bought
 	var battle_id: String = ""
 
 	func _init(data: Dictionary):

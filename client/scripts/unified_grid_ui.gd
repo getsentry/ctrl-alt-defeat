@@ -341,7 +341,7 @@ func _load_shop_from_state():
 	_display_shop_items(GameStateManager.current_shop)
 
 
-func _display_shop_items(shop_data: Array):
+func _display_shop_items(shop_data: Array[APITypes.Item]):
 	# Clear existing shop items (but not the containers/labels)
 	for child in shop_container.get_children():
 		if child.name.begins_with("ShopItem") and child.get_child_count() > 0:
@@ -584,9 +584,8 @@ func _can_place_container(container_data: APITypes.Item, grid_pos: Vector2i) -> 
 			return false
 
 	# Check for overlap with existing containers
-	for container_dict in inventory_grid.containers:
-		var cont_data: APITypes.ServerContainer = container_dict["data"]
-		for square in cont_data.covered_squares():
+	for placed in inventory_grid.containers:
+		for square in placed.container.covered_squares():
 			if square in squares:
 				return false  # Overlapping
 

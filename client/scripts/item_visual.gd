@@ -16,7 +16,7 @@ var enable_tooltip: bool = false  # Tooltip disabled by default
 
 # Item data
 var item_data
-var item_shape: Array = [[0, 0]]  # Default single cell
+var item_shape: Array = [[0, 0]]  # Array[Array[int]]: the [x, y] offsets it covers
 
 # Tooltip
 var tooltip_panel: Panel = null
