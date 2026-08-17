@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Coffee cup. A mask, not a picture: one colour, no background. -->
+  <path d="M47 26 H53 A9 9 0 0 1 53 44 H45" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <path fill="#ffffff" d="M10 15 H48 A2 2 0 0 1 50 17 L45 51 A7 7 0 0 1 38 57 H20 A7 7 0 0 1 13 51 L8 17 A2 2 0 0 1 10 15 Z"/>
+</svg>

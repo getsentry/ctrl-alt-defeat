@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Terminal prompt. The glyph is cut out of the screen, so the pattern
+       behind shows through it. A mask, not a picture. -->
+  <path fill="#ffffff" fill-rule="evenodd" d="M8 9 H56 A7 7 0 0 1 63 16 V48 A7 7 0 0 1 56 55 H8 A7 7 0 0 1 1 48 V16 A7 7 0 0 1 8 9 Z M16 20 H24 L36 32 L24 44 H16 L28 32 Z M33 39 H49 V45 H33 Z"/>
+</svg>
