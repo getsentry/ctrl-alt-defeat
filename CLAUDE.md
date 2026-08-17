@@ -20,6 +20,32 @@
 - Start server: `cd server && python main.py`
 
 ### Client Tests
-- Run ALL tests: `./run_tests.sh`
-- Run specific test by name: `./run_tests.sh test_shop_purchase`
-- Run specific test file: `./run_tests.sh test/ui/test_ui_driven.gd`
+Run one file at a time. `-gtest` does not restrict GUT, and the whole suite
+pulls in `test/ui/` and `test/integration/`, which need a server running in
+TEST_MODE and will otherwise hang or fail:
+
+```
+godot --headless --path client -s addons/gut/gut_cmdln.gd \
+  -gdir=res://test/unit -ginclude_subdirs=false -gselect=test_api_types.gd -gexit
+```
+
+## Git
+
+Several agents commit to `main` at once, so pulls collide often. Run this once
+per clone — `git config` writes to `.git/config`, so it is not shared and a new
+clone will not have it:
+
+```
+git config pull.rebase true       # replay local commits, no merge bubble
+git config rebase.autostash true  # stash and restore a dirty tree
+git config rerere.enabled true    # remember a conflict resolution and reuse it
+git config merge.conflictstyle zdiff3
+```
+
+`rerere` earns its place here: a rebase replays each commit separately, and the
+item JSON files get touched by nearly every commit, so the same conflict can
+come up several times in one rebase.
+
+Before pulling, commit or move aside anything untracked. An untracked file
+sitting where an incoming commit wants to write blocks the merge outright, and
+no pull strategy fixes that.
