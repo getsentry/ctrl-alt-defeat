@@ -10,9 +10,9 @@ const APITypes = preload("res://scripts/api_types.gd")
 
 
 func _item(overrides: Dictionary = {}) -> Dictionary:
-	# Fully populated on purpose. A real item carries all of this, and keeping
-	# one fixture means the API shape work updates it here rather than in every
-	# test that happens to build an item.
+	# Fully populated on purpose. A real item carries all of this, and one
+	# fixture means a field change lands here rather than in every test that
+	# happens to build an item.
 	var data = {
 		"id": "item_1",
 		"slug": "null_blade",

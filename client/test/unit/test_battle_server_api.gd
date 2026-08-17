@@ -73,9 +73,9 @@ func test_reset_clears_everything_from_the_last_run():
 # ============ It announces failures ============
 
 func test_a_failed_purchase_reports_back_and_changes_nothing():
-	# A failure is nothing plus an error, the way every other call reports one.
-	# Inventing a response that says a purchase happened is how a caller ends up
-	# reading fields off an item nobody bought.
+	# A failure is nothing plus an error, the way every call reports one. There
+	# is no response object, so a caller cannot read fields off an item nobody
+	# bought.
 	BattleServerAPI.player_id = "1"
 	BattleServerAPI.BASE_URL = "http://127.0.0.1:1"  # nothing listens here
 	GameStateManager.gold = 17

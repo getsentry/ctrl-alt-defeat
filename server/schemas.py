@@ -42,13 +42,10 @@ class StartSessionRequest(BaseModel):
 class ShopRefreshRequest(BaseModel):
     """Request to refresh shop items"""
 
-    player_id: str
-
 
 class SimpleBattleRequest(BaseModel):
-    """Simple battle request with just player ID"""
+    """Request to simulate a battle"""
 
-    player_id: str
     seed: Optional[int] = None  # For deterministic testing
     test_ai_difficulty: Optional[
         int
@@ -58,7 +55,6 @@ class SimpleBattleRequest(BaseModel):
 class PurchaseRequest(BaseModel):
     """Request to purchase an item"""
 
-    player_id: str
     item_id: str
     target_position: Optional[Position] = None  # [x, y] position on grid
     to_storage: bool = False  # Place in storage instead of grid
@@ -67,14 +63,12 @@ class PurchaseRequest(BaseModel):
 class SellRequest(BaseModel):
     """Request to sell an item"""
 
-    player_id: str
     item_id: str  # Unique ID of the placed item
 
 
 class MoveItemRequest(BaseModel):
     """Request to move an item to a new position or storage"""
 
-    player_id: str
     item_id: str  # Unique instance ID of the item to move
     to_location: Union[str, Position]  # "storage" or [x, y] coordinates
 
@@ -112,9 +106,8 @@ class BattleActionName(str, Enum):
     Everything that can happen in a battle.
 
     The client matches these names, so the set is the contract between the two.
-    Adding one here without teaching the client about it leaves the client
-    silently ignoring it, which is how heals once reached the log but never the
-    health bar.
+    A name added here has to be added to the client's processor as well, or the
+    client will not act on it.
     """
 
     BATTLE_START = "battle_start"

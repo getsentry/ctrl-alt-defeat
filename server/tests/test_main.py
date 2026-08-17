@@ -2,7 +2,6 @@
 Tests for AI opponent generation with containers
 """
 
-import pytest
 
 from battle_engine import BattleSimulator
 from containers import Container
@@ -79,7 +78,7 @@ class TestAIOpponentGeneration:
         assert request.seed is None
 
     def test_no_opponent_id_in_battle_request(self):
-        """Test that opponent_id is no longer in SimpleBattleRequest"""
+        """A battle request names no opponent; the server picks one"""
         from schemas import SimpleBattleRequest
 
         # Should not have opponent_id field
@@ -105,7 +104,6 @@ class TestBattleAPIResponse:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop and purchase items
         session = data["session"]
@@ -122,7 +120,6 @@ class TestBattleAPIResponse:
                 response = auth_client.post(
                     "/purchase/item",
                     json={
-                        "player_id": player_id,
                         "item_id": item["id"],
                         "target_position": positions[idx],
                     },
@@ -134,7 +131,6 @@ class TestBattleAPIResponse:
 
         # Simulate battle
         battle_request = {
-            "player_id": player_id,
             "seed": 42,
             "test_ai_difficulty": 1,
         }
@@ -233,7 +229,6 @@ class TestBattleAPIResponse:
             "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase an item
         shop = data["session"]["current_shop"]
@@ -242,7 +237,6 @@ class TestBattleAPIResponse:
                 auth_client.post(
                     "/purchase/item",
                     json={
-                        "player_id": player_id,
                         "item_id": item["id"],
                         "target_position": [2, 3],
                     },
@@ -252,7 +246,7 @@ class TestBattleAPIResponse:
         # Battle
         response = auth_client.post(
             "/battle/simulate",
-            json={"player_id": player_id, "test_ai_difficulty": 1, "seed": None},
+            json={"test_ai_difficulty": 1, "seed": None},
         )
 
         result = response.json()
@@ -275,13 +269,11 @@ class TestBattleAPIResponse:
         response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": None}
         )
-        data = response.json()
-        player_id = data["player_id"]
 
         # Don't purchase any items, just battle
         response = auth_client.post(
             "/battle/simulate",
-            json={"player_id": player_id, "test_ai_difficulty": 1, "seed": None},
+            json={"test_ai_difficulty": 1, "seed": None},
         )
 
         # Should fail with 400 - empty inventory
@@ -295,7 +287,6 @@ class TestBattleAPIResponse:
             "/session/start", json={"player_name": "test_player", "seed": 123}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase specific items
         shop = data["session"]["current_shop"]
@@ -306,7 +297,6 @@ class TestBattleAPIResponse:
                 response = auth_client.post(
                     "/purchase/item",
                     json={
-                        "player_id": player_id,
                         "item_id": item["id"],
                         "target_position": [
                             2 + len(purchased),
@@ -321,7 +311,6 @@ class TestBattleAPIResponse:
         response = auth_client.post(
             "/battle/simulate",
             json={
-                "player_id": player_id,
                 "seed": 456,
                 "test_ai_difficulty": 1,
             },
@@ -347,7 +336,6 @@ class TestBattleAPIResponse:
             "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase an item
         shop = data["session"]["current_shop"]
@@ -356,7 +344,6 @@ class TestBattleAPIResponse:
                 auth_client.post(
                     "/purchase/item",
                     json={
-                        "player_id": player_id,
                         "item_id": item["id"],
                         "target_position": [2, 3],
                     },
@@ -366,14 +353,14 @@ class TestBattleAPIResponse:
         # Battle round 1
         response1 = auth_client.post(
             "/battle/simulate",
-            json={"player_id": player_id, "test_ai_difficulty": 1, "seed": None},
+            json={"test_ai_difficulty": 1, "seed": None},
         )
         enemy_inv1 = response1.json()["battle_result"]["enemy_inventory"]
 
         # Battle round 5 (should have more/different items)
         response5 = auth_client.post(
             "/battle/simulate",
-            json={"player_id": player_id, "seed": None, "test_ai_difficulty": None},
+            json={"seed": None, "test_ai_difficulty": None},
         )
         enemy_inv5 = response5.json()["battle_result"]["enemy_inventory"]
 
@@ -392,7 +379,6 @@ class TestBattleAPIResponse:
             "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         shop = data["session"]["current_shop"]
         # Filter out containers since they can't be placed in storage (only on grid)
@@ -403,7 +389,6 @@ class TestBattleAPIResponse:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": items[0]["id"],
                 "target_position": None,
                 "to_storage": True,
@@ -415,7 +400,6 @@ class TestBattleAPIResponse:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": items[1]["id"],
                 "target_position": [2, 3],
             },
@@ -425,7 +409,7 @@ class TestBattleAPIResponse:
         # Battle
         response = auth_client.post(
             "/battle/simulate",
-            json={"player_id": player_id, "test_ai_difficulty": 1, "seed": None},
+            json={"test_ai_difficulty": 1, "seed": None},
         )
 
         result = response.json()
@@ -449,7 +433,6 @@ class TestContainerPurchase:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
 
         shop = data["session"]["current_shop"]
         container = next(
@@ -461,7 +444,6 @@ class TestContainerPurchase:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": container["id"],
                 "target_position": [0, 0],
             },
@@ -478,14 +460,86 @@ class TestContainerPurchase:
         )
 
 
-class TestHealthEndpoint:
-    """
-    Test /health, which the deploy platform watches.
+class TestOnePlayerCannotActAsAnother:
+    def _player(self, name):
+        from fastapi.testclient import TestClient
 
-    It used to call db_manager.execute, which does not exist, so the exception
-    was caught and reported as an unhealthy database. The server had never once
-    said it was healthy.
-    """
+        from main import app
+
+        client = TestClient(app)
+        token = client.post("/auth/guest").json()["access_token"]
+        client.headers["Authorization"] = f"Bearer {token}"
+        started = client.post(
+            "/session/start", json={"player_name": name, "seed": SHOP_SEED}
+        ).json()
+        return client, started["player_id"]
+
+    def test_the_player_is_taken_from_the_token(self):
+        """A request carries no player id. The token says who is asking."""
+        from schemas import (
+            MoveItemRequest,
+            PurchaseRequest,
+            SellRequest,
+            ShopRefreshRequest,
+            SimpleBattleRequest,
+        )
+
+        for model in (
+            PurchaseRequest,
+            SellRequest,
+            MoveItemRequest,
+            ShopRefreshRequest,
+            SimpleBattleRequest,
+        ):
+            assert "player_id" not in model.model_fields, model.__name__
+
+    def test_each_player_reads_only_their_own_session(self):
+        alice, alice_id = self._player("Alice")
+        bob, bob_id = self._player("Bob")
+
+        assert alice_id != bob_id, "Setup: two different players"
+        assert alice.get("/session").json()["player_id"] == alice_id
+        assert bob.get("/session").json()["player_id"] == bob_id
+
+    def test_a_stranger_cannot_spend_your_gold(self):
+        alice, _alice_id = self._player("Alice")
+        bob, _bob_id = self._player("Bob")
+        gold_before = alice.get("/session").json()["gold"]
+
+        # Bob refreshes a shop. It can only ever be his own.
+        assert bob.post("/shop/refresh", json={}).status_code == 200
+
+        assert alice.get("/session").json()["gold"] == gold_before
+
+    def test_every_session_endpoint_requires_a_token(self):
+        from fastapi.testclient import TestClient
+
+        from main import app
+
+        anonymous = TestClient(app)
+
+        for method, path, body in [
+            ("get", "/session", None),
+            ("post", "/shop/refresh", {}),
+            ("post", "/battle/simulate", {}),
+            ("post", "/purchase/item", {"item_id": "x"}),
+            ("post", "/sell/item", {"item_id": "x"}),
+            ("post", "/move/item", {"item_id": "x", "to_location": "storage"}),
+            ("get", "/battle/history", None),
+        ]:
+            response = (
+                anonymous.get(path)
+                if method == "get"
+                else anonymous.post(path, json=body)
+            )
+            assert response.status_code in (
+                401,
+                403,
+            ), f"{path} answered {response.status_code}"
+
+
+class TestHealthEndpoint:
+    """/health reports whether the database is reachable. The deploy watches it."""
 
     def test_a_reachable_database_reports_healthy(self, auth_client):
         response = auth_client.get("/health")
@@ -508,12 +562,7 @@ class TestHealthEndpoint:
 
 
 class TestSellItemAPI:
-    """
-    Test the /sell/item endpoint.
-
-    Selling had never worked: the client sent item_id and the request model
-    wanted item_uid, so every sale was a 422.
-    """
+    """Test the /sell/item endpoint."""
 
     def _buy_one(self, auth_client):
         """Start a session and put one item on the grid. Returns the details."""
@@ -527,7 +576,6 @@ class TestSellItemAPI:
         bought = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item["id"],
                 "target_position": [2, 3],
             },
@@ -538,9 +586,7 @@ class TestSellItemAPI:
     def test_selling_pays_half_and_takes_the_item(self, auth_client):
         player_id, item, gold_after_buying = self._buy_one(auth_client)
 
-        response = auth_client.post(
-            "/sell/item", json={"player_id": player_id, "item_id": item["id"]}
-        )
+        response = auth_client.post("/sell/item", json={"item_id": item["id"]})
 
         assert response.status_code == 200, response.text
         sold = response.json()
@@ -548,26 +594,21 @@ class TestSellItemAPI:
         assert sold["gold"] == gold_after_buying + sold["gold_gained"]
         assert sold["sold_item"]["id"] == item["id"], "The sold item comes back"
 
-        session = auth_client.get(f"/session/{player_id}").json()
+        session = auth_client.get("/session").json()
         assert session["inventory_grid"] == [], "The item leaves the grid"
         assert session["gold"] == sold["gold"], "The gold is kept on the session"
 
     def test_selling_an_item_you_do_not_own_is_refused(self, auth_client):
         player_id, _item, _gold = self._buy_one(auth_client)
 
-        response = auth_client.post(
-            "/sell/item", json={"player_id": player_id, "item_id": "no_such_item"}
-        )
+        response = auth_client.post("/sell/item", json={"item_id": "no_such_item"})
 
         assert response.status_code == 404, response.text
-        session = auth_client.get(f"/session/{player_id}").json()
+        session = auth_client.get("/session").json()
         assert len(session["inventory_grid"]) == 1, "The real item is untouched"
 
-    def test_the_request_names_the_item_the_way_everything_else_does(self):
-        """
-        item_id, not item_uid. The two names were the whole bug, so the contract
-        is worth pinning.
-        """
+    def test_purchase_sell_and_move_name_the_item_the_same_way(self):
+        """All three call it item_id, matching Item.id."""
         from schemas import MoveItemRequest, PurchaseRequest, SellRequest
 
         for model in (PurchaseRequest, SellRequest, MoveItemRequest):
@@ -585,7 +626,6 @@ class TestMoveItemAPI:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase an item
         shop = data["session"]["current_shop"]
@@ -593,7 +633,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item["id"],
                 "target_position": [2, 3],
             },
@@ -606,7 +645,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": [4, 3],  # Second container
             },
@@ -632,7 +670,6 @@ class TestMoveItemAPI:
             "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase item to grid
         shop = data["session"]["current_shop"]
@@ -640,7 +677,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item["id"],
                 "target_position": [2, 3],
             },
@@ -651,7 +687,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": "storage",
             },
@@ -662,7 +697,7 @@ class TestMoveItemAPI:
         # Success is indicated by 200 status
         assert len(result["inventory_storage"]) == 1
         assert len(result["inventory_grid"]) == 0
-        # An item in the chest has no position field at all
+        # An item in the chest has no position field
         assert "position" not in result["inventory_storage"][0]
 
     def test_move_item_storage_to_grid(self, auth_client):
@@ -672,7 +707,6 @@ class TestMoveItemAPI:
             "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase item to storage
         shop = data["session"]["current_shop"]
@@ -680,7 +714,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item["id"],
                 "target_position": None,
                 "to_storage": True,
@@ -692,7 +725,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": [2, 3],
             },
@@ -712,7 +744,6 @@ class TestMoveItemAPI:
             "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase item to storage
         shop = data["session"]["current_shop"]
@@ -720,7 +751,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item["id"],
                 "target_position": None,
                 "to_storage": True,
@@ -732,7 +762,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": "storage",
             },
@@ -750,7 +779,6 @@ class TestMoveItemAPI:
             "/session/start", json={"player_name": "test_player"}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase item
         shop = data["session"]["current_shop"]
@@ -758,7 +786,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item["id"],
                 "target_position": [2, 3],
             },
@@ -769,7 +796,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": [0, 0],  # Not on any container
             },
@@ -787,7 +813,6 @@ class TestMoveItemAPI:
             "/session/start", json={"player_name": "test_player"}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase two items
         shop = data["session"]["current_shop"]
@@ -797,7 +822,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": items[0]["id"],
                 "target_position": [2, 3],
             },
@@ -808,7 +832,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": items[1]["id"],
                 "target_position": [4, 3],
             },
@@ -819,7 +842,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item2_uid,
                 "to_location": [2, 3],  # Already occupied
             },
@@ -833,14 +855,11 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/session/start", json={"player_name": "test_player"}
         )
-        data = response.json()
-        player_id = data["player_id"]
 
         # Try to move non-existent item
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": "fake-item-id-12345",
                 "to_location": [4, 3],
             },
@@ -855,7 +874,6 @@ class TestMoveItemAPI:
             "/session/start", json={"player_name": "test_player"}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase item
         shop = data["session"]["current_shop"]
@@ -863,7 +881,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item["id"],
                 "target_position": [2, 3],
             },
@@ -874,7 +891,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": [2, 3],
             },
@@ -892,7 +908,6 @@ class TestMoveItemAPI:
             "/session/start", json={"player_name": "test_player", "seed": 123}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Purchase item
         shop = data["session"]["current_shop"]
@@ -900,7 +915,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item["id"],
                 "target_position": [2, 3],
             },
@@ -914,7 +928,6 @@ class TestMoveItemAPI:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": [4, 3],
             },
@@ -934,42 +947,44 @@ class TestMoveItemAPI:
         assert moved_item["position"] == [4, 3]
 
     def test_move_multi_square_item(self, auth_client):
-        """Test moving an item that occupies multiple squares"""
-        # Start session
+        """
+        Test moving an item that occupies multiple squares.
+
+        The shop is seeded so the item it offers is known, and containers are
+        skipped because one cannot be bought onto a square another already
+        covers.
+        """
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
         )
         data = response.json()
-        player_id = data["player_id"]
 
-        # Find a multi-square item if available
         shop = data["session"]["current_shop"]
-        multi_square_item = None
-        for item in shop:
-            if item and "shape" in item and len(item["shape"]) > 1:
-                multi_square_item = item
-                break
-
-        if not multi_square_item:
-            # If no multi-square item in shop, skip test
-            pytest.skip("No multi-square item available in shop")
+        multi_square_item = next(
+            (
+                item
+                for item in shop
+                if item and not item["is_container"] and len(item["shape"]) > 1
+            ),
+            None,
+        )
+        assert multi_square_item, "Seed should offer a multi-square item to move"
 
         # Purchase multi-square item
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": multi_square_item["id"],
                 "target_position": [2, 3],
             },
         )
+        assert response.status_code == 200, response.text
         item_id = response.json()["purchased_item"]["id"]
 
         # Move to different container
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": [6, 3],  # Third container
             },
@@ -985,18 +1000,34 @@ class TestMoveItemAPI:
             detail = response.json()["detail"]
             assert "invalid placement" in detail.lower() or "not on" in detail.lower()
 
-    def test_move_item_without_session(self, auth_client):
-        """Test moving item without valid session"""
-        response = auth_client.post(
-            "/move/item",
-            json={
-                "player_id": "invalid-player-id",
-                "item_id": "some-item",
-                "to_location": [4, 3],
-            },
+    def test_move_item_without_session(self):
+        """A move needs a session, so a player who has not started one is refused."""
+        from fastapi.testclient import TestClient
+
+        from main import app
+
+        client = TestClient(app)
+        token = client.post("/auth/guest").json()["access_token"]
+        client.headers["Authorization"] = f"Bearer {token}"
+
+        response = client.post(
+            "/move/item", json={"item_id": "some-item", "to_location": [4, 3]}
         )
+
         assert response.status_code == 404
         assert "Session not found" in response.json()["detail"]
+
+    def test_a_move_without_a_token_is_refused(self):
+        """Every endpoint that touches a session needs to know who is asking."""
+        from fastapi.testclient import TestClient
+
+        from main import app
+
+        response = TestClient(app).post(
+            "/move/item", json={"item_id": "some-item", "to_location": [4, 3]}
+        )
+
+        assert response.status_code in (401, 403), response.text
 
 
 # ============ Position contract ============
@@ -1023,7 +1054,6 @@ def buy_an_item(client, session, position):
     return client.post(
         "/purchase/item",
         json={
-            "player_id": session["player_id"],
             "item_id": session["current_shop"][0]["id"],
             "target_position": position,
         },
@@ -1056,12 +1086,11 @@ class TestPositionContractOverHttp:
         GET /session/{player_id} reads state straight from the database, so it
         shows what was actually stored.
         """
-        start = auth_client.post(
+        auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
-        player_id = start.json()["player_id"]
 
-        response = auth_client.get(f"/session/{player_id}")
+        response = auth_client.get("/session")
         assert response.status_code == 200
         assert_positions_are_canonical(response.json(), "GET /session/{player_id}")
 
@@ -1080,7 +1109,6 @@ class TestPositionContractOverHttp:
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
         session = start.json()["session"]
-        player_id = session["player_id"]
 
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
         assert bought.status_code == 200, bought.text
@@ -1089,7 +1117,6 @@ class TestPositionContractOverHttp:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": SECOND_SQUARE,
             },
@@ -1101,7 +1128,7 @@ class TestPositionContractOverHttp:
         assert response.json()["inventory_grid"][0]["position"] == SECOND_SQUARE
 
     def test_an_item_in_the_chest_carries_no_position(self, auth_client):
-        """An item in the chest carries no position at all."""
+        """An item in the chest carries no position; only a placed one has one."""
         start = auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
@@ -1113,7 +1140,6 @@ class TestPositionContractOverHttp:
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": session["player_id"],
                 "item_id": item_id,
                 "to_location": "storage",
             },
@@ -1132,9 +1158,7 @@ class TestPositionContractOverHttp:
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
         assert bought.status_code == 200, bought.text
 
-        response = auth_client.post(
-            "/battle/simulate", json={"player_id": session["player_id"]}
-        )
+        response = auth_client.post("/battle/simulate", json={})
         assert response.status_code == 200, response.text
         payload = response.json()
         assert_positions_are_canonical(payload, "POST /battle/simulate")
@@ -1156,7 +1180,6 @@ class TestPositionContractOverHttp:
         )
         assert start.status_code == 200
         session = start.json()["session"]
-        player_id = session["player_id"]
         responses.append(("POST /session/start", start.json()))
 
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
@@ -1167,7 +1190,6 @@ class TestPositionContractOverHttp:
         moved = auth_client.post(
             "/move/item",
             json={
-                "player_id": player_id,
                 "item_id": item_id,
                 "to_location": SECOND_SQUARE,
             },
@@ -1175,15 +1197,15 @@ class TestPositionContractOverHttp:
         assert moved.status_code == 200, moved.text
         responses.append(("POST /move/item", moved.json()))
 
-        refreshed = auth_client.post("/shop/refresh", json={"player_id": player_id})
+        refreshed = auth_client.post("/shop/refresh", json={})
         assert refreshed.status_code == 200, refreshed.text
         responses.append(("POST /shop/refresh", refreshed.json()))
 
-        fetched = auth_client.get(f"/session/{player_id}")
+        fetched = auth_client.get("/session")
         assert fetched.status_code == 200
         responses.append(("GET /session/{player_id}", fetched.json()))
 
-        battle = auth_client.post("/battle/simulate", json={"player_id": player_id})
+        battle = auth_client.post("/battle/simulate", json={})
         assert battle.status_code == 200, battle.text
         responses.append(("POST /battle/simulate", battle.json()))
 
@@ -1208,7 +1230,6 @@ class TestPositionContractRejectsBadInput:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": session["player_id"],
                 "item_id": shop_item["id"],
                 "target_position": {"x": 2, "y": 3},
             },
@@ -1229,7 +1250,6 @@ class TestPositionContractRejectsBadInput:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": session["player_id"],
                 "item_id": shop_item["id"],
                 "target_position": [2, 3, 4],
             },
@@ -1237,15 +1257,13 @@ class TestPositionContractRejectsBadInput:
         assert response.status_code == 422, response.text
 
     def test_move_rejects_a_dictionary_position(self, auth_client):
-        start = auth_client.post(
+        auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
-        session = start.json()["session"]
 
         response = auth_client.post(
             "/move/item",
             json={
-                "player_id": session["player_id"],
                 "item_id": "does-not-matter",
                 "to_location": {"x": 2, "y": 3},
             },

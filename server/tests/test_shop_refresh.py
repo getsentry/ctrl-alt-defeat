@@ -16,7 +16,6 @@ class TestShopRefresh:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Check initial shop
         shop = data["session"]["current_shop"]
@@ -28,9 +27,7 @@ class TestShopRefresh:
 
         # Test multiple refreshes
         for i in range(10):
-            response = auth_client.post(
-                "/shop/refresh", json={"player_id": player_id, "round": 1}
-            )
+            response = auth_client.post("/shop/refresh", json={"round": 1})
             assert response.status_code == 200
             shop = response.json()["shop"]
 
@@ -47,16 +44,13 @@ class TestShopRefresh:
             "/session/start", json={"player_name": "test_player", "seed": 100}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get initial shop
         initial_shop = data["session"]["current_shop"]
         initial_names = [item["name"] if item else None for item in initial_shop]
 
         # Refresh shop
-        response = auth_client.post(
-            "/shop/refresh", json={"player_id": player_id, "round": 1}
-        )
+        response = auth_client.post("/shop/refresh", json={"round": 1})
         assert response.status_code == 200
 
         refreshed_shop = response.json()["shop"]
@@ -78,13 +72,10 @@ class TestShopRefresh:
             "/session/start", json={"player_name": "test_player", "seed": None}
         )
         data = response.json()
-        player_id = data["player_id"]
         initial_gold = data["session"]["gold"]
 
         # First refresh (after initial shop) should cost 1 gold
-        response = auth_client.post(
-            "/shop/refresh", json={"player_id": player_id, "round": 1}
-        )
+        response = auth_client.post("/shop/refresh", json={"round": 1})
         assert response.status_code == 200
 
         new_gold = response.json()["gold"]
@@ -111,13 +102,11 @@ class TestShopRefresh:
         response1 = client1.post(
             "/session/start", json={"player_name": "test_player", "seed": 999}
         )
-        player1 = response1.json()["player_id"]
         shop1_initial = response1.json()["session"]["current_shop"]
 
         response2 = client2.post(
             "/session/start", json={"player_name": "test_player", "seed": 999}
         )
-        player2 = response2.json()["player_id"]
         shop2_initial = response2.json()["session"]["current_shop"]
 
         # Initial shops should be identical
@@ -127,14 +116,10 @@ class TestShopRefresh:
                 assert shop1_initial[i]["name"] == shop2_initial[i]["name"]
 
         # Refresh both shops
-        response1 = client1.post(
-            "/shop/refresh", json={"player_id": player1, "round": 1}
-        )
+        response1 = client1.post("/shop/refresh", json={"round": 1})
         shop1_refresh = response1.json()["shop"]
 
-        response2 = client2.post(
-            "/shop/refresh", json={"player_id": player2, "round": 1}
-        )
+        response2 = client2.post("/shop/refresh", json={"round": 1})
         shop2_refresh = response2.json()["shop"]
 
         # Refreshed shops should also be identical
@@ -156,28 +141,23 @@ class TestShopRefresh:
         response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 500}
         )
-        data = response.json()
-        player_id = data["player_id"]
 
         # Refresh shop a few times in round 1
         for _ in range(3):
-            auth_client.post("/shop/refresh", json={"player_id": player_id, "round": 1})
+            auth_client.post("/shop/refresh", json={"round": 1})
 
         # Get the third refresh shop
-        response = auth_client.post(
-            "/shop/refresh", json={"player_id": player_id, "round": 1}
-        )
+        response = auth_client.post("/shop/refresh", json={"round": 1})
         round1_shop = response.json()["shop"]
 
         # Purchase some items and battle to advance round
-        session = auth_client.get(f"/session/{player_id}").json()
+        session = auth_client.get("/session").json()
         shop = session["current_shop"]
         for i, item in enumerate(shop[:3]):
             if item:
                 auth_client.post(
                     "/purchase/item",
                     json={
-                        "player_id": player_id,
                         "item_id": item["id"],
                         "target_position": [2 + i, 3],
                     },
@@ -187,7 +167,6 @@ class TestShopRefresh:
         response = auth_client.post(
             "/battle/simulate",
             json={
-                "player_id": player_id,
                 "seed": 42,
                 "test_ai_difficulty": 1,  # Easy AI (1)
             },

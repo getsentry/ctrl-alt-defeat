@@ -288,8 +288,7 @@ func test_a_buff_is_announced_by_name():
 
 	processor.skip_to_end()
 
-	# The name comes from the server's details, which the client used to read
-	# under the wrong key.
+	# The name travels in the server's details, under buff_name.
 	assert_signal_emitted_with_parameters(processor, "buff_applied", [1, "speed"])
 
 

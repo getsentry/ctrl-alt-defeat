@@ -56,10 +56,9 @@ class TestAPISlugResponses:
             "/session/start", json={"player_name": "TestPlayer"}
         )
         assert response.status_code == 200
-        player_id = response.json()["player_id"]
 
         # Refresh shop
-        response = auth_client.post("/shop/refresh", json={"player_id": player_id})
+        response = auth_client.post("/shop/refresh", json={})
 
         assert response.status_code == 200
         data = response.json()
@@ -81,7 +80,6 @@ class TestAPISlugResponses:
             "/session/start", json={"player_name": "TestPlayer"}
         )
         data = response.json()
-        player_id = data["player_id"]
         session = data["session"]
 
         # Find a non-container item to purchase
@@ -95,7 +93,6 @@ class TestAPISlugResponses:
             response = auth_client.post(
                 "/purchase/item",
                 json={
-                    "player_id": player_id,
                     "item_id": item_to_buy["id"],
                     "to_storage": True,
                 },
@@ -115,7 +112,6 @@ class TestAPISlugResponses:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
 
         item_to_buy = data["session"]["current_shop"][0]
 
@@ -124,7 +120,6 @@ class TestAPISlugResponses:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item_to_buy["id"],
                 "target_position": [2, 3],
             },
@@ -134,7 +129,7 @@ class TestAPISlugResponses:
 
         response = auth_client.post(
             "/sell/item",
-            json={"player_id": player_id, "item_id": purchased_item["id"]},
+            json={"item_id": purchased_item["id"]},
         )
         assert response.status_code == 200, f"Sell failed: {response.json()}"
 
@@ -154,7 +149,6 @@ class TestAPISlugResponses:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
         session = data["session"]
 
         # Get non-container items from shop to purchase
@@ -168,7 +162,6 @@ class TestAPISlugResponses:
             response = auth_client.post(
                 "/purchase/item",
                 json={
-                    "player_id": player_id,
                     "item_id": items_to_buy[0]["id"],
                     "to_storage": True,
                 },
@@ -202,7 +195,6 @@ class TestAPISlugResponses:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
 
         item_to_buy = data["session"]["current_shop"][0]
 
@@ -210,14 +202,13 @@ class TestAPISlugResponses:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": item_to_buy["id"],
                 "target_position": [2, 3],
             },
         )
         assert response.status_code == 200, f"Purchase failed: {response.json()}"
 
-        response = auth_client.post("/battle/simulate", json={"player_id": player_id})
+        response = auth_client.post("/battle/simulate", json={})
         assert response.status_code == 200, f"Battle failed: {response.json()}"
 
         new_shop = response.json()["new_shop"]
@@ -238,7 +229,6 @@ class TestAPISlugResponses:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
         session = data["session"]
 
         # Get first non-container item from shop
@@ -252,7 +242,6 @@ class TestAPISlugResponses:
             response = auth_client.post(
                 "/purchase/item",
                 json={
-                    "player_id": player_id,
                     "item_id": item_to_buy["id"],
                     "to_storage": True,  # To storage
                 },
@@ -349,7 +338,6 @@ class TestAPISlugResponses:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
         session = data["session"]
 
         # Check starting containers
@@ -366,7 +354,6 @@ class TestAPISlugResponses:
             response = auth_client.post(
                 "/purchase/item",
                 json={
-                    "player_id": player_id,
                     "item_id": item["id"],
                     "target_position": [2, 3],
                 },
@@ -378,7 +365,7 @@ class TestAPISlugResponses:
             print("No non-container item in shop")
 
         # Now submit battle
-        response = auth_client.post("/battle/simulate", json={"player_id": player_id})
+        response = auth_client.post("/battle/simulate", json={})
         if response.status_code != 200:
             print(f"Battle failed with: {response.json()}")
         assert response.status_code == 200
@@ -412,7 +399,6 @@ class TestAPISlugResponses:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
         session = data["session"]
 
         # Check if session has server_containers
@@ -439,7 +425,6 @@ class TestAPISlugResponses:
             response = auth_client.post(
                 "/purchase/item",
                 json={
-                    "player_id": player_id,
                     "item_id": container_item["id"],
                     "target_position": [2, 2],
                 },
@@ -469,7 +454,6 @@ class TestAPISlugResponses:
         )
         assert response.status_code == 200
         data = response.json()
-        player_id = data["player_id"]
 
         # Buy an item so we can battle
         shop = data["session"]["current_shop"]
@@ -485,7 +469,6 @@ class TestAPISlugResponses:
             response = auth_client.post(
                 "/purchase/item",
                 json={
-                    "player_id": player_id,
                     "item_id": item_to_buy["id"],
                     "target_position": [2, 3],
                 },
@@ -493,7 +476,7 @@ class TestAPISlugResponses:
             assert response.status_code == 200, f"Purchase failed: {response.json()}"
 
         # Submit battle
-        response = auth_client.post("/battle/simulate", json={"player_id": player_id})
+        response = auth_client.post("/battle/simulate", json={})
         assert response.status_code == 200
         data = response.json()
 

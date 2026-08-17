@@ -51,10 +51,9 @@ class TestShopShape:
             "/session/start", json={"player_name": "TestPlayer"}
         )
         assert response.status_code == 200
-        player_id = response.json()["player_id"]
 
         # Refresh shop
-        response = auth_client.post("/shop/refresh", json={"player_id": player_id})
+        response = auth_client.post("/shop/refresh", json={})
         assert response.status_code == 200
 
         shop = response.json()["shop"]

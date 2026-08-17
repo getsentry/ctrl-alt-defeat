@@ -146,7 +146,7 @@ func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResponse:
 	print("Submitting battle to server")
 
 	if player_id == "":
-		push_error("Cannot submit battle - no player ID")
+		push_error("Cannot submit battle - no session started")
 		return null
 
 	var url = BASE_URL + "/battle/simulate"
@@ -155,7 +155,7 @@ func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResponse:
 		"Authorization: Bearer " + _auth_token
 	]
 
-	var body_dict = {"player_id": player_id}
+	var body_dict = {}
 
 	print("Sending battle request for round %d" % session_data.get("round", 1))
 
@@ -204,7 +204,7 @@ func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResponse:
 func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 	# Refresh shop from real server
 	if player_id == "":
-		push_error("Cannot refresh shop - no player ID")
+		push_error("Cannot refresh shop - no session started")
 		return null
 
 	var url = BASE_URL + "/shop/refresh"
@@ -213,7 +213,6 @@ func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 		"Authorization: Bearer " + _auth_token
 	]
 	var body = JSON.stringify({
-		"player_id": player_id,
 		"round": round
 	})
 
@@ -240,7 +239,7 @@ func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 	# Purchase item on real server
 	if player_id == "":
-		push_error("Cannot purchase item - no player ID")
+		push_error("Cannot purchase item - no session started")
 		return null
 
 	var url = BASE_URL + "/purchase/item"
@@ -250,7 +249,6 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 	]
 
 	var body_dict = {
-		"player_id": player_id,
 		"item_id": item_id
 	}
 
@@ -288,7 +286,7 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 func sell_item(item_id: String) -> APITypes.SellResponse:
 	# Sell item on real server
 	if player_id == "":
-		push_error("Cannot sell item - no player ID")
+		push_error("Cannot sell item - no session started")
 		return null
 
 	var url = BASE_URL + "/sell/item"
@@ -298,7 +296,6 @@ func sell_item(item_id: String) -> APITypes.SellResponse:
 	]
 
 	var body_dict = {
-		"player_id": player_id,
 		"item_id": item_id
 	}
 
@@ -328,7 +325,7 @@ func sell_item(item_id: String) -> APITypes.SellResponse:
 func move_item(item_id: String, to_location) -> APITypes.MoveItemResponse:
 	# Move item to new position on real server
 	if player_id == "":
-		push_error("Cannot move item - no player ID")
+		push_error("Cannot move item - no session started")
 		return null
 
 	var url = BASE_URL + "/move/item"
@@ -338,7 +335,6 @@ func move_item(item_id: String, to_location) -> APITypes.MoveItemResponse:
 	]
 
 	var body_dict = {
-		"player_id": player_id,
 		"item_id": item_id,
 		"to_location": to_location  # Either "storage" or [x, y]
 	}

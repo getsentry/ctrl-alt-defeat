@@ -4,8 +4,8 @@ extends GutTest
 #
 # These check grid rules: where an item may go, what a container makes
 # available, and that loading a state and reading it back gives the same thing.
-# They are written against behaviour rather than field names, because the API
-# shape work rewrites the fields but not the rules.
+# They are written against behaviour rather than field names, so a change to the
+# fields leaves them standing.
 
 const InventoryGridScript = preload("res://scripts/inventory_grid.gd")
 const APITypes = preload("res://scripts/api_types.gd")

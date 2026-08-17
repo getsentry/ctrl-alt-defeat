@@ -14,12 +14,9 @@ class TestBattleWithSession:
         response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
-        data = response.json()
-        player_id = data["player_id"]
 
         # Try to battle with empty inventory
         battle_request = {
-            "player_id": player_id,
             "seed": 42,
             "test_ai_difficulty": None,
         }
@@ -35,7 +32,6 @@ class TestBattleWithSession:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop
         session = data["session"]
@@ -47,7 +43,6 @@ class TestBattleWithSession:
                 response = auth_client.post(
                     "/purchase/item",
                     json={
-                        "player_id": player_id,
                         "item_id": item["id"],
                         "target_position": [2, 3],
                     },
@@ -57,7 +52,6 @@ class TestBattleWithSession:
 
         # Now battle with the purchased item
         battle_request = {
-            "player_id": player_id,
             "seed": 42,
             "test_ai_difficulty": 1,  # Easy AI (1)
         }
@@ -95,7 +89,6 @@ class TestBattleWithSession:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop
         session = data["session"]
@@ -109,7 +102,6 @@ class TestBattleWithSession:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": items[0]["id"],
                 "target_position": None,
                 "to_storage": True,
@@ -121,7 +113,6 @@ class TestBattleWithSession:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": items[1]["id"],
                 "target_position": [2, 3],
             },
@@ -130,7 +121,6 @@ class TestBattleWithSession:
 
         # Battle should only use the grid item, not storage item
         battle_request = {
-            "player_id": player_id,
             "seed": 42,
             "test_ai_difficulty": 1,  # Easy AI (1)
         }
@@ -174,7 +164,7 @@ class TestBattleWithSession:
         assert "position" in enemy_item
 
         # Check session still has item in storage after battle
-        session_response = auth_client.get(f"/session/{player_id}")
+        session_response = auth_client.get("/session")
         updated_session = session_response.json()
         assert len(updated_session["inventory_storage"]) == 1
         assert len(updated_session["inventory_grid"]) == 1

@@ -281,9 +281,12 @@ async def start_session(
     )
 
 
-@app.get("/session/{player_id}")
-async def get_session_endpoint(player_id: str) -> GameSession:
+@app.get("/session")
+async def get_session_endpoint(
+    current_user: TokenData = Depends(get_current_user),
+) -> GameSession:
     """Get current session state"""
+    player_id = str(current_user.user_id)
     session = await session_manager.get_session(player_id)
     if not session:
         raise HTTPException(
@@ -293,9 +296,13 @@ async def get_session_endpoint(player_id: str) -> GameSession:
 
 
 @app.post("/shop/refresh", response_model=ShopRefreshResponse)
-async def refresh_shop(request: ShopRefreshRequest) -> ShopRefreshResponse:
+async def refresh_shop(
+    request: ShopRefreshRequest,
+    current_user: TokenData = Depends(get_current_user),
+) -> ShopRefreshResponse:
     """Get new shop items (costs 1 gold if not free refresh)"""
-    session = await session_manager.get_session(request.player_id)
+    player_id = str(current_user.user_id)
+    session = await session_manager.get_session(player_id)
     if not session:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
@@ -444,11 +451,15 @@ def generate_shop_items(
 
 
 @app.post("/battle/simulate", response_model=BattleResponse)
-async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
+async def simulate_battle(
+    request: SimpleBattleRequest,
+    current_user: TokenData = Depends(get_current_user),
+) -> BattleResponse:
     """
     Simulate a battle using inventory from session
     """
-    session = await session_manager.get_session(request.player_id)
+    player_id = str(current_user.user_id)
+    session = await session_manager.get_session(player_id)
     if not session:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
@@ -502,9 +513,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                 from models import GameSession as DBGameSession
 
                 db_session_result = await db.execute(
-                    select(DBGameSession).where(
-                        DBGameSession.player_id == request.player_id
-                    )
+                    select(DBGameSession).where(DBGameSession.player_id == player_id)
                 )
                 db_session = db_session_result.scalar_one_or_none()
 
@@ -660,9 +669,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                 from models import GameSession as DBGameSession
 
                 db_session_result = await db.execute(
-                    select(DBGameSession).where(
-                        DBGameSession.player_id == request.player_id
-                    )
+                    select(DBGameSession).where(DBGameSession.player_id == player_id)
                 )
                 db_session = db_session_result.scalar_one_or_none()
 
@@ -672,7 +679,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
                     player_build = await matchmaking.save_player_build(
                         user_id=db_session.user_id,
                         player_name=session.player_name,
-                        game_session_id=request.player_id,
+                        game_session_id=player_id,
                         round_number=current_round,
                         wins=session.wins,
                         losses=session.losses,
@@ -711,7 +718,7 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
 
     # Store battle in history (use clean result without BattleItem objects)
     await session_manager.save_battle_history(
-        player1_id=request.player_id,
+        player1_id=player_id,
         player2_id=None,  # AI opponent for now
         round_number=current_round,
         winner=battle_result["winner"],
@@ -729,10 +736,9 @@ async def simulate_battle(request: SimpleBattleRequest) -> BattleResponse:
         """
         The battle engine's item, as the item the client already knows.
 
-        This rebuilds from the catalogue, so anything held on the instance
-        rather than on the type is dropped. That is safe while an item is only
-        ever a plain catalogue entry, and it stops being safe as soon as one
-        carries sockets or an upgrade.
+        This rebuilds from the catalogue, so an item is only ever what its type
+        says it is. An item that carries anything of its own, such as a socket
+        or an upgrade, needs its instance carried through here instead.
         """
         return Item.of(item.spec.id, item.uid).placed_at(item.position, item.rotation)
 
@@ -1017,9 +1023,13 @@ def place_item_in_inventory(
 
 
 @app.post("/purchase/item", response_model=PurchaseResponse)
-async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
+async def purchase_item(
+    request: PurchaseRequest,
+    current_user: TokenData = Depends(get_current_user),
+) -> PurchaseResponse:
     """Purchase an item from shop and place in inventory or storage"""
-    session = await session_manager.get_session(request.player_id)
+    player_id = str(current_user.user_id)
+    session = await session_manager.get_session(player_id)
     if not session:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
@@ -1136,9 +1146,13 @@ async def purchase_item(request: PurchaseRequest) -> PurchaseResponse:
 
 
 @app.post("/sell/item", response_model=SellResponse)
-async def sell_item(request: SellRequest) -> SellResponse:
+async def sell_item(
+    request: SellRequest,
+    current_user: TokenData = Depends(get_current_user),
+) -> SellResponse:
     """Sell an item for 50% value"""
-    session = await session_manager.get_session(request.player_id)
+    player_id = str(current_user.user_id)
+    session = await session_manager.get_session(player_id)
     if not session:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
@@ -1213,9 +1227,13 @@ async def sell_item(request: SellRequest) -> SellResponse:
 
 
 @app.post("/move/item", response_model=MoveItemResponse)
-async def move_item(request: MoveItemRequest) -> MoveItemResponse:
+async def move_item(
+    request: MoveItemRequest,
+    current_user: TokenData = Depends(get_current_user),
+) -> MoveItemResponse:
     """Move an item to a new position or storage"""
-    session = await session_manager.get_session(request.player_id)
+    player_id = str(current_user.user_id)
+    session = await session_manager.get_session(player_id)
     if not session:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
@@ -1322,10 +1340,13 @@ async def get_leaderboard(limit: int = 10) -> LeaderboardResponse:
     return LeaderboardResponse(entries=entries[:limit])
 
 
-@app.get("/battle/history/{player_id}", response_model=BattleHistoryResponse)
-async def get_battle_history(player_id: str, limit: int = 10) -> BattleHistoryResponse:
+@app.get("/battle/history", response_model=BattleHistoryResponse)
+async def get_battle_history(
+    limit: int = 10,
+    current_user: TokenData = Depends(get_current_user),
+) -> BattleHistoryResponse:
     """Get player's recent battles"""
-    # Get battle history from session manager
+    player_id = str(current_user.user_id)
     battles_data = await session_manager.get_battle_history(player_id, limit)
 
     # Convert to BattleHistoryEntry models

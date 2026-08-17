@@ -43,7 +43,6 @@ class TestGameSessionInventory:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get initial shop
         session = data["session"]
@@ -62,7 +61,6 @@ class TestGameSessionInventory:
         purchase_response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": shop_item["id"],
                 "target_position": None,
                 "to_storage": True,
@@ -76,7 +74,7 @@ class TestGameSessionInventory:
         assert purchase_response.status_code == 200
 
         # Get session again
-        response = auth_client.get(f"/session/{player_id}")
+        response = auth_client.get("/session")
         assert response.status_code == 200
 
         session = response.json()

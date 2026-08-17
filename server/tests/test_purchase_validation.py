@@ -15,7 +15,6 @@ class TestPurchaseValidation:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop
         session = data["session"]
@@ -35,7 +34,6 @@ class TestPurchaseValidation:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": shop_item["id"],
                 "target_position": None,
                 "to_storage": True,
@@ -49,7 +47,7 @@ class TestPurchaseValidation:
         assert result["gold"] == initial_gold - shop_item["cost"]
 
         # Verify item is in storage
-        session_response = auth_client.get(f"/session/{player_id}")
+        session_response = auth_client.get("/session")
         updated_session = session_response.json()
 
         assert len(updated_session["inventory_storage"]) == 1
@@ -63,7 +61,6 @@ class TestPurchaseValidation:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop
         session = data["session"]
@@ -80,7 +77,6 @@ class TestPurchaseValidation:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": shop_item["id"],
                 "target_position": [2, 3],
             },
@@ -89,7 +85,7 @@ class TestPurchaseValidation:
         assert response.status_code == 200
 
         # Verify item is on grid
-        session_response = auth_client.get(f"/session/{player_id}")
+        session_response = auth_client.get("/session")
         updated_session = session_response.json()
 
         assert len(updated_session["inventory_grid"]) == 1
@@ -103,7 +99,6 @@ class TestPurchaseValidation:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop
         session = data["session"]
@@ -120,7 +115,6 @@ class TestPurchaseValidation:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": shop_item["id"],
                 "target_position": [0, 0],
             },
@@ -141,7 +135,6 @@ class TestPurchaseValidation:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop
         session = data["session"]
@@ -155,7 +148,6 @@ class TestPurchaseValidation:
         response1 = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": items[0]["id"],
                 "target_position": [2, 3],
             },
@@ -166,7 +158,6 @@ class TestPurchaseValidation:
         response2 = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": items[1]["id"],
                 "target_position": [2, 3],
             },
@@ -181,14 +172,11 @@ class TestPurchaseValidation:
         response = auth_client.post(
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
-        data = response.json()
-        player_id = data["player_id"]
 
         # Try to purchase non-existent item
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": "fake-item-id",
                 "target_position": None,
                 "to_storage": True,
@@ -205,7 +193,6 @@ class TestPurchaseValidation:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop
         session = data["session"]
@@ -217,7 +204,6 @@ class TestPurchaseValidation:
                 response = auth_client.post(
                     "/purchase/item",
                     json={
-                        "player_id": player_id,
                         "item_id": item["id"],
                         "target_position": None,
                         "to_storage": True,
@@ -231,7 +217,7 @@ class TestPurchaseValidation:
 
         # If all items were free or we had enough gold, try again with any remaining item
         # Get updated shop
-        session_response = auth_client.get(f"/session/{player_id}")
+        session_response = auth_client.get("/session")
         updated_session = session_response.json()
 
         # Find any non-null item still in shop and try to buy it
@@ -240,7 +226,6 @@ class TestPurchaseValidation:
                 response = auth_client.post(
                     "/purchase/item",
                     json={
-                        "player_id": player_id,
                         "item_id": item["id"],
                         "target_position": None,
                         "to_storage": True,
@@ -260,7 +245,6 @@ class TestPurchaseValidation:
             "/session/start", json={"player_name": "test_player", "seed": 42}
         )
         data = response.json()
-        player_id = data["player_id"]
 
         # Get shop
         session = data["session"]
@@ -279,7 +263,6 @@ class TestPurchaseValidation:
         response = auth_client.post(
             "/purchase/item",
             json={
-                "player_id": player_id,
                 "item_id": shop_item["id"],
                 "target_position": None,
                 "to_storage": True,
@@ -288,7 +271,7 @@ class TestPurchaseValidation:
         assert response.status_code == 200
 
         # Check shop has one less item
-        session_response = auth_client.get(f"/session/{player_id}")
+        session_response = auth_client.get("/session")
         updated_session = session_response.json()
         updated_shop = updated_session["current_shop"]
 
