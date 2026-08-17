@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Chip. A mask, not a picture: one colour, no background. -->
+  <g stroke="#ffffff" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M18 24 H7 M18 32 H7 M18 40 H7"/>
+    <path d="M46 24 H57 M46 32 H57 M46 40 H57"/>
+    <path d="M24 18 V7 M32 18 V7 M40 18 V7"/>
+    <path d="M24 46 V57 M32 46 V57 M40 46 V57"/>
+  </g>
+  <rect x="17" y="17" width="30" height="30" rx="4" fill="#ffffff"/>
+</svg>

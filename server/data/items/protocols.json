@@ -4,6 +4,8 @@
     "api_token": {
       "name": "API Token",
       "category": "protocol",
+      "color": "green",
+      "pattern": "solid",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -34,6 +36,8 @@
     "bitcoin_wallet": {
       "name": "Bitcoin Wallet",
       "category": "protocol",
+      "color": "green",
+      "pattern": "stripe_d_bold",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -60,6 +64,8 @@
     "captcha_module": {
       "name": "CAPTCHA Module",
       "category": "protocol",
+      "color": "green",
+      "pattern": "dot_large_grid",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -86,6 +92,8 @@
     "script_compiler": {
       "name": "Script Compiler - Alchemy",
       "category": "protocol",
+      "color": "green",
+      "pattern": "stripe_v_bold",
       "class": "neutral",
       "shape": "2x1",
       "map": [
@@ -119,6 +127,8 @@
     "dark_web_access": {
       "name": "Dark Web Access",
       "category": "protocol",
+      "color": "green",
+      "pattern": "check_large",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -146,6 +156,8 @@
     "power_management_unit": {
       "name": "Power Management Unit",
       "category": "protocol",
+      "color": "green",
+      "pattern": "stripe_h_bold",
       "class": "neutral",
       "shape": "2x1",
       "map": [
@@ -172,6 +184,8 @@
     "auto_scaler": {
       "name": "Auto-Scaler",
       "category": "protocol",
+      "color": "green",
+      "pattern": "hatch_diag",
       "class": "neutral",
       "shape": "2x1",
       "map": [
@@ -206,6 +220,8 @@
     "redundancy_protocol": {
       "name": "Redundancy Protocol",
       "category": "protocol",
+      "color": "green",
+      "pattern": "dot_small_stagger",
       "class": "neutral",
       "shape": "1x2",
       "map": [
@@ -230,6 +246,8 @@
     "encryption_module": {
       "name": "Encryption Module",
       "category": "protocol",
+      "color": "green",
+      "pattern": "chevron_up",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -262,6 +280,8 @@
     "machine_learning_core": {
       "name": "Machine Learning Core",
       "category": "protocol",
+      "color": "green",
+      "pattern": "stripe_a_bold",
       "class": "neutral",
       "shape": "2x2",
       "map": [
@@ -289,6 +309,8 @@
     "crypto_mining_rig": {
       "name": "Crypto Mining Rig",
       "category": "protocol",
+      "color": "green",
+      "pattern": "rings",
       "class": "neutral",
       "shape": "2x1",
       "map": [
@@ -314,6 +336,8 @@
     "transaction_log": {
       "name": "Transaction Log",
       "category": "protocol",
+      "color": "green",
+      "pattern": "stripe_v_fine",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -339,6 +363,8 @@
     "premium_subscription": {
       "name": "Premium Subscription",
       "category": "protocol",
+      "color": "green",
+      "pattern": "dot_large_stagger",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -363,6 +389,8 @@
     "vampire_rootkit": {
       "name": "Vampire Rootkit",
       "category": "protocol",
+      "color": "green",
+      "pattern": "check_small",
       "class": "neutral",
       "shape": "2x2",
       "map": [

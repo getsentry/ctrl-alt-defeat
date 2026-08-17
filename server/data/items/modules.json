@@ -4,6 +4,8 @@
     "performance_module_chipped": {
       "name": "Chipped Performance Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "solid",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -29,6 +31,8 @@
     "performance_module_flawed": {
       "name": "Flawed Performance Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "stripe_d_bold",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -54,6 +58,8 @@
     "performance_module_regular": {
       "name": "Performance Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "dot_large_grid",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -79,6 +85,8 @@
     "performance_module_flawless": {
       "name": "Flawless Performance Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "stripe_v_bold",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -104,6 +112,8 @@
     "performance_module_perfect": {
       "name": "Perfect Performance Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "check_large",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -129,6 +139,8 @@
     "memory_module_chipped": {
       "name": "Chipped Memory Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "stripe_h_bold",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -154,6 +166,8 @@
     "memory_module_flawed": {
       "name": "Flawed Memory Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "hatch_diag",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -179,6 +193,8 @@
     "memory_module_regular": {
       "name": "Memory Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "dot_small_stagger",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -204,6 +220,8 @@
     "processing_module_chipped": {
       "name": "Chipped Processing Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "chevron_up",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -229,6 +247,8 @@
     "processing_module_regular": {
       "name": "Processing Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "stripe_a_bold",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -254,6 +274,8 @@
     "efficiency_module_chipped": {
       "name": "Chipped Efficiency Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "rings",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -279,6 +301,8 @@
     "efficiency_module_regular": {
       "name": "Efficiency Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "stripe_v_fine",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -304,6 +328,8 @@
     "security_module_chipped": {
       "name": "Chipped Security Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "dot_large_stagger",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -329,6 +355,8 @@
     "security_module_regular": {
       "name": "Security Module",
       "category": "module",
+      "color": "orange",
+      "pattern": "check_small",
       "class": "neutral",
       "shape": "1x1",
       "map": [

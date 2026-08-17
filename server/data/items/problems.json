@@ -4,6 +4,8 @@
     "null_blade": {
       "name": "Null blade",
       "category": "problem",
+      "color": "red",
+      "pattern": "solid",
       "class": "neutral",
       "shape": "1x2",
       "map": [
@@ -36,6 +38,8 @@
     "core_dumper": {
       "name": "Core Dumper",
       "category": "problem",
+      "color": "red",
+      "pattern": "stripe_d_bold",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -69,6 +73,8 @@
     "deadlock_twins": {
       "name": "Deadlock Twins",
       "category": "problem",
+      "color": "red",
+      "pattern": "dot_large_grid",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -101,6 +107,8 @@
     "mobius_lash": {
       "name": "Mobius Lash",
       "category": "problem",
+      "color": "red",
+      "pattern": "stripe_v_bold",
       "class": "neutral",
       "shape": "2x1",
       "map": [
@@ -138,6 +146,8 @@
     "sql_injector": {
       "name": "SQL Injector",
       "category": "problem",
+      "color": "red",
+      "pattern": "check_large",
       "class": "neutral",
       "shape": "1x2",
       "map": [
@@ -174,6 +184,8 @@
     "denier_of_service": {
       "name": "Denier of Service",
       "category": "problem",
+      "color": "red",
+      "pattern": "stripe_h_bold",
       "class": "neutral",
       "shape": "2x2",
       "map": [
@@ -206,6 +218,8 @@
     "day_zero": {
       "name": "Day Zero",
       "category": "problem",
+      "color": "red",
+      "pattern": "hatch_diag",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -250,6 +264,8 @@
     "nullshot": {
       "name": "Nullshot",
       "category": "problem",
+      "color": "red",
+      "pattern": "dot_small_stagger",
       "class": "sentaur",
       "shape": "1x2",
       "map": [
@@ -284,6 +300,8 @@
     "neural_interface_blade": {
       "name": "Neural Interface Blade",
       "category": "problem",
+      "color": "red",
+      "pattern": "chevron_up",
       "class": "sentaur",
       "shape": "1x2",
       "map": [
@@ -332,6 +350,8 @@
     "querystorm": {
       "name": "Querystorm",
       "category": "problem",
+      "color": "red",
+      "pattern": "stripe_a_bold",
       "class": "sentaur",
       "shape": "2x2",
       "map": [
@@ -381,6 +401,8 @@
     "quantum_sniper": {
       "name": "Quantum Sniper",
       "category": "problem",
+      "color": "red",
+      "pattern": "rings",
       "class": "sentaur",
       "shape": "1x2",
       "map": [
@@ -415,6 +437,8 @@
     "virus_injector": {
       "name": "Virus Injector",
       "category": "problem",
+      "color": "red",
+      "pattern": "stripe_v_fine",
       "class": "sentaur",
       "shape": "2x2",
       "map": [
@@ -456,6 +480,8 @@
     "malware_propagator": {
       "name": "Malware Propagator",
       "category": "problem",
+      "color": "red",
+      "pattern": "dot_large_stagger",
       "class": "sentaur",
       "shape": "2x2",
       "map": [
@@ -492,6 +518,8 @@
     "probability_manipulator": {
       "name": "Probability Manipulator",
       "category": "problem",
+      "color": "red",
+      "pattern": "check_small",
       "class": "sentaur",
       "shape": "2x2",
       "map": [
@@ -540,6 +568,8 @@
     "quantum_flux_rifle": {
       "name": "Quantum Flux Rifle",
       "category": "problem",
+      "color": "red",
+      "pattern": "stripe_h_fine",
       "class": "sentaur",
       "shape": "2x1",
       "map": [
@@ -581,6 +611,8 @@
     "data_leech_swarm": {
       "name": "Data Leech Swarm",
       "category": "problem",
+      "color": "red",
+      "pattern": "hatch_ortho",
       "class": "sentaur",
       "shape": "2x2",
       "map": [
@@ -616,6 +648,8 @@
     "spike_launcher": {
       "name": "Spike Launcher",
       "category": "problem",
+      "color": "red",
+      "pattern": "chevron_right",
       "class": "sentaur",
       "shape": "2x2",
       "map": [
@@ -663,6 +697,8 @@
     "spike_generator": {
       "name": "Spike Generator",
       "category": "problem",
+      "color": "red",
+      "pattern": "stripe_d_fine",
       "class": "sentaur",
       "shape": "1x2",
       "map": [
@@ -704,6 +740,8 @@
     "plasma_edge": {
       "name": "Plasma Edge",
       "category": "problem",
+      "color": "red",
+      "pattern": "dot_small_grid",
       "class": "sentaur",
       "shape": "1x2",
       "map": [

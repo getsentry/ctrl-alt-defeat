@@ -108,7 +108,8 @@ class Item(BaseModel):
     is_container: bool = Field(description="Whether this item is a container")
     shape: Shape = Field(description="Covered squares, as [x, y] offsets")
     description: str = Field(description="What the item does, in prose")
-
+    color: str = Field(description="Palette colour name, empty on a container")
+    pattern: str = Field(description="Pattern name, empty on a container")
     min_damage: int = Field(description="Minimum damage dealt")
     max_damage: int = Field(description="Maximum damage dealt")
     min_heal: int = Field(description="Minimum healing given")
@@ -140,6 +141,8 @@ class Item(BaseModel):
             is_container=spec.category == "container",
             shape=shape_of(spec),
             description=describe(stats),
+            color=spec.color,
+            pattern=spec.pattern,
             **stats.model_dump(),
         )
 

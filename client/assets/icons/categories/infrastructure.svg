@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Stacked drums. A rounded rectangle would have collided with the script
+       icon at a glance, and the point of the icon is to be told apart. -->
+  <path fill="#ffffff" fill-rule="evenodd" d="M9 14 A23 9 0 0 1 55 14 V50 A23 9 0 0 1 9 50 Z M11 25 H53 V31 H11 Z M11 37 H53 V43 H11 Z"/>
+</svg>

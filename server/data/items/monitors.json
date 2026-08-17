@@ -4,6 +4,8 @@
     "basic_firewall": {
       "name": "Basic Firewall",
       "category": "monitor",
+      "color": "sky",
+      "pattern": "solid",
       "class": "neutral",
       "shape": "2x1",
       "map": [
@@ -33,6 +35,8 @@
     "cryogenic_shield": {
       "name": "Cryogenic Shield",
       "category": "monitor",
+      "color": "sky",
+      "pattern": "stripe_d_bold",
       "class": "neutral",
       "shape": "2x1",
       "map": [
@@ -63,6 +67,8 @@
     "sanctified_firewall": {
       "name": "Sanctified Firewall",
       "category": "monitor",
+      "color": "sky",
+      "pattern": "dot_large_grid",
       "class": "neutral",
       "shape": "2x2",
       "map": [
@@ -101,6 +107,8 @@
     "corrupted_kernel": {
       "name": "Corrupted Kernel",
       "category": "monitor",
+      "color": "sky",
+      "pattern": "stripe_v_bold",
       "class": "neutral",
       "shape": "2x2",
       "map": [

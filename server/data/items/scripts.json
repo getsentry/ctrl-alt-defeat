@@ -4,6 +4,8 @@
     "health_check_script": {
       "name": "Health Check Script",
       "category": "script",
+      "color": "lime",
+      "pattern": "solid",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -34,6 +36,8 @@
     "firewall_script": {
       "name": "Firewall Script",
       "category": "script",
+      "color": "lime",
+      "pattern": "stripe_d_bold",
       "class": "neutral",
       "shape": "1x1",
       "map": [
@@ -66,6 +70,8 @@
     "cache_optimizer": {
       "name": "Cache Optimizer",
       "category": "script",
+      "color": "lime",
+      "pattern": "dot_large_grid",
       "class": "neutral",
       "shape": "1x2",
       "map": [
@@ -97,6 +103,8 @@
     "load_balancer_script": {
       "name": "Load Balancer Script",
       "category": "script",
+      "color": "lime",
+      "pattern": "stripe_v_bold",
       "class": "neutral",
       "shape": "2x2",
       "map": [
@@ -127,6 +135,8 @@
     "ai_assistant_bot": {
       "name": "AI Assistant Bot",
       "category": "script",
+      "color": "lime",
+      "pattern": "check_large",
       "class": "neutral",
       "shape": "2x2",
       "map": [
@@ -160,6 +170,8 @@
     "ddos_protection_module": {
       "name": "DDoS Protection Module",
       "category": "script",
+      "color": "lime",
+      "pattern": "stripe_h_bold",
       "class": "neutral",
       "shape": "2x1",
       "map": [
@@ -192,6 +204,8 @@
     "cryogenic_cooling_system": {
       "name": "Cryogenic Cooling System",
       "category": "script",
+      "color": "lime",
+      "pattern": "hatch_diag",
       "class": "neutral",
       "shape": "3x2",
       "map": [
