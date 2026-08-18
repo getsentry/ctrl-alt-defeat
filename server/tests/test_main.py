@@ -5,6 +5,7 @@ Tests for AI opponent generation with containers
 
 from battle_engine import BattleSimulator
 from containers import Container
+from items import sale_price
 from main import generate_ai_opponent
 from tests.conftest import MULTI_SQUARE_SHOP_SEED, SHOP_SEED
 from tests.test_utils import find_bad_positions
@@ -225,24 +226,23 @@ class TestBattleAPIResponse:
 
     def test_battle_response_item_shapes(self, auth_client):
         """Test that item shapes are properly serialized"""
-        # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": None}
+            "/session/start",
+            json={"player_name": "test_player", "seed": SHOP_SEED},
         )
         data = response.json()
 
         # Purchase an item
         shop = data["session"]["current_shop"]
-        for item in shop:
-            if item:
-                auth_client.post(
-                    "/purchase/item",
-                    json={
-                        "item_id": item["id"],
-                        "target_position": [2, 3],
-                    },
-                )
-                break
+        item = next(offer for offer in shop if offer and not offer["is_container"])
+        bought = auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": item["id"],
+                "target_position": [2, 3],
+            },
+        )
+        assert bought.status_code == 200, bought.text
 
         # Battle
         response = auth_client.post(
@@ -332,24 +332,23 @@ class TestBattleAPIResponse:
 
     def test_enemy_inventory_changes_by_round(self, auth_client):
         """Test that enemy inventory is different for different rounds"""
-        # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": None}
+            "/session/start",
+            json={"player_name": "test_player", "seed": SHOP_SEED},
         )
         data = response.json()
 
         # Purchase an item
         shop = data["session"]["current_shop"]
-        for item in shop:
-            if item:
-                auth_client.post(
-                    "/purchase/item",
-                    json={
-                        "item_id": item["id"],
-                        "target_position": [2, 3],
-                    },
-                )
-                break
+        item = next(offer for offer in shop if offer and not offer["is_container"])
+        bought = auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": item["id"],
+                "target_position": [2, 3],
+            },
+        )
+        assert bought.status_code == 200, bought.text
 
         # Battle round 1
         response1 = auth_client.post(
@@ -375,9 +374,9 @@ class TestBattleAPIResponse:
 
     def test_battle_does_not_include_storage_items(self, auth_client):
         """Test that items in storage are not included in battle inventory"""
-        # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": None}
+            "/session/start",
+            json={"player_name": "test_player", "seed": SHOP_SEED},
         )
         data = response.json()
 
@@ -424,13 +423,32 @@ class TestBattleAPIResponse:
 class TestContainerPurchase:
     """A bought container keeps the shape of its type"""
 
-    # Seed 154 puts a packet_buffer, which is 1x2 rather than 2x2, in round 1.
-    NON_SQUARE_CONTAINER_SEED = 154
+    @staticmethod
+    def _seed_offering_a_non_square_container():
+        """A seed whose round one shop holds a container that is not a square.
+
+        Searched rather than written down. Which items a seed offers depends on
+        what is in the catalogue, so a seed noted here goes stale the next time
+        an item is added, and the test then fails for a reason it is not about.
+        """
+        from main import generate_shop_items
+
+        for seed in range(500):
+            for offer in generate_shop_items(1, seed):
+                if not offer or not offer.is_container:
+                    continue
+                xs = {x for x, _ in offer.shape}
+                ys = {y for _, y in offer.shape}
+                if len(offer.shape) != len(xs) * len(ys) or len(xs) != len(ys):
+                    return seed, offer.item_type
+        raise AssertionError("No seed in 500 offers a container that is not a square")
 
     def test_a_bought_container_keeps_its_own_shape(self, auth_client):
+        seed, container_type = self._seed_offering_a_non_square_container()
+
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "Tester", "seed": self.NON_SQUARE_CONTAINER_SEED},
+            json={"player_name": "Tester", "seed": seed},
         )
         assert response.status_code == 200
         data = response.json()
@@ -439,7 +457,7 @@ class TestContainerPurchase:
         container = next(
             item
             for item in shop
-            if item and item["is_container"] and item["item_type"] == "packet_buffer"
+            if item and item["is_container"] and item["item_type"] == container_type
         )
 
         response = auth_client.post(
@@ -591,7 +609,9 @@ class TestSellItemAPI:
 
         assert response.status_code == 200, response.text
         sold = response.json()
-        assert sold["gold_gained"] == item["cost"] // 2, "A sale pays half the cost"
+        assert sold["gold_gained"] == sale_price(item["cost"]), (
+            "A sale pays half the cost, rounded up"
+        )
         assert sold["gold"] == gold_after_buying + sold["gold_gained"]
         assert sold["sold_item"]["id"] == item["id"], "The sold item comes back"
 
@@ -804,17 +824,15 @@ class TestMoveItemAPI:
 
     def test_move_item_grid_to_storage(self, auth_client):
         """Test moving an item from grid to storage"""
-        # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": None}
+            "/session/start",
+            json={"player_name": "test_player", "seed": SHOP_SEED},
         )
         data = response.json()
 
         # Purchase item to grid
         shop = data["session"]["current_shop"]
-        # Not simply the first slot: a container cannot be bought into
-        # storage, and with an unseeded shop any slot may hold one.
-        item = next(item for item in shop if item and not item["is_container"])
+        item = next(offer for offer in shop if offer and not offer["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -822,6 +840,7 @@ class TestMoveItemAPI:
                 "target_position": [2, 3],
             },
         )
+        assert response.status_code == 200, response.text
         item_id = response.json()["purchased_item"]["id"]
 
         # Move to storage
@@ -843,17 +862,15 @@ class TestMoveItemAPI:
 
     def test_move_item_storage_to_grid(self, auth_client):
         """Test moving an item from storage to grid"""
-        # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": None}
+            "/session/start",
+            json={"player_name": "test_player", "seed": SHOP_SEED},
         )
         data = response.json()
 
         # Purchase item to storage
         shop = data["session"]["current_shop"]
-        # Not simply the first slot: a container cannot be bought into
-        # storage, and with an unseeded shop any slot may hold one.
-        item = next(item for item in shop if item and not item["is_container"])
+        item = next(offer for offer in shop if offer and not offer["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -862,6 +879,7 @@ class TestMoveItemAPI:
                 "to_storage": True,
             },
         )
+        assert response.status_code == 200, response.text
         item_id = response.json()["purchased_item"]["id"]
 
         # Move to grid
@@ -882,17 +900,15 @@ class TestMoveItemAPI:
 
     def test_move_item_storage_to_storage_noop(self, auth_client):
         """Test that moving from storage to storage is a no-op"""
-        # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": None}
+            "/session/start",
+            json={"player_name": "test_player", "seed": SHOP_SEED},
         )
         data = response.json()
 
         # Purchase item to storage
         shop = data["session"]["current_shop"]
-        # Not simply the first slot: a container cannot be bought into
-        # storage, and with an unseeded shop any slot may hold one.
-        item = next(item for item in shop if item and not item["is_container"])
+        item = next(offer for offer in shop if offer and not offer["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -901,6 +917,7 @@ class TestMoveItemAPI:
                 "to_storage": True,
             },
         )
+        assert response.status_code == 200, response.text
         item_id = response.json()["purchased_item"]["id"]
 
         # Try to move from storage to storage (should be no-op, not error)
