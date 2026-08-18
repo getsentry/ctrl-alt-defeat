@@ -10,8 +10,8 @@ the code and its tests.
 | 2. Which items travel | done |
 | 3. What makes a move fail | done |
 | 4. The hand, instead of the chest | to do, and not soon |
-| 5. Showing the chest | **to do — blocks the rest** |
-| 6. Dragging a container in the client | **to do** |
+| 5. Showing the chest | done |
+| 6. Dragging a container in the client | done |
 | 7. Rotation | to do, and not soon |
 
 A container can be placed when it is bought and never moved again. That makes
@@ -117,7 +117,7 @@ broke the pattern for something the client can already work out.
 
 ---
 
-## 5. The chest has to be visible first — *to do, and it blocks 6*
+## 5. The chest has to be visible first — *done*
 
 **Storage is not drawn.** `unified_grid_ui.gd` builds `storage_grid`, styles it
 and marks its cells usable, and nothing ever puts an item in it.
@@ -139,16 +139,25 @@ Two halves, and only the first is needed here:
 
 ---
 
-## 6. Dragging a container — *to do*
+## 6. Dragging a container — *done*
 
-Nothing in the client can move a container yet. `_add_container` connects no
-`gui_input`, so a container takes no clicks, and nothing sends the move.
+A container is dragged the way an item is, with three differences.
 
-The drag itself is the same shape as an item's: `_start_drag`, follow the
-mouse in `_process`, `_end_drag` sends `/move/item`. What is different is that
-the item visuals standing on the container have to travel with it while it is
-being dragged, and the response can send an item to the chest, so the grid has
-to be redrawn from what comes back rather than assuming the drop succeeded.
+**It needs free squares, not usable ones.** An item asks whether a container
+has made a square usable; a container asks whether a square is empty. The two
+ask opposite questions of the same board, which is why `can_place_container`
+exists beside `_can_place_item`.
+
+**Its items travel with it on screen.** `_start_container_drag` collects every
+item visual with a square on the container — the same rule the server uses —
+and moves them with it.
+
+**The board is redrawn from the answer, not from the drop.** The response
+carries the grid, the chest and the containers, because the move can set an
+item down in the chest. Assuming the drop succeeded would lose that.
+
+`drop_container_at` takes the pointer rather than reading it, so where a
+container lands can be tested without a mouse.
 
 ---
 
@@ -183,8 +192,14 @@ Done:
   on becomes usable.
 - A travelling item is not left behind on the square it came from.
 
+- The chest shows what the server says is in it. *(done)*
+- A container can be dragged, and its items move with it on screen. *(done)*
+- A container needs free squares, not squares another container has made
+  usable, and is no obstacle to itself. *(done)*
+- A container dropped where it cannot stand goes back, and so does everything
+  standing on it. *(done)*
+
 To do:
 
-- The chest shows what the server says is in it, including an item that a
-  container move has just set down there.
-- A container can be dragged, and its items move with it on screen.
+- Section 4, the displaced item going to the hand rather than the chest.
+- Section 7, rotation.

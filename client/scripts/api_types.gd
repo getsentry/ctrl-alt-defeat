@@ -341,9 +341,23 @@ class SellResponse extends Resource:
 class MoveItemResponse extends Resource:
 	var inventory_grid: Array[PlacedItem] = []
 	var inventory_storage: Array[Item] = []
+	# Moving a container moves the containers, so the whole board comes back.
+	var server_containers: Array[PlacedItem] = []
 
 	func _init(data: Dictionary):
 		for item_data in data["inventory_grid"]:
 			inventory_grid.append(PlacedItem.new(item_data))
 		for item_data in data["inventory_storage"]:
 			inventory_storage.append(Item.new(item_data))
+		for container_data in data["server_containers"]:
+			server_containers.append(PlacedItem.new(container_data))
+
+	# The board as the grid loads it.
+	func as_inventory_state() -> InventoryState:
+		var items := []
+		for item in inventory_grid:
+			items.append(item.to_dict())
+		var servers := []
+		for container in server_containers:
+			servers.append(container.to_dict())
+		return InventoryState.new({"items": items, "servers": servers})

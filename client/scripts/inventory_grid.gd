@@ -61,6 +61,11 @@ var saves_positions: bool = true
 
 # Drag and drop state
 var dragging_object = null
+# A container being dragged, and the items riding on it. They travel together,
+# because that is what the move does.
+var dragging_container: PlacedContainer = null
+var container_riders: Array[Control] = []
+var rider_offsets: Array[Vector2] = []
 var drag_offset = Vector2.ZERO
 var original_position = Vector2.ZERO
 var original_grid_pos = Vector2i(-1, -1)
@@ -79,6 +84,10 @@ signal item_stored(item_data)
 # Dragged out of the chest and dropped on the main grid. Carries where it was
 # dropped, because the chest cannot work out a square on someone else's grid.
 signal item_unstored(item_data, global_pos)
+# A container has been dropped somewhere it can stand. Whoever owns the grid
+# asks the server, because what comes back is the whole board: the container
+# carries its items, and any it cannot carry are set down in the chest.
+signal container_dropped(container_data, grid_pos)
 # The server answers a move with the whole inventory, the chest included. The
 # grid draws only the grid, so it passes the rest on rather than keeping it.
 signal inventory_returned(response)
@@ -259,7 +268,11 @@ func _add_container(container: APITypes.PlacedItem):
 				cell.add_theme_stylebox_override("panel", style)
 
 	add_child(container_visual)
-	containers.append(PlacedContainer.new(container, container_visual))
+	var placed = PlacedContainer.new(container, container_visual)
+	containers.append(placed)
+
+	if not read_only:
+		container_visual.gui_input.connect(_on_container_input.bind(placed))
 
 func _add_item(item: APITypes.PlacedItem):
 	"""Add an item to the grid"""
@@ -296,6 +309,116 @@ func _add_item(item: APITypes.PlacedItem):
 
 	add_child(item_visual)
 	items.append(item_visual)
+
+func _on_container_input(event: InputEvent, placed: PlacedContainer):
+	"""Handle input on containers for dragging"""
+	if read_only:
+		return
+
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_start_container_drag(placed)
+		else:
+			_end_container_drag()
+
+
+func can_place_container(container, grid_pos: Vector2i) -> bool:
+	"""Whether a container may stand with its anchor on this square.
+
+	A container needs squares that are free, where an item needs squares that a
+	container has made usable. That is why this is not _can_place_item: the two
+	ask opposite questions of the same board.
+	"""
+	if grid_pos.x < 0 or grid_pos.y < 0:
+		return false
+
+	var taken := {}
+	for placed in containers:
+		if placed.container.id == container.id:
+			continue  # It is no obstacle to itself.
+		for square in placed.container.covered_squares():
+			taken[square] = true
+
+	for offset in container.shape:
+		if not (offset is Array and offset.size() >= 2):
+			continue
+		var square := Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1]))
+		if square.x < 0 or square.x >= grid_width:
+			return false
+		if square.y < 0 or square.y >= grid_height:
+			return false
+		if taken.has(square):
+			return false
+	return true
+
+
+func _start_container_drag(placed: PlacedContainer) -> void:
+	"""Pick a container up, and everything standing on it with it"""
+	if read_only or dragging_object:
+		return
+
+	dragging_container = placed
+	original_grid_pos = placed.position()
+	drag_offset = placed.visual.position - get_local_mouse_position()
+	move_child(placed.visual, get_child_count() - 1)
+	placed.visual.z_index = 10
+
+	# Whatever has a square on it travels with it, which is the same rule the
+	# server uses when it works out what the move carries.
+	var covered := {}
+	for square in placed.container.covered_squares():
+		covered[square] = true
+
+	container_riders = []
+	rider_offsets = []
+	for item_visual in items:
+		for square in item_visual.get_meta("item_data").covered_squares():
+			if covered.has(square):
+				container_riders.append(item_visual)
+				rider_offsets.append(item_visual.position - placed.visual.position)
+				move_child(item_visual, get_child_count() - 1)
+				item_visual.z_index = 11
+				break
+
+
+func _end_container_drag() -> void:
+	"""Put a dragged container down where the pointer is"""
+	drop_container_at(get_global_mouse_position())
+
+
+func drop_container_at(pointer: Vector2) -> void:
+	"""Put a dragged container down at this place.
+
+	Takes the pointer rather than reading it, so where a container lands can be
+	asked about without a mouse.
+	"""
+	if not dragging_container:
+		return
+
+	var placed := dragging_container
+	dragging_container = null
+	hide_hover_preview()
+	placed.visual.z_index = 0
+	for rider in container_riders:
+		rider.z_index = 0
+
+	var grid_pos := pixel_to_grid(get_global_transform().affine_inverse() * pointer)
+	if grid_pos != original_grid_pos and can_place_container(placed.container, grid_pos):
+		container_dropped.emit(placed.container, grid_pos)
+		return
+
+	# Nowhere it can stand, so it and its passengers go back where they were.
+	_return_container(placed)
+
+
+func _return_container(placed: PlacedContainer) -> void:
+	"""Put a container and its passengers back where they were picked up"""
+	placed.visual.position = grid_to_pixel(original_grid_pos)
+	for i in container_riders.size():
+		container_riders[i].position = placed.visual.position + rider_offsets[i]
+	container_riders = []
+	rider_offsets = []
+
 
 func _on_item_input(event: InputEvent, item_visual: Control):
 	"""Handle input on items for dragging"""
@@ -538,6 +661,14 @@ func _remove_item(item_visual: Control):
 
 func _process(_delta):
 	"""Update dragging and hover preview"""
+	if dragging_container:
+		var visual = dragging_container.visual
+		visual.position = get_local_mouse_position() + drag_offset
+		for i in container_riders.size():
+			container_riders[i].position = visual.position + rider_offsets[i]
+		update_container_preview(get_global_mouse_position())
+		return
+
 	if dragging_object:
 		# Update position smoothly
 		var target_pos = get_local_mouse_position() + drag_offset
@@ -549,6 +680,35 @@ func _process(_delta):
 
 		update_drag_preview(get_global_mouse_position())
 		return
+
+
+func update_container_preview(pointer: Vector2) -> void:
+	"""Mark where a held container would stand, for a pointer at this place"""
+	if not dragging_container or not hover_preview or not is_instance_valid(hover_preview):
+		return
+
+	var container = dragging_container.container
+	var grid_pos := pixel_to_grid(get_global_transform().affine_inverse() * pointer)
+	if not can_place_container(container, grid_pos):
+		hover_preview.visible = false
+		return
+
+	var max_x := 0
+	var max_y := 0
+	for offset in container.shape:
+		if offset is Array and offset.size() >= 2:
+			max_x = max(max_x, int(offset[0]))
+			max_y = max(max_y, int(offset[1]))
+
+	hover_preview.visible = true
+	hover_preview.position = grid_to_pixel(grid_pos)
+	hover_preview.size = Vector2(
+		(max_x + 1) * (cell_size + cell_spacing) - cell_spacing,
+		(max_y + 1) * (cell_size + cell_spacing) - cell_spacing
+	)
+	var style = hover_preview.get_theme_stylebox("panel")
+	style.bg_color = Color(0.3, 1.0, 0.3, 0.3)
+	style.border_color = Color(0.5, 1.0, 0.5, 0.8)
 
 
 func update_drag_preview(pointer: Vector2) -> void:

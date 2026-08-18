@@ -115,6 +115,31 @@ func _on_chest_item_sold(item_data: APITypes.Item):
 	print("Sold %s out of the chest for %d gold" % [item_data.name, response.gold_gained])
 
 
+func _on_container_dropped(container_data: APITypes.PlacedItem, grid_pos: Vector2i):
+	"""Called when a container is dropped somewhere it can stand"""
+	var response = await BattleServerAPI.move_item(
+		container_data.id, [grid_pos.x, grid_pos.y])
+	if response == null:
+		print("The server refused to move the container")
+		_reload_board()
+		return
+
+	# The whole board comes back, and it has to: the container carries its
+	# items, and any it could not carry have been set down in the chest.
+	GameStateManager.inventory_storage = response.inventory_storage
+	inventory_grid.load_inventory_state(response.as_inventory_state())
+	load_storage()
+	_save_current_state()
+	print("Moved %s to %s" % [container_data.name, grid_pos])
+
+
+func _reload_board():
+	"""Draw the grid again from what is held, after something came to nothing"""
+	inventory_grid.load_inventory_state(
+		APITypes.InventoryState.new(GameStateManager.get_inventory_state()))
+	load_storage()
+
+
 func _on_inventory_returned(response: APITypes.MoveItemResponse):
 	"""The server has answered a move with the whole inventory.
 
@@ -349,6 +374,7 @@ func _create_server_room():
 	inventory_grid.item_sold.connect(_on_item_sold)
 	inventory_grid.inventory_returned.connect(_on_inventory_returned)
 	inventory_grid.item_stored.connect(_on_item_stored)
+	inventory_grid.container_dropped.connect(_on_container_dropped)
 	inventory_grid.item_moved.connect(_on_item_moved)
 	inventory_grid.drag_started.connect(_on_drag_started)
 	inventory_grid.drag_ended.connect(_on_drag_ended)

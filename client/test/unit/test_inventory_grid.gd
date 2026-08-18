@@ -511,3 +511,113 @@ func test_letting_go_clears_the_other_grid():
 	await get_tree().process_frame
 
 	assert_false(other.hover_preview.visible, "No mark should be left behind")
+
+
+# ============ Moving a container ============
+#
+# A container needs squares that are free, where an item needs squares a
+# container has made usable. The two ask opposite questions of the same board,
+# which is why a container has a check of its own.
+
+func test_a_container_may_stand_on_empty_floor():
+	_load_default_containers()
+	var moving = grid.containers[0].container
+
+	assert_true(grid.can_place_container(moving, Vector2i(0, 0)),
+		"Bare floor is exactly where a container goes")
+
+
+func test_a_container_may_not_stand_on_another():
+	_load_default_containers()
+	var moving = grid.containers[0].container
+
+	assert_false(grid.can_place_container(moving, Vector2i(4, 3)),
+		"Container B is already there")
+
+
+func test_a_container_is_no_obstacle_to_itself():
+	# Its own squares must not count against it, or it could never stay put
+	# nor shuffle by one.
+	_load_default_containers()
+	var moving = grid.containers[0].container
+
+	assert_true(grid.can_place_container(moving, Vector2i(2, 3)),
+		"Where it already stands is somewhere it can stand")
+
+	# A shifts onto B if it moves right, so the one-square shift is C's, which
+	# has nothing to its right but the edge.
+	var rightmost = grid.containers[2].container
+	assert_true(grid.can_place_container(rightmost, Vector2i(7, 3)),
+		"It can shift by one onto squares that are its own")
+
+
+func test_a_container_may_not_hang_off_the_grid():
+	_load_default_containers()
+	var moving = grid.containers[0].container
+
+	assert_false(grid.can_place_container(moving, Vector2i(8, 3)),
+		"A 2x2 at the last column would hang off the right")
+	assert_false(grid.can_place_container(moving, Vector2i(2, 6)),
+		"and at the last row it would hang off the bottom")
+
+
+func test_picking_a_container_up_takes_its_items_with_it():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "riding"}), Vector2i(2, 3))
+	grid.place_shop_item(_item({"id": "elsewhere"}), Vector2i(4, 3))
+
+	grid._start_container_drag(grid.containers[0])
+
+	var riding = grid.container_riders.map(func(v): return v.get_meta("item_data").id)
+	assert_eq(riding, ["riding"], "Only what stands on it comes with it")
+
+
+func test_dropping_a_container_somewhere_it_fits_asks_for_the_move():
+	_load_default_containers()
+	watch_signals(grid)
+
+	grid._start_container_drag(grid.containers[0])
+	grid.drop_container_at(grid.global_position + grid.grid_to_pixel(Vector2i(0, 0)))
+	await get_tree().process_frame
+
+	assert_signal_emitted_with_parameters(grid, "container_dropped",
+		[grid.containers[0].container, Vector2i(0, 0)],
+		"It should ask for the square it was dropped on")
+
+
+func test_dropping_a_container_back_where_it_started_asks_for_nothing():
+	_load_default_containers()
+	watch_signals(grid)
+
+	grid._start_container_drag(grid.containers[0])
+	grid.drop_container_at(grid.global_position + grid.grid_to_pixel(Vector2i(2, 3)))
+	await get_tree().process_frame
+
+	assert_signal_not_emitted(grid, "container_dropped",
+		"A container put back where it was has not moved")
+
+
+func test_a_container_dropped_where_it_cannot_stand_goes_back():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "riding"}), Vector2i(2, 3))
+	var placed = grid.containers[0]
+	var was_at = placed.visual.position
+	var rider_was_at = grid.items[0].position
+
+	grid._start_container_drag(placed)
+	placed.visual.position = Vector2(-500, -500)  # dragged off the board
+	grid.drop_container_at(grid.global_position + Vector2(-500, -500))
+	await get_tree().process_frame
+
+	assert_eq(placed.visual.position, was_at, "The container goes back")
+	assert_eq(grid.items[0].position, rider_was_at, "and so does what stood on it")
+
+
+func test_a_read_only_grid_does_not_pick_containers_up():
+	# The battle screens show a board that cannot be rearranged.
+	grid.read_only = true
+	grid.load_inventory_state(_state([], [_container({"position": [2, 3]})]))
+
+	grid._start_container_drag(grid.containers[0])
+
+	assert_null(grid.dragging_container, "A read-only board holds still")
