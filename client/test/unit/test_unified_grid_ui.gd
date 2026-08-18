@@ -766,3 +766,81 @@ func test_letting_go_clears_the_mark():
 	await get_tree().process_frame
 
 	assert_false(grid.hover_preview.visible, "No mark should be left behind")
+
+
+# ============ Turning what is held ============
+#
+# An item is held either because it is being dragged or because a container
+# move set it down and it was picked up. Both are holding it, so both turn, and
+# one action reaches both.
+
+func test_turning_what_is_in_hand():
+	GameStateManager.inventory_storage = [
+		TestHelpers.item({"id": "held", "shape": [[0, 0], [1, 0]]})
+	]
+	ui.hold(GameStateManager.inventory_storage[0])
+
+	ui.turn(1)
+
+	assert_eq(ui.held_item.facing(), 90, "A quarter turn clockwise")
+	var across = ui.held_item.turned_shape().map(func(o): return o[0])
+	assert_eq(across, [0, 0], "and it now stands on end")
+
+
+func test_turning_what_is_in_hand_the_other_way():
+	GameStateManager.inventory_storage = [
+		TestHelpers.item({"id": "held", "shape": [[0, 0], [1, 0]]})
+	]
+	ui.hold(GameStateManager.inventory_storage[0])
+
+	ui.turn(-1)
+
+	assert_eq(ui.held_item.facing(), 270, "Anticlockwise")
+
+
+func test_turning_reaches_an_item_being_dragged_on_the_grid():
+	# Nothing is in hand, so the turn has to find the drag instead.
+	GameStateManager.save_inventory_state([], [
+		TestHelpers.container_data({"id": "container_a", "position": [2, 3]})
+	])
+	ui.inventory_grid.load_inventory_state(APITypes.InventoryState.new(
+		GameStateManager.get_inventory_state()))
+	ui.inventory_grid.place_shop_item(
+		TestHelpers.item({"id": "dragged", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+	ui.inventory_grid._start_drag(ui.inventory_grid.items[0])
+
+	ui.turn(1)
+
+	assert_eq(ui.inventory_grid.items[0].get_meta("item_data").facing(), 90,
+		"The dragged item turned, though nothing was in hand")
+
+
+func test_turning_with_nothing_held_does_nothing():
+	ui.turn(1)
+	assert_null(ui.held_item, "Nothing to turn, and nothing goes wrong")
+
+
+func test_turning_reaches_an_item_carried_out_of_the_shop():
+	# This is the one most worth turning: it is when the player is deciding
+	# where on the board a new item goes. It is also a different drag from the
+	# grid's, so it has to be reached separately.
+	ui.dragging_shop_data = TestHelpers.item(
+		{"id": "buying", "shape": [[0, 0], [1, 0]]})
+
+	ui.turn(1)
+
+	assert_eq(ui.dragging_shop_data.facing(), 90, "A quarter turn clockwise")
+	var across = ui.dragging_shop_data.turned_shape().map(func(o): return o[0])
+	assert_eq(across, [0, 0], "and it now stands on end")
+
+
+func test_a_shop_item_turned_and_bought_is_bought_turned():
+	# The client used to place it turned and buy it flat, so the board the
+	# player saw and the board the server kept were different, and the server
+	# won at battle time.
+	ui.dragging_shop_data = TestHelpers.item(
+		{"id": "buying", "shape": [[0, 0], [1, 0]]})
+	ui.turn(1)
+
+	assert_eq(ui.dragging_shop_data.facing(), 90,
+		"The facing the purchase carries is the one the player chose")

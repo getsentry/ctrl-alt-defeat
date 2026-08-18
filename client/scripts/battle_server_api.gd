@@ -219,7 +219,9 @@ func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 	push_error("Shop refresh failed with code: " + str(last_response_code))
 	return null
 
-func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
+func purchase_item(
+	item_id: String, placement: Variant, facing: int = 0
+) -> APITypes.PurchaseResponse:
 	# Purchase item on real server
 	if player_id == "":
 		push_error("Cannot purchase item - no session started")
@@ -232,7 +234,11 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 	]
 
 	var body_dict = {
-		"item_id": item_id
+		"item_id": item_id,
+		# An item can be turned while it is carried out of the shop, and the
+		# purchase is when that is settled. Sent every time, so what the server
+		# stores is what the player saw themselves put down.
+		"rotation": facing
 	}
 
 	# Server expects target_position field for grid placement
@@ -240,7 +246,7 @@ func purchase_item(item_id: String, placement) -> APITypes.PurchaseResponse:
 		body_dict["target_position"] = placement
 
 	var body = JSON.stringify(body_dict)
-	print("DEBUG: Purchasing item %s at position %s" % [item_id, placement])
+	print("DEBUG: Purchasing item %s at %s facing %d" % [item_id, placement, facing])
 	http_request.request(url, headers, HTTPClient.METHOD_POST, body)
 	var result = await http_request.request_completed
 
@@ -303,7 +309,12 @@ func sell_item(item_id: String) -> APITypes.SellResponse:
 	error_occurred.emit(error_msg)
 	return null
 
-func move_item(item_id: String, to_location) -> APITypes.MoveItemResponse:
+# to_location is a square as [x, y], or the word "storage". GDScript cannot
+# say "one of these two", so it is Variant. Splitting it into two calls would
+# type it properly; see docs/BACKLOG.md.
+func move_item(
+	item_id: String, to_location: Variant, facing: int = 0
+) -> APITypes.MoveItemResponse:
 	# Move item to new position on real server
 	if player_id == "":
 		push_error("Cannot move item - no session started")
@@ -317,7 +328,10 @@ func move_item(item_id: String, to_location) -> APITypes.MoveItemResponse:
 
 	var body_dict = {
 		"item_id": item_id,
-		"to_location": to_location  # Either "storage" or [x, y]
+		"to_location": to_location,  # Either "storage" or [x, y]
+		# An item can be turned while it is held, and the move is when that is
+		# settled. Sent every time, so a move never straightens an item out.
+		"rotation": facing
 	}
 
 	var body = JSON.stringify(body_dict)

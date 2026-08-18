@@ -390,3 +390,105 @@ func test_sale_fields_survive_a_round_trip():
 	assert_true(reloaded.on_sale)
 
 
+
+
+# ============ Turning a shape ============
+#
+# The server turns shapes the same way. If the two ever disagree, an item draws
+# on squares the server has it standing somewhere else, which is the kind of
+# thing that only shows up as an item that cannot be placed where it looks like
+# it should fit.
+
+func test_a_shape_turned_none_is_unchanged():
+	var wide = [[0, 0], [1, 0]]
+	assert_eq(APITypes.turn(wide, 0), wide, "No turn, no change")
+
+
+func test_a_quarter_turn_stands_a_wide_shape_on_end():
+	# Two across becomes two down.
+	assert_eq(_sorted(APITypes.turn([[0, 0], [1, 0]], 90)), [[0, 0], [0, 1]],
+		"A two-wide item turned clockwise is two tall")
+
+
+func test_a_quarter_turn_lays_a_tall_shape_flat():
+	assert_eq(_sorted(APITypes.turn([[0, 0], [0, 1]], 90)), [[0, 0], [1, 0]],
+		"A two-tall item turned clockwise is two wide")
+
+
+func test_a_half_turn_of_a_wide_shape_is_still_wide():
+	var turned = APITypes.turn([[0, 0], [1, 0]], 180)
+	assert_eq(turned.size(), 2, "It still covers two squares")
+	var xs = turned.map(func(o): return o[0])
+	assert_true(0 in xs and 1 in xs, "and still lies across")
+
+
+func test_four_quarter_turns_come_back_to_the_start():
+	var shape = [[0, 0], [1, 0], [0, 1]]
+	var once = APITypes.turn(shape, 90)
+	var twice = APITypes.turn(once, 90)
+	var thrice = APITypes.turn(twice, 90)
+	var round_trip = APITypes.turn(thrice, 90)
+
+	assert_eq(_sorted(round_trip), _sorted(shape), "Back where it started")
+
+
+func test_a_turn_never_moves_the_item_off_its_corner():
+	# A turn changes the squares an item covers, not where it stands, so the
+	# offsets always start at the origin.
+	for rotation in [90, 180, 270]:
+		var turned = APITypes.turn([[0, 0], [1, 0], [2, 0]], rotation)
+		var least_x = turned.map(func(o): return o[0]).min()
+		var least_y = turned.map(func(o): return o[1]).min()
+		assert_eq([least_x, least_y], [0, 0],
+			"Turned by %d it should still sit on its corner" % rotation)
+
+
+func test_an_L_keeps_its_three_squares_however_it_is_turned():
+	for rotation in [0, 90, 180, 270]:
+		assert_eq(APITypes.turn([[0, 0], [0, 1], [1, 1]], rotation).size(), 3,
+			"Turning changes the shape, never how much of it there is")
+
+
+func test_a_turned_item_covers_turned_squares():
+	var item = APITypes.PlacedItem.new(
+		_item({"shape": [[0, 0], [1, 0]], "position": [4, 3], "rotation": 90}))
+
+	assert_eq(_sorted_squares(item.covered_squares()),
+		[Vector2i(4, 3), Vector2i(4, 4)],
+		"Standing on end at (4,3), it covers the square below as well")
+
+
+func test_an_unturned_item_covers_the_squares_it_always_did():
+	var item = APITypes.PlacedItem.new(
+		_item({"shape": [[0, 0], [1, 0]], "position": [4, 3], "rotation": 0}))
+
+	assert_eq(_sorted_squares(item.covered_squares()),
+		[Vector2i(4, 3), Vector2i(5, 3)],
+		"Lying flat, it covers the square to its right")
+
+
+func test_moving_a_turned_item_keeps_it_turned():
+	# placed_at used to set the rotation to zero, so every move straightened
+	# the item out without asking.
+	var item = APITypes.PlacedItem.new(
+		_item({"shape": [[0, 0], [1, 0]], "position": [4, 3], "rotation": 90}))
+
+	var moved = item.placed_at(Vector2i(2, 3))
+
+	assert_eq(moved.rotation, 90, "It should still be facing the way it was")
+	assert_eq(_sorted_squares(moved.covered_squares()),
+		[Vector2i(2, 3), Vector2i(2, 4)],
+		"and still cover the squares that go with facing that way")
+
+
+# The offsets an item covers are a set, so order is never the point.
+func _sorted(offsets: Array) -> Array:
+	var copy = offsets.duplicate()
+	copy.sort_custom(func(a, b): return [a[0], a[1]] < [b[0], b[1]])
+	return copy
+
+
+func _sorted_squares(squares: Array) -> Array:
+	var copy = squares.duplicate()
+	copy.sort_custom(func(a, b): return [a.x, a.y] < [b.x, b.y])
+	return copy

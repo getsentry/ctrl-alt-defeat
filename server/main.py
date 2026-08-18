@@ -27,6 +27,7 @@ from containers import Container, starting_containers
 
 # Import session management and schemas
 from database import db_manager
+from grid_system import Rotation
 from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
 from items import SALE_CHANCE, Item, PlacedItem
 from matchmaking import MatchmakingService
@@ -952,6 +953,7 @@ def place_item_in_inventory(
     manager: InventoryManager,
     item: Item,
     to_location: Union[str, Position],
+    rotation: Rotation = Rotation.NONE,
 ) -> None:
     """
     Shared logic for placing an item in inventory (grid or chest)
@@ -960,6 +962,9 @@ def place_item_in_inventory(
         manager: InventoryManager instance
         item: The item to place
         to_location: Either "storage" or an (x, y) position
+        rotation: Which way it faces when it lands. An item can be turned
+            while it is being carried out of the shop, and the purchase is
+            when that is settled.
 
     Raises:
         HTTPException: If placement fails with appropriate error message
@@ -973,7 +978,7 @@ def place_item_in_inventory(
             )
     else:
         # Place on grid
-        success = manager.place_item(item, placement=to_location)
+        success = manager.place_item(item, placement=to_location, rotation=rotation)
         if not success:
             # Work out which of the two reasons it was
             placed = item.placed_at(to_location)
@@ -1099,7 +1104,7 @@ async def purchase_item(
         )
 
     # Use shared placement logic
-    place_item_in_inventory(manager, item, to_location)
+    place_item_in_inventory(manager, item, to_location, request.rotation)
 
     # Update session with new inventory state
     new_state = manager.get_state()
@@ -1266,7 +1271,10 @@ async def move_item(
     # Attempt the move using InventoryManager
     try:
         manager.move_item(
-            item_id=request.item_id, from_location=current_location, to_location=to_loc
+            item_id=request.item_id,
+            from_location=current_location,
+            to_location=to_loc,
+            rotation=request.rotation,
         )
     except ItemNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))

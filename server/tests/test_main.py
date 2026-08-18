@@ -637,6 +637,137 @@ class TestSellItemAPI:
             assert "item_uid" not in model.model_fields, model.__name__
 
 
+class TestATurnIsKept:
+    """An item can be turned while it is held, and that has to stick.
+
+    The client draws the board it thinks it placed; the server keeps the board
+    the battle is fought on. If a turn reaches one and not the other, the
+    player sets up one board and fights with another.
+    """
+
+    def _wide_item(self, session):
+        """The offer in this shop that is two squares across"""
+        for item in session["current_shop"]:
+            if item and sorted(map(tuple, item["shape"])) == [(0, 0), (1, 0)]:
+                return item
+        raise AssertionError("This seed offers nothing two squares across")
+
+    def _start(self, auth_client):
+        response = auth_client.post(
+            "/session/start",
+            json={"player_name": "turner", "seed": MULTI_SQUARE_SHOP_SEED},
+        )
+        assert response.status_code == 200
+        return response.json()["session"]
+
+    def _on_the_board(self, auth_client, item_id):
+        """How the board says an item is standing, which is what the battle
+        will be fought with. The purchase answers with what was bought, not
+        with what was placed, so this asks the board itself."""
+        board = auth_client.get("/session").json()
+        return next(i for i in board["inventory_grid"] if i["id"] == item_id)
+
+    def test_an_item_is_bought_facing_the_way_it_was_turned(self, auth_client):
+        session = self._start(auth_client)
+        offer = self._wide_item(session)
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": offer["id"],
+                "target_position": [2, 3],
+                "rotation": 90,
+            },
+        )
+        assert response.status_code == 200, response.json()
+
+        assert self._on_the_board(auth_client, offer["id"])["rotation"] == 90, (
+            "Bought turned, it has to be stored turned, or the player placed "
+            "one thing and the server kept another"
+        )
+
+    def test_an_item_bought_flat_stays_flat(self, auth_client):
+        session = self._start(auth_client)
+        offer = self._wide_item(session)
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={"item_id": offer["id"], "target_position": [2, 3]},
+        )
+        assert response.status_code == 200, response.json()
+
+        assert self._on_the_board(auth_client, offer["id"])["rotation"] == 0
+
+    def test_a_turn_only_fits_where_a_turn_fits(self, auth_client):
+        """The containers end at x 7, so a two-wide item hangs off the last
+        column lying flat and fits stood on end. That is what turning is for."""
+        session = self._start(auth_client)
+        offer = self._wide_item(session)
+
+        flat = auth_client.post(
+            "/purchase/item",
+            json={"item_id": offer["id"], "target_position": [7, 3]},
+        )
+        assert flat.status_code == 400, "Lying flat it runs off the containers"
+
+        turned = auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": offer["id"],
+                "target_position": [7, 3],
+                "rotation": 90,
+            },
+        )
+        assert turned.status_code == 200, turned.json()
+
+    def test_a_turn_reaches_the_battle(self, auth_client):
+        # The board the battle is fought on is the server's, so a turn that
+        # does not reach it is a turn the player loses when the fighting starts.
+        session = self._start(auth_client)
+        offer = self._wide_item(session)
+        auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": offer["id"],
+                "target_position": [2, 3],
+                "rotation": 90,
+            },
+        )
+
+        response = auth_client.post("/battle/simulate", json={})
+
+        assert response.status_code == 200, response.json()
+        items = response.json()["battle_result"]["player_inventory"]["items"]
+        assert [i["rotation"] for i in items] == [90], (
+            "The battle should be fought with the item facing the way the "
+            "player left it"
+        )
+
+    def test_a_move_that_is_only_a_move_leaves_the_turn_alone(self, auth_client):
+        session = self._start(auth_client)
+        offer = self._wide_item(session)
+        bought = auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": offer["id"],
+                "target_position": [2, 3],
+                "rotation": 90,
+            },
+        )
+        item_id = bought.json()["purchased_item"]["id"]
+
+        response = auth_client.post(
+            "/move/item", json={"item_id": item_id, "to_location": [4, 3]}
+        )
+
+        assert response.status_code == 200, response.json()
+        moved = next(i for i in response.json()["inventory_grid"] if i["id"] == item_id)
+        assert moved["rotation"] == 0, (
+            "A move says which way the item faces when it lands, and this one "
+            "said square on"
+        )
+
+
 class TestMoveContainerAPI:
     """A container moves through /move/item, because it is an item.
 

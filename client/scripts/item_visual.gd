@@ -27,7 +27,8 @@ func setup(data, size: float = 45.0, spacing: float = 1.0):
 	item_data = data
 	cell_size = size
 	cell_spacing = spacing
-	item_shape = data.shape
+	# Turned, if it is facing anywhere but its default.
+	item_shape = data.turned_shape()
 
 	_create_visual()
 
@@ -73,11 +74,15 @@ func _create_visual():
 	else:
 		_create_colored_visual()
 
-	# Set up input handling for tooltip
+	# Set up input handling for tooltip. Drawn again whenever the item changes
+	# -- turning one is a redraw -- so the connection is made once and not once
+	# per redraw.
 	if enable_tooltip:
 		mouse_filter = Control.MOUSE_FILTER_PASS
-		mouse_entered.connect(_on_mouse_entered)
-		mouse_exited.connect(_on_mouse_exited)
+		if not mouse_entered.is_connected(_on_mouse_entered):
+			mouse_entered.connect(_on_mouse_entered)
+		if not mouse_exited.is_connected(_on_mouse_exited):
+			mouse_exited.connect(_on_mouse_exited)
 
 func _get_texture_path() -> String:
 	"""Get the texture path for this item based on slug"""

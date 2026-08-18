@@ -175,3 +175,19 @@ func test_leaving_the_tree_takes_the_tooltip_with_it():
 
 	assert_null(visual.tooltip_panel, "The item should drop its tooltip when it leaves the tree")
 	assert_false(is_instance_valid(panel), "The tooltip panel should be freed")
+
+
+func test_drawing_an_item_again_does_not_connect_its_tooltip_twice():
+	# An item is drawn again whenever it changes, and turning one is a redraw.
+	# Connecting on each of those raises an error every time.
+	visual = ItemVisual.new()
+	visual.enable_tooltip = true
+	add_child(visual)
+
+	visual.setup(_item(), 45.0, 1.0)
+	visual.setup(_item(), 45.0, 1.0)
+
+	assert_eq(visual.mouse_entered.get_connections().size(), 1,
+		"Drawn twice, connected once")
+	assert_eq(visual.mouse_exited.get_connections().size(), 1,
+		"and the same going out")

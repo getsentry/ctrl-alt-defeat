@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 
 from containers import Container
+from grid_system import Rotation
 from items import Item, PlacedItem
 from utils import Position
 
@@ -58,7 +59,11 @@ class PurchaseRequest(BaseModel):
     item_id: str
     target_position: Optional[Position] = None  # [x, y] position on grid
     to_storage: bool = False  # Place in storage instead of grid
-
+    rotation: Rotation = Field(
+        default=Rotation.NONE,
+        description="Which way the item faces when it lands. An item can be "
+        "turned while it is being carried out of the shop.",
+    )
 
 class SellRequest(BaseModel):
     """Request to sell an item"""
@@ -71,6 +76,11 @@ class MoveItemRequest(BaseModel):
 
     item_id: str  # Unique instance ID of the item to move
     to_location: Union[str, Position]  # "storage" or [x, y] coordinates
+    rotation: Rotation = Field(
+        default=Rotation.NONE,
+        description="Which way the item faces when it lands. An item may be "
+        "turned while it is held, and a move is when that is settled.",
+    )
 
 
 # ============ Response Models ============

@@ -1,6 +1,51 @@
 extends Resource
 class_name APITypes
 
+# The squares a shape covers once it has been turned, as [x, y] offsets.
+#
+# A quarter turn clockwise sends (x, y) to (y, -x), and the result is pushed
+# back so that its corner sits at the origin: turning an item changes the
+# squares it covers, not where it is. The server turns shapes the same way, and
+# the two have to agree or an item draws on squares the server has it standing
+# somewhere else.
+static func turn(shape: Array, rotation: int) -> Array:
+	if rotation == 0 or shape.is_empty():
+		return shape.duplicate()
+
+	var turned := []
+	for offset in shape:
+		if not (offset is Array and offset.size() >= 2):
+			continue
+		var x := int(offset[0])
+		var y := int(offset[1])
+		match rotation:
+			90:
+				turned.append([y, -x])
+			180:
+				turned.append([-x, -y])
+			270:
+				turned.append([-y, x])
+			_:
+				turned.append([x, y])
+
+	var least_x: int = turned[0][0]
+	var least_y: int = turned[0][1]
+	for offset in turned:
+		least_x = mini(least_x, offset[0])
+		least_y = mini(least_y, offset[1])
+
+	var settled := []
+	for offset in turned:
+		settled.append([offset[0] - least_x, offset[1] - least_y])
+	return settled
+
+
+# Where an item faces after being turned this many quarters, clockwise for a
+# positive number and the other way for a negative one.
+static func turned_by(rotation: int, quarters: int) -> int:
+	return posmod(rotation + quarters * 90, 360)
+
+
 # A shop slot holds an item, or null once that item has been bought.
 static func parse_shop(slots: Array) -> Array[Item]:
 	var shop: Array[Item] = []
@@ -28,6 +73,9 @@ class Position extends Resource:
 
 	func to_vector2() -> Vector2:
 		return Vector2(x, y)
+
+	func to_vector2i() -> Vector2i:
+		return Vector2i(x, y)
 
 
 # An item in the shop or in the chest.
@@ -113,11 +161,23 @@ class Item extends Resource:
 			"special_effect": special_effect
 		}
 
-	# The same item, now on the grid.
-	func placed_at(grid_pos: Vector2i) -> PlacedItem:
+	# The offsets this item covers. An item that is not on the grid is not
+	# facing any particular way, so this is its shape; a placed one answers
+	# with the shape turned. Both answer, so nothing asking has to know which
+	# kind it was handed.
+	func turned_shape() -> Array:
+		return shape
+
+	# Which way this item faces. One that is not on the grid faces nowhere in
+	# particular, so it answers the same as one that has not been turned.
+	func facing() -> int:
+		return 0
+
+	# The same item, now on the grid, facing whichever way it is asked to.
+	func placed_at(grid_pos: Vector2i, facing: int = 0) -> PlacedItem:
 		var fields = to_dict()
 		fields["position"] = [grid_pos.x, grid_pos.y]
-		fields["rotation"] = 0
+		fields["rotation"] = facing
 		return PlacedItem.new(fields)
 
 # An item on the grid. Only a placed item has somewhere to be and a way to face.
@@ -130,10 +190,23 @@ class PlacedItem extends Item:
 		position = Position.new(data["position"])
 		rotation = int(data["rotation"])
 
+	# The catalogue holds a shape unturned, so anything asking which squares an
+	# item takes has to turn it first or it is asking about a different item.
+	func turned_shape() -> Array:
+		return APITypes.turn(shape, rotation)
+
+	func facing() -> int:
+		return rotation
+
+	# An item already on the grid keeps facing the way it does unless it is
+	# asked to face another way.
+	func placed_at(grid_pos: Vector2i, facing: int = -1) -> PlacedItem:
+		return super.placed_at(grid_pos, rotation if facing < 0 else facing)
+
 	# The grid squares this item covers.
 	func covered_squares() -> Array[Vector2i]:
 		var squares: Array[Vector2i] = []
-		for offset in shape:
+		for offset in turned_shape():
 			squares.append(Vector2i(position.x + int(offset[0]), position.y + int(offset[1])))
 		return squares
 

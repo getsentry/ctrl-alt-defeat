@@ -80,12 +80,13 @@ func put_on_grid(item: APITypes.Item, grid_pos: Vector2i) -> bool:
 	if not inventory_grid.can_place_item(item, grid_pos):
 		return false
 
-	var response = await BattleServerAPI.move_item(item.id, [grid_pos.x, grid_pos.y])
+	var response = await BattleServerAPI.move_item(
+		item.id, [grid_pos.x, grid_pos.y], item.facing())
 	if response == null:
 		print("The server refused to put %s at %s" % [item.name, grid_pos])
 		return false
 
-	inventory_grid.place_shop_item(item, grid_pos)
+	inventory_grid.place_shop_item(item, grid_pos, item.facing())
 	_on_inventory_returned(response)
 	_save_current_state()
 	return true
@@ -213,7 +214,35 @@ func follow_pointer(pointer: Vector2) -> void:
 
 	var grid_pos := _global_to_grid(pointer)
 	inventory_grid.mark_square(
-		held_item.shape, grid_pos, inventory_grid.can_place_item(held_item, grid_pos))
+		held_item.turned_shape(), grid_pos,
+		inventory_grid.can_place_item(held_item, grid_pos))
+
+
+func turn(quarters: int) -> void:
+	"""Turn whatever is in hand, however it came to be there.
+
+	An item is held either because it is being dragged or because a container
+	move set it down and it was picked up. Both are holding it, so both turn.
+	"""
+	if held_item:
+		held_item = held_item.placed_at(
+			Vector2i.ZERO, APITypes.turned_by(held_item.facing(), quarters))
+		if is_instance_valid(held_visual):
+			held_visual.setup(held_item, inventory_grid.cell_size,
+				inventory_grid.cell_spacing)
+		follow_pointer(get_global_mouse_position())
+		return
+
+	if dragging_shop_data:
+		dragging_shop_data = dragging_shop_data.placed_at(
+			Vector2i.ZERO, APITypes.turned_by(dragging_shop_data.facing(), quarters))
+		if is_instance_valid(drag_preview):
+			drag_preview.setup(dragging_shop_data, inventory_grid.cell_size,
+				inventory_grid.cell_spacing)
+		return
+
+	inventory_grid.turn_dragged(quarters)
+	storage_grid.turn_dragged(quarters)
 
 
 func release_hand() -> void:
@@ -280,6 +309,13 @@ func _save_current_state():
 	GameStateManager.save_inventory_state(state.items, state.servers)
 
 func _input(event):
+	# Turning works on anything held, dragged or in hand. R and the wheel
+	# forward go clockwise, E and the wheel back the other way.
+	if _turn_asked_for(event) != 0:
+		get_viewport().set_input_as_handled()
+		turn(_turn_asked_for(event))
+		return
+
 	# An item in hand follows the pointer and is put down with a press, which
 	# is the other way round from a drag. The press is marked handled so that
 	# the click which puts the item down cannot also pick something else up.
@@ -310,6 +346,36 @@ func _input(event):
 			else:
 				# For normal items, use the inventory grid's hover preview
 				inventory_grid.show_hover_preview_for_shop(dragging_shop_data, grid_pos)
+
+
+func _turn_asked_for(event: InputEvent) -> int:
+	"""How many quarter turns this input asks for, clockwise, or none"""
+	if not _something_is_held():
+		return 0
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_R:
+			return 1
+		if event.keycode == KEY_E:
+			return -1
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			return 1
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			return -1
+	return 0
+
+
+func _something_is_held() -> bool:
+	"""Whether anything is in hand or being dragged, which is what can turn.
+
+	An item out of the shop counts. It is held the same way, and it is the one
+	most worth turning, because that is when the player is deciding where on
+	the board it goes.
+	"""
+	return held_item != null \
+		or dragging_shop_data != null \
+		or inventory_grid.dragging_object != null \
+		or storage_grid.dragging_object != null
 
 
 func _global_to_grid(global_pos: Vector2) -> Vector2i:
@@ -893,7 +959,8 @@ func _end_shop_drag(drop_position: Vector2):
 			var item_id = dragging_shop_data.id
 			if item_id:
 				print("Purchasing container %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
-				var response = await BattleServerAPI.purchase_item(item_id, [grid_pos.x, grid_pos.y])
+				var response = await BattleServerAPI.purchase_item(
+					item_id, [grid_pos.x, grid_pos.y])
 				# Check if purchase was actually successful
 				if response != null:
 					# Add the container to our grid
@@ -914,7 +981,9 @@ func _end_shop_drag(drop_position: Vector2):
 				var item_id = dragging_shop_data.id
 				if item_id:
 					print("Purchasing item %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
-					BattleServerAPI.purchase_item(item_id, [grid_pos.x, grid_pos.y])
+					BattleServerAPI.purchase_item(
+						item_id, [grid_pos.x, grid_pos.y],
+						dragging_shop_data.facing())
 					_mark_shop_item_sold(dragging_shop_item)
 			else:
 				print("Failed to place item at position")
@@ -949,7 +1018,7 @@ func _mark_shop_item_sold(shop_item: Panel):
 # The grid squares a container of this shape would cover at grid_pos.
 func _container_squares(container_data: APITypes.Item, grid_pos: Vector2i) -> Array[Vector2i]:
 	var squares: Array[Vector2i] = []
-	for offset in container_data.shape:
+	for offset in container_data.turned_shape():
 		squares.append(Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1])))
 	return squares
 

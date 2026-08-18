@@ -86,6 +86,9 @@ var container_riders: Array[Rider] = []
 var drag_offset = Vector2.ZERO
 var original_position = Vector2.ZERO
 var original_grid_pos = Vector2i(-1, -1)
+# Which way the item was facing when it was picked up. Turning it and putting
+# it back down on the same square is a change, even though it has not moved.
+var original_facing := 0
 var hover_preview: Panel = null
 var valid_placement = false
 
@@ -313,7 +316,7 @@ func _add_item(item: APITypes.PlacedItem):
 	item_visual.setup(item, cell_size, cell_spacing)
 
 	# Mark grid cells as occupied
-	for offset in item.shape:
+	for offset in item.turned_shape():
 		if offset is Array and offset.size() >= 2:
 			var cell_x = x + offset[0]
 			var cell_y = y + offset[1]
@@ -326,6 +329,26 @@ func _add_item(item: APITypes.PlacedItem):
 
 	add_child(item_visual)
 	items.append(item_visual)
+
+func turn_dragged(quarters: int) -> void:
+	"""Turn the item being dragged, if there is one.
+
+	A container is not turned. Turning one would have to turn everything
+	standing on it about its anchor, which is a different thing from turning
+	an item and is not built.
+	"""
+	if not dragging_object:
+		return
+
+	var item_data = dragging_object.get_meta("item_data")
+	var turned = item_data.placed_at(
+		item_data.position.to_vector2i(),
+		APITypes.turned_by(item_data.facing(), quarters))
+	dragging_object.set_meta("item_data", turned)
+
+	# Drawn again, because the squares it covers have changed.
+	dragging_object.setup(turned, cell_size, cell_spacing)
+
 
 func _on_container_input(event: InputEvent, placed: PlacedContainer):
 	"""Handle input on containers for dragging"""
@@ -356,7 +379,7 @@ func can_place_container(container: APITypes.PlacedItem, grid_pos: Vector2i) -> 
 		for square in placed.container.covered_squares():
 			taken[square] = true
 
-	for offset in container.shape:
+	for offset in container.turned_shape():
 		if not (offset is Array and offset.size() >= 2):
 			continue
 		var square := Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1]))
@@ -464,6 +487,7 @@ func _start_drag(item_visual: Control):
 	drag_started.emit(item_visual.get_meta("item_data"))
 	original_position = item_visual.position
 	original_grid_pos = item_visual.get_meta("grid_pos")
+	original_facing = item_visual.get_meta("item_data").facing()
 	drag_offset = item_visual.position - get_local_mouse_position()
 
 	# Ensure the item visual stays at its proper size while dragging
@@ -471,7 +495,7 @@ func _start_drag(item_visual: Control):
 
 	# Clear item from grid
 	var item_data = item_visual.get_meta("item_data")
-	for offset in item_data.shape:
+	for offset in item_data.turned_shape():
 		if offset is Array and offset.size() >= 2:
 			var cell_x = original_grid_pos.x + offset[0]
 			var cell_y = original_grid_pos.y + offset[1]
@@ -532,9 +556,8 @@ func _end_drag():
 		item_unstored.emit(item_data, get_global_mouse_position())
 		return
 
-	# Check if we're trying to move to the same position - no-op
-	if grid_pos == original_grid_pos:
-		# Just put it back where it was visually, no API call needed
+	if drop_changes_nothing(grid_pos, item_data):
+		# Nothing to tell the server, so it is put back and that is that.
 		_place_item_at(temp_object, original_grid_pos)
 		return
 
@@ -553,7 +576,8 @@ func _end_drag():
 		var item_id = item_data.id
 
 		# Call API to move item
-		var response = await BattleServerAPI.move_item(item_id, [grid_pos.x, grid_pos.y])
+		var response = await BattleServerAPI.move_item(
+			item_id, [grid_pos.x, grid_pos.y], item_data.facing())
 		if response:
 			print("Move persisted on server")
 			# Move succeeded, place at new position
@@ -570,6 +594,17 @@ func _end_drag():
 		# Can't place at target position, return to original
 		_place_item_at(temp_object, original_grid_pos)
 
+func drop_changes_nothing(grid_pos: Vector2i, item_data: APITypes.Item) -> bool:
+	"""Whether putting the held item down here leaves the board as it was.
+
+	The same square facing the same way is nothing to tell the server about. A
+	turn is a change even in place, because the item covers other squares
+	afterwards, and a server told nothing keeps a board the player has already
+	changed -- which is the board the battle is fought on.
+	"""
+	return grid_pos == original_grid_pos and item_data.facing() == original_facing
+
+
 func _place_item_at(item_visual: Control, grid_pos: Vector2i):
 	"""Place item visual at grid position"""
 	item_visual.position = grid_to_pixel(grid_pos)
@@ -581,7 +616,7 @@ func _place_item_at(item_visual: Control, grid_pos: Vector2i):
 	# here, and would otherwise be told where the item used to be.
 	var item_data = item_visual.get_meta("item_data").placed_at(grid_pos)
 	item_visual.set_meta("item_data", item_data)
-	for offset in item_data.shape:
+	for offset in item_data.turned_shape():
 		if offset is Array and offset.size() >= 2:
 			var cell_x = grid_pos.x + offset[0]
 			var cell_y = grid_pos.y + offset[1]
@@ -598,7 +633,7 @@ func _can_place_item(item_data, grid_pos: Vector2i) -> bool:
 		return false
 
 	# Check each cell in the item's shape
-	for offset in item_data.shape:
+	for offset in item_data.turned_shape():
 		if offset is Array and offset.size() >= 2:
 			var cell_x = grid_pos.x + offset[0]
 			var cell_y = grid_pos.y + offset[1]
@@ -617,12 +652,13 @@ func _can_place_item(item_data, grid_pos: Vector2i) -> bool:
 
 	return true
 
-func place_shop_item(item: APITypes.Item, grid_pos: Vector2i) -> bool:
-	"""Place a shop item at the given position"""
+func place_shop_item(item: APITypes.Item, grid_pos: Vector2i, facing: int = -1) -> bool:
+	"""Place a shop item at the given position, facing the way it is asked to"""
 	if not can_place_item(item, grid_pos):
 		return false
 
-	var placed = item.placed_at(grid_pos)
+	var placed = item.placed_at(
+		grid_pos, item.facing() if facing < 0 else facing)
 	_add_item(placed)
 	item_placed.emit(placed, grid_pos)
 
@@ -662,7 +698,7 @@ func mark_square(item_shape: Array, grid_pos: Vector2i, allowed: bool) -> void:
 
 func show_hover_preview_for_shop(item_data: APITypes.Item, grid_pos: Vector2i):
 	"""Show hover preview for a shop item being dragged"""
-	mark_square(item_data.shape, grid_pos, can_place_item(item_data, grid_pos))
+	mark_square(item_data.turned_shape(), grid_pos, can_place_item(item_data, grid_pos))
 
 func hide_hover_preview():
 	"""Hide the hover preview"""
@@ -675,7 +711,7 @@ func _remove_item(item_visual: Control):
 	var item_data = item_visual.get_meta("item_data")
 
 	# Clear from grid
-	for offset in item_data.shape:
+	for offset in item_data.turned_shape():
 		if offset is Array and offset.size() >= 2:
 			var cell_x = grid_pos.x + offset[0]
 			var cell_y = grid_pos.y + offset[1]
@@ -715,7 +751,7 @@ func update_container_preview(pointer: Vector2) -> void:
 		return
 	var container := dragging_container.container
 	var grid_pos := pixel_to_grid(get_global_transform().affine_inverse() * pointer)
-	mark_square(container.shape, grid_pos, can_place_container(container, grid_pos))
+	mark_square(container.turned_shape(), grid_pos, can_place_container(container, grid_pos))
 
 
 func update_drag_preview(pointer: Vector2) -> void:
@@ -740,7 +776,7 @@ func update_drag_preview(pointer: Vector2) -> void:
 		grid_zone.hide_hover_preview()
 
 	var grid_pos := pixel_to_grid(get_global_transform().affine_inverse() * pointer)
-	mark_square(item_data.shape, grid_pos, _can_place_item(item_data, grid_pos))
+	mark_square(item_data.turned_shape(), grid_pos, _can_place_item(item_data, grid_pos))
 
 func clear_all():
 	"""Clear all items and containers"""

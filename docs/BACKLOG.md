@@ -5,6 +5,36 @@ review, tick off as they land. Keep entries to a few lines.
 
 ## Open
 
+**Two tests in `test_item_visual.gd` fail on main.** They look for
+`res://assets/items/stack_smasher.png`, which does not exist -- the fixture was
+renamed from `core_dumper`, and only `core_dumper.png` is in `assets/items/`.
+Either add the artwork or point the fixture back at an item that has some.
+`client/test/unit/test_item_visual.gd`
+
+**Four ways to be holding something, five ways to put it down.** An item picked
+up off the grid, out of the chest, off the shop shelf, or handed over after a
+container move is four separate states with four sets of code, and they land
+through five paths. Anything true of "a held item" has to be written that many
+times. Rotation was the first property added since they multiplied and it found
+three of them: the shop drag could not be turned, the purchase dropped the
+facing, and a turn in place counted as no change. One `Carried` -- the item, its
+facing, the visual following the pointer, and where it came from -- would make
+each of those one place. Three of the five drops already make the same call.
+`client/scripts/unified_grid_ui.gd`, `client/scripts/inventory_grid.gd`
+
+**`move_item` and `purchase_item` take a place that is either a square or the
+word "storage".** GDScript cannot say "one of these two", so the parameter is
+`Variant` and neither the caller nor the reader is told anything. Two calls
+each -- one for a square, one for the chest -- would type it.
+`client/scripts/battle_server_api.gd`
+
+**A container cannot be turned, deliberately.** An item can, and the move
+carries its facing. Turning a container would have to turn everything standing
+on it about its anchor, which is a different problem from the shift that moving
+one needs, and only six of the eleven containers would change shape. Written
+down so nobody rediscovers it as a missing feature. `client/scripts/inventory_grid.gd`
+`turn_dragged`
+
 **The view owns the model in `inventory_grid.gd`.** `items` is a list of
 visuals, and the item itself lives in each visual's metadata. So "where is this
 item" has five answers — `item_data`, the `grid_pos` meta, the visual's pixel
@@ -22,11 +52,6 @@ no — the ones where a bug costs the player an item. A settable reference
 defaulting to the autoload would bring all four under test, and would let
 several extractions made only to get a foothold be retired.
 `client/scripts/unified_grid_ui.gd`
-
-**Running the whole client unit directory hangs.** Something under `test/unit`
-wants a server even though `-gdir` excludes `test/ui` and `test/integration`.
-One file at a time works, which is what the root `CLAUDE.md` says to do, but
-nobody has found which file. `client/test/unit`
 
 **The shop refresh price is hardcoded in the client.** The server charges 1
 gold for the first four refreshes of a round and 2 from the fifth

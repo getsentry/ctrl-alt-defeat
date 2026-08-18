@@ -72,9 +72,20 @@ class InventoryGrid:
                 return item
         return None
 
-    def place_item(self, item: Item, position: Position) -> None:
-        """Place an item on the grid"""
-        placed = item.placed_at(position, getattr(item, "rotation", Rotation.NONE))
+    def place_item(
+        self,
+        item: Item,
+        position: Position,
+        rotation: Optional[Rotation] = None,
+    ) -> None:
+        """Place an item on the grid, facing the way it is asked to.
+
+        Told nothing, it keeps facing the way it already does, so a move that
+        is only a move does not quietly straighten an item out.
+        """
+        if rotation is None:
+            rotation = getattr(item, "rotation", Rotation.NONE)
+        placed = item.placed_at(position, rotation)
 
         # The whole item, as it is turned, has to sit on containers
         if not self.can_hold(placed.covered_squares()):
@@ -233,13 +244,20 @@ class InventoryManager:
         self.grid = InventoryGrid()
         self.storage = InventoryStorage()
 
-    def place_item(self, item: Item, placement: Union[str, Position]) -> bool:
+    def place_item(
+        self,
+        item: Item,
+        placement: Union[str, Position],
+        rotation: Optional[Rotation] = None,
+    ) -> bool:
         """
         Place an item either in storage or on the grid
 
         Args:
             item: The item to place
             placement: Either "storage" or (x, y) coordinates
+            rotation: Which way it faces on the grid. Told nothing, it keeps
+                facing the way it already does.
 
         Returns:
             True if successful
@@ -249,7 +267,7 @@ class InventoryManager:
                 self.storage.add_item(item)
             else:
                 # Placement is grid coordinates
-                self.grid.place_item(item, placement)
+                self.grid.place_item(item, placement, rotation)
             return True
         except InvalidPlacementError:
             return False
@@ -259,6 +277,7 @@ class InventoryManager:
         item_id: str,
         from_location: Union[str, Position],
         to_location: Union[str, Position],
+        rotation: Optional[Rotation] = None,
     ) -> None:
         """
         Move an item between storage and grid
@@ -290,7 +309,7 @@ class InventoryManager:
             if to_location == "storage":
                 self.storage.add_item(item)
             else:
-                self.grid.place_item(item, to_location)
+                self.grid.place_item(item, to_location, rotation)
         except Exception:
             # Whatever went wrong, the item goes back where it came from, and
             # the caller still hears about it.

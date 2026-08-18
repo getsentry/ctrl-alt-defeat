@@ -648,3 +648,142 @@ func test_a_container_does_not_carry_an_item_that_has_moved_away():
 
 	assert_eq(grid.container_riders.size(), 0,
 		"Container A carries nothing: the item is on B now")
+
+
+# ============ Turning a dragged item ============
+#
+# An item is turned while it is held. R and the wheel forward go clockwise, E
+# and the wheel back the other way, and where that input is read is the UI's
+# business -- the grid only knows how to turn what it is dragging.
+
+func test_turning_a_dragged_item_changes_the_squares_it_covers():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+	grid._start_drag(grid.items[0])
+
+	grid.turn_dragged(1)
+
+	var item_data = grid.items[0].get_meta("item_data")
+	assert_eq(item_data.facing(), 90, "A quarter turn clockwise")
+	assert_eq(item_data.turned_shape().size(), 2, "It still covers two squares")
+	var across = item_data.turned_shape().map(func(o): return o[0])
+	assert_eq(across, [0, 0], "but both in the same column, standing on end")
+
+
+func test_turning_the_other_way_goes_the_other_way():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+	grid._start_drag(grid.items[0])
+
+	grid.turn_dragged(-1)
+
+	assert_eq(grid.items[0].get_meta("item_data").facing(), 270,
+		"Anticlockwise from square on is three quarters round")
+
+
+func test_four_turns_bring_a_dragged_item_back():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+	grid._start_drag(grid.items[0])
+
+	for i in 4:
+		grid.turn_dragged(1)
+
+	assert_eq(grid.items[0].get_meta("item_data").facing(), 0, "Back where it started")
+
+
+func test_turning_nothing_is_harmless():
+	# Nothing is being dragged, so there is nothing to turn.
+	_load_default_containers()
+	grid.turn_dragged(1)
+	assert_null(grid.dragging_object, "Still nothing in hand")
+
+
+func test_a_turned_item_is_placed_where_it_fits_turned():
+	# The containers run from x 2 to x 7, so at the last column a two-wide item
+	# hangs off the end and the same item stood on end does not. This is the
+	# whole point of turning: it is what makes an item fit where it would not.
+	_load_default_containers()
+	var wide = _item({"id": "wide", "shape": [[0, 0], [1, 0]]})
+
+	assert_false(grid.can_place_item(wide.placed_at(Vector2i(7, 3), 0), Vector2i(7, 3)),
+		"Lying flat its right half is past the last container")
+	assert_true(grid.can_place_item(wide.placed_at(Vector2i(7, 3), 90), Vector2i(7, 3)),
+		"Stood on end it fits down the last column")
+
+
+func test_a_turned_item_loaded_from_the_server_is_drawn_turned():
+	# The battle screens and the shop screen both load a board the server sent.
+	# An item that arrives turned has to be drawn turned, or the player is
+	# looking at a different board from the one the battle was fought on.
+	grid.load_inventory_state(_state(
+		[_item({"id": "turned", "shape": [[0, 0], [1, 0]], "position": [2, 3],
+			"rotation": 90})],
+		[_container({"position": [2, 3]})]
+	))
+
+	var drawn = grid.items[0]
+	var across = drawn.item_shape.map(func(o): return o[0])
+	assert_eq(across, [0, 0], "It should be drawn on end, both squares in a column")
+	assert_eq(drawn.size, Vector2(45, 91), "so it is one square wide and two tall")
+
+
+func test_a_turned_item_occupies_the_squares_it_covers_turned():
+	grid.load_inventory_state(_state(
+		[_item({"id": "turned", "shape": [[0, 0], [1, 0]], "position": [2, 3],
+			"rotation": 90})],
+		[_container({"position": [2, 3]})]
+	))
+
+	assert_not_null(grid.item_grid[3][2], "It stands on its own square")
+	assert_not_null(grid.item_grid[4][2], "and the one below, being on end")
+	assert_null(grid.item_grid[3][3], "not the one beside it, which is where it would lie flat")
+
+
+func test_saving_the_board_keeps_which_way_an_item_faces():
+	# The board goes back to GameStateManager between screens. A turn dropped
+	# here is a turn the player loses on the next screen.
+	grid.load_inventory_state(_state(
+		[_item({"id": "turned", "shape": [[0, 0], [1, 0]], "position": [2, 3],
+			"rotation": 90})],
+		[_container({"position": [2, 3]})]
+	))
+
+	var saved = grid.get_inventory_state()
+
+	assert_eq(saved["items"][0]["rotation"], 90, "It should still be facing that way")
+
+
+func test_putting_an_item_back_unchanged_tells_the_server_nothing():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "unmoved", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+	grid._start_drag(grid.items[0])
+	var item_data = grid.items[0].get_meta("item_data")
+
+	assert_true(grid.drop_changes_nothing(Vector2i(2, 3), item_data),
+		"Same square, same way round, nothing to tell")
+
+
+func test_turning_an_item_in_place_is_a_change():
+	# Picking an item up, turning it and setting it down where it was is the
+	# obvious way to turn something. It covers different squares afterwards, so
+	# the server has to hear about it -- its board is the one the battle uses.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "turned", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+	grid._start_drag(grid.items[0])
+
+	grid.turn_dragged(1)
+
+	var item_data = grid.items[0].get_meta("item_data")
+	assert_false(grid.drop_changes_nothing(Vector2i(2, 3), item_data),
+		"It has not moved, but it is not the same board")
+
+
+func test_moving_an_item_without_turning_it_is_a_change():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "moved", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+	grid._start_drag(grid.items[0])
+	var item_data = grid.items[0].get_meta("item_data")
+
+	assert_false(grid.drop_changes_nothing(Vector2i(4, 3), item_data),
+		"A different square is a change, turned or not")
