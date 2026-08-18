@@ -249,6 +249,66 @@ func test_clear_all_empties_the_grid():
 	assert_false(grid.active_grid[3][2], "Clearing should make every cell unusable again")
 
 
+# ============ Tooltips ============
+#
+# A container and the item standing on it must never both describe themselves
+# at once. Godot hands the hover to one control, the last one in the child
+# order whose rectangle holds the mouse, so the rule comes down to two things:
+# a container has to be hoverable at all, and items have to come after
+# containers in that order.
+
+func test_a_container_describes_itself():
+	_load_default_containers()
+
+	var drawn = grid.containers[0].visual
+	assert_true(drawn.enable_tooltip, "A container should have a tooltip")
+	assert_ne(drawn.mouse_filter, Control.MOUSE_FILTER_IGNORE,
+		"A container that ignores the mouse can never be hovered")
+
+
+func test_an_item_is_hovered_before_the_container_it_stands_on():
+	# The item is the later sibling, so it takes the hover for the squares it
+	# covers and the container keeps the squares nothing stands on.
+	_load_default_containers()
+	grid.place_shop_item(_item(), Vector2i(2, 3))
+
+	var container_order = grid.get_children().find(grid.containers[0].visual)
+	var item_order = grid.get_children().find(grid.items[0])
+
+	assert_gt(item_order, container_order,
+		"An item should come after the container it stands on")
+
+
+func test_dragging_an_item_keeps_it_above_the_containers():
+	# _start_drag moves the item to the end of the child order. It must not be
+	# able to land behind a container.
+	_load_default_containers()
+	grid.place_shop_item(_item(), Vector2i(2, 3))
+
+	grid._start_drag(grid.items[0])
+
+	var container_order = grid.get_children().find(grid.containers[0].visual)
+	var item_order = grid.get_children().find(grid.items[0])
+	assert_gt(item_order, container_order,
+		"A dragged item should still be above the containers")
+
+
+func test_a_read_only_container_still_describes_itself():
+	# The battle screens are read-only, and being able to read what is on the
+	# grid is the point of them. Items describe themselves there, so containers
+	# do too.
+	grid.read_only = true
+	grid.load_inventory_state(_state(
+		[_item({"position": [2, 3]})],
+		[_container({"position": [2, 3]})]
+	))
+
+	assert_true(grid.containers[0].visual.enable_tooltip,
+		"A read-only container should still have a tooltip")
+	assert_eq(grid.containers[0].visual.mouse_filter, grid.items[0].mouse_filter,
+		"A container should take the mouse the same way its items do")
+
+
 # ============ Read-only mode ============
 
 func test_read_only_grids_still_show_their_contents():

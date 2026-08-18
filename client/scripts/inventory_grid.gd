@@ -212,11 +212,15 @@ func _add_container(container: APITypes.PlacedItem):
 	# Create container visual using ItemVisual
 	var container_visual = ItemVisual.new()
 	container_visual.position = grid_to_pixel(Vector2i(x, y))
-	container_visual.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# A container carries no name or description, so it has nothing to show in a
-	# tooltip yet.
-	container_visual.enable_tooltip = false
+	# A container is hovered only where nothing stands on it. Items are added
+	# to the grid after containers, so an item is the later sibling and takes
+	# the hover for the squares it covers. That is what stops an item and the
+	# container under it from both describing themselves at once.
+	#
+	# The mouse filter is not set here: setup() below decides it, the same way
+	# it does for an item.
+	container_visual.enable_tooltip = true
 
 	# Set up the visual
 	container_visual.setup(container, cell_size, cell_spacing)
