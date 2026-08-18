@@ -125,6 +125,8 @@ Options whose values are lists/arrays can be specified multiple times:
 	opts.add('-gexit', false, 'Exit after running tests.  If not specified you have to manually close the window.')
 	opts.add('-gexit_on_success', false, 'Only exit if zero tests fail.')
 	opts.add('-gignore_pause', false, 'Ignores any calls to pause_before_teardown.')
+	# LOCAL CHANGE, not part of GUT 9.4.0. See gut.gd _call_test_bounded().
+	opts.add('-gtest_timeout', options.test_timeout, 'Seconds a single test may take before it is failed and the run moves on.  0 waits forever.  Default [default].')
 
 	opts.add_heading("Display Settings:")
 	opts.add('-glog', options.log_level, 'Log level [0-3].  Default [default]')
@@ -175,6 +177,8 @@ func extract_command_line_options(from, to):
 	to.suffix = from.get_value_or_null('-gsuffix')
 	to.errors_do_not_cause_failure = from.get_value_or_null('-gerrors_do_not_cause_failure')
 	to.tests = from.get_value_or_null('-gtest')
+	# LOCAL CHANGE, not part of GUT 9.4.0. See gut.gd _call_test_bounded().
+	to.test_timeout = from.get_value_or_null('-gtest_timeout')
 	to.unit_test_name = from.get_value_or_null('-gunit_test_name')
 
 	to.font_size = from.get_value_or_null('-gfont_size')

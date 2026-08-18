@@ -20,14 +20,57 @@
 - Start server: `cd server && python main.py`
 
 ### Client Tests
-Run one file at a time. `-gtest` does not restrict GUT, and the whole suite
-pulls in `test/ui/` and `test/integration/`, which need a server running in
-TEST_MODE and will otherwise hang or fail:
+Everything runs, and the whole lot takes about 17 seconds.
+
+The unit tests need nothing running, and are the ones to use while working:
 
 ```
-godot --headless --path client -s addons/gut/gut_cmdln.gd \
-  -gdir=res://test/unit -ginclude_subdirs=false -gselect=test_api_types.gd -gexit
+cd client && godot --headless --path . -s addons/gut/gut_cmdln.gd \
+  -gdir=res://test/unit -ginclude_subdirs=false -gexit
 ```
+
+`-ginclude_subdirs=false` is what keeps it to `test/unit/`. Add
+`-gselect=test_api_types.gd` for a single file.
+
+`test/ui/` and `test/smoke/` drive the real UI against a real server, so run
+them through `client/run_tests.sh`, which starts one in TEST_MODE first. Run
+them before anything that touches a screen: they are the only tests that would
+notice a scene that no longer loads.
+
+| Suite | Tests | Needs a server | Time |
+|-------|-------|----------------|------|
+| `test/unit/` | 350 | no | 6s |
+| `test/ui/` | 10 | yes | 11s |
+| `test/smoke/` | 8 | yes | <1s |
+| `test/integration/` | 0 | - | - |
+
+`test/integration/` holds no tests. Both files in it are helper classes that
+extend RefCounted, and GUT skips them with a warning because they are named
+`test_*`. Either rename them or make them tests.
+
+### Test Timeouts
+**No test may hang the run.** GUT on its own awaits each test method with no
+limit, so one test waiting on something that never arrives stops everything,
+and the output does not even say which test it was.
+
+`-gtest_timeout=<seconds>` fails a test that takes longer and moves on to the
+next one, naming it. 0 waits forever.
+
+It defaults to **10 seconds**, which is generous: the slowest unit test takes a
+tenth of a second and the slowest UI test three. `run_tests.sh` raises it to 45,
+not because anything there is slow, but so that a test's own wait — which gives
+up after 25 and says what it was waiting for — reports before GUT cuts in with
+a generic timeout.
+
+This is a **local change to the vendored addon** (`_call_test_bounded` in
+`addons/gut/gut.gd`, plus `gut_config.gd` and `cli/gut_cli.gd`, each marked
+LOCAL CHANGE) — keep it when upgrading GUT.
+
+GDScript cannot cancel a coroutine, so a test abandoned this way is still
+suspended somewhere. Treat a timeout as something to fix, not to live with.
+
+The one hang this cannot catch is a test that never awaits at all — an endless
+loop starves the process, timeout included. That one you notice and interrupt.
 
 ## Git
 

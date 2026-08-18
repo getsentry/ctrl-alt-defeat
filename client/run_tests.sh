@@ -12,6 +12,8 @@ SERVER_DIR="../server"
 SERVER_LOG="test_server.log"
 SERVER_PID_FILE="test_server.pid"
 TEST_DB_NAME="ctrl_alt_defeat_client_test"
+# Seconds to let the whole run take before killing it. See the note below.
+RUN_TIMEOUT="${RUN_TIMEOUT:-600}"
 # Use default host (localhost:5432) unless specified
 TEST_DB_HOST="${TEST_DB_HOST:-localhost:5432}"
 
@@ -116,20 +118,30 @@ fi
 echo ""
 echo "Running All Tests..."
 echo "--------------------"
-# Run all tests in one command - GUT will find all test directories
-# Use background process with timeout to prevent hanging tests
+# Run all tests in one command - GUT will find all test directories.
+#
+# 45s per test is not because anything is slow: the slowest UI test takes 3
+# seconds. It is so that a test's own wait, which gives up after 25 and says
+# what it was waiting for, gets to report before GUT cuts in with a generic
+# timeout.
 (
     godot --headless --script addons/gut/gut_cmdln.gd \
         -gdir=res://test \
         -gexit \
         -glog=3 \
+        -gtest_timeout=45 \
         $FILTER_ARG 2>&1 | tee test_output.tmp
 ) &
 TEST_PID=$!
 
-# Wait for up to 10 seconds
+# Wait for the whole run. GUT fails any single test that runs over
+# -gtest_timeout above, so this is only the backstop for a test that hangs
+# without ever awaiting, which nothing inside the process can catch.
+#
+# This used to be 10 seconds, which killed every run before it finished and is
+# most of why nobody ran this script.
 SECONDS=0
-while [ $SECONDS -lt 10 ]; do
+while [ $SECONDS -lt $RUN_TIMEOUT ]; do
     if ! kill -0 $TEST_PID 2>/dev/null; then
         # Process finished
         wait $TEST_PID
@@ -141,7 +153,7 @@ done
 
 # If still running after 10 seconds, kill it
 if kill -0 $TEST_PID 2>/dev/null; then
-    echo -e "${RED}❌ Tests timed out after 10 seconds${NC}"
+    echo -e "${RED}❌ Tests timed out after ${RUN_TIMEOUT} seconds${NC}"
     kill -TERM $TEST_PID 2>/dev/null
     wait $TEST_PID 2>/dev/null
     TEST_EXIT_CODE=124

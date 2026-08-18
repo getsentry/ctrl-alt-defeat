@@ -260,6 +260,17 @@ var _cancel_import = false
 # when a test completes (due to calls to add_child_autoqfree)
 var _auto_queue_free_delay = .1
 
+# LOCAL CHANGE, not part of GUT 9.4.0. Keep it when upgrading the addon.
+# How many seconds a single test may take before it is failed and the run moves
+# on. Zero waits forever, which is what GUT does on its own. See
+# _call_test_bounded().
+#
+# The unit tests are the ones this is sized for, and the slowest of those takes
+# a tenth of a second. The tests under test/ui and test/integration wait on
+# scene changes and a real server, and ask for as long as 25 seconds, so
+# run_tests.sh raises this for them rather than everyone living at their pace.
+var test_timeout = 10.0
+
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 func _init():
@@ -573,6 +584,47 @@ func _run_parameterized_test(test_script, test_name):
 
 
 # ------------------------------------------------------------------------------
+# LOCAL CHANGE, not part of GUT 9.4.0. Keep it when upgrading the addon.
+#
+# Calls a test and gives up on it after test_timeout seconds.
+#
+# GUT awaits the test method directly, so a test that waits on something that
+# never arrives waits forever, and the run stops dead with no output saying
+# which test it was. Here the wait is bounded: the test is failed, and the run
+# carries on with the next one.
+#
+# GDScript cannot cancel a coroutine, so a test abandoned this way is still
+# suspended somewhere. It stays that way as long as whatever it waits on never
+# arrives, which is the case that brought us here. If it does arrive later it
+# resumes against objects after_each has already freed, so treat a timeout as
+# something to fix rather than something to live with.
+#
+# A test that hangs without awaiting - an endless loop - cannot be caught at
+# all: nothing else runs, including this.
+# ------------------------------------------------------------------------------
+func _call_test_bounded(script_inst, test_name):
+	if(test_timeout <= 0.0):
+		await script_inst.call(test_name)
+		return
+
+	var state = {'finished': false}
+	_call_test_and_flag(script_inst, test_name, state)
+
+	var deadline = Time.get_ticks_msec() + int(test_timeout * 1000)
+	while(!state.finished and Time.get_ticks_msec() < deadline):
+		await get_tree().process_frame
+
+	if(!state.finished):
+		_fail(str('Timed out after ', test_timeout, ' seconds. The test is ',
+			'waiting on something that has not happened.'))
+
+
+func _call_test_and_flag(script_inst, test_name, state):
+	await script_inst.call(test_name)
+	state.finished = true
+
+
+# ------------------------------------------------------------------------------
 # Runs a single test given a test.gd instance and the name of the test to run.
 # ------------------------------------------------------------------------------
 func _run_test(script_inst, test_name):
@@ -584,7 +636,7 @@ func _run_test(script_inst, test_name):
 
 	start_test.emit(test_name)
 
-	await script_inst.call(test_name)
+	await _call_test_bounded(script_inst, test_name)
 
 	# if the test called pause_before_teardown then await until
 	# the continue button is pressed.

@@ -44,6 +44,8 @@ var default_options = {
 	show_help = false,
 	suffix = '.gd',
 	tests = [],
+	# LOCAL CHANGE, not part of GUT 9.4.0. See gut.gd _call_test_bounded().
+	test_timeout = 10,
 	unit_test_name = '',
 
 	gut_on_top = true,
@@ -126,6 +128,8 @@ func _apply_options(opts, gut):
 		opts.double_strategy, GutUtils.DOUBLE_STRATEGY,
 		GutUtils.DOUBLE_STRATEGY.SCRIPT_ONLY)
 
+	# LOCAL CHANGE, not part of GUT 9.4.0. See gut.gd _call_test_bounded().
+	gut.test_timeout = str(opts.test_timeout).to_float()
 	gut.unit_test_name = opts.unit_test_name
 	gut.pre_run_script = opts.pre_run_script
 	gut.post_run_script = opts.post_run_script
