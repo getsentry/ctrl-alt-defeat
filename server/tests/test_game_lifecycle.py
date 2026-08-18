@@ -9,183 +9,88 @@ os.environ["TEST_MODE"] = "true"
 
 import pytest  # noqa: E402
 
+from containers import Container, PlacementValidator  # noqa: E402
+from grid_system import ItemShape  # noqa: E402
+
+
+def _shape_of(item: dict) -> ItemShape:
+    """The shape an item carries on the wire, as the grid code wants it."""
+    return ItemShape(squares=[(x, y) for x, y in item["shape"]])
+
 
 def purchase_items_for_battle(client, player_id, session, num_items=3):
-    """Helper to purchase items from shop and place on grid"""
-    shop = session["current_shop"]
-    # Use positions within the default containers that are created with each session
-    # Default containers are 3 standard_vm at (2,3), (4,3), (6,3), each 2x2
-    # Be careful with shapes - items with shapes need all their squares to fit
-    # Prefer top-left positions for items with shapes to ensure they fit
-    container_positions = [
-        (2, 3),  # Container A top-left - safe for any shape up to 2x2
-        (4, 3),  # Container B top-left - safe for any shape up to 2x2
-        (6, 3),  # Container C top-left - safe for any shape up to 2x2
-        (3, 3),  # Container A top-right - only safe for 1x1 or 1x2
-        (5, 3),  # Container B top-right - only safe for 1x1 or 1x2
-        (7, 3),  # Container C top-right - only safe for 1x1 or 1x2
-        (2, 4),  # Container A bottom-left - only safe for 1x1 or 2x1
-        (4, 4),  # Container B bottom-left - only safe for 1x1 or 2x1
-        (6, 4),  # Container C bottom-left - only safe for 1x1 or 2x1
-        (3, 4),  # Container A bottom-right - only safe for 1x1
-        (5, 4),  # Container B bottom-right - only safe for 1x1
-        (7, 4),  # Container C bottom-right - only safe for 1x1
+    """Buy up to num_items from the shop and place them on the grid.
+
+    Where an item fits is worked out by PlacementValidator, the same class the
+    server places with, from the containers the session says it has. So this
+    knows nothing about where a container sits or what it covers, and an item of
+    any shape can be bought -- which matters now the catalogue holds items that
+    are not rectangles.
+
+    Returns how many were bought. Fewer than asked for is normal: the grid fills
+    up, and gold runs out.
+    """
+    validator = PlacementValidator()
+    for container in session["server_containers"]:
+        validator.add_container(
+            Container.of(
+                container["item_type"],
+                tuple(container["position"]),
+                container["id"],
+            )
+        )
+
+    # Squares the caller already filled in an earlier round.
+    for placed in session.get("inventory_grid", []):
+        validator.place_item(tuple(placed["position"]), _shape_of(placed))
+
+    already_placed = bool(validator.item_squares)
+
+    offers = [
+        offer
+        for offer in session["current_shop"]
+        if offer and not offer["is_container"]
     ]
+    # Something that can attack first. A caller that battles wants to win, and
+    # the round it reaches is what its assertions are about.
+    offers.sort(key=lambda offer: not (offer["min_damage"] or offer["max_damage"]))
 
-    # Track occupied positions from existing inventory.
-    # Grid items carry no shape, so this helper only ever buys single-square
-    # items and every placed item occupies exactly the square it sits on.
-    occupied_positions = set()
-    for item in session.get("inventory_grid", []):
-        pos = tuple(item.get("position", []))
-        if pos:
-            occupied_positions.add((pos[0], pos[1]))
+    bought = 0
+    for offer in offers:
+        if bought >= num_items:
+            break
 
-    items_purchased = 0
-    purchased_item_ids = set()  # Track which items we've already purchased
+        shape = _shape_of(offer)
+        # Reading order, so a run is repeatable and the first item lands top left.
+        position = next(
+            (
+                square
+                for square in sorted(validator.available_squares, key=lambda s: s[::-1])
+                if validator.validate_item_placement(square, shape)
+            ),
+            None,
+        )
+        if position is None:
+            continue  # Nowhere left this shape fits
 
-    for item in shop:
-        if item and items_purchased < min(num_items, len(container_positions)):
-            # Skip containers - we already have one
-            is_container = item.get("is_container", False)
-            if is_container:
-                continue
+        response = client.post(
+            "/purchase/item",
+            json={"item_id": offer["id"], "target_position": list(position)},
+        )
+        if response.status_code != 200:
+            continue  # Out of gold, most likely
 
-            # Skip already purchased items
-            if item["id"] in purchased_item_ids:
-                continue
+        validator.place_item(position, shape)
+        bought += 1
 
-            # Only single-square items, so occupancy stays trackable between rounds
-            item_shape = item.get("shape", [[0, 0]])
-            if len(item_shape) != 1:
-                continue
-
-            target_position = None
-
-            for pos in container_positions:
-                if pos in occupied_positions:
-                    continue
-
-                # Check if shape fits at this position
-                x, y = pos
-                fits = True
-                for offset in item_shape:
-                    check_x = x + offset[0]
-                    check_y = y + offset[1]
-                    # Check if this square is in a container
-                    # Containers: A=(2-3,3-4), B=(4-5,3-4), C=(6-7,3-4)
-                    in_container = False
-                    if 2 <= check_x <= 3 and 3 <= check_y <= 4:  # Container A
-                        in_container = True
-                    elif 4 <= check_x <= 5 and 3 <= check_y <= 4:  # Container B
-                        in_container = True
-                    elif 6 <= check_x <= 7 and 3 <= check_y <= 4:  # Container C
-                        in_container = True
-
-                    if not in_container or (check_x, check_y) in occupied_positions:
-                        fits = False
-                        break
-
-                if fits:
-                    target_position = pos
-                    break
-
-            if not target_position:
-                continue  # Try next item, this one doesn't fit
-
-            # Prefer items with attack capability (damage > 0)
-            # But purchase any item if we haven't purchased enough
-            has_damage = item.get("min_damage", 0) > 0 or item.get("max_damage", 0) > 0
-
-            # Purchase items with damage or any item if we need more
-            if has_damage or items_purchased < 2:
-                response = client.post(
-                    "/purchase/item",
-                    json={
-                        "item_id": item["id"],
-                        "target_position": list(target_position),
-                    },
-                )
-                if response.status_code == 200:
-                    items_purchased += 1
-                    purchased_item_ids.add(item["id"])
-                    # Mark all squares occupied by this item
-                    for offset in item_shape:
-                        occupied_positions.add(
-                            (
-                                target_position[0] + offset[0],
-                                target_position[1] + offset[1],
-                            )
-                        )
-
-    # If we didn't get enough offensive items, purchase any available items
-    if items_purchased < num_items:
-        for item in shop:
-            if item and items_purchased < min(num_items, len(container_positions)):
-                # Skip containers - we already have one
-                if item.get("is_container", False):
-                    continue
-                # Skip already purchased items
-                if item["id"] in purchased_item_ids:
-                    continue
-
-                # Only single-square items, as above
-                item_shape = item.get("shape", [[0, 0]])
-                if len(item_shape) != 1:
-                    continue
-
-                target_position = None
-                for pos in container_positions:
-                    if pos in occupied_positions:
-                        continue
-
-                    # Check if shape fits at this position
-                    x, y = pos
-                    fits = True
-                    for offset in item_shape:
-                        check_x = x + offset[0]
-                        check_y = y + offset[1]
-                        # Check if this square is in a container
-                        # Containers: A=(2-3,3-4), B=(4-5,3-4), C=(6-7,3-4)
-                        in_container = False
-                        if 2 <= check_x <= 3 and 3 <= check_y <= 4:  # Container A
-                            in_container = True
-                        elif 4 <= check_x <= 5 and 3 <= check_y <= 4:  # Container B
-                            in_container = True
-                        elif 6 <= check_x <= 7 and 3 <= check_y <= 4:  # Container C
-                            in_container = True
-
-                        if not in_container or (check_x, check_y) in occupied_positions:
-                            fits = False
-                            break
-
-                    if fits:
-                        target_position = pos
-                        break
-
-                if not target_position:
-                    continue  # Try next item
-
-                response = client.post(
-                    "/purchase/item",
-                    json={
-                        "item_id": item["id"],
-                        "target_position": list(target_position),
-                    },
-                )
-                if response.status_code == 200:
-                    items_purchased += 1
-                    purchased_item_ids.add(item["id"])
-                    # Mark all squares occupied by this item
-                    for offset in item_shape:
-                        occupied_positions.add(
-                            (
-                                target_position[0] + offset[0],
-                                target_position[1] + offset[1],
-                            )
-                        )
-
-    return items_purchased
+    # Buying nothing is fine once the grid is full. Buying nothing onto an empty
+    # grid is not: the battle is then refused for having no items, which names
+    # neither the shop nor this helper.
+    assert bought or already_placed, (
+        "Bought nothing onto an empty grid, so the battle will be refused. "
+        f"The shop offered {[(o['item_type'], len(o['shape'])) for o in offers]}"
+    )
+    return bought
 
 
 class TestGameLifecycle:
@@ -472,9 +377,8 @@ class TestGameLifecycle:
 
     def test_gold_economy_through_rounds(self, auth_client):
         """Test that gold rewards match specification through all rounds"""
-        # Start new session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={"player_name": "test_player", "seed": 2}
         )
         data = response.json()
         player_id = data["player_id"]
