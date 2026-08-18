@@ -4,6 +4,7 @@ extends Control
 const BattleEventProcessor = preload("res://scripts/battle_event_processor.gd")
 const APITypes = preload("res://scripts/api_types.gd")
 const Presentation = preload("res://scripts/presentation.gd")
+const ROUND_RESULT_OVERLAY = preload("res://scenes/RoundResultOverlay.tscn")
 
 # Event processor for battle replay
 var event_processor
@@ -55,6 +56,9 @@ var enemy_health_bar: ProgressBar
 var enemy_stamina_bar: ProgressBar
 var enemy_health_label: Label
 var enemy_stamina_label: Label
+
+# The run scoreboard shown once the battle is over. Null until then.
+var round_result: Control = null
 
 # Battle effects
 
@@ -393,13 +397,26 @@ func _on_battle_ended(winner: int):
 	battle_active = false
 	# Log is handled by BattleEventProcessor
 
-	# Wait a moment then go to post-battle screen
-	await get_tree().create_timer(Presentation.delay(2.0)).timeout
+	# Let the last blow land before the result covers it.
+	await get_tree().create_timer(Presentation.delay(1.0)).timeout
 	# Leaving the screen during that wait frees this node while the coroutine is
-	# still suspended. Changing scene from a freed node crashes the engine.
+	# still suspended. Building the overlay on a freed node crashes the engine.
 	if not is_inside_tree():
 		return
-	_go_to_post_battle()
+	_show_round_result(winner == 1)
+
+
+func _show_round_result(won: bool):
+	"""Drop the run scoreboard over the finished battle.
+
+	The overlay reports the run rather than the round, and the server has
+	already applied this round to GameStateManager, so it is given the totals
+	from after it and works the animation out from there.
+	"""
+	round_result = ROUND_RESULT_OVERLAY.instantiate()
+	add_child(round_result)
+	round_result.continued.connect(_go_to_post_battle)
+	round_result.show_result(won, GameStateManager.wins, GameStateManager.player_lives)
 
 func _show_damage_number(player: int, amount: int):
 	if not Presentation.request("damage_number", {"player": player, "amount": amount}):

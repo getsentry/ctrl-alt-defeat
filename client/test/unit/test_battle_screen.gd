@@ -182,28 +182,34 @@ func test_skip_to_end_functionality():
 	pending("BattleScreen has no skip button.")
 
 func test_battle_result_display():
-	# BattleScreen shows no result itself. _on_battle_ended() waits 2 seconds and
-	# then changes to PostBattleScreen, which draws the result. Calling it here
-	# would swap the scene tree out from under the run, so check the routing.
-	# The result text is covered by test_post_battle_screen.gd.
+	# The result is drawn by the round result overlay, which _on_battle_ended()
+	# drops over the finished battle. Calling that here would swap the scene
+	# tree out from under the run, because with nothing to animate the overlay
+	# continues straight to the post-battle screen. So check the routing.
+	# What the overlay draws is covered by test_round_result_overlay.gd.
 	assert_true(battle_screen.has_method("_on_battle_ended"),
 		"Battle end should be handled")
+	assert_true(battle_screen.has_method("_show_round_result"),
+		"Battle end should show the run scoreboard")
+	assert_true(ResourceLoader.exists("res://scenes/RoundResultOverlay.tscn"),
+		"The overlay it shows should exist")
 	assert_true(battle_screen.has_method("_go_to_post_battle"),
-		"Battle end should lead to the post-battle screen")
+		"Reading the result should lead to the post-battle screen")
 	assert_true(ResourceLoader.exists("res://scenes/PostBattleScreen.tscn"),
 		"The post-battle screen it routes to should exist")
 
 func test_battle_ended_stops_playback():
-	# _on_battle_ended() sets battle_active = false, then waits 2 seconds and
-	# calls change_scene_to_file(). A test cannot call it: the scene swap fires
+	# _on_battle_ended() sets battle_active = false, then waits and shows the
+	# overlay, which changes scene. A test cannot call it: the scene swap fires
 	# later, during another test or teardown, and takes the engine down.
 	# Testing this needs the scene change split out of _on_battle_ended().
 	pending("_on_battle_ended() changes scene on a timer. Not safe to call in a test.")
 
 func test_continue_button_after_battle():
-	# There is no Continue button on BattleScreen. Moving on is automatic, via
-	# the scene change in _go_to_post_battle().
-	pending("BattleScreen has no Continue button. It changes scene automatically.")
+	# There is no Continue button on BattleScreen. The round result overlay
+	# waits for a click instead, and moves on by itself when there is no
+	# display to click on. Covered by test_round_result_overlay.gd.
+	pending("BattleScreen has no Continue button. The round result overlay waits for the click.")
 
 func test_inventory_display():
 	var p1_inventory = battle_screen.find_child("Player1Inventory", true, false)

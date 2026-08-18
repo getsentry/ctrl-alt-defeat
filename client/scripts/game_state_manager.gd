@@ -3,13 +3,18 @@ extends Node
 
 const APITypes = preload("res://scripts/api_types.gd")
 
+# The run, as section 6.3 of the Game Design Document sets it out: bank this
+# many wins and the run is won, spend this many tries and it is over.
+const WINS_TO_VICTORY := 10
+const STARTING_LIVES := 5
+
 # Player info
 var player_id: String = ""
 var player_name: String = "Player"
 
 # Game progression
 var current_round: int = 1
-var player_lives: int = 5  # Player has 5 lives/tries
+var player_lives: int = STARTING_LIVES  # Tries left in the run
 var player_health: int = 100  # Player's health (different from lives)
 var max_player_health: int = 100  # Maximum player health
 var battle_health: int = 25  # Health for the current battle (quota)
@@ -55,7 +60,7 @@ func start_new_game():
 	last_error = ""
 	is_connected = false
 	current_round = 1
-	player_lives = 5
+	player_lives = STARTING_LIVES
 	player_health = 100  # Reset player health
 	max_player_health = 100
 	battle_health = get_round_quota()  # Set based on round

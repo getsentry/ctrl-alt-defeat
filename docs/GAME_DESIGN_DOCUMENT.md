@@ -540,6 +540,30 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
 3. Battle ends when a player reaches 0 HP
 4. If time expires, player with more HP wins
 
+### 6.3 Round Result
+
+A round ends the moment one side reaches 0 HP, and its result is spent on the
+run rather than on the next battle.
+
+- **A win** banks one win. Bank **10** and the run is won.
+- **A loss** spends one try. The run starts with **5** tries, and ends when the
+  last one is spent.
+- Neither carries over into the next battle: both players start the next round
+  on that round's full health.
+
+The result is shown over the finished battle, not on a screen of its own, so
+the player reads the run against the battle that changed it. It shows:
+
+1. Which way the round went.
+2. **Wins**: one trophy per win the run is played for, lit up to the wins
+   banked.
+3. **Tries**: one heart per try the run starts with, lit down to the tries
+   left.
+
+The counters open on the totals from *before* the round and then move the one
+icon the round changed, so the player sees the trophy light up or the heart go
+out. The player clicks to move on to the post-battle screen.
+
 ## 7. Special Mechanics
 
 ### 7.1 Fatigue
