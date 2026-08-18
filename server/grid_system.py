@@ -62,7 +62,10 @@ EMPTY = "."
 AURA = {STAR: "star", DIAMOND: "diamond"}
 
 COVERED = FOOTPRINT + ANCHOR
-LEGAL = COVERED + STAR + DIAMOND + EMPTY
+# Squares an item reaches without covering. Held apart from COVERED because the
+# blank-edge check counts them and the footprint does not.
+REACHED = STAR + DIAMOND
+LEGAL = COVERED + REACHED + EMPTY
 
 
 class BadMap(ValueError):
@@ -116,7 +119,7 @@ def parse_map(rows: List[str], name: str) -> "ItemShape":
 
     # No blank edge, counting aura as drawn. Two maps of the same item should
     # be the same text, and a stray blank row would make them differ.
-    used = set(_cells(rows, COVERED + STAR + DIAMOND))
+    used = set(_cells(rows, COVERED + REACHED))
     if not used:
         raise BadMap(f"{name}: nothing drawn")
     if not any(y == 0 for _, y in used) or not any(y == len(rows) - 1 for _, y in used):

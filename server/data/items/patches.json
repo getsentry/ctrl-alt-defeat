@@ -177,6 +177,96 @@
       ],
       "slug": "system_restore",
       "icontype": "holy"
+    },
+    "lightning_in_a_bottle": {
+      "name": "Lightning in a Bottle",
+      "category": "patch",
+      "color": "yellow",
+      "pattern": "hatch_diag",
+      "class": "neutral",
+      "map": [
+        ".+.",
+        "+*+",
+        ".#.",
+        "+#+",
+        "+.+",
+        ".+."
+      ],
+      "source": "Lightning in a Bottle",
+      "rarity": "unique",
+      "cost": 7,
+      "triggers": [],
+      "slug": "lightning_in_a_bottle",
+      "in_shop": false,
+      "unbuilt": [
+        "After 2s-7s: Consume this and deal 10 Effect damage, inflict 10 Blind for 5s and for each {{Icon/diamond}} Holy-item, heal for 5."
+      ],
+      "sockets": 1,
+      "icontype": "treasure"
+    },
+    "strong_heroic_potion": {
+      "name": "Strong Heroic Potion",
+      "category": "patch",
+      "color": "yellow",
+      "pattern": "dot_small_stagger",
+      "class": "neutral",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Strong Heroic Potion",
+      "rarity": "legendary",
+      "cost": 9,
+      "triggers": [],
+      "slug": "strong_heroic_potion",
+      "in_shop": false,
+      "unbuilt": [
+        "Out of stamina: Consume this and regenerate 4 stamina and gain 1 Empower."
+      ]
+    },
+    "strong_stone_skin_potion": {
+      "name": "Strong Stone Skin Potion",
+      "category": "patch",
+      "color": "yellow",
+      "pattern": "chevron_up",
+      "class": "neutral",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Strong Stone Skin Potion",
+      "rarity": "legendary",
+      "cost": 9,
+      "triggers": [],
+      "slug": "strong_stone_skin_potion",
+      "in_shop": false,
+      "unbuilt": [
+        "45 Block reached: Consume this and convert 15 health to 35 Block and gain 2 Spikes for 4s."
+      ]
+    },
+    "vampiric_potion": {
+      "name": "Vampiric Potion",
+      "category": "patch",
+      "color": "yellow",
+      "pattern": "stripe_a_bold",
+      "class": "neutral",
+      "map": [
+        "*",
+        "^",
+        "#"
+      ],
+      "source": "Vampiric Potion",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [],
+      "slug": "vampiric_potion",
+      "in_shop": false,
+      "unbuilt": [
+        "Both characters drop below 80% health: Consume this and gain 3 Vampirism and deal 15 Effect-damage with 100% lifesteal."
+      ],
+      "icontype": "vampiric"
     }
   }
 }

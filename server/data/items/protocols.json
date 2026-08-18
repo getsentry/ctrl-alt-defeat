@@ -398,6 +398,865 @@
       ],
       "slug": "vampire_rootkit",
       "icontype": "vampiric"
+    },
+    "amulet_of_fortune": {
+      "name": "Amulet of Fortune",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "stripe_h_fine",
+      "class": "neutral",
+      "map": [
+        "***",
+        "*#*",
+        "***"
+      ],
+      "source": "Amulet of Fortune",
+      "rarity": "rare",
+      "cost": 6,
+      "triggers": [],
+      "slug": "amulet_of_fortune",
+      "in_shop": false,
+      "unbuilt": [
+        "Chance-based effects of the Star items are 15% more likely to trigger.",
+        "After 5s: Gain 2 buffs of the type of which you have the most."
+      ]
+    },
+    "amulet_of_light": {
+      "name": "Amulet of Light",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "hatch_ortho",
+      "class": "neutral",
+      "map": [
+        "...*...",
+        ".*.*.*.",
+        "..***..",
+        "***#***",
+        "..***..",
+        ".*.*.*.",
+        "...*..."
+      ],
+      "source": "Amulet of Light",
+      "rarity": "rare",
+      "cost": 6,
+      "triggers": [],
+      "slug": "amulet_of_light",
+      "in_shop": false,
+      "unbuilt": [
+        "Regeneration gained: Gain 3 maximum health.",
+        "Star item activates: 10% chance to gain 1 Regeneration, 30% if the item is Holy."
+      ],
+      "icontype": "holy"
+    },
+    "angel_crystal": {
+      "name": "Angel Crystal",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "chevron_right",
+      "class": "neutral",
+      "map": [
+        ".*...*.",
+        "**...**",
+        ".**#**.",
+        "..*#*.."
+      ],
+      "source": "Angel Crystal",
+      "rarity": "unique",
+      "cost": 6,
+      "triggers": [],
+      "slug": "angel_crystal",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 3 Regeneration + 2 Regeneration per Star Holy-item.",
+        "After 7s: Gain 3 Empower + 1 Empower per Star Holy-item.",
+        "Regeneration gained: Gain 4 maximum health."
+      ],
+      "icontype": "treasure,holy"
+    },
+    "bag_of_stones": {
+      "name": "Bag of Stones",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "stripe_d_fine",
+      "class": "neutral",
+      "map": [
+        "*",
+        "^",
+        "^"
+      ],
+      "source": "Bag of Stones",
+      "rarity": "rare",
+      "cost": 3,
+      "triggers": [],
+      "slug": "bag_of_stones",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Stones above can be thrown repeatedly."
+      ]
+    },
+    "blue_sage_collar": {
+      "name": "Blue Sage Collar",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "dot_small_grid",
+      "class": "sentaur",
+      "map": [
+        "***",
+        "*#*",
+        "***"
+      ],
+      "source": "Blue Sage Collar",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [],
+      "slug": "blue_sage_collar",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Weapon hits: 7% chance for each Luck to gain 3 Mana."
+      ],
+      "icontype": "magic, nature"
+    },
+    "boiling_pot": {
+      "name": "Boiling Pot",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "stripe_a_fine",
+      "class": "neutral",
+      "map": [
+        ".+..*",
+        "++##*",
+        "++##*",
+        ".+..*"
+      ],
+      "source": "Boiling Pot",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [],
+      "slug": "boiling_pot",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Potion triggered: Heal for 10 + 2 per Diamond Food.",
+        "After 15s: Gain 6Heat and 6Regeneration.",
+        "Triggers 50% faster for each Star Potion and Diamond Food."
+      ],
+      "sockets": 1
+    },
+    "djinn_lamp": {
+      "name": "Djinn Lamp",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "grid_fine",
+      "class": "neutral",
+      "map": [
+        "##*"
+      ],
+      "source": "Djinn Lamp",
+      "rarity": "godly",
+      "cost": 11,
+      "triggers": [],
+      "slug": "djinn_lamp",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 1.6s: Gain 1 Luck or 1 Spikes or 1 Mana, depending on what you have the least of.",
+        "Use 7 Block, 7 Luck, 7 Spikes, 7 Mana and 27 health: Give the Star Weapon +27 damage (once)."
+      ],
+      "icontype": "magic"
+    },
+    "fanfare": {
+      "name": "Fanfare",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "zigzag_h",
+      "class": "neutral",
+      "map": [
+        "....*.",
+        "...**.",
+        "###***",
+        "...**.",
+        "....*."
+      ],
+      "source": "Fanfare",
+      "rarity": "godly",
+      "cost": 7,
+      "triggers": [],
+      "slug": "fanfare",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3s: Randomly gain 1 Empower or gain 3 Mana and remove 2 Mana from opponent or remove 1 stamina from opponent.",
+        "Triggers 10% faster for each Star item."
+      ],
+      "icontype": "magic,musical"
+    },
+    "flute": {
+      "name": "Flute",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "wave_h",
+      "class": "neutral",
+      "map": [
+        ".....*",
+        "....**",
+        "###***",
+        "....**",
+        ".....*"
+      ],
+      "source": "Flute",
+      "rarity": "epic",
+      "cost": 6,
+      "triggers": [],
+      "slug": "flute",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 4.7s: Randomly gain 14 Block or 2 stamina or 2 Luck.",
+        "Triggers 10% faster for each Star item."
+      ],
+      "icontype": "magic, musical"
+    },
+    "furcifer_prime_subscription": {
+      "name": "Furcifer Prime Subscription",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "wave_v",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Furcifer Prime Subscription",
+      "rarity": "unique",
+      "cost": 5,
+      "triggers": [],
+      "slug": "furcifer_prime_subscription",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Pay 2 Gold fees. For the next shop:",
+        "Sales chance +10%. Crafted items are offered in the shop."
+      ]
+    },
+    "happy_bomb": {
+      "name": "Happy Bomb",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "brick_h",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Happy Bomb",
+      "rarity": "unique",
+      "cost": 7,
+      "triggers": [],
+      "slug": "happy_bomb",
+      "in_shop": false,
+      "unbuilt": [
+        "After 12s: Use all your buffs, your opponent takes +4% damage for each buff used. Deal 30 Effect-damage."
+      ],
+      "icontype": "treasure"
+    },
+    "heart_container": {
+      "name": "Heart Container",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "brick_v",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Heart Container",
+      "rarity": "godly",
+      "cost": 11,
+      "triggers": [],
+      "slug": "heart_container",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3s: Gain 1 Regeneration.",
+        "Use 7 Regeneration: Gain 100 maximum health, 2 Empower and your healing is increased by 15% (once)."
+      ],
+      "sockets": 1,
+      "icontype": "holy"
+    },
+    "heart_of_darkness": {
+      "name": "Heart of Darkness",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "scale",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Heart of Darkness",
+      "rarity": "godly",
+      "cost": 19,
+      "triggers": [],
+      "slug": "heart_of_darkness",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 4s: Steal 2 buffs, prioritizing Regeneration.",
+        "Triggers 20% faster for each Star Dark-item.",
+        "Use 7 Regeneration: Gain 100 maximum health, 4 Empower and your opponent's healing is reduced by 40% (once)."
+      ],
+      "sockets": 1,
+      "icontype": "dark"
+    },
+    "leaf_badge": {
+      "name": "Leaf Badge",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "triangle_up",
+      "class": "neutral",
+      "map": [
+        ".*.",
+        "*#*",
+        ".*."
+      ],
+      "source": "Leaf Badge",
+      "rarity": "unique",
+      "cost": 5,
+      "triggers": [],
+      "slug": "leaf_badge",
+      "in_shop": false,
+      "unbuilt": [
+        "Ranger items are offered in the shop.",
+        "Star items gain 2% critical hit chance for each Luck.",
+        "Every 2.2s: Gain 1 Luck."
+      ],
+      "icontype": "treasure"
+    },
+    "lucky_piggy": {
+      "name": "Lucky Piggy",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "triangle_down",
+      "class": "sentaur",
+      "map": [
+        ".*.",
+        "##*"
+      ],
+      "source": "Lucky Piggy",
+      "rarity": "epic",
+      "cost": 7,
+      "triggers": [],
+      "slug": "lucky_piggy",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Gain 1 Gold.",
+        "Start of battle: Gain 2 Luck.",
+        "Chance-based effects of the Star items are 12% more likely to trigger."
+      ]
+    },
+    "maneki_neko": {
+      "name": "Maneki-neko",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "diamond_stagger",
+      "class": "neutral",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Maneki-neko",
+      "rarity": "legendary",
+      "cost": 10,
+      "triggers": [],
+      "slug": "maneki_neko",
+      "in_shop": false,
+      "unbuilt": [
+        "Sale chance +3%.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Value of Star items > 20 Gold</font></div>",
+        "15% chance to resist critical hits.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Value of Star items > 40 Gold</font></div>",
+        "Godly and Unique items trigger 15% faster."
+      ],
+      "icontype": "holy"
+    },
+    "oil_lamp": {
+      "name": "Oil Lamp",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "cross_grid",
+      "class": "neutral",
+      "map": [
+        ".#",
+        "*#"
+      ],
+      "source": "Oil Lamp",
+      "rarity": "epic",
+      "cost": 7,
+      "triggers": [],
+      "slug": "oil_lamp",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 2 Heat.",
+        "Every 3.4s: The Star Weapon gains 1 damage and 5% accuracy."
+      ],
+      "icontype": "fire"
+    },
+    "platinum_customer_card": {
+      "name": "Platinum Customer Card",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "plus_grid",
+      "class": "neutral",
+      "map": [
+        "*.*",
+        ".#.",
+        "*.*"
+      ],
+      "source": "Platinum Customer Card",
+      "rarity": "epic",
+      "cost": 8,
+      "triggers": [],
+      "slug": "platinum_customer_card",
+      "in_shop": false,
+      "unbuilt": [
+        "Chance to find Treasure-items +30%.",
+        "You can obtain +1 Treasure-item.",
+        "25% chance for a Trade offer.",
+        "Start of battle: Reflect 2 debuffs for each Star Legendary, Godly or Unique item."
+      ]
+    },
+    "present": {
+      "name": "Present",
+      "category": "protocol",
+      "color": "green",
+      "pattern": "speckle",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Present",
+      "rarity": "unique",
+      "cost": 10,
+      "triggers": [],
+      "slug": "present",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Instead of gold, you receive items with a higher value.",
+        "Start of battle: Gain 5 random buffs."
+      ],
+      "icontype": "treasure"
+    },
+    "puzzle_badge": {
+      "name": "Puzzle Badge",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "solid",
+      "class": "neutral",
+      "map": [
+        ".*..",
+        "***.",
+        ".#**",
+        "***."
+      ],
+      "source": "Puzzle Badge",
+      "rarity": "unique",
+      "cost": 5,
+      "triggers": [],
+      "slug": "puzzle_badge",
+      "in_shop": false,
+      "unbuilt": [
+        "Star item triggers 20% slower.",
+        "After 5s: They trigger 50% faster instead.",
+        "Bag bought: 35% chance to restock with a Puzzlebag."
+      ],
+      "icontype": "treasure"
+    },
+    "rainbow_badge": {
+      "name": "Rainbow Badge",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "stripe_d_bold",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Rainbow Badge",
+      "rarity": "unique",
+      "cost": 5,
+      "triggers": [],
+      "slug": "rainbow_badge",
+      "in_shop": false,
+      "unbuilt": [
+        "Items of all classes are offered in the shop.",
+        "After 7s: Gain 1 of every type of buff."
+      ],
+      "icontype": "treasure"
+    },
+    "red_orchid_collar": {
+      "name": "Red Orchid Collar",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "dot_large_grid",
+      "class": "sentaur",
+      "map": [
+        "***",
+        "*#*",
+        "***"
+      ],
+      "source": "Red Orchid Collar",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [],
+      "slug": "red_orchid_collar",
+      "in_shop": false,
+      "unbuilt": [
+        "Star items steal 3% life for each Luck (up to 50%) and gain 4% critical chance for each Vampirism."
+      ],
+      "icontype": "vampiric, nature"
+    },
+    "repeater": {
+      "name": "Repeater",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "stripe_v_bold",
+      "class": "neutral",
+      "map": [
+        "*...*",
+        ".*#*.",
+        "*...*"
+      ],
+      "source": "Repeater",
+      "rarity": "unique",
+      "cost": 8,
+      "triggers": [],
+      "slug": "repeater",
+      "in_shop": false,
+      "unbuilt": [
+        "After 12s: Repeat the Start of battle effects of the Star items."
+      ],
+      "icontype": "treasure"
+    },
+    "rope": {
+      "name": "Rope",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "check_large",
+      "class": "neutral",
+      "map": [
+        "##+",
+        "*.."
+      ],
+      "source": "Rope",
+      "rarity": "rare",
+      "cost": 4,
+      "triggers": [],
+      "slug": "rope",
+      "in_shop": false,
+      "unbuilt": [
+        "Star item activates: The Diamond item triggers 10% faster for 6s (up to 50% shared by all ropes)"
+      ]
+    },
+    "shepherds_crook": {
+      "name": "Shepherds Crook",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "stripe_h_bold",
+      "class": "neutral",
+      "map": [
+        "##",
+        "#*",
+        "#*",
+        "#*",
+        "**"
+      ],
+      "source": "Shepherds Crook",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [],
+      "slug": "shepherds_crook",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Star Weapons gain 2 damage.",
+        "35% chance to protect your buffs from removal.",
+        "50% chance to resist Blind and Cold."
+      ]
+    },
+    "shiny_shell": {
+      "name": "Shiny Shell",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "hatch_diag",
+      "class": "neutral",
+      "map": [
+        "*#*"
+      ],
+      "source": "Shiny Shell",
+      "rarity": "common",
+      "cost": 2,
+      "triggers": [],
+      "slug": "shiny_shell",
+      "in_shop": false,
+      "unbuilt": [
+        "After 5s: Heal for 5 + 3 for each Star Holy-item."
+      ],
+      "icontype": "holy, nature"
+    },
+    "sir_sand": {
+      "name": "Sir Sand",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "dot_small_stagger",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Sir Sand",
+      "rarity": "epic",
+      "cost": 5,
+      "triggers": [],
+      "slug": "sir_sand",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of Battle: Both players take -25% damage for 7s (unstackable). Inflict 3 Blind to both players."
+      ]
+    },
+    "snowball": {
+      "name": "Snowball",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "stripe_a_bold",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Snowball",
+      "rarity": "epic",
+      "cost": 4,
+      "triggers": [],
+      "slug": "snowball",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Inflict 2 Cold.",
+        "Your opponent gains 15% less maximum health from items."
+      ],
+      "icontype": "ice"
+    },
+    "stable_recombobulator": {
+      "name": "Stable Recombobulator",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "rings",
+      "class": "neutral",
+      "map": [
+        "*.*.*",
+        ".***.",
+        "**#**",
+        ".***.",
+        "*.*.*"
+      ],
+      "source": "Stable Recombobulator",
+      "rarity": "unique",
+      "cost": 6,
+      "triggers": [],
+      "slug": "stable_recombobulator",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Consume Star items. Create different items based on the combined value.",
+        "Every 2.5s: Gain 1 random buff and cleanse 1 debuff."
+      ],
+      "icontype": "treasure, dark, magic"
+    },
+    "star_of_courage": {
+      "name": "Star of Courage",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "stripe_v_fine",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Star of Courage",
+      "rarity": "unique",
+      "cost": 1,
+      "triggers": [],
+      "slug": "star_of_courage",
+      "in_shop": false,
+      "unbuilt": [
+        "Chance to find Treasure-items +5%.",
+        "Your Weapons use -5% stamina.",
+        "(Rewarded for starting as a random character.)"
+      ]
+    },
+    "stone_badge": {
+      "name": "Stone Badge",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "dot_large_stagger",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Stone Badge",
+      "rarity": "unique",
+      "cost": 5,
+      "triggers": [],
+      "slug": "stone_badge",
+      "in_shop": false,
+      "unbuilt": [
+        "Your starting class items are no longer offered in the shop (even when this item is in storage).",
+        "Shop entered: Generate items worth 1 Gold.",
+        "Every 3s: Gain 4 Block."
+      ],
+      "icontype": "treasure"
+    },
+    "time_dilator": {
+      "name": "Time Dilator",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "check_small",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Time Dilator",
+      "rarity": "unique",
+      "cost": 8,
+      "triggers": [],
+      "slug": "time_dilator",
+      "in_shop": false,
+      "unbuilt": [
+        "Your and your opponent's Weapons attack 30% slower.",
+        "Every 1s: Your item with the highest cooldown triggers 6% faster."
+      ],
+      "icontype": "treasure"
+    },
+    "unidentified_amulet": {
+      "name": "Unidentified Amulet",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "hatch_ortho",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Unidentified Amulet",
+      "rarity": "rare",
+      "cost": 6,
+      "triggers": [],
+      "slug": "unidentified_amulet",
+      "in_shop": false,
+      "unbuilt": [
+        "On buy: Gain a random effect."
+      ]
+    },
+    "unstable_recombobulator": {
+      "name": "Unstable Recombobulator",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "chevron_right",
+      "class": "neutral",
+      "map": [
+        "*...*",
+        ".*.*.",
+        "..#..",
+        ".*.*.",
+        "*...*"
+      ],
+      "source": "Unstable Recombobulator",
+      "rarity": "epic",
+      "cost": 6,
+      "triggers": [],
+      "slug": "unstable_recombobulator",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Consume this and Star items. Create different items based on the combined value.",
+        "Every 4s: Gain 1 random buff and cleanse 1 debuff."
+      ],
+      "icontype": "dark, magic"
+    },
+    "walrus_tusk": {
+      "name": "Walrus Tusk",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "stripe_d_fine",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Walrus Tusk",
+      "rarity": "common",
+      "cost": 4,
+      "triggers": [],
+      "slug": "walrus_tusk",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 1 Spikes."
+      ],
+      "icontype": "nature"
+    },
+    "whetstone": {
+      "name": "Whetstone",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "dot_small_grid",
+      "class": "neutral",
+      "map": [
+        "*",
+        "#",
+        "*"
+      ],
+      "source": "Whetstone",
+      "rarity": "common",
+      "cost": 4,
+      "triggers": [],
+      "slug": "whetstone",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Star Weapons gain 1 damage."
+      ]
+    },
+    "white_lily_collar": {
+      "name": "White Lily Collar",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "stripe_a_fine",
+      "class": "sentaur",
+      "map": [
+        "***",
+        "*#*",
+        "***"
+      ],
+      "source": "White Lily Collar",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [],
+      "slug": "white_lily_collar",
+      "in_shop": false,
+      "unbuilt": [
+        "Star item activates: 22% chance to gain 1 Luck and 1 Regeneration.",
+        "Star item gains 1% critical hit chance for each Luck and Regeneration."
+      ],
+      "icontype": "holy, nature"
+    },
+    "wonky_snowman": {
+      "name": "Wonky Snowman",
+      "category": "protocol",
+      "color": "citron",
+      "pattern": "grid_fine",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Wonky Snowman",
+      "rarity": "epic",
+      "cost": 8,
+      "triggers": [],
+      "slug": "wonky_snowman",
+      "in_shop": false,
+      "unbuilt": [
+        "On Buy: Split into 2 Snowballs."
+      ],
+      "icontype": "ice"
     }
   }
 }

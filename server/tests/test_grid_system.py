@@ -74,6 +74,12 @@ class TestRefusingABadMap:
         with pytest.raises(BadMap, match="Trim"):
             parse_map(["..", "##"], "padded")
 
+    def test_aura_holds_the_map_open_to_its_own_edge(self):
+        """The blank-edge check counts every square the item reaches, not only
+        the ones it covers, or a map drawn around a one square item would be
+        trimmed down to the item and lose its reach."""
+        assert parse_map(["***", "*#*", "***"], "amulet").squares == [(0, 0)]
+
     def test_a_character_that_means_nothing(self):
         with pytest.raises(BadMap, match="not a character"):
             parse_map(["#?"], "typo")

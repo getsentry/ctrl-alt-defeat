@@ -125,3 +125,59 @@ class TestShopVisibility:
                 offered |= {i.item_type for i in generate_shop_items(1, seed) if i}
         assert hidden not in offered, "a hidden item should never reach the shop"
         assert len(offered) > 5, "the rest of the catalogue should still be offered"
+
+
+class TestItemsSetAside:
+    """`data/unavailable_items.json` holds items this game will never have.
+
+    Each exists to put another class's items in the shop, and those classes are
+    not being made, so there is nothing to build. They are kept rather than
+    deleted so a later scrape does not add them back, which means the one thing
+    worth testing is that keeping them cannot leak them into the game.
+    """
+
+    @staticmethod
+    def _set_aside() -> dict:
+        import json
+        from pathlib import Path
+
+        path = Path(__file__).parent.parent / "data" / "unavailable_items.json"
+        return json.loads(path.read_text())
+
+    def test_it_sits_outside_the_directory_the_loader_reads(self):
+        """ConfigLoader globs data/items/*.json. A file in there is loaded, so
+        this one has to be a sibling of that directory rather than inside it."""
+        from pathlib import Path
+
+        data = Path(__file__).parent.parent / "data"
+        assert (data / "unavailable_items.json").exists()
+        assert not list((data / "items").glob("unavailable*.json"))
+
+    def test_there_are_some(self):
+        # Six class badges. If this finds none, the tests below pass without
+        # checking anything.
+        assert len(self._set_aside()["items"]) >= 6
+
+    def test_each_one_says_why(self):
+        for item_id, config in self._set_aside()["items"].items():
+            why = config.get("why", "")
+            assert len(why) > 20, f"{item_id} is set aside but does not say why"
+
+    def test_none_of_them_is_in_the_catalogue(self):
+        from config_loader import config_loader
+
+        loaded = set(config_loader.items) | set(config_loader.containers)
+        clashes = sorted(set(self._set_aside()["items"]) & loaded)
+        assert not clashes, f"{clashes} are set aside and loaded anyway"
+
+    def test_the_shop_never_offers_one(self):
+        from main import generate_shop_items
+
+        set_aside = set(self._set_aside()["items"])
+        offered = {
+            offer.item_type
+            for seed in range(200)
+            for offer in generate_shop_items(1, seed)
+            if offer
+        }
+        assert not (offered & set_aside), f"the shop offered {offered & set_aside}"

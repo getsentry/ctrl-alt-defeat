@@ -364,6 +364,132 @@
         }
       ],
       "slug": "security_module"
+    },
+    "burning_coal": {
+      "name": "Burning Coal",
+      "category": "module",
+      "color": "orange",
+      "pattern": "stripe_h_fine",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Burning Coal",
+      "rarity": "rare",
+      "cost": 2,
+      "triggers": [],
+      "slug": "burning_coal",
+      "in_shop": false,
+      "unbuilt": [
+        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "On hit: 12% chance to deal +6 damage and gain 1 Heat.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "Start of battle: Gain 12 Block.",
+        "Resist 7 Cold.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "After 5s: Gain 2 Heat, cleanse 3 debuffs."
+      ],
+      "icontype": "fire"
+    },
+    "corrupted_crystal": {
+      "name": "Corrupted Crystal",
+      "category": "module",
+      "color": "orange",
+      "pattern": "hatch_ortho",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Corrupted Crystal",
+      "rarity": "epic",
+      "cost": 7,
+      "triggers": [],
+      "slug": "corrupted_crystal",
+      "in_shop": false,
+      "unbuilt": [
+        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "Opponent below 30% health: Deal +50% damage.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "7 debuffs inflicted: Gain 6 Block.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "Every 3.9s: Inflict Fatigue damage."
+      ],
+      "icontype": "dark"
+    },
+    "lump_of_coal": {
+      "name": "Lump of Coal",
+      "category": "module",
+      "color": "orange",
+      "pattern": "chevron_right",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Lump of Coal",
+      "rarity": "common",
+      "cost": 2,
+      "triggers": [],
+      "slug": "lump_of_coal",
+      "in_shop": false,
+      "unbuilt": [
+        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "On attack: 70% chance to deal +1 damage.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "Start of battle: Gain 8 Block.",
+        "Resist 1 debuff.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "After 3s: Gain a random buff, inflict a random debuff."
+      ]
+    },
+    "tim": {
+      "name": "Tim",
+      "category": "module",
+      "color": "orange",
+      "pattern": "stripe_d_fine",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Tim",
+      "rarity": "unique",
+      "cost": 10,
+      "triggers": [],
+      "slug": "tim",
+      "in_shop": false,
+      "unbuilt": [
+        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "On hit: 50% chance to steal a random buff.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "25% chance to resist debuffs or critical hits.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "Opponent drops below 30%: Heal for 50 and gain 5 Empower."
+      ],
+      "icontype": "treasure, dark"
+    },
+    "wisp": {
+      "name": "Wisp",
+      "category": "module",
+      "color": "orange",
+      "pattern": "dot_small_grid",
+      "class": "sentaur",
+      "map": [
+        "#"
+      ],
+      "source": "Wisp",
+      "rarity": "godly",
+      "cost": 8,
+      "triggers": [],
+      "slug": "wisp",
+      "in_shop": false,
+      "unbuilt": [
+        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "30 damage dealt: Gain 1 Spikes.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "After 5s: Gain 35% of your current health as maximum health.",
+        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "After 12s: Gain 10 Luck and 10 Regeneration. Triggers 10% faster for each Star Nature-item."
+      ],
+      "icontype": "nature"
     }
   }
 }

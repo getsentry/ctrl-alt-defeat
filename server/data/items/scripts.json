@@ -222,6 +222,28 @@
       ],
       "slug": "cryogenic_cooling_system",
       "icontype": "treasure, ice"
+    },
+    "cupcake": {
+      "name": "Cupcake",
+      "category": "script",
+      "color": "lime",
+      "pattern": "dot_small_stagger",
+      "class": "neutral",
+      "map": [
+        ".*.",
+        "*#*",
+        ".*."
+      ],
+      "source": "Cupcake",
+      "rarity": "legendary",
+      "cost": 5,
+      "triggers": [],
+      "slug": "cupcake",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 6s: Heal for 10 and gain 2 buffs of the type of which you have the most."
+      ],
+      "icontype": "magic"
     }
   }
 }

@@ -198,6 +198,408 @@
       ],
       "slug": "adaptive_mesh_armor",
       "sockets": 2
+    },
+    "cap_of_discomfort": {
+      "name": "Cap of Discomfort",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "hatch_diag",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Cap of Discomfort",
+      "rarity": "legendary",
+      "cost": 14,
+      "triggers": [],
+      "slug": "cap_of_discomfort",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Reduce damage taken by 25% for 5s.",
+        "Opponent gains buff: 15% chance to nullify it.",
+        "Your opponent's healing is reduced by 30%."
+      ],
+      "sockets": 1,
+      "icontype": "dark"
+    },
+    "cap_of_resilience": {
+      "name": "Cap of Resilience",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "dot_small_stagger",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Cap of Resilience",
+      "rarity": "epic",
+      "cost": 7,
+      "triggers": [],
+      "slug": "cap_of_resilience",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Reduce damage taken by 25% for 3s.",
+        "15% chance to resist critical hits.",
+        "15% chance to resist stuns."
+      ],
+      "sockets": 1
+    },
+    "gloves_of_power": {
+      "name": "Gloves of Power",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "chevron_up",
+      "class": "neutral",
+      "map": [
+        "*##*"
+      ],
+      "source": "Gloves of Power",
+      "rarity": "legendary",
+      "cost": 10,
+      "triggers": [],
+      "slug": "gloves_of_power",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Weapons deal +20% damage but attack 10% slower.",
+        "Star Weapon hits: gain 7 Block."
+      ]
+    },
+    "glowing_crown": {
+      "name": "Glowing Crown",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "stripe_a_bold",
+      "class": "neutral",
+      "map": [
+        "##"
+      ],
+      "source": "Glowing Crown",
+      "rarity": "godly",
+      "cost": 12,
+      "triggers": [],
+      "slug": "glowing_crown",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 2.4s: Cleanse 1 Blind and heal for 5.",
+        "Use 10 Mana: Become invulnerable for 2s (once)."
+      ],
+      "sockets": 1,
+      "icontype": "holy, magic"
+    },
+    "gold_armor": {
+      "name": "Gold Armor",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "rings",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Gold Armor",
+      "rarity": "godly",
+      "cost": 22,
+      "triggers": [],
+      "slug": "gold_armor",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Gain 3 Gold.",
+        "Start of battle: Gain 120 Block. Gain 3 Regeneration for each Star Holy-item.",
+        "Every 2.2s: Cleanse 5 debuffs. If you have no debuffs, gain 25 Block.",
+        "Your Weapons attack 50% slower."
+      ],
+      "sockets": 3,
+      "icontype": "holy"
+    },
+    "king_crown": {
+      "name": "King Crown",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "stripe_v_fine",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "King Crown",
+      "rarity": "godly",
+      "cost": 17,
+      "triggers": [],
+      "slug": "king_crown",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 2.4s: Heal for 8 and protect 1 buff from removal.",
+        "Use 10 Mana: Become invulnerable for 2.5s (once).",
+        "Effects of Gemstones socketed in this are increased by 50%."
+      ],
+      "sockets": 2,
+      "icontype": "holy, magic"
+    },
+    "leather_boots": {
+      "name": "Leather Boots",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "dot_large_stagger",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Leather Boots",
+      "rarity": "epic",
+      "cost": 6,
+      "triggers": [],
+      "slug": "leather_boots",
+      "in_shop": false,
+      "unbuilt": [
+        "Health drops below 70%: Gain 1 Luck, 1 Empower and 15 Block (once)."
+      ],
+      "sockets": 1
+    },
+    "moon_armor": {
+      "name": "Moon Armor",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "check_small",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Moon Armor",
+      "rarity": "godly",
+      "cost": 19,
+      "triggers": [],
+      "slug": "moon_armor",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 50 Block + 20 Block for each Star Magic-item.",
+        "Every 2.6s: Gain 3 Mana and reflect 2 debuffs."
+      ],
+      "sockets": 3,
+      "icontype": "holy, magic"
+    },
+    "moon_shield": {
+      "name": "Moon Shield",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "stripe_h_fine",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Moon Shield",
+      "rarity": "godly",
+      "cost": 18,
+      "triggers": [],
+      "slug": "moon_shield",
+      "in_shop": false,
+      "unbuilt": [
+        "Star items give +30% Block.",
+        "Star items gained 12 Block: Gain 1 Mana.",
+        "On attacked (Melee/Ranged): 30% chance to prevent 12 damage and remove 0.7 stamina from your opponent."
+      ],
+      "sockets": 2,
+      "icontype": "holy, magic"
+    },
+    "pine_protector": {
+      "name": "Pine Protector",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "hatch_ortho",
+      "class": "neutral",
+      "map": [
+        ".*..*.",
+        "*.**.*",
+        ".*##*.",
+        ".*##*.",
+        "*.**.*",
+        ".*..*."
+      ],
+      "source": "Pine Protector",
+      "rarity": "godly",
+      "cost": 14,
+      "triggers": [],
+      "slug": "pine_protector",
+      "in_shop": false,
+      "unbuilt": [
+        "On attacked (Melee): 30% chance to prevent 10 damage, remove 0.3 stamina from your opponent, and gain 1 Spikes (up to 5 + 1 per Star Food).",
+        "Star Food activates: Prevent +1 damage (up to +10) and heal for 8."
+      ],
+      "sockets": 1,
+      "icontype": "nature"
+    },
+    "shield_of_valor": {
+      "name": "Shield of Valor",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "chevron_right",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Shield of Valor",
+      "rarity": "legendary",
+      "cost": 11,
+      "triggers": [],
+      "slug": "shield_of_valor",
+      "in_shop": false,
+      "unbuilt": [
+        "StarItems give 30% more Block.",
+        "On attacked (Melee): 30% chance to prevent 14 damage and remove 0.7 stamina from opponent."
+      ],
+      "sockets": 2,
+      "icontype": "holy"
+    },
+    "stone_armor": {
+      "name": "Stone Armor",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "stripe_d_fine",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##",
+        "##"
+      ],
+      "source": "Stone Armor",
+      "rarity": "legendary",
+      "cost": 13,
+      "triggers": [],
+      "slug": "stone_armor",
+      "in_shop": false,
+      "unbuilt": [
+        "Items use +20% stamina.",
+        "Start of battle: Gain 120 Block.",
+        "Every 4s: Remove 1 Spikes and 2 Empower from opponent.",
+        "Health drops below 50%: Gain Block equal to 40% of your missing health (once)."
+      ],
+      "sockets": 2
+    },
+    "stone_helm": {
+      "name": "Stone Helm",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "dot_small_grid",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Stone Helm",
+      "rarity": "legendary",
+      "cost": 13,
+      "triggers": [],
+      "slug": "stone_helm",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Reduce damage taken by 25% for 5s and gain 35 Block.",
+        "30% chance to resist critical hits.",
+        "40% chance to resist stuns."
+      ],
+      "sockets": 1
+    },
+    "stone_shoes": {
+      "name": "Stone Shoes",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "stripe_a_fine",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Stone Shoes",
+      "rarity": "legendary",
+      "cost": 12,
+      "triggers": [],
+      "slug": "stone_shoes",
+      "in_shop": false,
+      "unbuilt": [
+        "Health drops below 70%: Gain 1 Luck, 1 Empower, and 45 Block. Reduce Ranged/Effect-damage taken by 35% for 7s (once)."
+      ],
+      "sockets": 1
+    },
+    "vampiric_armor": {
+      "name": "Vampiric Armor",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "grid_bold",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##",
+        "##"
+      ],
+      "source": "Vampiric Armor",
+      "rarity": "legendary",
+      "cost": 15,
+      "triggers": [],
+      "slug": "vampiric_armor",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Convert 50 health into 100 Block and gain 5 Vampirism.",
+        "Every 2.8s: Convert 10 health into 20 Block."
+      ],
+      "sockets": 2,
+      "icontype": "vampiric"
+    },
+    "vampiric_gloves": {
+      "name": "Vampiric Gloves",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "grid_fine",
+      "class": "neutral",
+      "map": [
+        "*##*"
+      ],
+      "source": "Vampiric Gloves",
+      "rarity": "godly",
+      "cost": 12,
+      "triggers": [],
+      "slug": "vampiric_gloves",
+      "in_shop": false,
+      "unbuilt": [
+        "After 4s: Gain 5 Vampirism, Star items trigger 35% faster."
+      ],
+      "icontype": "vampiric"
+    },
+    "winged_boots": {
+      "name": "Winged Boots",
+      "category": "defense",
+      "color": "blue",
+      "pattern": "zigzag_h",
+      "class": "neutral",
+      "map": [
+        "##",
+        ".#"
+      ],
+      "source": "Winged Boots",
+      "rarity": "godly",
+      "cost": 13,
+      "triggers": [],
+      "slug": "winged_boots",
+      "in_shop": false,
+      "unbuilt": [
+        "Health drops below 70%: Gain 1 Empower, cleanse 15 debuffs and dodge the next 3 Melee/Ranged-attacks (once)."
+      ],
+      "sockets": 1
     }
   }
 }

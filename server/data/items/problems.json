@@ -752,6 +752,1693 @@
       "slug": "plasma_edge",
       "sockets": 1,
       "icontype": "melee"
+    },
+    "rage_click": {
+      "name": "Rage Click",
+      "category": "problem",
+      "color": "red",
+      "pattern": "stripe_a_fine",
+      "class": "neutral",
+      "map": [
+        "*",
+        "#",
+        "*"
+      ],
+      "source": "Artifact Stone: Cold",
+      "rarity": "unique",
+      "cost": 10,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 4,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "rage_click",
+      "in_shop": false,
+      "unbuilt": [
+        "Can only be thrown once per battle.",
+        "On hit: Inflict 3 Cold.",
+        "Star Weapon hits: Inflict 1 Cold."
+      ],
+      "icontype": "treasure, ice, ranged"
+    },
+    "thermal_throttle": {
+      "name": "Thermal Throttle",
+      "category": "problem",
+      "color": "red",
+      "pattern": "grid_bold",
+      "class": "neutral",
+      "map": [
+        "*",
+        "#",
+        "*"
+      ],
+      "source": "Artifact Stone: Heat",
+      "rarity": "unique",
+      "cost": 9,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 6,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "thermal_throttle",
+      "in_shop": false,
+      "unbuilt": [
+        "Can only be thrown once per battle.",
+        "On hit: Gain 3 Heat.",
+        "10 Heat reached: Star Weapons gain 8 damage."
+      ],
+      "icontype": "treasure, fire, ranged"
+    },
+    "credential_harvester": {
+      "name": "Credential Harvester",
+      "category": "problem",
+      "color": "red",
+      "pattern": "grid_fine",
+      "class": "neutral",
+      "map": [
+        "###",
+        "#**",
+        "#**",
+        "#**"
+      ],
+      "source": "Blood Harvester",
+      "rarity": "unique",
+      "cost": 7,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 10,
+              "max_damage": 16,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "credential_harvester",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Items give +100% Vampirism.",
+        "Attacks 5% faster for every Vampirism."
+      ],
+      "sockets": 3,
+      "icontype": "treasure, vampiric, melee"
+    },
+    "bloodthorne": {
+      "name": "Bloodthorne",
+      "category": "problem",
+      "color": "red",
+      "pattern": "zigzag_h",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Bloodthorne",
+      "rarity": "godly",
+      "cost": 15,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.6,
+          "cpu_cost": 1.5,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 8,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "bloodthorne",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Use 1 Regeneration to gain 1 Vampirism and 1 Spikes.",
+        "Deals +1 damage per Spikes and Vampirism."
+      ],
+      "sockets": 2,
+      "icontype": "vampiric, nature, melee"
+    },
+    "bloody_dagger": {
+      "name": "Bloody Dagger",
+      "category": "problem",
+      "color": "red",
+      "pattern": "zigzag_v",
+      "class": "neutral",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Bloody Dagger",
+      "rarity": "legendary",
+      "cost": 12,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.1,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 5,
+              "max_damage": 7,
+              "accuracy": 0.95
+            }
+          ]
+        }
+      ],
+      "slug": "bloody_dagger",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Gain 1 Vampirism (up to 5 per battle). Heal 4 per Star Vampiric-item.",
+        "On stun: Triggers extra attack."
+      ],
+      "sockets": 1,
+      "icontype": "vampiric, melee"
+    },
+    "broom": {
+      "name": "Broom",
+      "category": "problem",
+      "color": "red",
+      "pattern": "wave_h",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Broom",
+      "rarity": "common",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.7,
+          "cpu_cost": 1.2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 4,
+              "accuracy": 0.95
+            }
+          ]
+        }
+      ],
+      "slug": "broom",
+      "in_shop": false,
+      "unbuilt": [
+        "Opponent misses attack: Gain +2 damage for the next attack.",
+        "On hit: 33% chance to inflict 1 Blind."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "burning_torch": {
+      "name": "Burning Torch",
+      "category": "problem",
+      "color": "red",
+      "pattern": "wave_v",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Burning Torch",
+      "rarity": "epic",
+      "cost": 5,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.4,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 3,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "burning_torch",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 2 Heat.",
+        "On hit: 30% chance to gain 1 damage."
+      ],
+      "sockets": 1,
+      "icontype": "fire, melee"
+    },
+    "claws_of_attack": {
+      "name": "Claws of Attack",
+      "category": "problem",
+      "color": "red",
+      "pattern": "brick_h",
+      "class": "neutral",
+      "map": [
+        "##"
+      ],
+      "source": "Claws of Attack",
+      "rarity": "epic",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.6,
+          "cpu_cost": 0.5,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 5,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "claws_of_attack",
+      "in_shop": false,
+      "unbuilt": [
+        "After 4 hits, gain 1 Empower.",
+        "Attacks 5% faster for every Spikes."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "crossblades": {
+      "name": "Crossblades",
+      "category": "problem",
+      "color": "red",
+      "pattern": "brick_v",
+      "class": "neutral",
+      "map": [
+        ".*..",
+        ".#..",
+        "###+",
+        ".#.."
+      ],
+      "source": "Crossblades",
+      "rarity": "godly",
+      "cost": 30,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.4,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 11,
+              "accuracy": 1.0
+            }
+          ]
+        }
+      ],
+      "slug": "crossblades",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: The Star Weapon gains 10 damage. The Diamond item triggers 65% faster.",
+        "On hit: Gain 1 damage and attack 4% faster."
+      ],
+      "sockets": 3,
+      "icontype": "melee"
+    },
+    "dancing_dragon": {
+      "name": "Dancing Dragon",
+      "category": "problem",
+      "color": "red",
+      "pattern": "scale",
+      "class": "neutral",
+      "map": [
+        "..***.",
+        ".*###*",
+        "*###*.",
+        ".***.."
+      ],
+      "source": "Dancing Dragon",
+      "rarity": "unique",
+      "cost": 9,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.2,
+          "cpu_cost": 2.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 15,
+              "max_damage": 20,
+              "accuracy": 0.85
+            }
+          ]
+        }
+      ],
+      "slug": "dancing_dragon",
+      "in_shop": false,
+      "unbuilt": [
+        "You have a 2% chance to resist debuffs for each Luck.",
+        "Start of battle: Gain 2 Heat and 2 Luck for each Star Magic-item.",
+        "Deals +0.5 damage per Heat."
+      ],
+      "sockets": 2,
+      "icontype": "treasure, fire, ranged"
+    },
+    "darksaber": {
+      "name": "Darksaber",
+      "category": "problem",
+      "color": "red",
+      "pattern": "triangle_up",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Darksaber",
+      "rarity": "godly",
+      "cost": 16,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.5,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 12,
+              "max_damage": 17,
+              "accuracy": 0.95
+            }
+          ]
+        }
+      ],
+      "slug": "darksaber",
+      "in_shop": false,
+      "unbuilt": [
+        "On attack: Use 1 Mana to inflict 1 Blind.",
+        "Deals +0.5 damage for each debuff of your opponent."
+      ],
+      "sockets": 2,
+      "icontype": "dark, melee"
+    },
+    "eggscalibur": {
+      "name": "Eggscalibur",
+      "category": "problem",
+      "color": "red",
+      "pattern": "triangle_down",
+      "class": "neutral",
+      "map": [
+        "..***",
+        ".*##*",
+        "*##*.",
+        "***.."
+      ],
+      "source": "Eggscalibur",
+      "rarity": "legendary",
+      "cost": 10,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.6,
+          "cpu_cost": 1.3,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 9,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "eggscalibur",
+      "in_shop": false,
+      "unbuilt": [
+        "On attack: Use 11 Mana: Trigger all Star Food.",
+        "Deals +1 damage for each Star Food."
+      ],
+      "sockets": 2,
+      "icontype": "holy, magic, melee"
+    },
+    "falcon_blade": {
+      "name": "Falcon Blade",
+      "category": "problem",
+      "color": "red",
+      "pattern": "diamond_grid",
+      "class": "neutral",
+      "map": [
+        "..*..",
+        ".*#*.",
+        ".*#*.",
+        "**#**",
+        "..*.."
+      ],
+      "source": "Falcon Blade",
+      "rarity": "legendary",
+      "cost": 15,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.7,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 5,
+              "accuracy": 1.0
+            }
+          ]
+        }
+      ],
+      "slug": "falcon_blade",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Star items trigger 40% faster.",
+        "Attacks twice."
+      ],
+      "sockets": 2,
+      "icontype": "melee"
+    },
+    "fancy_fencing_rapier": {
+      "name": "Fancy Fencing Rapier",
+      "category": "problem",
+      "color": "red",
+      "pattern": "diamond_stagger",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Fancy Fencing Rapier",
+      "rarity": "godly",
+      "cost": 12,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.4,
+          "cpu_cost": 0.8,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 10,
+              "max_damage": 16,
+              "accuracy": 0.6
+            }
+          ]
+        }
+      ],
+      "slug": "fancy_fencing_rapier",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Use 3 Luck to gain 3 damage.",
+        "On miss: Gain 3 Luck."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "frostbite": {
+      "name": "Frostbite",
+      "category": "problem",
+      "color": "red",
+      "pattern": "cross_grid",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Frostbite",
+      "rarity": "legendary",
+      "cost": 11,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.7,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 7,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "frostbite",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 45% chance to inflict 1 Cold.",
+        "Opponent reaches 30 Cold: Gain 12 Vampirism (once).",
+        "Deals +1 damage per Vampirism and +0.4 per Cold of your opponent."
+      ],
+      "sockets": 2,
+      "icontype": "ice, vampiric, melee"
+    },
+    "hammer": {
+      "name": "Hammer",
+      "category": "problem",
+      "color": "red",
+      "pattern": "plus_grid",
+      "class": "neutral",
+      "map": [
+        "###",
+        ".#.",
+        ".#."
+      ],
+      "source": "Hammer",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.0,
+          "cpu_cost": 3.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 10,
+              "max_damage": 13,
+              "accuracy": 0.75
+            }
+          ]
+        }
+      ],
+      "slug": "hammer",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 45% chance to stun your opponent for 0.5s."
+      ],
+      "sockets": 2,
+      "icontype": "melee"
+    },
+    "hero_longsword": {
+      "name": "Hero Longsword",
+      "category": "problem",
+      "color": "red",
+      "pattern": "speckle",
+      "class": "neutral",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Hero Longsword",
+      "rarity": "legendary",
+      "cost": 19,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.6,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 10,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "hero_longsword",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Star Weapons gain 3 damage."
+      ],
+      "sockets": 2,
+      "icontype": "melee"
+    },
+    "hero_sword": {
+      "name": "Hero Sword",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "solid",
+      "class": "neutral",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Hero Sword",
+      "rarity": "epic",
+      "cost": 7,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.4,
+          "cpu_cost": 0.7,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 4,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "hero_sword",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Star Weapons gain 1 damage."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "holy_spear": {
+      "name": "Holy Spear",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "stripe_d_bold",
+      "class": "neutral",
+      "map": [
+        ".*.",
+        ".*.",
+        ".*.",
+        "***",
+        ".*.",
+        ".#.",
+        ".#.",
+        ".#.",
+        ".#."
+      ],
+      "source": "Holy Spear",
+      "rarity": "godly",
+      "cost": 18,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.8,
+          "cpu_cost": 0.4,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 10,
+              "max_damage": 15,
+              "accuracy": 2.0
+            }
+          ]
+        }
+      ],
+      "slug": "holy_spear",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Destroy 10 Block and cleanse 1 debuff for each Star free slot or Holy-item.",
+        "Use 10 Mana: Become invulnerable and attack 100% faster for 3s (once)."
+      ],
+      "sockets": 2,
+      "icontype": "holy, magic, melee"
+    },
+    "hungry_blade": {
+      "name": "Hungry Blade",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "dot_large_grid",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Hungry Blade",
+      "rarity": "epic",
+      "cost": 7,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.6,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 3,
+              "max_damage": 6,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "hungry_blade",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 1 Vampirism.",
+        "On hit: Use 1 Regeneration to gain 1 Vampirism.",
+        "Deals +1 maximum damage per Vampirism."
+      ],
+      "sockets": 1,
+      "icontype": "vampiric, melee"
+    },
+    "impractically_large_greatsword": {
+      "name": "Impractically Large Greatsword",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "stripe_v_bold",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##",
+        "##",
+        "#."
+      ],
+      "source": "Impractically Large Greatsword",
+      "rarity": "godly",
+      "cost": 14,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 5.0,
+          "cpu_cost": 5.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 40,
+              "max_damage": 50,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "impractically_large_greatsword",
+      "in_shop": false,
+      "unbuilt": [
+        "While you have at least 5 Empower, decrease stamina usage to 2 and cooldown to 2s."
+      ],
+      "sockets": 4,
+      "icontype": "melee"
+    },
+    "katana": {
+      "name": "Katana",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "check_large",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Katana",
+      "rarity": "godly",
+      "cost": 11,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.5,
+          "cpu_cost": 1.3,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 10,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "katana",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Remove 1 damage gained in battle from all opponent Weapons and gain 1 damage. If your opponent has at least 20 buffs, remove 2 of the type they have the most of."
+      ],
+      "sockets": 3,
+      "icontype": "melee"
+    },
+    "lightsaber": {
+      "name": "Lightsaber",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "stripe_h_bold",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Lightsaber",
+      "rarity": "godly",
+      "cost": 9,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.5,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 12,
+              "accuracy": 0.95
+            }
+          ]
+        }
+      ],
+      "slug": "lightsaber",
+      "in_shop": false,
+      "unbuilt": [
+        "Use 3 Regeneration: Inflict 8 Blind for 6s (unstackable).",
+        "Deals +1 damage for each Blind of your opponent."
+      ],
+      "sockets": 2,
+      "icontype": "holy, melee"
+    },
+    "magic_staff": {
+      "name": "Magic Staff",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "hatch_diag",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Magic Staff",
+      "rarity": "epic",
+      "cost": 10,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.8,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 6,
+              "max_damage": 8,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "magic_staff",
+      "in_shop": false,
+      "unbuilt": [
+        "On attack: Use 3 Mana to deal +6 damage and gain 2 damage."
+      ],
+      "sockets": 1,
+      "icontype": "magic, ranged"
+    },
+    "magic_torch": {
+      "name": "Magic Torch",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "dot_small_stagger",
+      "class": "neutral",
+      "map": [
+        "*#*",
+        ".#."
+      ],
+      "source": "Magic Torch",
+      "rarity": "legendary",
+      "cost": 11,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.4,
+          "cpu_cost": 0.7,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 3,
+              "max_damage": 6,
+              "accuracy": 2.0
+            }
+          ]
+        }
+      ],
+      "slug": "magic_torch",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Use 1 Mana: This and Star Weapons gain 1 damage."
+      ],
+      "sockets": 1,
+      "icontype": "magic, fire, melee"
+    },
+    "manathirst": {
+      "name": "Manathirst",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "chevron_up",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Manathirst",
+      "rarity": "legendary",
+      "cost": 13,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.4,
+          "cpu_cost": 0.5,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 5,
+              "max_damage": 7,
+              "accuracy": 2.0
+            }
+          ]
+        }
+      ],
+      "slug": "manathirst",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Gain 2 Mana.",
+        "30 Mana gained: Deal 10 Effect-damage with 100% lifesteal. Deal +1 for each Vampirism."
+      ],
+      "sockets": 1,
+      "icontype": "magic, vampiric, melee"
+    },
+    "stack_smasher": {
+      "name": "Stack Smasher",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "stripe_a_bold",
+      "class": "neutral",
+      "map": [
+        "..*.",
+        ".*#*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Pan",
+      "rarity": "common",
+      "cost": 4,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.2,
+          "cpu_cost": 2.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 5,
+              "max_damage": 6,
+              "accuracy": 0.85
+            }
+          ]
+        }
+      ],
+      "slug": "stack_smasher",
+      "in_shop": false,
+      "unbuilt": [
+        "Deals +1 damage for each Star Food."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "pandamonium": {
+      "name": "Pandamonium",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "rings",
+      "class": "neutral",
+      "map": [
+        "..**.",
+        ".****",
+        "*****",
+        "*###*"
+      ],
+      "source": "Pandamonium",
+      "rarity": "legendary",
+      "cost": 11,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.0,
+          "cpu_cost": 0.7,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 9,
+              "max_damage": 11,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "pandamonium",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Food activates: Inflict 1 Poison.",
+        "Poison on your opponent has 4% critical hit chance per Star Food."
+      ],
+      "sockets": 2,
+      "icontype": "dark, melee"
+    },
+    "poison_dagger": {
+      "name": "Poison Dagger",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "stripe_v_fine",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Poison Dagger",
+      "rarity": "epic",
+      "cost": 11,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.9,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 5,
+              "max_damage": 7,
+              "accuracy": 0.95
+            }
+          ]
+        }
+      ],
+      "slug": "poison_dagger",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Inflict 2 Poison.",
+        "On stun: Triggers extra attack."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "poison_spear": {
+      "name": "Poison Spear",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "dot_large_stagger",
+      "class": "neutral",
+      "map": [
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Poison Spear",
+      "rarity": "legendary",
+      "cost": 13,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.5,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 9,
+              "max_damage": 14,
+              "accuracy": 0.85
+            }
+          ]
+        }
+      ],
+      "slug": "poison_spear",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Inflict 3 Poison and 2 Poison to yourself. Destroy 6 Block for each Star free slot or Nature-item."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "pop": {
+      "name": "Pop",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "check_small",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Pop",
+      "rarity": "unique",
+      "cost": 6,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.5,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 1,
+              "max_damage": 2,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "pop",
+      "in_shop": false,
+      "unbuilt": [
+        "Attacks 3% faster for each Mana (up to 60%)."
+      ],
+      "sockets": 4,
+      "icontype": "treasure, magic, effect, ranged"
+    },
+    "prismatic_sword": {
+      "name": "Prismatic Sword",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "stripe_h_fine",
+      "class": "neutral",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Prismatic Sword",
+      "rarity": "godly",
+      "cost": 17,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.4,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 14,
+              "max_damage": 20,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "prismatic_sword",
+      "in_shop": false,
+      "unbuilt": [
+        "For each...",
+        "Star Magic-item: +8% attack speed.",
+        "Star Vampiric-item: +15% lifesteal.",
+        "Star Holy-item: Gain +0.3 damage on hit.",
+        "Star Dark-item: +10% chance to inflict 4 random debuffs on hit."
+      ],
+      "sockets": 2,
+      "icontype": "magic, vampiric, holy, dark, melee"
+    },
+    "ripsaw_blade": {
+      "name": "Ripsaw Blade",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "hatch_ortho",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Ripsaw Blade",
+      "rarity": "legendary",
+      "cost": 7,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.8,
+          "cpu_cost": 1.5,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 10,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "ripsaw_blade",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Remove 1 damage gained in battle from all opponent Weapons and gain 0.5 damage."
+      ],
+      "sockets": 3,
+      "icontype": "melee"
+    },
+    "serpent_staff": {
+      "name": "Serpent Staff",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "chevron_right",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Serpent Staff",
+      "rarity": "legendary",
+      "cost": 17,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.8,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 10,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "serpent_staff",
+      "in_shop": false,
+      "unbuilt": [
+        "On attack: Use 4 Mana to gain 2 damage and inflict 1 Poison for each 4 damage dealt.",
+        "You have 40% chance to duplicate Poison you inflict."
+      ],
+      "sockets": 1,
+      "icontype": "magic, ranged"
+    },
+    "shell_totem": {
+      "name": "Shell Totem",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "stripe_d_fine",
+      "class": "neutral",
+      "map": [
+        "***#***",
+        "...#..."
+      ],
+      "source": "Shell Totem",
+      "rarity": "rare",
+      "cost": 5,
+      "triggers": [],
+      "slug": "shell_totem",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3.4s: If your health is above 70%, gain 1 Empower. Otherwise, heal for 8.",
+        "Uses -15% stamina for each Star Holy-item."
+      ],
+      "icontype": "holy"
+    },
+    "data_miner": {
+      "name": "Data Miner",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "dot_small_grid",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Shovel",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.4,
+          "cpu_cost": 1.7,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 5,
+              "max_damage": 8,
+              "accuracy": 0.95
+            }
+          ]
+        }
+      ],
+      "slug": "data_miner",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Dig up a random item.",
+        "On hit: 40% chance to inflict 1 Blind."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "snow_stick": {
+      "name": "Snow Stick",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "stripe_a_fine",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Snow Stick",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.1,
+          "cpu_cost": 1.2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 6,
+              "max_damage": 9,
+              "accuracy": 0.95
+            }
+          ]
+        }
+      ],
+      "slug": "snow_stick",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Inflict 3 Cold and 2 Cold to yourself."
+      ],
+      "sockets": 1,
+      "icontype": "ice, melee"
+    },
+    "buffer_overflow": {
+      "name": "Buffer Overflow",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "grid_bold",
+      "class": "neutral",
+      "map": [
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "#",
+        "#",
+        "#",
+        "#"
+      ],
+      "source": "Spear",
+      "rarity": "rare",
+      "cost": 6,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.5,
+          "cpu_cost": 1.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 3,
+              "max_damage": 8,
+              "accuracy": 0.85
+            }
+          ]
+        }
+      ],
+      "slug": "buffer_overflow",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Destroy 4 Block for each free Star slot."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "spectral_dagger": {
+      "name": "Spectral Dagger",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "grid_fine",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Spectral Dagger",
+      "rarity": "legendary",
+      "cost": 10,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.5,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 3,
+              "accuracy": 0.95
+            }
+          ]
+        }
+      ],
+      "slug": "spectral_dagger",
+      "in_shop": false,
+      "unbuilt": [
+        "On attack: Use 1 Mana to ignore Block and deal +6 damage.",
+        "On stun: Triggers extra attack."
+      ],
+      "sockets": 1,
+      "icontype": "magic, melee"
+    },
+    "stankus_toothpick": {
+      "name": "Stankus' Toothpick",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "zigzag_h",
+      "class": "neutral",
+      "map": [
+        "..*..",
+        "..*..",
+        ".*#*.",
+        "**#**",
+        "..*..",
+        "..*.."
+      ],
+      "source": "Stankus' Toothpick",
+      "rarity": "legendary",
+      "cost": 9,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.4,
+          "cpu_cost": 0.5,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 4,
+              "accuracy": 0.9
+            }
+          ]
+        }
+      ],
+      "slug": "stankus_toothpick",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Your opponent takes +2% damage.",
+        "Attacks 12% faster for each Star Food."
+      ],
+      "sockets": 1,
+      "icontype": "melee"
+    },
+    "ping_flood": {
+      "name": "Ping Flood",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "zigzag_v",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Stone",
+      "rarity": "common",
+      "cost": 1,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.5,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 2,
+              "max_damage": 4,
+              "accuracy": 0.7
+            }
+          ]
+        }
+      ],
+      "slug": "ping_flood",
+      "in_shop": false,
+      "unbuilt": [
+        "Can only be thrown once per battle.",
+        "On hit: Destroy 4 Block."
+      ],
+      "icontype": "nature, ranged"
+    },
+    "stone_golem": {
+      "name": "Stone Golem",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "wave_h",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        ".##.",
+        "*##*"
+      ],
+      "source": "Stone Golem",
+      "rarity": "godly",
+      "cost": 16,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 5.5,
+          "cpu_cost": 0.0,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 8,
+              "max_damage": 13,
+              "accuracy": 0.85
+            }
+          ]
+        }
+      ],
+      "slug": "stone_golem",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Gain 1 Empower. 30% chance to stun for 0.5s.",
+        "Use 7 Regeneration: Reduce cooldown to 2.6s and gain 150 Block (once).",
+        "Deals +10 damage for each Star Bag of Stones."
+      ],
+      "sockets": 1,
+      "icontype": "effect, ranged"
+    },
+    "thorn_whip": {
+      "name": "Thorn Whip",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "wave_v",
+      "class": "neutral",
+      "map": [
+        "##.",
+        ".#.",
+        ".##"
+      ],
+      "source": "Thorn Whip",
+      "rarity": "epic",
+      "cost": 8,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.2,
+          "cpu_cost": 2.2,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 4,
+              "max_damage": 9,
+              "accuracy": 0.8
+            }
+          ]
+        }
+      ],
+      "slug": "thorn_whip",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Gain 1 Spikes.",
+        "Deals +1 damage per Spikes."
+      ],
+      "sockets": 2,
+      "icontype": "nature, melee"
+    },
+    "thornbloom": {
+      "name": "Thornbloom",
+      "category": "problem",
+      "color": "ember",
+      "pattern": "brick_h",
+      "class": "neutral",
+      "map": [
+        "##.",
+        "##.",
+        ".##"
+      ],
+      "source": "Thornbloom",
+      "rarity": "godly",
+      "cost": 14,
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.1,
+          "cpu_cost": 2.1,
+          "effects": [
+            {
+              "type": "attack",
+              "min_damage": 7,
+              "max_damage": 12,
+              "accuracy": 0.8
+            }
+          ]
+        }
+      ],
+      "slug": "thornbloom",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: Gain 1 Spikes. 60% chance to gain 1 Empower.",
+        "Empower gained: Gain 11 maximum health.",
+        "Deals +1 damage per Spikes."
+      ],
+      "sockets": 2,
+      "icontype": "nature, melee"
     }
   }
 }

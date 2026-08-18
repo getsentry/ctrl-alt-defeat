@@ -3,8 +3,9 @@
 # against the UI background. Sixteen is near the limit of what a person can tell
 # apart by hue alone, so add patterns rather than a seventeenth colour.
 #
-# The client keeps its own copy of this map, because the client is what draws.
-# This is the source of truth for both the names and the values.
+# The client is sent the value and keeps no palette, so a colour can be retuned
+# here without shipping a new client. A pattern is the other way round: it
+# arrives as a name, because the client is what draws it.
 PALETTE = {
     # In use, one per category.
     "red": "#BE0032",
@@ -16,6 +17,7 @@ PALETTE = {
     "blue": "#0067A5",
     "violet": "#604E97",
     "pink": "#E68FAC",
+    "sand": "#C2B280",
     # Spare, for a category that outgrows the patterns.
     "amber": "#F6A600",
     "ember": "#E25822",
@@ -23,7 +25,6 @@ PALETTE = {
     "salmon": "#F99379",
     "magenta": "#B3446C",
     "purple": "#875692",
-    "sand": "#C2B280",
 }
 
 # A category larger than the pattern list borrows a second colour, close in
@@ -45,6 +46,7 @@ CATEGORY_COLOR = {
     "infrastructure": "violet",
     "patch": "yellow",
     "monitor": "sky",
+    "pet": "sand",
 }
 
 # The patterns, most distinct first. A category with four items uses only the

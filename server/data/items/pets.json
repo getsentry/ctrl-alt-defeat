@@ -1,0 +1,455 @@
+{
+  "category": "pets",
+  "items": {
+    "blood_goobert": {
+      "name": "Blood Goobert",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "solid",
+      "class": "neutral",
+      "map": [
+        "*##*",
+        "*##*"
+      ],
+      "source": "Blood Goobert",
+      "rarity": "legendary",
+      "cost": 14,
+      "triggers": [],
+      "slug": "blood_goobert",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 5 Vampirism.",
+        "6 Star item activations: Deal 10 Effect-damage with 100% lifesteal. Deal +1 for each Vampirism."
+      ],
+      "icontype": "vampiric"
+    },
+    "cthulhu": {
+      "name": "Cthulhu",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "stripe_d_bold",
+      "class": "neutral",
+      "map": [
+        ".***.",
+        "*###*",
+        "*###*",
+        ".***."
+      ],
+      "source": "Cthulhu",
+      "rarity": "unique",
+      "cost": 8,
+      "triggers": [],
+      "slug": "cthulhu",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3.3s: Deal 10 Effect-damage with 100% lifesteal and trigger a random Star Food.",
+        "Star Food gains Dark.",
+        "Triggers 15% faster for each Star Dark-item."
+      ],
+      "icontype": "treasure, dark"
+    },
+    "cubert": {
+      "name": "Cubert",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "dot_large_grid",
+      "class": "neutral",
+      "map": [
+        ".++.",
+        "*##*",
+        "*##*",
+        ".++."
+      ],
+      "source": "Cubert",
+      "rarity": "unique",
+      "cost": 8,
+      "triggers": [],
+      "slug": "cubert",
+      "in_shop": false,
+      "unbuilt": [
+        "Star activates: 35% chance to gain 1 Regeneration.",
+        "Diamond activates: 30% chance to use 1 Regeneration to gain 1 Empower."
+      ],
+      "icontype": "treasure"
+    },
+    "hyper_hedgehog": {
+      "name": "Hyper Hedgehog",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "stripe_v_bold",
+      "class": "sentaur",
+      "map": [
+        ".*",
+        "*#",
+        "*#",
+        ".*"
+      ],
+      "source": "Hyper Hedgehog",
+      "rarity": "godly",
+      "cost": 12,
+      "triggers": [],
+      "slug": "hyper_hedgehog",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 5s: Deal 10 Effect-damage + 0.5 for each Spikes + 1 for each Empower.",
+        "Health drops below 70%: Gain 4 Spikes, 3 Empower and 35 Block (once).",
+        "Triggers 15% faster for each Star Pet or Food."
+      ],
+      "icontype": "holy,nature"
+    },
+    "jynx_torquilla": {
+      "name": "Jynx torquilla",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "check_large",
+      "class": "neutral",
+      "map": [
+        ".....*",
+        "....**",
+        "...***",
+        ".#****",
+        "##.***",
+        "....**",
+        ".....*"
+      ],
+      "source": "Jynx torquilla",
+      "rarity": "legendary",
+      "cost": 6,
+      "triggers": [],
+      "slug": "jynx_torquilla",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3s: Star items trigger 5% faster (up to 50%). Remove 1 Luck from your opponent."
+      ],
+      "icontype": "nature, musical"
+    },
+    "king_goobert": {
+      "name": "King Goobert",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "stripe_h_bold",
+      "class": "neutral",
+      "map": [
+        "*##*",
+        "*##*",
+        "*##*"
+      ],
+      "source": "King Goobert",
+      "rarity": "godly",
+      "cost": 23,
+      "triggers": [],
+      "slug": "king_goobert",
+      "in_shop": false,
+      "unbuilt": [
+        "6 Star item activations: Heal for 35, protect 3 buffs from removal and use 4 Mana to become invulnerable for 1.5s (up to 3 times).",
+        "Effects of Gemstones socketed in this are increased by 50%."
+      ],
+      "sockets": 2,
+      "icontype": "holy, magic"
+    },
+    "light_goobert": {
+      "name": "Light Goobert",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "hatch_diag",
+      "class": "neutral",
+      "map": [
+        "*##*",
+        "*##*"
+      ],
+      "source": "Light Goobert",
+      "rarity": "godly",
+      "cost": 15,
+      "triggers": [],
+      "slug": "light_goobert",
+      "in_shop": false,
+      "unbuilt": [
+        "6 Star item activations: Heal for 25 and inflict 7 Blind for 3s."
+      ],
+      "icontype": "holy"
+    },
+    "lil_chestnut": {
+      "name": "Lil Chestnut",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "dot_small_stagger",
+      "class": "neutral",
+      "map": [
+        "***##***",
+        "***##***"
+      ],
+      "source": "Lil Chestnut",
+      "rarity": "unique",
+      "cost": 6,
+      "triggers": [],
+      "slug": "lil_chestnut",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop refreshes: 40% chance for a Trade offer.",
+        "Every 6s: Gain 3 buffs of the type you have most of.",
+        "Triggers 1% faster for each Gold the Star items are worth."
+      ],
+      "icontype": "treasure"
+    },
+    "paradise_birb": {
+      "name": "Paradise Birb",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "chevron_up",
+      "class": "neutral",
+      "map": [
+        ".....*",
+        "....**",
+        "...***",
+        ".#****",
+        "##.***",
+        "#...**",
+        ".....*"
+      ],
+      "source": "Paradise Birb",
+      "rarity": "godly",
+      "cost": 20,
+      "triggers": [],
+      "slug": "paradise_birb",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 2.7s: Star items gain 7% chance to duplicate buffs they gain, heal 7% more and trigger 7% faster (up to 10 times)."
+      ],
+      "icontype": "magic,vampiric,holy,dark,musical,nature"
+    },
+    "rainbow_goobert_megasludge_alphapuddle": {
+      "name": "Rainbow Goobert Megasludge Alphapuddle",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "stripe_a_bold",
+      "class": "sentaur",
+      "map": [
+        "****",
+        "*##*",
+        "*##*",
+        "****"
+      ],
+      "source": "Rainbow Goobert Megasludge Alphapuddle",
+      "rarity": "godly",
+      "cost": 54,
+      "triggers": [],
+      "slug": "rainbow_goobert_megasludge_alphapuddle",
+      "in_shop": false,
+      "unbuilt": [
+        "9 Star item activations: Heal for 40, gain 20 Block, 2 Vampirism and 2 Empower, inflict 3 Blind, and Star Weapons gain 4 damage."
+      ],
+      "icontype": "vampiric, holy, nature"
+    },
+    "rat_chef": {
+      "name": "Rat Chef",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "rings",
+      "class": "sentaur",
+      "map": [
+        ".*.",
+        "*#*",
+        "*#*",
+        ".*."
+      ],
+      "source": "Rat Chef",
+      "rarity": "rare",
+      "cost": 8,
+      "triggers": [],
+      "slug": "rat_chef",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 1 Regeneration for each Star Food.",
+        "Every 7s: Regenerate 2 stamina and gain 1 Empower.",
+        "Triggers 15% faster for each Star Pet or Food."
+      ],
+      "icontype": "nature"
+    },
+    "ruby_egg": {
+      "name": "Ruby Egg",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "stripe_v_fine",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Ruby Egg",
+      "rarity": "legendary",
+      "cost": 10,
+      "triggers": [],
+      "slug": "ruby_egg",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 4 Heat. Reflect 3 debuffs.",
+        "Hatches after 2 rounds in your backpack."
+      ],
+      "icontype": "fire"
+    },
+    "shelly": {
+      "name": "Shelly",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "dot_large_stagger",
+      "class": "neutral",
+      "map": [
+        ".##.",
+        "****"
+      ],
+      "source": "Shelly",
+      "rarity": "rare",
+      "cost": 6,
+      "triggers": [],
+      "slug": "shelly",
+      "in_shop": false,
+      "unbuilt": [
+        "Cleanse effects have a 25% chance to cleanse an additional debuff.",
+        "Every 13s: Cleanse 6 debuffs and heal for 40.",
+        "Triggers 20% faster for each Star Potion."
+      ],
+      "icontype": "holy, nature"
+    },
+    "sloth": {
+      "name": "Sloth",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "check_small",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*"
+      ],
+      "source": "Sloth",
+      "rarity": "unique",
+      "cost": 5,
+      "triggers": [],
+      "slug": "sloth",
+      "in_shop": false,
+      "unbuilt": [
+        "Star items trigger 30% slower.",
+        "Start of battle: Gain 10% maximum health + 15% per Star item.",
+        "After 25s: Awaken hidden sloth powers! (Gain 10 of each buff and stun the opponent for 1.5s)."
+      ],
+      "icontype": "treasure,nature"
+    },
+    "snowmaster": {
+      "name": "Snowmaster",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "stripe_h_fine",
+      "class": "sentaur",
+      "map": [
+        ".#.",
+        "*#*",
+        "***"
+      ],
+      "source": "Snowmaster",
+      "rarity": "legendary",
+      "cost": 9,
+      "triggers": [],
+      "slug": "snowmaster",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 1.3s: Inflict 1 Cold. If your opponent has at least 10 Cold, gain 1 Empower instead. Cleanse 1 debuff.",
+        "Triggers 10% faster for each Ice item."
+      ],
+      "icontype": "ice"
+    },
+    "steel_goobert": {
+      "name": "Steel Goobert",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "hatch_ortho",
+      "class": "neutral",
+      "map": [
+        ".++.",
+        "*##*",
+        "*##*",
+        ".++."
+      ],
+      "source": "Steel Goobert",
+      "rarity": "legendary",
+      "cost": 17,
+      "triggers": [],
+      "slug": "steel_goobert",
+      "in_shop": false,
+      "unbuilt": [
+        "6 Star item activations: Diamond Weapons gain +2 damage. Gain 16 Block."
+      ]
+    },
+    "thorn_elemental": {
+      "name": "Thorn Elemental",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "chevron_right",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        ".##.",
+        "*##*"
+      ],
+      "source": "Thorn Elemental",
+      "rarity": "unique",
+      "cost": 6,
+      "triggers": [],
+      "slug": "thorn_elemental",
+      "in_shop": false,
+      "unbuilt": [
+        "Return damage limit of Spikes against Ranged- and Effect-attacks +50%.",
+        "Spikes have 10% critical hit chance per Star Nature-item.",
+        "Every 3s: Gain 3 Spikes."
+      ],
+      "sockets": 2,
+      "icontype": "treasure,nature"
+    },
+    "unsettling_presence": {
+      "name": "Unsettling Presence",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "stripe_d_fine",
+      "class": "neutral",
+      "map": [
+        "#",
+        "#"
+      ],
+      "source": "Unsettling Presence",
+      "rarity": "unique",
+      "cost": 10,
+      "triggers": [],
+      "slug": "unsettling_presence",
+      "in_shop": false,
+      "unbuilt": [
+        "Deal +30% of your healing as Effect-damage.",
+        "Every 3s: Use a random buff to heal for 12."
+      ],
+      "icontype": "treasure, dark"
+    },
+    "wolpertinger": {
+      "name": "Wolpertinger",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "dot_small_grid",
+      "class": "neutral",
+      "map": [
+        ".**.",
+        "*##*",
+        "*##*",
+        ".**."
+      ],
+      "source": "Wolpertinger",
+      "rarity": "godly",
+      "cost": 12,
+      "triggers": [],
+      "slug": "wolpertinger",
+      "in_shop": false,
+      "unbuilt": [
+        "Increase base stamina regeneration by 0.7% for each buff you have.",
+        "Every 5s: Gain 3 of the buff you have least of.",
+        "Triggers 15% faster for each Star Pet."
+      ],
+      "icontype": "nature"
+    }
+  }
+}

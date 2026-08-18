@@ -233,6 +233,22 @@
         }
       ],
       "slug": "mesh_network_hub"
+    },
+    "chaos_experiment": {
+      "name": "Chaos Experiment",
+      "class": "neutral",
+      "map": [
+        "##",
+        "##"
+      ],
+      "source": "Sack of Surprises",
+      "rarity": "unique",
+      "cost": 10,
+      "effects": [],
+      "slug": "chaos_experiment",
+      "unbuilt": [
+        "Game started: Replace this with random starting bags and items."
+      ]
     }
   }
 }
