@@ -972,15 +972,17 @@ class TestMoveItemAPI:
 
     def test_move_item_to_occupied_position(self, auth_client):
         """Test moving an item to an occupied position"""
-        # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start",
+            json={"player_name": "test_player", "seed": SHOP_SEED},
         )
         data = response.json()
 
-        # Purchase two items
+        # Two items, and never a container: one bought at [2, 3] would overlap a
+        # container already there, and the first two offers of an unseeded shop
+        # could be anything.
         shop = data["session"]["current_shop"]
-        items = [item for item in shop if item][:2]
+        items = [offer for offer in shop if offer and not offer["is_container"]][:2]
 
         # Place first item
         response = auth_client.post(
@@ -990,7 +992,7 @@ class TestMoveItemAPI:
                 "target_position": [2, 3],
             },
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
 
         # Place second item
         response = auth_client.post(
@@ -1000,6 +1002,7 @@ class TestMoveItemAPI:
                 "target_position": [4, 3],
             },
         )
+        assert response.status_code == 200, response.text
         item2_uid = response.json()["purchased_item"]["id"]
 
         # Try to move second item to first item's position
