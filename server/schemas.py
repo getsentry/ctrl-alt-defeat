@@ -121,6 +121,7 @@ class BattleActionName(str, Enum):
     DOT = "dot"
     CONSUME = "consume"
     CPU_FAIL = "cpu_fail"
+    CPU_DRAIN = "cpu_drain"
     PLAYER_DEFEATED = "player_defeated"
 
 

@@ -9,19 +9,24 @@ from typing import Any, Dict, List, Optional
 
 from grid_system import ItemShape, parse_map
 from item_effects import (
+    DEBUFFS,
     AttackEffect,
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
     ConsumeEffect,
+    CpuDrainEffect,
     DamageTakenTrigger,
+    DebuffEffect,
     HealEffect,
     ItemSpec,
+    OnAttackedTrigger,
+    OnHitTrigger,
     PassiveTrigger,
+    PreventDamageEffect,
     StatModEffect,
     TimerTrigger,
 )
-from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +113,7 @@ class ConfigLoader:
         effects = []
         triggers = []
         for effect_config in config.get("effects", []):
-            effect = self._parse_effect(effect_config)
+            effect = self._parse_effect(effect_config, container_id)
             if effect:
                 effects.append(effect)
 
@@ -139,7 +144,7 @@ class ConfigLoader:
         # Parse triggers
         triggers = []
         for trigger_config in config.get("triggers", []):
-            trigger = self._parse_trigger(trigger_config)
+            trigger = self._parse_trigger(trigger_config, item_id)
             if trigger:
                 triggers.append(trigger)
 
@@ -162,16 +167,29 @@ class ConfigLoader:
         """The squares an item covers, from its map"""
         return parse_map(item_map, name)
 
-    def _parse_trigger(self, config: Dict[str, Any]) -> Optional[Any]:
+    def _parse_trigger(self, config: Dict[str, Any], item_id: str) -> Optional[Any]:
         """Parse a trigger configuration"""
         trigger_type = config.get("type")
         effects = []
 
         # Parse effects
         for effect_config in config.get("effects", []):
-            effect = self._parse_effect(effect_config)
+            effect = self._parse_effect(effect_config, item_id)
             if effect:
                 effects.append(effect)
+
+        # Preventing damage is the one effect that cannot apply itself: it
+        # has to hand a number back so the attack can be reduced by it, and
+        # only the on_attacked handler asks. Anywhere else it would load
+        # cleanly and do nothing, which is the failure this catches.
+        if trigger_type != "on_attacked" and any(
+            isinstance(e, PreventDamageEffect) for e in effects
+        ):
+            raise ValueError(
+                f"{item_id}: prevent_damage only works in an on_attacked "
+                f"trigger, not a {trigger_type!r} one. There is no attack to "
+                f"prevent anywhere else."
+            )
 
         if trigger_type == "timer":
             return TimerTrigger(
@@ -188,14 +206,27 @@ class ConfigLoader:
                 cpu_cost=config.get("cpu_cost", 0),
                 effects=effects,
             )
+        elif trigger_type == "on_hit":
+            # `chance` is a second roll, taken only after accuracy has passed.
+            if "chance" not in config:
+                raise ValueError(
+                    f"{item_id}: an on_hit trigger has to state its `chance`. "
+                    f"Write 1.0 if the effect always happens."
+                )
+            return OnHitTrigger(chance=config["chance"], effects=effects)
         elif trigger_type == "on_attacked":
-            return OnAttackedTrigger(effects=effects)
+            if "chance" not in config:
+                raise ValueError(
+                    f"{item_id}: an on_attacked trigger has to state its "
+                    f"`chance`. Every shield in the source game rolls 0.3."
+                )
+            return OnAttackedTrigger(chance=config["chance"], effects=effects)
         elif trigger_type == "passive":
             return PassiveTrigger(effects=effects)
 
         return None
 
-    def _parse_effect(self, config: Dict[str, Any]) -> Optional[Any]:
+    def _parse_effect(self, config: Dict[str, Any], item_id: str) -> Optional[Any]:
         """Parse an effect configuration"""
         effect_type = config.get("type")
 
@@ -218,16 +249,17 @@ class ConfigLoader:
             return HealEffect(
                 min_heal=config.get("min_heal", 1), max_heal=config.get("max_heal", 1)
             )
-        elif effect_type == "shield_block":
-            effect = ShieldBlockEffect(
-                block_chance=config.get("block_chance", 0.3),
-                block_amount=config.get("block_amount", 5),
-                cpu_steal=config.get("cpu_steal", 0),
+        elif effect_type == "prevent_damage":
+            if "value" not in config:
+                raise ValueError(f"{item_id}: prevent_damage needs a `value`")
+            return PreventDamageEffect(amount=config["value"])
+        elif effect_type == "cpu_drain":
+            if "value" not in config:
+                raise ValueError(f"{item_id}: cpu_drain needs a `value`")
+            return CpuDrainEffect(
+                amount=config["value"],
+                target_type=config.get("target", "attacker"),
             )
-            # Store additional properties as attributes
-            if config.get("reflect_damage"):
-                effect.reflect_damage = config.get("reflect_damage", 0)
-            return effect
         elif effect_type == "stat_mod":
             return StatModEffect(
                 stat_name=config.get("stat", "max_cpu"), value=config.get("value", 1)
@@ -237,6 +269,18 @@ class ConfigLoader:
                 buff_name=config.get("stat", "speed"),
                 value=config.get("value", 0.1),
                 target_type=config.get("target", "self"),
+            )
+        elif effect_type == "debuff":
+            name = config.get("debuff_name")
+            if name not in DEBUFFS:
+                raise ValueError(
+                    f"{item_id}: `{name}` is not a debuff. "
+                    f"Section 3.2 has three: {', '.join(sorted(DEBUFFS))}."
+                )
+            return DebuffEffect(
+                debuff_name=name,
+                value=config.get("value", 1),
+                target_type=config.get("target", "enemy"),
             )
         elif effect_type == "block":
             return BlockEffect(block_amount=config.get("value", 5))

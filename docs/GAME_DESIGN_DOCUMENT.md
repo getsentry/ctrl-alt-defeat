@@ -54,13 +54,35 @@ regeneration and a third has to wait. That is the intended pressure.
 
 ### 1.3 Item Activation Flow
 ```
-1. Check cooldown timer
-2. Check stamina availability
-3. Roll accuracy check (if applicable)
-4. Apply effects (damage/buff/debuff)
-5. Trigger on-hit effects (if successful)
-6. Reset cooldown
+1. The cooldown comes due
+2. Check CPU. Too little, and the item skips this activation
+3. Roll accuracy, if the item attacks
+4. Apply the effects whose timing matches the result
+5. Reset the cooldown
 ```
+
+**A miss does not cancel the activation.** The item still pays its CPU, and the
+activation still counts. Only the effects that need a hit are lost. This is
+Backpack Battles' rule: its wiki says "Weapons will still provide activations
+regardless if their attack hits or misses", and separately that "'On attack'
+effects will always trigger when a weapon successfully attempts to attack (AKA
+when not out of stamina)."
+
+So an effect has to say *when* it wants to happen, and there are three answers.
+Each one is a trigger of its own, not a flag on the effect, because that is how
+Backpack Battles writes them: an item's text starts "On hit:" or "On attack:".
+
+| Trigger | Fires when | Backpack Battles examples |
+|---|---|---|
+| `on_attack` | The item attacks, whether it hits or misses | Critwood Staff, Magic Staff |
+| `on_hit` | The attack lands | Hungry Blade, Hammer, socketed gems |
+| `on_miss` | The attack fails | Broom, Fancy Fencing Rapier |
+
+A shield's `on_attacked` trigger sits on the hit side. A shield never blocks an
+attack that missed, because there was nothing to block.
+
+Of the three, only `on_hit` is built. `on_attack` and `on_miss` are named in
+the item catalogue but the loader drops them, so nothing uses them yet.
 
 ## 2. Item Categories & Mechanics
 
@@ -69,18 +91,26 @@ Items can have multiple effects with different triggers. Each effect specifies w
 ### 2.1 Effect Triggers
 - **ON_TIMER**: Activates on a cooldown timer (like weapons)
 - **ON_BATTLE_START**: Activates once at battle start
-- **ON_ATTACKED**: Activates when owner is attacked (% chance)
+- **ON_ATTACKED**: Activates when the owner is attacked, and only when that
+  attack hits (% chance)
 - **ON_DAMAGED**: Activates when the owner takes damage
+- **ON_ATTACK**: Activates whenever the item attacks, hit or miss
+- **ON_HIT**: Activates when the item's own attack lands
+- **ON_MISS**: Activates when the item's own attack fails
 - **ON_DEAL_DAMAGE**: Activates when this item deals damage
-- **ON_HIT**: Activates when an attack successfully hits
 - **ON_KILL**: Activates when getting a kill
 - **ON_HEALTH_THRESHOLD**: Activates at specific health %
 - **PASSIVE**: Always active (e.g., stat modifiers)
 
+ON_ATTACK, ON_HIT and ON_MISS belong to the item that attacked. One item's
+miss never stops another item's on-hit effect. See Section 1.3 for the order.
+
 ### 2.2 Effect Types
 - **DAMAGE**: Deal damage to enemies
 - **HEAL**: Restore health
-- **BLOCK**: Prevent damage
+- **BLOCK**: Gain Block, the resource that absorbs damage a point at a time
+- **PREVENT_DAMAGE**: Stop one attack outright, keeping nothing
+- **CPU_DRAIN**: Take CPU off somebody, never below 0
 - **BUFF/DEBUFF**: Apply status effects
 - **MODIFY_STAT**: Change max CPU, CPU regen, etc.
 - **REFLECT**: Return damage to attacker
@@ -128,18 +158,62 @@ as a result.
   - Sockets: 1
   - Special: Bypasses 50% of shields
 
+- **Virus Injector** (Legendary Ranged, from Belladonna's Shade)
+  - Damage: 4-11
+  - Cooldown: 1.7s
+  - CPU Cost: 0.7
+  - Accuracy: 85%
+  - Sockets: 1
+  - On Hit: 70% chance to inflict 2 "memory_leaked"
+
+  This is the worked example of an on-hit effect. The 70% roll happens only
+  after the accuracy roll passes, so a miss never poisons. Belladonna's Shade
+  inflicts a random debuff on the same roll, which is not built yet.
+
 ### 2.4 Shields (Monitoring/Defense)
-Defensive items that have a chance to block attacks. Shield mechanics:
-- **30% base chance** to activate when attacked
-- Block a specific amount of damage (7-14 typically)
-- Can remove attacker's CPU (0.3-0.7)
-- May have additional effects when blocking
+
+A shield rolls once when its owner is attacked, and everything behind that
+roll happens together.
+
+```
+On attacked: 30% chance to
+  - prevent 9 damage
+  - remove 0.3 CPU from the attacker
+  - and gain 1 Spikes
+```
+
+**One roll, not one per consequence.** Backpack Battles writes its shields as
+a single chance in front of a list — "30% chance to prevent 9 damage, remove
+0.3 stamina from opponent, and gain 1 Spikes (up to 5)" — so a shield can
+never prevent the damage and miss the CPU. The chance therefore belongs to the
+`on_attacked` trigger, and each consequence is an effect of its own behind it.
+This is the same shape as `on_hit` in Section 1.3, for the same reason.
+
+- **30% chance.** Every shield in Backpack Battles rolls 30%, without
+  exception, so this is the figure and not a base to modify.
+- **Prevent** 7 to 15 damage, across the shields we have.
+- **Remove** 0.3 to 0.9 CPU from the attacker. Every shield in the source game
+  does this, and the attacker never goes below 0.
+
+A shield only rolls against an attack that **hit**. There is nothing to block
+otherwise, and Backpack Battles says so: "'On attacked' effects ... will only
+occur when a weapon hits."
+
+Every number comes from the source item and every one is stated. None has a
+default, because a shield whose numbers never arrived would otherwise load as
+a working item.
+
+**Preventing is not Blocking.** Two mechanics reduce damage and they are not
+the same. *Block* is a resource: it stacks, absorbs one damage per stack, and
+is spent doing it ("Start of battle: Gain 45 Block"). *Preventing* stops one
+attack outright and is spent on nothing. Backpack Battles keeps them apart,
+and so do we: `BlockEffect` against `PreventDamageEffect`.
 
 #### Examples:
-- **Error Monitoring** (Common Shield)
+- **Error Monitoring** (Common Shield, from Wooden Buckler)
   - 30% chance to activate on attack
-  - Blocks 8 damage
-  - Removes 0.5 CPU from attacker
+  - Blocks 7 damage
+  - Removes 0.3 CPU from attacker
   - Passive: Adjacent problems gain +10% accuracy
 
 - **Session Replay** (Uncommon Shield)
@@ -148,11 +222,20 @@ Defensive items that have a chance to block attacks. Shield mechanics:
   - Reflects 30% of blocked damage back
   - Records last 3 attacks for replay
 
-- **Firewall** (Rare Shield)
+- **Firewall** (Common Shield, from Wooden Buckler)
   - 30% chance to activate on attack
-  - Blocks 12 damage
-  - On Block: Apply "throttled" debuff to attacker
-  - Passive: +2 block to adjacent shields
+  - Blocks 7 damage
+  - Removes 0.3 CPU from attacker
+
+  It shares its source with Error Monitoring, so the two are identical.
+  One of them has the wrong item recorded as its source.
+
+- **Rate Limiter** (Rare Shield, from Hero Shield)
+  - 30% chance to activate on attack
+  - Blocks 15 damage
+  - Removes 0.4 CPU from attacker
+  - Hero Shield also buffs weapons at the start of the battle, which we
+    do not have.
 
 ### 2.5 Accessories (Infrastructure/Support)
 Items providing passive bonuses, periodic effects, or conditional triggers.
@@ -268,13 +351,34 @@ Special items that provide periodic effects or triggered abilities.
 - **Regenerating**: Heal 1 HP per second per stack
 
 ### 3.2 Debuffs
+
+**Every debuff stacks, and none of them wears off.** A debuff lasts to the end
+of the battle unless something says otherwise, so the only way out is a
+cleanse. This is Backpack Battles' rule, word for word from its wiki:
+"Debuffs are given until end of the combat unless otherwise specified. Every
+debuff is stackable."
+
+A `duration` on a debuff in the item catalogue therefore means nothing today.
+Treat a missing duration and a duration of -1 as the same thing.
+
+**There are three debuffs, and that is all of them.** Backpack Battles has
+three, so we have three:
+
 - **Throttled** (Cold): Items trigger 2% slower per stack
-- **Memory Leaked** (Poison): 1 damage every 2 seconds
+- **Memory Leaked** (Poison): 1 damage every 2 seconds, per stack
 - **Rate Limited** (Blind): -5% accuracy per stack
-- **Crashed** (Stun): Cannot activate for X seconds
-- **Corrupted**: Next healing effect damages instead
-- **Lagged**: Delays next X activations by 0.5s
-- **Vulnerable**: Take +2 damage from all sources
+
+An item that applies a *random* debuff draws from these three. There is no
+fourth to draw.
+
+**Memory Leaked hits in whole periods, not smoothly.** Every two seconds it
+deals damage equal to the stack count, and between those moments it deals
+nothing. Two stacks means 2 damage at 2s, 2 more at 4s, and so on, not a
+trickle of 0.1 per tick. The period is measured from the start of the battle,
+so a stack applied at 3.5s pays out at 4s with all the others.
+
+The count is read at the moment it pays. Stacks added between two payments
+count in full at the next one, and no stack is spent by paying out.
 
 ## 4. Item Placement & Adjacency
 
@@ -423,9 +527,9 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
 - Can trigger special effects
 
 ### 7.3 Shield Blocking
-- Shields have 30% base chance to block
-- Block prevents X damage (varies by shield)
-- Can trigger counter-effects
+See Section 2.4. One 30% roll per attack, and every consequence behind that
+roll lands together or not at all. Nothing blocks damage that comes from a
+player's own stacks — poison has no attack to block.
 
 ### 7.4 Item Consumption
 - Some items are consumed after use

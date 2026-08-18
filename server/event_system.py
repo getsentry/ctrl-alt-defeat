@@ -20,7 +20,8 @@ class EventType(Enum):
     BATTLE_END = "battle_end"
     DAMAGE_DEALT = "damage_dealt"
     DAMAGE_TAKEN = "damage_taken"
-    ON_ATTACKED = "on_attacked"  # Before damage, for shields to block
+    ON_ATTACKED = "on_attacked"  # Before damage when a player is hit
+    ON_HIT = "on_hit"  # An attack landed, for the attacking item's on-hit effects
     PLAYER_DEATH = "player_death"  # A player died (check target to see which one)
     TIMER_TICK = "timer_tick"
     ITEM_ACTIVATED = "item_activated"
@@ -42,7 +43,7 @@ class EventData:
     buff_value: Optional[int] = None
     previous_health: Optional[int] = None
     current_health: Optional[int] = None
-    attacker_item_id: Optional[str] = None  # For ON_ATTACKED event
+    attacker_item_id: Optional[str] = None  # For ON_ATTACKED and ON_HIT events
     pending_damage: Optional[int] = None  # Damage before blocks/mitigation
 
 

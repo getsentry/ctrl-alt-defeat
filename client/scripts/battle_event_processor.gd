@@ -145,6 +145,9 @@ func _process_event(event: APITypes.BattleAction):
 		"cpu_fail":
 			log_msg = "[%.1fs] Player %d's %s could not run: not enough CPU" % [event_time, player, item_name]
 			log_color = Color(1.0, 0.6, 0.2)  # Amber for a throttle
+		"cpu_drain":
+			log_msg = "[%.1fs] Player %d loses %s CPU to %s" % [event_time, player, event.details["amount"], item_name]
+			log_color = Color(1.0, 0.6, 0.2)  # Amber, same as a throttle
 		_:
 			log_msg = "[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage]
 			log_color = Color.WHITE
@@ -190,6 +193,10 @@ func _process_event(event: APITypes.BattleAction):
 
 		"cpu_fail":
 			# Nothing to show yet: the item simply did not activate
+			pass
+
+		"cpu_drain":
+			# The CPU bar is not driven from the log yet
 			pass
 
 		"player_defeated":

@@ -2,7 +2,8 @@
 Tests for the improved item effects system
 """
 
-from dataclasses import dataclass
+import random
+from dataclasses import dataclass, field
 
 from battle_engine import ITEM_CATALOG
 from grid_system import ItemShape
@@ -17,6 +18,7 @@ from item_effects import (
     HealEffect,
     ItemSpec,
     KillTrigger,
+    OnHitTrigger,
     PassiveTrigger,
     ReflectEffect,
     StatModEffect,
@@ -36,9 +38,15 @@ class MockPlayer:
 
 @dataclass
 class MockBattleState:
-    """Mock battle state for testing"""
+    """Mock battle state for testing
+
+    It carries its own seeded RNG because the real simulator does. Every roll
+    in a battle comes off that one generator, so a test that reaches for the
+    global `random` instead is not testing the thing that ships.
+    """
 
     current_time: float = 0.0
+    rng: random.Random = field(default_factory=lambda: random.Random(42))
 
 
 class TestEffects:
@@ -177,9 +185,7 @@ class TestTriggers:
 
     def test_damage_dealt_trigger(self):
         """Test damage dealt trigger with chance"""
-        import random
-
-        random.seed(42)  # For predictable testing
+        battle_state = MockBattleState()
 
         trigger = DamageDealtTrigger(
             chance=0.5, effects=[StunEffect(stun_duration=1.0)]  # 50% chance
@@ -188,7 +194,7 @@ class TestTriggers:
         # Test multiple activations to verify chance
         activations = 0
         for _ in range(100):
-            if trigger.should_activate("damage_dealt", None, None, None):
+            if trigger.should_activate("damage_dealt", None, None, battle_state):
                 activations += 1
 
         # Should be roughly 50% (allow some variance)
@@ -281,3 +287,43 @@ class TestItemSpecs:
             timer = ddos.triggers[0]
             assert len(timer.effects) >= 1
             assert isinstance(timer.effects[0], AttackEffect)
+
+
+class TestOnHitTrigger:
+    """Section 1.3: an on-hit trigger fires only when the attack lands"""
+
+    def test_fires_on_a_hit(self):
+        """With no chance given, a landed hit always reaches the effects"""
+        trigger = OnHitTrigger(effects=[DebuffEffect("memory_leaked", 2)])
+        assert trigger.should_activate("on_hit", None, None, None) is True
+
+    def test_ignores_every_other_event(self):
+        """It must not answer a timer tick or a miss"""
+        trigger = OnHitTrigger(effects=[DebuffEffect("memory_leaked", 2)])
+        for event in ["timer_tick", "battle_start", "damage_taken", "on_attacked"]:
+            assert trigger.should_activate(event, None, None, None) is False
+
+    def test_chance_is_rolled_after_the_hit(self):
+        """Virus Injector's 70% is a second roll, taken once accuracy passed"""
+        trigger = OnHitTrigger(chance=0.7, effects=[DebuffEffect("memory_leaked", 2)])
+
+        class Rolls(MockBattleState):
+            """A battle whose next roll is known"""
+
+            def __init__(self, value):
+                self.rng = self
+                self.value = value
+
+            def random(self):
+                return self.value
+
+        assert trigger.should_activate("on_hit", None, None, Rolls(0.69)) is True
+        assert trigger.should_activate("on_hit", None, None, Rolls(0.71)) is False
+
+    def test_costs_no_cpu(self):
+        """The activation that landed the hit already paid"""
+        assert OnHitTrigger(chance=0.7).get_cpu_cost() == 0
+
+    def test_debuff_lasts_the_whole_battle(self):
+        """Section 3.2: no debuff wears off, so a duration is never needed"""
+        assert DebuffEffect("memory_leaked", 2).duration == -1

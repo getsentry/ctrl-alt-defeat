@@ -449,16 +449,21 @@
               "accuracy": 0.85,
               "ranged": true,
               "description": "Ranged virus attack"
-            },
-            {
-              "type": "debuff",
-              "chance": 0.7,
-              "debuff_name": "malware",
-              "value": 2,
-              "duration": 5,
-              "description": "70% chance to inflict 2 Malware stacks"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 0.7,
+          "effects": [
+            {
+              "type": "debuff",
+              "debuff_name": "memory_leaked",
+              "value": 2,
+              "description": "Inflict 2 Memory Leaked"
+            }
+          ],
+          "description": "70% chance to inflict 2 Memory Leaked"
         }
       ],
       "slug": "virus_injector",
@@ -491,9 +496,9 @@
               "max_damage": 14,
               "accuracy": 0.85,
               "ranged": true,
-              "scaling_damage": "malware",
+              "scaling_damage": "memory_leaked",
               "scale_ratio": 0.5,
-              "description": "+0.5 damage per Malware on enemy"
+              "description": "+0.5 damage per Memory Leaked on enemy"
             }
           ]
         }

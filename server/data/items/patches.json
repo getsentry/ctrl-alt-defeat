@@ -107,10 +107,10 @@
           "effects": [
             {
               "type": "debuff",
-              "debuff_name": "virus",
-              "value": 2,
-              "duration": -1,
-              "target": "enemy"
+              "debuff_name": "memory_leaked",
+              "value": 3,
+              "target": "enemy",
+              "description": "Inflict 3 Memory Leaked"
             }
           ]
         }

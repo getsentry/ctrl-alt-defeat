@@ -9,14 +9,16 @@ from item_effects import (
     AttackEffect,
     BattleStartTrigger,
     ConsumeEffect,
+    CpuDrainEffect,
     DamageTakenTrigger,
     HealEffect,
     ItemSpec,
+    OnAttackedTrigger,
     PassiveTrigger,
+    PreventDamageEffect,
     StatModEffect,
     TimerTrigger,
 )
-from shield_effect import OnAttackedTrigger, ShieldBlockEffect
 
 from .helpers import get_large_test_containers, get_test_containers
 
@@ -124,11 +126,11 @@ class TestFullBattleScenarios:
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
+                            chance=0.3,
                             effects=[
-                                ShieldBlockEffect(
-                                    block_chance=0.3, block_amount=8, cpu_steal=0.5
-                                )
-                            ]
+                                PreventDamageEffect(8),
+                                CpuDrainEffect(0.5),
+                            ],
                         )
                     ],
                 ),
@@ -146,11 +148,11 @@ class TestFullBattleScenarios:
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
+                            chance=0.3,
                             effects=[
-                                ShieldBlockEffect(
-                                    block_chance=0.3, block_amount=10, cpu_steal=0.7
-                                )
-                            ]
+                                PreventDamageEffect(10),
+                                CpuDrainEffect(0.7),
+                            ],
                         )
                     ],
                 ),
@@ -339,9 +341,11 @@ class TestFullBattleScenarios:
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
+                            chance=0.4,
                             effects=[
-                                ShieldBlockEffect(block_chance=0.4, block_amount=6)
-                            ]
+                                PreventDamageEffect(6),
+                                CpuDrainEffect(0.0),
+                            ],
                         )
                     ],
                 ),
@@ -588,9 +592,11 @@ class TestFullBattleScenarios:
                     rarity="rare",
                     triggers=[
                         OnAttackedTrigger(
+                            chance=0.4,
                             effects=[
-                                ShieldBlockEffect(block_chance=0.4, block_amount=12)
-                            ]
+                                PreventDamageEffect(12),
+                                CpuDrainEffect(0.0),
+                            ],
                         )
                     ],
                 ),

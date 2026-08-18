@@ -5,8 +5,14 @@ Shields should have 30% chance to block attacks and can have additional effects
 
 from battle_engine import BattleItem, BattleSimulator
 from grid_system import ItemShape
-from item_effects import AttackEffect, ItemSpec, TimerTrigger
-from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+from item_effects import (
+    AttackEffect,
+    CpuDrainEffect,
+    ItemSpec,
+    OnAttackedTrigger,
+    PreventDamageEffect,
+    TimerTrigger,
+)
 
 from .helpers import get_test_containers
 
@@ -34,14 +40,12 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                        effects=[
-                            ShieldBlockEffect(
-                                block_chance=1.0,  # 100% for testing
-                                block_amount=10,
-                                cpu_steal=0.5,
-                            )
-                        ]
-                    )
+                            chance=1.0,
+                            effects=[
+                                PreventDamageEffect(10),
+                                CpuDrainEffect(0.5),
+                            ],
+                        )
                 ],
             ),
             position=(0, 0),
@@ -113,12 +117,12 @@ class TestShieldBlocking:
                         player_class="neutral",
                         triggers=[
                             OnAttackedTrigger(
-                                effects=[
-                                    ShieldBlockEffect(
-                                        block_chance=0.3, block_amount=8  # 30% chance
-                                    )
-                                ]
-                            )
+                            chance=0.3,
+                            effects=[
+                                PreventDamageEffect(8),
+                                CpuDrainEffect(0.0),
+                            ],
+                        )
                         ],
                     ),
                     position=(i % 3, i // 3),
@@ -200,14 +204,12 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                        effects=[
-                            ShieldBlockEffect(
-                                block_chance=1.0,  # Always block for testing
-                                block_amount=5,
-                                cpu_steal=3.0,  # Steal 3 CPU
-                            )
-                        ]
-                    )
+                            chance=1.0,
+                            effects=[
+                                PreventDamageEffect(5),
+                                CpuDrainEffect(3.0),
+                            ],
+                        )
                 ],
             ),
             position=(0, 0),
@@ -272,8 +274,12 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                        effects=[ShieldBlockEffect(block_chance=1.0, block_amount=5)]
-                    )
+                            chance=1.0,
+                            effects=[
+                                PreventDamageEffect(5),
+                                CpuDrainEffect(0.0),
+                            ],
+                        )
                 ],
             ),
             position=(0, 0),
@@ -291,8 +297,12 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                        effects=[ShieldBlockEffect(block_chance=1.0, block_amount=7)]
-                    )
+                            chance=1.0,
+                            effects=[
+                                PreventDamageEffect(7),
+                                CpuDrainEffect(0.0),
+                            ],
+                        )
                 ],
             ),
             position=(1, 0),
@@ -361,8 +371,12 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                        effects=[ShieldBlockEffect(block_chance=1.0, block_amount=10)]
-                    )
+                            chance=1.0,
+                            effects=[
+                                PreventDamageEffect(10),
+                                CpuDrainEffect(0.0),
+                            ],
+                        )
                 ],
             ),
             position=(0, 0),

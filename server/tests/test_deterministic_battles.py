@@ -9,8 +9,14 @@ import pytest
 
 from battle_engine import BattleItem, BattleSimulator
 from grid_system import ItemShape
-from item_effects import AttackEffect, ItemSpec, TimerTrigger
-from shield_effect import OnAttackedTrigger, ShieldBlockEffect
+from item_effects import (
+    AttackEffect,
+    CpuDrainEffect,
+    ItemSpec,
+    OnAttackedTrigger,
+    PreventDamageEffect,
+    TimerTrigger,
+)
 
 from .helpers import get_test_containers
 
@@ -186,12 +192,12 @@ class TestDeterministicBattles:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                        effects=[
-                            ShieldBlockEffect(
-                                block_chance=0.5, block_amount=5  # 50% chance
-                            )
-                        ]
-                    )
+                            chance=0.5,
+                            effects=[
+                                PreventDamageEffect(5),
+                                CpuDrainEffect(0.0),
+                            ],
+                        )
                 ],
             ),
             position=(0, 0),
@@ -292,9 +298,11 @@ class TestDeterministicBattles:
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
+                            chance=0.3,
                             effects=[
-                                ShieldBlockEffect(block_chance=0.3, block_amount=4)
-                            ]
+                                PreventDamageEffect(4),
+                                CpuDrainEffect(0.0),
+                            ],
                         )
                     ],
                 ),

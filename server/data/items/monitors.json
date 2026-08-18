@@ -126,12 +126,6 @@
               "buff_name": "block",
               "value": 20,
               "duration": -1
-            },
-            {
-              "type": "debuff",
-              "debuff_name": "corruption",
-              "value": 1,
-              "duration": -1
             }
           ]
         }

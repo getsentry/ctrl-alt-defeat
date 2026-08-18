@@ -6,6 +6,7 @@ Event-driven system with priority queue for timers
 import random
 import time
 import uuid
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, TypedDict
@@ -24,20 +25,88 @@ from item_effects import (
     DebuffEffect,
     Effect,
     HealEffect,
+    CpuDrainEffect,
     ItemSpec,
+    OnAttackedTrigger,
+    OnHitTrigger,
     PassiveTrigger,
+    PreventDamageEffect,
     ReflectEffect,
     StatModEffect,
     TimerTrigger,
 )
 from schemas import BattleAction
 
-# Import shield effect if available
-try:
-    from shield_effect import OnAttackedTrigger, ShieldBlockEffect
-except ImportError:
-    OnAttackedTrigger = None
-    ShieldBlockEffect = None
+MEMORY_LEAKED = "memory_leaked"
+POISON_PERIOD = 2.0
+
+
+class OverTimeEffect(ABC):
+    """Something a player's own state does to them, once each period.
+
+    Backpack Battles has three, and no more. They are worth listing, because
+    the shape of this class is decided by the third:
+
+    | Effect       | Period | Amount                        | Driven by     |
+    |--------------|--------|-------------------------------|---------------|
+    | Poison       | 2s     | 1 damage per stack            | a stack count |
+    | Regeneration | 2s     | 1 health per stack            | a stack count |
+    | Fatigue      | 1s     | escalating, from nightfall    | its own last  |
+
+    Fatigue's amount comes from what it dealt last time, not from any stack,
+    so no arrangement of "damage per stack" and "heal per stack" fields can
+    hold it. Each effect therefore works out its own payout and applies it.
+
+    None of the stat buffs belong here. Heat, Cold, Blind, Luck and Empower do
+    not tick -- they are read at the moment they matter, when an activation is
+    scheduled or an accuracy roll is made. Spikes and Vampirism are reactive,
+    not periodic. An over-time effect is one that happens on a clock.
+
+    `pay` routes through the simulator rather than writing to the player, so
+    the damage travels the same road as every other kind and everything
+    watching a player's health still sees it. Section 3.2 of the design
+    document, and "Where a trigger belongs" in docs/effects.md.
+    """
+
+    #: The buff or debuff behind it, which is also its key in `Player.paid_at`
+    name: str = ""
+
+    #: Seconds between payouts
+    period: float = 0.0
+
+    @abstractmethod
+    def pay(self, player: "Player", battle: "BattleSimulator") -> None:
+        """Called once per period. Do nothing if nothing is owed."""
+
+
+class MemoryLeaked(OverTimeEffect):
+    """Poison. Section 3.2: 1 damage per stack, every 2 seconds."""
+
+    name = MEMORY_LEAKED
+    period = POISON_PERIOD
+
+    def pay(self, player: "Player", battle: "BattleSimulator") -> None:
+        # Read when it pays, so a stack applied since the last payout counts
+        # in full at this one. Paying spends none of them.
+        stacks = player.debuffs.get(self.name, 0)
+        if stacks <= 0:
+            return
+
+        battle._take_damage(
+            player,
+            stacks,
+            source="system",  # No one item is behind it once stacked
+            action="dot",
+            attacker=None,  # The stacks are the source
+            details={"debuff_name": self.name},
+        )
+
+
+#: Every over-time effect in the game, in the order they pay out.
+#: Regeneration and Fatigue are not built yet -- see the table on
+#: OverTimeEffect for how each one fits.
+OVER_TIME: List[OverTimeEffect] = [MemoryLeaked()]
+
 
 # BattleItem will reference the new ItemSpec from item_effects.py
 
@@ -97,6 +166,35 @@ class Player:
     # Session Replay special tracking
     recorded_attacks: List[Dict] = field(default_factory=list)
 
+    # When each over-time effect last paid out, keyed by the buff or debuff
+    # behind it.
+    paid_at: Dict[str, float] = field(default_factory=dict)
+
+    def reset_for_battle(self) -> None:
+        """Forget everything the last battle left here.
+
+        One call clears every field a battle writes, so nothing can survive
+        into a later round. Adding a new piece of battle state means clearing
+        it here, and nowhere else.
+        """
+        self.buffs.clear()
+        self.debuffs.clear()
+        self.recorded_attacks.clear()
+        self.paid_at.clear()
+
+    def period_due(self, name: str, period: float, now: float) -> bool:
+        """True once per period, on the period, timed from the battle start.
+
+        The epsilon is for the battle loop, which adds its tick to a float:
+        twenty tenths of a second come to 1.9999999999999998. Without it every
+        period would pay one tick late, and the lateness would compound.
+        """
+        due_at = self.paid_at.get(name, 0.0) + period
+        if now + 1e-9 < due_at:
+            return False
+        self.paid_at[name] = due_at
+        return True
+
 
 ITEM_CATALOG = config_loader.items
 
@@ -134,8 +232,15 @@ class BattleSimulator:
         self.rng = random.Random(self.seed)
 
     def _time_ms(self) -> int:
-        """Convert current time to milliseconds for BattleAction"""
-        return int(self.current_time * 1000)
+        """Convert current time to milliseconds for BattleAction
+
+        Rounds rather than truncates. The loop adds `tick_rate` to a float
+        sixty times a second, so by six seconds the clock reads
+        5.999999999999995. Truncating that logged a 6.0s event at 5999ms, and
+        every later event drifted the same way. The client replays off these
+        timestamps, so the error was visible.
+        """
+        return round(self.current_time * 1000)
 
     def simulate_battle(
         self,
@@ -182,6 +287,8 @@ class BattleSimulator:
         self.actions = []
         self.event_manager.clear()
         self.consumed_items = set()
+        player1.reset_for_battle()
+        player2.reset_for_battle()
 
         # Calculate adjacency (Section 4.2 & 4.3)
         self._calculate_adjacency(p1_items)
@@ -223,9 +330,9 @@ class BattleSimulator:
             self.event_manager.current_time = self.current_time
             self.event_manager.process_timers(self.current_time)
 
-            # Apply DOT effects (Section 3.2 - Memory Leaked/Poison)
-            self._apply_dot_effects(player1)
-            self._apply_dot_effects(player2)
+            # Pay out over-time effects (Sections 3.1 and 3.2)
+            self._apply_over_time(player1)
+            self._apply_over_time(player2)
 
             # Check for defeat
             if player1.quota <= 0:
@@ -467,59 +574,62 @@ class BattleSimulator:
                         EventType.DAMAGE_TAKEN, handle_damage_taken
                     )
 
+                elif isinstance(trigger, OnHitTrigger):
+                    # Fires only for this item's own landed attacks. Another
+                    # item's miss must never cost this one its on-hit effect,
+                    # so the attacker is checked by uid rather than by owner.
+                    def handle_on_hit(event, trigger=trigger, item=item, owner=owner):
+                        if event.data.attacker_item_id != item.uid:
+                            return
+                        if item.uid in self.consumed_items:
+                            return
+                        # The chance roll lives here, after accuracy passed.
+                        if not trigger.should_activate("on_hit", item, enemy, self):
+                            return
+                        self._apply_effects(trigger.effects, item, owner, enemy)
+
+                    self.event_manager.subscribe(EventType.ON_HIT, handle_on_hit)
+
                 elif isinstance(trigger, PassiveTrigger):
                     # Apply passive effects immediately
                     self._apply_effects(trigger.effects, item, owner, enemy)
 
-                elif OnAttackedTrigger and isinstance(trigger, OnAttackedTrigger):
-                    # Subscribe to ON_ATTACKED events for shields
+                elif isinstance(trigger, OnAttackedTrigger):
                     def handle_on_attacked(
                         event, trigger=trigger, item=item, owner=owner
                     ):
                         if event.target != owner:
                             return
-
-                        # Skip if item is consumed
                         if item.uid in self.consumed_items:
                             return
+                        if not trigger.should_activate(
+                            "on_attacked", item, owner, self
+                        ):
+                            return
 
-                        # Check CPU cost (shields are usually free)
-                        cpu_cost = trigger.get_cpu_cost()
-                        if owner.cpu >= cpu_cost:
-                            # Process shield effects
-                            blocked_damage = 0
-                            for effect in trigger.effects:
-                                if ShieldBlockEffect and isinstance(
-                                    effect, ShieldBlockEffect
-                                ):
-                                    result = effect.apply(item, event.source, self)
-                                    if result.get("blocked"):
-                                        # Shield activated!
-                                        blocked_damage = min(
-                                            result["block_amount"],
-                                            event.data.pending_damage,
-                                        )
+                        prevented = 0
+                        remaining = event.data.pending_damage
+                        for effect in trigger.effects:
+                            if isinstance(effect, PreventDamageEffect):
+                                stopped = min(effect.amount, remaining)
+                                prevented += stopped
+                                remaining -= stopped
+                            else:
+                                self._apply_effects([effect], item, owner, enemy)
 
-                                        # Log the block
-                                        self.actions.append(
-                                            BattleAction(
-                                                timestamp=self._time_ms(),
-                                                source=item.uid,
-                                                action="block",
-                                                target=None,
-                                                damage=blocked_damage,
-                                                player=owner.id,
-                                                details=None,
-                                            )
-                                        )
-
-                                        # Apply counter effects if any
-                                        if result.get("cpu_steal") and event.source:
-                                            event.source.cpu -= result["cpu_steal"]
-
-                                        # Return blocked amount to reduce damage
-                                        return {"blocked": blocked_damage}
-                            owner.cpu -= cpu_cost
+                        if prevented:
+                            self.actions.append(
+                                BattleAction(
+                                    timestamp=self._time_ms(),
+                                    source=item.uid,
+                                    action="block",
+                                    target=None,
+                                    damage=prevented,
+                                    player=owner.id,
+                                    details=None,
+                                )
+                            )
+                        return {"blocked": prevented}
 
                     self.event_manager.subscribe(
                         EventType.ON_ATTACKED, handle_on_attacked
@@ -671,9 +781,32 @@ class BattleSimulator:
                     owner.max_cpu += result["value"]
                 elif result["stat"] == "cpu_regen":
                     owner.cpu_regen += result["value"]
+            elif isinstance(effect, CpuDrainEffect):
+                # Backpack Battles calls it removing stamina. Nobody can be
+                # put into debt by it, so it floors at zero rather than going
+                # negative and locking the loser out for the rest of the
+                # battle.
+                drained = owner if result["target_type"] == "self" else enemy
+                drained.cpu = max(0.0, drained.cpu - result["amount"])
+                self.actions.append(
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source=item.uid,
+                        action="cpu_drain",
+                        target=None,
+                        damage=None,
+                        player=drained.id,
+                        details={"amount": result["amount"]},
+                    )
+                )
             elif isinstance(effect, ConsumeEffect):
                 # Mark item for removal and emit event
                 self._consume_item(item, owner)
+            else:
+                raise TypeError(
+                    f"{item.spec.id}: {type(effect).__name__} has no handler "
+                    f"in _apply_effects"
+                )
 
     def _process_attack(
         self, attack_data: dict, item: BattleItem, owner: Player, enemy: Player
@@ -734,73 +867,104 @@ class BattleSimulator:
             if "block" in enemy.buffs:
                 enemy.buffs["block"] = int(enemy.buffs["block"] * 0.5)
 
-        # Deal damage
-        self._deal_damage(enemy, damage, owner, item.uid)
-
-    def _deal_damage(self, target: Player, damage: int, attacker: Player, item_id: str):
-        """Deal damage following Section 7.3"""
-        # Emit ON_ATTACKED event for shields to process
-        # This happens BEFORE damage is dealt
-        attack_event = Event(
-            EventType.ON_ATTACKED,
-            attacker,
-            target,
-            EventData(pending_damage=damage, attacker_item_id=item_id),
+        # Shields roll and Block is spent, both because this was an attack.
+        damage = self._mitigate_attack(enemy, damage, owner, item.uid)
+        self._take_damage(
+            enemy, damage, source=item.uid, action="damage", attacker=owner
         )
-        block_results = self.event_manager.emit(attack_event)
 
-        # Process shield blocks
-        total_blocked = 0
-        for result in block_results:
-            if result and result.get("blocked"):
-                total_blocked += result["blocked"]
-
-        # Reduce damage by shield blocks
-        damage = max(0, damage - total_blocked)
-
-        # Check buff-based block (Section 7.3)
-        if "block" in target.buffs and target.buffs["block"] > 0:
-            blocked = min(damage, target.buffs["block"])
-            damage -= blocked
-            target.buffs["block"] -= blocked
-
-            if target.buffs["block"] <= 0:
-                del target.buffs["block"]
-
-            if blocked > 0:
-                self.actions.append(
-                    BattleAction(
-                        timestamp=self._time_ms(),
-                        source="system",  # Block from buff, not specific item
-                        action="block",
-                        target=None,
-                        damage=blocked,
-                        player=target.id,
-                        details={"type": "buff_block"},
-                    )
-                )
-
-        # Store old health for threshold detection
-        old_quota = target.quota
-
-        # Apply damage
-        target.quota -= damage
-
-        # Log damage
-        self.actions.append(
-            BattleAction(
-                timestamp=self._time_ms(),
-                source=item_id,
-                action="damage",
-                target=None,  # Target is implicit from player field
-                damage=damage,
-                player=target.id,
-                details=None,
+        # The attack landed, so this item's on-hit triggers may now run.
+        # Emitted after the damage, so the log reads in the
+        # order it happened and an on-hit effect can see the result.
+        self.event_manager.emit(
+            Event(
+                EventType.ON_HIT,
+                owner,
+                enemy,
+                EventData(damage=damage, attacker_item_id=item.uid),
             )
         )
 
-        # Emit damage event for reactive items (Session Replay, health potions, etc)
-        # Items will check their own thresholds
+    def _mitigate_attack(
+        self, target: Player, damage: int, attacker: Player, item_id: str
+    ) -> int:
+        """Everything standing between an attack and the quota (Section 7.3).
+
+        Belongs to the attack, not to the damage. A shield rolls because it
+        was attacked, and Block is spent stopping a blow. Neither has anything
+        to say about damage that comes from inside, which is why poison does
+        not come through here.
+        """
+        # Shields roll first, and only against an attack that hit -- this is
+        # reached after the accuracy check, so a miss never gets here.
+        block_results = self.event_manager.emit(
+            Event(
+                EventType.ON_ATTACKED,
+                attacker,
+                target,
+                EventData(pending_damage=damage, attacker_item_id=item_id),
+            )
+        )
+        prevented = sum(
+            result["blocked"]
+            for result in block_results
+            if result and result.get("blocked")
+        )
+        damage = max(0, damage - prevented)
+
+        # Then Block, the resource, which is spent a point at a time.
+        held = target.buffs.get("block", 0)
+        if held > 0 and damage > 0:
+            absorbed = min(damage, held)
+            damage -= absorbed
+            target.buffs["block"] = held - absorbed
+            if target.buffs["block"] <= 0:
+                del target.buffs["block"]
+
+            self.actions.append(
+                BattleAction(
+                    timestamp=self._time_ms(),
+                    source="system",  # Block is the player's, not an item's
+                    action="block",
+                    target=None,
+                    damage=absorbed,
+                    player=target.id,
+                    details={"type": "buff_block"},
+                )
+            )
+
+        return damage
+
+    def _take_damage(
+        self,
+        target: Player,
+        damage: int,
+        source: str,
+        action: str,
+        attacker: Optional[Player] = None,
+        details: Optional[Dict] = None,
+    ):
+        """Put damage on a player and tell everyone watching.
+
+        The one place a quota goes down. Whatever the damage was mitigated by
+        on its way here, it lands the same and is seen the same, so an item
+        that reacts to its owner being hurt reacts to all of it.
+        """
+        old_quota = target.quota
+        target.quota -= damage
+
+        self.actions.append(
+            BattleAction(
+                timestamp=self._time_ms(),
+                source=source,
+                action=action,
+                target=None,  # Target is implicit from the player field
+                damage=damage,
+                player=target.id,
+                details=details,
+            )
+        )
+
         self.event_manager.emit(
             Event(
                 EventType.DAMAGE_TAKEN,
@@ -808,32 +972,18 @@ class BattleSimulator:
                 target,
                 EventData(
                     damage=damage,
-                    item_id=item_id,
+                    item_id=source,
                     previous_health=old_quota,
                     current_health=target.quota,
                 ),
             )
         )
 
-    def _apply_dot_effects(self, player: Player):
-        """Apply DOT effects (Section 3.2)"""
-        if "memory_leaked" in player.debuffs:
-            # 1 damage every 2 seconds per stack
-            tick_damage = player.debuffs["memory_leaked"] * (self.tick_rate / 2.0)
-            if tick_damage >= 1:
-                damage = int(tick_damage)
-                player.quota -= damage
-                self.actions.append(
-                    BattleAction(
-                        timestamp=self._time_ms(),
-                        source="core_dumper",  # DOT source
-                        action="dot",
-                        target=None,
-                        damage=damage,
-                        player=player.id,
-                        details={"debuff_name": "memory_leaked"},
-                    )
-                )
+    def _apply_over_time(self, player: Player):
+        """Pay out whatever a player's own state owes right now."""
+        for effect in OVER_TIME:
+            if player.period_due(effect.name, effect.period, self.current_time):
+                effect.pay(player, self)
 
     def _consume_item(self, item: BattleItem, owner: Player):
         """Consume an item (remove it from battle)"""

@@ -6,9 +6,14 @@ Effects determine WHAT happens
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import TYPE_CHECKING, ClassVar, List, Optional
 
 from grid_system import ItemShape
+
+# battle_engine imports this module, so the simulator can only be named for
+# type checking. Same arrangement as event_system.py.
+if TYPE_CHECKING:
+    from battle_engine import BattleSimulator
 
 # ============= EFFECTS (What happens) =============
 
@@ -17,7 +22,7 @@ class Effect(ABC):
     """Base class for all effects"""
 
     @abstractmethod
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         """Apply this effect"""
         pass
 
@@ -32,7 +37,7 @@ class AttackEffect(Effect):
     crit_chance: float = 0.05
     special: Optional[str] = None  # "bypass_block", "crash", etc
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         # Battle system will implement damage dealing
         return {
             "type": "attack",
@@ -52,7 +57,7 @@ class HealEffect(Effect):
     max_heal: int
     target_type: str = "self"  # "self", "lowest_ally", "all_allies"
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "heal",
             "min_heal": self.min_heal,
@@ -63,15 +68,46 @@ class HealEffect(Effect):
 
 @dataclass
 class BlockEffect(Effect):
-    """Add block/shield to target"""
+    """Gain Block, the resource that absorbs damage a point at a time."""
 
     block_amount: int
     target_type: str = "self"
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "block",
             "amount": self.block_amount,
+            "target_type": self.target_type,
+        }
+
+
+@dataclass
+class PreventDamageEffect(Effect):
+    """Stop an incoming attack dead, up to `amount`.
+
+    Not the same thing as Block, though both reduce damage. Block is a
+    stacking resource that absorbs 1 damage per stack and is spent doing it
+    (see BlockEffect). This reduces damage on one attack outright and is spent on
+    nothing.
+    """
+
+    amount: int
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "prevent_damage", "amount": self.amount}
+
+
+@dataclass
+class CpuDrainEffect(Effect):
+    """Take CPU off somebody."""
+
+    amount: float
+    target_type: str = "attacker"
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {
+            "type": "cpu_drain",
+            "amount": self.amount,
             "target_type": self.target_type,
         }
 
@@ -85,7 +121,7 @@ class BuffEffect(Effect):
     duration: Optional[float] = None  # None = permanent
     target_type: str = "self"
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "buff",
             "buff_name": self.buff_name,
@@ -95,17 +131,20 @@ class BuffEffect(Effect):
         }
 
 
+DEBUFFS = frozenset({"throttled", "memory_leaked", "rate_limited"})
+
+
 @dataclass
 class DebuffEffect(Effect):
     """Apply a debuff to enemies"""
 
-    debuff_name: str  # "slow", "vulnerable", "poison", etc
+    debuff_name: str  # One of DEBUFFS
     value: float
-    duration: float
+    duration: float = -1  # -1 is "to the end of the battle", which is all of them
     accuracy: float = 1.0
     target_type: str = "enemy"
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "debuff",
             "debuff_name": self.debuff_name,
@@ -124,7 +163,7 @@ class StunEffect(Effect):
     accuracy: float = 0.5
     target_type: str = "enemy"
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "stun",
             "duration": self.stun_duration,
@@ -139,7 +178,7 @@ class ReflectEffect(Effect):
 
     reflect_percent: float  # 0.3 = 30% reflect
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         return {"type": "reflect", "percent": self.reflect_percent}
 
 
@@ -150,7 +189,7 @@ class StatModEffect(Effect):
     stat_name: str  # "max_cpu", "cpu_regen", "max_health"
     value: float
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         return {"type": "stat_mod", "stat": self.stat_name, "value": self.value}
 
 
@@ -158,7 +197,7 @@ class StatModEffect(Effect):
 class ConsumeEffect(Effect):
     """Consume the item (remove it from battle)"""
 
-    def apply(self, source, target, battle_state):
+    def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "consume",
             "item_id": source.uid if hasattr(source, "uid") else None,
@@ -175,7 +214,9 @@ class Trigger(ABC):
         self.effects = effects or []
 
     @abstractmethod
-    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
         """Check if this trigger should activate"""
         pass
 
@@ -196,7 +237,9 @@ class TimerTrigger(Trigger):
     # Runtime state
     current_cooldown: float = 0.0
 
-    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
         if event_type != "timer_tick":
             return False
         return self.current_cooldown <= 0
@@ -211,7 +254,9 @@ class BattleStartTrigger(Trigger):
 
     effects: List[Effect] = field(default_factory=list)
 
-    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
         return event_type == "battle_start"
 
     def get_cpu_cost(self) -> int:
@@ -230,7 +275,9 @@ class DamageTakenTrigger(Trigger):
     # Runtime state
     current_cooldown: float = 0.0
 
-    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
         if event_type != "damage_taken":
             return False
         if self.current_cooldown > 0:
@@ -252,17 +299,51 @@ class DamageDealtTrigger(Trigger):
     chance: float = 1.0  # Chance to trigger
     effects: List[Effect] = field(default_factory=list)
 
-    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
         if event_type != "damage_dealt":
             return False
-        import random
-
-        # Use battle_state's RNG if available, otherwise fall back to random
-        rng = getattr(battle_state, "rng", random)
-        return rng.random() < self.chance
+        return battle_state.rng.random() < self.chance
 
     def get_cpu_cost(self) -> int:
         return 0  # On-hit effects are usually free
+
+
+@dataclass
+class ChanceTrigger(Trigger):
+    """A trigger that fires its effects based on a % chance"""
+
+    chance: float = 1.0
+    effects: List[Effect] = field(default_factory=list)
+
+    # The event this trigger answers to. Subclasses name it.
+    event_name: ClassVar[str] = ""
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        if event_type != self.event_name:
+            return False
+        if self.chance >= 1.0:
+            return True
+        return battle_state.rng.random() < self.chance
+
+    def get_cpu_cost(self) -> int:
+        return 0  # Whatever caused the event has already paid
+
+
+@dataclass
+class OnHitTrigger(ChanceTrigger):
+    """Activates when this item's attack hits. Doesn't fire after a miss."""
+    event_name: ClassVar[str] = "on_hit"
+
+
+@dataclass
+class OnAttackedTrigger(ChanceTrigger):
+    """Activates when the owner is attacked, and the attack hit."""
+
+    event_name: ClassVar[str] = "on_attacked"
 
 
 @dataclass
@@ -271,7 +352,9 @@ class PassiveTrigger(Trigger):
 
     effects: List[Effect] = field(default_factory=list)
 
-    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
         return event_type == "passive_apply"
 
     def get_cpu_cost(self) -> int:
@@ -284,7 +367,9 @@ class KillTrigger(Trigger):
 
     effects: List[Effect] = field(default_factory=list)
 
-    def should_activate(self, event_type: str, source, target, battle_state) -> bool:
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
         return event_type == "enemy_killed"
 
     def get_cpu_cost(self) -> int:
