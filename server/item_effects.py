@@ -102,7 +102,7 @@ class CpuDrainEffect(Effect):
     """Take CPU off somebody."""
 
     amount: float
-    target_type: str = "attacker"
+    target_type: str
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
@@ -151,6 +151,47 @@ class DebuffEffect(Effect):
             "value": self.value,
             "duration": self.duration,
             "accuracy": self.accuracy,
+            "target_type": self.target_type,
+        }
+
+
+@dataclass
+class CleanseEffect(Effect):
+    """Take N of a status off somebody.
+
+    Two axes, and every combination works: what to take -- a buff or a debuff,
+    named or any -- and who to take it from. Taking a debuff off yourself is
+    called "cleanse" and taking a buff off your opponent is called "remove",
+    but that is the wording differing, not the mechanic.
+    """
+
+    count: int
+
+    #: What to take: "debuff" or "buff" for any of that kind, or the name of
+    #: one. A name says which kind it is by itself, since no buff and debuff
+    #: share one, so there is nothing to state twice and no way to write the
+    #: contradiction that two fields allowed.
+    removes: str
+
+    target_type: str  # "self" or "enemy"
+
+    def named(self) -> bool:
+        """Whether it takes one particular status rather than any"""
+        return self.removes not in ("debuff", "buff")
+
+    def kind(self) -> str:
+        """Which pool it draws from: `debuff` or `buff`"""
+        if not self.named():
+            return self.removes
+        return "debuff" if self.removes in DEBUFFS else "buff"
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {
+            "type": "cleanse",
+            "count": self.count,
+            "removes": self.removes,
+            "named": self.named(),
+            "kind": self.kind(),
             "target_type": self.target_type,
         }
 
@@ -208,7 +249,19 @@ class ConsumeEffect(Effect):
 
 
 class Trigger(ABC):
-    """Base class for all triggers"""
+    """Base class for all triggers
+
+    **A field the item catalogue supplies has no default.** The catalogue is
+    transcribed by hand from a wiki, and a default cannot be told apart from
+    a transcription that lost a value -- which is how a shield came to roll
+    30% for 8 with no CPU drain, and an on-hit effect came to have no chance.
+    An item that genuinely has no value for something writes it anyway: `0`
+    for a shield that takes no CPU, `1.0` for an effect that always happens.
+
+    Runtime state is different and keeps its default. `fired` and
+    `current_cooldown` are the engine's own bookkeeping, not something an
+    item can say.
+    """
 
     def __init__(self, effects: List[Effect] = None):
         self.effects = effects or []
@@ -280,7 +333,7 @@ class HealthThresholdTrigger(Trigger):
     by whatever did the falling
     """
 
-    threshold: float = 0.5  # Fraction of max health, so 0.5 is "below 50%"
+    threshold: float  # Fraction of max health, so 0.5 is "below 50%"
     effects: List[Effect] = field(default_factory=list)
 
     # Runtime state, cleared between battles by rebuilding the spec
@@ -321,7 +374,7 @@ class DamageDealtTrigger(Trigger):
 class ChanceTrigger(Trigger):
     """A trigger that fires its effects based on a % chance"""
 
-    chance: float = 1.0
+    chance: float
     effects: List[Effect] = field(default_factory=list)
 
     # The event this trigger answers to. Subclasses name it.

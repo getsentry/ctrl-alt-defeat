@@ -14,6 +14,7 @@ from item_effects import (
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
+    CleanseEffect,
     ConsumeEffect,
     CpuDrainEffect,
     HealthThresholdTrigger,
@@ -283,9 +284,10 @@ class ConfigLoader:
         elif effect_type == "cpu_drain":
             if "value" not in config:
                 raise ValueError(f"{item_id}: cpu_drain needs a `value`")
+            if "target" not in config:
+                raise ValueError(f"{item_id}: cpu_drain needs a `target`")
             return CpuDrainEffect(
-                amount=config["value"],
-                target_type=config.get("target", "attacker"),
+                amount=config["value"], target_type=config["target"]
             )
         elif effect_type == "stat_mod":
             return StatModEffect(
@@ -296,6 +298,35 @@ class ConfigLoader:
                 buff_name=config.get("stat", "speed"),
                 value=config.get("value", 0.1),
                 target_type=config.get("target", "self"),
+            )
+        elif effect_type == "cleanse":
+            if "count" not in config:
+                raise ValueError(
+                    f"{item_id}: a cleanse has to state its `count`, the "
+                    f"number of statuses it takes off."
+                )
+            if "removes" not in config:
+                raise ValueError(
+                    f"{item_id}: a cleanse has to state what it `removes`. "
+                    f"Write `debuff` or `buff` for any of that kind, or name "
+                    f"one of: {', '.join(sorted(DEBUFFS))}."
+                )
+            removes = config["removes"]
+            if removes not in ("debuff", "buff") and removes not in DEBUFFS:
+                raise ValueError(
+                    f"{item_id}: `{removes}` is not something to cleanse. "
+                    f"Write `debuff` or `buff` for any of that kind, or name "
+                    f"one of: {', '.join(sorted(DEBUFFS))}."
+                )
+            if "target" not in config:
+                raise ValueError(
+                    f"{item_id}: a cleanse has to state its `target`, `self` "
+                    f"or `enemy`."
+                )
+            return CleanseEffect(
+                count=config["count"],
+                removes=removes,
+                target_type=config["target"],
             )
         elif effect_type == "debuff":
             name = config.get("debuff_name")

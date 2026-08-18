@@ -95,6 +95,21 @@
               "duration": -1
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 2.2,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "cleanse",
+              "count": 2,
+              "target": "self",
+              "description": "Cleanse 2 memory_leaked",
+              "removes": "memory_leaked"
+            }
+          ],
+          "description": "Every 2.2s: Cleanse 2 Memory Leaked"
         }
       ],
       "slug": "sanctified_firewall",

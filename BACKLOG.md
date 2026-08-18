@@ -67,30 +67,126 @@ stop the shop depending on insertion order at all — the second is better, and
 it means drawing from a sorted list of ids at the point of use rather than
 from whatever `dict` iteration hands back.
 
-### Three items sit on a trigger their source does not have
+### Two items sit on a trigger their source does not have
 
-`health_threshold` is right for two of the five items using it. The other
-three were given a threshold that their source item never had:
+`health_threshold` is right for two of the items using it. Two others were
+given a threshold their source never had:
 
 | Ours | Source | What the source actually says |
 |---|---|---|
 | `healing_nanobots` | Healing Herbs | "**Start of battle**: Gain 2 Regeneration" |
-| `system_restore` | Carrot | "**Every 2.7s**: Cleanse 1 debuff. If you have at least 4 Luck: 55% chance to gain 1 Empower" |
 | `backup_system` | Goobert | "**5 Star item activations**: Heal for 9" |
 
-None of the three can be fixed yet, and each is blocked on something
-different: Regeneration does not tick, `cleanse` is not an effect, and there
-is no trigger that counts activations. They are left healing on a threshold,
-which is at least a thing the engine does, rather than being given a trigger
-that silently does nothing.
+Neither can be fixed yet. Regeneration does not tick, and no trigger counts
+activations. They are left healing on a threshold, which is at least
+something the engine does, rather than being moved to a trigger that would
+silently do nothing.
 
-Two more effects are missing from the two items that *are* right. Health
-Potion is "heal for 12 **and cleanse 4 Poison**", and Strong Health Potion
-adds "**gain 3 Regeneration**". The heals and the thresholds now match; the
-cleanse and the Regeneration do not exist.
+`auto_rollback` was a third of these and is now right -- Carrot's "Every 2.7s:
+Cleanse 1 debuff" -- once the cleanse it was waiting on existed. Its heal,
+buff and consume were invented and are gone with the threshold.
 
-**`cleanse` is the one to build next.** Poison exists now, four items want to
-remove it, and it has no dependencies of its own.
+### Five catalogue fields still have defaults
+
+Nothing an item supplies should have one. The catalogue is transcribed by hand
+from a wiki, and a default cannot be told apart from a transcription that lost
+a value -- which is how a shield came to roll 30% for 8 with no CPU drain, how
+an on-hit trigger came to have no chance, and how a cleanse came to take
+"debuff" without being asked.
+
+Every effect built recently states everything. These older ones do not:
+
+| Field | Unstated on | Silently becomes |
+|---|---|---|
+| `attack.crit_chance` | 55 effects | 0 |
+| `buff.target` | 16 | `self` |
+| `heal.min_heal` / `max_heal` | 3 each | 1 |
+| `debuff.target` | 1 | `enemy` |
+
+Seventy items in all. `attack.crit_chance` is the one that matters most: 55
+weapons are silently non-critting, and the design document gives a 5% base
+crit chance in Section 7.2, so the default disagrees with the spec as well as
+hiding the omission.
+
+**Fix.** Require them in `_parse_effect`, and write the value into every item.
+Mechanical, but it touches most of the catalogue, so it wants to be its own
+change with nothing else in it.
+
+Runtime state keeps its defaults. `fired` and `current_cooldown` are the
+engine's bookkeeping, not something an item can say.
+
+### `player.buffs` is four different things in one dictionary
+
+Calling a player's core attributes "buffs" is the root of it. `Player.buffs`
+currently holds:
+
+| What | Examples | Should be |
+|---|---|---|
+| Real buffs | `regeneration` | A stacking status, like debuffs |
+| A resource | `block` | Its own field. Block absorbs damage a point at a time; it is not a status |
+| Core attributes | `accuracy`, `speed`, `cpu_cost`, `attack_speed`, `damage_reduction`, `max_memory`, `compute` | Attributes of the player or its items, modified, not stacked |
+| Engine bookkeeping | `reflect` | Not player state at all |
+
+**Only `block` is ever read.** Every other name in that table is written into
+the dictionary and consulted by nothing, while logging a `buff` action that
+makes it look as though it worked. An item that says "adjacent items act 10%
+faster" writes `speed` and changes nothing.
+
+It is also not type-safe: `reflect` is stored as a fraction beside integer
+stack counts, so summing the dictionary is meaningless and a cleanse could
+remove `0.3` of something.
+
+**Three consequences, all live:**
+
+- **`cleanse: buff` is unsafe.** It picks a kind at random and could strip
+  somebody's Block, which is not a buff. Nothing does it today because no item
+  removes buffs yet, but the effect allows it.
+- **No buff can be named or checked.** `buff_name` is unvalidated, unlike
+  `debuff_name`, so a typo is silent. There is no `BUFFS` allowlist to check
+  against because nobody has decided what our buffs are.
+- **Named buff removal cannot be written.** Six items in the source game want
+  it: "Remove 2 Luck", "Remove 1 Spikes and 2 Empower", "Remove 1 Vampirism".
+
+**Fix.** Separate the four. Real buffs become a stacking status set with an
+allowlist, the way `DEBUFFS` already works -- Backpack Battles has seven:
+Empower, Heat, Luck, Mana, Regeneration, Spikes, Vampirism. Block becomes a
+field on the player. Attribute modifiers stop pretending to be statuses and
+act on the attribute they name. `reflect` moves out of player state.
+
+Do this with the Section 3.1 entry below, which is the same job seen from the
+design document's side: that list has four invented buffs and is missing four
+real ones.
+
+### Fifteen more items want a cleanse they do not have
+
+`cleanse` is built, and five items use it. Twenty items in the catalogue have
+a source that cleanses, so fifteen are still short one. Each is blocked on
+something other than the cleanse itself:
+
+- **A trigger we do not have.** `system_restore` is Divine Potion, "You
+  reached 10 debuff: Consume this and cleanse 10 debuffs" -- a count of
+  debuffs held, which is a resource threshold. It cleanses at the start of
+  battle instead, where there is nothing to remove.
+- **A condition we cannot express.** `holy_spear` cleanses "1 debuff for each
+  Star free slot"; `shelly` gives cleanses "a 25% chance to cleanse an
+  additional debuff", which modifies other items' cleanses.
+- **Items not otherwise imported yet**, where the cleanse is one clause of
+  several: `burning_coal`, `gold_armor`, `winged_boots`, `snowmaster`,
+  `ai_companion_core`, `corrupted_kernel`, `glowing_crown`, the
+  recombobulators, the Amethyst modules.
+
+Covered by the per-item audit entry below, and listed here because the effect
+they were waiting on now exists.
+
+Two smaller ones, both real:
+
+- **`emergency_patch` still gains Block it should not.** Strong Health Potion
+  is "heal for 24, gain 3 **Regeneration** and cleanse 4 Poison". The heal and
+  the cleanse are right now; the Block is invented and Regeneration does not
+  tick.
+- **`emergency_hotfix` is a second Health Potion** on a battle_start trigger,
+  where the real one is a health threshold. Two items, one source, one of them
+  wrong.
 
 ### A health threshold cannot say whether it re-arms
 

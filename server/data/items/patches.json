@@ -166,7 +166,10 @@
           "effects": [
             {
               "type": "cleanse",
-              "target": "self"
+              "count": 10,
+              "target": "self",
+              "removes": "debuff",
+              "description": "Cleanse 10 debuffs"
             },
             {
               "type": "heal",

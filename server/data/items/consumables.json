@@ -27,6 +27,13 @@
               "description": "Heal for 12"
             },
             {
+              "type": "cleanse",
+              "count": 4,
+              "target": "self",
+              "description": "Cleanse 4 memory_leaked",
+              "removes": "memory_leaked"
+            },
+            {
               "type": "consume"
             }
           ]
@@ -94,6 +101,13 @@
             {
               "type": "block",
               "value": 10
+            },
+            {
+              "type": "cleanse",
+              "count": 4,
+              "target": "self",
+              "description": "Cleanse 4 memory_leaked",
+              "removes": "memory_leaked"
             },
             {
               "type": "consume"
@@ -332,25 +346,19 @@
       "cost": 3,
       "triggers": [
         {
-          "type": "health_threshold",
-          "threshold": 0.3,
+          "type": "timer",
+          "cooldown": 2.7,
+          "cpu_cost": 0,
           "effects": [
             {
-              "type": "heal",
-              "min_heal": 20,
-              "max_heal": 25
-            },
-            {
-              "type": "buff",
-              "buff_name": "damage_reduction",
-              "value": 0.2,
-              "duration": 5,
-              "description": "20% damage reduction for 5 seconds"
-            },
-            {
-              "type": "consume"
+              "type": "cleanse",
+              "count": 1,
+              "target": "self",
+              "removes": "debuff",
+              "description": "Cleanse 1 debuffs"
             }
-          ]
+          ],
+          "description": "Every 2.7s: Cleanse 1 debuff"
         }
       ],
       "slug": "auto_rollback",

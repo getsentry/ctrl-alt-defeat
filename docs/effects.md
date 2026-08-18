@@ -65,6 +65,7 @@ Two of the three are built.
 | `consume` | yes | 7 |
 | `prevent_damage` | yes | 6 |
 | `cpu_drain` | yes | 6 |
+| `cleanse` | yes | 5 |
 | `debuff` | yes | 2 |
 | `block` | yes | 1 |
 | `spawn_companion` | **no** | 4 |
@@ -72,7 +73,6 @@ Two of the three are built.
 | `scaling_buff` | **no** | 2 |
 | `adaptive_buff` | **no** | 1 |
 | `adjacent_buff` | **no** | 1 |
-| `cleanse` | **no** | 1 |
 | `damage_bonus` | **no** | 1 |
 | `damage_immunity` | **no** | 1 |
 | `damage_reduction` | **no** | 1 |

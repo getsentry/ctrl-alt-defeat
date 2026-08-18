@@ -195,7 +195,7 @@ class TestDeterministicBattles:
                             chance=0.5,
                             effects=[
                                 PreventDamageEffect(5),
-                                CpuDrainEffect(0.0),
+                                CpuDrainEffect(0.0, target_type="attacker"),
                             ],
                         )
                 ],
@@ -301,7 +301,7 @@ class TestDeterministicBattles:
                             chance=0.3,
                             effects=[
                                 PreventDamageEffect(4),
-                                CpuDrainEffect(0.0),
+                                CpuDrainEffect(0.0, target_type="attacker"),
                             ],
                         )
                     ],

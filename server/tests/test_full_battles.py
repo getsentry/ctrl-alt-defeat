@@ -129,7 +129,7 @@ class TestFullBattleScenarios:
                             chance=0.3,
                             effects=[
                                 PreventDamageEffect(8),
-                                CpuDrainEffect(0.5),
+                                CpuDrainEffect(0.5, target_type="attacker"),
                             ],
                         )
                     ],
@@ -151,7 +151,7 @@ class TestFullBattleScenarios:
                             chance=0.3,
                             effects=[
                                 PreventDamageEffect(10),
-                                CpuDrainEffect(0.7),
+                                CpuDrainEffect(0.7, target_type="attacker"),
                             ],
                         )
                     ],
@@ -344,7 +344,7 @@ class TestFullBattleScenarios:
                             chance=0.4,
                             effects=[
                                 PreventDamageEffect(6),
-                                CpuDrainEffect(0.0),
+                                CpuDrainEffect(0.0, target_type="attacker"),
                             ],
                         )
                     ],
@@ -591,7 +591,7 @@ class TestFullBattleScenarios:
                             chance=0.4,
                             effects=[
                                 PreventDamageEffect(12),
-                                CpuDrainEffect(0.0),
+                                CpuDrainEffect(0.0, target_type="attacker"),
                             ],
                         )
                     ],

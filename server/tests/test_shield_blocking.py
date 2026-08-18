@@ -43,7 +43,7 @@ class TestShieldBlocking:
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(10),
-                                CpuDrainEffect(0.5),
+                                CpuDrainEffect(0.5, target_type="attacker"),
                             ],
                         )
                 ],
@@ -120,7 +120,7 @@ class TestShieldBlocking:
                             chance=0.3,
                             effects=[
                                 PreventDamageEffect(8),
-                                CpuDrainEffect(0.0),
+                                CpuDrainEffect(0.0, target_type="attacker"),
                             ],
                         )
                         ],
@@ -207,7 +207,7 @@ class TestShieldBlocking:
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(5),
-                                CpuDrainEffect(3.0),
+                                CpuDrainEffect(3.0, target_type="attacker"),
                             ],
                         )
                 ],
@@ -277,7 +277,7 @@ class TestShieldBlocking:
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(5),
-                                CpuDrainEffect(0.0),
+                                CpuDrainEffect(0.0, target_type="attacker"),
                             ],
                         )
                 ],
@@ -300,7 +300,7 @@ class TestShieldBlocking:
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(7),
-                                CpuDrainEffect(0.0),
+                                CpuDrainEffect(0.0, target_type="attacker"),
                             ],
                         )
                 ],
@@ -374,7 +374,7 @@ class TestShieldBlocking:
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(10),
-                                CpuDrainEffect(0.0),
+                                CpuDrainEffect(0.0, target_type="attacker"),
                             ],
                         )
                 ],

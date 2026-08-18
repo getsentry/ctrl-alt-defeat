@@ -140,8 +140,9 @@ game's own wording:
 - **MODIFY_STAT**: Change max CPU, CPU regen, etc.
 - **REFLECT**: Return damage to attacker
 - **CONSUME**: Remove item from battle after use
-- **STEAL**: Take buffs from enemy
-- **CLEANSE**: Remove debuffs
+- **CLEANSE**: Remove statuses from somebody. Taking a debuff off yourself and
+  taking a buff off your opponent are the same effect with a different target,
+  so STEAL is not separate.
 
 ### 2.3 Weapons (Problems/Bugs)
 Attack items that deal damage. All weapons:
@@ -395,6 +396,50 @@ three, so we have three:
 
 An item that applies a *random* debuff draws from these three. There is no
 fourth to draw.
+
+#### Cleansing
+
+The only way out of a debuff. One effect, on two axes: what to take, and who
+to take it from.
+
+| | Debuffs | Buffs |
+|---|---|---|
+| **Self** | "cleanse 4 Poison" | — |
+| **Opponent** | — | "remove 2 random buffs" |
+
+It reads as "Cleanse" when you take a debuff off yourself and "Remove" when
+you take a buff off your opponent. Underneath it is one thing: take N of a
+status off a target.
+
+The two blank corners are what the items we have imported happen to use, not
+a rule. Every combination works, and one of them is nearly in use already:
+Corrupted Armor cleanses debuffs off itself and inflicts them on the
+opponent.
+
+**Named or not, in one field.** An item says what it takes: `debuff` or
+`buff` for any of that kind, or the name of one. A name carries its own kind,
+since no buff shares a name with a debuff, so nothing is stated twice and the
+contradiction of naming a debuff while asking for a buff cannot be written.
+
+A name the game does not have is refused rather than assumed to be the other
+kind. Otherwise a misspelling would load cleanly and remove nothing for the
+rest of the game.
+
+**How an unnamed one picks: uniformly across the kinds present, never weighted
+by how many of each.** One stack at a time, looking again after each. So
+against 10 Memory Leaked and 1 Throttled, cleansing 2 is a coin flip on the
+first, and if the Throttled goes then the second can only be Memory Leaked.
+
+This is Backpack Battles' rule, which its wiki gives once: "if they have 50
+Mana, 10 Luck and 1 Spike, and you try to remove a buff, it's just as likely
+to remove 1 Spike as 1 Mana."
+
+It has a consequence worth knowing before tuning anything. Cleansing one is
+unreliable and cleansing many is close to certain, because the small kinds run
+out early and every later pick lands on what is left. Against 10 Memory Leaked
+and 1 Throttled, cleansing 1 wastes itself half the time while cleansing 4
+always clears at least 3 Memory Leaked. The gap is far wider than four
+times.
 
 **Memory Leaked hits in whole periods, not smoothly.** Every two seconds it
 deals damage equal to the stack count, and between those moments it deals

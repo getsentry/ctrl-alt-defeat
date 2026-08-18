@@ -7,13 +7,28 @@ from copy import deepcopy
 import pytest
 from pydantic import ValidationError
 
-from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator, Player
+from battle_engine import (
+    ITEM_CATALOG,
+    MEMORY_LEAKED,
+    OVER_TIME,
+    POISON_PERIOD,
+    BattleItem,
+    BattleSimulator,
+    MemoryLeaked,
+    Player,
+)
 from containers import Container
 from grid_system import parse_map
 from item_effects import (
+    AttackEffect,
+    CleanseEffect,
     CpuDrainEffect,
+    DebuffEffect,
+    HealEffect,
+    HealthThresholdTrigger,
     ItemSpec,
     OnAttackedTrigger,
+    OnHitTrigger,
     PassiveTrigger,
     PreventDamageEffect,
     TimerTrigger,
@@ -39,7 +54,6 @@ def get_test_containers():
 
 class TestGameDesignCompliance:
     """Test that battle engine exactly matches the Game Design Document"""
-
     def test_player_quota_scaling(self):
         """Test Section 1.1: Player Quota scaling by round"""
         sim = BattleSimulator(seed=TEST_SEED)
@@ -257,7 +271,10 @@ class TestGameDesignCompliance:
         result = sim.simulate_battle(
             [
                 BattleItem(
-                    spec=deepcopy(ITEM_CATALOG["auto_rollback"]), position=(0, 0)
+                    # Any item that buffs will do. auto_rollback used to,
+                    # until it was corrected to Carrot's "Every 2.7s: Cleanse
+                    # 1 debuff", which is all Carrot has ever done.
+                    spec=deepcopy(ITEM_CATALOG["basic_firewall"]), position=(0, 0)
                 )
             ],
             [BattleItem(spec=deepcopy(ITEM_CATALOG["stack_smasher"]), position=(4, 0))],
@@ -303,7 +320,6 @@ class TestGameDesignCompliance:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create item with high CPU cost
-        from item_effects import AttackEffect
 
         item = BattleItem(
             spec=ItemSpec(
@@ -392,7 +408,6 @@ class TestGameDesignCompliance:
 
 class TestBattleSimulation:
     """Test actual battle simulations"""
-
     def test_basic_battle(self):
         """Test a simple 1v1 battle"""
         sim = BattleSimulator(seed=TEST_SEED)
@@ -422,7 +437,6 @@ class TestBattleSimulation:
         sim = BattleSimulator(seed=TEST_SEED)
 
         # Create overpowered item
-        from item_effects import AttackEffect
 
         op_item = BattleItem(
             spec=ItemSpec(
@@ -514,7 +528,6 @@ class TestOnHitResolution:
     ):
         """A weapon that poisons on hit. Accuracy is 1 or 0, so the test never
         depends on a roll going a particular way."""
-        from item_effects import AttackEffect, DebuffEffect, OnHitTrigger
 
         return BattleItem(
             spec=ItemSpec(
@@ -691,12 +704,10 @@ class TestMemoryLeakedDamage:
 
 class TestPlayerOverTime:
     """The clock is the player's, the behaviour is the effect's"""
-
     def test_the_player_only_keeps_the_clock(self):
         """Asking whether a period is due must not pay anything out. The
         player has no way to write a battle log or take damage, and that is
         deliberate."""
-        from battle_engine import MEMORY_LEAKED, POISON_PERIOD
 
         player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
         player.debuffs[MEMORY_LEAKED] = 4
@@ -706,7 +717,6 @@ class TestPlayerOverTime:
         assert player.quota == 100, "asking is not paying"
 
     def test_a_period_comes_due_once(self):
-        from battle_engine import MEMORY_LEAKED, POISON_PERIOD
 
         player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
         due_at = [
@@ -719,7 +729,6 @@ class TestPlayerOverTime:
     def test_every_effect_has_a_name_and_a_period(self):
         """OVER_TIME is the registry the loop walks, so an effect that forgot
         either would silently never pay."""
-        from battle_engine import OVER_TIME
 
         assert OVER_TIME, "the registry should not be empty"
         for effect in OVER_TIME:
@@ -728,8 +737,6 @@ class TestPlayerOverTime:
 
     def test_an_effect_pays_itself_out(self):
         """Behaviour belongs to the effect, not to a field the loop reads"""
-        from battle_engine import MEMORY_LEAKED, MemoryLeaked
-
         p1_containers, p2_containers = get_test_containers()
         sim = BattleSimulator(seed=TEST_SEED)
         sim.simulate_battle([], [], 18, p1_containers, p2_containers)
@@ -742,7 +749,6 @@ class TestPlayerOverTime:
         assert [a for a in sim.actions if a.action == "dot" and a.damage == 4]
 
     def test_an_effect_owing_nothing_does_nothing(self):
-        from battle_engine import MemoryLeaked
 
         p1_containers, p2_containers = get_test_containers()
         sim = BattleSimulator(seed=TEST_SEED)
@@ -758,7 +764,6 @@ class TestPlayerOverTime:
     def test_reset_for_battle_clears_everything(self):
         """Nothing a battle writes may reach the next round, and one call has
         to clear all of it."""
-        from battle_engine import MEMORY_LEAKED, POISON_PERIOD
 
         player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
         player.debuffs[MEMORY_LEAKED] = 5
@@ -777,7 +782,6 @@ class TestPlayerOverTime:
     def test_a_reused_player_starts_its_own_clock(self):
         """Or a poison from an earlier round would pay out on the first tick
         of the next one."""
-        from battle_engine import MEMORY_LEAKED, POISON_PERIOD
 
         player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
         for t in [2.0, 4.0, 6.0]:
@@ -800,12 +804,10 @@ class TestPlayerOverTime:
 
 class TestOverTimeDamageIsSeen:
     """Poison used to write straight to the quota, so nothing could react"""
-
     def test_a_health_potion_reacts_to_poison(self):
         """It could not before. Its trigger listens for DAMAGE_TAKEN, and
         poison emitted none, so a player could die of poison with an unused
         potion sitting in the rack."""
-        from battle_engine import MEMORY_LEAKED
 
         potion = BattleItem(
             spec=ITEM_CATALOG["health_potion"], position=(0, 0), uid="potion"
@@ -830,8 +832,6 @@ class TestOverTimeDamageIsSeen:
 
     def test_no_shield_blocks_poison(self):
         """There is no attack to block, so no Block buff may be spent on it"""
-        from battle_engine import MEMORY_LEAKED
-
         p1_containers, p2_containers = get_test_containers()
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = 4.5
@@ -857,7 +857,6 @@ class TestOneRollCoversTheList:
 
     @staticmethod
     def _shield(chance: float, prevent: int, drain: float):
-        from item_effects import CpuDrainEffect, OnAttackedTrigger, PreventDamageEffect
 
         return BattleItem(
             spec=ItemSpec(
@@ -873,7 +872,7 @@ class TestOneRollCoversTheList:
                         chance=chance,
                         effects=[
                             PreventDamageEffect(prevent),
-                            CpuDrainEffect(drain),
+                            CpuDrainEffect(drain, target_type="attacker"),
                         ],
                     )
                 ],
@@ -884,7 +883,6 @@ class TestOneRollCoversTheList:
 
     @staticmethod
     def _attacker(damage: int, cpu_cost: float = 0.0, uid: str = "sword"):
-        from item_effects import AttackEffect
 
         return BattleItem(
             spec=ItemSpec(
@@ -1021,8 +1019,6 @@ class TestOneRollCoversTheList:
 
     def test_a_shield_never_rolls_against_a_miss(self):
         """There is nothing to block, so the CPU stays on the attacker too"""
-        from item_effects import AttackEffect
-
         misser = self._attacker(6)
         misser.spec.triggers[0].effects = [
             AttackEffect(min_damage=6, max_damage=6, accuracy=0.0, crit_chance=0.0)
@@ -1039,7 +1035,6 @@ class TestCpuDrainIsAnOrdinaryEffect:
     built without special-casing it a second time."""
 
     def test_a_timer_can_drain_cpu(self):
-        from item_effects import CpuDrainEffect
 
         drainer = BattleItem(
             spec=ItemSpec(
@@ -1048,7 +1043,7 @@ class TestCpuDrainIsAnOrdinaryEffect:
                 slug="drainer",
                 triggers=[
                     TimerTrigger(cooldown=1.0, cpu_cost=0,
-                                 effects=[CpuDrainEffect(1.0)])
+                                 effects=[CpuDrainEffect(1.0, target_type="attacker")])
                 ],
             ),
             position=(0, 0), uid="drainer",
@@ -1074,8 +1069,6 @@ class TestCpuDrainIsAnOrdinaryEffect:
 
     def test_it_never_puts_anyone_into_debt(self):
         """Negative CPU would lock a player out for the rest of the battle"""
-        from item_effects import CpuDrainEffect
-
         greedy = BattleItem(
             spec=ItemSpec(
                 id="greedy", name="Greedy", category="problem", cost=1,
@@ -1083,7 +1076,7 @@ class TestCpuDrainIsAnOrdinaryEffect:
                 slug="greedy",
                 triggers=[
                     TimerTrigger(cooldown=0.5, cpu_cost=0,
-                                 effects=[CpuDrainEffect(99.0)])
+                                 effects=[CpuDrainEffect(99.0, target_type="attacker")])
                 ],
             ),
             position=(0, 0), uid="greedy",
@@ -1107,18 +1100,15 @@ class TestCpuDrainIsAnOrdinaryEffect:
 
     def test_a_shield_still_drains_the_attacker(self):
         """The route changed, the behaviour did not"""
-        from item_effects import CpuDrainEffect, OnAttackedTrigger, PreventDamageEffect
-
         shield = BattleItem(
             spec=ItemSpec(
                 id="s", name="Shield", category="defense", cost=1,
                 player_class="neutral", shape=parse_map(["#"], "s"), slug="s",
                 triggers=[OnAttackedTrigger(chance=1.0, effects=[
-                    PreventDamageEffect(10), CpuDrainEffect(0.5)])],
+                    PreventDamageEffect(10), CpuDrainEffect(0.5, target_type="attacker")])],
             ),
             position=(0, 0), uid="shield",
         )
-        from item_effects import AttackEffect
 
         sword = BattleItem(
             spec=ItemSpec(
@@ -1147,7 +1137,6 @@ class TestHealthThresholds:
     def _watcher(threshold: float, uid: str = "watcher"):
         """An item that heals below a line, and does not consume itself, so
         nothing hides how often it fires."""
-        from item_effects import HealEffect, HealthThresholdTrigger
 
         return BattleItem(
             spec=ItemSpec(
@@ -1161,7 +1150,6 @@ class TestHealthThresholds:
 
     @staticmethod
     def _sword(damage: int, uid: str = "sword"):
-        from item_effects import AttackEffect
 
         return BattleItem(
             spec=ItemSpec(
@@ -1175,7 +1163,6 @@ class TestHealthThresholds:
         )
 
     def _run(self, mine, theirs, seconds=6.0, poison=0):
-        from battle_engine import MEMORY_LEAKED
 
         p1_containers, p2_containers = get_test_containers()
         sim = BattleSimulator(seed=TEST_SEED)
@@ -1236,3 +1223,127 @@ class TestHealthThresholds:
         assert healed_first == 1
         assert healed_again == 1, "the second battle gets its own crossing"
         assert first["player1_quota"] == second["player1_quota"]
+
+
+class TestCleansing:
+    """Section 3.2: taking statuses off somebody"""
+
+    @staticmethod
+    def _sim():
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 0.5
+        sim.simulate_battle([], [], 18, p1, p2)
+        return sim
+
+    def test_a_named_cleanse_takes_only_that_one(self):
+
+        sim = self._sim()
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        player.debuffs.update({MEMORY_LEAKED: 5, "throttled": 4})
+
+        removed = sim._cleanse(player, "debuff", 3, MEMORY_LEAKED)
+
+        assert removed == {MEMORY_LEAKED: 3}
+        assert player.debuffs == {MEMORY_LEAKED: 2, "throttled": 4}
+
+    def test_it_cannot_take_more_than_is_there(self):
+
+        sim = self._sim()
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        player.debuffs[MEMORY_LEAKED] = 2
+
+        removed = sim._cleanse(player, "debuff", 10, MEMORY_LEAKED)
+
+        assert removed == {MEMORY_LEAKED: 2}
+        assert MEMORY_LEAKED not in player.debuffs, "an empty kind is gone, not zero"
+
+    def test_an_unnamed_cleanse_picks_by_kind_not_by_stack(self):
+        """Section 3.2. Ten of one and one of another is a coin flip, not
+        ten to one. This is the rule the whole effect turns on, so it is
+        measured rather than assumed."""
+
+        picked_the_lonely_one = 0
+        for seed in range(200):
+            sim = BattleSimulator(seed=seed)
+            player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+            player.debuffs.update({MEMORY_LEAKED: 10, "throttled": 1})
+            removed = sim._cleanse(player, "debuff", 1)
+            picked_the_lonely_one += removed.get("throttled", 0)
+
+        # Weighted by stacks it would be about 18 in 200; by kind, about 100.
+        assert 70 < picked_the_lonely_one < 130, picked_the_lonely_one
+
+    def test_it_looks_again_after_every_one(self):
+        """Cleanse 2 from ten Memory Leaked and one Throttled. Whichever goes
+        first, the second pick can only come from what is left."""
+
+        for seed in range(40):
+            sim = BattleSimulator(seed=seed)
+            player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+            player.debuffs.update({MEMORY_LEAKED: 10, "throttled": 1})
+
+            removed = sim._cleanse(player, "debuff", 2)
+
+            assert sum(removed.values()) == 2, "never wasted while a kind remains"
+            assert removed.get("throttled", 0) <= 1, "cannot take what is not there"
+
+    def test_a_big_cleanse_clears_the_big_stack(self):
+        """The consequence worth knowing: small kinds run out early, so every
+        later pick lands on what is left."""
+
+        for seed in range(40):
+            sim = BattleSimulator(seed=seed)
+            player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+            player.debuffs.update({MEMORY_LEAKED: 10, "throttled": 1})
+
+            removed = sim._cleanse(player, "debuff", 4)
+
+            assert removed.get(MEMORY_LEAKED, 0) >= 3
+
+    def test_it_stops_when_there_is_nothing_left(self):
+        sim = self._sim()
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        player.debuffs["throttled"] = 1
+
+        removed = sim._cleanse(player, "debuff", 5)
+
+        assert removed == {"throttled": 1}
+        assert player.debuffs == {}
+
+    def test_the_same_effect_takes_buffs_off_the_other_side(self):
+        """Cleanse and "remove 2 random buffs from your opponent" are one
+        mechanic pointed two ways."""
+        sim = self._sim()
+        enemy = Player(id=2, quota=100, max_quota=100, cpu=3.0)
+        enemy.buffs.update({"block": 8, "regenerating": 2})
+
+        removed = sim._cleanse(enemy, "buff", 3)
+
+        assert sum(removed.values()) == 3
+        assert sum(enemy.buffs.values()) == 7
+
+    def test_health_potion_clears_the_poison_it_was_written_for(self):
+
+        potion = BattleItem(
+            spec=ITEM_CATALOG["health_potion"], position=(0, 0), uid="potion"
+        )
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 30.0
+        original = sim._setup_item_handlers
+
+        def poison(items, owner, enemy):
+            result = original(items, owner, enemy)
+            if owner.id == 1:
+                owner.debuffs[MEMORY_LEAKED] = 3
+            return result
+
+        sim._setup_item_handlers = poison
+        result = sim.simulate_battle([potion], [], 1, p1, p2)
+
+        assert [a for a in sim.actions if a.action == "cleanse"]
+        # Before the cleanse existed the poison carried on and killed them.
+        assert result["player1_quota"] > 0
+        assert not [a for a in sim.actions if a.action == "dot"
+                    and a.timestamp > 10_000], "no poison left to tick"

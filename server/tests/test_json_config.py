@@ -3,16 +3,45 @@
 Test that JSON configuration system works correctly
 """
 
+import json
+import os
+import shutil
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
-from battle_engine import BattleItem, BattleSimulator
-from config_loader import ConfigLoader
+from battle_engine import (
+    ITEM_CATALOG,
+    MEMORY_LEAKED,
+    BattleItem,
+    BattleSimulator,
+)
+from config_loader import CatalogueError, ConfigLoader, config_loader
+import config_loader as config_loader_module
 from containers import Container
+from main import generate_shop_items
+from grid_system import parse_map
+from item_effects import (
+    DEBUFFS,
+    AttackEffect,
+    CleanseEffect,
+    ConsumeEffect,
+    CpuDrainEffect,
+    DebuffEffect,
+    HealEffect,
+    HealthThresholdTrigger,
+    OnAttackedTrigger,
+    OnHitTrigger,
+    PreventDamageEffect,
+    ItemSpec,
+    TimerTrigger,
+)
 
 
 def test_json_config():
     """Test that we can load and use items from JSON"""
-
     print("Testing JSON Configuration System")
     print("=" * 50)
 
@@ -102,9 +131,7 @@ if __name__ == "__main__":
 
 class TestShopVisibility:
     """An item can exist without the shop offering it"""
-
     def test_items_are_offered_unless_told_otherwise(self):
-        from config_loader import config_loader
 
         spec = config_loader.items["null_blade"]
         assert spec.in_shop is True
@@ -113,10 +140,6 @@ class TestShopVisibility:
         # Items arrive from Backpack Battles with numbers and no behaviour.
         # They have to be able to sit in the catalogue without a player
         # being able to buy one.
-        from unittest.mock import patch
-
-        from battle_engine import ITEM_CATALOG
-        from main import generate_shop_items
 
         hidden = "null_blade"
         original = ITEM_CATALOG[hidden]
@@ -141,8 +164,6 @@ class TestItemsSetAside:
 
     @staticmethod
     def _set_aside() -> dict:
-        import json
-        from pathlib import Path
 
         path = Path(__file__).parent.parent / "data" / "unavailable_items.json"
         return json.loads(path.read_text())
@@ -150,7 +171,6 @@ class TestItemsSetAside:
     def test_it_sits_outside_the_directory_the_loader_reads(self):
         """ConfigLoader globs data/items/*.json. A file in there is loaded, so
         this one has to be a sibling of that directory rather than inside it."""
-        from pathlib import Path
 
         data = Path(__file__).parent.parent / "data"
         assert (data / "unavailable_items.json").exists()
@@ -167,14 +187,12 @@ class TestItemsSetAside:
             assert len(why) > 20, f"{item_id} is set aside but does not say why"
 
     def test_none_of_them_is_in_the_catalogue(self):
-        from config_loader import config_loader
 
         loaded = set(config_loader.items) | set(config_loader.containers)
         clashes = sorted(set(self._set_aside()["items"]) & loaded)
         assert not clashes, f"{clashes} are set aside and loaded anyway"
 
     def test_the_shop_never_offers_one(self):
-        from main import generate_shop_items
 
         set_aside = set(self._set_aside()["items"])
         offered = {
@@ -187,12 +205,8 @@ class TestItemsSetAside:
 
 class TestOnHitLoading:
     """An on_hit trigger and a debuff effect have to survive the load"""
-
     def test_virus_injector_matches_belladonnas_shade(self):
         """Its numbers come from the source item, so they are worth pinning"""
-        from config_loader import config_loader
-        from item_effects import AttackEffect, OnHitTrigger, TimerTrigger
-
         spec = config_loader.items["virus_injector"]
         timer, on_hit = spec.triggers
 
@@ -211,8 +225,6 @@ class TestOnHitLoading:
     def test_the_debuff_effect_is_not_dropped(self):
         """The loader had no debuff branch, so every debuff in the
         catalogue was silently thrown away at startup"""
-        from config_loader import config_loader
-        from item_effects import DebuffEffect
 
         (debuff,) = config_loader.items["virus_injector"].triggers[1].effects
         assert isinstance(debuff, DebuffEffect)
@@ -221,7 +233,6 @@ class TestOnHitLoading:
 
     def test_the_debuff_never_wears_off(self):
         """Section 3.2: a debuff lasts to the end of the battle"""
-        from config_loader import config_loader
 
         (debuff,) = config_loader.items["virus_injector"].triggers[1].effects
         assert debuff.duration == -1
@@ -229,8 +240,6 @@ class TestOnHitLoading:
     def test_the_engine_reads_the_name_the_catalogue_writes(self):
         """The engine pays poison out by name. A disagreement between the two
         spellings would tick nothing, and nothing would say so."""
-        from battle_engine import MEMORY_LEAKED
-        from config_loader import config_loader
 
         (debuff,) = config_loader.items["virus_injector"].triggers[1].effects
         assert debuff.debuff_name == MEMORY_LEAKED
@@ -238,9 +247,7 @@ class TestOnHitLoading:
 
 class TestCatalogueStrictness:
     """A wrong item should fail loudly, not quietly do nothing"""
-
     def loader(self):
-        from config_loader import ConfigLoader
 
         return ConfigLoader()
 
@@ -248,7 +255,6 @@ class TestCatalogueStrictness:
         """Both forms exist in the source game -- the Axe is a flat "On hit:
         gain 1 damage", the Torch a "25% chance" -- so a missing chance cannot
         be told apart from an import that lost one."""
-        import pytest
 
         with pytest.raises(ValueError, match="chance"):
             self.loader()._parse_trigger(
@@ -256,7 +262,6 @@ class TestCatalogueStrictness:
             )
 
     def test_an_always_on_effect_writes_one(self):
-        from item_effects import OnHitTrigger
 
         trigger = self.loader()._parse_trigger(
             {"type": "on_hit", "chance": 1.0, "effects": []}, "some_item"
@@ -268,7 +273,6 @@ class TestCatalogueStrictness:
         """`virus` and `corruption` were both in the catalogue. Neither is a
         debuff, so both were carried on the player and read by nothing, which
         looks exactly like a working debuff until you check the damage."""
-        import pytest
 
         for invented in ["virus", "corruption", "slow", "speed"]:
             with pytest.raises(ValueError, match="not a debuff"):
@@ -279,8 +283,6 @@ class TestCatalogueStrictness:
 
     def test_the_error_names_the_item(self):
         """A catalogue of 95 items is no use to debug without the name"""
-        import pytest
-
         with pytest.raises(ValueError, match="prize_item"):
             self.loader()._parse_effect(
                 {"type": "debuff", "debuff_name": "virus"}, "prize_item"
@@ -288,8 +290,6 @@ class TestCatalogueStrictness:
 
     def test_stat_is_no_longer_a_way_to_name_a_debuff(self):
         """One key. Two spellings is how "speed" became a debuff."""
-        import pytest
-
         with pytest.raises(ValueError, match="not a debuff"):
             self.loader()._parse_effect(
                 {"type": "debuff", "stat": "speed", "value": -0.2}, "some_item"
@@ -298,8 +298,6 @@ class TestCatalogueStrictness:
     def test_every_debuff_in_the_catalogue_is_one_the_engine_ticks(self):
         """The catalogue is imported by hand from a wiki, so this is the
         check that the whole of it survived the import."""
-        from config_loader import config_loader
-        from item_effects import DEBUFFS, DebuffEffect
 
         found = [
             effect
@@ -332,8 +330,6 @@ class TestShieldsMatchTheirSources:
     }
 
     def shield(self, item_id):
-        from config_loader import config_loader
-        from item_effects import OnAttackedTrigger
 
         (trigger,) = [
             t
@@ -343,7 +339,6 @@ class TestShieldsMatchTheirSources:
         return trigger
 
     def test_each_shield_has_its_own_numbers(self):
-        from item_effects import CpuDrainEffect, PreventDamageEffect
 
         for item_id, (_, chance, prevent, drain) in self.SOURCES.items():
             trigger = self.shield(item_id)
@@ -368,9 +363,6 @@ class TestShieldsMatchTheirSources:
             assert not any(hasattr(e, "chance") for e in trigger.effects), item_id
 
     def test_an_on_attacked_trigger_has_to_state_its_chance(self):
-        import pytest
-
-        from config_loader import ConfigLoader
 
         with pytest.raises(ValueError, match="chance"):
             ConfigLoader()._parse_trigger(
@@ -380,9 +372,6 @@ class TestShieldsMatchTheirSources:
     def test_both_effects_have_to_state_a_value(self):
         """No defaults. A number that never arrived would otherwise load as a
         working shield."""
-        import pytest
-
-        from config_loader import ConfigLoader
 
         for effect_type in ["prevent_damage", "cpu_drain"]:
             with pytest.raises(ValueError, match="value"):
@@ -399,9 +388,6 @@ class TestPreventDamageStaysWhereItWorks:
     """
 
     def test_the_loader_refuses_it_in_another_trigger(self):
-        import pytest
-
-        from config_loader import ConfigLoader
 
         block = {"type": "prevent_damage", "value": 7}
         for trigger in ["timer", "battle_start", "passive", "damage_taken"]:
@@ -413,8 +399,6 @@ class TestPreventDamageStaysWhereItWorks:
                 )
 
     def test_it_is_allowed_in_on_attacked(self):
-        from config_loader import ConfigLoader
-        from item_effects import PreventDamageEffect
 
         trigger = ConfigLoader()._parse_trigger(
             {"type": "on_attacked", "chance": 0.3,
@@ -424,8 +408,6 @@ class TestPreventDamageStaysWhereItWorks:
         assert isinstance(trigger.effects[0], PreventDamageEffect)
 
     def test_the_catalogue_only_uses_it_there(self):
-        from config_loader import config_loader
-        from item_effects import OnAttackedTrigger, PreventDamageEffect
 
         for item_id, spec in config_loader.items.items():
             for trigger in spec.triggers or []:
@@ -437,11 +419,6 @@ class TestPreventDamageStaysWhereItWorks:
         """The backstop. An effect the engine cannot apply used to fall
         through the chain and vanish, which is how an item comes to load
         cleanly and do less than it says."""
-        import pytest
-
-        from battle_engine import BattleItem, BattleSimulator
-        from grid_system import parse_map
-        from item_effects import ItemSpec, PreventDamageEffect
 
         item = BattleItem(
             spec=ItemSpec(id="odd", name="Odd", category="defense", cost=1,
@@ -465,20 +442,12 @@ class TestABadCatalogueStopsTheServer:
     @staticmethod
     def _catalogue(edit) -> str:
         """A copy of the real catalogue with one thing wrong in it"""
-        import json
-        import shutil
-        import tempfile
-        from pathlib import Path
-
         tmp = Path(tempfile.mkdtemp())
         shutil.copytree("data/items", tmp / "items")
         edit(tmp / "items", json)
         return str(tmp)
 
     def test_a_bad_item_stops_the_load(self):
-        import pytest
-
-        from config_loader import CatalogueError, ConfigLoader
 
         def break_one_debuff(items_dir, json):
             path = items_dir / "problems.json"
@@ -499,9 +468,6 @@ class TestABadCatalogueStopsTheServer:
     def test_a_json_typo_stops_the_load(self):
         """A missing bracket in consumables.json once ran the whole game with
         zero consumables and nothing said so."""
-        import pytest
-
-        from config_loader import CatalogueError, ConfigLoader
 
         def break_the_json(items_dir, json):
             (items_dir / "patches.json").write_text('{"items": {,}}')
@@ -511,10 +477,6 @@ class TestABadCatalogueStopsTheServer:
 
     def test_a_missing_catalogue_stops_the_load(self):
         """Containers are read first, so that is what an empty path reports"""
-        import pytest
-
-        from config_loader import CatalogueError, ConfigLoader
-
         with pytest.raises(CatalogueError, match="no containers file"):
             ConfigLoader("/nowhere/at/all").load_all()
 
@@ -523,10 +485,6 @@ class TestABadCatalogueStopsTheServer:
 
     def test_nothing_is_half_loaded(self):
         """The old failure kept whatever it had read before the bad item"""
-        import pytest
-
-        from config_loader import CatalogueError, ConfigLoader
-
         def break_one_debuff(items_dir, json):
             path = items_dir / "problems.json"
             d = json.loads(path.read_text())
@@ -543,12 +501,7 @@ class TestABadCatalogueStopsTheServer:
 
 class TestTheCatalogueIsFoundFromAnywhere:
     """It used to resolve `data` against the working directory"""
-
     def test_it_does_not_depend_on_where_the_process_is_running(self):
-        import os
-        import tempfile
-
-        from config_loader import ConfigLoader
 
         here = os.getcwd()
         try:
@@ -560,12 +513,8 @@ class TestTheCatalogueIsFoundFromAnywhere:
             os.chdir(here)
 
     def test_the_default_sits_next_to_the_module(self):
-        from pathlib import Path
 
-        import config_loader as module
-        from config_loader import ConfigLoader
-
-        assert ConfigLoader.DATA_DIR == Path(module.__file__).parent / "data"
+        assert ConfigLoader.DATA_DIR == Path(config_loader_module.__file__).parent / "data"
 class TestTheCatalogueIsOneCatalogue:
     """Every item in every file, read together.
 
@@ -578,9 +527,6 @@ class TestTheCatalogueIsOneCatalogue:
     @staticmethod
     def _every_entry():
         """(item_id, config, filename) for items and containers alike."""
-        import json
-        from pathlib import Path
-
         items_dir = Path(__file__).parent.parent / "data" / "items"
         for path in sorted(items_dir.glob("*.json")):
             data = json.loads(path.read_text())
@@ -625,7 +571,6 @@ class TestTheCatalogueIsOneCatalogue:
             assert config.get("source"), f"{item_id} in {filename} has no source"
 
     def test_every_map_parses(self):
-        from grid_system import parse_map
 
         for item_id, config, _ in self._every_entry():
             parse_map(config["map"], item_id)
@@ -688,3 +633,78 @@ class TestEveryItemIsOneASentaurCanReach:
                 f"{item_id} needs the {record['subclass']} subclass "
                 f"and the shop offers it anyway"
             )
+
+class TestCleanseLoading:
+    """A cleanse states its count, and names something real or nothing"""
+    def loader(self):
+
+        return ConfigLoader()
+
+    def test_a_cleanse_has_to_state_its_count(self):
+
+        with pytest.raises(ValueError, match="count"):
+            self.loader()._parse_effect({"type": "cleanse"}, "some_item")
+
+    def test_a_named_cleanse_has_to_name_a_real_debuff(self):
+        """`virus` and `corruption` were once written as debuffs. A cleanse
+        aimed at one would load cleanly and remove nothing, forever."""
+
+        with pytest.raises(ValueError, match="not something to cleanse"):
+            self.loader()._parse_effect(
+                {"type": "cleanse", "count": 4, "removes": "virus"}, "some_item"
+            )
+
+    def test_a_cleanse_has_to_say_what_it_removes(self):
+        """Even taking any debuff is a choice, and the item makes it"""
+        with pytest.raises(ValueError, match="removes"):
+            self.loader()._parse_effect({"type": "cleanse", "count": 3}, "some_item")
+
+    def test_taking_any_of_a_kind_is_written_out(self):
+
+        effect = self.loader()._parse_effect(
+            {"type": "cleanse", "count": 3, "removes": "debuff", "target": "self"},
+            "some_item",
+        )
+        assert isinstance(effect, CleanseEffect)
+        assert (effect.count, effect.removes) == (3, "debuff")
+        assert effect.named() is False
+        assert effect.kind() == "debuff"
+
+    def test_a_named_cleanse_knows_its_own_kind(self):
+
+        effect = self.loader()._parse_effect(
+            {"type": "cleanse", "count": 4, "removes": MEMORY_LEAKED, "target": "self"},
+            "some_item",
+        )
+        assert effect.named() is True
+        assert effect.kind() == "debuff", "the name says which pool, unaided"
+
+    def test_the_catalogue_only_cleanses_things_that_exist(self):
+
+        found = [
+            effect
+            for spec in config_loader.items.values()
+            for trigger in spec.triggers or []
+            for effect in getattr(trigger, "effects", []) or []
+            if isinstance(effect, CleanseEffect)
+        ]
+        assert found, "the catalogue should cleanse somewhere"
+        for effect in found:
+            assert effect.count > 0
+            if effect.named():
+                assert effect.removes in DEBUFFS, "no buff is named yet"
+
+    def test_health_potion_matches_its_source(self):
+        """"Health drops below 50%: Consume this and heal for 12 and cleanse
+        4 Poison." All four parts, in one item."""
+
+        (trigger,) = config_loader.items["health_potion"].triggers
+        assert isinstance(trigger, HealthThresholdTrigger)
+        assert trigger.threshold == 0.5
+
+        by_type = {type(e).__name__: e for e in trigger.effects}
+        assert by_type["HealEffect"].min_heal == 12
+        assert by_type["HealEffect"].max_heal == 12
+        assert by_type["CleanseEffect"].count == 4
+        assert by_type["CleanseEffect"].removes == MEMORY_LEAKED
+        assert isinstance(by_type["ConsumeEffect"], ConsumeEffect)

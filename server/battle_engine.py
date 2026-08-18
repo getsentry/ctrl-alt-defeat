@@ -20,12 +20,13 @@ from item_effects import (
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
+    CleanseEffect,
     ConsumeEffect,
+    CpuDrainEffect,
     DebuffEffect,
     Effect,
     HealEffect,
     HealthThresholdTrigger,
-    CpuDrainEffect,
     ItemSpec,
     OnAttackedTrigger,
     OnHitTrigger,
@@ -794,6 +795,29 @@ class BattleSimulator:
                         details={"amount": result["amount"]},
                     )
                 )
+            elif isinstance(effect, CleanseEffect):
+                cleansed = self._cleanse(
+                    owner if result["target_type"] == "self" else enemy,
+                    result["kind"],
+                    result["count"],
+                    result["removes"] if result["named"] else "",
+                )
+                if cleansed:
+                    self.actions.append(
+                        BattleAction(
+                            timestamp=self._time_ms(),
+                            source=item.uid,
+                            action="cleanse",
+                            target=None,
+                            damage=sum(cleansed.values()),
+                            player=(
+                                owner.id
+                                if result["target_type"] == "self"
+                                else enemy.id
+                            ),
+                            details={"removed": cleansed},
+                        )
+                    )
             elif isinstance(effect, ConsumeEffect):
                 # Mark item for removal and emit event
                 self._consume_item(item, owner)
@@ -802,6 +826,31 @@ class BattleSimulator:
                     f"{item.spec.id}: {type(effect).__name__} has no handler "
                     f"in _apply_effects"
                 )
+
+    def _cleanse(
+        self, target: Player, removes: str, count: int, status: str = ""
+    ) -> Dict[str, int]:
+        """Take `count` off a player, and report what went."""
+        held = target.debuffs if removes == "debuff" else target.buffs
+        removed: Dict[str, int] = {}
+
+        for _ in range(count):
+            if status:
+                if held.get(status, 0) <= 0:
+                    break
+                chosen = status
+            else:
+                present = sorted(k for k, v in held.items() if v > 0)
+                if not present:
+                    break
+                chosen = present[self.rng.randrange(len(present))]
+
+            held[chosen] -= 1
+            removed[chosen] = removed.get(chosen, 0) + 1
+            if held[chosen] <= 0:
+                del held[chosen]
+
+        return removed
 
     def _process_attack(
         self, attack_data: dict, item: BattleItem, owner: Player, enemy: Player

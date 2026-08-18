@@ -148,6 +148,14 @@ func _process_event(event: APITypes.BattleAction):
 		"cpu_drain":
 			log_msg = "[%.1fs] Player %d loses %s CPU to %s" % [event_time, player, event.details["amount"], item_name]
 			log_color = Color(1.0, 0.6, 0.2)  # Amber, same as a throttle
+		"cleanse":
+			# One cleanse can take several kinds at once, so name them rather
+			# than just counting. details.removed is {name: how many}.
+			var taken: Array[String] = []
+			for status_name in event.details["removed"]:
+				taken.append("%d %s" % [event.details["removed"][status_name], status_name])
+			log_msg = "[%.1fs] Player %d's %s cleanses %s" % [event_time, player, item_name, ", ".join(taken)]
+			log_color = Color(0.6, 1.0, 0.8)  # Mint, the same as a buff
 		_:
 			log_msg = "[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage]
 			log_color = Color.WHITE
@@ -197,6 +205,10 @@ func _process_event(event: APITypes.BattleAction):
 
 		"cpu_drain":
 			# The CPU bar is not driven from the log yet
+			pass
+
+		"cleanse":
+			# Nothing to show yet: the debuff icons are not driven from the log
 			pass
 
 		"player_defeated":

@@ -291,12 +291,12 @@ class TestOnHitTrigger:
 
     def test_fires_on_a_hit(self):
         """With no chance given, a landed hit always reaches the effects"""
-        trigger = OnHitTrigger(effects=[DebuffEffect("memory_leaked", 2)])
+        trigger = OnHitTrigger(chance=1.0, effects=[DebuffEffect("memory_leaked", 2)])
         assert trigger.should_activate("on_hit", None, None, None) is True
 
     def test_ignores_every_other_event(self):
         """It must not answer a timer tick or a miss"""
-        trigger = OnHitTrigger(effects=[DebuffEffect("memory_leaked", 2)])
+        trigger = OnHitTrigger(chance=1.0, effects=[DebuffEffect("memory_leaked", 2)])
         for event in ["timer_tick", "battle_start", "damage_taken", "on_attacked"]:
             assert trigger.should_activate(event, None, None, None) is False
 
