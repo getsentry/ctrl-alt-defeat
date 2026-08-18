@@ -50,6 +50,14 @@ var containers: Array[PlacedContainer] = []
 # hands it over; the grid only needs somewhere to test the pointer against.
 var sell_zone: Control = null
 var storage_zone: Control = null
+# The grid an item dragged out of this one goes to. It draws its own hover
+# preview while the pointer is over it, because the square under the pointer is
+# one of its squares and not one of ours.
+var grid_zone: InventoryGrid = null
+# Whether a square in this grid is a place the server knows about. The chest
+# lays itself out from scratch every time, so moving something inside it means
+# nothing and must not be sent anywhere.
+var saves_positions: bool = true
 
 # Drag and drop state
 var dragging_object = null
@@ -68,6 +76,9 @@ signal drag_started(item_data)
 signal drag_ended()
 signal item_moved(item_id, from_pos, to_pos)
 signal item_stored(item_data)
+# Dragged out of the chest and dropped on the main grid. Carries where it was
+# dropped, because the chest cannot work out a square on someone else's grid.
+signal item_unstored(item_data, global_pos)
 # The server answers a move with the whole inventory, the chest included. The
 # grid draws only the grid, so it passes the rest on rather than keeping it.
 signal inventory_returned(response)
@@ -327,10 +338,25 @@ func _start_drag(item_visual: Control):
 	# Move to top for dragging (visual hierarchy)
 	move_child(item_visual, get_child_count() - 1)
 
+func _pointer_is_over_grid_zone(pointer: Vector2) -> bool:
+	"""Whether the pointer is over the grid this item would move to"""
+	if not grid_zone or not grid_zone.is_inside_tree():
+		return false
+	return grid_zone.get_global_rect().has_point(pointer)
+
+
+func _grid_zone_square(pointer: Vector2) -> Vector2i:
+	"""The square under the pointer, in the other grid's squares"""
+	return grid_zone.pixel_to_grid(
+		grid_zone.get_global_transform().affine_inverse() * pointer)
+
+
 func _end_drag():
 	"""End dragging and place item"""
 	if not dragging_object:
 		return
+	if grid_zone:
+		grid_zone.hide_hover_preview()
 
 	var grid_pos = pixel_to_grid(get_local_mouse_position())
 	var item_data = dragging_object.get_meta("item_data")
@@ -355,10 +381,28 @@ func _end_drag():
 		item_stored.emit(item_data)
 		return
 
+	# Dragged out of the chest onto the main grid. Which square that is belongs
+	# to the other grid to decide, so this one only says where the drop landed.
+	if grid_zone and grid_zone.get_global_rect().has_point(get_global_mouse_position()):
+		items.erase(temp_object)
+		temp_object.queue_free()
+		item_unstored.emit(item_data, get_global_mouse_position())
+		return
+
 	# Check if we're trying to move to the same position - no-op
 	if grid_pos == original_grid_pos:
 		# Just put it back where it was visually, no API call needed
 		_place_item_at(temp_object, original_grid_pos)
+		return
+
+	# Shuffling things around inside the chest changes nothing the server holds,
+	# so it is drawn and not sent. Its squares are not places, and sending one
+	# would read as a square on the main grid.
+	if not saves_positions:
+		if _can_place_item(item_data, grid_pos):
+			_place_item_at(temp_object, grid_pos)
+		else:
+			_place_item_at(temp_object, original_grid_pos)
 		return
 
 	# Check if the new position is valid
@@ -503,32 +547,57 @@ func _process(_delta):
 		if not hover_preview or not is_instance_valid(hover_preview):
 			return  # Skip hover preview updates if it's invalid
 
-		var grid_pos = pixel_to_grid(get_local_mouse_position())
-		var item_data = dragging_object.get_meta("item_data")
+		update_drag_preview(get_global_mouse_position())
+		return
 
-		if _can_place_item(item_data, grid_pos):
-			hover_preview.visible = true
-			hover_preview.position = grid_to_pixel(grid_pos)
 
-			# Calculate hover size from shape
-			var max_x = 0
-			var max_y = 0
-			for offset in item_data.shape:
-				if offset is Array and offset.size() >= 2:
-					max_x = max(max_x, offset[0])
-					max_y = max(max_y, offset[1])
+func update_drag_preview(pointer: Vector2) -> void:
+	"""Mark where the held item would land, for a pointer at this place.
 
-			hover_preview.size = Vector2(
-				(max_x + 1) * (cell_size + cell_spacing) - cell_spacing,
-				(max_y + 1) * (cell_size + cell_spacing) - cell_spacing
-			)
+	Takes the pointer rather than reading it, so what it decides can be asked
+	about without a mouse.
+	"""
+	if not dragging_object or not hover_preview or not is_instance_valid(hover_preview):
+		return
 
-			# Green for valid placement
-			var style = hover_preview.get_theme_stylebox("panel")
-			style.bg_color = Color(0.3, 1.0, 0.3, 0.3)
-			style.border_color = Color(0.5, 1.0, 0.5, 0.8)
-		else:
-			hover_preview.visible = false
+	var item_data = dragging_object.get_meta("item_data")
+
+	# Held over the grid it would move to, so that grid shows where it would
+	# land. Ours would be marking a square of its own, which is not where the
+	# item is going.
+	if _pointer_is_over_grid_zone(pointer):
+		hide_hover_preview()
+		grid_zone.show_hover_preview_for_shop(item_data, _grid_zone_square(pointer))
+		return
+	if grid_zone:
+		grid_zone.hide_hover_preview()
+
+	var grid_pos = pixel_to_grid(
+		get_global_transform().affine_inverse() * pointer)
+
+	if _can_place_item(item_data, grid_pos):
+		hover_preview.visible = true
+		hover_preview.position = grid_to_pixel(grid_pos)
+
+		# Calculate hover size from shape
+		var max_x = 0
+		var max_y = 0
+		for offset in item_data.shape:
+			if offset is Array and offset.size() >= 2:
+				max_x = max(max_x, offset[0])
+				max_y = max(max_y, offset[1])
+
+		hover_preview.size = Vector2(
+			(max_x + 1) * (cell_size + cell_spacing) - cell_spacing,
+			(max_y + 1) * (cell_size + cell_spacing) - cell_spacing
+		)
+
+		# Green for valid placement
+		var style = hover_preview.get_theme_stylebox("panel")
+		style.bg_color = Color(0.3, 1.0, 0.3, 0.3)
+		style.border_color = Color(0.5, 1.0, 0.5, 0.8)
+	else:
+		hover_preview.visible = false
 
 func clear_all():
 	"""Clear all items and containers"""

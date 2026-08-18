@@ -484,3 +484,71 @@ func test_a_move_answer_refreshes_the_chest():
 
 	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
 	assert_eq(drawn, ["set_down"], "The chest should show what the move put there")
+
+
+func test_the_sell_chest_names_its_price_for_an_item_from_the_chest():
+	# An item can be sold out of the chest as well as off the grid, so the
+	# prompt has to answer to both.
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held", "cost": 8})]
+	ui.load_storage()
+
+	ui.storage_grid._start_drag(ui.storage_grid.items[0])
+	await get_tree().process_frame
+
+	var prompt = ui.sell_chest.get_node("Prompt").text
+	assert_true("sell for" in prompt,
+		"The prompt should name a price, not stay at its resting text. Got: %s" % prompt)
+
+	ui.storage_grid._end_drag()
+	await get_tree().process_frame
+	assert_eq(ui.sell_chest.get_node("Prompt").text, "Drop here to sell",
+		"and go back to its resting text when the drag ends")
+
+
+# ============ The chest is actually on screen ============
+#
+# Two bugs got as far as a screenshot before anything noticed: the chest was
+# drawn wider than the panel holding it, so most of it was off the edge of its
+# own box, and the panel's modulate faded everything inside it to a fifth.
+# Both looked perfectly healthy from the node tree. These are the invariants
+# that were broken.
+
+func _effective_alpha(node: CanvasItem) -> float:
+	"""How opaque a node really is, once its parents have had their say.
+
+	modulate multiplies down the tree, so a node can report full opacity and
+	still be drawn nearly invisible.
+	"""
+	var alpha = 1.0
+	var walk: Node = node
+	while walk is CanvasItem:
+		alpha *= walk.modulate.a
+		walk = walk.get_parent()
+	return alpha
+
+
+func test_the_chest_fits_inside_its_panel():
+	var panel = ui.storage_grid.get_parent()
+	assert_lte(ui.storage_grid.size.x, panel.size.x,
+		"A chest wider than its panel is drawn off the edge of its own box")
+	assert_lte(ui.storage_grid.size.y, panel.size.y,
+		"and the same downwards")
+
+
+func test_the_chest_stays_within_its_panel():
+	var panel = ui.storage_grid.get_parent()
+	var grid = ui.storage_grid
+	assert_gte(grid.position.x, 0.0, "It should not start left of its panel")
+	assert_gte(grid.position.y, 0.0, "nor above it")
+	assert_lte(grid.position.x + grid.size.x, panel.size.x, "nor run off the right")
+	assert_lte(grid.position.y + grid.size.y, panel.size.y, "nor off the bottom")
+
+
+func test_what_is_in_the_chest_is_drawn_solid():
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.load_storage()
+
+	var drawn = ui.storage_grid.items[0]
+	assert_almost_eq(_effective_alpha(drawn), 1.0, 0.01,
+		"An item in the chest should be as solid as one on the grid. " +
+		"Check the panel's modulate: it multiplies down into every child.")

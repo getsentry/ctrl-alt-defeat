@@ -376,3 +376,138 @@ func test_a_grid_with_no_chest_still_drops():
 	await get_tree().process_frame
 
 	assert_eq(grid.items.size(), 1, "It should still be on the grid, not lost")
+
+
+# ============ Dragging out of the chest ============
+
+func _grid_under_the_drop() -> InventoryGrid:
+	# The grid an item would move to, sitting where the drop will land so the
+	# hit test finds it.
+	return _other_grid(Vector2.ZERO)
+
+
+func test_dropping_on_the_main_grid_hands_the_item_over():
+	# The chest cannot say which square of someone else's grid was hit, so it
+	# says where the drop landed and lets that grid work it out.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "leaving"}), Vector2i(2, 3))
+	grid.grid_zone = _grid_under_the_drop()
+
+	watch_signals(grid)
+	grid._start_drag(grid.items[0])
+	grid._end_drag()
+	await get_tree().process_frame
+
+	assert_signal_emitted(grid, "item_unstored", "Should hand the item over")
+	assert_eq(grid.items.size(), 0, "The chest lets go of it")
+
+
+func test_a_grid_that_saves_positions_is_unaffected_by_the_chest_rule():
+	assert_true(grid.saves_positions, "An ordinary grid sends its moves")
+
+
+# ============ A chest does not send its moves ============
+
+func test_shuffling_inside_a_chest_is_not_sent_anywhere():
+	# The chest lays itself out from scratch, so its squares are not places.
+	# A square number from the chest would read as a square on the main grid.
+	grid.saves_positions = false
+	for y in range(grid.grid_height):
+		for x in range(grid.grid_width):
+			grid.active_grid[y][x] = true
+	grid.place_shop_item(_item({"id": "shuffled"}), Vector2i(0, 0))
+
+	watch_signals(grid)
+	grid._start_drag(grid.items[0])
+	grid._end_drag()
+	await get_tree().process_frame
+
+	assert_signal_not_emitted(grid, "item_moved", "Nothing to tell the server")
+	assert_eq(grid.items.size(), 1, "The item is still in the chest")
+
+
+# ============ Marking where a held item would land ============
+#
+# update_drag_preview takes the pointer rather than reading it, so these can
+# put the pointer anywhere without a mouse. That is the whole reason it takes
+# an argument: the hover mark is the kind of thing that only ever broke where
+# no test could see it.
+
+func _other_grid(at: Vector2 = Vector2(1000, 0)) -> InventoryGrid:
+	var other = InventoryGridScript.new()
+	add_child(other)
+	autofree(other)
+	other.configure(WIDTH, HEIGHT, 45.0, 1.0)
+	other.position = at
+	other.load_inventory_state(_state([], [
+		_container({"id": "far_a", "position": [2, 3]})
+	]))
+	return other
+
+
+func test_the_grid_marks_where_a_held_item_would_land():
+	_load_default_containers()
+	grid.place_shop_item(_item(), Vector2i(2, 3))
+	grid._start_drag(grid.items[0])
+
+	grid.update_drag_preview(grid.global_position + grid.grid_to_pixel(Vector2i(4, 3)))
+
+	assert_true(grid.hover_preview.visible, "It should mark the square under the pointer")
+	assert_eq(grid.hover_preview.position, grid.grid_to_pixel(Vector2i(4, 3)),
+		"and mark the one the pointer is over")
+
+
+func test_a_pointer_off_the_containers_marks_nothing():
+	_load_default_containers()
+	grid.place_shop_item(_item(), Vector2i(2, 3))
+	grid._start_drag(grid.items[0])
+
+	grid.update_drag_preview(grid.global_position + grid.grid_to_pixel(Vector2i(0, 0)))
+
+	assert_false(grid.hover_preview.visible, "Bare floor is not somewhere it can land")
+
+
+func test_the_other_grid_marks_the_square_when_the_pointer_is_over_it():
+	# Dragging out of the chest: the square under the pointer is one of the
+	# main grid's squares, so the main grid is what marks it.
+	var other = _other_grid()
+	_load_default_containers()
+	grid.place_shop_item(_item(), Vector2i(2, 3))
+	grid.grid_zone = other
+	grid._start_drag(grid.items[0])
+
+	grid.update_drag_preview(other.global_position + other.grid_to_pixel(Vector2i(2, 3)))
+
+	assert_true(other.hover_preview.visible, "The grid it would move to marks the square")
+	assert_eq(other.hover_preview.position, other.grid_to_pixel(Vector2i(2, 3)),
+		"and marks the right one")
+	assert_false(grid.hover_preview.visible,
+		"The grid it is leaving should not mark a square of its own")
+
+
+func test_bringing_the_pointer_back_clears_the_other_grid():
+	var other = _other_grid()
+	_load_default_containers()
+	grid.place_shop_item(_item(), Vector2i(2, 3))
+	grid.grid_zone = other
+	grid._start_drag(grid.items[0])
+
+	grid.update_drag_preview(other.global_position + other.grid_to_pixel(Vector2i(2, 3)))
+	grid.update_drag_preview(grid.global_position + grid.grid_to_pixel(Vector2i(4, 3)))
+
+	assert_false(other.hover_preview.visible, "The other grid should stop marking")
+	assert_true(grid.hover_preview.visible, "and this one should take over")
+
+
+func test_letting_go_clears_the_other_grid():
+	var other = _other_grid()
+	_load_default_containers()
+	grid.place_shop_item(_item(), Vector2i(2, 3))
+	grid.grid_zone = other
+	grid._start_drag(grid.items[0])
+	grid.update_drag_preview(other.global_position + other.grid_to_pixel(Vector2i(2, 3)))
+
+	grid._end_drag()
+	await get_tree().process_frame
+
+	assert_false(other.hover_preview.visible, "No mark should be left behind")

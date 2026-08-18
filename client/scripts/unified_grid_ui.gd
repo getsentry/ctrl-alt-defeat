@@ -75,6 +75,46 @@ func _on_item_stored(item_data: APITypes.PlacedItem):
 	print("Put %s in the chest" % item_data.name)
 
 
+func _on_item_unstored(item_data: APITypes.Item, global_pos: Vector2):
+	"""Called when an item is dragged out of the chest onto the grid"""
+	var grid_pos = _global_to_grid(global_pos)
+
+	# The chest has already let go of it, so every way out of here either puts
+	# it on the grid or draws the chest again with it still inside.
+	if not inventory_grid.can_place_item(item_data, grid_pos):
+		print("Nothing can go at %s, so it stays in the chest" % grid_pos)
+		load_storage()
+		return
+
+	var response = await BattleServerAPI.move_item(
+		item_data.id, [grid_pos.x, grid_pos.y])
+	if response == null:
+		print("The server refused the move, so it stays in the chest")
+		load_storage()
+		return
+
+	inventory_grid.place_shop_item(item_data, grid_pos)
+	_on_inventory_returned(response)
+	_save_current_state()
+	print("Took %s out of the chest" % item_data.name)
+
+
+func _on_chest_item_sold(item_data: APITypes.Item):
+	"""Called when an item is dragged from the chest onto the sell chest"""
+	var response = await BattleServerAPI.sell_item(item_data.id)
+	if response == null:
+		print("Sell refused by the server, so it stays in the chest")
+		load_storage()
+		return
+
+	GameStateManager.gold = response.gold
+	GameStateManager.inventory_storage = GameStateManager.inventory_storage.filter(
+		func(held): return held.id != item_data.id)
+	load_storage()
+	_update_stats()
+	print("Sold %s out of the chest for %d gold" % [item_data.name, response.gold_gained])
+
+
 func _on_inventory_returned(response: APITypes.MoveItemResponse):
 	"""The server has answered a move with the whole inventory.
 
@@ -359,6 +399,18 @@ func _create_storage_area():
 		# lands on the frame still goes in the chest.
 		if inventory_grid:
 			inventory_grid.storage_zone = storage_bg
+
+		# The chest lays itself out, so its squares are not places the server
+		# knows about and a move inside it is never sent.
+		storage_grid.saves_positions = false
+		storage_grid.sell_zone = sell_chest
+		storage_grid.grid_zone = inventory_grid
+		storage_grid.item_sold.connect(_on_chest_item_sold)
+		storage_grid.item_unstored.connect(_on_item_unstored)
+		# An item out of the chest can be sold just as one off the grid can, so
+		# the sell chest names its price while it is in hand either way.
+		storage_grid.drag_started.connect(_on_drag_started)
+		storage_grid.drag_ended.connect(_on_drag_ended)
 
 		# Set legacy reference
 
