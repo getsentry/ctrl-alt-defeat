@@ -32,8 +32,12 @@ func setup(data, size: float = 45.0, spacing: float = 1.0):
 	_create_visual()
 
 func _is_container() -> bool:
-	"""A container is drawn differently from an item that sits on one"""
-	return item_data is APITypes.ServerContainer
+	"""A container is drawn as the ground the items sit on, not as an item.
+
+	Both the shop's Item and the grid's ServerContainer answer this, so the
+	drawing does not have to know which of the two it was handed.
+	"""
+	return item_data.is_container
 
 func _create_visual():
 	"""Create the item visual representation"""
@@ -83,14 +87,8 @@ func _get_texture_path() -> String:
 
 	# Build path based on type
 	var texture_path = "res://assets/items/" + slug + ".png"
-	print("ItemVisual: Looking for texture at: %s" % texture_path)
-
-	# Check if the file exists
 	if ResourceLoader.exists(texture_path):
-		print("ItemVisual: Texture found!")
 		return texture_path
-
-	print("ItemVisual: Texture not found, will use colored visual")
 	return ""
 
 func _create_texture_visual(texture_path: String):
@@ -139,27 +137,27 @@ func _create_texture_visual(texture_path: String):
 		move_child(bg, 0)  # Move background behind texture
 
 func _create_colored_visual():
-	"""Create visual using colored cells (fallback)"""
-	# Use different colors for containers vs items
-	var color_to_use = container_color if _is_container() else item_color
+	"""Draw the item as a coloured shape, for as long as it has no artwork.
 
-	for offset in item_shape:
-		if offset is Array and offset.size() >= 2:
-			var cell = Panel.new()
-			cell.position = Vector2(
-				offset[0] * (cell_size + cell_spacing),
-				offset[1] * (cell_size + cell_spacing)
-			)
-			cell.size = Vector2(cell_size, cell_size)
-			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	One ItemPlaceholder draws the whole item, so the outline goes around the
+	outside of the shape rather than around each of its cells.
+	"""
+	var placeholder = ItemPlaceholder.new()
+	placeholder.setup(item_shape, _placeholder_color(), cell_size, cell_spacing)
+	placeholder.size = custom_minimum_size
+	add_child(placeholder)
 
-			var style = StyleBoxFlat.new()
-			style.bg_color = color_to_use
-			style.border_color = border_color
-			style.set_border_width_all(2)
-			style.set_corner_radius_all(4)
-			cell.add_theme_stylebox_override("panel", style)
-			add_child(cell)
+
+func _placeholder_color() -> Color:
+	"""The fill for an item with no artwork.
+
+	A container keeps its own quiet colour. It is the ground the items sit on,
+	and giving it one of the palette colours would make the grid too busy to
+	read.
+	"""
+	if _is_container():
+		return container_color
+	return Color.html(item_data.color)
 
 func _on_mouse_entered():
 	"""Show tooltip on hover"""

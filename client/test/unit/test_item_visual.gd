@@ -87,9 +87,26 @@ func test_draws_something_even_without_artwork():
 		"An item with no artwork should still draw coloured cells")
 
 
-func test_draws_one_cell_per_shape_square_without_artwork():
-	_make(_item({"slug": "no_such_item_anywhere", "shape": [[0, 0], [1, 0], [0, 1]]}))
-	assert_eq(visual.get_child_count(), 3, "Should draw one panel per square of the shape")
+func test_hands_the_whole_shape_to_one_placeholder():
+	# One drawing for the whole item, not one per cell. That is what lets the
+	# outline go around the outside of the shape instead of around each square.
+	var shape = [[0, 0], [1, 0], [0, 1]]
+	_make(_item({"slug": "no_such_item_anywhere", "shape": shape}))
+
+	assert_eq(visual.get_child_count(), 1, "One placeholder should draw the whole item")
+	assert_eq(visual.get_child(0).shape, shape, "It should be given every square")
+
+
+func test_the_placeholder_covers_the_whole_item():
+	_make(_item({"slug": "no_such_item_anywhere", "shape": [[0, 0], [1, 0]]}), 45.0, 1.0)
+	assert_eq(visual.get_child(0).size, visual.size,
+		"The placeholder should be as big as the item it draws")
+
+
+func test_uses_the_colour_the_server_sent():
+	_make(_item({"slug": "no_such_item_anywhere", "color": "#8DB600"}))
+	assert_eq(visual.get_child(0).fill_color, Color("#8DB600"),
+		"Should draw the item in the colour it arrived with")
 
 
 # ============ Typed items ============
@@ -109,16 +126,26 @@ func test_accepts_a_typed_inventory_item():
 # ============ Containers ============
 
 func test_container_is_drawn_in_its_own_colour():
+	# A container is the ground the items sit on. If it took a palette colour
+	# the grid would be too busy to read.
 	_make(TestHelpers.container({"slug": "no_such_item_anywhere"}))
-	var container_cell = visual.get_child(0)
-	var container_style = container_cell.get_theme_stylebox("panel")
+	var container_fill = visual.get_child(0).fill_color
 
 	_make(_item({"slug": "no_such_item_anywhere", "is_container": false}))
-	var item_cell = visual.get_child(0)
-	var item_style = item_cell.get_theme_stylebox("panel")
+	var item_fill = visual.get_child(0).fill_color
 
-	assert_ne(container_style.bg_color, item_style.bg_color,
+	assert_ne(container_fill, item_fill,
 		"A container should not look the same as an item")
+	assert_lt(container_fill.a, 1.0, "A container should stay see-through")
+
+
+func test_a_container_in_the_shop_is_drawn_as_a_container():
+	# In the shop a container is an ordinary Item with the flag set, because
+	# that is what the player buys. It carries no colour of its own, so
+	# drawing it as an item put a black square on the shop shelf.
+	_make(_item({"slug": "standard_vm", "is_container": true, "color": "", "pattern": ""}))
+	assert_lt(visual.get_child(0).fill_color.a, 1.0,
+		"A container for sale is still a container")
 
 
 # ============ Tooltip ============

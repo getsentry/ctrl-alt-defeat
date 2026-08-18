@@ -18,6 +18,8 @@ static func item_data(overrides: Dictionary = {}) -> Dictionary:
 		"is_container": false,
 		"shape": [[0, 0]],
 		"description": "Deals 2-5 damage",
+		"color": "#BE0032",
+		"pattern": "solid",
 		"min_damage": 2,
 		"max_damage": 5,
 		"min_heal": 0,

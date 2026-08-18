@@ -36,7 +36,9 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 		"cpu_cost": 3,
 		"special_effect": "Memory leak",
 		"block_amount": 0,
-		"description": "Deals 2-5 damage"
+		"description": "Deals 2-5 damage",
+		"color": "#BE0032",
+		"pattern": "solid"
 	}
 	data.merge(overrides, true)
 	return data

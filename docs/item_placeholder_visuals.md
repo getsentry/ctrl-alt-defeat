@@ -1,7 +1,7 @@
 # Item Placeholder Visuals
 
-**Status:** agreed design. The catalogue data and its tests are in. The client
-drawing is not.
+**Status:** agreed design. The catalogue data is in, and so is the drawing of
+the fill and the outline. The patterns and the icons are not.
 
 Only 9 of the 86 items have artwork. Every other item draws as the same blue
 square, so the grid tells the player nothing. This document specifies what an
@@ -245,30 +245,34 @@ from drawing.
 
 ## 7. How the drawing works
 
-Replace `_create_colored_visual()` in `client/scripts/item_visual.gd`. Today it
-adds one `Panel` per cell, each with its own border on all four sides. Instead,
-draw the whole item in one control with a `_draw()` function.
+`client/scripts/item_placeholder.gd` draws the whole item in one control with a
+`_draw()` function. It replaced the one `Panel` per cell that `ItemVisual` used
+to add, each with its own border on all four sides.
 
 The input is the set of covered cells. Draw in this order:
 
-1. **Fill.** Every covered cell, in the item's colour.
+1. **Fill and outline.** See below. *(done)*
 2. **Pattern.** Across the bounding box, in the dark ink at 30% alpha, clipped
    to the covered cells. Clipping is what makes the pattern continuous across
    the item rather than restarting in each cell.
 3. **Icons.** Per cell: the silhouette in dark ink at four ±1 px offsets, then
    the silhouette in the plain fill colour.
-4. **Outline.** The edge of the union of cells, 3 px, inside the edge, in the
-   darkened fill colour.
 
-**Finding the outline is simple.** An edge between two squares is on the outline
-only when exactly one of the two squares is in the covered set. Collect those
-edges and draw them. This works for a rectangle, for an L, for a T, and for a
-shape with a hole in it, with no special cases.
+**One rule decides the outline.** A side of a cell is on the item's edge when
+the square beyond it is not part of the item. That covers a rectangle, an L, a
+T, and a shape with a hole, with no special cases — the hole gets an outline for
+the same reason the outside does.
 
-**The cells must draw flush.** `cell_spacing` is 1 px today, and a gap between
-cells would put gaps in the outline and let the background show through the
-middle of an item. The grid draws its own cell lines underneath, so the item
-does not need to repeat them.
+**The outline is painted, not stroked.** Fill the whole covered area in the
+outline colour, then paint it again in the fill colour, pulled in by 3 px on
+every side that is on the edge. What is left showing is a band exactly on the
+edge and nowhere else. Tracing the edge as lines gives the same answer but needs
+the corners handled; this way they take care of themselves.
+
+**The cells draw flush.** The grid leaves 1 px between its squares. Inside an
+item that gap is closed, or the outline would have holes where two cells meet.
+Only the gaps *inside* the item are closed, so the item still lines up with the
+grid squares underneath it.
 
 ---
 
@@ -313,23 +317,23 @@ container took part in the palette, the grid would become too busy to read.
 - The colour reaches the client as a value and the pattern as a name, and both
   survive an item being placed on the grid and put back in the chest.
 
-**Client** (not done):
-- The look of an item is a pure function of its fields, so it can be checked
-  without drawing.
-- The outline edge set is correct for a rectangle, for an L, and for a shape
-  with a hole.
-- A container draws with no pattern and no icon.
-- An unknown category still draws.
-
-`client/test/unit/test_item_visual.gd:90` asserts one child node per cell of the
-shape. One control that draws itself has no such children, so that test must
-check the drawn geometry instead.
+**Client** (`test/unit/test_item_placeholder.gd` and `test_item_visual.gd`):
+- The rectangles are worked out without drawing, so they are checked directly
+  rather than by looking at pixels. *(done)*
+- The outline is right for a single cell, a wide item, an L with its concave
+  corner, and a ring with a hole in the middle. *(done)*
+- An item still lines up with the grid squares underneath it. *(done)*
+- A container draws in its own see-through colour. *(done)*
+- An item that arrives with no colour still draws, in a colour nobody could
+  mistake for a real one. *(done)*
+- A container draws with no pattern and no icon. *(not done)*
+- An unknown category still draws. *(not done)*
 
 ---
 
 ## 11. Clean-up while in these files
 
-- `_get_color_for_category()` at `client/scripts/unified_grid_ui.gd:440` is dead.
-  Only `test_unified_grid_ui.gd:314` calls it, and it knows 4 of the 9
-  categories. Delete both.
-- `_get_texture_path()` prints on every item drawn. Remove the prints.
+- `_get_color_for_category()` in `client/scripts/unified_grid_ui.gd` is dead.
+  Only `test_unified_grid_ui.gd` calls it, and it knows 4 of the 9 categories.
+  Delete both. *(not done)*
+- `_get_texture_path()` printed on every item drawn. *(done)*

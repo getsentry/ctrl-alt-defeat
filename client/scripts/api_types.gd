@@ -47,6 +47,11 @@ class Item extends Resource:
 	var is_container: bool = false
 	var shape: Array = []  # Array[Array[int]]: the [x, y] offsets it covers
 	var description: String = ""
+	# How to draw the item while it has no artwork. The colour arrives as a
+	# value, so the client keeps no palette; the pattern arrives as a name,
+	# because the client is what draws it. Both are empty on a container.
+	var color: String = ""
+	var pattern: String = ""
 	var min_damage: int = 0
 	var max_damage: int = 0
 	var min_heal: int = 0
@@ -70,6 +75,8 @@ class Item extends Resource:
 		is_container = data["is_container"]
 		shape = data["shape"]
 		description = data["description"]
+		color = data["color"]
+		pattern = data["pattern"]
 		min_damage = int(data["min_damage"])
 		max_damage = int(data["max_damage"])
 		min_heal = int(data["min_heal"])
@@ -94,6 +101,8 @@ class Item extends Resource:
 			"is_container": is_container,
 			"shape": shape,
 			"description": description,
+			"color": color,
+			"pattern": pattern,
 			"min_damage": min_damage,
 			"max_damage": max_damage,
 			"min_heal": min_heal,
@@ -136,6 +145,7 @@ class PlacedItem extends Item:
 
 # Container/Server - matches server response
 class ServerContainer extends Resource:
+	var is_container: bool = true
 	var id: String = ""
 	var type: String = ""
 	var slug: String = ""
