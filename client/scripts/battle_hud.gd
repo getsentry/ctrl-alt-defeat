@@ -35,7 +35,7 @@ const ENEMY_AT := Vector2(0.915, 0.62)
 # width to each rack, about half of it to the stats in the middle, and the
 # fighters shrunk into the bottom corners. The racks and the numbers are what a
 # player reads; the characters are scenery.
-const CLOCK_SIZE := Vector2(372, 68)
+const CLOCK_SIZE := Vector2(452, 68)
 const LOG_SIZE := Vector2(700, 344)
 const LOG_BUTTON_SIZE := Vector2(126, 46)
 const RACK_TOP := 78.0
@@ -59,6 +59,9 @@ const FEET_BELOW := 26.0
 const SHADOW_ABOVE := 42.0
 const SHADOW_SIZE := Vector2(340, 66)
 const COLUMN_INSET := 26.0
+## How far a name keeps away from each end of its column. The blades sit in the
+## middle, and a name that runs into them reads as one long word.
+const NAME_INSET := 38.0
 const ROW_LABEL := 118.0
 const BAR_WIDTH := 244.0
 
@@ -68,6 +71,7 @@ const LOW_HEALTH := 0.3
 
 var screen: Control
 var clock_plate: NeonPlate
+var pause_button: Button
 var timeline: Timeline
 var log_drawer: Control
 var log_button: Button
@@ -152,6 +156,20 @@ func _build_clock(time_label: Label, speed_button: Button) -> void:
 	speed_button.custom_minimum_size = Vector2(94, 30)
 	_style_button(speed_button, CLOCK_ACCENT)
 
+	pause_button = Button.new()
+	pause_button.name = "PauseButton"
+	pause_button.text = PAUSE_GLYPH
+	_put(pause_button, Vector2(CLOCK_SIZE.x - 240, 29), Vector2(84, 30))
+	pause_button.custom_minimum_size = Vector2(84, 30)
+	_style_button(pause_button, CLOCK_ACCENT)
+	clock_plate.add_child(pause_button)
+
+
+## Say whether the battle is running or held.
+func show_paused(held: bool) -> void:
+	if is_instance_valid(pause_button):
+		pause_button.text = PLAY_GLYPH if held else PAUSE_GLYPH
+
 
 ## Move the clock hand and the elapsed time on.
 func tick(elapsed: float, total: float) -> void:
@@ -234,6 +252,8 @@ const VOICES := 6
 ## blow, not as six.
 const HIT_GAP_MS := 55
 const HIT_PATH := "res://assets/audio/hit.wav"
+const PAUSE_GLYPH := "❚❚"
+const PLAY_GLYPH := "▶"
 
 
 func _build_hits() -> void:
@@ -314,12 +334,17 @@ func _build_column(stats: Dictionary, side: String, accent: Color, left: float) 
 
 	var name_label: Label = stats[side + "_name"]
 	_reparent(name_label, stats_plate)
-	name_label.position = Vector2(left, 10)
-	name_label.size = Vector2(column - 40, 44)
+	# Kept clear of the middle, where the blades are, and cut off rather than
+	# allowed to run over them. A ghost opponent is named by whoever played
+	# them, so the length of it is nobody's to promise.
+	name_label.position = Vector2(left + NAME_INSET, 8)
+	name_label.size = Vector2(column - NAME_INSET * 2.0, 44)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 30)
+	name_label.add_theme_font_size_override("font_size", 28)
 	name_label.add_theme_color_override("font_color", accent)
+	name_label.clip_text = true
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 
 	_build_row(stats, side, "health", accent, left, 72, HEALTH_FILL)
 	_build_row(stats, side, "stamina", accent, left, 122, STAMINA_FILL)

@@ -185,7 +185,7 @@ func test_battle_result_display():
 	# The result is drawn by the round result overlay, which _on_battle_ended()
 	# drops over the finished battle. Calling that here would swap the scene
 	# tree out from under the run, because with nothing to animate the overlay
-	# continues straight to the post-battle screen. So check the routing.
+	# continues straight on. So check the routing.
 	# What the overlay draws is covered by test_round_result_overlay.gd.
 	assert_true(battle_screen.has_method("_on_battle_ended"),
 		"Battle end should be handled")
@@ -193,10 +193,12 @@ func test_battle_result_display():
 		"Battle end should show the run scoreboard")
 	assert_true(ResourceLoader.exists("res://scenes/RoundResultOverlay.tscn"),
 		"The overlay it shows should exist")
-	assert_true(battle_screen.has_method("_go_to_post_battle"),
-		"Reading the result should lead to the post-battle screen")
-	assert_true(ResourceLoader.exists("res://scenes/PostBattleScreen.tscn"),
-		"The post-battle screen it routes to should exist")
+	assert_true(battle_screen.has_method("_go_to_round_over"),
+		"Reading the result should lead out of the battle")
+	assert_true(ResourceLoader.exists("res://scenes/UnifiedGridUI.tscn"),
+		"and back to the shop, which is where the next round is played from")
+	assert_true(ResourceLoader.exists("res://scenes/GameOverScreen.tscn"),
+		"unless the run is over")
 
 func test_battle_ended_stops_playback():
 	# _on_battle_ended() sets battle_active = false, then waits and shows the

@@ -323,6 +323,88 @@ func test_damage_over_time_wears_health_down():
 	assert_eq(processor.player2_hp, quota - 3, "Damage over time should still hurt")
 
 
+# ============ Changing pace without moving the playhead ============
+
+func _play_for(seconds: float) -> void:
+	await get_tree().create_timer(seconds).timeout
+
+
+func test_the_playhead_does_not_jump_when_the_speed_changes():
+	# It used to be the wall clock since the start times the speed, so changing
+	# the speed rescaled every second already played: eight seconds in, going
+	# from 1x to 2x moved the playhead to sixteen and fired everything in
+	# between at once.
+	processor.load_battle_events(_battle([_action({"timestamp": 60000})]))
+	processor.start_playback(1.0)
+	await _play_for(0.2)
+
+	var before = processor.get_current_time()
+	processor.set_playback_speed(4.0)
+	var after = processor.get_current_time()
+
+	assert_almost_eq(after, before, 0.02,
+		"Changing the speed should not move where the battle has got to")
+	processor.stop_playback()
+
+
+func test_a_faster_speed_covers_more_battle_in_the_same_time():
+	processor.load_battle_events(_battle([_action({"timestamp": 60000})]))
+	processor.start_playback(1.0)
+	await _play_for(0.15)
+	var slow = processor.get_current_time()
+
+	processor.set_playback_speed(8.0)
+	var from = processor.get_current_time()
+	await _play_for(0.15)
+	var fast = processor.get_current_time() - from
+
+	assert_gt(fast, slow, "Eight times the speed should cover more ground")
+	processor.stop_playback()
+
+
+func test_a_held_battle_stays_where_it_is():
+	processor.load_battle_events(_battle([_action({"timestamp": 60000})]))
+	processor.start_playback(1.0)
+	await _play_for(0.15)
+
+	processor.set_paused(true)
+	var held = processor.get_current_time()
+	await _play_for(0.2)
+
+	assert_almost_eq(processor.get_current_time(), held, 0.01,
+		"A held battle should not run on")
+	processor.stop_playback()
+
+
+func test_letting_go_carries_on_from_where_it_was_held():
+	processor.load_battle_events(_battle([_action({"timestamp": 60000})]))
+	processor.start_playback(1.0)
+	await _play_for(0.15)
+	processor.set_paused(true)
+	var held = processor.get_current_time()
+	await _play_for(0.2)
+
+	processor.set_paused(false)
+
+	assert_almost_eq(processor.get_current_time(), held, 0.02,
+		"It should carry on from where it stopped, not skip the pause")
+	processor.stop_playback()
+
+
+func test_holding_it_twice_changes_nothing():
+	processor.load_battle_events(_battle([_action({"timestamp": 60000})]))
+	processor.start_playback(1.0)
+	await _play_for(0.1)
+	processor.set_paused(true)
+	var held = processor.get_current_time()
+
+	processor.set_paused(true)
+
+	assert_almost_eq(processor.get_current_time(), held, 0.01,
+		"Asking again for what is already true should do nothing")
+	processor.stop_playback()
+
+
 # ============ The client knows every action the server can send ============
 
 func test_the_client_handles_every_action_the_server_declares():

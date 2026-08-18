@@ -523,7 +523,7 @@ async def simulate_battle(
     # Try matchmaking first (unless in test mode with specified AI difficulty)
     opponent_data = None
     opponent_type = "ai"
-    opponent_name = f"AI Opponent (Round {current_round})"
+    opponent_name = "AI Opponent"
     match_history_id = None  # Track for updating after battle
 
     if not TEST_MODE or request.test_ai_difficulty is None:

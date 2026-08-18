@@ -21,6 +21,16 @@ var current_event_index: int = 0
 var start_time: float = 0.0
 var playback_speed: float = 1.0
 var is_playing: bool = false
+## Battle seconds already played, at whatever speeds they were played at.
+##
+## The playhead used to be the wall clock since the start times the speed,
+## which works only while the speed never changes. Change it half way and every
+## second already played is rescaled with it: eight seconds in, going from 1x
+## to 2x moved the playhead to sixteen and fired everything in between at once.
+## So the seconds are banked here as they are played, and the wall clock only
+## ever measures the stretch since the last change.
+var played: float = 0.0
+var paused: bool = false
 var battle_duration: float = 0.0
 
 # Player states for visualization
@@ -64,6 +74,8 @@ func start_playback(speed: float = 1.0):
 
 	playback_speed = speed
 	current_event_index = 0
+	played = 0.0
+	paused = false
 	start_time = Time.get_ticks_msec() / 1000.0
 	is_playing = true
 	set_process(true)
@@ -80,7 +92,7 @@ func _process(_delta):
 			_finish_battle()
 		return
 
-	var current_time = (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
+	var current_time = get_current_time()
 
 	# Process all events that should have happened by now
 	while current_event_index < events.size():
@@ -253,10 +265,43 @@ func _finish_battle():
 	battle_ended.emit(winner)
 
 func get_current_time() -> float:
-	"""Get current playback time in seconds"""
-	if not is_playing:
+	"""How far into the battle the playhead is, in battle seconds."""
+	if not is_playing and played == 0.0:
 		return 0.0
-	return (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
+	if paused or not is_playing:
+		return played
+	return played + (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
+
+
+func _bank() -> void:
+	"""Put the stretch since the last change into the total, and re-anchor.
+
+	Every change of pace goes through this. Miss it and the playhead jumps.
+	"""
+	if not paused and is_playing:
+		played += (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
+	start_time = Time.get_ticks_msec() / 1000.0
+
+
+func set_playback_speed(speed: float) -> void:
+	"""Play faster or slower from here on, without moving the playhead."""
+	_bank()
+	playback_speed = maxf(speed, 0.01)
+
+
+func set_paused(wanted: bool) -> void:
+	"""Hold the battle where it is, or let it run on from there."""
+	if wanted == paused:
+		return
+	if wanted:
+		_bank()
+		paused = true
+		set_process(false)
+	else:
+		paused = false
+		start_time = Time.get_ticks_msec() / 1000.0
+		if is_playing:
+			set_process(true)
 
 func get_progress() -> float:
 	"""Get battle progress as percentage (0-1)"""

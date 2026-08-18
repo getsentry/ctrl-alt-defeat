@@ -77,6 +77,9 @@ var won: bool = false
 ## Wins banked and tries left after the round, as GameStateManager holds them.
 var wins: int = 0
 var lives: int = 0
+## What the round paid. The server has already banked it by the time any of
+## this is drawn; saying so is the only part left to do.
+var gold_earned: int = 0
 
 ## Whether the animation has finished and the screen is showing its final
 ## state. A click before that settles it instead of continuing, so an
@@ -91,6 +94,7 @@ var _ghosts: Array[Label] = []
 var _wins_bar: NeonPlate
 var _tries_bar: NeonPlate
 var _prompt: Label
+var _gold: Label
 var _sting: AudioStreamPlayer
 var _trophies: Array[Control] = []
 var _hearts: Array[Control] = []
@@ -119,10 +123,12 @@ func _exit_tree() -> void:
 ##
 ## `wins_after` and `lives_after` are the run totals the server has already
 ## applied, so the screen works out the counts to open on from `player_won`.
-func show_result(player_won: bool, wins_after: int, lives_after: int) -> void:
+func show_result(player_won: bool, wins_after: int, lives_after: int,
+		paid: int = 0) -> void:
 	won = player_won
 	wins = wins_after
 	lives = lives_after
+	gold_earned = paid
 
 	if not is_node_ready():
 		await ready
@@ -135,6 +141,10 @@ func show_result(player_won: bool, wins_after: int, lives_after: int) -> void:
 	_banner_label.add_theme_color_override("font_color", accent)
 	_banner.accent = accent
 	_sting.stream = WON_STING if won else LOST_STING
+
+	_gold.text = "+%d GOLD" % gold_earned
+	# A round that paid nothing has nothing to say about pay.
+	_gold.visible = gold_earned > 0
 
 	if not Presentation.request("round_result", {"won": won, "wins": wins, "lives": lives}):
 		# No display to animate on, so show the settled screen and move on
@@ -211,6 +221,17 @@ func _build() -> void:
 
 	# Above the plates rather than behind them: the sparks thrown off the icon
 	# that just changed have to be seen coming off it.
+	_gold = Label.new()
+	_gold.name = "GoldEarned"
+	_gold.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gold.add_theme_font_size_override("font_size", 32)
+	_gold.add_theme_color_override("font_color", TROPHY_LIT)
+	_gold.add_theme_color_override("font_outline_color", Color(0.02, 0.01, 0.06, 0.9))
+	_gold.add_theme_constant_override("outline_size", 6)
+	_gold.mouse_filter = MOUSE_FILTER_IGNORE
+	_gold.visible = false
+	add_child(_hold(_gold, Vector2(400, 44), 296))
+
 	_sparkles = Sparkles.new()
 	_sparkles.name = "Sparkles"
 	_sparkles.set_anchors_and_offsets_preset(PRESET_FULL_RECT)

@@ -137,20 +137,21 @@ func test_defeat_says_game_over():
 	assert_false(_label("VictorySubtitle").visible, "A defeat should show no victory subtitle")
 
 
-func test_victory_past_round_ten_says_victory():
+func test_a_won_run_says_victory():
 	GameStateManager.start_new_game()
 	GameStateManager.current_round = 11
-	GameStateManager.player_health = 50
+	GameStateManager.wins = GameStateManager.WINS_TO_VICTORY
+	GameStateManager.victory = true
 	screen = await _open_screen()
 
-	assert_eq(_label("GameOverTitle").text, "VICTORY!", "Surviving past round 10 should be a victory")
+	assert_eq(_label("GameOverTitle").text, "VICTORY!", "Banking the wins the run is played for should be a victory")
 	assert_true(_label("VictorySubtitle").visible, "A victory should show its subtitle")
 
 
 func test_victory_adds_a_score_bonus():
 	GameStateManager.start_new_game()
 	GameStateManager.current_round = 11
-	GameStateManager.player_health = 50
+	GameStateManager.victory = true
 	GameStateManager.wins = 0
 	screen = await _open_screen()
 

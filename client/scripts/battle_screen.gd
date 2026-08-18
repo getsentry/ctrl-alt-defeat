@@ -158,6 +158,7 @@ func _setup_ui_references():
 		"player_art": $Player1Container/StatusPanel/TextureRect,
 		"enemy_art": $Player2Container/StatusPanel/TextureRect,
 	})
+	hud.pause_button.pressed.connect(_on_toggle_pause)
 
 func _setup_inventories():
 	# Constants for grid configuration
@@ -219,9 +220,18 @@ func _on_toggle_speed():
 	# Update button text
 	speed_button.text = "%.0fx" % battle_speed_multiplier
 
-	# Update the event processor speed if playing
-	if event_processor and event_processor.is_playing:
+	# Whether or not it is playing: a speed set while the battle is held should
+	# be the speed it runs at when it is let go.
+	if is_instance_valid(event_processor):
 		event_processor.set_playback_speed(battle_speed_multiplier)
+
+
+func _on_toggle_pause():
+	"""Hold the battle where it is, or let it run on."""
+	if not is_instance_valid(event_processor):
+		return
+	event_processor.set_paused(not event_processor.paused)
+	hud.show_paused(event_processor.paused)
 
 func _update_stats_display():
 	# Update player stats
@@ -454,8 +464,9 @@ func _show_round_result(won: bool):
 	"""
 	round_result = ROUND_RESULT_OVERLAY.instantiate()
 	add_child(round_result)
-	round_result.continued.connect(_go_to_post_battle)
-	round_result.show_result(won, GameStateManager.wins, GameStateManager.player_lives)
+	round_result.continued.connect(_go_to_round_over)
+	round_result.show_result(won, GameStateManager.wins, GameStateManager.player_lives,
+		GameStateManager.last_gold_earned)
 
 func _show_damage_number(player: int, amount: int):
 	if not Presentation.request("damage_number", {"player": player, "amount": amount}):
@@ -517,6 +528,15 @@ func _show_item_activation(item_id: String, _player: int, action: String):
 			hud.item_fired()
 		return
 
-func _go_to_post_battle():
-	# Go to post-battle results screen
-	get_tree().change_scene_to_file("res://scenes/PostBattleScreen.tscn")
+func _go_to_round_over():
+	"""Leave the finished battle.
+
+	Straight to the shop. There used to be a screen in between that named the
+	result, counted the gold and asked for another click, all of which the
+	round result overlay now does over the battle itself - so it was a second
+	screen and a second click saying what the first one had just said.
+	"""
+	if GameStateManager.is_game_over():
+		get_tree().change_scene_to_file("res://scenes/GameOverScreen.tscn")
+	else:
+		get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")

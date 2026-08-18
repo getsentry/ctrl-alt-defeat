@@ -112,8 +112,11 @@ func _setup_ui():
 func _display_final_stats():
 	"""Display final game statistics"""
 
-	# Check if this was a victory (reached round 10+)
-	var is_victory = GameStateManager.current_round > 10 and GameStateManager.player_health > 0
+	# The server decides this and says so. Working it out again from the round
+	# number and a health counter gave a second rule that could disagree with
+	# the first - and did, since the run ends on tries rather than on health,
+	# so that health was never anything but 100.
+	var is_victory = GameStateManager.is_victory()
 
 	# Update title for victory
 	var title = find_child("GameOverTitle", true, false)

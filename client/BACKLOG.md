@@ -45,71 +45,21 @@ say, or the client would need to infer it from the artwork.
 calling `hit()` a few times with different numbers and picking between them in
 `BattleHud.item_fired`.
 
-## The battle speed button calls a method that does not exist
+## `player_health` is a counter nothing counts
 
-`battle_screen._on_toggle_speed` cycles `battle_speed_multiplier` 1x → 2x → 3x,
-updates its own label, and then does this:
+`GameStateManager.player_health` starts at 100 and is now never changed by
+anything. The post-battle screen used to take one off it per loss, and that
+screen is gone; the only thing that read it was the game over screen, working
+out victory a second way, which now asks the server's flag instead.
 
-```gdscript
-if event_processor and event_processor.is_playing:
-    event_processor.set_playback_speed(battle_speed_multiplier)
-```
+A run is decided by `player_lives`. Even when the health was maintained it
+could not reach zero, because the run ends after five losses and health only
+fell by one each time — so `player_health > 0` was true in every state the game
+could reach.
 
-**There is no `set_playback_speed`.** `grep -rn "func set_playback_speed"
-client/scripts/` returns nothing. The only place `playback_speed` is ever
-assigned is `start_playback(speed)`, which runs once when the battle begins. So
-the button changes its own caption and nothing else, which is exactly what a
-player sees: it clicks, it reads 2x, the battle runs at the same pace.
-
-**Adding the method is not enough.** The playhead is derived from the wall
-clock and the multiplier together:
-
-```gdscript
-var current_time = (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
-```
-
-Change `playback_speed` half way through and all the elapsed time is rescaled
-retroactively, so the battle jumps: eight seconds in, switching 1x to 2x snaps
-the playhead to sixteen and fires every event in between at once. The change
-has to bank the seconds already played at the old speed and restart the clock
-from there — keep a `played` total, add to it on each speed change, and measure
-new elapsed time from that point.
-
-**There is no pause either.** `stop_playback()` sets `is_playing = false` and
-stops processing, but nothing resumes from where it stopped, for the same
-reason: `start_time` is the only anchor and it is absolute. The same `played`
-total that fixes the speed change is what a pause and resume needs. The clock
-plate has room for a pause button beside the speed one.
-
-**Test.** Start playback, advance the clock, change speed, and assert the
-playhead moved on from where it was rather than jumping. Then pause, advance
-the clock, resume, and assert it did not skip the gap.
-
-## The post-battle screen has nothing left to say
-
-The round result overlay now shows the result over the finished battle: which
-way the round went, the wins banked, the tries left. `PostBattleScreen` then
-shows the same result again as text, plus the gold earned, and asks for a
-second click to reach the shop.
-
-Two screens and two clicks for one round, and the first of them is the one
-worth keeping.
-
-**Fix.** Route `_go_to_post_battle` straight to `UnifiedGridUI`, keeping the
-game-over branch `PostBattleScreen._on_continue_pressed` currently owns
-(`GameStateManager.is_game_over()` → `GameOverScreen`). Gold earned needs
-somewhere to go — either onto the round result overlay next to the wins, or
-into the shop's header, which already shows the gold total.
-
-`PostBattleScreen` also applies the health loss on the way through
-(`set_battle_result` does `GameStateManager.player_health -= health_lost`).
-Check whether anything still reads `player_health` before deleting the screen
-that maintains it — the run is decided by `player_lives`, and this may be a
-second, unused counter.
-
-Delete `PostBattleScreen.tscn`, `post_battle_screen.gd` and
-`test_post_battle_screen.gd` with it, and the routing assertions in
-`test_battle_screen.gd` that name it.
+**Fix.** Delete `player_health` and `max_player_health`, and the assertions in
+`test/smoke/test_critical_path.gd` that check them. Left in place for now
+because that smoke test needs a running server to verify against.
 
 ## There are two backlogs at the repo root
 

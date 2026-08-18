@@ -247,6 +247,24 @@ func test_both_fighters_stats_are_side_by_side_in_the_middle():
 			"%s should be on the stats panel" % bar.name)
 
 
+func test_a_long_name_stays_in_its_own_half():
+	# A ghost opponent is named by whoever played them, so nothing promises the
+	# length. The server made this worse for a while by appending the round
+	# number to its own AI's name.
+	battle_screen.opponent_name_label.text = "A Very Long Handle Indeed (Round 12)"
+	await get_tree().process_frame
+
+	var name_at = battle_screen.opponent_name_label.get_global_rect()
+	var middle = hud.stats_plate.get_global_rect().get_center().x
+
+	assert_gt(name_at.position.x, middle,
+		"The opponent's name should stay on the opponent's side")
+	assert_true(hud.stats_plate.get_global_rect().encloses(name_at),
+		"and inside the panel")
+	assert_true(battle_screen.opponent_name_label.clip_text,
+		"and be cut off rather than allowed to run over the blades")
+
+
 func test_the_two_fighters_read_left_and_right_of_the_split():
 	var middle = hud.stats_plate.get_global_rect().get_center().x
 
