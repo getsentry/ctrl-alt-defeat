@@ -10,13 +10,18 @@ difference between the two types. So a position is never null, and nothing has
 to work out what a missing one means.
 """
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from config_loader import config_loader
 from grid_system import ItemShape, Rotation
 from item_effects import ItemSpec
-from item_looks import hex_of
+from item_looks import PATTERNS, hex_of
 from utils import Position, Shape
+
+# A colour on the wire is what Godot's Color.html() can read, or nothing at all
+# for a container. The client draws whatever arrives without checking it, so
+# anything it could not draw has to be stopped here.
+HEX_COLOR = r"^(#[0-9A-Fa-f]{6})?$"
 
 # What an item of each rarity costs in the shop.
 # Backpack Battles puts one shop item in ten on sale at half price.
@@ -109,7 +114,10 @@ class Item(BaseModel):
     is_container: bool = Field(description="Whether this item is a container")
     shape: Shape = Field(description="Covered squares, as [x, y] offsets")
     description: str = Field(description="What the item does, in prose")
-    color: str = Field(description="Fill colour as #RRGGBB, empty on a container")
+    color: str = Field(
+        pattern=HEX_COLOR,
+        description="Fill colour as #RRGGBB, empty on a container",
+    )
     pattern: str = Field(description="Pattern name, empty on a container")
     min_damage: int = Field(description="Minimum damage dealt")
     max_damage: int = Field(description="Maximum damage dealt")
@@ -122,6 +130,19 @@ class Item(BaseModel):
         default=False, description="Whether the shop is offering this at half price"
     )
     special_effect: str = Field(description="Special effect name, empty if none")
+
+    @field_validator("pattern")
+    @classmethod
+    def known_pattern(cls, value: str) -> str:
+        """A pattern is a name of something the client has a routine for.
+
+        Unlike the colour it cannot be sent as a value, so a name the client
+        has never heard of would simply draw nothing. Refuse it here, where
+        there is somewhere to say why.
+        """
+        if value and value not in PATTERNS:
+            raise ValueError(f"{value} is not a pattern the client can draw")
+        return value
 
     @classmethod
     def of(cls, item_type: str, item_id: str, on_sale: bool = False) -> "Item":

@@ -2,7 +2,10 @@
 Tests for items.py
 """
 
-from item_looks import CATEGORY_COLOR, PALETTE
+import pytest
+from pydantic import ValidationError
+
+from item_looks import CATEGORY_COLOR, PALETTE, PATTERNS
 from items import SALE_CHANCE, Item, sale_price
 
 
@@ -138,3 +141,46 @@ class TestTheLookOnTheWire:
         stored = Item.of("null_blade", "test_id").placed_at((2, 3)).stored()
         assert stored.color == PALETTE[CATEGORY_COLOR["problem"]]
         assert stored.pattern == "solid"
+
+
+class TestTheLookIsCheckedOnTheWayOut:
+    """The client draws what it is given without checking it.
+
+    It has no palette to compare a colour against and no way to ask what a
+    pattern name means, so a look it cannot draw has to be refused here.
+    """
+
+    def _rebuilt(self, **changes) -> Item:
+        """An item put back through validation with something changed."""
+        fields = Item.of("null_blade", "test_id").model_dump()
+        fields.update(changes)
+        return Item.model_validate(fields)
+
+    def test_refuses_a_colour_that_is_not_a_value(self):
+        # The name is what the catalogue holds. Sending it would leave the
+        # client with a string it cannot turn into a colour.
+        with pytest.raises(ValidationError):
+            self._rebuilt(color="red")
+
+    def test_refuses_a_colour_that_is_not_six_digits(self):
+        with pytest.raises(ValidationError):
+            self._rebuilt(color="#BE003")
+
+    def test_refuses_something_that_is_not_a_colour_at_all(self):
+        with pytest.raises(ValidationError):
+            self._rebuilt(color="rgb(190, 0, 50)")
+
+    def test_allows_no_colour_at_all(self):
+        # A container has none, and that is not an error.
+        assert self._rebuilt(color="").color == ""
+
+    def test_refuses_a_pattern_the_client_cannot_draw(self):
+        with pytest.raises(ValidationError, match="not a pattern the client can draw"):
+            self._rebuilt(pattern="tartan")
+
+    def test_allows_no_pattern_at_all(self):
+        assert self._rebuilt(pattern="").pattern == ""
+
+    def test_allows_every_pattern_there_is(self):
+        for name in PATTERNS:
+            assert self._rebuilt(pattern=name).pattern == name
