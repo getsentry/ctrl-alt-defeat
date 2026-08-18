@@ -155,6 +155,7 @@ class ConfigLoader:
             rarity=config["rarity"],
             color=config["color"],
             pattern=config["pattern"],
+            in_shop=config.get("in_shop", True),
         )
 
     def _parse_shape(self, shape_str: str) -> ItemShape:

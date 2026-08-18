@@ -17,7 +17,13 @@ from typing import Dict, Iterator, Tuple
 
 import pytest
 
-from item_looks import CATEGORY_COLOR, PALETTE, PATTERNS, hex_of
+from item_looks import (
+    CATEGORY_COLOR,
+    CATEGORY_EXTRA_COLOR,
+    PALETTE,
+    PATTERNS,
+    hex_of,
+)
 
 ITEMS_DIR = Path(__file__).parent.parent / "data" / "items"
 
@@ -57,8 +63,14 @@ class TestThePalette:
             assert color in PALETTE, f"{category} wears {color}, which does not exist"
 
     def test_no_two_categories_share_a_colour(self):
-        repeated = [c for c, n in Counter(CATEGORY_COLOR.values()).items() if n > 1]
+        used = list(CATEGORY_COLOR.values()) + list(CATEGORY_EXTRA_COLOR.values())
+        repeated = [c for c, n in Counter(used).items() if n > 1]
         assert not repeated, f"Two categories wear the same colour: {repeated}"
+
+    def test_every_extra_colour_is_in_the_palette(self):
+        for category, color in CATEGORY_EXTRA_COLOR.items():
+            assert category in CATEGORY_COLOR, f"{category} has no first colour"
+            assert color in PALETTE, f"{category} overflows to {color}, which does not exist"
 
 
 class TestHexOf:
@@ -115,20 +127,25 @@ class TestTheCatalogue:
         for item_id, config in ITEMS.items():
             category = config["category"]
             assert category in CATEGORY_COLOR, f"{category} has no colour of its own"
-            assert config["color"] == CATEGORY_COLOR[category], (
-                f"{item_id} is a {category}, so it should be "
-                f"{CATEGORY_COLOR[category]}, not {config['color']}"
+            allowed = {CATEGORY_COLOR[category]}
+            if category in CATEGORY_EXTRA_COLOR:
+                allowed.add(CATEGORY_EXTRA_COLOR[category])
+            assert config["color"] in allowed, (
+                f"{item_id} is a {category}, so it should be one of "
+                f"{sorted(allowed)}, not {config['color']}"
             )
 
-    def test_a_category_still_fits_in_the_patterns(self):
-        """One colour per category only works while a category is smaller than
-        the pattern list. When this fails, give the extra items a spare colour
-        from the palette rather than repeating a pair."""
+    def test_a_category_still_fits_in_its_colours(self):
+        """A category has as many looks as it has colours times patterns. When
+        this fails, give the category a spare colour from the palette rather
+        than repeating a pair."""
         counts = Counter(config["category"] for config in ITEMS.values())
         for category, count in counts.items():
-            assert count <= len(PATTERNS), (
-                f"{category} has {count} items and there are only "
-                f"{len(PATTERNS)} patterns"
+            colours = 2 if category in CATEGORY_EXTRA_COLOR else 1
+            room = colours * len(PATTERNS)
+            assert count <= room, (
+                f"{category} has {count} items and room for {room}: "
+                f"{colours} colour(s) times {len(PATTERNS)} patterns"
             )
 
 

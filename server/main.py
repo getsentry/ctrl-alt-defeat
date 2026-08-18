@@ -408,6 +408,8 @@ def generate_shop_items(
         "godly": [],
     }
     for item_type, item_spec in ITEM_CATALOG.items():
+        if not item_spec.in_shop:
+            continue
         rarity = item_spec.rarity.lower()
         # Map uncommon to rare for our table
         if rarity == "uncommon":

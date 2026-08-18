@@ -98,3 +98,33 @@ def test_json_config():
 
 if __name__ == "__main__":
     test_json_config()
+
+
+class TestShopVisibility:
+    """An item can exist without the shop offering it"""
+
+    def test_items_are_offered_unless_told_otherwise(self):
+        from config_loader import config_loader
+
+        spec = config_loader.items["null_blade"]
+        assert spec.in_shop is True
+
+    def test_the_shop_skips_an_item_that_is_not_offered(self):
+        # Items arrive from Backpack Battles with numbers and no behaviour.
+        # They have to be able to sit in the catalogue without a player
+        # being able to buy one.
+        from unittest.mock import patch
+
+        from battle_engine import ITEM_CATALOG
+        from main import generate_shop_items
+
+        hidden = "null_blade"
+        original = ITEM_CATALOG[hidden]
+        with patch.dict(ITEM_CATALOG, {hidden: original.__class__(
+            **{**original.__dict__, "in_shop": False}
+        )}):
+            offered = set()
+            for seed in range(120):
+                offered |= {i.item_type for i in generate_shop_items(1, seed) if i}
+        assert hidden not in offered, "a hidden item should never reach the shop"
+        assert len(offered) > 5, "the rest of the catalogue should still be offered"

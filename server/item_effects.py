@@ -320,5 +320,8 @@ class ItemSpec:
     color: str = ""
     pattern: str = ""
 
+    # Whether to make the item available in the shop
+    in_shop: bool = True
+
     # Adjacency bonuses this item provides to neighbors
     adjacency_bonus: Optional[dict] = None

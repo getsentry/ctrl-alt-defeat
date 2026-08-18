@@ -26,6 +26,14 @@ PALETTE = {
     "sand": "#C2B280",
 }
 
+# A category larger than the pattern list borrows a second colour, close in
+# hue to its first so the category still reads as one thing. Only the two big
+# categories need one: 63 weapons and 58 accessories against 36 patterns.
+CATEGORY_EXTRA_COLOR = {
+    "problem": "ember",     # red-orange, beside red
+    "protocol": "citron",   # yellow-green, beside green
+}
+
 # Which colour every item of a category wears.
 CATEGORY_COLOR = {
     "problem": "red",
@@ -62,6 +70,24 @@ PATTERNS = (
     "stripe_d_fine",
     "dot_small_grid",
     "stripe_a_fine",
+    # Added when the catalogue grew past 96 items. Different shapes rather
+    # than finer rulings of the ones above, which stop being tellable apart.
+    "grid_bold",
+    "grid_fine",
+    "zigzag_h",
+    "zigzag_v",
+    "wave_h",
+    "wave_v",
+    "brick_h",
+    "brick_v",
+    "scale",
+    "triangle_up",
+    "triangle_down",
+    "diamond_grid",
+    "diamond_stagger",
+    "cross_grid",
+    "plus_grid",
+    "speckle",
 )
 
 
