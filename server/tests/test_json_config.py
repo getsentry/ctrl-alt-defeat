@@ -563,3 +563,66 @@ class TestTheCatalogueIsFoundFromAnywhere:
         from config_loader import ConfigLoader
 
         assert ConfigLoader.DATA_DIR == Path(module.__file__).parent / "data"
+class TestTheCatalogueIsOneCatalogue:
+    """Every item in every file, read together.
+
+    The files are read from disk rather than through ConfigLoader, which keys
+    every item by id in one dict. Two items sharing an id look like one item
+    there, so the loader is the wrong place to notice it from: it would report
+    one item fewer than the files hold and nothing about which one lost.
+    """
+
+    @staticmethod
+    def _every_entry():
+        """(item_id, config, filename) for items and containers alike."""
+        import json
+        from pathlib import Path
+
+        items_dir = Path(__file__).parent.parent / "data" / "items"
+        for path in sorted(items_dir.glob("*.json")):
+            data = json.loads(path.read_text())
+            group = data.get("items", data.get("containers", {}))
+            for item_id, config in group.items():
+                yield item_id, config, path.name
+
+    def test_there_are_items_to_check(self):
+        # A glob that matched nothing would make every test below pass.
+        assert len(list(self._every_entry())) > 200
+
+    def test_no_two_items_share_an_id(self):
+        """An id is what a purchase and a battle name an item by, so a repeat
+        means one of the two is unreachable and nothing says which."""
+        seen = {}
+        for item_id, _, filename in self._every_entry():
+            assert item_id not in seen, (
+                f"{item_id} is in both {seen[item_id]} and {filename}"
+            )
+            seen[item_id] = filename
+
+    def test_no_two_items_share_a_name(self):
+        """The name is all a player has to tell two items apart by."""
+        seen = {}
+        for item_id, config, _ in self._every_entry():
+            name = config["name"]
+            assert name not in seen, f"{item_id} and {seen[name]} are both {name}"
+            seen[name] = item_id
+
+    def test_the_id_and_the_slug_agree(self):
+        """item_visual.gd builds res://assets/items/<slug>.png, so a slug that
+        disagrees with the id points at a file that cannot be there."""
+        for item_id, config, filename in self._every_entry():
+            assert config["slug"] == item_id, (
+                f"{item_id} in {filename} calls itself {config['slug']}"
+            )
+
+    def test_every_item_names_the_item_it_came_from(self):
+        """Our numbers are the wiki's. With no source there is nothing to check
+        a number against, and the item drifts unnoticed."""
+        for item_id, config, filename in self._every_entry():
+            assert config.get("source"), f"{item_id} in {filename} has no source"
+
+    def test_every_map_parses(self):
+        from grid_system import parse_map
+
+        for item_id, config, _ in self._every_entry():
+            parse_map(config["map"], item_id)

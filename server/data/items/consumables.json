@@ -318,8 +318,8 @@
       "slug": "healing_nanobots",
       "icontype": "nature"
     },
-    "system_restore": {
-      "name": "System Restore",
+    "auto_rollback": {
+      "name": "Auto Rollback",
       "category": "consumable",
       "color": "pink",
       "pattern": "stripe_a_bold",
@@ -357,7 +357,7 @@
           ]
         }
       ],
-      "slug": "system_restore",
+      "slug": "auto_rollback",
       "icontype": "nature"
     }
   }

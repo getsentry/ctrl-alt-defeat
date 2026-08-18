@@ -118,7 +118,7 @@
           ]
         }
       ],
-      "slug": "script_compiler_alchemy"
+      "slug": "script_compiler"
     },
     "dark_web_access": {
       "name": "Dark Web Access",

@@ -25,7 +25,7 @@
           ]
         }
       ],
-      "slug": "chipped_performance_module"
+      "slug": "performance_module_chipped"
     },
     "performance_module_flawed": {
       "name": "Flawed Performance Module",
@@ -51,7 +51,7 @@
           ]
         }
       ],
-      "slug": "flawed_performance_module"
+      "slug": "performance_module_flawed"
     },
     "performance_module_regular": {
       "name": "Performance Module",
@@ -77,7 +77,7 @@
           ]
         }
       ],
-      "slug": "performance_module"
+      "slug": "performance_module_regular"
     },
     "performance_module_flawless": {
       "name": "Flawless Performance Module",
@@ -103,7 +103,7 @@
           ]
         }
       ],
-      "slug": "flawless_performance_module"
+      "slug": "performance_module_flawless"
     },
     "performance_module_perfect": {
       "name": "Perfect Performance Module",
@@ -129,7 +129,7 @@
           ]
         }
       ],
-      "slug": "perfect_performance_module"
+      "slug": "performance_module_perfect"
     },
     "memory_module_chipped": {
       "name": "Chipped Memory Module",
@@ -155,7 +155,7 @@
           ]
         }
       ],
-      "slug": "chipped_memory_module"
+      "slug": "memory_module_chipped"
     },
     "memory_module_flawed": {
       "name": "Flawed Memory Module",
@@ -181,7 +181,7 @@
           ]
         }
       ],
-      "slug": "flawed_memory_module"
+      "slug": "memory_module_flawed"
     },
     "memory_module_regular": {
       "name": "Memory Module",
@@ -207,7 +207,7 @@
           ]
         }
       ],
-      "slug": "memory_module"
+      "slug": "memory_module_regular"
     },
     "processing_module_chipped": {
       "name": "Chipped Processing Module",
@@ -233,7 +233,7 @@
           ]
         }
       ],
-      "slug": "chipped_processing_module"
+      "slug": "processing_module_chipped"
     },
     "processing_module_regular": {
       "name": "Processing Module",
@@ -259,7 +259,7 @@
           ]
         }
       ],
-      "slug": "processing_module"
+      "slug": "processing_module_regular"
     },
     "efficiency_module_chipped": {
       "name": "Chipped Efficiency Module",
@@ -285,7 +285,7 @@
           ]
         }
       ],
-      "slug": "chipped_efficiency_module"
+      "slug": "efficiency_module_chipped"
     },
     "efficiency_module_regular": {
       "name": "Efficiency Module",
@@ -311,7 +311,7 @@
           ]
         }
       ],
-      "slug": "efficiency_module"
+      "slug": "efficiency_module_regular"
     },
     "security_module_chipped": {
       "name": "Chipped Security Module",
@@ -337,7 +337,7 @@
           ]
         }
       ],
-      "slug": "chipped_security_module"
+      "slug": "security_module_chipped"
     },
     "security_module_regular": {
       "name": "Security Module",
@@ -363,7 +363,7 @@
           ]
         }
       ],
-      "slug": "security_module"
+      "slug": "security_module_regular"
     },
     "burning_coal": {
       "name": "Burning Coal",

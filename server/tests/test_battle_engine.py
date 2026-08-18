@@ -256,7 +256,7 @@ class TestGameDesignCompliance:
         result = sim.simulate_battle(
             [
                 BattleItem(
-                    spec=deepcopy(ITEM_CATALOG["system_restore"]), position=(0, 0)
+                    spec=deepcopy(ITEM_CATALOG["auto_rollback"]), position=(0, 0)
                 )
             ],
             [BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(4, 0))],

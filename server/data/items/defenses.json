@@ -31,7 +31,7 @@
           "chance": 0.3
         }
       ],
-      "slug": "error_monitoring_shield",
+      "slug": "error_monitoring",
       "sockets": 1
     },
     "firewall": {
