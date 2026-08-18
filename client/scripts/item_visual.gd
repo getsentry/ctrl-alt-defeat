@@ -144,7 +144,7 @@ func _create_colored_visual():
 	"""
 	var placeholder = ItemPlaceholder.new()
 	placeholder.setup(item_shape, _placeholder_color(), cell_size, cell_spacing,
-		_placeholder_pattern())
+		_placeholder_pattern(), _placeholder_category())
 	placeholder.size = custom_minimum_size
 	add_child(placeholder)
 
@@ -158,6 +158,17 @@ func _placeholder_pattern() -> String:
 	if _is_container():
 		return ""
 	return item_data.pattern
+
+
+func _placeholder_category() -> String:
+	"""The category whose icon this item wears.
+
+	A container wears none. It is the ground, and an icon on it would compete
+	with the items standing on top.
+	"""
+	if _is_container():
+		return ""
+	return item_data.category
 
 
 func _placeholder_color() -> Color:

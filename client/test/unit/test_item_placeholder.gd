@@ -155,3 +155,87 @@ func test_the_outline_is_the_fill_darkened():
 	assert_lt(outline.v, placeholder.fill_color.v, "The outline should be darker")
 	assert_almost_eq(outline.h, placeholder.fill_color.h, 0.01,
 		"It should be the same colour, not a second one")
+
+
+# ============ The category icon ============
+#
+# The icon says which category an item belongs to. It is knocked out of the
+# pattern rather than laid over it: the silhouette is drawn in a dark ink at
+# four offsets of a pixel, which shows as an edge, then in the plain fill
+# colour on top. So both the pattern and the icon keep their full strength.
+
+const CATEGORIES := ["problem", "protocol", "module", "consumable", "script",
+	"infrastructure", "patch", "defense", "monitor", "pet"]
+
+
+func test_every_category_has_an_icon():
+	# A category the server can send and the client cannot draw leaves an item
+	# with nothing saying what it is.
+	for category in CATEGORIES:
+		assert_not_null(ItemPlaceholder.icon_for(category),
+			"The %s category has no icon" % category)
+
+
+func test_a_category_with_no_icon_draws_nothing_rather_than_failing():
+	# The server can name a category this client has never heard of.
+	assert_null(ItemPlaceholder.icon_for("no_such_category"),
+		"An unknown category should draw no icon and not stop the grid")
+
+
+func test_an_item_with_no_category_has_no_icon():
+	# A container is drawn as the ground, so it wears none.
+	assert_null(ItemPlaceholder.icon_for(""), "No category, no icon")
+
+
+func test_the_icon_is_drawn_on_every_square():
+	# An irregular item has no reliable middle, and a repeated icon still reads
+	# when a neighbour covers part of the item.
+	var placeholder = ItemPlaceholder.new()
+	autofree(placeholder)
+	placeholder.setup(L_SHAPE, Color("#BE0032"), CELL, GAP, "solid", "problem")
+
+	assert_eq(placeholder.icon_rects().size(), 3, "One icon per square of the L")
+
+
+func test_the_icon_sits_inside_its_square():
+	var placeholder = ItemPlaceholder.new()
+	autofree(placeholder)
+	placeholder.setup([[0, 0]], Color("#BE0032"), CELL, GAP, "solid", "problem")
+
+	var icon = placeholder.icon_rects()[0]
+	assert_gt(icon.position.x, 0.0, "It should not touch the left edge")
+	assert_gt(icon.position.y, 0.0, "nor the top")
+	assert_lt(icon.end.x, CELL, "nor run past the right")
+	assert_lt(icon.end.y, CELL, "nor past the bottom")
+
+
+func test_the_icon_is_centred_in_its_square():
+	var placeholder = ItemPlaceholder.new()
+	autofree(placeholder)
+	placeholder.setup([[0, 0]], Color("#BE0032"), CELL, GAP, "solid", "problem")
+
+	var icon = placeholder.icon_rects()[0]
+	assert_almost_eq(icon.position.x + icon.size.x / 2, CELL / 2, 0.01,
+		"It should sit in the middle across")
+	assert_almost_eq(icon.position.y + icon.size.y / 2, CELL / 2, 0.01,
+		"and in the middle down")
+
+
+func test_the_icon_follows_the_square_it_is_in():
+	var placeholder = ItemPlaceholder.new()
+	autofree(placeholder)
+	placeholder.setup([[0, 0], [1, 0]], Color("#BE0032"), CELL, GAP, "solid", "problem")
+
+	var rects = placeholder.icon_rects()
+	assert_almost_eq(rects[1].position.x - rects[0].position.x, CELL + GAP, 0.01,
+		"The second icon should be one square along, gap included")
+
+
+func test_the_icon_stays_big_enough_to_read():
+	# The chest draws at 30 px. Below about 16 px a silhouette stops reading.
+	var placeholder = ItemPlaceholder.new()
+	autofree(placeholder)
+	placeholder.setup([[0, 0]], Color("#BE0032"), 30.0, GAP, "solid", "problem")
+
+	assert_gte(placeholder.icon_rects()[0].size.x, 16.0,
+		"An icon this small would be a smudge")

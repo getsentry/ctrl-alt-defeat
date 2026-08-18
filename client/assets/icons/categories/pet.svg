@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Paw print. A mask, not a picture: one colour, no background. -->
+  <g fill="#ffffff">
+    <ellipse cx="15" cy="26" rx="7.5" ry="9.5"/>
+    <ellipse cx="29" cy="17" rx="8" ry="10.5"/>
+    <ellipse cx="44" cy="19" rx="8" ry="10.5"/>
+    <ellipse cx="56" cy="31" rx="7" ry="9"/>
+    <path d="M32 34 C44 34 53 42 53 50 C53 58 45 61 38 58 C34 56.5 30 56.5 26 58
+             C19 61 11 58 11 50 C11 42 20 34 32 34 Z"/>
+  </g>
+</svg>

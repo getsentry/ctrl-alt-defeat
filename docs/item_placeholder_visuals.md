@@ -1,11 +1,12 @@
 # Item Placeholder Visuals
 
-**Status:** agreed design. The catalogue data is in, and so is the drawing of
-the fill and the outline. The patterns and the icons are not.
+**Status:** built. Colour, pattern and icon are all drawn. This describes what
+is there rather than what is planned; delete it if the code and its tests ever
+say it better.
 
-Only 9 of the 86 items have artwork. Every other item draws as the same blue
-square, so the grid tells the player nothing. This document specifies what an
-item without artwork looks like instead.
+Only 9 of the 214 items have artwork. Every other item would draw as the same
+blue square, so the grid would tell the player nothing. This is what an item
+without artwork looks like instead.
 
 **This applies only when an item has no artwork.** `ItemVisual` looks for
 `res://assets/items/<slug>.png` first. When it finds one, none of this is drawn.
@@ -48,20 +49,22 @@ red is a problem, blue is a defense — and it reinforces the icon.
 
 | Category | Colour | Hex | Items |
 |---|---|---|---|
-| `problem` | `red` | `#BE0032` | 19 |
-| `module` | `orange` | `#F38400` | 14 |
-| `protocol` | `green` | `#008856` | 14 |
+| `problem` | `red` | `#BE0032` | 63 |
+| `protocol` | `green` | `#008856` | 52 |
+| `defense` | `blue` | `#0067A5` | 23 |
+| `module` | `orange` | `#F38400` | 19 |
+| `pet` | `sand` | `#C2B280` | 19 |
 | `consumable` | `pink` | `#E68FAC` | 10 |
-| `script` | `lime` | `#8DB600` | 7 |
-| `defense` | `blue` | `#0067A5` | 6 |
+| `patch` | `yellow` | `#F3C300` | 10 |
+| `script` | `lime` | `#8DB600` | 8 |
 | `infrastructure` | `violet` | `#604E97` | 6 |
-| `patch` | `yellow` | `#F3C300` | 6 |
 | `monitor` | `sky` | `#A1CAF1` | 4 |
 
-**This fits, but only just.** The largest category holds 19 items and there are
-20 patterns. When a category outgrows the patterns, do not repeat a pair. Take
-an unused colour from the palette below and give it to the extra items. The
-uniqueness test will tell you the moment this happens.
+**Two categories have outgrown the patterns.** There are 36, and `problem` has
+63 items while `protocol` has 52. Those two take a second colour from
+`CATEGORY_EXTRA_COLOR` for the overflow — `ember` beside red, `citron` beside
+green, each close in hue so the category still reads as one thing. A pair is
+never repeated, and the uniqueness test says so over the whole catalogue.
 
 ### The palette
 
@@ -99,8 +102,13 @@ any of the seven spares.
 
 ## 3. The patterns
 
-Twenty patterns, built from seven motifs and their variations. Each motif is one
-small draw routine; the variations are parameters to it.
+Thirty-six patterns. Each one is a **predicate** rather than drawing code:
+`ItemPatterns.is_ink(name, x, y, period)` answers whether there is ink at a
+point of the tile. That is what lets all 36 be checked without rendering
+anything — every one puts ink down, none covers everything, none is too faint
+to see, and no two draw the same thing.
+
+Drawing builds a tileable texture from the predicate, once per name and size.
 
 **The order matters.** A category with four items uses only the first four
 patterns, so the list runs from the most distinct to the least.
@@ -132,19 +140,11 @@ patterns, so the list runs from the most distinct to the least.
 colour.** Then an item is "orange", not "orange and black", and the colour
 channel stays clean whatever the fill.
 
-**Every measurement is a fraction of the cell size**, so a 45 px grid cell and a
-60 px shop cell show the same pattern at the same relative scale:
-
-| Feature | Size |
-|---|---|
-| Fine stripe width and gap | cell / 9 |
-| Bold stripe width and gap | cell / 4.5 |
-| Small dot radius | cell / 12 |
-| Large dot radius | cell / 7 |
-| Dot spacing | cell / 3 |
-| Small chequer | cell / 3 |
-| Large chequer | cell / 2 |
-| Ring spacing | cell / 6 |
+**Every measurement is a fraction of the cell size**, so the chest's 30 px
+squares carry the same patterns as the grid's 45 px ones at the same relative
+scale. A bold motif repeats three times across a square and a fine one nine,
+which is what tells the two apart. Nothing falls below a period of three
+pixels, where a pattern turns into a grey wash with no shape in it.
 
 The pattern runs across the whole item, not per cell. It does not restart at a
 cell edge. See [section 7](#7-how-the-drawing-works).
@@ -205,6 +205,7 @@ One icon per category:
 
 | Category | Icon |
 |---|---|
+| `pet` | paw print |
 | `problem` | bug |
 | `protocol` | plug |
 | `module` | chip |
@@ -226,13 +227,13 @@ edge or another item hides part of the item.
 
 This makes two demands on the artwork:
 
-1. **Each icon is a single-colour silhouette**, white on transparent. It is used
-   as a mask, not as a picture. The existing files in
-   `client/assets/sprites/items/` (`bug_icon.svg`, `shield_icon.svg`,
-   `coffee.svg`, and the rest) are candidates, but only if their silhouette is
-   solid. A multi-colour icon cannot be knocked out.
-2. **The silhouette must read at 28 px.** That is the icon box inside a 45 px
-   cell. Simple shapes only, no detail.
+1. **Each icon is a single-colour silhouette**, white on transparent, in
+   `client/assets/icons/categories/<category>.svg`. It is used as a mask, not
+   as a picture. The eight files in `client/assets/sprites/items/` could not be
+   used: every one opens with an opaque rounded rectangle, which as a mask
+   fills the whole square.
+2. **The silhouette must read small.** The icon takes 62% of a square, so 28 px
+   on the grid and 19 px in the chest. Simple shapes only, no detail.
 
 The dark edge around the knocked-out icon needs no second asset. Draw the same
 silhouette in the dark ink at four ±1 px offsets, then draw it once at true
@@ -316,7 +317,8 @@ container took part in the palette, the grid would become too busy to read.
 - The colour reaches the client as a value and the pattern as a name, and both
   survive an item being placed on the grid and put back in the chest.
 
-**Client** (`test/unit/test_item_placeholder.gd` and `test_item_visual.gd`):
+**Client** (`test/unit/test_item_placeholder.gd`, `test_item_patterns.gd` and
+`test_item_visual.gd`):
 - The rectangles are worked out without drawing, so they are checked directly
   rather than by looking at pixels. *(done)*
 - The outline is right for a single cell, a wide item, an L with its concave
@@ -325,14 +327,24 @@ container took part in the palette, the grid would become too busy to read.
 - A container draws in its own see-through colour. *(done)*
 - An item that arrives with no colour still draws, in a colour nobody could
   mistake for a real one. *(done)*
-- A container draws with no pattern and no icon. *(not done)*
-- An unknown category still draws. *(not done)*
+- A container draws with no pattern and no icon. *(done)*
+- An unknown category draws no icon rather than stopping the grid, and an
+  unknown pattern leaves the colour showing. *(done)*
+- Every category the catalogue can send has an icon. *(done)*
+- No two patterns draw the same thing. *(done)*
+
+**What a test cannot see.** Three bugs here reached a screenshot before
+anything noticed: the chest drawn wider than its panel, its contents faded by
+an ancestor's modulate, and — twice — a motif that was not the thing its name
+claims. `speckle` had banded into diagonal stripes, and every item with the
+`solid` pattern lost its icon to an early return. Each was consistent with
+itself and wrong on screen. Draw all the cases on one sheet and look at it.
 
 ---
 
 ## 11. Clean-up while in these files
 
 - `_get_color_for_category()` in `client/scripts/unified_grid_ui.gd` is dead.
-  Only `test_unified_grid_ui.gd` calls it, and it knows 4 of the 9 categories.
+  Only `test_unified_grid_ui.gd` calls it, and it knows 4 of the 10 categories.
   Delete both. *(not done)*
 - `_get_texture_path()` printed on every item drawn. *(done)*
