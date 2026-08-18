@@ -5,12 +5,6 @@ review, tick off as they land. Keep entries to a few lines.
 
 ## Open
 
-**Two tests in `test_item_visual.gd` fail on main.** They look for
-`res://assets/items/stack_smasher.png`, which does not exist -- the fixture was
-renamed from `core_dumper`, and only `core_dumper.png` is in `assets/items/`.
-Either add the artwork or point the fixture back at an item that has some.
-`client/test/unit/test_item_visual.gd`
-
 **Four ways to be holding something, five ways to put it down.** An item picked
 up off the grid, out of the chest, off the shop shelf, or handed over after a
 container move is four separate states with four sets of code, and they land

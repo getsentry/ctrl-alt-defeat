@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cusca66olruds"
-path="res://.godot/imported/core_dumper.png-05836d9eaba3d84badf8bdccfff92651.ctex"
+path="res://.godot/imported/stack_smasher.png-7fcd93f9de82914eb8b5dadb9a2bb82c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/core_dumper.png"
-dest_files=["res://.godot/imported/core_dumper.png-05836d9eaba3d84badf8bdccfff92651.ctex"]
+source_file="res://assets/items/stack_smasher.png"
+dest_files=["res://.godot/imported/stack_smasher.png-7fcd93f9de82914eb8b5dadb9a2bb82c.ctex"]
 
 [params]
 
