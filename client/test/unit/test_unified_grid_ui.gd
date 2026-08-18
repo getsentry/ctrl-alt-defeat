@@ -396,3 +396,91 @@ func test_the_grid_knows_where_the_chest_is():
 	# Without this the grid has nothing to test a drop against and every
 	# item goes back to its square.
 	assert_eq(ui.inventory_grid.sell_zone, ui.sell_chest)
+
+
+# ============ The chest ============
+#
+# An item in the chest is off the grid, so it has no position. The chest is
+# what decides where to draw it, and it has to draw everything the server says
+# is in there -- a container move can put an item in the chest without the
+# player asking, and an item nobody can see looks like an item that was lost.
+
+func _chest_item(overrides: Dictionary = {}) -> Resource:
+	return TestHelpers.item(overrides)
+
+
+func test_the_chest_shows_what_the_server_says_is_in_it():
+	GameStateManager.inventory_storage = [
+		_chest_item({"id": "first"}), _chest_item({"id": "second"})
+	]
+
+	ui.load_storage()
+
+	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
+	assert_eq(drawn.size(), 2, "Both items should be drawn")
+	assert_true("first" in drawn and "second" in drawn, "Both by id")
+
+
+func test_an_empty_chest_draws_nothing():
+	GameStateManager.inventory_storage = []
+
+	ui.load_storage()
+
+	assert_eq(ui.storage_grid.items.size(), 0, "Nothing in the chest, nothing drawn")
+
+
+func test_chest_items_do_not_land_on_each_other():
+	GameStateManager.inventory_storage = [
+		_chest_item({"id": "a"}), _chest_item({"id": "b"}), _chest_item({"id": "c"})
+	]
+
+	ui.load_storage()
+
+	var squares = []
+	for visual in ui.storage_grid.items:
+		for square in visual.get_meta("item_data").covered_squares():
+			assert_false(square in squares, "%s is drawn on top of something" % square)
+			squares.append(square)
+
+
+func test_a_multi_square_item_fits_in_the_chest():
+	GameStateManager.inventory_storage = [_chest_item({"shape": [[0, 0], [1, 0]]})]
+
+	ui.load_storage()
+
+	assert_eq(ui.storage_grid.items.size(), 1, "A wide item should still be drawn")
+
+
+func test_loading_the_chest_twice_does_not_double_it():
+	# It is redrawn on every inventory load, so it has to replace rather than add.
+	GameStateManager.inventory_storage = [_chest_item({"id": "only"})]
+
+	ui.load_storage()
+	ui.load_storage()
+
+	assert_eq(ui.storage_grid.items.size(), 1, "The chest should be redrawn, not added to")
+
+
+func test_an_item_taken_out_of_the_chest_stops_being_drawn():
+	GameStateManager.inventory_storage = [_chest_item({"id": "leaving"})]
+	ui.load_storage()
+
+	GameStateManager.inventory_storage = []
+	ui.load_storage()
+
+	assert_eq(ui.storage_grid.items.size(), 0, "It is gone from the chest, so gone from view")
+
+
+func test_a_move_answer_refreshes_the_chest():
+	# Moving a container can set an item down in the chest without the player
+	# asking, so the chest is redrawn from whatever the server sends back.
+	var response = APITypes.MoveItemResponse.new({
+		"inventory_grid": [],
+		"inventory_storage": [TestHelpers.item_data({"id": "set_down"})],
+		"server_containers": []
+	})
+
+	ui._on_inventory_returned(response)
+
+	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
+	assert_eq(drawn, ["set_down"], "The chest should show what the move put there")

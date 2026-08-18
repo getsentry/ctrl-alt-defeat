@@ -22,6 +22,9 @@ var victory: bool = false
 # Inventory state
 var current_inventory: Dictionary = {}  # Stores placed items and servers
 var server_containers: Array = []  # Array[Dictionary]: containers as plain data
+# The chest. Items here are off the grid, so they have no position and the
+# chest decides where to draw them.
+var inventory_storage: Array[APITypes.Item] = []
 
 # Shop state
 var current_shop: Array[APITypes.Item] = []  # null in a slot whose item was bought
@@ -63,6 +66,7 @@ func start_new_game():
 	victory = false
 	current_inventory.clear()
 	server_containers.clear()
+	inventory_storage.clear()
 	current_shop.clear()
 	shop_rerolls = 0
 	last_battle_result = null  # Reset to null instead of clear
@@ -83,6 +87,8 @@ func update_from_session(session: APITypes.GameSession):
 	player_id = session.player_id
 	gold = session.gold
 	current_shop = session.current_shop
+
+	inventory_storage = session.inventory_storage
 
 	# Store server containers
 	server_containers.clear()

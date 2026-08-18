@@ -15,6 +15,7 @@ const CELL_SPACING = 1
 # Storage settings
 const STORAGE_WIDTH = 12
 const STORAGE_HEIGHT = 2
+const STORAGE_PADDING = 5
 
 # Runtime calculated cell size
 var actual_cell_size: float = CELL_SIZE
@@ -56,6 +57,17 @@ func _on_drag_started(item_data: APITypes.PlacedItem):
 
 func _on_drag_ended():
 	sell_chest.get_node("Prompt").text = "Drop here to sell"
+
+
+func _on_inventory_returned(response: APITypes.MoveItemResponse):
+	"""The server has answered a move with the whole inventory.
+
+	The chest is the part the grid cannot draw, and a move can put something in
+	it without the player asking: moving a container sets down any item left
+	with nowhere to stand.
+	"""
+	GameStateManager.inventory_storage = response.inventory_storage
+	load_storage()
 
 
 func _on_item_moved(item_id: String, from_pos: Vector2i, to_pos: Vector2i):
@@ -191,6 +203,9 @@ func load_inventory_state(inventory_data: APITypes.InventoryState):
 	# Delegate to InventoryGrid
 	if inventory_grid:
 		inventory_grid.load_inventory_state(inventory_data)
+	# The chest is not part of an InventoryState, but whatever changed the grid
+	# may well have put something in it.
+	load_storage()
 
 func get_inventory_state() -> Dictionary:
 	# Delegate to InventoryGrid
@@ -276,6 +291,7 @@ func _create_server_room():
 	inventory_grid.item_placed.connect(_on_item_placed)
 	inventory_grid.item_removed.connect(_on_item_removed)
 	inventory_grid.item_sold.connect(_on_item_sold)
+	inventory_grid.inventory_returned.connect(_on_inventory_returned)
 	inventory_grid.item_moved.connect(_on_item_moved)
 	inventory_grid.drag_started.connect(_on_drag_started)
 	inventory_grid.drag_ended.connect(_on_drag_ended)
@@ -298,13 +314,29 @@ func _create_storage_area():
 		storage_style.set_corner_radius_all(4)
 		storage_bg.add_theme_stylebox_override("panel", storage_style)
 
+		# The panel is faded in the scene, and modulate multiplies down into
+		# children, so everything in the chest was drawn at a fifth opacity.
+		# self_modulate fades the panel alone, and the style above is already
+		# see-through, so the chest keeps its look and its contents are solid.
+		storage_bg.modulate = Color.WHITE
+
 		# Create storage grid
 		storage_grid = InventoryGrid.new()
-		storage_grid.position = Vector2(5, 5)  # Small padding
-		storage_grid.configure(STORAGE_WIDTH, STORAGE_HEIGHT, CELL_SIZE, CELL_SPACING)
+		# The chest is twelve squares wide and its panel is drawn in the scene,
+		# so the squares are sized to the panel rather than to the grid's own
+		# cell size. At 45 they are wider than the panel and most of the chest
+		# is drawn off the edge of its own box.
+		storage_grid.configure(
+			STORAGE_WIDTH, STORAGE_HEIGHT,
+			_storage_cell_size(storage_bg.size.x), CELL_SPACING
+		)
 		storage_grid.title = "Storage"
 		storage_grid.read_only = read_only_mode
 		storage_bg.add_child(storage_grid)
+
+		# Sit it in the middle of its panel rather than in a corner, so it does
+		# not run over the frame drawn around the edge.
+		storage_grid.position = ((storage_bg.size - storage_grid.size) / 2).floor()
 
 		# Set legacy reference
 
@@ -312,6 +344,51 @@ func _create_storage_area():
 		for y in range(STORAGE_HEIGHT):
 			for x in range(STORAGE_WIDTH):
 				storage_grid.active_grid[y][x] = true
+
+		load_storage()
+
+
+static func _storage_cell_size(panel_width: float) -> float:
+	"""How big a chest square can be and still fit its panel.
+
+	Twelve of them, with a gap between each pair and a little padding at both
+	ends. Never larger than a grid square, so the chest cannot end up drawing
+	items bigger than the inventory does.
+	"""
+	var usable = panel_width - 2 * STORAGE_PADDING - (STORAGE_WIDTH - 1) * CELL_SPACING
+	return min(CELL_SIZE, floor(usable / STORAGE_WIDTH))
+
+
+func load_storage():
+	"""Lay the chest out from what the server says is in it.
+
+	An item in the chest is off the grid, so it has no position of its own and
+	the chest decides where to draw it: the first square it fits in, reading
+	left to right and then down. Nothing is remembered between calls, so the
+	same contents always draw the same way.
+	"""
+	if hide_storage or not storage_grid:
+		return
+
+	storage_grid.clear_all()
+	for y in range(STORAGE_HEIGHT):
+		for x in range(STORAGE_WIDTH):
+			storage_grid.active_grid[y][x] = true
+
+	for item in GameStateManager.inventory_storage:
+		if not _put_in_chest(item):
+			# The chest holds 24 squares and the server holds no such limit, so
+			# a full chest is a thing the player has to be able to see happen.
+			push_warning("No room in the chest to draw %s" % item.name)
+
+
+func _put_in_chest(item: APITypes.Item) -> bool:
+	"""Put an item in the first square of the chest it fits in"""
+	for y in range(STORAGE_HEIGHT):
+		for x in range(STORAGE_WIDTH):
+			if storage_grid.place_shop_item(item, Vector2i(x, y)):
+				return true
+	return false
 
 func _create_controls():
 	if not read_only_mode:

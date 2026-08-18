@@ -66,6 +66,9 @@ signal item_sold(item_data)
 signal drag_started(item_data)
 signal drag_ended()
 signal item_moved(item_id, from_pos, to_pos)
+# The server answers a move with the whole inventory, the chest included. The
+# grid draws only the grid, so it passes the rest on rather than keeping it.
+signal inventory_returned(response)
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_PASS
@@ -360,6 +363,7 @@ func _end_drag():
 			_place_item_at(temp_object, grid_pos)
 			# Emit signal for any listeners
 			item_moved.emit(item_id, original_grid_pos, grid_pos)
+			inventory_returned.emit(response)
 		else:
 			print("Failed to persist move on server, reverting")
 			# Move failed, return to original position
