@@ -54,7 +54,7 @@ from schemas import (
     StartSessionResponse,
 )
 from session_manager import SessionManager
-from utils import Position, utc_now
+from utils import Position, to_position, utc_now
 
 # Test mode allows seeds and special AI configurations for testing
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
@@ -1227,6 +1227,13 @@ async def move_item(
         }
     )
 
+    to_loc = request.to_location
+
+    # A container is an item, so it is moved through this endpoint too. It
+    # carries whatever rests on it; see docs/moving_containers.md.
+    if manager.grid.find_container(request.item_id) is not None:
+        return await _move_container(session, manager, request.item_id, to_loc)
+
     # Find the item and its current location
     item_found = None
     current_location = None
@@ -1248,8 +1255,6 @@ async def move_item(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Item not found in inventory"
         )
-
-    to_loc = request.to_location
 
     # Check for same position move (no-op)
     if current_location == to_loc:
@@ -1287,6 +1292,41 @@ async def move_item(
     return MoveItemResponse(
         inventory_grid=session.inventory_grid,
         inventory_storage=session.inventory_storage,
+        server_containers=session.server_containers,
+    )
+
+
+async def _move_container(
+    session, manager: InventoryManager, container_id: str, to_loc
+) -> MoveItemResponse:
+    """Move a container and everything resting on it.
+
+    The container is all or nothing: if it would leave the grid or land on
+    another container, nothing moves. An item that cannot stand where it lands
+    is set down in storage, and the move still stands.
+    """
+    if to_loc == "storage":
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="A container is the ground the items stand on, so it cannot "
+            "be put in the chest",
+        )
+
+    try:
+        manager.move_container(container_id, to_position(to_loc))
+    except InvalidPlacementError as e:
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
+
+    new_state = manager.get_state()
+    session.inventory_grid = new_state["grid"]
+    session.inventory_storage = new_state["storage"]
+    session.server_containers = new_state["containers"]
+    await session_manager.update_session(session)
+
+    return MoveItemResponse(
+        inventory_grid=session.inventory_grid,
+        inventory_storage=session.inventory_storage,
+        server_containers=session.server_containers,
     )
 
 

@@ -617,6 +617,142 @@ class TestSellItemAPI:
             assert "item_uid" not in model.model_fields, model.__name__
 
 
+class TestMoveContainerAPI:
+    """A container moves through /move/item, because it is an item.
+
+    A new session starts with three 2x2 containers at (2,3), (4,3) and (6,3).
+    See docs/moving_containers.md.
+    """
+
+    def _start(self, auth_client):
+        response = auth_client.post(
+            "/session/start", json={"player_name": "mover", "seed": 42}
+        )
+        assert response.status_code == 200
+        return response.json()["session"]
+
+    def _buy_onto(self, auth_client, session, position):
+        """Buy the first shop item that is not a container, onto a square"""
+        offer = next(
+            item
+            for item in session["current_shop"]
+            if item and not item["is_container"] and item["shape"] == [[0, 0]]
+        )
+        response = auth_client.post(
+            "/purchase/item",
+            json={"item_id": offer["id"], "target_position": position},
+        )
+        assert response.status_code == 200, response.json()
+        return response.json()["purchased_item"]["id"]
+
+    def test_a_container_moves_and_takes_its_item_with_it(self, auth_client):
+        session = self._start(auth_client)
+        item_id = self._buy_onto(auth_client, session, [2, 3])
+
+        response = auth_client.post(
+            "/move/item", json={"item_id": "container_a", "to_location": [0, 0]}
+        )
+
+        assert response.status_code == 200, response.json()
+        result = response.json()
+        moved = next(
+            c for c in result["server_containers"] if c["id"] == "container_a"
+        )
+        assert moved["position"] == [0, 0]
+        item = next(i for i in result["inventory_grid"] if i["id"] == item_id)
+        assert item["position"] == [0, 0], "The item travelled with the container"
+        assert result["inventory_storage"] == [], "Nothing was set down"
+
+    def test_a_displaced_item_arrives_in_the_chest(self, auth_client):
+        """An item left with nowhere to stand goes to the chest, and is named.
+
+        The multi-square seed offers an item two squares wide. Placed at (3,3)
+        it straddles containers A and B. Moving A to (0,0) carries it to (1,0),
+        where its left square is on A and its right square is over bare floor.
+        """
+        response = auth_client.post(
+            "/session/start",
+            json={"player_name": "mover", "seed": MULTI_SQUARE_SHOP_SEED},
+        )
+        session = response.json()["session"]
+        wide = [
+            item
+            for item in session["current_shop"]
+            if item and sorted(map(tuple, item["shape"])) == [(0, 0), (1, 0)]
+        ]
+        assert wide, (
+            "This seed no longer offers an item two squares wide, so it cannot "
+            "straddle two containers. Pick a seed that does."
+        )
+        offer = wide[0]
+        bought = auth_client.post(
+            "/purchase/item",
+            json={"item_id": offer["id"], "target_position": [3, 3]},
+        )
+        assert bought.status_code == 200, bought.json()
+        item_id = bought.json()["purchased_item"]["id"]
+
+        response = auth_client.post(
+            "/move/item", json={"item_id": "container_a", "to_location": [0, 0]}
+        )
+
+        assert response.status_code == 200, response.json()
+        result = response.json()
+        assert item_id in [i["id"] for i in result["inventory_storage"]], (
+            "The chest arrives whole, so what is in it now and was not before "
+            "is what this move set down"
+        )
+        assert item_id not in [i["id"] for i in result["inventory_grid"]]
+
+
+    def test_a_container_cannot_land_on_another_container(self, auth_client):
+        self._start(auth_client)
+
+        response = auth_client.post(
+            "/move/item", json={"item_id": "container_a", "to_location": [4, 3]}
+        )
+
+        assert response.status_code == 400
+        assert "overlap" in response.json()["detail"].lower()
+
+    def test_a_container_cannot_leave_the_grid(self, auth_client):
+        self._start(auth_client)
+
+        response = auth_client.post(
+            "/move/item", json={"item_id": "container_a", "to_location": [8, 3]}
+        )
+
+        assert response.status_code == 400
+        assert "leave the grid" in response.json()["detail"]
+
+    def test_a_container_cannot_go_in_the_chest(self, auth_client):
+        self._start(auth_client)
+
+        response = auth_client.post(
+            "/move/item", json={"item_id": "container_a", "to_location": "storage"}
+        )
+
+        assert response.status_code == 400
+        assert "chest" in response.json()["detail"]
+
+    def test_a_refused_move_changes_nothing(self, auth_client):
+        session = self._start(auth_client)
+        item_id = self._buy_onto(auth_client, session, [2, 3])
+
+        auth_client.post(
+            "/move/item", json={"item_id": "container_a", "to_location": [8, 3]}
+        )
+
+        response = auth_client.post(
+            "/move/item", json={"item_id": item_id, "to_location": [3, 3]}
+        )
+        assert response.status_code == 200, "The grid is still where it was"
+        moved = next(
+            c for c in response.json()["server_containers"] if c["id"] == "container_a"
+        )
+        assert moved["position"] == [2, 3]
+
+
 class TestMoveItemAPI:
     """Test the /move/item endpoint functionality"""
 
@@ -630,7 +766,9 @@ class TestMoveItemAPI:
 
         # Purchase an item
         shop = data["session"]["current_shop"]
-        item = next(item for item in shop if item)
+        # Not simply the first slot: a container cannot be bought into
+        # storage, and with an unseeded shop any slot may hold one.
+        item = next(item for item in shop if item and not item["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -674,7 +812,9 @@ class TestMoveItemAPI:
 
         # Purchase item to grid
         shop = data["session"]["current_shop"]
-        item = next(item for item in shop if item)
+        # Not simply the first slot: a container cannot be bought into
+        # storage, and with an unseeded shop any slot may hold one.
+        item = next(item for item in shop if item and not item["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -711,7 +851,9 @@ class TestMoveItemAPI:
 
         # Purchase item to storage
         shop = data["session"]["current_shop"]
-        item = next(item for item in shop if item)
+        # Not simply the first slot: a container cannot be bought into
+        # storage, and with an unseeded shop any slot may hold one.
+        item = next(item for item in shop if item and not item["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -748,7 +890,9 @@ class TestMoveItemAPI:
 
         # Purchase item to storage
         shop = data["session"]["current_shop"]
-        item = next(item for item in shop if item)
+        # Not simply the first slot: a container cannot be bought into
+        # storage, and with an unseeded shop any slot may hold one.
+        item = next(item for item in shop if item and not item["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -783,7 +927,9 @@ class TestMoveItemAPI:
 
         # Purchase item
         shop = data["session"]["current_shop"]
-        item = next(item for item in shop if item)
+        # Not simply the first slot: a container cannot be bought into
+        # storage, and with an unseeded shop any slot may hold one.
+        item = next(item for item in shop if item and not item["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -878,7 +1024,9 @@ class TestMoveItemAPI:
 
         # Purchase item
         shop = data["session"]["current_shop"]
-        item = next(item for item in shop if item)
+        # Not simply the first slot: a container cannot be bought into
+        # storage, and with an unseeded shop any slot may hold one.
+        item = next(item for item in shop if item and not item["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={
@@ -912,7 +1060,9 @@ class TestMoveItemAPI:
 
         # Purchase item
         shop = data["session"]["current_shop"]
-        item = next(item for item in shop if item)
+        # Not simply the first slot: a container cannot be bought into
+        # storage, and with an unseeded shop any slot may hold one.
+        item = next(item for item in shop if item and not item["is_container"])
         response = auth_client.post(
             "/purchase/item",
             json={

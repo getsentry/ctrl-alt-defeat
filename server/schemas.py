@@ -203,6 +203,9 @@ class MoveItemResponse(BaseModel):
 
     inventory_grid: List[PlacedItem] = Field(description="Updated grid inventory")
     inventory_storage: List[Item] = Field(description="Updated chest contents")
+    server_containers: List[Container] = Field(
+        default_factory=list, description="Updated containers"
+    )
 
 
 class LeaderboardEntry(BaseModel):

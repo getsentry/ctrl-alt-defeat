@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from grid_system import Rotation
+from grid_system import Rotation, parse_map
 from inventory_manager import (
     InvalidPlacementError,
     InventoryGrid,
@@ -16,7 +16,7 @@ from inventory_manager import (
     ItemNotFoundError,
 )
 from containers import Container
-from items import Item
+from items import Item, PlacedItem
 from tests.test_utils import find_bad_positions
 from utils import dump_all
 
@@ -541,3 +541,184 @@ class TestATurnedItemIsCheckedAsItIsTurned:
         placed = manager.grid.get_item_at((3, 3))
         assert placed is not None, "The turned item reaches the square beside it"
         assert placed.rotation is Rotation.CLOCKWISE_90
+
+
+# The shapes these tests place, built the way the catalogue builds them.
+ONE_SQUARE = parse_map(["#"], "one square")
+TWO_WIDE = parse_map(["##"], "two wide")
+
+
+class TestMovingAContainer:
+    """A move carries whatever rests on the thing moved.
+
+    The starting grid is three 2x2 containers at (2,3), (4,3) and (6,3), so
+    they cover x 2-7 and y 3-4 with nothing else on the board.
+    See docs/moving_containers.md.
+    """
+
+    def _grid(self) -> InventoryGrid:
+        return InventoryGrid()
+
+    def _item(self, item_id: str, position, shape=None) -> PlacedItem:
+        item = Item.of("null_blade", item_id)
+        squares = list((shape or ONE_SQUARE).squares)
+        return item.model_copy(update={"shape": squares}).placed_at(position)
+
+    def test_a_container_takes_its_items_with_it(self):
+        grid = self._grid()
+        grid.items.append(self._item("on_a", (2, 3)))
+
+        displaced = grid.move_container("container_a", (0, 0))
+
+        assert displaced == []
+        assert grid.find_container("container_a").position == (0, 0)
+        assert grid.items[0].position == (0, 0), "The item moved with it"
+
+    def test_an_item_left_with_nothing_under_it_is_displaced(self):
+        # A two-wide item straddling containers A and B. Only A moves, so the
+        # half that was on B has nothing under it any more.
+        grid = self._grid()
+        grid.items.append(self._item("straddler", (3, 3), shape=TWO_WIDE))
+
+        displaced = grid.move_container("container_a", (0, 0))
+
+        assert [item.id for item in displaced] == ["straddler"]
+        assert grid.items == [], "A displaced item is off the grid"
+        assert grid.find_container("container_a").position == (0, 0)
+
+    def test_an_item_that_still_has_ground_under_it_is_not_displaced(self):
+        """The half that hangs off the moving container lands on another one.
+
+        A fourth container at (4,5) covers x 4-5, y 5-6. Container A moves down
+        to (2,5), so the two-wide item straddling A and B travels to (3,5) and
+        covers (3,5) on A and (4,5) on the new container. It has ground under
+        all of it, so it stays where it landed.
+        """
+        grid = self._grid()
+        grid.containers.append(Container.of("standard_vm", (4, 5), "container_d"))
+        grid.items.append(self._item("straddler", (3, 3), shape=TWO_WIDE))
+
+        displaced = grid.move_container("container_a", (2, 5))
+
+        assert displaced == [], "It landed on ground, so it stays"
+        assert grid.items[0].position == (3, 5)
+
+    def test_an_item_landing_on_a_stationary_item_is_displaced(self):
+        """The same move as above, but something is already standing there.
+
+        Only a straddling item can collide: an item wholly on the moving
+        container lands wholly inside it, and the container cannot land on
+        another container, so there is nothing there to hit.
+        """
+        grid = self._grid()
+        grid.containers.append(Container.of("standard_vm", (4, 5), "container_d"))
+        grid.items.append(self._item("straddler", (3, 3), shape=TWO_WIDE))
+        grid.items.append(self._item("stayed", (4, 5)))
+
+        displaced = grid.move_container("container_a", (2, 5))
+
+        assert [item.id for item in displaced] == ["straddler"], (
+            "The item being moved gives way, not the one that stayed still"
+        )
+        assert [item.id for item in grid.items] == ["stayed"]
+        assert grid.items[0].position == (4, 5), "The stationary item did not move"
+
+    def test_a_container_that_would_leave_the_grid_is_refused(self):
+        grid = self._grid()
+        grid.items.append(self._item("on_a", (2, 3)))
+
+        with pytest.raises(InvalidPlacementError, match="leave the grid"):
+            grid.move_container("container_a", (8, 3))
+
+        assert grid.find_container("container_a").position == (2, 3)
+        assert grid.items[0].position == (2, 3), "Nothing moved"
+
+    def test_a_container_that_would_overlap_another_is_refused(self):
+        grid = self._grid()
+
+        with pytest.raises(InvalidPlacementError, match="overlap"):
+            grid.move_container("container_a", (4, 3))
+
+        assert grid.find_container("container_a").position == (2, 3)
+
+    def test_a_container_may_move_onto_where_it_already_is(self):
+        # Its own squares are not an obstacle to itself.
+        grid = self._grid()
+
+        assert grid.move_container("container_a", (2, 3)) == []
+        assert grid.find_container("container_a").position == (2, 3)
+
+    def test_an_unknown_container_is_not_found(self):
+        with pytest.raises(ItemNotFoundError):
+            self._grid().move_container("no_such_container", (0, 0))
+
+    def test_a_displaced_item_goes_to_storage(self):
+        manager = InventoryManager()
+        manager.grid.items.append(self._item("straddler", (3, 3), shape=TWO_WIDE))
+
+        displaced = manager.move_container("container_a", (0, 0))
+
+        assert [item.id for item in displaced] == ["straddler"]
+        assert [item.id for item in manager.storage.items] == ["straddler"]
+        assert manager.grid.items == []
+
+    def test_the_square_a_displaced_item_leaves_is_free(self):
+        """A displaced item is off the grid, so its old square takes another.
+
+        Nothing on the grid keeps a record of what is occupied: get_item_at
+        reads the list of items and can_hold reads the list of containers. So
+        this is really asking whether the item was taken out of the list, but
+        it is the fact a caller depends on.
+        """
+        grid = self._grid()
+        grid.containers.append(Container.of("standard_vm", (4, 5), "container_d"))
+        grid.items.append(self._item("straddler", (3, 3), shape=TWO_WIDE))
+        grid.items.append(self._item("stayed", (4, 5)))
+
+        grid.move_container("container_a", (2, 5))
+
+        assert grid.get_item_at((3, 5)) is None, "The displaced item left no trace"
+        grid.place_item(Item.of("null_blade", "newcomer"), (3, 5))
+        assert grid.get_item_at((3, 5)).id == "newcomer"
+
+    def test_the_ground_a_container_leaves_stops_being_usable(self):
+        grid = self._grid()
+
+        grid.move_container("container_a", (0, 0))
+
+        assert grid.can_hold([(2, 3)]) is False, (
+            "The squares container A used to cover are bare floor now"
+        )
+        assert grid.can_hold([(3, 4)]) is False
+        with pytest.raises(InvalidPlacementError):
+            grid.place_item(Item.of("null_blade", "nowhere"), (2, 3))
+
+    def test_the_ground_a_container_arrives_on_becomes_usable(self):
+        grid = self._grid()
+
+        grid.move_container("container_a", (0, 0))
+
+        assert grid.can_hold([(0, 0)]) is True
+        assert grid.can_hold([(1, 1)]) is True
+        # null_blade is two squares tall, so at (1,0) it covers (1,0) and
+        # (1,1), which are the right-hand column of the container's new home.
+        grid.place_item(Item.of("null_blade", "newcomer"), (1, 0))
+        assert grid.get_item_at((1, 1)).id == "newcomer"
+
+    def test_a_travelling_item_frees_the_square_it_came_from(self):
+        grid = self._grid()
+        grid.items.append(self._item("passenger", (2, 3)))
+
+        grid.move_container("container_a", (0, 0))
+
+        assert grid.get_item_at((2, 3)) is None, "It is not in two places at once"
+        assert grid.get_item_at((0, 0)).id == "passenger"
+
+    def test_an_item_in_storage_has_no_position(self):
+        # It is off the grid, so it is an Item and not a PlacedItem.
+        manager = InventoryManager()
+        manager.grid.items.append(self._item("straddler", (3, 3), shape=TWO_WIDE))
+
+        manager.move_container("container_a", (0, 0))
+
+        assert not hasattr(manager.storage.items[0], "position")
