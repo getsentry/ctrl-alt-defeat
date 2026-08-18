@@ -8,6 +8,11 @@ extends GutTest
 const BattleEventProcessorScript = preload("res://scripts/battle_event_processor.gd")
 const APITypes = preload("res://scripts/api_types.gd")
 
+## The server's schema, relative to the client project, and the enum in it that
+## names every action a battle can contain.
+const SCHEMAS_PATH := "../server/schemas.py"
+const ACTION_ENUM := "BattleActionName"
+
 var processor
 
 
@@ -321,18 +326,11 @@ func test_damage_over_time_wears_health_down():
 # ============ The client knows every action the server can send ============
 
 func test_the_client_handles_every_action_the_server_declares():
-	# The server publishes its action names as an enum in its OpenAPI schema.
-	# Anything in there that the client does not recognise falls through to the
-	# generic log line, which is exactly how heals, buffs and debuffs were lost.
-	var http = HTTPRequest.new()
-	add_child(http)
-	http.request(OS.get_environment("BATTLE_SERVER_URL") + "/openapi.json")
-	var result = await http.request_completed
-	assert_eq(result[1], 200, "Should be able to read the server's schema")
-	http.queue_free()
-
-	var schema = JSON.parse_string(result[3].get_string_from_utf8())
-	var declared = schema["components"]["schemas"]["BattleActionName"]["enum"]
+	# The server declares its action names as an enum, and says in as many
+	# words that the set is the contract between the two sides. Anything in
+	# there that the client does not recognise falls through to the generic log
+	# line, which is exactly how heals, buffs and debuffs were lost.
+	var declared := _action_names_the_server_declares()
 	assert_gt(declared.size(), 0, "The server should declare its action names")
 
 	# What a well-formed action of each kind carries. Anything not listed here
@@ -341,7 +339,8 @@ func test_the_client_handles_every_action_the_server_declares():
 		"buff": {"buff_name": "speed", "actual_value": 0.2},
 		"debuff": {"debuff_name": "memory_leaked", "actual_value": 1},
 		"dot": {"debuff_name": "memory_leaked"},
-		"cpu_fail": {"reason": "Insufficient CPU"}
+		"cpu_fail": {"reason": "Insufficient CPU"},
+		"cpu_drain": {"amount": 1}
 	}
 
 	for action_name in declared:
@@ -356,7 +355,40 @@ func test_the_client_handles_every_action_the_server_declares():
 		processor.skip_to_end()
 		processor.log_message.disconnect(record)
 
-		assert_eq(messages.size(), 1, "One action should log one line")
+		assert_eq(messages.size(), 1,
+			"'%s' should log one line" % action_name)
 		assert_false("Action=" in messages[0],
 			"The client should recognise '%s', not fall through to the generic line"
 				% action_name)
+
+
+## The action names the server declares, read straight out of its schema.
+##
+## Off disk rather than over HTTP. The old version of this asked a running
+## server for /openapi.json, which meant the check only ran when someone
+## remembered to start one - and an HTTPRequest never completes under the GUT
+## command line runner anyway, so in practice it never ran at all. The file is
+## the same contract, it needs nothing running, and it works in the plain unit
+## suite.
+func _action_names_the_server_declares() -> Array:
+	var path := ProjectSettings.globalize_path("res://").path_join(SCHEMAS_PATH)
+	var file := FileAccess.open(path, FileAccess.READ)
+	assert_not_null(file, "Should be able to read %s" % path)
+	if file == null:
+		return []
+	var source := file.get_as_text()
+	file.close()
+
+	var start := source.find("class %s" % ACTION_ENUM)
+	assert_true(start != -1, "%s should declare %s" % [SCHEMAS_PATH, ACTION_ENUM])
+	if start == -1:
+		return []
+	var end := source.find("\nclass ", start + 1)
+	if end == -1:
+		end = source.length()
+
+	var names := []
+	var member := RegEx.create_from_string('=\\s*"([a-z_]+)"')
+	for found in member.search_all(source.substr(start, end - start)):
+		names.append(found.get_string(1))
+	return names
