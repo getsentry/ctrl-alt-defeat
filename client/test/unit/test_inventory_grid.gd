@@ -568,7 +568,7 @@ func test_picking_a_container_up_takes_its_items_with_it():
 
 	grid._start_container_drag(grid.containers[0])
 
-	var riding = grid.container_riders.map(func(v): return v.get_meta("item_data").id)
+	var riding = grid.container_riders.map(func(r): return r.id())
 	assert_eq(riding, ["riding"], "Only what stands on it comes with it")
 
 
@@ -621,3 +621,30 @@ func test_a_read_only_grid_does_not_pick_containers_up():
 	grid._start_container_drag(grid.containers[0])
 
 	assert_null(grid.dragging_container, "A read-only board holds still")
+
+
+func test_an_item_that_has_been_moved_knows_where_it_is():
+	# What a container carries is worked out from the squares its items cover,
+	# so an item still reporting where it used to be gets picked up by the
+	# wrong container.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "wanderer"}), Vector2i(2, 3))
+
+	grid._place_item_at(grid.items[0], Vector2i(4, 3))
+
+	var item_data = grid.items[0].get_meta("item_data")
+	assert_eq(item_data.position.to_array(), [4, 3], "It should know its new square")
+	assert_eq(item_data.covered_squares(), [Vector2i(4, 3)], "and cover it")
+
+
+func test_a_container_does_not_carry_an_item_that_has_moved_away():
+	# Moving an item from one container to another and then dragging the first
+	# used to take the item along, because it still said it was there.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "moved_away"}), Vector2i(2, 3))
+	grid._place_item_at(grid.items[0], Vector2i(4, 3))
+
+	grid._start_container_drag(grid.containers[0])
+
+	assert_eq(grid.container_riders.size(), 0,
+		"Container A carries nothing: the item is on B now")

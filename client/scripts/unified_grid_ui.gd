@@ -75,28 +75,30 @@ func _on_item_stored(item_data: APITypes.PlacedItem):
 	print("Put %s in the chest" % item_data.name)
 
 
-func _on_item_unstored(item_data: APITypes.Item, global_pos: Vector2):
-	"""Called when an item is dragged out of the chest onto the grid"""
-	var grid_pos = _global_to_grid(global_pos)
+func put_on_grid(item: APITypes.Item, grid_pos: Vector2i) -> bool:
+	"""Move an item out of the chest onto a square of the grid."""
+	if not inventory_grid.can_place_item(item, grid_pos):
+		return false
 
-	# The chest has already let go of it, so every way out of here either puts
-	# it on the grid or draws the chest again with it still inside.
-	if not inventory_grid.can_place_item(item_data, grid_pos):
-		print("Nothing can go at %s, so it stays in the chest" % grid_pos)
-		load_storage()
-		return
-
-	var response = await BattleServerAPI.move_item(
-		item_data.id, [grid_pos.x, grid_pos.y])
+	var response = await BattleServerAPI.move_item(item.id, [grid_pos.x, grid_pos.y])
 	if response == null:
-		print("The server refused the move, so it stays in the chest")
-		load_storage()
-		return
+		print("The server refused to put %s at %s" % [item.name, grid_pos])
+		return false
 
-	inventory_grid.place_shop_item(item_data, grid_pos)
+	inventory_grid.place_shop_item(item, grid_pos)
 	_on_inventory_returned(response)
 	_save_current_state()
-	print("Took %s out of the chest" % item_data.name)
+	return true
+
+
+func _on_item_unstored(item_data: APITypes.Item, global_pos: Vector2):
+	"""Called when an item is dragged out of the chest onto the grid"""
+	# The chest has already let go of it on screen, so a move that does not
+	# happen has to draw the chest again with the item still in it.
+	if await put_on_grid(item_data, _global_to_grid(global_pos)):
+		print("Took %s out of the chest" % item_data.name)
+	else:
+		load_storage()
 
 
 func _on_chest_item_sold(item_data: APITypes.Item):
@@ -115,7 +117,11 @@ func _on_chest_item_sold(item_data: APITypes.Item):
 	print("Sold %s out of the chest for %d gold" % [item_data.name, response.gold_gained])
 
 
-func _on_container_dropped(container_data: APITypes.PlacedItem, grid_pos: Vector2i):
+func _on_container_dropped(
+	container_data: APITypes.PlacedItem,
+	grid_pos: Vector2i,
+	rider_ids: Array[String],
+):
 	"""Called when a container is dropped somewhere it can stand"""
 	var response = await BattleServerAPI.move_item(
 		container_data.id, [grid_pos.x, grid_pos.y])
@@ -131,6 +137,116 @@ func _on_container_dropped(container_data: APITypes.PlacedItem, grid_pos: Vector
 	load_storage()
 	_save_current_state()
 	print("Moved %s to %s" % [container_data.name, grid_pos])
+
+	take_displaced(rider_ids, response.inventory_grid)
+
+
+func take_displaced(
+	rider_ids: Array[String], grid_now: Array[APITypes.PlacedItem]
+) -> void:
+	"""Take into the hand whatever the container could not carry.
+
+	The items that travelled with a container are known: the grid picked them
+	up with it. One that is not on the grid afterwards had nowhere to stand,
+	and is in the chest now. Asking it this way needs nothing of the chest, so
+	whatever else is in there cannot be mistaken for a displaced item.
+
+	Only the first comes into the hand. The rest stay in the chest, which is
+	where they are anyway.
+	"""
+	var landed: Dictionary[String, bool] = {}
+	for item in grid_now:
+		landed[item.id] = true
+
+	for rider_id in rider_ids:
+		if not landed.has(rider_id):
+			var displaced = _in_chest(rider_id)
+			if displaced:
+				hold(displaced)
+			return
+
+
+func _in_chest(item_id: String) -> APITypes.Item:
+	"""The item with this id, if the chest holds it"""
+	for item in GameStateManager.inventory_storage:
+		if item.id == item_id:
+			return item
+	return null
+
+
+func hold(item: APITypes.Item) -> void:
+	"""Take an item into the hand, to be put down with a click.
+
+	It is in the chest already, so this is a shortcut and not a place of its
+	own: whatever happens next, the item has somewhere safe to be.
+	"""
+	if is_instance_valid(held_visual):
+		held_visual.queue_free()
+
+	held_item = item
+	held_visual = ItemVisual.new()
+	held_visual.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	held_visual.setup(item, inventory_grid.cell_size, inventory_grid.cell_spacing)
+	add_child(held_visual)
+
+	# Put where the pointer already is. Waiting for the pointer to move would
+	# leave it sitting in the corner of the screen until the player twitched.
+	follow_pointer(get_global_mouse_position())
+
+	# Drawn last, so the chest knows what is in hand and leaves its square empty.
+	load_storage()
+	print("Holding %s. Click to put it down, or click the chest to leave it there."
+		% item.name)
+
+
+func follow_pointer(pointer: Vector2) -> void:
+	"""Put the held item under the pointer, and mark where it would land.
+
+	A held item is not being dragged, so the grid is not marking anything of
+	its own accord. It still has to show where a click would put the item, the
+	same as a drag does.
+	"""
+	if not held_item:
+		return
+	if is_instance_valid(held_visual):
+		held_visual.global_position = pointer - held_visual.size / 2
+
+	var grid_pos := _global_to_grid(pointer)
+	inventory_grid.mark_square(
+		held_item.shape, grid_pos, inventory_grid.can_place_item(held_item, grid_pos))
+
+
+func release_hand() -> void:
+	"""Let go of whatever is in the hand, leaving it in the chest"""
+	held_item = null
+	inventory_grid.hide_hover_preview()
+	if is_instance_valid(held_visual):
+		held_visual.queue_free()
+	held_visual = null
+	load_storage()
+
+
+func place_held_at(pointer: Vector2) -> void:
+	"""Put the held item down at this place.
+
+	Takes the pointer rather than reading it, so where a held item lands can be
+	asked about without a mouse.
+	"""
+	if not held_item:
+		return
+
+	# The chest is where it already is, so this is simply letting go.
+	if storage_grid and storage_grid.get_parent().get_global_rect().has_point(pointer):
+		print("Left %s in the chest" % held_item.name)
+		release_hand()
+		return
+
+	# It stays in hand unless it lands, so a misclick cannot put it somewhere
+	# the player did not choose.
+	var item = held_item
+	if await put_on_grid(item, _global_to_grid(pointer)):
+		release_hand()
+		print("Put %s down" % item.name)
 
 
 func _reload_board():
@@ -164,6 +280,18 @@ func _save_current_state():
 	GameStateManager.save_inventory_state(state.items, state.servers)
 
 func _input(event):
+	# An item in hand follows the pointer and is put down with a press, which
+	# is the other way round from a drag. The press is marked handled so that
+	# the click which puts the item down cannot also pick something else up.
+	if held_item:
+		if event is InputEventMouseMotion:
+			follow_pointer(event.global_position)
+		elif event is InputEventMouseButton and event.pressed \
+				and event.button_index == MOUSE_BUTTON_LEFT:
+			get_viewport().set_input_as_handled()
+			place_held_at(event.global_position)
+		return
+
 	# Handle shop item dragging
 	if dragging_shop_item:
 		if event is InputEventMouseButton:
@@ -214,6 +342,12 @@ var hide_storage: bool = false
 
 # UI state
 var hover_preview: Panel = null  # For shop preview
+
+# An item in hand: picked up without a button being held, and put down with a
+# click. It is in the chest the whole time, so the hand is a shortcut rather
+# than a place of its own.
+var held_item: APITypes.Item = null
+var held_visual: ItemVisual = null
 
 # UI References
 var shop_container: Control
@@ -476,6 +610,11 @@ func load_storage():
 			storage_grid.active_grid[y][x] = true
 
 	for item in GameStateManager.inventory_storage:
+		# What is in hand is in the chest as well, because the hand is a
+		# shortcut and not a place. Drawing it in both would look like two of
+		# it, so the chest leaves its square empty until it is let go of.
+		if held_item and item.id == held_item.id:
+			continue
 		if not _put_in_chest(item):
 			# The chest holds 24 squares and the server holds no such limit, so
 			# a full chest is a thing the player has to be able to see happen.

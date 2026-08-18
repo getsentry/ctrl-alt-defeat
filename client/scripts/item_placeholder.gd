@@ -37,9 +37,9 @@ func outline_color() -> Color:
 	return fill_color.darkened(OUTLINE_DARKENING)
 
 
-static func squares_of(item_shape: Array) -> Dictionary:
+static func squares_of(item_shape: Array) -> Dictionary[Vector2i, bool]:
 	"""The covered squares, as a set that can be asked about a neighbour."""
-	var squares := {}
+	var squares: Dictionary[Vector2i, bool] = {}
 	for offset in item_shape:
 		if offset is Array and offset.size() >= 2:
 			squares[Vector2i(int(offset[0]), int(offset[1]))] = true

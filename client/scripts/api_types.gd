@@ -354,10 +354,10 @@ class MoveItemResponse extends Resource:
 
 	# The board as the grid loads it.
 	func as_inventory_state() -> InventoryState:
-		var items := []
+		var items: Array[Dictionary] = []
 		for item in inventory_grid:
 			items.append(item.to_dict())
-		var servers := []
+		var servers: Array[Dictionary] = []
 		for container in server_containers:
 			servers.append(container.to_dict())
 		return InventoryState.new({"items": items, "servers": servers})

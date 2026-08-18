@@ -552,3 +552,217 @@ func test_what_is_in_the_chest_is_drawn_solid():
 	assert_almost_eq(_effective_alpha(drawn), 1.0, 0.01,
 		"An item in the chest should be as solid as one on the grid. " +
 		"Check the panel's modulate: it multiplies down into every child.")
+
+
+# ============ An item in the hand ============
+#
+# A container move can set an item down in the chest without the player asking.
+# Rather than leaving it there, the item comes into the hand: picked up with no
+# button held, and put down with a click.
+#
+# The item is in the chest the whole time it is held, so nothing can strand it.
+
+func test_holding_an_item_shows_it():
+	var item = TestHelpers.item({"id": "held"})
+
+	ui.hold(item)
+
+	assert_eq(ui.held_item, item, "It should be in hand")
+	assert_true(is_instance_valid(ui.held_visual), "and drawn following the pointer")
+
+
+func test_letting_go_leaves_it_in_the_chest():
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.load_storage()
+	ui.hold(GameStateManager.inventory_storage[0])
+
+	ui.release_hand()
+	await get_tree().process_frame
+
+	assert_null(ui.held_item, "Nothing in hand")
+	assert_eq(ui.storage_grid.items.size(), 1, "and it is still in the chest")
+
+
+func test_clicking_the_chest_puts_it_back():
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.load_storage()
+	ui.hold(GameStateManager.inventory_storage[0])
+
+	var chest = ui.storage_grid.get_parent()
+	ui.place_held_at(chest.global_position + chest.size / 2)
+	await get_tree().process_frame
+
+	assert_null(ui.held_item, "The chest is where it already was, so this is letting go")
+	assert_eq(ui.storage_grid.items.size(), 1, "and it is drawn there")
+
+
+func test_clicking_nowhere_keeps_hold_of_it():
+	# Otherwise a misclick drops the item somewhere the player did not choose.
+	var item = TestHelpers.item({"id": "held"})
+	ui.hold(item)
+
+	ui.place_held_at(Vector2(-500, -500))
+	await get_tree().process_frame
+
+	assert_eq(ui.held_item, item, "A click on nothing should not put it down")
+
+
+func test_holding_something_else_lets_go_of_the_first():
+	ui.hold(TestHelpers.item({"id": "first"}))
+	var second = TestHelpers.item({"id": "second"})
+
+	ui.hold(second)
+	await get_tree().process_frame
+
+	assert_eq(ui.held_item, second, "The hand holds one thing")
+	assert_eq(ui.get_children().filter(func(c): return c == ui.held_visual).size(), 1,
+		"and the first drawing is gone")
+
+
+func test_a_rider_that_did_not_land_comes_into_the_hand():
+	# The items that travelled with the container are known, so the question is
+	# which of them is missing from the grid afterwards. Nothing is asked of
+	# the chest, so what else is in there cannot be mistaken for a displaced
+	# item.
+	GameStateManager.inventory_storage = [
+		TestHelpers.item({"id": "unrelated"}), TestHelpers.item({"id": "stranded"})
+	]
+
+	var riders: Array[String] = ["landed", "stranded"]
+	var on_grid: Array[APITypes.PlacedItem] = [TestHelpers.placed_item({"id": "landed"})]
+
+	ui.take_displaced(riders, on_grid)
+
+	assert_not_null(ui.held_item, "The rider that did not land should be in hand")
+	assert_eq(ui.held_item.id, "stranded", "and not the one that was already in the chest")
+
+
+func test_riders_that_all_landed_leave_the_hand_empty():
+	var riders: Array[String] = ["a", "b"]
+	var on_grid: Array[APITypes.PlacedItem] = [
+		TestHelpers.placed_item({"id": "a"}), TestHelpers.placed_item({"id": "b"})
+	]
+
+	ui.take_displaced(riders, on_grid)
+
+	assert_null(ui.held_item, "Nothing was left behind, so nothing is picked up")
+
+
+func test_a_move_with_no_riders_leaves_the_hand_empty():
+	var riders: Array[String] = []
+	var on_grid: Array[APITypes.PlacedItem] = []
+
+	ui.take_displaced(riders, on_grid)
+
+	assert_null(ui.held_item, "An empty container carries nothing to strand")
+
+
+func test_only_the_first_stranded_rider_comes_into_the_hand():
+	# The rest stay in the chest, which is where they are anyway.
+	GameStateManager.inventory_storage = [
+		TestHelpers.item({"id": "first"}), TestHelpers.item({"id": "second"})
+	]
+
+	var riders: Array[String] = ["first", "second"]
+	var on_grid: Array[APITypes.PlacedItem] = []
+
+	ui.take_displaced(riders, on_grid)
+
+	assert_eq(ui.held_item.id, "first", "One hand, one item")
+
+
+func test_the_held_item_is_not_also_drawn_in_the_chest():
+	# It is in the chest the whole time it is held, because the hand is a
+	# shortcut and not a place. Drawing it in both would look like two of it.
+	GameStateManager.inventory_storage = [
+		TestHelpers.item({"id": "in_hand"}), TestHelpers.item({"id": "left_behind"})
+	]
+
+	ui.hold(GameStateManager.inventory_storage[0])
+	await get_tree().process_frame
+
+	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
+	assert_eq(drawn, ["left_behind"], "Only what is not in hand is drawn in the chest")
+
+
+func test_letting_go_draws_it_in_the_chest_again():
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "in_hand"})]
+	ui.hold(GameStateManager.inventory_storage[0])
+
+	ui.release_hand()
+	await get_tree().process_frame
+
+	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
+	assert_eq(drawn, ["in_hand"], "It comes back into view where it has been all along")
+
+
+func test_a_second_stranded_item_waits_in_the_chest():
+	# One hand, so the rest stay where the move put them and are drawn there.
+	GameStateManager.inventory_storage = [
+		TestHelpers.item({"id": "first"}), TestHelpers.item({"id": "second"})
+	]
+
+	var riders: Array[String] = ["first", "second"]
+	var on_grid: Array[APITypes.PlacedItem] = []
+
+	ui.take_displaced(riders, on_grid)
+	await get_tree().process_frame
+
+	assert_eq(ui.held_item.id, "first", "The first comes into the hand")
+	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
+	assert_eq(drawn, ["second"], "and the second is waiting in the chest")
+
+
+func test_a_held_item_sits_under_the_pointer():
+	ui.hold(TestHelpers.item({"id": "held"}))
+
+	ui.follow_pointer(Vector2(400, 300))
+
+	assert_eq(ui.held_visual.global_position + ui.held_visual.size / 2,
+		Vector2(400, 300), "It should be centred on the pointer")
+
+
+func test_a_held_item_is_placed_the_moment_it_is_picked_up():
+	# Waiting for the first mouse movement left it sitting in the corner of the
+	# screen until the player twitched.
+	ui.hold(TestHelpers.item({"id": "held"}))
+	await get_tree().process_frame
+
+	assert_ne(ui.held_visual.global_position, Vector2.ZERO,
+		"It should already be under the pointer, not parked at the origin")
+
+
+func test_a_held_item_marks_where_it_would_land():
+	# A held item is not being dragged, so the grid marks nothing by itself.
+	# It still has to show where a click would put it.
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.hold(GameStateManager.inventory_storage[0])
+	var grid = ui.inventory_grid
+
+	ui.follow_pointer(grid.global_position + grid.grid_to_pixel(Vector2i(2, 3)))
+
+	assert_true(grid.hover_preview.visible, "It should mark the square under the pointer")
+	assert_eq(grid.hover_preview.position, grid.grid_to_pixel(Vector2i(2, 3)),
+		"and the one the pointer is over")
+
+
+func test_a_held_item_over_bare_floor_marks_nothing():
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.hold(GameStateManager.inventory_storage[0])
+	var grid = ui.inventory_grid
+
+	ui.follow_pointer(grid.global_position + grid.grid_to_pixel(Vector2i(0, 0)))
+
+	assert_false(grid.hover_preview.visible, "Bare floor is not somewhere it can go")
+
+
+func test_letting_go_clears_the_mark():
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.hold(GameStateManager.inventory_storage[0])
+	var grid = ui.inventory_grid
+	ui.follow_pointer(grid.global_position + grid.grid_to_pixel(Vector2i(2, 3)))
+
+	ui.release_hand()
+	await get_tree().process_frame
+
+	assert_false(grid.hover_preview.visible, "No mark should be left behind")

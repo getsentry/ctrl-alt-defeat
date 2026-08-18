@@ -9,7 +9,7 @@ the code and its tests.
 | 1. One endpoint, one rule | done |
 | 2. Which items travel | done |
 | 3. What makes a move fail | done |
-| 4. The hand, instead of the chest | to do, and not soon |
+| 4. The hand, instead of the chest | done |
 | 5. Showing the chest | done |
 | 6. Dragging a container in the client | done |
 | 7. Rotation | to do, and not soon |
@@ -88,13 +88,18 @@ same every time.
 
 ---
 
-## 4. What Backpack Battles does, and what we do instead — *to do*
+## 4. What Backpack Battles does, and what we do instead — *done*
 
 Backpack Battles does not put a displaced item in the chest. It puts it in your
 hand — attached to the cursor, waiting to be placed. With two displaced items,
 one goes to the chest and the other goes to your hand.
 
-**We put every displaced item in storage.** That is this version.
+**Every displaced item goes to the chest, and the first is then taken into the
+hand.** The hand is a client idea only: the item is in the chest the whole time
+it is held, so nothing can strand it. It is put down with a click rather than a
+release, which is the other way round from a drag, so that press is marked
+handled to stop it picking something else up on the way through. Clicking
+nowhere keeps hold of it; clicking the chest leaves it there.
 
 The difference is smaller than it looks, and the simple version does not block
 the better one:
@@ -199,7 +204,10 @@ Done:
 - A container dropped where it cannot stand goes back, and so does everything
   standing on it. *(done)*
 
+- An item the move could not carry comes into the hand, and a second waits in
+  the chest. *(done)*
+- The held item is not also drawn in the chest. *(done)*
+
 To do:
 
-- Section 4, the displaced item going to the hand rather than the chest.
 - Section 7, rotation.
