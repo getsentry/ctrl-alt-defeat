@@ -47,21 +47,25 @@ caused the disagreement.
 *(See `docs/effects.md` for the reasoning behind each. Ordered by how much
 they cost.)*
 
-### The loader swallows a bad item, and takes the rest of the file with it
+### A seeded shop depends on the order the filesystem lists files in
 
-`load_items` wraps each category file in `except Exception`, logs, and carries
-on (`config_loader.py:92`). It aborts **partway** through the file, so items
-before the bad one survive and items after it vanish. Half a category going
-missing is harder to notice than all of it.
+`load_items` walks `items_dir.glob("*.json")`, and the order it gets back is
+whatever the filesystem gives. That order becomes the catalogue's insertion
+order, and the shop draws from it, so **the same seed can offer different
+items on different machines**.
 
-This now matters more than it did. `_parse_trigger` and `_parse_effect` raise
-on a missing `chance`, a missing shield number and an unknown debuff name —
-good messages that nobody ever sees, while items disappear.
+Found by sorting the glob while fixing something else: five seeded tests
+changed their answers immediately, including "seed 0 should produce a buff",
+which stopped being true. The sort was reverted because reshuffling every shop
+in the game does not belong in an unrelated change.
 
-**Fix.** Fail startup. A catalogue the server cannot read is not a state it
-should serve from: it sells items that do not exist and runs battles that
-cannot be simulated. The alternative is to drop the guards, and then the bad
-data ships silently instead.
+Section 9.1 promises a deterministic simulation and `test_deterministic_battles`
+holds it for battles. The shop has no such guarantee, and this is why.
+
+**Fix.** Sort the catalogue on load and take the one-off shop reshuffle, or
+stop the shop depending on insertion order at all — the second is better, and
+it means drawing from a sorted list of ids at the point of use rather than
+from whatever `dict` iteration hands back.
 
 ### `damage_taken` is a health threshold wearing the wrong name
 
@@ -331,11 +335,22 @@ and Vampirism are missing from the document but already used in the data:
 Virus Injector's tooltip says "Deals 4-11 damage every 1.7s (costs 0.7 CPU)"
 and never mentions the poison, which is the reason to buy it.
 
-### `TestMoveItemAPI` is order-dependent
+### The API tests share state and fail about one run in six
 
-Two failures in eight runs on a clean tree, a different test each time, always
-in `test_main.py`. Never fails in isolation or in a fixed order. Predates this
-work.
+Not one test but a family. Across many runs the failure lands in a different
+place each time, always in one of these four:
+
+- `test_main.py`
+- `test_api_slug_responses.py`
+- `test_purchase_validation.py`
+- `test_game_lifecycle.py`
+
+They pass in isolation and fail in company, so it is shared state rather than
+a bad assertion — most likely a session or client that outlives the test that
+made it. The other 317 tests pass every run.
+
+Predates the effects work: confirmed by running the four on a clean tree,
+where they fail at the same rate.
 
 ---
 
@@ -360,12 +375,4 @@ as severe as the one above.)*
   the raw SQL at `:216`). Losing builds are never offered as opponents, so a
   new player who needs a weak opponent is matched only against builds that won.
 
-- **`config_loader` swallows a bad data file** (`config_loader.py:92` catches
-  `Exception`, logs, and continues). A JSON typo silently removes an entire
-  category — `consumables.json` was missing one `[` and the game ran with zero
-  consumables, with no error surfaced. Consider failing startup instead.
 
-- **`config_loader` builds its catalogue from a cwd-relative path**
-  (`config_loader.py:32`, plus the `load_all()` at module import). Importing it
-  from anywhere but `server/` yields an empty catalogue and only a printed
-  warning. This makes the server hard to drive from tools and tests.
