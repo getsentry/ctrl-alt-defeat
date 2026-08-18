@@ -35,13 +35,14 @@ Consumables are items that have limited uses or are consumed upon activation, pr
 
 ### Data Packets
 - **Shape:** 1x1 (1 slot)
-- **Stackable:** Yes (max 5 stacks, 8 in Packet Buffer)
+- **Stackable:** Yes (max 5 stacks)
 - **Effect:** +2 damage per stack on attack. Consumes 1 stack per attack
 - **Cost:** 2 Gold
 - **Rarity:** Common
 - **Class:** Sentaur
 - **Description:** Stackable ammunition that enhances firepower
-- **Backpack Battles Equivalent:** Arrows
+- **Not offered:** its source is a Hunter subclass item, and subclasses are not built
+- **Backpack Battles Equivalent:** Piercing Arrow
 
 ### AI Companion Core
 - **Shape:** 2x1 (2 slots horizontal)

@@ -27,8 +27,8 @@ func _make(data, size: float = 45.0, spacing: float = 1.0) -> Control:
 
 
 func _item(overrides: Dictionary = {}) -> Resource:
-	var defaults = {"item_type": "core_dumper", "slug": "core_dumper",
-		"name": "Core Dumper"}
+	var defaults = {"item_type": "stack_smasher", "slug": "stack_smasher",
+		"name": "Stack Smasher"}
 	defaults.merge(overrides, true)
 	return TestHelpers.item(defaults)
 
@@ -69,9 +69,9 @@ func test_cell_size_is_honoured():
 # ============ Artwork ============
 
 func test_uses_the_artwork_matching_the_slug():
-	# core_dumper.png is in assets/items
-	_make(_item({"slug": "core_dumper"}))
-	assert_eq(visual._get_texture_path(), "res://assets/items/core_dumper.png",
+	# stack_smasher.png is in assets/items
+	_make(_item({"slug": "stack_smasher"}))
+	assert_eq(visual._get_texture_path(), "res://assets/items/stack_smasher.png",
 		"Should find the artwork named after the slug")
 
 
@@ -114,12 +114,12 @@ func test_uses_the_colour_the_server_sent():
 func test_accepts_a_typed_inventory_item():
 	visual = ItemVisual.new()
 	add_child(visual)
-	var item = TestHelpers.placed_item({"slug": "core_dumper",
-		"item_type": "core_dumper", "name": "Core Dumper"})
+	var item = TestHelpers.placed_item({"slug": "stack_smasher",
+		"item_type": "stack_smasher", "name": "Stack Smasher"})
 
 	visual.setup(item, 45.0, 1.0)
 
-	assert_eq(visual._get_texture_path(), "res://assets/items/core_dumper.png",
+	assert_eq(visual._get_texture_path(), "res://assets/items/stack_smasher.png",
 		"Should read the slug off a typed item")
 
 

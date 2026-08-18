@@ -34,40 +34,6 @@
       "sockets": 1,
       "icontype": "melee"
     },
-    "core_dumper": {
-      "name": "Core Dumper",
-      "category": "problem",
-      "color": "red",
-      "pattern": "stripe_d_bold",
-      "class": "neutral",
-      "map": [
-        "##",
-        "#.",
-        "#."
-      ],
-      "source": "Axe",
-      "rarity": "rare",
-      "cost": 6,
-      "triggers": [
-        {
-          "type": "timer",
-          "cooldown": 2.0,
-          "cpu_cost": 1.4,
-          "effects": [
-            {
-              "type": "attack",
-              "min_damage": 3,
-              "max_damage": 6,
-              "accuracy": 0.85,
-              "special": "stacking"
-            }
-          ]
-        }
-      ],
-      "slug": "core_dumper",
-      "sockets": 2,
-      "icontype": "melee"
-    },
     "deadlock_twins": {
       "name": "Deadlock Twins",
       "category": "problem",
@@ -112,32 +78,31 @@
         ".#.",
         ".##"
       ],
-      "source": "Chain Whip",
-      "rarity": "legendary",
+      "source": "Thorn Whip",
+      "rarity": "epic",
       "cost": 8,
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 2.4,
-          "cpu_cost": 2.1,
+          "cooldown": 2.2,
+          "cpu_cost": 2.2,
           "effects": [
             {
               "type": "attack",
               "min_damage": 4,
               "max_damage": 9,
-              "accuracy": 0.85
-            },
-            {
-              "type": "cpu_drain",
-              "value": 2,
-              "target": "enemy"
+              "accuracy": 0.8
             }
           ]
         }
       ],
       "slug": "mobius_lash",
       "sockets": 2,
-      "icontype": "holy, melee"
+      "icontype": "nature, melee",
+      "unbuilt": [
+        "On hit: Gain 1 Spikes.",
+        "Deals +1 damage per Spikes."
+      ]
     },
     "sql_injector": {
       "name": "SQL Injector",
@@ -1792,7 +1757,6 @@
         }
       ],
       "slug": "stack_smasher",
-      "in_shop": false,
       "unbuilt": [
         "Deals +1 damage for each Star Food."
       ],
@@ -2367,44 +2331,6 @@
       ],
       "sockets": 1,
       "icontype": "effect, ranged"
-    },
-    "thorn_whip": {
-      "name": "Thorn Whip",
-      "category": "problem",
-      "color": "ember",
-      "pattern": "wave_v",
-      "class": "neutral",
-      "map": [
-        "##.",
-        ".#.",
-        ".##"
-      ],
-      "source": "Thorn Whip",
-      "rarity": "epic",
-      "cost": 8,
-      "triggers": [
-        {
-          "type": "timer",
-          "cooldown": 2.2,
-          "cpu_cost": 2.2,
-          "effects": [
-            {
-              "type": "attack",
-              "min_damage": 4,
-              "max_damage": 9,
-              "accuracy": 0.8
-            }
-          ]
-        }
-      ],
-      "slug": "thorn_whip",
-      "in_shop": false,
-      "unbuilt": [
-        "On hit: Gain 1 Spikes.",
-        "Deals +1 damage per Spikes."
-      ],
-      "sockets": 2,
-      "icontype": "nature, melee"
     },
     "thornbloom": {
       "name": "Thornbloom",

@@ -272,9 +272,9 @@ class TestItemSpecs:
 
     def test_trigger_effect_combinations(self):
         """Test that triggers can have multiple effects"""
-        # Memory Leak has attack effect
-        core_dumper = ITEM_CATALOG["core_dumper"]
-        timer = core_dumper.triggers[0]
+        # One timer, one attack
+        stack_smasher = ITEM_CATALOG["stack_smasher"]
+        timer = stack_smasher.triggers[0]
         assert len(timer.effects) == 1
         assert isinstance(timer.effects[0], AttackEffect)
 

@@ -3,7 +3,7 @@
 The 129 items whose numbers now come from a Backpack Battles item a Sentaur
 can reach: 128 that we did not have, plus Mobius Lash, which was re-pointed
 off a Berserker weapon. Each keeps its source's map, rarity, cost, sockets and
-combat stats. The category is ours, and so is the name for the 8 that `docs/`
+combat stats. The category is ours, and so is the name for the 9 that `docs/`
 had already thought one up for; the rest still wear the source's name.
 
 `server/data/items/*.json` is the record, not this file. Regenerate it with
@@ -129,6 +129,7 @@ a second colour close to its first. See `server/item_looks.py`.
 | Magic Staff |  | epic | 10 | 1x4 | 1 | 1 |
 | Magic Torch |  | legendary | 11 | 3x2 | 1 | 1 |
 | Manathirst |  | legendary | 13 | 1x3 | 1 | 2 |
+| Mobius Lash | Thorn Whip | epic | 8 | 3x3 | 2 | 2 |
 | Pandamonium |  | legendary | 11 | 5x4 | 2 | 2 |
 | Ping Flood | Stone | common | 1 | 1x1 |  | 2 |
 | Poison Dagger |  | epic | 11 | 1x2 | 1 | 2 |
@@ -145,7 +146,6 @@ a second colour close to its first. See `server/item_looks.py`.
 | Stankus' Toothpick |  | legendary | 9 | 5x6 | 1 | 2 |
 | Stone Golem |  | godly | 16 | 4x3 | 1 | 3 |
 | Thermal Throttle | Artifact Stone: Heat | unique | 9 | 1x3 |  | 3 |
-| Thorn Whip |  | epic | 8 | 3x3 | 2 | 2 |
 | Thornbloom |  | godly | 14 | 3x3 | 2 | 3 |
 
 ## Protocols (accessories) (38)

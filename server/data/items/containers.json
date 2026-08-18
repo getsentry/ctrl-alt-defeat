@@ -142,34 +142,6 @@
       ],
       "slug": "serverless_function"
     },
-    "packet_buffer": {
-      "name": "Packet Buffer",
-      "class": "sentaur",
-      "map": [
-        ".##",
-        "##."
-      ],
-      "source": "Puzzlebag of Improvement",
-      "rarity": "rare",
-      "cost": 5,
-      "effects": [
-        {
-          "type": "buff",
-          "target": "data_packets",
-          "stat": "stack_limit",
-          "value": 3,
-          "description": "Data Packets can stack 3 higher"
-        },
-        {
-          "type": "buff",
-          "target": "contained",
-          "stat": "damage",
-          "value": 0.25,
-          "description": "Items inside deal 25% more damage"
-        }
-      ],
-      "slug": "packet_buffer"
-    },
     "network_cache": {
       "name": "Network Cache",
       "class": "sentaur",

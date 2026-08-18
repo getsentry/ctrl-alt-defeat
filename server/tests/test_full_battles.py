@@ -59,8 +59,8 @@ class TestFullBattleScenarios:
             ),
             BattleItem(
                 spec=ItemSpec(
-                    id="core_dumper",
-                    name="Memory Leak",
+                    id="stack_smasher",
+                    name="Stack Smasher",
                     shape=ItemShape([(0, 0)], "1x1"),
                     slug="test_slug",
                     category="problem",

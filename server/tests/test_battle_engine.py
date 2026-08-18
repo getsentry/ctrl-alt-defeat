@@ -84,14 +84,15 @@ class TestGameDesignCompliance:
         assert attack_effect.accuracy == 0.9
         # Special attribute is optional
 
-        # Core Dumper, from Axe (Section 2.3)
-        ml = ITEM_CATALOG["core_dumper"]
-        assert len(ml.triggers) == 1
-        assert isinstance(ml.triggers[0], TimerTrigger)
-        assert ml.triggers[0].cooldown == 2.0
-        assert ml.triggers[0].cpu_cost == 1.4
-        attack_effect = ml.triggers[0].effects[0]
-        assert attack_effect.min_damage == 3
+        # An irregular weapon, to check a shape that is not a rectangle carries
+        # its numbers as faithfully as a 1x2 does (Section 2.3)
+        ss = ITEM_CATALOG["stack_smasher"]
+        assert len(ss.triggers) == 1
+        assert isinstance(ss.triggers[0], TimerTrigger)
+        assert ss.triggers[0].cooldown == 2.2
+        assert ss.triggers[0].cpu_cost == 2.0
+        attack_effect = ss.triggers[0].effects[0]
+        assert attack_effect.min_damage == 5
         assert attack_effect.max_damage == 6
         assert attack_effect.accuracy == 0.85
         # Special attribute is optional
@@ -229,7 +230,7 @@ class TestGameDesignCompliance:
         problem1 = BattleItem(
             spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(1, 1)
         )
-        problem2 = BattleItem(spec=ITEM_CATALOG["core_dumper"], position=(1, 0))
+        problem2 = BattleItem(spec=ITEM_CATALOG["stack_smasher"], position=(1, 0))
         problem3 = BattleItem(spec=ITEM_CATALOG["deadlock_twins"], position=(0, 1))
 
         items = [problem1, problem2, problem3]
@@ -259,7 +260,7 @@ class TestGameDesignCompliance:
                     spec=deepcopy(ITEM_CATALOG["auto_rollback"]), position=(0, 0)
                 )
             ],
-            [BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(4, 0))],
+            [BattleItem(spec=deepcopy(ITEM_CATALOG["stack_smasher"]), position=(4, 0))],
             round_number=1,
             p1_containers=p1_containers,
             p2_containers=p2_containers,
@@ -370,8 +371,8 @@ class TestGameDesignCompliance:
         """Test specific item special effects from Section 2"""
         BattleSimulator(seed=TEST_SEED)
 
-        # Memory Leak stacking
-        ml = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 0))
+        # An item starts a battle with none of the damage it can gain in one
+        ml = BattleItem(spec=deepcopy(ITEM_CATALOG["stack_smasher"]), position=(0, 0))
         assert ml.memory_leak_stacks == 0
         # After activation would increment
 
@@ -398,7 +399,7 @@ class TestBattleSimulation:
 
         item1 = BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
 
-        item2 = BattleItem(spec=ITEM_CATALOG["core_dumper"], position=(4, 0))
+        item2 = BattleItem(spec=ITEM_CATALOG["stack_smasher"], position=(4, 0))
 
         p1_containers, p2_containers = get_test_containers()
         result = sim.simulate_battle(

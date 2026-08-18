@@ -167,7 +167,7 @@ as a result.
   - Sockets: 1
   - On Crit: 20% chance to "crash" for 15 damage
 
-- **Core Dumper** (Rare Melee, from Axe)
+- **Stack Smasher** (Rare Melee, from Axe)
   - Damage: 3-6 (increases by +1 each activation)
   - Cooldown: 2.0s
   - CPU Cost: 1.4
@@ -492,7 +492,7 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
 ### 5.4 Example Sentry-Themed Recipes
 
 #### Weapon Recipes
-- **Stack Overflow** (Epic): Memory Leak + Buffer Overflow
+- **Stack Overflow** (Epic): Stack Smasher + Buffer Overflow
 - **Kernel Panic** (Legendary): Null Pointer + Race Condition + Segfault
 - **DDoS Attack** (Epic): Flood Attack + Bot Swarm
 - **Zero Day Exploit** (Godly): SQL Injection + XSS Attack + Buffer Overflow

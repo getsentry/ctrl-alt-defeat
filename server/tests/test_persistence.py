@@ -157,11 +157,11 @@ class TestSessionPersistence:
             Item.of("firewall", "item2").placed_at((1, 0)),
         ]
 
-        session.inventory_storage = [Item.of("core_dumper", "item3")]
+        session.inventory_storage = [Item.of("stack_smasher", "item3")]
 
         session.current_shop = [
             Item.of("deadlock_twins", "shop1"),
-            Item.of("core_dumper", "shop2"),
+            Item.of("stack_smasher", "shop2"),
         ]
 
         # Update

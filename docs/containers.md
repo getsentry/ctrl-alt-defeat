@@ -70,16 +70,6 @@ Containers are the equivalent of "Bags" from Backpack Battles. They provide grid
 
 ## Sentaur Class Containers
 
-### Packet Buffer
-- **Shape:** 1x2 (2 slots vertical)
-- **Internal Storage:** 2x1
-- **Effect:** Items inside gain +25% damage. Data Packets can stack to 8 (instead of 5)
-- **Cost:** 5 Gold
-- **Rarity:** Uncommon
-- **Class:** Sentaur
-- **Description:** Storage system that amplifies data packet effectiveness
-- **Backpack Battles Equivalent:** Quiver
-
 ### Network Cache
 - **Shape:** 2x2 (4 slots square)
 - **Internal Storage:** 3x2

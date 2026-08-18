@@ -50,17 +50,6 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 
 ## Advanced Exploits
 
-### Core Dumper
-- **Shape:** 3x1 (3 slots horizontal)
-- **Damage:** 3-6 (2.0 DPS)
-- **Cooldown:** 2.3s
-- **CPU Cost:** 1.4 (0.7/s)
-- **Effect:** On hit: Gain 1 damage
-- **Cost:** 6 Gold
-- **Rarity:** Rare
-- **Description:** Grows stronger as it consumes more memory
-- **Backpack Battles Equivalent:** Axe
-
 ### Buffer Overflow
 - **Shape:** 3x1 (3 slots horizontal)
 - **Damage:** 4-7 (2.2 DPS)
@@ -84,11 +73,12 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 - **Backpack Battles Equivalent:** Torch
 
 ### Stack Smasher
-- **Shape:** 2x2 (4 slots square)
-- **Damage:** 4-6 (2.0 DPS)
-- **Cooldown:** 2.5s
-- **CPU Cost:** 2 (0.9/s)
-- **Effect:** +1 damage for each Star-tier Module
+- **Map:** `..*.` / `.*#*` / `*##*` / `.**.` — three squares in a 2x2, leaving a corner free
+- **Damage:** 5-6 (85% accuracy)
+- **Cooldown:** 2.2s
+- **CPU Cost:** 2.0
+- **Sockets:** 1
+- **Effect:** +1 damage for each star Script (not built)
 - **Cost:** 4 Gold
 - **Rarity:** Common
 - **Description:** Corrupts the call stack for massive damage

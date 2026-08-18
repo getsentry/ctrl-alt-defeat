@@ -207,7 +207,7 @@ class TestContainers:
         """Test that battle engine validates with containers"""
         sim = BattleSimulator(seed=12345)
 
-        # A blade covers two squares and a Core Dumper is a four square L, so
+        # A blade covers two squares and a Stack Smasher is a four square L, so
         # they want more room than one 2x2 VM.
         vm1 = Container.of("mesh_network_hub", (1, 1), "p1_hub")
 
@@ -218,7 +218,7 @@ class TestContainers:
                 uid="item1",
             ),
             BattleItem(
-                spec=ITEM_CATALOG["core_dumper"],
+                spec=ITEM_CATALOG["stack_smasher"],
                 position=(2, 1),
                 uid="item2",
             ),

@@ -123,7 +123,7 @@ class TestInventoryGrid:
         grid = InventoryGrid()
 
         # The starting containers are two rows deep, so everything here has to
-        # be a shape that stands in two rows. A Core Dumper is a three row L
+        # be a shape that stands in two rows. A Stack Smasher is a three row L
         # and cannot be placed at the start of a game at all.
         item1 = Item.of("null_blade", "item1")
         item2 = Item.of("firewall", "item2")
@@ -304,7 +304,7 @@ class TestInventoryManager:
         # Add items to both grid and storage
         grid_item1 = Item.of("null_blade", "grid1")
         grid_item2 = Item.of("firewall", "grid2")
-        storage_item = Item.of("core_dumper", "storage1")
+        storage_item = Item.of("stack_smasher", "storage1")
 
         manager.place_item(grid_item1, placement=(2, 3))
         manager.place_item(grid_item2, placement=(4, 3))

@@ -3,6 +3,8 @@
 Test that JSON configuration system works correctly
 """
 
+import pytest
+
 from battle_engine import BattleItem, BattleSimulator
 from config_loader import ConfigLoader
 from containers import Container
@@ -26,22 +28,23 @@ def test_json_config():
 
     # Get some items from JSON config
     null_blade = loader.get_item("null_blade")
-    core_dumper = loader.get_item("core_dumper")
+    stack_smasher = loader.get_item("stack_smasher")
     loader.get_item("firewall")  # Verify it exists
     health_check = loader.get_item("health_check")
 
-    # Room for the shapes these items actually have. A Core Dumper is a four
-    # square L, so a 2x2 container holds it and nothing else.
+    # Room for the shapes these items actually have. A Stack Smasher is a three
+    # square L inside a 2x2, so it leaves one corner of that 2x2 free.
     p1_container = Container.of("mesh_network_hub", (0, 0), "p1_hub")
     p2_container = Container.of("mesh_network_hub", (4, 0), "p2_hub")
 
     p1_items = [
         BattleItem(spec=null_blade, position=(0, 0), uid="p1_null"),
-        BattleItem(spec=core_dumper, position=(1, 0), uid="p1_leak"),
+        BattleItem(spec=stack_smasher, position=(1, 0), uid="p1_leak"),
     ]
     p2_items = [
-        BattleItem(spec=core_dumper, position=(4, 0), uid="p2_null2"),
-        BattleItem(spec=health_check, position=(5, 1), uid="p2_health"),
+        BattleItem(spec=stack_smasher, position=(4, 0), uid="p2_null2"),
+        # (5, 1) is under the Stack Smasher, so this sits clear of it.
+        BattleItem(spec=health_check, position=(6, 0), uid="p2_health"),
     ]
 
     # Run battle
@@ -626,3 +629,62 @@ class TestTheCatalogueIsOneCatalogue:
 
         for item_id, config, _ in self._every_entry():
             parse_map(config["map"], item_id)
+
+
+class TestEveryItemIsOneASentaurCanReach:
+    """Our only class is Sentaur, which is the wiki's Ranger.
+
+    An item whose numbers come from a Berserker or Mage item is one no player
+    can ever legitimately own, so it has no business in the catalogue however
+    good those numbers are. Three were, and were caught by hand.
+    """
+
+    # Ranger is Sentaur. Neutral is open to everyone. An item with no class at
+    # all is unrestricted.
+    REACHABLE = {"Neutral", "Ranger", ""}
+
+    @staticmethod
+    def _wiki():
+        """The scrape, or a skip. It is not committed, so a fresh clone has no
+        way to check this and should say so rather than pass."""
+        import json
+        from pathlib import Path
+
+        scrape = (
+            Path(__file__).parent.parent.parent
+            / "research"
+            / "item_grids"
+            / "all_item_grids.json"
+        )
+        if not scrape.exists():
+            pytest.skip("research/item_grids/all_item_grids.json is not in this checkout")
+        return json.loads(scrape.read_text())
+
+    def test_no_item_comes_from_a_class_we_do_not_have(self):
+        wiki = self._wiki()
+        unreachable = []
+        for item_id, config, _ in TestTheCatalogueIsOneCatalogue._every_entry():
+            record = wiki.get(config["source"])
+            if record is None:
+                continue
+            classes = {c.strip() for c in (record.get("class") or "").split(",")}
+            if classes & self.REACHABLE:
+                continue
+            unreachable.append(f"{item_id} <- {config['source']} ({record['class']})")
+        assert not unreachable, "\n".join(unreachable)
+
+    def test_a_subclass_item_is_not_offered(self):
+        """A Ranger reaches these, but only through a subclass, and subclasses
+        are not built. They stay, held back, rather than being deleted."""
+        from config_loader import config_loader
+
+        wiki = self._wiki()
+        for item_id, config, _ in TestTheCatalogueIsOneCatalogue._every_entry():
+            record = wiki.get(config["source"]) or {}
+            if not record.get("subclass"):
+                continue
+            spec = config_loader.items.get(item_id) or config_loader.containers[item_id]
+            assert not spec.in_shop, (
+                f"{item_id} needs the {record['subclass']} subclass "
+                f"and the shop offers it anyway"
+            )
