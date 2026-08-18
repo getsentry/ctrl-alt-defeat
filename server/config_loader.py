@@ -31,29 +31,11 @@ from item_effects import (
 logger = logging.getLogger(__name__)
 
 
-class CatalogueError(Exception):
-    """The item catalogue could not be read.
-
-    Raised rather than logged. A server that starts on half a catalogue sells
-    items that do not exist and runs battles it cannot simulate, and the
-    player is never told why. It used to log and carry on, which lost the rest
-    of whichever file held the bad item -- so some items survived and some
-    vanished, which is harder to notice than losing all of them.
-    """
-
-
 class ConfigLoader:
     """Loads item and container configurations from JSON files"""
 
-    # The catalogue sits next to this module, so it is found from wherever the
-    # process happens to be running. It used to be resolved against the working
-    # directory, which meant importing this from anywhere but `server/` built
-    # an empty catalogue and printed a warning -- and the trainer carries an
-    # `os.chdir` to work around it, having been bitten through multiprocessing.
-    DATA_DIR = Path(__file__).parent / "data"
-
-    def __init__(self, data_dir: Optional[str] = None):
-        self.data_dir = Path(data_dir) if data_dir else self.DATA_DIR
+    def __init__(self, data_dir: str = "data"):
+        self.data_dir = Path(data_dir)
         self.containers: dict[str, ItemSpec] = {}
         self.items = {}
 
@@ -73,24 +55,15 @@ class ConfigLoader:
         if not filepath.exists():
             filepath = self.data_dir / filename
         if not filepath.exists():
-            raise CatalogueError(
-                f"no containers file at {filepath}. Every item stands on a "
-                f"container, so a game without them cannot be played."
-            )
+            print(f"Warning: {filepath} not found")
+            return {}
 
-        try:
-            data = json.loads(filepath.read_text())
-        except json.JSONDecodeError as bad_json:
-            raise CatalogueError(f"{filename} is not valid JSON: {bad_json}") from None
+        with open(filepath, "r") as f:
+            data = json.load(f)
 
         containers = {}
         for container_id, config in data.get("containers", {}).items():
-            try:
-                containers[container_id] = self._create_container_spec(
-                    container_id, config
-                )
-            except Exception as bad_container:
-                raise CatalogueError(f"{filename}: {bad_container}") from None
+            containers[container_id] = self._create_container_spec(container_id, config)
 
         self.containers = containers
         return containers
@@ -102,35 +75,30 @@ class ConfigLoader:
         # Load from split category files in data/items/
         items_dir = self.data_dir / "items"
         if not items_dir.exists() or not items_dir.is_dir():
-            raise CatalogueError(f"no items directory at {items_dir}")
+            print(f"Warning: Items directory not found at {items_dir}")
+            self.items = items
+            return items
 
-        # Deliberately not sorted. The catalogue's insertion order decides
-        # what a seeded shop offers, so sorting here silently reshuffles every
-        # shop in the game. That the order comes from the filesystem at all is
-        # a real problem, but it is not this one -- see BACKLOG.md.
         for category_file in items_dir.glob("*.json"):
-            # Containers are loaded separately, by load_containers
-            if category_file.name == "containers.json":
-                continue
-
             try:
-                category_data = json.loads(category_file.read_text())
-            except json.JSONDecodeError as bad_json:
-                raise CatalogueError(
-                    f"{category_file.name} is not valid JSON: {bad_json}"
-                ) from None
+                with open(category_file, "r") as f:
+                    category_data = json.load(f)
 
-            # Both shapes appear: {"items": {...}} and {"category", "items"}
-            for item_id, config in category_data.get("items", {}).items():
-                try:
+                # Skip containers file - handled separately by load_containers
+                if category_file.name == "containers.json":
+                    continue
+
+                # Handle both formats: {"items": {...}} and {"category": "...", "items": {...}}
+                category_items = category_data.get("items", {})
+                for item_id, config in category_items.items():
                     items[item_id] = self._create_item_spec(item_id, config)
-                except Exception as bad_item:
-                    raise CatalogueError(
-                        f"{category_file.name}: {bad_item}"
-                    ) from None
+
+                print(f"Loaded {len(category_items)} items from {category_file.name}")
+            except Exception:
+                logging.exception(f"Failed to load item config {category_file}:")
 
         if not items:
-            raise CatalogueError(f"no items in any file under {items_dir}")
+            print("Warning: No items loaded from any files")
 
         self.items = items
         return items

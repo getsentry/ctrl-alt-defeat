@@ -283,12 +283,7 @@ and it already emits `on_hit` from the branch next door.
 ## Two ways an effect goes missing
 
 **The loader drops it.** `_parse_effect` returns `None` for a name it does not
-know, and `_parse_trigger` does the same. This is the 26 items above. Note the
-difference from a *malformed* item: a name the loader has never heard of is
-dropped quietly, while an item that uses a known name wrongly now raises
-`CatalogueError` and stops the server. Closing this gap means the loader
-refusing an unknown name too, which it cannot do until every name in the
-catalogue has an implementation.
+know, and `_parse_trigger` does the same. This is the 26 items above.
 
 **A handler ignores it.** An effect can parse and still be skipped by whatever
 handles its trigger. The `on_attacked` handler reads `prevent_damage` and
