@@ -4,8 +4,15 @@ Test the server container system
 
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
 from containers import Container, PlacementValidator
-from grid_system import SHAPES, Rotation
+from grid_system import Rotation, parse_map
 from items import Item, PlacedItem
+
+
+# The shapes these tests place, built the way the catalogue builds them.
+ONE = parse_map(["#"], "one square")
+TWO_BY_TWO = parse_map(["##", "##"], "two by two")
+THREE_WIDE = parse_map(["###"], "three wide")
+AN_L = parse_map(["#.", "##"], "an L")
 
 
 class TestAContainerIsAnItem:
@@ -97,7 +104,7 @@ class TestContainers:
         assert len(validator.available_squares) == 0
 
         # Try to place item - should fail
-        assert not validator.validate_item_placement((0, 0), SHAPES["1x1"])
+        assert not validator.validate_item_placement((0, 0), ONE)
 
         # Add a container
         validator.add_container(Container.of("standard_vm", (1, 1), "vm1"))
@@ -106,14 +113,14 @@ class TestContainers:
         assert len(validator.available_squares) > 0
 
         # Can place item inside the rack (rack is at (1,1) and is 2x2)
-        assert validator.validate_item_placement((1, 1), SHAPES["1x1"])
-        assert validator.validate_item_placement((2, 1), SHAPES["1x1"])
-        assert validator.validate_item_placement((1, 2), SHAPES["1x1"])
-        assert validator.validate_item_placement((2, 2), SHAPES["1x1"])
+        assert validator.validate_item_placement((1, 1), ONE)
+        assert validator.validate_item_placement((2, 1), ONE)
+        assert validator.validate_item_placement((1, 2), ONE)
+        assert validator.validate_item_placement((2, 2), ONE)
 
         # Cannot place item outside the rack
-        assert not validator.validate_item_placement((0, 0), SHAPES["1x1"])
-        assert not validator.validate_item_placement((3, 1), SHAPES["1x1"])
+        assert not validator.validate_item_placement((0, 0), ONE)
+        assert not validator.validate_item_placement((3, 1), ONE)
 
     def test_items_cannot_overlap(self):
         """Test that items cannot overlap each other"""
@@ -125,13 +132,13 @@ class TestContainers:
         )
 
         # Place first item
-        assert validator.place_item((1, 1), SHAPES["1x1"])
+        assert validator.place_item((1, 1), ONE)
 
         # Try to place overlapping item
-        assert not validator.place_item((1, 1), SHAPES["1x1"])  # Same position
+        assert not validator.place_item((1, 1), ONE)  # Same position
 
         # Place non-overlapping item
-        assert validator.place_item((2, 1), SHAPES["1x1"])
+        assert validator.place_item((2, 1), ONE)
 
     def test_multi_square_items_on_servers(self):
         """Test that multi-square items work with servers"""
@@ -143,19 +150,19 @@ class TestContainers:
         )
 
         # Place a 2x2 item
-        assert validator.validate_item_placement((1, 1), SHAPES["2x2"])
-        assert validator.place_item((1, 1), SHAPES["2x2"])
+        assert validator.validate_item_placement((1, 1), TWO_BY_TWO)
+        assert validator.place_item((1, 1), TWO_BY_TWO)
 
         # Try to place overlapping 2x2 item
         assert not validator.validate_item_placement(
-            (2, 2), SHAPES["2x2"]
+            (2, 2), TWO_BY_TWO
         )  # Would overlap
 
         # Place non-overlapping item
         # Container orchestrator is at (1,1) and is 3x2, so it covers (1,1) to (3,2)
         # Item at (1,1) occupies (1,1), (2,1), (1,2), (2,2)
         # So we can place at (3,1) which is still inside the container
-        assert validator.validate_item_placement((3, 1), SHAPES["1x1"])
+        assert validator.validate_item_placement((3, 1), ONE)
 
     def test_item_spanning_containers(self):
         """Test that items can span multiple containers"""
@@ -170,10 +177,10 @@ class TestContainers:
 
         # Place a 3x1 item that spans both VMs
         # This item would occupy squares from both containers
-        assert validator.validate_item_placement((1, 0), SHAPES["3x1"])
+        assert validator.validate_item_placement((1, 0), THREE_WIDE)
 
         # Get containers for this item
-        containers_touched = validator.get_containers_for_item((1, 0), SHAPES["3x1"])
+        containers_touched = validator.get_containers_for_item((1, 0), THREE_WIDE)
         assert len(containers_touched) == 2  # Item spans both containers
 
     def test_non_rectangular_container_covers_only_its_shape(self):
@@ -185,34 +192,34 @@ class TestContainers:
         # into the shape the test is about.
         validator.add_container(
             Container.of("standard_vm", (1, 1), "l1").model_copy(
-                update={"shape": SHAPES["L_shape"].squares}
+                update={"shape": AN_L.squares}
             )
         )
 
-        assert validator.validate_item_placement((1, 1), SHAPES["1x1"])
-        assert validator.validate_item_placement((1, 2), SHAPES["1x1"])
-        assert validator.validate_item_placement((2, 2), SHAPES["1x1"])
+        assert validator.validate_item_placement((1, 1), ONE)
+        assert validator.validate_item_placement((1, 2), ONE)
+        assert validator.validate_item_placement((2, 2), ONE)
 
         # The fourth square of the bounding box is not part of the shape
-        assert not validator.validate_item_placement((2, 1), SHAPES["1x1"])
+        assert not validator.validate_item_placement((2, 1), ONE)
 
     def test_battle_with_containers(self):
         """Test that battle engine validates with containers"""
         sim = BattleSimulator(seed=12345)
 
-        # Create a container
-        vm1 = Container.of("standard_vm", (1, 1), "p1_vm")
+        # A blade covers two squares and a Core Dumper is a four square L, so
+        # they want more room than one 2x2 VM.
+        vm1 = Container.of("mesh_network_hub", (1, 1), "p1_hub")
 
-        # Create items placed in the VM
         p1_items = [
             BattleItem(
                 spec=ITEM_CATALOG["null_blade"],
-                position=(1, 1),  # Inside VM
+                position=(1, 1),
                 uid="item1",
             ),
             BattleItem(
                 spec=ITEM_CATALOG["core_dumper"],
-                position=(2, 1),  # Inside VM
+                position=(2, 1),
                 uid="item2",
             ),
         ]
@@ -248,21 +255,24 @@ class TestATurnedContainerCoversItsTurnedSquares:
     """
 
     def test_a_turn_moves_the_squares_it_covers(self):
-        # memory_cache is three wide and one tall.
+        # memory_cache is one wide and three tall, as its Stamina Sack is.
         upright = Container.of("memory_cache", (2, 3), "c1")
-        assert upright.covered_squares() == [(2, 3), (3, 3), (4, 3)]
+        assert sorted(upright.covered_squares()) == [(2, 3), (2, 4), (2, 5)]
 
         turned = upright.model_copy(update={"rotation": Rotation.CLOCKWISE_90})
-        assert sorted(turned.covered_squares()) == [(2, 3), (2, 4), (2, 5)]
+        assert sorted(turned.covered_squares()) == [(2, 3), (3, 3), (4, 3)]
 
     def test_the_validator_sees_the_turn(self):
         validator = PlacementValidator()
-        # Three tall from (2, 5) reaches row 7, which the grid does not have.
-        turned = Container.of("memory_cache", (2, 5), "c1").model_copy(
+        # Upright it stands in one column, so column 7 holds it. Turned it lies
+        # three wide and reaches column 9, which the grid does not have.
+        turned = Container.of("memory_cache", (7, 3), "c1").model_copy(
             update={"rotation": Rotation.CLOCKWISE_90}
         )
-
-        assert not validator.add_container(turned), "It hangs off the bottom"
+        assert not validator.add_container(turned), "It hangs off the right"
+        assert validator.add_container(
+            Container.of("memory_cache", (7, 3), "c2")
+        ), "Upright it fits in the column"
 
     def test_two_containers_can_share_a_row_once_one_is_turned(self):
         validator = PlacementValidator()

@@ -122,14 +122,16 @@ class TestInventoryGrid:
         """Test getting items formatted for battle"""
         grid = InventoryGrid()
 
-        # Place several items
+        # The starting containers are two rows deep, so everything here has to
+        # be a shape that stands in two rows. A Core Dumper is a three row L
+        # and cannot be placed at the start of a game at all.
         item1 = Item.of("null_blade", "item1")
         item2 = Item.of("firewall", "item2")
-        item3 = Item.of("core_dumper", "item3")
+        item3 = Item.of("api_token", "item3")
 
         grid.place_item(item1, (2, 3))
-        grid.place_item(item2, (4, 3))
-        grid.place_item(item3, (6, 4))
+        grid.place_item(item2, (3, 3))
+        grid.place_item(item3, (6, 3))
 
         battle_items = grid.get_battle_items()
 

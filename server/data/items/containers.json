@@ -3,7 +3,6 @@
     "standard_vm": {
       "name": "Standard VM",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         "##",
         "##"
@@ -17,7 +16,6 @@
     "edge_node": {
       "name": "Edge Node",
       "class": "neutral",
-      "shape": "2x1",
       "map": [
         "##"
       ],
@@ -38,7 +36,6 @@
     "memory_cache": {
       "name": "Memory Cache",
       "class": "neutral",
-      "shape": "3x1",
       "map": [
         "#",
         "#",
@@ -60,7 +57,6 @@
     "load_balancer": {
       "name": "Load Balancer",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -80,7 +76,6 @@
     "patch_registry": {
       "name": "Patch Registry",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         "#",
         "#",
@@ -110,7 +105,6 @@
     "container_orchestrator": {
       "name": "Container Orchestrator",
       "class": "neutral",
-      "shape": "3x2",
       "map": [
         "###",
         "###"
@@ -131,7 +125,6 @@
     "serverless_function": {
       "name": "Serverless Function",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         "##",
         "##"
@@ -152,7 +145,6 @@
     "packet_buffer": {
       "name": "Packet Buffer",
       "class": "sentaur",
-      "shape": "1x2",
       "map": [
         ".##",
         "##."
@@ -181,7 +173,6 @@
     "network_cache": {
       "name": "Network Cache",
       "class": "sentaur",
-      "shape": "2x2",
       "map": [
         "##",
         "##",
@@ -217,7 +208,6 @@
     "mesh_network_hub": {
       "name": "Mesh Network Hub",
       "class": "sentaur",
-      "shape": "3x1",
       "map": [
         "###",
         "###",

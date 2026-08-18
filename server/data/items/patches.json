@@ -7,7 +7,6 @@
       "color": "yellow",
       "pattern": "solid",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "*",
         "^",
@@ -35,7 +34,6 @@
       "color": "yellow",
       "pattern": "stripe_d_bold",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "*",
         "^",
@@ -66,7 +64,6 @@
       "color": "yellow",
       "pattern": "dot_large_grid",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "*",
         "^",
@@ -96,7 +93,6 @@
       "color": "yellow",
       "pattern": "stripe_v_bold",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "*",
         "^",
@@ -127,7 +123,6 @@
       "color": "yellow",
       "pattern": "check_large",
       "class": "neutral",
-      "shape": "1x2",
       "map": [
         "*",
         "^",
@@ -157,7 +152,6 @@
       "color": "yellow",
       "pattern": "stripe_h_bold",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         "*",
         "^",

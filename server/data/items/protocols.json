@@ -7,7 +7,6 @@
       "color": "green",
       "pattern": "solid",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -39,7 +38,6 @@
       "color": "green",
       "pattern": "stripe_d_bold",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "**",
         "##",
@@ -67,7 +65,6 @@
       "color": "green",
       "pattern": "dot_large_grid",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -95,7 +92,6 @@
       "color": "green",
       "pattern": "stripe_v_bold",
       "class": "neutral",
-      "shape": "2x1",
       "map": [
         "***",
         "***",
@@ -130,7 +126,6 @@
       "color": "green",
       "pattern": "check_large",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         ".*.",
         "*.*",
@@ -159,7 +154,6 @@
       "color": "green",
       "pattern": "stripe_h_bold",
       "class": "neutral",
-      "shape": "2x1",
       "map": [
         "*",
         "#"
@@ -187,7 +181,6 @@
       "color": "green",
       "pattern": "hatch_diag",
       "class": "neutral",
-      "shape": "2x1",
       "map": [
         "....*",
         "...**",
@@ -223,7 +216,6 @@
       "color": "green",
       "pattern": "dot_small_stagger",
       "class": "neutral",
-      "shape": "1x2",
       "map": [
         "#"
       ],
@@ -249,7 +241,6 @@
       "color": "green",
       "pattern": "chevron_up",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "*********",
         "****#****",
@@ -283,7 +274,6 @@
       "color": "green",
       "pattern": "stripe_a_bold",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         "*",
         "#"
@@ -312,7 +302,6 @@
       "color": "green",
       "pattern": "rings",
       "class": "neutral",
-      "shape": "2x1",
       "map": [
         "##"
       ],
@@ -339,7 +328,6 @@
       "color": "green",
       "pattern": "stripe_v_fine",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -366,7 +354,6 @@
       "color": "green",
       "pattern": "dot_large_stagger",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -392,7 +379,6 @@
       "color": "green",
       "pattern": "check_small",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         "#"
       ],

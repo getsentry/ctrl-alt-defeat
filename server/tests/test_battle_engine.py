@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator, Player
 from containers import Container
-from grid_system import SHAPES
+from grid_system import parse_map
 from item_effects import ItemSpec, PassiveTrigger, TimerTrigger
 from schemas import BattleAction
 
@@ -19,14 +19,15 @@ TEST_SEED = 424242
 
 
 def get_test_containers():
-    """Get standard test containers for both players"""
-    # Player 1 gets a standard VM at (0,0)
-    p1_container = Container.of("standard_vm", (0, 0), "p1_test_rack")
+    """A 3x3 for each player.
 
-    # Player 2 gets a standard VM at (4,0)
-    p2_container = Container.of("standard_vm", (4, 0), "p2_test_rack")
-
-    return [p1_container], [p2_container]
+    A 2x2 was enough while every item covered a square or two. Items carry
+    their real shapes now, and a four square L reaches three rows down.
+    """
+    return (
+        [Container.of("mesh_network_hub", (0, 0), "p1_test_rack")],
+        [Container.of("mesh_network_hub", (4, 0), "p2_test_rack")],
+    )
 
 
 class TestGameDesignCompliance:
@@ -188,17 +189,17 @@ class TestGameDesignCompliance:
         """Test Section 4.2: Orthogonal adjacency only"""
         sim = BattleSimulator(seed=TEST_SEED)
 
-        center = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 1))
+        center = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(1, 1))
 
         # Orthogonally adjacent
-        top = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 0))
-        right = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(2, 1))
-        bottom = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(1, 2))
-        left = BattleItem(spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 1))
+        top = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(1, 0))
+        right = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(2, 1))
+        bottom = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(1, 2))
+        left = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(0, 1))
 
         # Diagonally adjacent (should NOT count)
         diagonal = BattleItem(
-            spec=deepcopy(ITEM_CATALOG["core_dumper"]), position=(0, 0)
+            spec=deepcopy(ITEM_CATALOG["api_token"]), position=(0, 0)
         )
 
         all_items = [center, top, right, bottom, left, diagonal]
@@ -298,7 +299,7 @@ class TestGameDesignCompliance:
                 category="problem",
                 cost=1,
                 player_class="neutral",
-                shape=SHAPES["1x1"],
+                shape=parse_map(["#"], "test item"),
                 slug="test_slug",
                 triggers=[
                     TimerTrigger(
@@ -418,7 +419,7 @@ class TestBattleSimulation:
                 category="problem",
                 cost=1,
                 player_class="neutral",
-                shape=SHAPES["1x1"],
+                shape=parse_map(["#"], "test item"),
                 slug="test_slug",
                 triggers=[
                     TimerTrigger(

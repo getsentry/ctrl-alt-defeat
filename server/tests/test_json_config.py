@@ -30,21 +30,18 @@ def test_json_config():
     loader.get_item("firewall")  # Verify it exists
     health_check = loader.get_item("health_check")
 
-    # Create container instances from JSON config
-    p1_container = Container.of("standard_vm", (0, 0), "p1_vm")
-    p2_container = Container.of("edge_node", (4, 0), "p2_edge")
+    # Room for the shapes these items actually have. A Core Dumper is a four
+    # square L, so a 2x2 container holds it and nothing else.
+    p1_container = Container.of("mesh_network_hub", (0, 0), "p1_hub")
+    p2_container = Container.of("mesh_network_hub", (4, 0), "p2_hub")
 
-    # Create items
     p1_items = [
         BattleItem(spec=null_blade, position=(0, 0), uid="p1_null"),
         BattleItem(spec=core_dumper, position=(1, 0), uid="p1_leak"),
     ]
-
-    # Place items that fit within the edge_node container (2x1 horizontal at 4,0)
-    # Use smaller items that fit in the available squares
     p2_items = [
-        BattleItem(spec=core_dumper, position=(4, 0), uid="p2_null2"),  # 1x1 item
-        BattleItem(spec=health_check, position=(5, 0), uid="p2_health"),  # 1x1 item
+        BattleItem(spec=core_dumper, position=(4, 0), uid="p2_null2"),
+        BattleItem(spec=health_check, position=(5, 1), uid="p2_health"),
     ]
 
     # Run battle

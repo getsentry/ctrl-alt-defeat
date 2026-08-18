@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from grid_system import SHAPES, ItemShape
+from grid_system import ItemShape, parse_map
 from item_effects import (
     AttackEffect,
     BattleStartTrigger,
@@ -102,7 +102,7 @@ class ConfigLoader:
         self, container_id: str, config: Dict[str, Any]
     ) -> ItemSpec:
         """Create a container specification from config"""
-        shape = self._parse_shape(config["shape"])
+        shape = self._parse_shape(config["map"], config["name"])
 
         # Parse effects
         effects = []
@@ -134,7 +134,7 @@ class ConfigLoader:
     def _create_item_spec(self, item_id: str, config: Dict[str, Any]) -> ItemSpec:
         """Create an item specification from config"""
         # Parse shape
-        shape = self._parse_shape(config.get("shape", "1x1"))
+        shape = self._parse_shape(config["map"], config["name"])
 
         # Parse triggers
         triggers = []
@@ -158,9 +158,9 @@ class ConfigLoader:
             in_shop=config.get("in_shop", True),
         )
 
-    def _parse_shape(self, shape_str: str) -> ItemShape:
-        """Parse a shape string like '2x2' or '3x1'"""
-        return SHAPES[shape_str]
+    def _parse_shape(self, item_map: list, name: str) -> ItemShape:
+        """The squares an item covers, from its map"""
+        return parse_map(item_map, name)
 
     def _parse_trigger(self, config: Dict[str, Any]) -> Optional[Any]:
         """Parse a trigger configuration"""

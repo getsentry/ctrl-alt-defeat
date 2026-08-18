@@ -5,14 +5,16 @@ from containers import Container
 
 
 def get_test_containers():
-    """Get standard test containers for both players"""
-    # Player 1 gets a standard VM at (0,0) - 2x2 container
-    p1_container = Container.of("standard_vm", (0, 0), "p1_test_vm")
+    """Standard test containers: a 3x3 square each.
 
-    # Player 2 gets a standard VM at (4,0) - 2x2 container
-    p2_container = Container.of("standard_vm", (4, 0), "p2_test_vm")
-
-    return [p1_container], [p2_container]
+    A 2x2 was enough while every test item covered a square or two. Items carry
+    their real shapes now, and a four square L reaches three rows down, so it
+    needs somewhere three rows deep to stand.
+    """
+    return (
+        [Container.of("mesh_network_hub", (0, 0), "p1_test_hub")],
+        [Container.of("mesh_network_hub", (4, 0), "p2_test_hub")],
+    )
 
 
 def get_large_test_containers():

@@ -7,7 +7,6 @@
       "color": "red",
       "pattern": "solid",
       "class": "neutral",
-      "shape": "1x2",
       "map": [
         "#",
         "#"
@@ -41,7 +40,6 @@
       "color": "red",
       "pattern": "stripe_d_bold",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "##",
         "#.",
@@ -76,7 +74,6 @@
       "color": "red",
       "pattern": "dot_large_grid",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#",
         "#"
@@ -110,7 +107,6 @@
       "color": "red",
       "pattern": "stripe_v_bold",
       "class": "neutral",
-      "shape": "2x1",
       "map": [
         "##.",
         ".#.",
@@ -149,7 +145,6 @@
       "color": "red",
       "pattern": "check_large",
       "class": "neutral",
-      "shape": "1x2",
       "map": [
         "..*..",
         ".***.",
@@ -187,7 +182,6 @@
       "color": "red",
       "pattern": "stripe_h_bold",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         "##",
         "##"
@@ -221,7 +215,6 @@
       "color": "red",
       "pattern": "hatch_diag",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "*",
         "#",
@@ -267,7 +260,6 @@
       "color": "red",
       "pattern": "dot_small_stagger",
       "class": "sentaur",
-      "shape": "1x2",
       "map": [
         ".#..",
         "###*",
@@ -303,7 +295,6 @@
       "color": "red",
       "pattern": "chevron_up",
       "class": "sentaur",
-      "shape": "1x2",
       "map": [
         "#",
         "#",
@@ -353,7 +344,6 @@
       "color": "red",
       "pattern": "stripe_a_bold",
       "class": "sentaur",
-      "shape": "2x2",
       "map": [
         "..**.",
         ".*##*",
@@ -404,7 +394,6 @@
       "color": "red",
       "pattern": "rings",
       "class": "sentaur",
-      "shape": "1x2",
       "map": [
         "#",
         "#"
@@ -440,7 +429,6 @@
       "color": "red",
       "pattern": "stripe_v_fine",
       "class": "sentaur",
-      "shape": "2x2",
       "map": [
         "#",
         "#"
@@ -483,7 +471,6 @@
       "color": "red",
       "pattern": "dot_large_stagger",
       "class": "sentaur",
-      "shape": "2x2",
       "map": [
         ".#..",
         "###*",
@@ -521,7 +508,6 @@
       "color": "red",
       "pattern": "check_small",
       "class": "sentaur",
-      "shape": "2x2",
       "map": [
         ".#..",
         "###*",
@@ -571,7 +557,6 @@
       "color": "red",
       "pattern": "stripe_h_fine",
       "class": "sentaur",
-      "shape": "2x1",
       "map": [
         "#",
         "#"
@@ -614,7 +599,6 @@
       "color": "red",
       "pattern": "hatch_ortho",
       "class": "sentaur",
-      "shape": "2x2",
       "map": [
         "..*.",
         ".*#*",
@@ -651,7 +635,6 @@
       "color": "red",
       "pattern": "chevron_right",
       "class": "sentaur",
-      "shape": "2x2",
       "map": [
         ".#..",
         "###*",
@@ -700,7 +683,6 @@
       "color": "red",
       "pattern": "stripe_d_fine",
       "class": "sentaur",
-      "shape": "1x2",
       "map": [
         "#",
         "#"
@@ -743,7 +725,6 @@
       "color": "red",
       "pattern": "dot_small_grid",
       "class": "sentaur",
-      "shape": "1x2",
       "map": [
         "#",
         "#"

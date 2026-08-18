@@ -7,7 +7,6 @@
       "color": "orange",
       "pattern": "solid",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -34,7 +33,6 @@
       "color": "orange",
       "pattern": "stripe_d_bold",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -61,7 +59,6 @@
       "color": "orange",
       "pattern": "dot_large_grid",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -88,7 +85,6 @@
       "color": "orange",
       "pattern": "stripe_v_bold",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -115,7 +111,6 @@
       "color": "orange",
       "pattern": "check_large",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -142,7 +137,6 @@
       "color": "orange",
       "pattern": "stripe_h_bold",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -169,7 +163,6 @@
       "color": "orange",
       "pattern": "hatch_diag",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -196,7 +189,6 @@
       "color": "orange",
       "pattern": "dot_small_stagger",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -223,7 +215,6 @@
       "color": "orange",
       "pattern": "chevron_up",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -250,7 +241,6 @@
       "color": "orange",
       "pattern": "stripe_a_bold",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -277,7 +267,6 @@
       "color": "orange",
       "pattern": "rings",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -304,7 +293,6 @@
       "color": "orange",
       "pattern": "stripe_v_fine",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -331,7 +319,6 @@
       "color": "orange",
       "pattern": "dot_large_stagger",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],
@@ -358,7 +345,6 @@
       "color": "orange",
       "pattern": "check_small",
       "class": "neutral",
-      "shape": "1x1",
       "map": [
         "#"
       ],

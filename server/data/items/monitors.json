@@ -7,7 +7,6 @@
       "color": "sky",
       "pattern": "solid",
       "class": "neutral",
-      "shape": "2x1",
       "map": [
         "##",
         "##",
@@ -38,7 +37,6 @@
       "color": "sky",
       "pattern": "stripe_d_bold",
       "class": "neutral",
-      "shape": "2x1",
       "map": [
         "##",
         "##",
@@ -70,7 +68,6 @@
       "color": "sky",
       "pattern": "dot_large_grid",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         ".**.",
         "*##*",
@@ -110,7 +107,6 @@
       "color": "sky",
       "pattern": "stripe_v_bold",
       "class": "neutral",
-      "shape": "2x2",
       "map": [
         ".**.",
         "*##*",

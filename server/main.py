@@ -819,106 +819,73 @@ async def simulate_battle(
 
 
 def get_ghost_player_items(round_number: int) -> List[BattleItem]:
-    """Get predefined ghost player inventory for each round"""
+    """The opponent's build for a round, as a list of item types.
 
+    Where each one goes is worked out here rather than written down. Items
+    carry their real Backpack Battles shapes, so a hand placed coordinate is
+    wrong the moment a shape changes, and several were.
+    """
     containers = generate_ai_containers()
 
-    # Define ghost player inventories for rounds 1-10
     ghost_inventories = {
-        1: [  # Very basic
-            ("null_blade", (0, 3)),
-        ],
-        2: [  # Still easy
-            ("null_blade", (0, 3)),
-            ("firewall", (4, 3)),
-        ],
-        3: [  # Adding defense
-            ("null_blade", (0, 3)),
-            ("core_dumper", (2, 3)),
-            ("firewall", (4, 3)),
-        ],
-        4: [  # More items
-            ("null_blade", (0, 3)),
-            ("core_dumper", (2, 3)),
-            ("firewall", (4, 3)),
-            ("health_check", (5, 3)),
-        ],
-        5: [  # Medium difficulty
-            ("null_blade", (0, 3)),
-            ("core_dumper", (2, 3)),
-            ("deadlock_twins", (6, 3)),
-            ("firewall", (4, 3)),
-            ("error_monitoring", (5, 3)),
-        ],
-        6: [  # Adding infrastructure
-            ("null_blade", (0, 3)),
-            ("core_dumper", (2, 3)),
-            ("deadlock_twins", (6, 3)),
-            ("firewall", (4, 3)),
-            ("error_monitoring", (5, 3)),
-            ("auto_scaler", (5, 4)),
-        ],
-        7: [  # Stronger items
-            ("null_blade", (1, 3)),
-            ("core_dumper", (2, 3)),
-            ("buffer_overflow", (1, 4)),
-            ("firewall", (4, 3)),
-            ("error_monitoring", (5, 3)),
-            ("auto_scaler", (5, 4)),  # Moved to avoid overlap
-            ("health_check", (6, 3)),  # Moved to empty spot
-        ],
-        8: [  # Good mix
-            ("null_blade", (1, 3)),
-            ("core_dumper", (2, 3)),
-            ("buffer_overflow", (1, 4)),
-            ("deadlock_twins", (2, 4)),
-            ("firewall", (4, 3)),
-            ("error_monitoring", (5, 3)),
-            ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
-            ("quantum_processor", (6, 3)),  # Moved to empty spot
-        ],
-        9: [  # Near endgame
-            ("null_blade", (1, 3)),
-            ("core_dumper", (2, 3)),
-            ("buffer_overflow", (1, 4)),
-            ("deadlock_twins", (2, 4)),
-            ("firewall", (4, 3)),
-            ("error_monitoring", (5, 3)),
-            ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
-            ("quantum_processor", (6, 3)),  # Moved to empty spot
-            ("load_balancer_module", (3, 3)),
-        ],
-        10: [  # Final boss
-            ("null_blade", (1, 3)),
-            ("core_dumper", (2, 3)),
-            ("buffer_overflow", (1, 4)),
-            ("deadlock_twins", (2, 4)),
-            ("firewall", (4, 3)),
-            ("error_monitoring", (5, 3)),
-            ("auto_scaler", (5, 4)),  # Moved to avoid overlap with firewall
-            ("quantum_processor", (6, 3)),  # Moved to empty spot
-            ("load_balancer_module", (3, 3)),
-            ("health_check", (3, 4)),
-        ],
+        1: ["null_blade"],
+        2: ["null_blade", "firewall"],
+        3: ["null_blade", "core_dumper", "firewall"],
+        4: ["null_blade", "core_dumper", "firewall", "health_check"],
+        5: ["null_blade", "core_dumper", "deadlock_twins", "firewall",
+            "error_monitoring"],
+        6: ["null_blade", "core_dumper", "deadlock_twins", "firewall",
+            "error_monitoring", "auto_scaler"],
+        7: ["null_blade", "core_dumper", "firewall", "error_monitoring",
+            "auto_scaler", "health_check"],
+        8: ["null_blade", "core_dumper", "deadlock_twins", "firewall",
+            "error_monitoring", "auto_scaler", "quantum_processor"],
+        9: ["null_blade", "core_dumper", "deadlock_twins", "firewall",
+            "error_monitoring", "auto_scaler", "quantum_processor",
+            "load_balancer_module"],
+        10: ["null_blade", "core_dumper", "deadlock_twins", "firewall",
+             "error_monitoring", "auto_scaler", "quantum_processor",
+             "load_balancer_module", "health_check"],
     }
-    if round_number >= 5:
-        containers.append(Container.of("standard_vm", (6, 3), "ai_vm4"))
 
-    # Get inventory for this round (cap at 10)
-    round_items = ghost_inventories.get(min(round_number, 10), ghost_inventories[1])
+    wanted = ghost_inventories.get(min(round_number, 10), ghost_inventories[1])
+    return _place_ghost_items(wanted, containers), containers
+
+
+def _place_ghost_items(
+    item_types: List[str], containers: List[Container]
+) -> List[BattleItem]:
+    """Put each item on the first free squares that hold its shape.
+
+    Raises if one will not fit. A build the opponent was meant to have and
+    silently does not is a weaker opponent than intended, in a way nobody
+    would notice from the outside.
+    """
+    free = set()
+    for container in containers:
+        free |= set(container.covered_squares())
 
     items = []
-    for item_type, position in round_items:
-        if item_type in ITEM_CATALOG:
-            item_spec = ITEM_CATALOG[item_type]
-            placed_item = BattleItem(
-                spec=item_spec,
-                position=position,
-                uid=f"ghost_{item_type}_{position[0]}_{position[1]}",
-            )
-            items.append(placed_item)
+    for item_type in item_types:
+        spec = ITEM_CATALOG.get(item_type)
+        if spec is None:
+            raise ValueError(f"The opponent wants {item_type}, which is not an item")
 
-    return items, containers
+        for x, y in sorted(free, key=lambda p: (p[1], p[0])):
+            squares = {(x + dx, y + dy) for dx, dy in spec.shape.squares}
+            if squares <= free:
+                free -= squares
+                items.append(
+                    BattleItem(spec=spec, position=(x, y), uid=f"ghost_{item_type}")
+                )
+                break
+        else:
+            raise ValueError(
+                f"Nowhere to put {item_type}, which covers "
+                f"{len(spec.shape.squares)} squares. The opponent has "
+                f"{len(free)} free left across its containers."
+            )
+    return items
 
 
 def get_test_ai_items(difficulty: int, round_number: int) -> List[BattleItem]:
@@ -972,10 +939,12 @@ def generate_ai_opponent(
 def generate_ai_containers() -> List[Container]:
     """Generate server containers that cover all AI item positions"""
     # Standard VMs are 2x2, so adjust positions to avoid gaps
+    # Three rows deep, because a four square L stands three rows tall and a
+    # 2x2 VM cannot hold one.
     return [
-        Container.of("standard_vm", (0, 3), "ai_vm1"),  # Covers (0,3)-(1,4)
-        Container.of("standard_vm", (2, 3), "ai_vm2"),  # Covers (2,3)-(3,4)
-        Container.of("standard_vm", (4, 3), "ai_vm3"),  # Covers (4,3)-(5,4)
+        Container.of("mesh_network_hub", (0, 3), "ai_hub1"),  # (0,3)-(2,5)
+        Container.of("mesh_network_hub", (3, 3), "ai_hub2"),  # (3,5)-(5,5)
+        Container.of("mesh_network_hub", (6, 3), "ai_hub3"),  # (6,3)-(8,5)
     ]
 
 
