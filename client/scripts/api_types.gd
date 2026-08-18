@@ -143,46 +143,14 @@ class PlacedItem extends Item:
 		fields["rotation"] = rotation
 		return fields
 
-# Container/Server - matches server response
-class ServerContainer extends Resource:
-	var is_container: bool = true
-	var id: String = ""
-	var type: String = ""
-	var slug: String = ""
-	var position: Position
-	var shape: Array = []  # Array[Array[int]]: the [x, y] offsets it covers
-	var rotation: int = 0  # Quarter turns clockwise, 0/90/180/270
-
-	func _init(data: Dictionary):
-		# Server sends all these fields
-		id = data["id"]
-		type = data["type"]
-		slug = data["slug"]
-		position = Position.new(data["position"])
-		shape = data["shape"]
-		rotation = int(data["rotation"])
-
-	func to_dict() -> Dictionary:
-		return {
-			"id": id,
-			"type": type,
-			"slug": slug,
-			"position": position.to_array() if position else null,
-			"shape": shape,
-			"rotation": rotation
-		}
-
-	# The grid squares this container covers.
-	func covered_squares() -> Array[Vector2i]:
-		var squares: Array[Vector2i] = []
-		for offset in shape:
-			squares.append(Vector2i(position.x + int(offset[0]), position.y + int(offset[1])))
-		return squares
+# A container is a PlacedItem that provides squares rather than filling them.
+# It comes from the same catalogue, is bought from the same shop and stands on
+# the same grid. What tells the two apart is which list they arrive in.
 
 # Inventory state (used in battles and saved state)
 class InventoryState extends Resource:
 	var items: Array[PlacedItem] = []
-	var containers: Array[ServerContainer] = []
+	var containers: Array[PlacedItem] = []
 
 	func _init(data: Dictionary):
 		items.clear()
@@ -192,7 +160,7 @@ class InventoryState extends Resource:
 		# The server calls the containers "servers" in InventoryData
 		containers.clear()
 		for container_data in data["servers"]:
-			containers.append(ServerContainer.new(container_data))
+			containers.append(PlacedItem.new(container_data))
 
 # Battle action - matches server BattleAction schema
 class BattleAction extends Resource:
@@ -288,7 +256,7 @@ class GameSession extends Resource:
 	# Inventory fields
 	var inventory_grid: Array[PlacedItem] = []
 	var inventory_storage: Array[Item] = []
-	var server_containers: Array[ServerContainer]
+	var server_containers: Array[PlacedItem]
 
 	func _init(data: Dictionary):
 		player_id = data["player_id"]
@@ -310,7 +278,7 @@ class GameSession extends Resource:
 
 		server_containers = []
 		for container_data in data["server_containers"]:
-			server_containers.append(ServerContainer.new(container_data))
+			server_containers.append(PlacedItem.new(container_data))
 
 
 # Session start response - matches server StartSessionResponse
@@ -337,13 +305,13 @@ class ShopRefreshResponse extends Resource:
 class PurchaseResponse extends Resource:
 	var purchased_item: Item
 	var gold: int = 0
-	var server_containers: Array[ServerContainer] = []
+	var server_containers: Array[PlacedItem] = []
 
 	func _init(data: Dictionary):
 		purchased_item = Item.new(data["purchased_item"])
 		gold = data["gold"]
 		for container_data in data["server_containers"]:
-			server_containers.append(ServerContainer.new(container_data))
+			server_containers.append(PlacedItem.new(container_data))
 
 # Battle response - matches server BattleResponse schema
 class BattleResponse extends Resource:

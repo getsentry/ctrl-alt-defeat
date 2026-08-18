@@ -24,20 +24,20 @@ func test_server_containers_property_exists():
 
 func test_can_set_and_get_server_containers():
 	var test_containers = [
-		{"type": "cube_2x2", "position": [1, 3]},
-		{"type": "cube_2x2", "position": [4, 3]}
+		{"item_type": "cube_2x2", "position": [1, 3]},
+		{"item_type": "cube_2x2", "position": [4, 3]}
 	]
 
 	GameStateManager.server_containers = test_containers
 
 	assert_eq(GameStateManager.server_containers.size(), 2,
 		"Should have 2 containers after setting")
-	assert_eq(GameStateManager.server_containers[0].type, "cube_2x2",
+	assert_eq(GameStateManager.server_containers[0].item_type, "cube_2x2",
 		"First container should be cube_2x2")
 
 func test_start_new_game_clears_server_containers():
 	# Setup: add some containers
-	GameStateManager.server_containers = [{"type": "test"}]
+	GameStateManager.server_containers = [{"item_type": "test"}]
 	assert_eq(GameStateManager.server_containers.size(), 1, "Setup failed")
 
 	# Test: start_new_game should clear them

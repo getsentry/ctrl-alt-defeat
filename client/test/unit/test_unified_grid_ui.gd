@@ -12,12 +12,9 @@ func before_each():
 
 	# The 3 starting containers the server sends with a new session.
 	GameStateManager.save_inventory_state([], [
-		{"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
-			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0},
-		{"id": "container_b", "slug": "standard_vm", "type": "standard_vm",
-			"position": [4, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0},
-		{"id": "container_c", "slug": "standard_vm", "type": "standard_vm",
-			"position": [6, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
+		TestHelpers.container_data({"id": "container_a", "position": [2, 3]}),
+		TestHelpers.container_data({"id": "container_b", "position": [4, 3]}),
+		TestHelpers.container_data({"id": "container_c", "position": [6, 3]})
 	])
 
 	ui = ui_scene.instantiate()
@@ -219,10 +216,7 @@ func test_inventory_state_save_and_load():
 	# load_inventory_state() takes an APITypes.InventoryState.
 	var test_state = APITypes.InventoryState.new({
 		"items": [TestHelpers.placed_item_data({"id": "item1", "name": "Test Item"})],
-		"servers": [{
-			"id": "container_a", "slug": "standard_vm", "type": "standard_vm",
-			"position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
-		}]
+		"servers": [TestHelpers.container_data({"id": "container_a"})]
 	})
 
 	ui.load_inventory_state(test_state)

@@ -48,16 +48,33 @@ static func placed_item(overrides: Dictionary = {}) -> Resource:
 		placed_item_data(overrides))
 
 
-static func container(overrides: Dictionary = {}) -> Resource:
-	var data = {
+static func container_data(overrides: Dictionary = {}) -> Dictionary:
+	var data = placed_item_data({
 		"id": "container_a",
+		"item_type": "standard_vm",
+		"name": "Standard VM",
 		"slug": "standard_vm",
-		"type": "standard_vm",
-		"position": [2, 3],
-		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
-	}
+		"category": "container",
+		"is_container": true,
+		"cost": 4,
+		"price": 4,
+		"sell_value": 2,
+		"description": "",
+		"color": "",
+		"pattern": "",
+		"min_damage": 0,
+		"max_damage": 0,
+		"cooldown": 0.0,
+		"cpu_cost": 0,
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]],
+	})
 	data.merge(overrides, true)
-	return preload("res://scripts/api_types.gd").ServerContainer.new(data)
+	return data
+
+
+static func container(overrides: Dictionary = {}) -> Resource:
+	return preload("res://scripts/api_types.gd").PlacedItem.new(
+		container_data(overrides))
 
 # Helper to create a valid BattleResult for testing
 static func create_test_battle_result(winner: int = 1, duration: float = 10.0) -> Resource:
@@ -80,13 +97,13 @@ static func create_test_battle_result(winner: int = 1, duration: float = 10.0) -
 		"player_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "test_srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
+				container_data({"id": "test_srv1"})
 			]
 		},
 		"enemy_inventory": {
 			"items": [],
 			"servers": [
-				{"id": "test_srv2", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
+				container_data({"id": "test_srv2"})
 			]
 		}
 	}
@@ -154,7 +171,7 @@ static func create_test_inventory_state() -> Dictionary:
 			placed_item_data({"id": "item1", "name": "Test Item"})
 		],
 		"servers": [
-			{"id": "srv1", "slug": "standard_vm", "type": "standard_vm", "position": [2, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
+			container_data({"id": "srv1"})
 		]
 	}
 

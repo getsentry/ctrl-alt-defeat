@@ -15,6 +15,7 @@ from inventory_manager import (
     InventoryStorage,
     ItemNotFoundError,
 )
+from containers import Container
 from items import Item
 from tests.test_utils import find_bad_positions
 from utils import dump_all
@@ -440,13 +441,9 @@ class TestStoredPositions:
                 "grid": dump_all([Item.of("null_blade", "item_1").placed_at((2, 3))]),
                 "storage": [],
                 "containers": [
-                    {
-                        "id": "container_a",
-                        "slug": "standard_vm",
-                        "type": "standard_vm",
-                        "position": [2, 3],
-                        "shape": [[0, 0], [1, 0], [0, 1], [1, 1]],
-                    }
+                    dump_all(
+                        [Container.of("standard_vm", (2, 3), "container_a")]
+                    )[0]
                 ],
             }
         )

@@ -5,6 +5,41 @@ Test the server container system
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
 from containers import Container, PlacementValidator
 from grid_system import SHAPES, Rotation
+from items import Item, PlacedItem
+
+
+class TestAContainerIsAnItem:
+    """A container is a placed item whose squares are for other items."""
+
+    def test_it_is_a_placed_item(self):
+        assert isinstance(Container.of("standard_vm", (1, 1), "vm1"), PlacedItem)
+
+    def test_it_says_it_is_a_container(self):
+        # The same answer the shop's offer gives, so nothing drawing it or
+        # laying it out has to know which of the two it was handed.
+        assert Container.of("standard_vm", (1, 1), "vm1").is_container
+
+    def test_it_has_the_name_the_shop_sold_it_under(self):
+        # The name is what a tooltip shows, so a placed container needs one
+        # just as much as the offer the player bought did.
+        offer = Item.of("standard_vm", "vm1")
+        placed = Container.of("standard_vm", (1, 1), "vm1")
+        assert placed.name == offer.name == "Standard VM"
+        assert placed.item_type == offer.item_type
+
+    def test_it_carries_no_look_of_its_own(self):
+        # A container is the ground the items sit on, so it takes no palette
+        # colour and no pattern.
+        placed = Container.of("standard_vm", (1, 1), "vm1")
+        assert placed.color == ""
+        assert placed.pattern == ""
+
+    def test_an_item_bought_and_placed_matches_it(self):
+        """The shop sells a container as an Item. Placing it must not change
+        what it is, only where it is."""
+        offer = Item.of("standard_vm", "vm1")
+        placed = Container.of("standard_vm", (1, 1), "vm1")
+        assert placed.item_fields() == offer.item_fields()
 
 
 class TestContainers:
@@ -145,14 +180,12 @@ class TestContainers:
         """A container offers the squares of its shape, and no others"""
         validator = PlacementValidator()
 
-        # An L shape covers (0,0), (0,1) and (1,1) of its 2x2 bounding box
+        # An L shape covers (0,0), (0,1) and (1,1) of its 2x2 bounding box.
+        # No catalogue container is an L yet, so this is one that has been bent
+        # into the shape the test is about.
         validator.add_container(
-            Container(
-                id="l1",
-                slug="l_rack",
-                type="l_rack",
-                position=(1, 1),
-                shape=SHAPES["L_shape"].squares,
+            Container.of("standard_vm", (1, 1), "l1").model_copy(
+                update={"shape": SHAPES["L_shape"].squares}
             )
         )
 

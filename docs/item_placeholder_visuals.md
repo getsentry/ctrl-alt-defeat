@@ -246,8 +246,7 @@ from drawing.
 ## 7. How the drawing works
 
 `client/scripts/item_placeholder.gd` draws the whole item in one control with a
-`_draw()` function. It replaced the one `Panel` per cell that `ItemVisual` used
-to add, each with its own border on all four sides.
+`_draw()` function. `ItemVisual` adds one of them per item, and no other node.
 
 The input is the set of covered cells. Draw in this order:
 

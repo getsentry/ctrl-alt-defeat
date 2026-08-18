@@ -7,10 +7,8 @@ are not always rectangular, so a container has no width and no height.
 
 from typing import List, Optional, Set, Tuple
 
-from pydantic import BaseModel, Field
-
-from config_loader import config_loader
-from grid_system import ItemShape, Rotation
+from grid_system import ItemShape
+from items import Item, PlacedItem
 from utils import Position, Shape
 
 # The grid is 9 squares wide and 7 squares tall.
@@ -24,39 +22,26 @@ STARTING_CONTAINERS = [
 ]
 
 
-class Container(BaseModel):
-    """A server container on the grid"""
+class Container(PlacedItem):
+    """An item on the grid whose squares are for other items to sit on.
 
-    id: str = Field(description="Container instance ID")
-    slug: str = Field(description="Container slug")
-    type: str = Field(description="Container type, a key in containers.json")
-    position: Position = Field(description="[x, y] anchor on the grid")
-    shape: Shape = Field(description="Covered squares, as [x, y] offsets")
-    rotation: Rotation = Field(
-        default=Rotation.NONE, description="Quarter turns clockwise from the shape"
-    )
+    It adds nothing to a placed item. A container is bought from the same shop,
+    built from the same catalogue and stands on the same grid, so it is an item
+    that provides squares rather than filling them.
+
+    What separates the two is which list a thing is in, not what it is: a
+    session keeps its containers apart from its items, and the placement rules
+    read one list for the squares on offer and the other for the squares
+    already taken.
+    """
 
     @classmethod
     def of(
         cls, container_type: str, position: Position, container_id: str
     ) -> "Container":
         """Build a container of a type declared in containers.json"""
-        spec = config_loader.get_container(container_type)
-        return cls(
-            id=container_id,
-            slug=spec.slug,
-            type=container_type,
-            position=position,
-            shape=list(spec.shape.squares),
-        )
-
-    def covered_squares(self) -> Shape:
-        """The grid squares this container covers, once turned"""
-        squares = self.shape
-        if self.rotation is not Rotation.NONE:
-            squares = ItemShape(squares=list(squares)).rotate(self.rotation).squares
-        x, y = self.position
-        return [(x + dx, y + dy) for dx, dy in squares]
+        item = Item.of(container_type, container_id)
+        return cls(**item.item_fields(), position=position)
 
 
 def starting_containers() -> List[Container]:

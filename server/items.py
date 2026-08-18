@@ -187,8 +187,8 @@ class Item(BaseModel):
         """
         return sale_price(self.cost)
 
-    def _item_fields(self) -> dict:
-        """Just the fields an Item has, so a placed item can be rebuilt"""
+    def item_fields(self) -> dict:
+        """Just the fields an Item has, so a placed item can be rebuilt."""
         return {k: v for k, v in self.model_dump().items() if k in Item.model_fields}
 
     def placed_at(
@@ -196,7 +196,7 @@ class Item(BaseModel):
     ) -> "PlacedItem":
         """The same item, now on the grid. Works on a placed item too."""
         return PlacedItem(
-            **self._item_fields(),
+            **self.item_fields(),
             position=position,
             rotation=rotation,
         )
@@ -220,4 +220,4 @@ class PlacedItem(Item):
 
     def stored(self) -> Item:
         """The same item, taken off the grid and put in the chest"""
-        return Item(**self._item_fields())
+        return Item(**self.item_fields())

@@ -23,7 +23,7 @@ var tooltip_panel: Panel = null
 var is_hovering: bool = false
 
 func setup(data, size: float = 45.0, spacing: float = 1.0):
-	"""Initialize the visual from an APITypes.Item or APITypes.ServerContainer"""
+	"""Initialize the visual from an APITypes.Item"""
 	item_data = data
 	cell_size = size
 	cell_spacing = spacing
@@ -34,8 +34,8 @@ func setup(data, size: float = 45.0, spacing: float = 1.0):
 func _is_container() -> bool:
 	"""A container is drawn as the ground the items sit on, not as an item.
 
-	Both the shop's Item and the grid's ServerContainer answer this, so the
-	drawing does not have to know which of the two it was handed.
+	A container is an item that provides squares rather than filling them,
+	and it says so whether it is still in the shop or already on the grid.
 	"""
 	return item_data.is_container
 

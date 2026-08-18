@@ -186,7 +186,7 @@ class TestBattleAPIResponse:
         assert len(player_inv["servers"]) >= 3  # Should have default containers
         for container in player_inv["servers"]:
             assert "id" in container
-            assert "type" in container
+            assert "item_type" in container
             assert "position" in container
             assert "shape" in container
 
@@ -217,7 +217,7 @@ class TestBattleAPIResponse:
         # Verify enemy containers
         for container in enemy_inv["servers"]:
             assert "id" in container
-            assert "type" in container
+            assert "item_type" in container
             assert "position" in container
             assert "shape" in container
             assert isinstance(container["position"], list)

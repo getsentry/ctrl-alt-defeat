@@ -44,14 +44,20 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 	return data
 
 
+# A container is a placed item that provides squares rather than filling them,
+# so it arrives carrying every field an item does.
 func _container(overrides: Dictionary = {}) -> Dictionary:
-	var data = {
+	var data = _item({
 		"id": "container_a",
+		"item_type": "standard_vm",
+		"name": "Standard VM",
 		"slug": "standard_vm",
-		"type": "standard_vm",
-		"position": [2, 3],
-		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
-	}
+		"category": "container",
+		"is_container": true,
+		"color": "",
+		"pattern": "",
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]
+	})
 	data.merge(overrides, true)
 	return data
 
@@ -111,11 +117,13 @@ func test_a_whole_item_survives_parsing():
 
 
 func test_a_whole_container_survives_parsing():
-	var container = APITypes.ServerContainer.new(_container({"id": "container_b", "position": [4, 3]}))
+	var container = APITypes.PlacedItem.new(_container({"id": "container_b", "position": [4, 3]}))
 
 	assert_eq(container.id, "container_b", "id should survive parsing")
 	assert_eq(container.slug, "standard_vm", "slug should survive parsing")
-	assert_eq(container.type, "standard_vm", "type should survive parsing")
+	assert_eq(container.item_type, "standard_vm", "item_type should survive parsing")
+	assert_true(container.is_container, "a container should say that it is one")
+	assert_eq(container.name, "Standard VM", "a container carries the name its tooltip shows")
 	assert_eq(container.position.x, 4, "x should survive parsing")
 	assert_eq(container.position.y, 3, "y should survive parsing")
 	assert_eq(container.shape, [[0, 0], [1, 0], [0, 1], [1, 1]], "shape should survive parsing")
@@ -137,8 +145,8 @@ func test_a_round_trip_through_to_dict_loses_nothing():
 	assert_eq(reloaded_item.position.x, item.position.x, "item x should survive a round trip")
 	assert_eq(reloaded_item.position.y, item.position.y, "item y should survive a round trip")
 
-	var container = APITypes.ServerContainer.new(_container({"id": "container_c", "position": [6, 3]}))
-	var reloaded_container = APITypes.ServerContainer.new(container.to_dict())
+	var container = APITypes.PlacedItem.new(_container({"id": "container_c", "position": [6, 3]}))
+	var reloaded_container = APITypes.PlacedItem.new(container.to_dict())
 
 	assert_eq(reloaded_container.id, container.id, "container id should survive a round trip")
 	assert_eq(reloaded_container.shape, container.shape, "container shape should survive a round trip")
@@ -187,7 +195,7 @@ func test_inventory_state_handles_an_empty_inventory():
 func test_inventory_state_survives_a_round_trip():
 	# An item goes out to the server as plain data and comes back the same.
 	var item = APITypes.PlacedItem.new(_item())
-	var container = APITypes.ServerContainer.new(_container())
+	var container = APITypes.PlacedItem.new(_container())
 
 	var state = APITypes.InventoryState.new({
 		"items": [item.to_dict()], "servers": [container.to_dict()]
@@ -339,7 +347,7 @@ func test_a_position_serialises_only_as_an_array():
 
 
 func test_positions_survive_a_container_round_trip():
-	var container = APITypes.ServerContainer.new(_container({"position": [4, 3]}))
+	var container = APITypes.PlacedItem.new(_container({"position": [4, 3]}))
 	var as_dict = container.to_dict()
 
 	assert_typeof(as_dict["position"], TYPE_ARRAY, "A container writes its position as an array")

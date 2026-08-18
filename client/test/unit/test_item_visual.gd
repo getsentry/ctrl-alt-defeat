@@ -141,8 +141,8 @@ func test_container_is_drawn_in_its_own_colour():
 
 func test_a_container_in_the_shop_is_drawn_as_a_container():
 	# In the shop a container is an ordinary Item with the flag set, because
-	# that is what the player buys. It carries no colour of its own, so
-	# drawing it as an item put a black square on the shop shelf.
+	# that is what the player buys. It carries no colour of its own, so it has
+	# to be drawn as a container wherever it is.
 	_make(_item({"slug": "standard_vm", "is_container": true, "color": "", "pattern": ""}))
 	assert_lt(visual.get_child(0).fill_color.a, 1.0,
 		"A container for sale is still a container")

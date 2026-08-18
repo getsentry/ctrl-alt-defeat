@@ -7,27 +7,9 @@ func test_server_starting_containers_format():
 
 	# Simulate server response with starting containers
 	var server_containers = [
-		{
-			"slug": "standard_vm",
-			"type": "standard_vm",
-			"name": "Standard VM",
-			"position": [1, 3],
-			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
-		},
-		{
-			"slug": "standard_vm",
-			"type": "standard_vm",
-			"name": "Standard VM",
-			"position": [3, 3],
-			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
-		},
-		{
-			"slug": "standard_vm",
-			"type": "standard_vm",
-			"name": "Standard VM",
-			"position": [5, 3],
-			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0
-		}
+		TestHelpers.container_data({"position": [1, 3]}),
+		TestHelpers.container_data({"position": [3, 3]}),
+		TestHelpers.container_data({"position": [5, 3]})
 	]
 
 	GameStateManager.server_containers = server_containers
@@ -37,7 +19,7 @@ func test_server_starting_containers_format():
 
 	# Check first container
 	var first = GameStateManager.server_containers[0]
-	assert_eq(first.type, "standard_vm", "Should be standard_vm type")
+	assert_eq(first.item_type, "standard_vm", "Should be standard_vm type")
 	assert_eq(first.position[0], 1, "Should be at x=1")
 	assert_eq(first.position[1], 3, "Should be at y=3")
 	assert_eq(first.shape, [[0, 0], [1, 0], [0, 1], [1, 1]], "Should cover a 2x2 block")
@@ -56,11 +38,11 @@ func test_standard_vm_mapping():
 
 	# Set containers with standard_vm type
 	GameStateManager.server_containers = [
-		{"slug": "standard_vm", "type": "standard_vm", "position": [1, 1]}
+		TestHelpers.container_data({"position": [1, 1]})
 	]
 
 	# The client should map this to cube_2x2
-	var container_type = GameStateManager.server_containers[0].type
+	var container_type = GameStateManager.server_containers[0].item_type
 	assert_eq(container_type, "standard_vm", "Raw data should still say standard_vm")
 
 	# But UnifiedGridUI should map it
@@ -71,9 +53,9 @@ func test_multiple_containers_side_by_side():
 	GameStateManager.start_new_game()
 
 	var containers = [
-		{"slug": "standard_vm", "type": "standard_vm", "position": [1, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0},
-		{"slug": "standard_vm", "type": "standard_vm", "position": [3, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0},
-		{"slug": "standard_vm", "type": "standard_vm", "position": [5, 3], "shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0}
+		TestHelpers.container_data({"position": [1, 3]}),
+		TestHelpers.container_data({"position": [3, 3]}),
+		TestHelpers.container_data({"position": [5, 3]})
 	]
 
 	GameStateManager.server_containers = containers

@@ -7,10 +7,10 @@ class_name InventoryGrid
 
 # A container on the grid: what the server says it is, and what is drawn for it.
 class PlacedContainer extends RefCounted:
-	var container: APITypes.ServerContainer
+	var container: APITypes.PlacedItem
 	var visual: ItemVisual
 
-	func _init(server_container: APITypes.ServerContainer, drawn: ItemVisual):
+	func _init(server_container: APITypes.PlacedItem, drawn: ItemVisual):
 		container = server_container
 		visual = drawn
 
@@ -201,7 +201,7 @@ func load_inventory_state(inventory_state: APITypes.InventoryState):
 	for item_data in inventory_state.items:
 		_add_item(item_data)
 
-func _add_container(container: APITypes.ServerContainer):
+func _add_container(container: APITypes.PlacedItem):
 	"""Add a server container to the grid"""
 	if not container.position:
 		return
