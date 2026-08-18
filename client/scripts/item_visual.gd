@@ -143,9 +143,21 @@ func _create_colored_visual():
 	outside of the shape rather than around each of its cells.
 	"""
 	var placeholder = ItemPlaceholder.new()
-	placeholder.setup(item_shape, _placeholder_color(), cell_size, cell_spacing)
+	placeholder.setup(item_shape, _placeholder_color(), cell_size, cell_spacing,
+		_placeholder_pattern())
 	placeholder.size = custom_minimum_size
 	add_child(placeholder)
+
+
+func _placeholder_pattern() -> String:
+	"""The pattern name for an item with no artwork.
+
+	A container has none. It is the ground the items stand on, and a pattern
+	there would fight with the items standing on it.
+	"""
+	if _is_container():
+		return ""
+	return item_data.pattern
 
 
 func _placeholder_color() -> Color:

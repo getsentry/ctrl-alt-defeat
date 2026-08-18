@@ -18,13 +18,18 @@ const OUTLINE_DARKENING := 0.45
 
 var shape: Array = [[0, 0]]  # Array[Array[int]]: the [x, y] offsets it covers
 var fill_color := Color(0.2, 0.5, 1.0)
+var pattern := ""
 var cell_size := 45.0
 var cell_spacing := 1.0
 
 
-func setup(item_shape: Array, color: Color, size: float, spacing: float) -> void:
+func setup(
+	item_shape: Array, color: Color, size: float, spacing: float,
+	pattern_name: String = ""
+) -> void:
 	shape = item_shape
 	fill_color = color
+	pattern = pattern_name
 	cell_size = size
 	cell_spacing = spacing
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -116,5 +121,19 @@ static func inner_rects(
 func _draw() -> void:
 	for rect in filled_rects(shape, cell_size, cell_spacing):
 		draw_rect(rect, outline_color())
-	for rect in inner_rects(shape, cell_size, cell_spacing, OUTLINE_WIDTH):
+
+	var inner := inner_rects(shape, cell_size, cell_spacing, OUTLINE_WIDTH)
+	for rect in inner:
 		draw_rect(rect, fill_color)
+
+	if ItemPatterns.draws_nothing(pattern):
+		return
+
+	# The pattern runs across the whole item rather than restarting in each
+	# square: the piece of the tile drawn in each rectangle is taken from where
+	# that rectangle sits, so the motif carries on across the seams. It goes
+	# inside the outline, which is why it follows the inner rectangles.
+	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	var texture := ItemPatterns.tile(pattern, cell_size)
+	for rect in inner:
+		draw_texture_rect_region(texture, rect, Rect2(rect.position, rect.size))
