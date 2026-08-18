@@ -31,7 +31,16 @@ godot --headless --path client -s addons/gut/gut_cmdln.gd \
 
 ## Git
 
-Several agents commit to `main` at once, so pulls collide often. Run this once
+**Do not commit or push until you are asked to.** Do the work, stop at a point
+that can be reviewed, and say what changed and what is still open. Being asked
+to *do* something is not being asked to commit it.
+
+An approval covers the change it was given for and nothing else. If a message
+approves a commit and asks for more work, the new work is not covered by it —
+that work waits for its own review, even though a commit was just approved.
+
+When you are asked to commit, pull first. Several agents commit to `main` at
+once, so pulls collide often. Run this once
 per clone — `git config` writes to `.git/config`, so it is not shared and a new
 clone will not have it:
 
