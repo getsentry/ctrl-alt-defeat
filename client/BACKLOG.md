@@ -34,42 +34,16 @@ cannot reconstruct the curve.
 the client draw it. Until that lands the honest thing may be to hide the bar
 rather than show a number that is made up.
 
-## An item that fires should look and sound like it
+## An item's hit should sound like what the item is made of
 
-Taken from the game this is modelled on, where every activation is felt:
+There is one hit sound, played when an item's attack lands. What it ought to
+key off is how the item *looks* — a blade and a brick should not land the same
+way — which is a property no item currently carries. The server would need to
+say, or the client would need to infer it from the artwork.
 
-- **The item swells briefly** as it goes off, then settles. That, not the log,
-  is what tells you which of your items is carrying the build.
-- **A sound per class of item**, not per item — wooden things thunk, metal
-  things ring. A sound for all ninety-five items is a sound nobody makes; a
-  sound per material is a handful.
-
-The seam is already there and already wired: `event_processor.item_activated`
-is connected to `battle_screen._on_item_activated`, which calls
-`_show_item_activation(item_id, player)` — a function whose whole body is
-`pass`.
-
-What is missing is a way to get from an `item_id` to the thing on screen.
-`InventoryGrid` holds `ItemVisual`s inside its placed entries but exposes no
-lookup, so that needs adding before the visual can be touched.
-
-For the sounds, `tools/create_sounds.py` already synthesises the two round
-result stings and is the obvious place to add a short set of material hits.
-
-## An item on cooldown should show it filling
-
-Also from the reference: an item that has just fired **goes dark**, then fills
-back up from empty as its cooldown runs down, so the rack reads as a set of
-timers rather than a still picture. It is the clearest signal in that game of
-what a build is actually doing.
-
-The data is already on the client: `APITypes.InventoryItem.cooldown` is
-populated (`api_types.gd:60`, `:85`), and every activation arrives with a
-timestamp. Time since last activation over cooldown gives the fill directly.
-
-Needs the same `item_id` to `ItemVisual` lookup as the item above, so the two
-are one piece of work. `ItemVisual` then wants an overlay it can wipe — a dark
-rectangle clipped to a fraction of the item's height is enough.
+`tools/create_sounds.py` builds the one there is; splitting it is a matter of
+calling `hit()` a few times with different numbers and picking between them in
+`BattleHud.item_fired`.
 
 ## The battle speed button calls a method that does not exist
 

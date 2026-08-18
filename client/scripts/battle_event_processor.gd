@@ -9,7 +9,7 @@ signal battle_started()
 signal damage_dealt(player: int, amount: int, remaining_hp: int, source: String)
 signal healing_done(player: int, amount: int, remaining_hp: int)
 signal block_activated(player: int, amount: int)
-signal item_activated(item_id: String, player: int)
+signal item_activated(item_id: String, player: int, action: String)
 signal buff_applied(player: int, buff_name: String)
 signal debuff_applied(player: int, debuff_name: String)
 signal player_died(player: int)
@@ -234,6 +234,13 @@ func _process_event(event: APITypes.BattleAction):
 			else:
 				player2_hp = max(0, player2_hp - damage)
 			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp, dot_source)
+
+	# Every action with an item behind it is that item firing, and the source
+	# is that item's own uid. This signal has been declared and connected since
+	# the class was written and never once emitted, so nothing on screen has
+	# ever known which item did anything.
+	if source != "system" and source != "none":
+		item_activated.emit(source, player, action)
 
 	event_processed.emit(event)
 

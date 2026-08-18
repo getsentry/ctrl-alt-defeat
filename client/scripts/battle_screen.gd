@@ -423,10 +423,10 @@ func _on_buff_applied(player: int, buff_name: String):
 func _on_debuff_applied(player: int, debuff_name: String):
 	hud.add_effect(player, debuff_name, false)
 
-func _on_item_activated(item_id: String, player: int):
+func _on_item_activated(item_id: String, player: int, action: String):
 	# Log is handled by BattleEventProcessor
 	# Show item activation visual
-	_show_item_activation(item_id, player)
+	_show_item_activation(item_id, player, action)
 
 func _on_player_died(player: int):
 	# Log is handled by BattleEventProcessor
@@ -491,9 +491,31 @@ func _show_block_effect(player: int):
 		return
 	_throw_number(player, "BLOCK", Color(0.5, 0.85, 1.0), 32)
 
-func _show_item_activation(item_id: String, player: int):
-	# Visual feedback for item activation
-	pass
+## What an item does that counts as swinging at someone. A buff or a heal is an
+## item doing its job too, but it is not a blow, and giving everything the same
+## knock would turn a busy build into one long rattle.
+const ATTACKS := ["damage", "critical_hit", "miss"]
+
+
+func _show_item_activation(item_id: String, _player: int, action: String):
+	"""Mark on screen that an item went off.
+
+	Which rack it is in is a lookup rather than a deduction: the id is the
+	item's own uid, and the player on the action is whoever it happened *to*,
+	which for an attack is the other one.
+	"""
+	if not Presentation.request("item_activation",
+			{"item": item_id, "action": action}):
+		return
+
+	for grid in [player_inventory, enemy_inventory]:
+		var visual = grid.item_visual(item_id)
+		if visual == null:
+			continue
+		visual.fire(visual.item_data.cooldown)
+		if action in ATTACKS:
+			hud.item_fired()
+		return
 
 func _go_to_post_battle():
 	# Go to post-battle results screen

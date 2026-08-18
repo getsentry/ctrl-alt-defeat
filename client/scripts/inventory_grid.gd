@@ -223,6 +223,19 @@ func _create_hover_preview():
 	hover_preview.add_theme_stylebox_override("panel", hover_style)
 	add_child(hover_preview)
 
+func item_visual(item_id: String) -> ItemVisual:
+	"""The drawing of one item, by the id the server calls it.
+
+	The battle timeline names the item behind every action by its own uid, so
+	this is what turns "something happened" into "that one, there".
+	"""
+	for visual in items:
+		var data = visual.get_meta("item_data")
+		if data != null and data.id == item_id:
+			return visual
+	return null
+
+
 func grid_to_pixel(grid_pos: Vector2i) -> Vector2:
 	"""Convert grid coordinates to pixel position"""
 	return Vector2(

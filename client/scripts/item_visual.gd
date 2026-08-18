@@ -22,6 +22,10 @@ var item_shape: Array = [[0, 0]]  # Array[Array[int]]: the [x, y] offsets it cov
 var tooltip_panel: Panel = null
 var is_hovering: bool = false
 
+# What the item is doing right now, as opposed to what it is.
+var _cooldown: Cooldown = null
+var _fire_tween: Tween = null
+
 func setup(data, size: float = 45.0, spacing: float = 1.0):
 	"""Initialize the visual from an APITypes.Item"""
 	item_data = data
@@ -283,3 +287,93 @@ static func create_shop_preview(item_data: Dictionary, size: Vector2 = Vector2(6
 	preview.enable_tooltip = false  # Shop items have their own hover behavior
 	preview.setup(item_data, size.x, 1)
 	return preview
+
+
+# ============ Firing ============
+
+## How much bigger an item gets at the top of its swell.
+const FIRE_SCALE := 1.35
+const FIRE_UP := 0.07
+const FIRE_DOWN := 0.16
+
+
+func fire(cooldown_seconds: float = 0.0) -> void:
+	"""Mark that this item just went off.
+
+	It swells and settles, and if it has a cooldown it goes dark and fills back
+	up over it. Between them they say which item is carrying a build, which is
+	the question a player watching a battle is actually asking - the log says
+	it too, but not fast enough to watch.
+	"""
+	_swell()
+	if cooldown_seconds > 0.0:
+		_start_cooldown(cooldown_seconds)
+
+
+func _swell() -> void:
+	# From the middle, not the corner, or a growing item slides as it grows.
+	pivot_offset = size / 2.0
+	if _fire_tween != null and _fire_tween.is_valid():
+		_fire_tween.kill()
+	scale = Vector2.ONE
+
+	_fire_tween = create_tween()
+	_fire_tween.tween_property(self, "scale", Vector2(FIRE_SCALE, FIRE_SCALE), FIRE_UP) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_fire_tween.tween_property(self, "scale", Vector2.ONE, FIRE_DOWN) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _start_cooldown(seconds: float) -> void:
+	if _cooldown == null:
+		_cooldown = Cooldown.new()
+		_cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Over the artwork, under the tooltip.
+		_cooldown.z_index = 1
+		add_child(_cooldown)
+	_cooldown.size = size
+	_cooldown.run(seconds)
+
+
+func is_cooling() -> bool:
+	return _cooldown != null and _cooldown.filling
+
+
+## The dark that covers an item while it is not ready, retreating downwards as
+## the cooldown runs out.
+##
+## Drawn from the top so the lit part grows from the bottom up, which reads as
+## filling rather than draining. An item ready to go is not covered at all.
+class Cooldown extends Control:
+	const DARK := Color(0.02, 0.02, 0.07, 0.72)
+
+	var filling: bool = false
+	var _left: float = 0.0
+	var _total: float = 0.0
+
+	func run(seconds: float) -> void:
+		_total = maxf(seconds, 0.01)
+		_left = _total
+		filling = true
+		set_process(true)
+		queue_redraw()
+
+	func _ready() -> void:
+		set_process(false)
+
+	func _process(delta: float) -> void:
+		_left -= delta
+		if _left <= 0.0:
+			_left = 0.0
+			filling = false
+			set_process(false)
+		queue_redraw()
+
+	func _draw() -> void:
+		if not filling:
+			return
+		var covered := size.y * (_left / _total)
+		draw_rect(Rect2(Vector2.ZERO, Vector2(size.x, covered)), DARK)
+		# A line at the waterline, so the movement is visible on a small item.
+		draw_line(Vector2(0, covered), Vector2(size.x, covered),
+			Color(0.6, 0.9, 1.0, 0.5), 1.0)

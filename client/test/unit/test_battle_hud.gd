@@ -194,6 +194,42 @@ func test_numbers_landing_together_do_not_print_on_top_of_each_other():
 		"Two hits at once should be readable as two")
 
 
+# ============ What an item sounds like ============
+
+func test_the_hit_is_ready_to_play():
+	# Both halves of this have been silently missing at some point: the sound
+	# that says an item landed was declared and never wired, and before that
+	# the signal behind it was declared and never emitted.
+	assert_not_null(hud._hit, "The hit sound should be loaded")
+	assert_gt(hud._voices.size(), 0, "and have somewhere to play")
+
+
+func test_hits_landing_together_do_not_all_sound():
+	# Six items landing at once should read as one blow. Without the gate it is
+	# six copies of the same tick over each other.
+	hud.item_fired()
+	var after_one = hud._next_voice
+	for i in 5:
+		hud.item_fired()
+
+	# _next_voice only moves on when a hit actually plays, which makes it the
+	# honest count of how many were let through. The clock is not: six calls in
+	# the same millisecond all read the same tick.
+	assert_eq(hud._next_voice, after_one,
+		"A hit in the same instant as the last should be swallowed")
+
+
+func test_a_hit_can_sound_again_once_the_gate_has_passed():
+	hud.item_fired()
+	var after_one = hud._next_voice
+	# Reach past the gate rather than waiting on the clock.
+	hud._last_hit -= BattleHud.HIT_GAP_MS * 2
+
+	hud.item_fired()
+
+	assert_ne(hud._next_voice, after_one, "The next blow should sound")
+
+
 # ============ The stats, in the middle ============
 
 func test_both_fighters_stats_are_side_by_side_in_the_middle():

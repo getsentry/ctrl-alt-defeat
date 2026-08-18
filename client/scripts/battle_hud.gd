@@ -72,6 +72,10 @@ var timeline: Timeline
 var log_drawer: Control
 var log_button: Button
 var stats_plate: NeonPlate
+var _hit: AudioStream = null
+var _voices: Array[AudioStreamPlayer] = []
+var _next_voice: int = 0
+var _last_hit: int = -HIT_GAP_MS
 var _effects: Dictionary = {}
 var _log_open: bool = false
 
@@ -102,6 +106,7 @@ func build(time_label: Label, speed_button: Button, log_panel: Control,
 	_frame(grids["enemy"], ENEMY_ACCENT, "THEIR RACK")
 	_place_fighters(art)
 	_build_stats(stats)
+	_build_hits()
 
 
 # ============ The clock ============
@@ -214,6 +219,51 @@ func toggle_log() -> void:
 
 func is_log_open() -> bool:
 	return _log_open
+
+
+# ============ What an item sounds like ============
+
+## How loud a single item landing is. Under the stings, but audibly so: at
+## -17 dB on top of a quiet file it came to 19 dB below them, almost all of it
+## at 140 Hz, and nobody could hear it at all.
+const HIT_VOLUME := -9.0
+## How many can sound at once. Past this the oldest is cut off, which is
+## preferable to twenty overlapping copies of the same tick.
+const VOICES := 6
+## How soon it may sound again. Six items landing together should read as one
+## blow, not as six.
+const HIT_GAP_MS := 55
+const HIT_PATH := "res://assets/audio/hit.wav"
+
+
+func _build_hits() -> void:
+	if not ResourceLoader.exists(HIT_PATH):
+		return
+	_hit = load(HIT_PATH)
+	for i in VOICES:
+		var voice := AudioStreamPlayer.new()
+		voice.name = "Hit%d" % i
+		voice.volume_db = HIT_VOLUME
+		screen.add_child(voice)
+		_voices.append(voice)
+
+
+## Sound an item landing a hit.
+func item_fired() -> void:
+	if _hit == null or _voices.is_empty():
+		return
+
+	# Several items landing together should read as one blow, not as a burst of
+	# identical ticks over each other.
+	var now := Time.get_ticks_msec()
+	if now - _last_hit < HIT_GAP_MS:
+		return
+	_last_hit = now
+
+	var voice := _voices[_next_voice]
+	_next_voice = (_next_voice + 1) % _voices.size()
+	voice.stream = _hit
+	voice.play()
 
 
 # ============ The stats, in the middle ============
