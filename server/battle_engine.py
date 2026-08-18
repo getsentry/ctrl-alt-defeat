@@ -123,13 +123,8 @@ class BattleItem:
 
     # Battle state
     current_cooldown: float = 0.0
-    memory_leak_stacks: int = 0  # For Memory Leak special
-
-    # Modifiers from adjacency (Section 4.3)
-    damage_mult: float = 1.0
-    accuracy_bonus: float = 0.0
-    speed_mult: float = 1.0
-    cpu_discount: int = 0
+    # Damage this item has picked up during the battle, on top of its own range.
+    damage_gained: int = 0
 
     @property
     def shape(self) -> ItemShape:
@@ -291,10 +286,6 @@ class BattleSimulator:
         player1.reset_for_battle()
         player2.reset_for_battle()
 
-        # Calculate adjacency (Section 4.2 & 4.3)
-        self._calculate_adjacency(p1_items)
-        self._calculate_adjacency(p2_items)
-
         # Apply infrastructure effects (Section 2.3)
         self._apply_infrastructure(p1_items, player1)
         self._apply_infrastructure(p2_items, player2)
@@ -416,90 +407,6 @@ class BattleSimulator:
         """Get quota based on round number (Section 1.1)"""
         index = min(max(round_num, 1), len(self.ROUND_QUOTA)) - 1
         return self.ROUND_QUOTA[index]
-
-    def _calculate_adjacency(self, items: List[BattleItem]):
-        """Calculate adjacency bonuses (Section 4.2 & 4.3)"""
-        for item in items:
-            if item.uid in self.consumed_items:
-                continue  # Skip consumed items
-            adjacent = self._get_adjacent_items(item, items)
-
-            # Count categories
-            problems = sum(1 for i in adjacent if i.spec.category == "problem")
-            defenses = sum(1 for i in adjacent if i.spec.category == "defense")
-            infrastructure = sum(
-                1 for i in adjacent if i.spec.category == "infrastructure"
-            )
-
-            # Bug Swarm: 3+ problems = +20% damage (Section 4.3)
-            if (
-                item.spec.category == "problem" and problems >= 2
-            ):  # 2 because we need 3 total
-                item.damage_mult *= 1.2
-
-            # Error Monitoring: Adjacent problems gain +10% accuracy (Section 2.2)
-            if item.spec.category == "problem":
-                for adj in adjacent:
-                    if adj.spec.name == "Error Monitoring":
-                        item.accuracy_bonus += 0.1
-
-            # Performance Monitoring: Reduces cooldowns by 0.5s when adjacent to problems
-            if item.spec.category == "problem":
-                for adj in adjacent:
-                    if adj.spec.name == "Performance Monitoring":
-                        # Reduce cooldown for all timer triggers
-                        for trigger in item.spec.triggers:
-                            if isinstance(trigger, TimerTrigger):
-                                trigger.cooldown = max(0.5, trigger.cooldown - 0.5)
-
-            # Full Stack: Problem + Defense + Infrastructure = 30% faster (Section 4.3)
-            if problems >= 1 and defenses >= 1 and infrastructure >= 1:
-                item.speed_mult *= 1.3
-
-            # CDN: Adjacent items gain First Strike (Section 2.3)
-            for adj in adjacent:
-                if adj.spec.name == "CDN":
-                    # Set initial cooldown for timer triggers to activate immediately
-                    for trigger in item.spec.triggers:
-                        if isinstance(trigger, TimerTrigger):
-                            trigger.current_cooldown = -0.1  # Will activate immediately
-
-            # Load Balancer: Distributes stamina cost (Section 2.3)
-            if any(adj.spec.name == "Load Balancer" for adj in adjacent):
-                item.cpu_discount = max(1, item.cpu_discount + 1)
-
-    def _get_adjacent_items(
-        self, item: BattleItem, all_items: List[BattleItem]
-    ) -> List[BattleItem]:
-        """Get orthogonally adjacent items supporting multi-square items"""
-        adjacent = []
-
-        # Get all squares occupied by this item
-        item_squares = set(item.get_occupied_squares())
-
-        # Get all adjacent squares (orthogonal only)
-        adjacent_squares = set()
-        for x, y in item_squares:
-            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                adj_square = (x + dx, y + dy)
-                if adj_square not in item_squares:  # Don't include item's own squares
-                    adjacent_squares.add(adj_square)
-
-        # Check which items occupy these adjacent squares
-        for other in all_items:
-            if other.uid == item.uid:
-                continue
-            if other.uid in self.consumed_items:
-                continue  # Skip consumed items
-
-            # Get squares occupied by the other item
-            other_squares = set(other.get_occupied_squares())
-
-            # If any of the other item's squares are adjacent to this item
-            if adjacent_squares & other_squares:  # Set intersection
-                adjacent.append(other)
-
-        return adjacent
 
     def _apply_infrastructure(self, items: List[BattleItem], player: Player):
         """Apply infrastructure passive effects (Section 2.3)"""
@@ -640,12 +547,7 @@ class BattleSimulator:
         trigger_uid: str,
     ):
         """Schedule timer-based trigger activation using priority queue"""
-        # Apply speed modifiers
-        speed = item.speed_mult
-
-        # Calculate next activation time
-        cooldown_adjusted = trigger.cooldown / speed
-        next_time = self.current_time + cooldown_adjusted
+        next_time = self.current_time + trigger.cooldown
 
         def activate():
             # Skip if item is consumed
@@ -653,7 +555,7 @@ class BattleSimulator:
                 return
 
             # Check CPU availability
-            cpu_cost = max(1, trigger.get_cpu_cost() - item.cpu_discount)
+            cpu_cost = trigger.get_cpu_cost()
 
             if owner.cpu >= cpu_cost:
                 # Have enough CPU - apply the effects
@@ -857,7 +759,7 @@ class BattleSimulator:
     ):
         """Process an attack effect"""
         # Check accuracy
-        accuracy = attack_data["accuracy"] + item.accuracy_bonus
+        accuracy = attack_data["accuracy"]
         if "rate_limited" in owner.debuffs:
             accuracy -= owner.debuffs["rate_limited"] * 0.05
 
@@ -878,7 +780,6 @@ class BattleSimulator:
 
         # Calculate damage
         damage = self.rng.randint(attack_data["min_damage"], attack_data["max_damage"])
-        damage = int(damage * item.damage_mult)
 
         # Check crit
         is_crit = self.rng.random() < attack_data["crit_chance"]
@@ -903,11 +804,11 @@ class BattleSimulator:
 
         # Handle special attack types
         if attack_data.get("special") == "stacking":
-            # Memory leak stacking damage
-            item.memory_leak_stacks += 1
-            damage += item.memory_leak_stacks
+            # The item gets stronger with every swing and keeps the gain for the
+            # rest of the battle.
+            item.damage_gained += 1
+            damage += item.damage_gained
         elif attack_data.get("special") == "bypass_block":
-            # SQL injection bypasses blocks
             if "block" in enemy.buffs:
                 enemy.buffs["block"] = int(enemy.buffs["block"] * 0.5)
 
@@ -1040,7 +941,8 @@ class BattleSimulator:
             )
         )
 
-        # Emit event so adjacency can be recalculated
+        # Nothing subscribes to this yet. It is emitted so that something which
+        # wants to react to an item leaving the board has an event to listen to.
         self.event_manager.emit(
             Event(EventType.ITEM_CONSUMED, owner, None, EventData(item_id=item.uid))
         )

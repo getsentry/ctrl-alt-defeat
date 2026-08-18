@@ -240,7 +240,7 @@ and so do we: `BlockEffect` against `PreventDamageEffect`.
   - 30% chance to activate on attack
   - Blocks 7 damage
   - Removes 0.3 CPU from attacker
-  - Passive: Adjacent problems gain +10% accuracy
+  - Passive: problems in its star zone gain +10% accuracy
 
 - **Session Replay** (Uncommon Shield)
   - 30% chance to activate on attack
@@ -279,11 +279,11 @@ Items providing passive bonuses, periodic effects, or conditional triggers.
 
 - **Redis Cache** (Common Accessory)
   - Passive: +3 CPU regeneration
-  - Start of battle: First activation of adjacent items is free
+  - Start of battle: the first activation of items in its star zone is free
 
 - **CDN** (Rare Accessory)
   - All items activate 15% faster
-  - Adjacent items gain "First Strike" at battle start
+  - Items in its star zone gain "First Strike" at battle start
 
 - **Kubernetes Cluster** (Legendary Accessory)
   - Every 3s: Spawn a temporary "Pod" that attacks for 3 damage
@@ -321,24 +321,24 @@ Items that are consumed after triggering once.
 
 ### 2.7 Food Items (Resource Regeneration)
 Items that provide healing and resource regeneration. Food mechanics:
-- **Trigger 10% faster for each adjacent food of DIFFERENT type**
-- Each unique food type adjacent gives the speed bonus
-- Multi-square foods have more adjacency slots for bonuses
+- **Trigger 10% faster for each food of a DIFFERENT type in its zone**
+- Each unique type counts once, however many of it there are
+- A larger food projects a larger zone, so it reaches more types
 - Provide healing, CPU regen, or buff generation
 
 #### Examples:
 - **Coffee** (Common Food) - 1x1
   - Every 5s: Regenerate 2 CPU
-  - Adjacent items gain +5% speed
+  - Items in its star zone gain +5% speed
 
 - **Energy Drink** (Uncommon Food) - 1x2
   - Every 4s: Regenerate 3 CPU + 1 Heat
   - If overheated: Cleanse 2 debuffs
-  - Larger size = more adjacency slots
+  - Larger size = a larger zone
 
 - **Server Room Pizza** (Rare Food) - 2x2
   - Every 6s: Heal 4 HP to all units
-  - Takes 4 grid squares (more adjacency!)
+  - Takes 4 grid squares, so its zone reaches further
 
 - **Debug Donuts** (Epic Food) - L-shaped (3 squares)
   - Every 4s: Heal 3 HP + 1 CPU
@@ -349,7 +349,7 @@ Special items that provide periodic effects or triggered abilities.
 
 #### Pet Mechanics:
 - Activate every X seconds or on specific conditions
-- Speed increased by 15% per adjacent pet
+- Speed increased by 15% per pet in its zone
 - Can have evolution/growth mechanics
 
 #### Examples:
@@ -362,7 +362,7 @@ Special items that provide periodic effects or triggered abilities.
   - On enemy kill: Howl (all pets attack immediately)
 
 - **AI Assistant** (Legendary Pet)
-  - Every 2s: Copy effect of random adjacent item
+  - Every 2s: Copy the effect of a random item in its zone
   - Learns patterns: -0.1s cooldown per activation
 
 ## 3. Buffs & Debuffs
@@ -450,7 +450,7 @@ so a stack applied at 3.5s pays out at 4s with all the others.
 The count is read at the moment it pays. Stacks added between two payments
 count in full at the next one, and no stack is spent by paying out.
 
-## 4. Item Placement & Adjacency
+## 4. Item Placement & Auras
 
 ### 4.1 Grid System
 - **Main Server Room**: 7x9 grid (63 slots)
@@ -466,9 +466,10 @@ count in full at the next one, and no stack is spent by paying out.
 
 ### 4.2 Multi-Square Items
 - **Items can occupy multiple grid squares** (e.g., a "Server Blade" might be 1x3)
-- **Each square of the item counts for adjacency** - a 1x3 item has more adjacent slots than a 1x1
-- **Example**: A 2x2 item has 12 adjacent slots (all orthogonally adjacent squares)
-- **Strategic placement**: Larger items provide more adjacency opportunities
+- **Each square of the item is reached separately** - an aura landing on any one
+  square of an item reaches that item
+- **Strategic placement**: a larger item is easier to reach with an aura, and
+  reaches further with its own
 
 #### Multi-Square Item Examples:
 - **Server Blade** (1x3): Long horizontal server component
@@ -478,26 +479,41 @@ count in full at the next one, and no stack is spent by paying out.
 - **Pizza Slice** (3 squares triangular): Irregular food shape
 - **Monitor Array** (T-shape, 4 squares): Central monitoring system
 
-### 4.3 Adjacency Rules
-- **Orthogonal only**: Items touching horizontally or vertically are "adjacent"
-- **No diagonals**: Diagonal touching doesn't count
-- **Multi-square adjacency**: ALL squares of an item check for adjacency
-- **Container rules**:
-  - Items inside a rack can be adjacent to each other
-  - Items inside a rack are NOT adjacent to items outside
+### 4.3 Auras
 
-### 4.4 Synergies
-- **Bug Swarm**: 3+ problems adjacent = all gain +20% damage
-  - Multi-square problems count as one item but have more adjacency
-- **Shield Wall**: 3+ shields adjacent = +10% block chance each
-  - Large shields provide better coverage
-- **Full Stack**: Problem + Defense + Infrastructure = 30% faster
-  - Each category only needs one item regardless of size
-- **Monitoring Suite**: 3+ Sentry products = +10 HP at battle start
-- **Food Court**: Different food types adjacent = +10% trigger speed per unique type
-  - Large foods can touch more different food types
-- **Pet Paradise**: Pets gain +1 effect power per adjacent pet
-  - Multi-square pets still count as one pet
+An item does not care what it is next to. It cares whose aura reaches it.
+
+- **An aura is a set of squares** an item projects around itself, drawn on the
+  item's map: `*` for the star zone, `+` for the diamond zone. The two are
+  separate zones, and an item may have either, both or neither.
+- **An aura reaches an item** when any square of the aura lands on any square
+  that item covers. Touching is not required and distance is not a rule: the map
+  says exactly which squares are reached. 118 items in the catalogue project an
+  aura and 41 of those reach past the four squares around them, so "next to" is
+  not a useful approximation of it.
+- **An aura never reaches the item projecting it.** A square of the zone landing
+  on the item's own footprint is dropped.
+- **Turning an item turns its aura**, except where the map marks a square `^`.
+  That square projects straight up in world space however the item is turned, and
+  the projection is dropped only where it lands on the item's own squares.
+
+**Undecided:** whether an aura stops at the edge of a container, or reaches into
+any square regardless. Nothing depends on the answer yet.
+
+`server/grid_system.py` reads all of this from the map. It returns the covered
+squares today and throws the zones away, so nothing acts on an aura yet.
+
+### 4.4 What an aura does
+
+An aura carries the effect of the item projecting it. "Star Weapons gain 3
+damage" means every weapon the star zone reaches gains 3 damage; "Chance-based
+effects of the star items are 15% more likely" means the same shape of thing.
+The wording on each item says what it grants and to what kind of item.
+
+There are no synergies that count how many of a category sit beside each other.
+An earlier version of this document described six, of which two were built
+against orthogonal adjacency. Neither the six nor adjacency exist in the game
+this one is based on, so both are gone.
 
 ## 5. Economy & Progression
 
@@ -628,7 +644,6 @@ player's own stacks — poison has no attack to block.
 ### 7.4 Item Consumption
 - Some items are consumed after use
 - Consumed items are removed from battle
-- Adjacency bonuses update when items are consumed
 
 ## 8. Classes/Heroes (Future)
 

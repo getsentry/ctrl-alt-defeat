@@ -81,7 +81,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(1, 0),  # Adjacent for Bug Swarm
+                position=(1, 0),
                 uid="p1_leak",
             ),
             BattleItem(
@@ -108,7 +108,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(0, 1),  # Adjacent for Bug Swarm
+                position=(0, 1),
                 uid="p1_race",
             ),
         ]
@@ -234,9 +234,14 @@ class TestFullBattleScenarios:
         assert len(block_actions) > 0, "Shields should block some attacks"
         assert len(heal_actions) > 0, "Health Check should heal"
 
-    def test_synergy_focused_builds(self):
-        """Test builds that rely on item synergies"""
-        # Player 1: Bug Swarm synergy (3+ problems adjacent)
+    def test_a_build_of_every_category_fights_to_a_finish(self):
+        """Three problems against a problem, a defense and an infrastructure.
+
+        It asserts only that someone wins. It was named after the Bug Swarm and
+        Full Stack synergies and never checked either of them, and those are gone
+        now, so what is left is a battle with a mixed build reaching an end.
+        """
+        # Player 1: three problems
         p1_items = [
             BattleItem(
                 spec=ItemSpec(
@@ -279,7 +284,7 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(1, 0),  # Adjacent (right)
+                position=(1, 0),
                 uid="p1_bug2",
             ),
             BattleItem(
@@ -301,12 +306,12 @@ class TestFullBattleScenarios:
                         )
                     ],
                 ),
-                position=(0, 1),  # Adjacent (below)
+                position=(0, 1),
                 uid="p1_bug3",
             ),
         ]
 
-        # Player 2: Mixed synergy (Full Stack: problem + defense + infrastructure)
+        # Player 2: one of each category
         p2_items = [
             BattleItem(
                 spec=ItemSpec(
@@ -385,9 +390,6 @@ class TestFullBattleScenarios:
         # Battle should complete
         assert result["winner"] in [1, 2]
 
-        # Check that synergies were applied (would need to check damage multipliers)
-        # Bug Swarm should give +20% damage to p1_bug1 (center bug adjacent to 2 others)
-        # Full Stack should give +30% speed to p2_problem
 
     def test_consumable_heavy_battle(self):
         """Test battle with consumable items (potions)"""

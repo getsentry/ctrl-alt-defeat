@@ -212,47 +212,6 @@ class TestGameDesignCompliance:
         )
         assert player.quota == 95
 
-    def test_adjacency_rules(self):
-        """Test Section 4.2: Orthogonal adjacency only"""
-        sim = BattleSimulator(seed=TEST_SEED)
-
-        center = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(1, 1))
-
-        # Orthogonally adjacent
-        top = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(1, 0))
-        right = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(2, 1))
-        bottom = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(1, 2))
-        left = BattleItem(spec=deepcopy(ITEM_CATALOG["api_token"]), position=(0, 1))
-
-        # Diagonally adjacent (should NOT count)
-        diagonal = BattleItem(
-            spec=deepcopy(ITEM_CATALOG["api_token"]), position=(0, 0)
-        )
-
-        all_items = [center, top, right, bottom, left, diagonal]
-        adjacent = sim._get_adjacent_items(center, all_items)
-
-        # Should have exactly 4 adjacent (not diagonal)
-        assert len(adjacent) == 4
-        assert diagonal not in adjacent
-
-    def test_synergies(self):
-        """Test Section 4.3: Synergy effects"""
-        sim = BattleSimulator(seed=TEST_SEED)
-
-        # Test Bug Swarm: 3+ problems = +20% damage
-        problem1 = BattleItem(
-            spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(1, 1)
-        )
-        problem2 = BattleItem(spec=ITEM_CATALOG["stack_smasher"], position=(1, 0))
-        problem3 = BattleItem(spec=ITEM_CATALOG["deadlock_twins"], position=(0, 1))
-
-        items = [problem1, problem2, problem3]
-        sim._calculate_adjacency(items)
-
-        # problem1 is adjacent to 2 other problems, so 3 total = bug swarm
-        assert problem1.damage_mult == 1.2  # +20% damage
-
     def test_an_action_name_the_client_does_not_know_cannot_be_built(self):
         fields = dict(
             timestamp=0, source="x", target=None, damage=1, player=1, details=None
@@ -387,10 +346,10 @@ class TestGameDesignCompliance:
         """Test specific item special effects from Section 2"""
         BattleSimulator(seed=TEST_SEED)
 
-        # An item starts a battle with none of the damage it can gain in one
-        ml = BattleItem(spec=deepcopy(ITEM_CATALOG["stack_smasher"]), position=(0, 0))
-        assert ml.memory_leak_stacks == 0
-        # After activation would increment
+        # An item starts a battle with none of the damage it can gain in one,
+        # whatever it gained in the last.
+        fresh = BattleItem(spec=deepcopy(ITEM_CATALOG["stack_smasher"]), position=(0, 0))
+        assert fresh.damage_gained == 0
 
         # Error Monitoring is now an on-attacked shield, not battle start block
         em = BattleItem(
@@ -490,26 +449,6 @@ class TestBattleSimulation:
         assert result["duration"] == 60.0
         assert result["player1_quota"] == 25  # No damage taken
         assert result["player2_quota"] == 25
-
-    @pytest.mark.skip(
-        reason="Adjacency buff effects from JSON not fully implemented yet"
-    )
-    def test_adjacency_in_battle(self):
-        """Test adjacency effects work in battle"""
-        sim = BattleSimulator(seed=TEST_SEED)
-
-        # Load Balancer Module gives adjacent items +15% speed
-        lb = BattleItem(spec=ITEM_CATALOG["load_balancer_module"], position=(0, 0))
-
-        np = BattleItem(
-            spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(1, 0)  # Adjacent
-        )
-
-        items = [lb, np]
-        sim._calculate_adjacency(items)
-
-        # Null pointer should have bonus speed from adjacent load balancer
-        assert np.speed_mult == 1.15  # +15% speed
 
 
 if __name__ == "__main__":
