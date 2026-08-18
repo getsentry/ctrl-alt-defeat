@@ -7,33 +7,6 @@ The backlog at the repo root is about the server, the items and the game rules,
 and several people write to it at once. Anything that is only about what the
 player looks at belongs here instead.
 
-## The stamina bar is decoration
-
-`battle_screen.gd:306` and `:314` invent it:
-
-```gdscript
-"stamina": 10.0,
-"max_stamina": 10.0,
-```
-
-Nothing ever writes to it again. The word `stamina` appears **zero times** in
-`api_types.gd` and zero times in `battle_event_processor.gd`, so no field on the
-battle result carries it and no event changes it. The bar reads 10/10 for the
-whole battle because 10/10 is all it has ever been told.
-
-The number is wrong as well as static. Section 1.2 of the Game Design Document
-says the CPU pool is **3 cycles**, regenerating 1 per second. The client shows
-10, which is over three times the rule.
-
-The server knows about CPU — `BattleActionName` has `CPU_FAIL` and `CPU_DRAIN`
-— but a battle action carries no CPU level, so even replaying every event
-cannot reconstruct the curve.
-
-**Fix.** Server side first: put the CPU level on the action, or add a
-`cpu`/`max_cpu` pair to the battle result the way health has one. Only then can
-the client draw it. Until that lands the honest thing may be to hide the bar
-rather than show a number that is made up.
-
 ## An item's hit should sound like what the item is made of
 
 There is one hit sound, played when an item's attack lands. What it ought to

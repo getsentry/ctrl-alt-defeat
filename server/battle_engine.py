@@ -218,6 +218,11 @@ class BattleSimulator:
         self.tick_rate = 0.1  # Section 10.1: 10 ticks/second
         self.current_time = 0.0
         self.actions: List[BattleAction] = []
+        # Set for the length of a battle, so _record can say where the CPU
+        # stood. A test that calls one method on its own has no players, and an
+        # action recorded then simply carries no CPU rather than failing.
+        self.player1: Optional["Player"] = None
+        self.player2: Optional["Player"] = None
         self.event_manager = EventManager()
         self.consumed_items = set()  # Track consumed item UIDs
 
@@ -278,8 +283,12 @@ class BattleSimulator:
                 "Invalid placement for player 2 items - items overlap or are outside containers"
             )
 
-        # Reset state
+        # Reset state. The players are kept on the simulator as well as in
+        # hand, so that _record can say where their CPU stood without every
+        # caller having to pass them.
         self.current_time = 0.0
+        self.player1 = player1
+        self.player2 = player2
         self.actions = []
         self.event_manager.clear()
         self.consumed_items = set()
@@ -296,7 +305,7 @@ class BattleSimulator:
 
         # Emit battle start event
         self.event_manager.emit(Event(EventType.BATTLE_START, None, None))
-        self.actions.append(
+        self._record(
             BattleAction(
                 timestamp=0,
                 source="system",
@@ -328,7 +337,7 @@ class BattleSimulator:
 
             # Check for defeat
             if player1.quota <= 0:
-                self.actions.append(
+                self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source="system",
@@ -341,7 +350,7 @@ class BattleSimulator:
                 )
                 break
             if player2.quota <= 0:
-                self.actions.append(
+                self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source="system",
@@ -402,6 +411,27 @@ class BattleSimulator:
         25, 35, 45, 55, 70, 85, 100, 115, 130,
         150, 170, 190, 210, 230, 260, 290, 320, 350,
     )
+
+    def _record(self, action: BattleAction) -> None:
+        """Add an action to the timeline, stamped with where the CPU stood.
+
+        The client draws a CPU bar for each fighter and nothing in the timeline
+        ever said what to put in it, so it invented a full pool of ten and
+        never moved it - three times the real pool, and static all battle.
+
+        Both players' levels go on every action, not just the one acting. Time
+        passes for both, so an action by one is also a moment at which the
+        other's bar has a different value than it did.
+        """
+        if self.player1 is not None and self.player2 is not None:
+            details = dict(action.details or {})
+            details["cpu"] = [
+                round(self.player1.cpu, 2),
+                round(self.player2.cpu, 2),
+            ]
+            details["max_cpu"] = [self.player1.max_cpu, self.player2.max_cpu]
+            action.details = details
+        self.actions.append(action)
 
     def _get_round_quota(self, round_num: int) -> int:
         """Get quota based on round number (Section 1.1)"""
@@ -521,7 +551,7 @@ class BattleSimulator:
                                 self._apply_effects([effect], item, owner, enemy)
 
                         if prevented:
-                            self.actions.append(
+                            self._record(
                                 BattleAction(
                                     timestamp=self._time_ms(),
                                     source=item.uid,
@@ -564,7 +594,7 @@ class BattleSimulator:
                 trigger.current_cooldown = trigger.cooldown
             else:
                 # Not enough CPU - log throttle but don't activate
-                self.actions.append(
+                self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source=item.uid,
@@ -598,7 +628,7 @@ class BattleSimulator:
                 # Handle heal effect
                 heal = self.rng.randint(result["min_heal"], result["max_heal"])
                 owner.quota = min(owner.max_quota, owner.quota + heal)
-                self.actions.append(
+                self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source=item.uid,
@@ -612,7 +642,7 @@ class BattleSimulator:
             elif isinstance(effect, BlockEffect):
                 # Handle block effect
                 owner.buffs["block"] = owner.buffs.get("block", 0) + result["amount"]
-                self.actions.append(
+                self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source=item.uid,
@@ -628,7 +658,7 @@ class BattleSimulator:
                 owner.buffs[result["buff_name"]] = (
                     owner.buffs.get(result["buff_name"], 0) + result["value"]
                 )
-                self.actions.append(
+                self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source=item.uid,
@@ -652,7 +682,7 @@ class BattleSimulator:
                     enemy.debuffs[result["debuff_name"]] = (
                         enemy.debuffs.get(result["debuff_name"], 0) + result["value"]
                     )
-                    self.actions.append(
+                    self._record(
                         BattleAction(
                             timestamp=self._time_ms(),
                             source=item.uid,
@@ -686,7 +716,7 @@ class BattleSimulator:
                 # battle.
                 drained = owner if result["target_type"] == "self" else enemy
                 drained.cpu = max(0.0, drained.cpu - result["amount"])
-                self.actions.append(
+                self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source=item.uid,
@@ -705,7 +735,7 @@ class BattleSimulator:
                     result["removes"] if result["named"] else "",
                 )
                 if cleansed:
-                    self.actions.append(
+                    self._record(
                         BattleAction(
                             timestamp=self._time_ms(),
                             source=item.uid,
@@ -765,7 +795,7 @@ class BattleSimulator:
 
         if self.rng.random() > accuracy:
             # Miss
-            self.actions.append(
+            self._record(
                 BattleAction(
                     timestamp=self._time_ms(),
                     source=item.uid,
@@ -790,7 +820,7 @@ class BattleSimulator:
             if attack_data.get("special") == "crash" and self.rng.random() < 0.2:
                 damage = 15  # Instant 15 damage
 
-            self.actions.append(
+            self._record(
                 BattleAction(
                     timestamp=self._time_ms(),
                     source=item.uid,
@@ -866,7 +896,7 @@ class BattleSimulator:
             if target.buffs["block"] <= 0:
                 del target.buffs["block"]
 
-            self.actions.append(
+            self._record(
                 BattleAction(
                     timestamp=self._time_ms(),
                     source="system",  # Block is the player's, not an item's
@@ -897,7 +927,7 @@ class BattleSimulator:
         """
         target.quota -= damage
 
-        self.actions.append(
+        self._record(
             BattleAction(
                 timestamp=self._time_ms(),
                 source=source,
@@ -929,7 +959,7 @@ class BattleSimulator:
         self.consumed_items.add(item.uid)
 
         # Log the consumption
-        self.actions.append(
+        self._record(
             BattleAction(
                 timestamp=self._time_ms(),
                 source=item.uid,

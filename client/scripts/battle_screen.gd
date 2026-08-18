@@ -243,7 +243,7 @@ func _update_stats_display():
 
 	player_stamina_bar.max_value = player_data.max_stamina
 	player_stamina_bar.value = player_data.stamina
-	player_stamina_label.text = "%.0f/%.0f" % [player_data.stamina, player_data.max_stamina]
+	player_stamina_label.text = "%.1f/%.0f" % [player_data.stamina, player_data.max_stamina]
 
 	# Update enemy stats
 	enemy_health_bar.max_value = enemy_data.max_health
@@ -254,7 +254,7 @@ func _update_stats_display():
 
 	enemy_stamina_bar.max_value = enemy_data.max_stamina
 	enemy_stamina_bar.value = enemy_data.stamina
-	enemy_stamina_label.text = "%.0f/%.0f" % [enemy_data.stamina, enemy_data.max_stamina]
+	enemy_stamina_label.text = "%.1f/%.0f" % [enemy_data.stamina, enemy_data.max_stamina]
 
 
 
@@ -264,6 +264,7 @@ func _connect_event_signals():
 	event_processor.damage_dealt.connect(_on_damage_dealt)
 	event_processor.healing_done.connect(_on_healing_done)
 	event_processor.block_activated.connect(_on_block_activated)
+	event_processor.cpu_changed.connect(_on_cpu_changed)
 	event_processor.buff_applied.connect(_on_buff_applied)
 	event_processor.debuff_applied.connect(_on_debuff_applied)
 	event_processor.item_activated.connect(_on_item_activated)
@@ -313,16 +314,22 @@ func _start_battle_playback():
 	player_data = {
 		"health": quota,
 		"max_health": quota,
-		"stamina": 10.0,
-		"max_stamina": 10.0,
+		# Nothing yet. The first action carries where the CPU really stood, and
+		# it arrives at the battle's own timestamp zero. Naming a number here
+		# is what put a static 10 out of 10 on screen for the whole battle.
+		"stamina": 0.0,
+		"max_stamina": 0.0,
 		"buffs": []
 	}
 
 	enemy_data = {
 		"health": quota,
 		"max_health": quota,
-		"stamina": 10.0,
-		"max_stamina": 10.0,
+		# Nothing yet. The first action carries where the CPU really stood, and
+		# it arrives at the battle's own timestamp zero. Naming a number here
+		# is what put a static 10 out of 10 on screen for the whole battle.
+		"stamina": 0.0,
+		"max_stamina": 0.0,
 		"buffs": []
 	}
 
@@ -426,6 +433,13 @@ func _on_healing_done(player: int, amount: int, remaining_hp: int):
 func _on_block_activated(player: int, amount: int):
 	# Log is handled by BattleEventProcessor
 	_show_block_effect(player)
+
+func _on_cpu_changed(player: int, cpu: float, max_cpu: float):
+	"""Take the CPU level from the battle rather than making one up."""
+	var side = player_data if player == 1 else enemy_data
+	side.stamina = cpu
+	side.max_stamina = max_cpu
+
 
 func _on_buff_applied(player: int, buff_name: String):
 	hud.add_effect(player, buff_name, true)

@@ -323,6 +323,52 @@ func test_damage_over_time_wears_health_down():
 	assert_eq(processor.player2_hp, quota - 3, "Damage over time should still hurt")
 
 
+# ============ Where the CPU stands ============
+
+func test_an_action_says_where_both_fighters_cpu_stood():
+	# The client used to invent a full pool of ten and never move it: three
+	# times the real pool, and static for the whole battle. Nothing in the
+	# timeline said otherwise, because nothing in the timeline said anything.
+	var seen = {}
+	processor.cpu_changed.connect(
+		func(player, cpu, max_cpu): seen[player] = [cpu, max_cpu])
+
+	processor.load_battle_events(_battle([_action({
+		"details": {"cpu": [1.5, 2.75], "max_cpu": [3, 4]}})]))
+	processor.skip_to_end()
+
+	assert_eq(seen[1], [1.5, 3.0], "The player's pool, as the battle had it")
+	assert_eq(seen[2], [2.75, 4.0], "and the opponent's, which is not the same")
+
+
+func test_an_action_without_a_cpu_level_says_nothing_about_it():
+	# Not every action carries one: an engine method called on its own outside
+	# a battle has no players to ask.
+	var seen = []
+	processor.cpu_changed.connect(func(_p, _c, _m): seen.append(true))
+
+	processor.load_battle_events(_battle([_action({"details": null})]))
+	processor.skip_to_end()
+
+	assert_eq(seen.size(), 0, "Better silent than made up")
+
+
+func test_the_pool_can_grow_during_a_battle():
+	# Infrastructure raises max_cpu, so the pool is not fixed for the battle
+	# and cannot be read once at the start.
+	var pools = []
+	processor.cpu_changed.connect(
+		func(player, _cpu, max_cpu): if player == 1: pools.append(max_cpu))
+
+	processor.load_battle_events(_battle([
+		_action({"details": {"cpu": [3.0, 3.0], "max_cpu": [3, 3]}}),
+		_action({"timestamp": 100, "details": {"cpu": [4.0, 3.0], "max_cpu": [5, 3]}}),
+	]))
+	processor.skip_to_end()
+
+	assert_eq(pools, [3.0, 5.0], "The pool should follow what the battle says")
+
+
 # ============ Changing pace without moving the playhead ============
 
 func _play_for(seconds: float) -> void:

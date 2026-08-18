@@ -12,6 +12,7 @@ signal block_activated(player: int, amount: int)
 signal item_activated(item_id: String, player: int, action: String)
 signal buff_applied(player: int, buff_name: String)
 signal debuff_applied(player: int, debuff_name: String)
+signal cpu_changed(player: int, cpu: float, max_cpu: float)
 signal player_died(player: int)
 signal battle_ended(winner: int)
 signal log_message(message: String, color: Color)
@@ -246,6 +247,15 @@ func _process_event(event: APITypes.BattleAction):
 			else:
 				player2_hp = max(0, player2_hp - damage)
 			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp, dot_source)
+
+	# Where both fighters' CPU stood at this moment. Every action carries it,
+	# because time passes for both of them, so an action by one is also a
+	# moment at which the other's pool has refilled a little.
+	if event.details != null and event.details.has("cpu"):
+		var levels = event.details["cpu"]
+		var pools = event.details.get("max_cpu", [0, 0])
+		for side in [0, 1]:
+			cpu_changed.emit(side + 1, float(levels[side]), float(pools[side]))
 
 	# Every action with an item behind it is that item firing, and the source
 	# is that item's own uid. This signal has been declared and connected since
