@@ -323,13 +323,22 @@ func test_damage_updates_health_even_though_it_does_not_animate():
 
 func test_both_players_have_a_full_stat_readout():
 	# Each side shows a health bar, a health number, a stamina bar and a
-	# stamina number. Only the bars were covered before.
-	for side in ["Player1Container", "Player2Container"]:
-		var panel = battle_screen.find_child(side, true, false)
-		assert_not_null(panel, "%s should exist" % side)
-		for stat in ["HealthBar", "HealthValue", "StaminaBar", "StaminaValue"]:
-			assert_not_null(panel.find_child(stat, true, false),
-				"%s should show %s" % [side, stat])
+	# stamina number. Both sets sit together on the stats panel in the middle
+	# now, rather than one in each bottom corner, so this checks the screen's
+	# own references rather than where in the tree they hang.
+	var readouts = {
+		"player health bar": battle_screen.player_health_bar,
+		"player health number": battle_screen.player_health_label,
+		"player stamina bar": battle_screen.player_stamina_bar,
+		"player stamina number": battle_screen.player_stamina_label,
+		"opponent health bar": battle_screen.enemy_health_bar,
+		"opponent health number": battle_screen.enemy_health_label,
+		"opponent stamina bar": battle_screen.enemy_stamina_bar,
+		"opponent stamina number": battle_screen.enemy_stamina_label,
+	}
+	for what in readouts:
+		assert_not_null(readouts[what], "The %s should exist" % what)
+		assert_true(readouts[what].is_inside_tree(), "The %s should be drawn" % what)
 
 
 func test_stat_readouts_show_numbers_once_the_battle_starts():

@@ -54,6 +54,13 @@ var server_color = Color(0.3, 0.4, 0.5, 0.3)
 var read_only: bool = false
 var title: String = ""
 
+## Whether to draw the empty squares behind the containers.
+##
+## They are placement guides: they say where a thing could go. In a battle
+## nothing can be placed, so they say nothing, and drawing them turns two
+## builds into two sheets of graph paper. Set this before configure().
+var show_base_grid: bool = true
+
 # The grid, as rows of columns, indexed [y][x]. Godot has no nested typed
 # collections, so the element type is written here.
 var active_grid: Array = []  # Array[Array[bool]]: is this cell on a container?
@@ -163,8 +170,8 @@ func _setup_visual():
 	bg.size = size
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.1, 0.15, 0.2)
-	style.border_color = border_color
+	style.bg_color = Color(0.05, 0.1, 0.15, 0.2) if show_base_grid else Color.TRANSPARENT
+	style.border_color = border_color if show_base_grid else Color.TRANSPARENT
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(4)
 	bg.add_theme_stylebox_override("panel", style)
@@ -191,6 +198,9 @@ func _create_cell_visual(x: int, y: int) -> Panel:
 	cell.position = grid_to_pixel(Vector2i(x, y))
 	cell.size = Vector2(cell_size, cell_size)
 	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# An empty square is only worth drawing while something is being placed on
+	# it. Where nothing can be placed, the containers are the whole picture.
+	cell.visible = show_base_grid
 
 	var cell_style = StyleBoxFlat.new()
 	cell_style.bg_color = Color(0.1, 0.1, 0.15, 0.3)
@@ -278,9 +288,11 @@ func _add_container(container: APITypes.PlacedItem):
 			# Mark as active for placement
 			active_grid[grid_y][grid_x] = true
 
-			# Update visual
+			# Update visual. A container's own squares are drawn whether or
+			# not the empty grid behind them is.
 			var cell = grid_cells[grid_y][grid_x]
 			if cell:
+				cell.visible = true
 				var style = StyleBoxFlat.new()
 				style.bg_color = Color(0.2, 0.3, 0.5, 0.3)
 				style.border_color = Color(0.3, 0.5, 0.8, 0.6)

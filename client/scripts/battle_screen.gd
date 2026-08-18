@@ -5,6 +5,7 @@ const BattleEventProcessor = preload("res://scripts/battle_event_processor.gd")
 const APITypes = preload("res://scripts/api_types.gd")
 const Presentation = preload("res://scripts/presentation.gd")
 const ROUND_RESULT_OVERLAY = preload("res://scenes/RoundResultOverlay.tscn")
+const BattleHud = preload("res://scripts/battle_hud.gd")
 
 # Event processor for battle replay
 var event_processor
@@ -60,6 +61,16 @@ var enemy_stamina_label: Label
 # The run scoreboard shown once the battle is over. Null until then.
 var round_result: Control = null
 
+# Everything about how the screen looks, kept out of the way of the battle.
+var hud
+
+# Held rather than looked up. The HUD moves these out of the scene tree paths
+# they were declared at, so a stale $ControlButtons/SpeedButton, or
+# $Player2Container/Player2NameLabel, is null.
+var speed_button: Button
+var player_name_label: Label
+var opponent_name_label: Label
+
 # Battle effects
 
 func _ready():
@@ -112,23 +123,52 @@ func _setup_ui_references():
 	battle_log_container = $BattleLog/LogScroll/LogText
 
 	# Name labels
-	var player_name_label = $Player1Container/Player1NameLabel
-	var opponent_name_label = $Player2Container/Player2NameLabel
+	player_name_label = $Player1Container/Player1NameLabel
+	opponent_name_label = $Player2Container/Player2NameLabel
 
 	# Set player name from GameStateManager
 	player_name_label.text = GameStateManager.player_name if GameStateManager.player_name != "" else "Player"
 
-	var speed_button = $ControlButtons/SpeedButton
+	speed_button = $ControlButtons/SpeedButton
 	speed_button.pressed.connect(_on_toggle_speed)
+	# The scene hardcodes a label that has nothing to do with the speed the
+	# battle actually starts at.
+	speed_button.text = "%.0fx" % battle_speed_multiplier
 
 	# Load inventories into the grid containers
 	_setup_inventories()
+
+	# The scene puts the clock over the floor, the speed button off the top of
+	# the window and the log across the middle. Hand them all over.
+	hud = BattleHud.new(self)
+	hud.build($TopBar/TimeLabel, speed_button, $BattleLog, {
+		"player_health": player_health_bar,
+		"enemy_health": enemy_health_bar,
+		"player_stamina": player_stamina_bar,
+		"enemy_stamina": enemy_stamina_bar,
+		"player_health_value": player_health_label,
+		"enemy_health_value": enemy_health_label,
+		"player_stamina_value": player_stamina_label,
+		"enemy_stamina_value": enemy_stamina_label,
+		"player_name": player_name_label,
+		"enemy_name": opponent_name_label,
+	}, {"player": player_inventory, "enemy": enemy_inventory}, {
+		"player": $Player1Container/CharacterDisplay,
+		"enemy": $Player2Container/CharacterDisplay,
+		"player_art": $Player1Container/StatusPanel/TextureRect,
+		"enemy_art": $Player2Container/StatusPanel/TextureRect,
+	})
 
 func _setup_inventories():
 	# Constants for grid configuration
 	const GRID_WIDTH = 9
 	const GRID_HEIGHT = 7
 	const CELL_SPACING = 1
+	# Fixed, not fitted to the panel it sits in. A cell sized to fill whatever
+	# space was left over came out at 48 pixels, and an item drawn that small
+	# is a smudge - and the racks are what the battle is decided by, so they
+	# are what there has to be room for.
+	const CELL_SIZE = 60
 
 	# Create inventory grids using InventoryGrid class (not scene)
 	# Player inventory - standard 9x7 grid like UnifiedGridUI
@@ -136,19 +176,17 @@ func _setup_inventories():
 	player_inventory = InventoryGrid.new()
 
 	# Calculate cell size based on panel size
-	var padding = 20
-	player_inventory.position = Vector2(padding, padding)
-	var panel_size = player_panel.size - Vector2(padding * 2, padding * 2)
-	var cell_width = (panel_size.x - (GRID_WIDTH - 1) * CELL_SPACING) / GRID_WIDTH
-	var cell_height = (panel_size.y - (GRID_HEIGHT - 1) * CELL_SPACING) / GRID_HEIGHT
-	var cell_size = min(cell_width, cell_height)  # Keep cells square
+	player_inventory.position = Vector2.ZERO
 
-	player_inventory.configure(GRID_WIDTH, GRID_HEIGHT, cell_size, CELL_SPACING)
+	# Only the racks and what is in them. Nothing can be placed during a
+	# battle, so the empty squares behind them are guides to nothing.
+	player_inventory.show_base_grid = false
+	player_inventory.configure(GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, CELL_SPACING)
 	player_inventory.read_only = true
 	player_inventory.title = "Player Inventory"
 	player_inventory.set_colors(
 		Color(0.1, 0.1, 0.15, 0.8),  # grid color
-		Color(0.3, 0.6, 1.0, 0.8),   # border color
+		Color(0.3, 0.6, 1.0, 0.15),  # border color, faint: the HUD frames it
 		Color(0.2, 0.5, 1.0, 1.0)    # item color - full opacity
 	)
 	player_panel.add_child(player_inventory)
@@ -157,19 +195,14 @@ func _setup_inventories():
 	var enemy_panel = $Player2Inventory
 	enemy_inventory = InventoryGrid.new()
 
-	# Same calculation for enemy panel
-	enemy_inventory.position = Vector2(padding, padding)
-	panel_size = enemy_panel.size - Vector2(padding * 2, padding * 2)
-	cell_width = (panel_size.x - (GRID_WIDTH - 1) * CELL_SPACING) / GRID_WIDTH
-	cell_height = (panel_size.y - (GRID_HEIGHT - 1) * CELL_SPACING) / GRID_HEIGHT
-	cell_size = min(cell_width, cell_height)  # Keep cells square
-
-	enemy_inventory.configure(GRID_WIDTH, GRID_HEIGHT, cell_size, CELL_SPACING)
+	enemy_inventory.position = Vector2.ZERO
+	enemy_inventory.show_base_grid = false
+	enemy_inventory.configure(GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, CELL_SPACING)
 	enemy_inventory.read_only = true
 	enemy_inventory.title = "Enemy Inventory"
 	enemy_inventory.set_colors(
 		Color(0.15, 0.1, 0.1, 0.8),  # grid color
-		Color(1.0, 0.3, 0.3, 0.8),   # border color
+		Color(1.0, 0.3, 0.3, 0.15),  # border color, faint: the HUD frames it
 		Color(1.0, 0.3, 0.3, 1.0)    # item color - full opacity
 	)
 	enemy_panel.add_child(enemy_inventory)
@@ -184,8 +217,7 @@ func _on_toggle_speed():
 		battle_speed_multiplier = 1.0
 
 	# Update button text
-	var speed_button = $ControlButtons/SpeedButton
-	speed_button.text = "Speed: %.0fx" % battle_speed_multiplier
+	speed_button.text = "%.0fx" % battle_speed_multiplier
 
 	# Update the event processor speed if playing
 	if event_processor and event_processor.is_playing:
@@ -197,6 +229,8 @@ func _update_stats_display():
 	player_health_bar.value = player_data.health
 	player_health_label.text = "%d/%d" % [player_data.health, player_data.max_health]
 
+	hud.health_changed(player_health_bar)
+
 	player_stamina_bar.max_value = player_data.max_stamina
 	player_stamina_bar.value = player_data.stamina
 	player_stamina_label.text = "%.0f/%.0f" % [player_data.stamina, player_data.max_stamina]
@@ -206,11 +240,13 @@ func _update_stats_display():
 	enemy_health_bar.value = enemy_data.health
 	enemy_health_label.text = "%d/%d" % [enemy_data.health, enemy_data.max_health]
 
+	hud.health_changed(enemy_health_bar)
+
 	enemy_stamina_bar.max_value = enemy_data.max_stamina
 	enemy_stamina_bar.value = enemy_data.stamina
 	enemy_stamina_label.text = "%.0f/%.0f" % [enemy_data.stamina, enemy_data.max_stamina]
 
-	# Buffs removed from display to save space
+
 
 func _connect_event_signals():
 	# Connect all event processor signals
@@ -218,6 +254,8 @@ func _connect_event_signals():
 	event_processor.damage_dealt.connect(_on_damage_dealt)
 	event_processor.healing_done.connect(_on_healing_done)
 	event_processor.block_activated.connect(_on_block_activated)
+	event_processor.buff_applied.connect(_on_buff_applied)
+	event_processor.debuff_applied.connect(_on_debuff_applied)
 	event_processor.item_activated.connect(_on_item_activated)
 	event_processor.player_died.connect(_on_player_died)
 	event_processor.battle_ended.connect(_on_battle_ended)
@@ -244,7 +282,6 @@ func _load_battle_from_state():
 	enemy_inventory.load_inventory_state(battle_result.enemy_inventory)
 
 	# Set opponent name and style based on type
-	var opponent_name_label = $Player2Container/Player2NameLabel
 	opponent_name_label.text = battle_result.opponent_name
 
 	# Different color for ghost players vs AI
@@ -287,11 +324,8 @@ func _start_battle_playback():
 func _process(delta):
 	if battle_active and event_processor.is_playing:
 		current_time = event_processor.get_current_time()
-		time_label.text = "%.1fs / %.1fs" % [current_time, max_battle_duration]
-
-		# Update progress bar if we add one
-		var progress = event_processor.get_progress()
-		# TODO: Update progress bar
+		time_label.text = "%.1f / %.0fs" % [current_time, max_battle_duration]
+		hud.tick(current_time, max_battle_duration)
 
 		_update_stats_display()
 
@@ -328,23 +362,22 @@ func _exit_tree():
 func _show_attack_animation(from_player: bool):
 	if not Presentation.request("attack_animation", {"from_player": from_player}):
 		return
-	# Simple visual effect for attacks
+	# A bolt crossing from whoever swung to whoever is about to be hit.
 	var effect = ColorRect.new()
-	effect.size = Vector2(30, 30)
-	effect.color = Color(1.0, 1.0, 0.0, 0.8) if from_player else Color(1.0, 0.3, 0.3, 0.8)
+	effect.size = Vector2(26, 4)
+	effect.color = Color(0.6, 0.95, 1.0) if from_player else Color(1.0, 0.45, 0.5)
+	effect.z_index = 55
 
-	if from_player:
-		effect.position = Vector2(400, 250)  # Adjusted for new inventory positions
-	else:
-		effect.position = Vector2(1000, 250)  # Adjusted for new inventory positions
-
+	var from: Vector2 = hud.fighter_at(1 if from_player else 2)
+	var to: Vector2 = hud.fighter_at(2 if from_player else 1)
+	effect.position = from
 	add_child(effect)
 
-	# Animate the effect
 	var tween = _effect_tween()
-	var target_pos = Vector2(800, 250)  # Center between inventories
-	tween.tween_property(effect, "position", target_pos, 0.3)
-	tween.tween_property(effect, "modulate:a", 0.0, 0.2)
+	tween.tween_property(effect, "position", to, 0.22) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(effect, "scale", Vector2(3.0, 1.0), 0.22)
+	tween.tween_property(effect, "modulate:a", 0.0, 0.12)
 	tween.tween_callback(effect.queue_free)
 
 func _on_log_message(message: String, color: Color):
@@ -384,6 +417,12 @@ func _on_block_activated(player: int, amount: int):
 	# Log is handled by BattleEventProcessor
 	_show_block_effect(player)
 
+func _on_buff_applied(player: int, buff_name: String):
+	hud.add_effect(player, buff_name, true)
+
+func _on_debuff_applied(player: int, debuff_name: String):
+	hud.add_effect(player, debuff_name, false)
+
 func _on_item_activated(item_id: String, player: int):
 	# Log is handled by BattleEventProcessor
 	# Show item activation visual
@@ -421,62 +460,36 @@ func _show_round_result(won: bool):
 func _show_damage_number(player: int, amount: int):
 	if not Presentation.request("damage_number", {"player": player, "amount": amount}):
 		return
-	var label = Label.new()
-	label.text = "-%d" % amount
-	label.add_theme_font_size_override("font_size", 24)
-	label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-
-	if player == 1:
-		label.position = Vector2(590, 500)
-	else:
-		label.position = Vector2(990, 500)
-
-	add_child(label)
-
-	# Animate floating up and fading
-	var tween = _effect_tween()
-	tween.parallel().tween_property(label, "position:y", label.position.y - 50, 1.0)
-	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.0)
-	tween.tween_callback(label.queue_free)
+	_throw_number(player, "-%d" % amount, Color(1.0, 0.86, 0.86), 44)
 
 func _show_heal_effect(player: int, amount: int):
 	if not Presentation.request("heal_effect", {"player": player, "amount": amount}):
 		return
-	var label = Label.new()
-	label.text = "+%d" % amount
-	label.add_theme_font_size_override("font_size", 24)
-	label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
+	_throw_number(player, "+%d" % amount, Color(0.45, 1.0, 0.6), 40)
 
-	if player == 1:
-		label.position = Vector2(590, 500)
-	else:
-		label.position = Vector2(990, 500)
 
-	add_child(label)
+func _throw_number(player: int, text: String, tint: Color, size: int):
+	"""Throw a number off the fighter it happened to.
+
+	It lands, holds for a beat and drifts up as it fades, so a hit reads even
+	when several land close together.
+	"""
+	var label = hud.combat_number(player, text, tint, size)
+	label.scale = Vector2(0.4, 0.4)
 
 	var tween = _effect_tween()
-	tween.parallel().tween_property(label, "position:y", label.position.y - 50, 1.0)
-	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.0)
-	tween.tween_callback(label.queue_free)
+	tween.tween_property(label, "scale", Vector2.ONE, 0.14) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(label, "position:y", label.position.y - 78.0, 1.1) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.1) \
+		.set_delay(0.35)
+	tween.chain().tween_callback(label.queue_free)
 
 func _show_block_effect(player: int):
 	if not Presentation.request("block_effect", {"player": player}):
 		return
-	var effect = ColorRect.new()
-	effect.size = Vector2(60, 60)
-	effect.color = Color(0.3, 0.6, 1.0, 0.6)
-
-	if player == 1:
-		effect.position = Vector2(570, 480)
-	else:
-		effect.position = Vector2(970, 480)
-
-	add_child(effect)
-
-	var tween = _effect_tween()
-	tween.tween_property(effect, "scale", Vector2(1.5, 1.5), 0.3)
-	tween.tween_property(effect, "modulate:a", 0.0, 0.2)
-	tween.tween_callback(effect.queue_free)
+	_throw_number(player, "BLOCK", Color(0.5, 0.85, 1.0), 32)
 
 func _show_item_activation(item_id: String, player: int):
 	# Visual feedback for item activation
