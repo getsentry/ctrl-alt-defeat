@@ -1137,3 +1137,101 @@ class TestCpuDrainIsAnOrdinaryEffect:
         drains = [a for a in sim.actions if a.action == "cpu_drain"]
         assert drains, "the shield should still take CPU"
         assert all(a.player == 2 for a in drains), "off the attacker"
+
+
+class TestHealthThresholds:
+    """Section 2.1: fires once, wherever the health falls from"""
+
+    @staticmethod
+    def _watcher(threshold: float, uid: str = "watcher"):
+        """An item that heals below a line, and does not consume itself, so
+        nothing hides how often it fires."""
+        from item_effects import HealEffect, HealthThresholdTrigger
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Watcher", category="infrastructure", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "w"), slug=uid,
+                triggers=[HealthThresholdTrigger(
+                    threshold=threshold, effects=[HealEffect(1, 1)])],
+            ),
+            position=(0, 0), uid=uid,
+        )
+
+    @staticmethod
+    def _sword(damage: int, uid: str = "sword"):
+        from item_effects import AttackEffect
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Sword", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "s"), slug=uid,
+                triggers=[TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=damage, max_damage=damage,
+                                 accuracy=1.0, crit_chance=0.0)])],
+            ),
+            position=(4, 0), uid=uid,
+        )
+
+    def _run(self, mine, theirs, seconds=6.0, poison=0):
+        from battle_engine import MEMORY_LEAKED
+
+        p1_containers, p2_containers = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        original = sim._setup_item_handlers
+
+        def setup(items, owner, enemy):
+            result = original(items, owner, enemy)
+            if poison and owner.id == 1:
+                owner.debuffs[MEMORY_LEAKED] = poison
+            return result
+
+        sim._setup_item_handlers = setup
+        sim.simulate_battle(mine, theirs, 1, p1_containers, p2_containers)
+        return sim
+
+    def test_it_fires_once_however_far_health_falls(self):
+        """It used to fire on every damage event while below the line. Only
+        the ConsumeEffect on the real items hid it."""
+        sim = self._run([self._watcher(0.5)], [self._sword(3)])
+        assert len([a for a in sim.actions if a.action == "heal"]) == 1
+
+    def test_it_does_not_fire_above_the_line(self):
+        sim = self._run([self._watcher(0.5)], [self._sword(1)], seconds=1.2)
+        assert not [a for a in sim.actions if a.action == "heal"]
+
+    def test_poison_crosses_it_too(self):
+        """The reason it is checked where health falls rather than raised as
+        an event: poison is not an attack, and used to be invisible to it."""
+        sim = self._run([self._watcher(0.9)], [], seconds=8.0, poison=3)
+        heals = [a for a in sim.actions if a.action == "heal"]
+        assert heals, "poison should have crossed the line"
+        assert len(heals) == 1
+        # Nothing attacked, so only the poison can have moved the health.
+        assert not [a for a in sim.actions if a.action == "damage"]
+
+    def test_each_item_keeps_its_own_line(self):
+        first = self._watcher(0.8, uid="high")
+        second = self._watcher(0.3, uid="low")
+        second.position = (1, 0)
+        sim = self._run([first, second], [self._sword(3)])
+        healers = {a.source for a in sim.actions if a.action == "heal"}
+        assert healers == {"high", "low"}, "both lines should be crossed once"
+
+    def test_a_threshold_is_forgotten_between_battles(self):
+        """`fired` is runtime state. A potion that went off last round has to
+        be ready again this round."""
+        p1_containers, p2_containers = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 6.0
+        mine, theirs = [self._watcher(0.5)], [self._sword(3)]
+
+        first = sim.simulate_battle(mine, theirs, 1, p1_containers, p2_containers)
+        healed_first = len([a for a in sim.actions if a.action == "heal"])
+        second = sim.simulate_battle(mine, theirs, 1, p1_containers, p2_containers)
+        healed_again = len([a for a in sim.actions if a.action == "heal"])
+
+        assert healed_first == 1
+        assert healed_again == 1, "the second battle gets its own crossing"
+        assert first["player1_quota"] == second["player1_quota"]

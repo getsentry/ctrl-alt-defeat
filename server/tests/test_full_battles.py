@@ -10,7 +10,7 @@ from item_effects import (
     BattleStartTrigger,
     ConsumeEffect,
     CpuDrainEffect,
-    DamageTakenTrigger,
+    HealthThresholdTrigger,
     HealEffect,
     ItemSpec,
     OnAttackedTrigger,
@@ -425,10 +425,8 @@ class TestFullBattleScenarios:
                     cost=1,
                     player_class="neutral",
                     triggers=[
-                        DamageTakenTrigger(
+                        HealthThresholdTrigger(
                             threshold=0.5,  # Activate at 50% health
-                            cooldown=0.0,
-                            cpu_cost=0,
                             effects=[
                                 HealEffect(min_heal=15, max_heal=20),
                                 ConsumeEffect(),
@@ -449,10 +447,8 @@ class TestFullBattleScenarios:
                     cost=1,
                     player_class="neutral",
                     triggers=[
-                        DamageTakenTrigger(
+                        HealthThresholdTrigger(
                             threshold=0.2,  # Activate at 20% health
-                            cooldown=0.0,
-                            cpu_cost=0,
                             effects=[
                                 HealEffect(min_heal=25, max_heal=30),
                                 ConsumeEffect(),

@@ -16,7 +16,7 @@ from item_effects import (
     BuffEffect,
     ConsumeEffect,
     CpuDrainEffect,
-    DamageTakenTrigger,
+    HealthThresholdTrigger,
     DebuffEffect,
     HealEffect,
     ItemSpec,
@@ -224,12 +224,14 @@ class ConfigLoader:
             )
         elif trigger_type == "battle_start":
             return BattleStartTrigger(effects=effects)
-        elif trigger_type == "damage_taken":
-            return DamageTakenTrigger(
-                threshold=config.get("threshold", 0),
-                cooldown=config.get("cooldown", 0),
-                cpu_cost=config.get("cpu_cost", 0),
-                effects=effects,
+        elif trigger_type == "health_threshold":
+            if "threshold" not in config:
+                raise ValueError(
+                    f"{item_id}: a health_threshold trigger has to state its "
+                    f"`threshold`, as a fraction of maximum health."
+                )
+            return HealthThresholdTrigger(
+                threshold=config["threshold"], effects=effects
             )
         elif trigger_type == "on_hit":
             # `chance` is a second roll, taken only after accuracy has passed.

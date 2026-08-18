@@ -93,17 +93,42 @@ Items can have multiple effects with different triggers. Each effect specifies w
 - **ON_BATTLE_START**: Activates once at battle start
 - **ON_ATTACKED**: Activates when the owner is attacked, and only when that
   attack hits (% chance)
-- **ON_DAMAGED**: Activates when the owner takes damage
+- **ON_HEALTH_THRESHOLD**: Activates once, when health falls past a fraction
+  of its maximum
 - **ON_ATTACK**: Activates whenever the item attacks, hit or miss
 - **ON_HIT**: Activates when the item's own attack lands
 - **ON_MISS**: Activates when the item's own attack fails
 - **ON_DEAL_DAMAGE**: Activates when this item deals damage
 - **ON_KILL**: Activates when getting a kill
-- **ON_HEALTH_THRESHOLD**: Activates at specific health %
 - **PASSIVE**: Always active (e.g., stat modifiers)
 
 ON_ATTACK, ON_HIT and ON_MISS belong to the item that attacked. One item's
 miss never stops another item's on-hit effect. See Section 1.3 for the order.
+
+**There is no "when I take damage" trigger**, and that is deliberate rather
+than an omission. Backpack Battles has none: an item that reacts to its owner
+being hurt is either a shield, which needs an attack to roll against, or a
+health threshold, which needs only a number. Nothing in the game reacts to an
+instance of damage as such.
+
+#### Health thresholds
+
+Written "Health drops below 50%". Three rules, all of them from the source
+game's own wording:
+
+- **It fires once a battle.** Being below the line is not the trigger;
+  *falling past it* is. Whether it should re-arm after healing back above the
+  line is an open question: "(once)" appears on 13 threshold clauses in the
+  source game and on no other kind of trigger, which suggests the default
+  re-arms and "(once)" pins it to one. Every item we have consumes itself, so
+  the distinction cannot yet be observed. See BACKLOG.md.
+- **It is checked wherever health falls**, not when an attack lands. Poison,
+  fatigue and an attack all move the same number, and a threshold cannot care
+  which did it. Checking it at the one place health goes down means a new
+  source of damage cannot forget to announce itself.
+- **The subject can be either player.** "Health drops below 50%" watches the
+  owner; "Opponent drops below 30%" watches the other side. Only the owner is
+  built.
 
 ### 2.2 Effect Types
 - **DAMAGE**: Deal damage to enemies

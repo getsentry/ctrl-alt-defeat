@@ -264,32 +264,39 @@ class BattleStartTrigger(Trigger):
 
 
 @dataclass
-class DamageTakenTrigger(Trigger):
-    """Activates when owner takes damage"""
+class HealthThresholdTrigger(Trigger):
+    """Fires once, when the owner's health falls past a fraction of its
+    maximum.
 
-    threshold: Optional[float] = None  # Only activate below X% health
-    cooldown: float = 0.0  # Optional cooldown
-    cpu_cost: float = 0.0
+    **Falling past the line is the trigger, not being below it.** Nearly every
+    item with one says "(once)" in its text, and the ones that do not consume
+    themselves instead, which comes to the same thing. This is why `fired` is
+    part of the trigger rather than left to a `ConsumeEffect` to imply: an
+    item that heals below 50% and is not a potion would otherwise heal on
+    every tick it spent down there.
+
+    **It is not a damage trigger**, though it is easy to mistake for one.
+    So it is checked wherever health falls rather than raised as an event
+    by whatever did the falling
+    """
+
+    threshold: float = 0.5  # Fraction of max health, so 0.5 is "below 50%"
     effects: List[Effect] = field(default_factory=list)
 
-    # Runtime state
-    current_cooldown: float = 0.0
+    # Runtime state, cleared between battles by rebuilding the spec
+    fired: bool = False
 
     def should_activate(
         self, event_type: str, source, target, battle_state: "BattleSimulator"
     ) -> bool:
-        if event_type != "damage_taken":
+        if event_type != "health_threshold" or self.fired:
             return False
-        if self.current_cooldown > 0:
-            return False
-        if self.threshold:
-            # Check if health is below threshold
-            health_percent = target.quota / target.max_quota
-            return health_percent < self.threshold
-        return True
+        # The first time health is under the line is the moment it crossed,
+        # since a battle starts at full health.
+        return target.quota < self.threshold * target.max_quota
 
     def get_cpu_cost(self) -> int:
-        return self.cpu_cost
+        return 0  # Nothing is spent noticing your own health
 
 
 @dataclass

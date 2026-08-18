@@ -7,7 +7,7 @@ from grid_system import ItemShape
 from item_effects import (
     BattleStartTrigger,
     ConsumeEffect,
-    DamageTakenTrigger,
+    HealthThresholdTrigger,
     HealEffect,
     ItemSpec,
     StatModEffect,
@@ -39,10 +39,8 @@ class TestConsumeEffect:
                 cost=1,
                 player_class="neutral",
                 triggers=[
-                    DamageTakenTrigger(
+                    HealthThresholdTrigger(
                         threshold=0.5,  # Activate below 50% health
-                        cooldown=0.0,
-                        cpu_cost=0,
                         effects=[HealEffect(min_heal=10, max_heal=10), ConsumeEffect()],
                     )
                 ],
@@ -274,10 +272,8 @@ class TestConsumeEffect:
                 cost=1,
                 player_class="neutral",
                 triggers=[
-                    DamageTakenTrigger(
+                    HealthThresholdTrigger(
                         threshold=0.7,  # Activate at 70% health
-                        cooldown=0.0,
-                        cpu_cost=0,
                         effects=[HealEffect(min_heal=5, max_heal=5), ConsumeEffect()],
                     )
                 ],
@@ -296,10 +292,8 @@ class TestConsumeEffect:
                 cost=1,
                 player_class="neutral",
                 triggers=[
-                    DamageTakenTrigger(
+                    HealthThresholdTrigger(
                         threshold=0.4,  # Activate at 40% health
-                        cooldown=0.0,
-                        cpu_cost=0,
                         effects=[HealEffect(min_heal=5, max_heal=5), ConsumeEffect()],
                     )
                 ],

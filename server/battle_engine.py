@@ -21,10 +21,10 @@ from item_effects import (
     BlockEffect,
     BuffEffect,
     ConsumeEffect,
-    DamageTakenTrigger,
     DebuffEffect,
     Effect,
     HealEffect,
+    HealthThresholdTrigger,
     CpuDrainEffect,
     ItemSpec,
     OnAttackedTrigger,
@@ -545,33 +545,28 @@ class BattleSimulator:
                         trigger, item, owner, enemy, trigger_uid
                     )
 
-                elif isinstance(trigger, DamageTakenTrigger):
-                    # Subscribe to damage events - check threshold if needed
-                    def handle_damage_taken(
+                elif isinstance(trigger, HealthThresholdTrigger):
+                    trigger.fired = False
+
+                    def handle_health_fell(
                         event, trigger=trigger, item=item, owner=owner
                     ):
-                        if event.target != owner:
+                        if event.target is not owner or trigger.fired:
                             return
-
-                        # Skip if item is consumed
                         if item.uid in self.consumed_items:
                             return
-
-                        # Check if trigger should activate
                         if not trigger.should_activate(
-                            "damage_taken", owner, owner, None
+                            "health_threshold", item, owner, self
                         ):
                             return
-
-                        # Check CPU cost
-                        cpu_cost = trigger.get_cpu_cost()
-                        if owner.cpu >= cpu_cost:
-                            self._apply_effects(trigger.effects, item, owner, enemy)
-                            owner.cpu -= cpu_cost
-                            trigger.current_cooldown = trigger.cooldown
+                        # Marked before the effects run, so an effect that
+                        # moves somebody's health cannot re-enter and fire it
+                        # a second time.
+                        trigger.fired = True
+                        self._apply_effects(trigger.effects, item, owner, enemy)
 
                     self.event_manager.subscribe(
-                        EventType.DAMAGE_TAKEN, handle_damage_taken
+                        EventType.HEALTH_FELL, handle_health_fell
                     )
 
                 elif isinstance(trigger, OnHitTrigger):
@@ -950,7 +945,6 @@ class BattleSimulator:
         on its way here, it lands the same and is seen the same, so an item
         that reacts to its owner being hurt reacts to all of it.
         """
-        old_quota = target.quota
         target.quota -= damage
 
         self.actions.append(
@@ -965,18 +959,9 @@ class BattleSimulator:
             )
         )
 
+        # Every kind of damage arrives here so this is the one place that can say health fell.
         self.event_manager.emit(
-            Event(
-                EventType.DAMAGE_TAKEN,
-                attacker,
-                target,
-                EventData(
-                    damage=damage,
-                    item_id=source,
-                    previous_health=old_quota,
-                    current_health=target.quota,
-                ),
-            )
+            Event(EventType.HEALTH_FELL, attacker, target, EventData(damage=damage))
         )
 
     def _apply_over_time(self, player: Player):

@@ -19,7 +19,7 @@ class EventType(Enum):
     BATTLE_START = "battle_start"
     BATTLE_END = "battle_end"
     DAMAGE_DEALT = "damage_dealt"
-    DAMAGE_TAKEN = "damage_taken"
+    HEALTH_FELL = "health_fell"  # A player's health went down, from any source
     ON_ATTACKED = "on_attacked"  # Before damage when a player is hit
     ON_HIT = "on_hit"  # An attack landed, for the attacking item's on-hit effects
     PLAYER_DEATH = "player_death"  # A player died (check target to see which one)
@@ -201,7 +201,7 @@ class ItemEventHandler:
         elif self.item.spec.trigger_type == TriggerType.ON_DAMAGED:
             # Subscribe with owner check
             self.event_manager.subscribe(
-                EventType.DAMAGE_TAKEN,
+                EventType.HEALTH_FELL,
                 self._on_damage_taken,
                 condition=lambda e: e.target == self.owner,
             )

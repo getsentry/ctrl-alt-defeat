@@ -13,7 +13,7 @@ from item_effects import (
     BlockEffect,
     BuffEffect,
     DamageDealtTrigger,
-    DamageTakenTrigger,
+    HealthThresholdTrigger,
     DebuffEffect,
     HealEffect,
     ItemSpec,
@@ -144,44 +144,41 @@ class TestTriggers:
         assert trigger.should_activate("timer_tick", None, None, None) is False
         assert trigger.get_cpu_cost() == 0  # Battle start is free
 
-    def test_damage_taken_trigger_no_threshold(self):
-        """Test damage taken trigger without health threshold"""
-        trigger = DamageTakenTrigger(
-            threshold=None,
-            cooldown=0.0,
-            cpu_cost=2,
-            effects=[ReflectEffect(reflect_percent=0.3)],
+    def test_a_threshold_fires_when_health_falls_past_the_line(self):
+        player = MockPlayer(quota=25, max_quota=100)  # a quarter left
+        trigger = HealthThresholdTrigger(
+            threshold=0.3, effects=[HealEffect(min_heal=5, max_heal=5)]
         )
+        assert trigger.should_activate("health_threshold", None, player, None) is True
 
-        # Should always activate when damaged
-        assert trigger.should_activate("damage_taken", None, None, None) is True
-        assert trigger.get_cpu_cost() == 2
-
-        # Should not activate for wrong event
-        assert trigger.should_activate("timer_tick", None, None, None) is False
-
-    def test_damage_taken_trigger_with_threshold(self):
-        """Test damage taken trigger with health threshold"""
-        player = MockPlayer(quota=25, max_quota=100)  # 25% health
-
-        trigger = DamageTakenTrigger(
-            threshold=0.3,  # Only below 30%
-            cooldown=0.0,
-            cpu_cost=3,
-            effects=[HealEffect(min_heal=5, max_heal=5)],
+    def test_it_stays_quiet_above_the_line(self):
+        player = MockPlayer(quota=40, max_quota=100)
+        trigger = HealthThresholdTrigger(
+            threshold=0.3, effects=[HealEffect(min_heal=5, max_heal=5)]
         )
+        assert trigger.should_activate("health_threshold", None, player, None) is False
 
-        # Should activate when below threshold
-        assert trigger.should_activate("damage_taken", None, player, None) is True
+    def test_it_fires_once_and_no_more(self):
+        """Section 2.1: falling past the line is the trigger, not being below
+        it. Nearly every item with a threshold says "(once)"."""
+        player = MockPlayer(quota=25, max_quota=100)
+        trigger = HealthThresholdTrigger(
+            threshold=0.5, effects=[HealEffect(min_heal=5, max_heal=5)]
+        )
+        assert trigger.should_activate("health_threshold", None, player, None) is True
 
-        # Should not activate when above threshold
-        player.quota = 40  # 40% health
-        assert trigger.should_activate("damage_taken", None, player, None) is False
+        trigger.fired = True  # what the engine sets when it runs the effects
+        player.quota = 5  # even lower, and still below the line
+        assert trigger.should_activate("health_threshold", None, player, None) is False
 
-        # Should not activate when on cooldown
-        player.quota = 25
-        trigger.current_cooldown = 5.0
-        assert trigger.should_activate("damage_taken", None, player, None) is False
+    def test_it_answers_to_nothing_else(self):
+        player = MockPlayer(quota=1, max_quota=100)
+        trigger = HealthThresholdTrigger(threshold=0.5, effects=[])
+        for event in ["timer_tick", "damage_taken", "on_hit", "on_attacked"]:
+            assert trigger.should_activate(event, None, player, None) is False
+
+    def test_noticing_your_own_health_is_free(self):
+        assert HealthThresholdTrigger(threshold=0.5).get_cpu_cost() == 0
 
     def test_damage_dealt_trigger(self):
         """Test damage dealt trigger with chance"""

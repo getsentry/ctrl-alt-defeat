@@ -67,22 +67,97 @@ stop the shop depending on insertion order at all — the second is better, and
 it means drawing from a sorted list of ids at the point of use rather than
 from whatever `dict` iteration hands back.
 
-### `damage_taken` is a health threshold wearing the wrong name
+### Three items sit on a trigger their source does not have
 
-All five items using it set a threshold — `health_potion` 0.5,
-`emergency_patch` 0.2, `healing_nanobots` 0.4, `system_restore` 0.3,
-`backup_system` 0.3. None uses the bare form, and Backpack Battles has no
-on-damage trigger at all. Two bugs follow:
+`health_threshold` is right for two of the five items using it. The other
+three were given a threshold that their source item never had:
 
-- **It fires while below the line, not on crossing it.** A threshold item with
-  no `ConsumeEffect` heals over and over. All five consume themselves, which
-  hides it.
-- **It depends on every damage source emitting an event.** Poison did not, so
-  a Health Potion watched its owner die of poison. Fixed by making poison
-  emit, but the next damage source will have the same hole.
+| Ours | Source | What the source actually says |
+|---|---|---|
+| `healing_nanobots` | Healing Herbs | "**Start of battle**: Gain 2 Regeneration" |
+| `system_restore` | Carrot | "**Every 2.7s**: Cleanse 1 debuff. If you have at least 4 Luck: 55% chance to gain 1 Empower" |
+| `backup_system` | Goobert | "**5 Star item activations**: Heal for 9" |
 
-**Fix.** Check the threshold in `_take_damage`, comparing the health before
-and after, and fire what the fall crossed. Then `damage_taken` can go.
+None of the three can be fixed yet, and each is blocked on something
+different: Regeneration does not tick, `cleanse` is not an effect, and there
+is no trigger that counts activations. They are left healing on a threshold,
+which is at least a thing the engine does, rather than being given a trigger
+that silently does nothing.
+
+Two more effects are missing from the two items that *are* right. Health
+Potion is "heal for 12 **and cleanse 4 Poison**", and Strong Health Potion
+adds "**gain 3 Regeneration**". The heals and the thresholds now match; the
+cleanse and the Regeneration do not exist.
+
+**`cleanse` is the one to build next.** Poison exists now, four items want to
+remove it, and it has no dependencies of its own.
+
+### A health threshold cannot say whether it re-arms
+
+`HealthThresholdTrigger` fires once a battle and never re-arms. Fall to 20%
+of a 30% threshold, heal to 40%, fall to 20% again, and it stays quiet.
+
+That is right for some items and wrong for others, and the trigger has no way
+to say which it is.
+
+**The evidence that both exist.** `(once)` appears on 13 threshold clauses in
+the source game and on **zero** other triggers -- not one timer, on-hit or
+start-of-battle effect uses it. So it is a threshold-specific modifier rather
+than emphasis, and a modifier has to be modifying something. If thresholds
+already fired once a battle, writing `(once)` on 13 items would say nothing.
+
+The reading that makes it meaningful: **crossing the line is the trigger, and
+`(once)` pins it to one crossing per battle.**
+
+Tim is the case that needs re-arming. "Opponent drops below 30%: Heal for 50
+and gain 5 Empower", with no `(once)` and no consume. It is written as
+something that happens when the opponent's health drops past the line, and it
+should happen again if they climb back over it and fall a second time.
+
+**Fix.** A field on the trigger -- `once: bool` -- and re-arm when health goes
+back above the line unless it is set. The catalogue writes `once: true` for
+the items whose text says `(once)`.
+
+**Not urgent.** Every one of our five threshold items carries a
+`ConsumeEffect`, so it removes itself the first time and the distinction
+cannot be observed. It matters as soon as a non-consuming threshold item is
+imported, and Tim would be the first.
+
+Nothing in the wiki states the rule outright; the Discord or Steam forum would
+settle it before this is built.
+
+### There is nowhere for "can this item act at all?" to live
+
+Every event handler opens with the same line, because a consumed item has to
+stop acting and nothing stops it centrally:
+
+```python
+if item.uid in self.consumed_items:
+    return
+```
+
+Seven of them, across four handlers. Adding a trigger means remembering to
+write it again, and forgetting means a potion that drank itself keeps healing.
+It is a correctness risk that reads as boilerplate, which is the worst kind.
+
+**Fix: one gate that every trigger passes through**, holding whatever is true
+of items in general rather than of any one trigger. A handler would then say
+only what makes *it* different.
+
+Consumption is the case that exists today, but it is not the only one coming.
+Stun in the source game "pauses all cooldowns for a certain amount of time",
+which is the same shape: a condition on the item or its owner that suppresses
+everything, checked in one place. `StunEffect` is already defined in
+`item_effects.py`, used by no item and handled by nothing.
+
+Unsubscribing on consume would also work and is worth considering —
+`_consume_item` already cancels the item's timers, and `EventManager.unsubscribe`
+exists with no callers, so the halves are inconsistent today. But it only
+answers "consumed". A gate answers the class, and stun would otherwise need
+its own seven lines.
+
+Worth doing before the next trigger. Each one added is another copy of the
+line, and the gate is where they all go away at once.
 
 ### `Effect.apply` does not apply anything
 

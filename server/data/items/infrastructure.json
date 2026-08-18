@@ -71,10 +71,8 @@
       "cost": 6,
       "triggers": [
         {
-          "type": "damage_taken",
+          "type": "health_threshold",
           "threshold": 0.3,
-          "cooldown": 0,
-          "cpu_cost": 0,
           "effects": [
             {
               "type": "heal",

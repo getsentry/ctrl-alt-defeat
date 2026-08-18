@@ -183,7 +183,7 @@ class TestHealthTriggers:
     """Test health-based triggers work correctly"""
 
     def test_health_threshold_triggers(self):
-        """Test that items can check health thresholds on damage events"""
+        """A threshold watches the one event that says health fell"""
         manager = EventManager()
 
         @dataclass
@@ -195,20 +195,20 @@ class TestHealthTriggers:
         player = MockPlayer(quota=100, max_quota=100)
         triggered = []
 
-        # Subscribe to damage events and check threshold
+        # Subscribe to the health event and check the threshold
         def on_damage_check_health(event):
             if event.target and hasattr(event.target, "quota"):
                 health_percent = event.target.quota / event.target.max_quota
                 if health_percent < 0.3:
                     triggered.append(("low", event.target.quota))
 
-        manager.subscribe(EventType.DAMAGE_TAKEN, on_damage_check_health)
+        manager.subscribe(EventType.HEALTH_FELL, on_damage_check_health)
 
         # Damage player to 50 HP (50%) - should not trigger
         player.quota = 50
         manager.emit(
             Event(
-                EventType.DAMAGE_TAKEN,
+                EventType.HEALTH_FELL,
                 None,
                 player,
                 EventData(damage=50, current_health=50),
@@ -220,7 +220,7 @@ class TestHealthTriggers:
         player.quota = 29
         manager.emit(
             Event(
-                EventType.DAMAGE_TAKEN,
+                EventType.HEALTH_FELL,
                 None,
                 player,
                 EventData(damage=21, current_health=29),
@@ -233,7 +233,7 @@ class TestHealthTriggers:
         triggered.clear()
         manager.emit(
             Event(
-                EventType.DAMAGE_TAKEN,
+                EventType.HEALTH_FELL,
                 None,
                 player,
                 EventData(damage=0, current_health=40),
@@ -271,13 +271,13 @@ class TestHealthTriggers:
                     return "healed"
 
         # Both potions subscribe to damage events
-        manager.subscribe(EventType.DAMAGE_TAKEN, heal_potion1)
-        manager.subscribe(EventType.DAMAGE_TAKEN, heal_potion2)
+        manager.subscribe(EventType.HEALTH_FELL, heal_potion1)
+        manager.subscribe(EventType.HEALTH_FELL, heal_potion2)
 
         # Emit damage event that brings health low
         manager.emit(
             Event(
-                EventType.DAMAGE_TAKEN,
+                EventType.HEALTH_FELL,
                 None,
                 player,
                 EventData(damage=75, current_health=25),

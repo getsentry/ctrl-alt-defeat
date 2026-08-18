@@ -20,7 +20,7 @@ at both ends.
 | Event | Emitted | Listened to | Notes |
 |---|---|---|---|
 | `battle_start` | yes | yes | |
-| `damage_taken` | yes | yes | Anything reacting to its owner being hurt |
+| `health_fell` | yes | yes | A player's health went down, from any source. Was `damage_taken`. |
 | `on_attacked` | yes | yes | Shields roll here, only against a hit |
 | `on_hit` | yes | yes | The attacking item's own on-hit effects |
 | `item_consumed` | yes | **no** | Emitted so adjacency could be recalculated. Nothing recalculates it. |
@@ -42,7 +42,7 @@ at both ends.
 | `passive` | yes | 28 | Always on |
 | `battle_start` | yes | 20 | Once, at the start |
 | `on_attacked` | yes | 6 | Owner was attacked, and the attack hit |
-| `damage_taken` | yes | 5 | Owner lost quota, from any source |
+| `health_threshold` | yes | 5 | Owner's health fell past a line, once a battle |
 | `on_hit` | yes | 1 | This item's own attack landed |
 | `on_attack` | **no** | 2 | Fires whether the attack hit or missed |
 | `on_crit` | **no** | 1 | `neural_interface_blade` |
@@ -159,18 +159,30 @@ The lasting shape: `_mitigate_attack` handles what stands between an attack
 and the quota, and `_take_damage` is the one place a quota goes down. A new
 damage source calls the second and skips the first.
 
-### An event nobody has to remember is better than one everybody must emit
+### Emit from a choke point, not from every source
 
 A trigger that listens for an announcement only works if every source
-remembers to announce. A trigger checked at a choke point cannot be missed.
+remembers to announce. Poison bypassed `DAMAGE_TAKEN`, so a Health Potion sat
+in the rack and watched its owner die of poison.
 
-Poison bypassed `DAMAGE_TAKEN`, so a Health Potion sat in the rack and watched
-its owner die of poison. The fix was not "make poison emit too" — that only
-works until the next damage source. It is to check the condition where the
-health actually changes.
+The fix is not "make poison emit too" — that lasts until the next damage
+source. Nor is it to abandon events: the first attempt at the health threshold
+hand-rolled a registry on the simulator and filtered it by owner, which was a
+second mechanism doing the first one's job.
 
-So prefer the choke point. Reach for an event when the trigger genuinely needs
-to know *what* happened, not merely *that* something did.
+**The two are not in tension.** Route every source through one function, and
+emit from there. `_take_damage` is the only place a quota goes down, so
+`HEALTH_FELL` is emitted once, from it, and anything watching a player's
+health subscribes like any other trigger. A new kind of damage gets it right
+by calling the same function.
+
+The rule is about *where the emit lives*, not about whether to use events. If
+you find yourself keeping a list of things to check by hand, look for the
+choke point instead — it is usually the function you are already in.
+
+**A health threshold is not an over-time effect**, though both are driven by
+the player's own state. A threshold fires once, when a number is crossed; an
+over-time effect fires on a clock forever. Section 2.1 has the rules.
 
 ### One roll in front of a list, never one roll per effect
 

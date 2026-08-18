@@ -17,15 +17,14 @@
       "cost": 4,
       "triggers": [
         {
-          "type": "damage_taken",
+          "type": "health_threshold",
           "threshold": 0.5,
-          "cooldown": 0,
-          "cpu_cost": 0,
           "effects": [
             {
               "type": "heal",
-              "min_heal": 10,
-              "max_heal": 15
+              "min_heal": 12,
+              "max_heal": 12,
+              "description": "Heal for 12"
             },
             {
               "type": "consume"
@@ -83,15 +82,14 @@
       "cost": 8,
       "triggers": [
         {
-          "type": "damage_taken",
-          "threshold": 0.2,
-          "cooldown": 0,
-          "cpu_cost": 0,
+          "type": "health_threshold",
+          "threshold": 0.5,
           "effects": [
             {
               "type": "heal",
-              "min_heal": 25,
-              "max_heal": 35
+              "min_heal": 24,
+              "max_heal": 24,
+              "description": "Heal for 24"
             },
             {
               "type": "block",
@@ -299,10 +297,8 @@
       "cost": 4,
       "triggers": [
         {
-          "type": "damage_taken",
+          "type": "health_threshold",
           "threshold": 0.4,
-          "cooldown": 0,
-          "cpu_cost": 0,
           "effects": [
             {
               "type": "heal",
@@ -334,10 +330,8 @@
       "cost": 3,
       "triggers": [
         {
-          "type": "damage_taken",
+          "type": "health_threshold",
           "threshold": 0.3,
-          "cooldown": 0,
-          "cpu_cost": 0,
           "effects": [
             {
               "type": "heal",
