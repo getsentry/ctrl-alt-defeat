@@ -59,6 +59,22 @@ func _on_drag_ended():
 	sell_chest.get_node("Prompt").text = "Drop here to sell"
 
 
+func _on_item_stored(item_data: APITypes.PlacedItem):
+	"""Called when an item is dropped on the chest"""
+	# The grid has already taken the item off, so put it back if the server
+	# refuses. Otherwise the item is gone from the grid and not in the chest.
+	var response = await BattleServerAPI.move_item(item_data.id, "storage")
+	if response == null:
+		print("The server refused to store it, putting the item back")
+		inventory_grid._add_item(item_data)
+		_save_current_state()
+		return
+
+	_on_inventory_returned(response)
+	_save_current_state()
+	print("Put %s in the chest" % item_data.name)
+
+
 func _on_inventory_returned(response: APITypes.MoveItemResponse):
 	"""The server has answered a move with the whole inventory.
 
@@ -292,6 +308,7 @@ func _create_server_room():
 	inventory_grid.item_removed.connect(_on_item_removed)
 	inventory_grid.item_sold.connect(_on_item_sold)
 	inventory_grid.inventory_returned.connect(_on_inventory_returned)
+	inventory_grid.item_stored.connect(_on_item_stored)
 	inventory_grid.item_moved.connect(_on_item_moved)
 	inventory_grid.drag_started.connect(_on_drag_started)
 	inventory_grid.drag_ended.connect(_on_drag_ended)
@@ -337,6 +354,11 @@ func _create_storage_area():
 		# Sit it in the middle of its panel rather than in a corner, so it does
 		# not run over the frame drawn around the edge.
 		storage_grid.position = ((storage_bg.size - storage_grid.size) / 2).floor()
+
+		# The whole panel takes a drop, not only the squares, so a drop that
+		# lands on the frame still goes in the chest.
+		if inventory_grid:
+			inventory_grid.storage_zone = storage_bg
 
 		# Set legacy reference
 

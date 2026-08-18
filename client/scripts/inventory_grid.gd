@@ -49,6 +49,7 @@ var containers: Array[PlacedContainer] = []
 # Where an item can be dropped to sell it. The parent owns the chest and
 # hands it over; the grid only needs somewhere to test the pointer against.
 var sell_zone: Control = null
+var storage_zone: Control = null
 
 # Drag and drop state
 var dragging_object = null
@@ -66,6 +67,7 @@ signal item_sold(item_data)
 signal drag_started(item_data)
 signal drag_ended()
 signal item_moved(item_id, from_pos, to_pos)
+signal item_stored(item_data)
 # The server answers a move with the whole inventory, the chest included. The
 # grid draws only the grid, so it passes the rest on rather than keeping it.
 signal inventory_returned(response)
@@ -343,6 +345,14 @@ func _end_drag():
 		items.erase(temp_object)
 		temp_object.queue_free()
 		item_sold.emit(item_data)
+		return
+
+	# Dropped on the chest, so take it off the grid and let the owner ask the
+	# server to store it. The cells were already cleared when the drag began.
+	if storage_zone and storage_zone.get_global_rect().has_point(get_global_mouse_position()):
+		items.erase(temp_object)
+		temp_object.queue_free()
+		item_stored.emit(item_data)
 		return
 
 	# Check if we're trying to move to the same position - no-op

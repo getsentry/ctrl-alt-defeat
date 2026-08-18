@@ -321,3 +321,58 @@ func test_read_only_grids_still_show_their_contents():
 
 	assert_eq(grid.items.size(), 1, "A read-only grid should still display its items")
 	assert_eq(grid.containers.size(), 1, "A read-only grid should still display its containers")
+
+
+# ============ Dropping on the chest ============
+
+func test_dropping_on_the_chest_takes_the_item_off_the_grid():
+	# The grid does not talk to the server. It takes the item off and says so,
+	# and whoever owns it asks for the move and puts it back if that fails.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "stored"}), Vector2i(2, 3))
+	var zone = Control.new()
+	zone.size = Vector2(100, 100)
+	add_child(zone)
+	autofree(zone)
+	grid.storage_zone = zone
+
+	watch_signals(grid)
+	grid._start_drag(grid.items[0])
+	grid._end_drag()
+	await get_tree().process_frame
+
+	assert_signal_emitted(grid, "item_stored", "Should say the item went to the chest")
+	assert_eq(grid.items.size(), 0, "It should be off the grid")
+	assert_null(grid.item_grid[3][2], "Its square should be free again")
+
+
+func test_a_drop_away_from_the_chest_is_an_ordinary_move():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "staying"}), Vector2i(2, 3))
+	var zone = Control.new()
+	zone.position = Vector2(5000, 5000)  # nowhere near the drop
+	zone.size = Vector2(10, 10)
+	add_child(zone)
+	autofree(zone)
+	grid.storage_zone = zone
+
+	watch_signals(grid)
+	grid._start_drag(grid.items[0])
+	grid._end_drag()
+	await get_tree().process_frame
+
+	assert_signal_not_emitted(grid, "item_stored", "The chest was not the target")
+	assert_eq(grid.items.size(), 1, "The item stays on the grid")
+
+
+func test_a_grid_with_no_chest_still_drops():
+	# The battle screens have no chest, so the zone is never set there.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "no_chest"}), Vector2i(2, 3))
+	assert_null(grid.storage_zone, "Setup: no chest on this grid")
+
+	grid._start_drag(grid.items[0])
+	grid._end_drag()
+	await get_tree().process_frame
+
+	assert_eq(grid.items.size(), 1, "It should still be on the grid, not lost")
