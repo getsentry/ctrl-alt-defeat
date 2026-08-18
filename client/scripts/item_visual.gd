@@ -32,6 +32,15 @@ func setup(data, size: float = 45.0, spacing: float = 1.0):
 
 	_create_visual()
 
+func redraw_as(data) -> void:
+	"""Draw this again for an item that has changed.
+
+	Turning one is a redraw: it covers different squares. The size it is drawn
+	at is already known here, so a caller does not have to carry it about.
+	"""
+	setup(data, cell_size, cell_spacing)
+
+
 func _is_container() -> bool:
 	"""A container is drawn as the ground the items sit on, not as an item.
 

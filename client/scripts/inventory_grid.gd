@@ -342,24 +342,22 @@ func _add_item(item: APITypes.PlacedItem):
 	add_child(item_visual)
 	items.append(item_visual)
 
-func turn_dragged(quarters: int) -> void:
-	"""Turn the item being dragged, if there is one.
+func turn_dragged(quarters: int) -> bool:
+	"""Turn the item being dragged, and say whether there was one.
 
 	A container is not turned. Turning one would have to turn everything
 	standing on it about its anchor, which is a different thing from turning
 	an item and is not built.
 	"""
 	if not dragging_object:
-		return
+		return false
 
-	var item_data = dragging_object.get_meta("item_data")
-	var turned = item_data.placed_at(
-		item_data.position.to_vector2i(),
-		APITypes.turned_by(item_data.facing(), quarters))
+	var turned = dragging_object.get_meta("item_data").turned(quarters)
 	dragging_object.set_meta("item_data", turned)
 
 	# Drawn again, because the squares it covers have changed.
-	dragging_object.setup(turned, cell_size, cell_spacing)
+	dragging_object.redraw_as(turned)
+	return true
 
 
 func _on_container_input(event: InputEvent, placed: PlacedContainer):

@@ -844,3 +844,20 @@ func test_a_shop_item_turned_and_bought_is_bought_turned():
 
 	assert_eq(ui.dragging_shop_data.facing(), 90,
 		"The facing the purchase carries is the one the player chose")
+
+
+func test_turning_says_whether_anything_turned():
+	# There is one list of what counts as holding something, and this is it.
+	# Two lists that had to agree is what let the shop drag go unturnable.
+	assert_false(ui.turn(1), "Holding nothing, nothing turns")
+
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.hold(GameStateManager.inventory_storage[0])
+
+	assert_true(ui.turn(1), "Holding something, it turns")
+
+
+func test_the_wheel_is_left_alone_when_nothing_is_held():
+	# The turn only swallows the input if it used it, so the wheel still
+	# scrolls when the player is not carrying anything.
+	assert_false(ui.turn(1), "Nothing to turn means the input was not used")

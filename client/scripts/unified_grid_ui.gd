@@ -218,31 +218,30 @@ func follow_pointer(pointer: Vector2) -> void:
 		inventory_grid.can_place_item(held_item, grid_pos))
 
 
-func turn(quarters: int) -> void:
-	"""Turn whatever is in hand, however it came to be there.
+func turn(quarters: int) -> bool:
+	"""Turn whatever is held, however it came to be held.
 
-	An item is held either because it is being dragged or because a container
-	move set it down and it was picked up. Both are holding it, so both turn.
+	An item is held for four different reasons -- dragged off the grid, taken
+	out of the chest, carried off the shop shelf, or picked up after a
+	container move set it down -- and all four are holding it. Says whether
+	anything was, so the caller knows whether the input was used, and there is
+	only one list of what counts as holding something.
 	"""
 	if held_item:
-		held_item = held_item.placed_at(
-			Vector2i.ZERO, APITypes.turned_by(held_item.facing(), quarters))
+		held_item = held_item.turned(quarters)
 		if is_instance_valid(held_visual):
-			held_visual.setup(held_item, inventory_grid.cell_size,
-				inventory_grid.cell_spacing)
+			held_visual.redraw_as(held_item)
 		follow_pointer(get_global_mouse_position())
-		return
+		return true
 
 	if dragging_shop_data:
-		dragging_shop_data = dragging_shop_data.placed_at(
-			Vector2i.ZERO, APITypes.turned_by(dragging_shop_data.facing(), quarters))
+		dragging_shop_data = dragging_shop_data.turned(quarters)
 		if is_instance_valid(drag_preview):
-			drag_preview.setup(dragging_shop_data, inventory_grid.cell_size,
-				inventory_grid.cell_spacing)
-		return
+			drag_preview.redraw_as(dragging_shop_data)
+		return true
 
-	inventory_grid.turn_dragged(quarters)
-	storage_grid.turn_dragged(quarters)
+	return inventory_grid.turn_dragged(quarters) \
+		or storage_grid.turn_dragged(quarters)
 
 
 func release_hand() -> void:
@@ -310,10 +309,12 @@ func _save_current_state():
 
 func _input(event):
 	# Turning works on anything held, dragged or in hand. R and the wheel
-	# forward go clockwise, E and the wheel back the other way.
-	if _turn_asked_for(event) != 0:
+	# forward go clockwise, E and the wheel back the other way. The input is
+	# only swallowed if something actually turned, so the wheel still scrolls
+	# when the player is holding nothing.
+	var quarters := _turn_asked_for(event)
+	if quarters != 0 and turn(quarters):
 		get_viewport().set_input_as_handled()
-		turn(_turn_asked_for(event))
 		return
 
 	# An item in hand follows the pointer and is put down with a press, which
@@ -350,8 +351,6 @@ func _input(event):
 
 func _turn_asked_for(event: InputEvent) -> int:
 	"""How many quarter turns this input asks for, clockwise, or none"""
-	if not _something_is_held():
-		return 0
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_R:
 			return 1
@@ -363,19 +362,6 @@ func _turn_asked_for(event: InputEvent) -> int:
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			return -1
 	return 0
-
-
-func _something_is_held() -> bool:
-	"""Whether anything is in hand or being dragged, which is what can turn.
-
-	An item out of the shop counts. It is held the same way, and it is the one
-	most worth turning, because that is when the player is deciding where on
-	the board it goes.
-	"""
-	return held_item != null \
-		or dragging_shop_data != null \
-		or inventory_grid.dragging_object != null \
-		or storage_grid.dragging_object != null
 
 
 func _global_to_grid(global_pos: Vector2) -> Vector2i:

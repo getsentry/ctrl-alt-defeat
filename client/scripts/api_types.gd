@@ -173,6 +173,12 @@ class Item extends Resource:
 	func facing() -> int:
 		return 0
 
+	# The same item, turned. Where an item stands is its own business, so
+	# nothing turning one has to know whether it is on the grid or in a hand:
+	# this is the only place a quarter turn is worked out.
+	func turned(quarters: int) -> PlacedItem:
+		return placed_at(Vector2i.ZERO, APITypes.turned_by(facing(), quarters))
+
 	# The same item, now on the grid, facing whichever way it is asked to.
 	func placed_at(grid_pos: Vector2i, facing: int = 0) -> PlacedItem:
 		var fields = to_dict()
@@ -197,6 +203,11 @@ class PlacedItem extends Item:
 
 	func facing() -> int:
 		return rotation
+
+	# An item on the grid turns where it stands.
+	func turned(quarters: int) -> PlacedItem:
+		return placed_at(
+			position.to_vector2i(), APITypes.turned_by(facing(), quarters))
 
 	# An item already on the grid keeps facing the way it does unless it is
 	# asked to face another way.

@@ -492,3 +492,35 @@ func _sorted_squares(squares: Array) -> Array:
 	var copy = squares.duplicate()
 	copy.sort_custom(func(a, b): return [a.x, a.y] < [b.x, b.y])
 	return copy
+
+
+func test_an_item_turns_where_it_stands():
+	# Turning is the item's own business, so nothing turning one has to know
+	# whether it is on the grid or in a hand. This is the only place a quarter
+	# turn is worked out, which is why it was worked out three ways before.
+	var item = APITypes.PlacedItem.new(
+		_item({"shape": [[0, 0], [1, 0]], "position": [4, 3], "rotation": 0}))
+
+	var turned = item.turned(1)
+
+	assert_eq(turned.facing(), 90, "A quarter clockwise")
+	assert_eq(turned.position.to_array(), [4, 3], "and it has not moved")
+
+
+func test_an_item_that_is_not_on_the_grid_still_turns():
+	# One in the hand or carried out of the shop is nowhere in particular.
+	var item = APITypes.Item.new(_item({"shape": [[0, 0], [1, 0]]}))
+
+	assert_eq(item.turned(1).facing(), 90, "It turns all the same")
+
+
+func test_turning_the_other_way():
+	var item = APITypes.Item.new(_item({"shape": [[0, 0], [1, 0]]}))
+	assert_eq(item.turned(-1).facing(), 270, "Anticlockwise from square on")
+
+
+func test_turning_adds_up():
+	var item = APITypes.Item.new(_item({"shape": [[0, 0], [1, 0]]}))
+	assert_eq(item.turned(1).turned(1).facing(), 180, "Two quarters is a half")
+	assert_eq(item.turned(1).turned(1).turned(1).turned(1).facing(), 0,
+		"and four is back where it started")
