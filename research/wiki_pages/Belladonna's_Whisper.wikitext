@@ -1,0 +1,70 @@
+{{Item infobox
+|name=Belladonna's Whisper
+|image=BelladonnasWhisper.png
+|rarity=Legendary
+|icontype=nature, ranged
+|type=Weapon
+|cost=13
+|class=Ranger
+|effect=
+* '''For every 5 damage {{icon/star}} [[Weapon]] deals:''' Inflict +1 {{icon/poison}} on the next attack.
+* Deals +0.5 damage per {{icon/poison}} of your opponent.
+|mindamage=11
+|maxdamage=14
+|stamina=1.2
+|accuracy=85
+|cooldown=3
+|sockets=1
+|grid=
+-1--
+1112
+-1--
+}}
+{{Recipe infobox
+|recipename=Belladonna's Whisper
+|ingredients=Bow and Arrow, Pestilence Flask
+|requirementcost=13 (6+7)
+|image=BelladonnasWhisper_recipe.png
+}}
+The [[Belladonna's Whisper]] is a [[Ranger]] [[Weapon]] normally obtained by combining the [[Bow and Arrow]] with a [[Pestilence Flask]]. It is a clear upgrade for the [[Bow and Arrow]], dealing substantially more damage, and inflicting {{icon/poison}} proportional to the damage the {{icon/star}} weapon at its tip deals. It also deals more damage the more {{icon/poison}} the opponent has.
+
+The [[Belladonna's Whisper]] likely has the strongest upside of any of the [[Bow and Arrow]] (or even [[Shortbow]]) upgrades, since it inflicts uncapped amounts of {{icon/poison}}, and could probably outdo any other source of {{icon/poison}}, so long as the {{icon/star}} weapon damage is high enough. With high amounts of {{icon/poison}} inflicted, the [[Belladonna's Whisper]] would deal extremely high ranged damage as well. 
+
+The [[Skill]] [[Critical Poison]] is very similar to the Whisper and can pair well with it as a result.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.8]]
+|Damage +2
+|-
+|[[Patch 0.9.20]]
+|Damage +3
+|-
+|[[Patch 0.9.14]]
+|Damage needed per {{icon/poison}} 6 -> 5
+|-
+|[[Patch 0.9.12]]
+|
+* Stamina usage 1.5 -> 1.2
+* Damage needed per {{icon/poison}} 7 -> 6
+|-
+|[[Patch 0.9.9]]
+|Damage to inflict {{icon/poison}} 8 -> 7
+|-
+|[[Patch 0.9.4]]
+|Damage required to generate {{icon/poison}} 9 -> 8
+|-
+|[[Patch 0.7.6]]
+|Threshold to generate {{icon/poison}} 8 -> 9
+|-
+|[[Patch 0.7.5]]
+|Damage needed per {{icon/poison}} 7 -> 8
+|-
+|[[Patch 0.7.4]]
+|Added into game.
+|}
+
+{{Items}}

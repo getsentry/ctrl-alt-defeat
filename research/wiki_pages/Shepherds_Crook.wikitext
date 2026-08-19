@@ -1,0 +1,45 @@
+{{Item infobox
+|name=Shepherd's Crook
+|image=ShepherdsCrook.png
+|rarity=Rare
+|type=Accessory
+|cost=8
+|effect=
+*'''Start of battle:''' {{icon/star}} [[Weapon]]s gain 2 damage.
+*35% chance to protect your [[buff]]s from removal.
+*50% chance to [[resist]] {{icon/blind}} and {{icon/cold}}.
+|grid=
+11
+12
+12
+12
+22
+}}
+The [[Shepherd's Crook]] is an item obtained by combining the [[Broom]] and [[Whetstone]], which are both common items available in the shop for all characters. It gives all [[weapon|weapons]] in its "crook" +2 damage, up to five of them. It also protects buffs from removal and gives a very high chance to resist {{icon/blind}} and {{icon/cold}}. It's a large item and takes up a lot of space, but it costs no stamina to use. Its passive effects are also fairly respectable, and can make a big difference in the right match-up. 
+
+The effects of the Crook stack additively, having two will give the player 100% {{icon/blind}} and {{icon/cold}} resist, and three would grant 100% chance to protect buffs from removal.
+{{Recipe infobox
+|recipename=Shepherd's Crook
+|ingredients=Broom, Whetstone
+|catalysts=
+|requirementcost=8 (4+4)
+|image=ShepherdsCrook_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown Patch
+|Added two star slots. Blind/Cold resist 40% -> 50%
+|-
+|0.9.26
+|Blind/Cold resist 35% -> 40%.
+|-
+|0.9.24
+|Added to the game.
+|}
+
+{{Items}}

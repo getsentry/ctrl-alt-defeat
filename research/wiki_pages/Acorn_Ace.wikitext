@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Acorn Ace
+|image=AcornAce.png
+|rarity=Unique
+|icontype=nature
+|type=Skill
+|cost=5
+|class=Ranger
+|effect=
+*[[Acorn Collar]]s have more {{icon/star}} slots.
+*Items affected by [[Acorn Collar]] use -8% stamina.
+*[[Critwood Staff]]s use -75% stamina.
+|skillround=10
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.21
+|Stamina reduction 10% -> 8%, stamina reduction for [[Critwood Staff]]s 50% -> 75%
+|-
+|0.9.20
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,43 @@
+{{Item infobox
+|name=Moon Shield
+|image=MoonShield.png
+|rarity=Godly
+|icontype=holy, magic
+|type=Shield
+|cost=18
+|effect=
+* {{icon/star}} items give +30% {{icon/block}}.
+* '''{{icon/star}} items gained 12 {{icon/block}}:''' Gain 1 {{icon/mana}}.
+* '''On attacked ({{icon/melee}}/{{icon/ranged}}):''' 30% chance to prevent 12 damage and remove 0.7 stamina from your opponent.
+|sockets=2
+|grid=
+-22-
+2112
+2112
+2112
+-22-
+}}
+{{Recipe infobox
+|recipename=Moon Shield
+|ingredients=Shield of Valor, Mana Orb
+|requirementcost=18 (12+6)
+|image=MoonShield_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.4
+|[[Shield]]s remove stamina even when opponent has less than the amount that should be removed. Reduced Block chance to 30% to compensate.
+|-
+|0.7.6
+|{{icon/block}} needed to generate {{icon/mana}} 10 -> 12
+|-
+|0.7.5
+|Added to the game
+|}
+
+{{Items}}

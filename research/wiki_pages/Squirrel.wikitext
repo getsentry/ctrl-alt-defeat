@@ -1,0 +1,32 @@
+{{Item infobox
+|name=Squirrel
+|image=Squirrel.png
+|rarity=Rare
+|icontype=nature
+|type=Pet
+|cost=5
+|class=Ranger
+|effect=
+* '''Every 4s:''' Steal a random [[buff]].
+* Triggers 15% faster for each {{icon/star}} [[Pet]] or [[Food]].
+|grid=
+-2--
+212-
+2112
+-22-
+}}
+The [[Squirrel]] is a [[Pet]] available in the shop for [[Ranger]]s with [[Big Bowl of Treats]]. It steals buffs at a slow rate, although it is hastened by touching [[Pet]]s and [[Food]]. Combining the [[Squirrel]] with a [[Shortbow]] gives the [[Squirrel Archer]], which is a mostly superior damaging [[weapon]] [[pet]] version of the [[Squirrel]], that has a similar buff-stealing effect.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.1
+|[[Pet]]/[[Food]] speed bonus 20% -> 15%
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

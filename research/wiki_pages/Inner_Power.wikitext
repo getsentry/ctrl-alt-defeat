@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Inner Power
+|image=Inner_Power.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Ranger, Berserker
+|effect=
+*'''Start of battle:''' Gain 2 {{icon/luck}} and 1 {{icon/empower}}.
+*{{icon/star}} items heal 2% more per {{icon/luck}} (up to 100%) and trigger 2% faster per {{icon/empower}} (up to 100%).
+|skillround=3
+|grid=
+02220
+20002
+20102
+20002
+02220
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

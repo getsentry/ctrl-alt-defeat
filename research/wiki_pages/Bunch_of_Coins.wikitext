@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Bunch of Coins
+|image=BunchofCoins.png
+|rarity=Rare
+|type=Accessory
+|cost=9
+|effect=They don't do anything. But you can sell them for profit!
+|grid=1
+}}
+{{Recipe infobox
+|recipename=Bunch of Coins
+|ingredients=Piggybank
+|catalysts=Hammer
+|requirementcost=
+|image=BunchofCoins_transform.png
+}}
+The [[Bunch of Coins]] is an item only obtainable by "smashing" the [[Piggybank]] using a [[Hammer]]. It has no effect other than selling for 5 {{icon/gold}}. Of course, in the long-term, the [[Piggybank]] could possibly generate even more gold, but that's for the player to decide if the short-term benefit is worth it.
+
+Starting with patch 1.1, the [[Bunch of Coins]] can be combined with the [[Holy Armor]] to create the [[Gold Armor]], which has many positive effects, with the drawback of making the player's weapons attack slower. The [[Maneki-neko]] can also be used for this craft, and is probably more straight-forward to obtain, but the [[Bunch of Coins]] is the more economical route, as the required [[Piggybank]] costs only 3 {{icon/gold}} while the [[Maneki-neko]] costs 10 {{icon/gold}}. This would require the [[Hammer]] of course, which costs 8 {{icon/gold}}, but could be used or sold.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.5.0
+|Sell price 4g -> 5g
+|}
+
+{{Items}}

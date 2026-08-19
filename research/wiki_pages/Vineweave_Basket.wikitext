@@ -1,0 +1,43 @@
+{{Item infobox
+|name=Vineweave Basket
+|image=VineweaveBasket.png
+|rarity=Unique
+|type=Bag
+|cost=20
+|class=Ranger
+|effect=
+* Add 9 backpack slots.
+* Your [[heal|healing]] is amplified by 12% + 5% per {{icon/nature}}-item inside.
+* In rounds 1 and 10, sale chance is increased by 20%.
+|grid=
+111
+111
+111
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Heal amp 10% -> 12%
+|-
+|[[Patch 0.9.20]]
+|Sale chance bonus 17% -> 20%
+|-
+|[[Patch 0.9.19]]
+|Sales chance bonus 12% -> 17%
+|-
+|[[Patch 0.9.18]]
+|[[Heal]] amplification 8% -> 10%, sales bonus: 10% -> 12%
+|-
+|[[Patch 0.9.17]]
+|[[Heal]] amplification 10% + 2% per [[Nature]] item -> 8% + 3% per [[Nature]] item
+|-
+|[[Patch 0.9.16]]
+|Added into game.
+|}
+
+{{Items}}

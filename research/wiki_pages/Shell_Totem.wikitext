@@ -1,0 +1,48 @@
+{{Item infobox
+|name=Shell Totem
+|image=ShellTotem.png
+|rarity=Rare
+|icontype=holy
+|type=Weapon
+|cost=5
+|effect=
+* '''Every 3.4s:''' If your health is above 70%, gain 1 {{icon/empower}}. Otherwise, [[heal]] for 8.
+* Uses -15% stamina for each {{icon/star}} {{icon/holy}}-item.
+|stamina=2
+|cooldown=3.4
+|grid=
+2221222
+---1---
+}}
+{{Recipe infobox
+|recipename=Shell Totem
+|ingredients=Wooden Sword, Shiny Shell
+|catalysts=
+|requirementcost=5 (3+2)
+|image=ShellTotem_recipe.png
+}}
+The [[Shell Totem]] is an [[weapon]] (although it deals no damage) obtained by combining the [[Wooden Sword]] and [[Shiny Shell]], which are both common items available in the shop for all characters. Every once in a while, if the character is healthy, it will give 1 {{icon/empower}}, which can be very powerful with enough different weapons. It instead heals the character when they are low on health.
+
+The [[Shell Totem]] takes a significant amount of stamina, despite dealing no damage, so it is highly-preferred to place [[Holy]] items next to it, which can substantially reduce this burden, leaving room for more weapons to utilize the {{icon/empower}}.
+
+Although the [[Shell Totem]] is a [[weapon]] and doesn't deal damage, it isn't simply a weapon with 0 damage, it has no attack at all, and so it can't be buffed with effects like the [[Whetstone]] to deal nonzero damage.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.23
+|Cooldown 3.4s -> 3.6s
+|-
+|0.9.18
+|Cooldown 3.3s -> 3.4s
+|-
+|0.9.17
+|Cooldown 3.2s -> 3.3s
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

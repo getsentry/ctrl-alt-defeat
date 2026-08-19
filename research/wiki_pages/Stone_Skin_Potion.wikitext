@@ -1,0 +1,43 @@
+{{Item infobox
+|name=Stone Skin Potion
+|image=StoneSkinPotion.png
+|rarity=Epic
+|type=Potion
+|cost=6
+|effect='''45 {{icon/block}} reached:''' Consume this and convert 15 health to 30 {{icon/block}}.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+The [[Stone Skin Potion]] is an epic [[Potion]] available in the shop for all classes. Once 45 {{icon/block}} is reached, it will consume and convert 15 health into 30 {{icon/block}}. This is at its best when the player has healing since that missing health can be replaced before all of the player's {{icon/block}} is expended. Notably, it does nothing unless at least 45 {{icon/block}} can be gained by the player in some other way, which is very easy if the player has any kind of [[Armor]], but can be difficult otherwise. If the player does have [[Armor]] it's excellent for triggering other [[Potion]]s above it, since it will always trigger immediately at the start of the battle.
+
+The [[Stone Skin Potion]] also acts as a crafting material for an entire set of stone armor pieces, using the leather variants. These pieces broadly speaking give very tanky properties, although the [[Stone Armor]] has the drawback of increasing [[weapon]]s' stamina costs, and the [[Gloves of Power]] makes {{icon/star}} [[weapon]]s deal more damage but attack slower, without any defensive properties. 
+
+The [[Stone Skin Potion]] can be combined with two [[Stone]]s or catalytically converted using a [[Cauldron]] (if the player is a [[Reaper]]) to create the [[Strong Stone Skin Potion]], which gives slightly more {{icon/block}} and some temporary {{icon/spikes}}.
+
+The health conversion cannot kill the player and will leave them with at least 1 health left. If not enough health was left for the full effect, it will give 2x the health that it could convert into {{icon/block}}.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.8.1
+|Trigger threshold 20 {{icon/block}} -> 45 {{icon/block}}
+|-
+|0.7.0
+|Cost 5g -> 6g
+|-
+|0.5.4
+|Changed wording
+|-
+|0.5.3
+|Convert 15 -> 30 (previously 6 -> 16)
+|-
+|0.3.7
+|Health converted 8 -> 6
+|}
+
+{{Items}}

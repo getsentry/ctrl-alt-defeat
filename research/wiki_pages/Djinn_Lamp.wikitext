@@ -1,0 +1,60 @@
+{{Item infobox
+|name=Djinn Lamp
+|image=DjinnLamp.png
+|rarity=Godly
+|icontype=magic
+|type=Accessory
+|cost=11
+|effect=
+* '''Every 1.6s:''' Gain 1 {{icon/luck}} or 1 {{icon/spikes}} or 1 {{icon/mana}}, depending on what you have the least of.
+* '''Use '''7 {{icon/block}}, 7 {{icon/luck}}, 7 {{icon/spikes}}, 7 {{icon/mana}} and 27 health: Give the {{icon/star}} [[Weapon]] +27 damage (once).
+|grid=
+112
+}}
+The [[Djinn Lamp]] is a godly [[Accessory]] available in the shop for all classes. It frequently gives {{icon/luck}}, {{icon/spikes}}, or {{icon/mana}} depending on what the player has the least of. If the player ever manages to accumulate 7 {{icon/block}}, 7 {{icon/luck}}, 7{{icon/spikes}}, 7 {{icon/mana}}, and 27 health the [[Djinn Lamp]] will use them to massively damage boost the [[Weapon]] in front of it for the rest of the fight.
+
+The [[Djinn Lamp]] has no means of gaining {{icon/block}}, and triggers too slowly to generate the other buffs needed for the damage boost on its own, so some other means of generating these buffs will be needed to get the most out of this item. The quicker the buffs can be put together, the quicker the player can be swinging an incredible weapon.
+
+Regardless, the [[Djinn Lamp]] can be a welcome, no-fuss source of {{icon/luck}}, {{icon/spikes}}, and {{icon/mana}}, especially for the builds that have extra uses for {{icon/luck}} and/or {{icon/mana}}. It also triggers fairly quickly for a no-stamina item, making it perfect for items like [[Storage Coffin]] and [[Goobert]]s.
+
+The [[Buy the Holy Light]] [[Skill]] specifically makes the [[Djinn Lamp]] (and [[Oil Lamp]]) become a {{icon/holy}}-item (which gets speed boosted when next to [[Buy the Holy Light]]).
+
+[[Gloves of Power]] are an excellent choice paired with the Lamp, granted they provide the precise amount of {{icon/block}} needed for the lamp's effect to trigger, and they additionally provide a percent increase to the damage.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.23
+|Cooldown 1.7s -> 1.6s
+|-
+|0.9.22
+|Cooldown 1.8s -> 1.7s
+|-
+|0.9.19
+|Cooldown 1.9s -> 1.8s
+|-
+|0.9.18
+|Cooldown 2s -> 1.9s
+|-
+|0.9.12
+|Now only triggers once
+|-
+|0.8.1
+|Now has the [[Magic]] Tag
+|-
+|0.5.0
+|Cooldown 2.5s -> 2.0s
+|-
+|0.3.9
+|Cooldown 3s -> 2.5s
+|-
+|0.3.6
+|Fixed multiple [[Djinn Lamp]]s sometimes triggering off the same stacks
+|-
+|0.3.3
+|Added to the game
+|}
+
+{{Items}}

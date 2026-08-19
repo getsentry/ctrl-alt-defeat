@@ -1,0 +1,56 @@
+{{Item infobox
+|name=Spear
+|image=Spear.png
+|rarity=Rare
+|icontype=melee
+|type=Weapon
+|cost=6
+|effect='''On hit:''' Destroy 4 {{icon/block}} for each free {{icon/star}} slot.
+|mindamage=3
+|maxdamage=8
+|stamina=1
+|accuracy=85
+|cooldown=1.5
+|sockets=1
+|grid=
+2
+2
+2
+2
+2
+1
+1
+1
+1
+}}
+The [[Spear]] is a [[Weapon]] available in the shop for all characters, at rare rarity. It specializes in destroying {{icon/block}}, although this requires there to be empty space in front of it. The [[Spear]] can also be upgraded into the [[Poison Spear]], [[Holy Spear]], [[Molten Spear]] (if [[Flame]]s can be acquired), or [[Very Long Spear]] (if [[Twine]] can be acquired). Most of these upgrades have higher damage and allow for certain themes of items to be in the {{icon/star}} slots rather than only empty space.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.12
+|Minimum damage +1
+|-
+|0.5.2
+|{{icon/block}} removal 5 -> 4 per slot
+|-
+|0.5.1
+|Cooldown 1.3s -> 1.5s
+|-
+|0.3.9
+|Damage 1-8 -> 2-8
+|-
+|0.3.4
+|Damage 1-7 -> 1-8
+Now only remove {{icon/block}} when hitting and before dealing the damage.
+|-
+|0.2.1
+|{{icon/block}} removal 4 -> 5
+|-
+|0.2.0
+|Max damage +1, now removes 4 {{icon/block}}
+|}
+
+{{Items}}

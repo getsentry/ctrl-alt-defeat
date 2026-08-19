@@ -1,0 +1,42 @@
+{{Item infobox
+|name=Wisp
+|image=Wisp.png
+|rarity=Godly
+|icontype=nature
+|type=Gemstone
+|cost=8
+|class=Ranger
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+'''30 damage dealt:''' Gain 1 {{icon/spikes}}.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+'''After 5s:''' Gain 35% of your current health as maximum health.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+'''After 12s:''' Gain 10 {{icon/luck}} and 10 {{icon/regeneration}}. Triggers 10% faster for each {{icon/star}} {{icon/nature}}-item.
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.4]]
+|(Weapon): Damage threshold 25 -> 30
+|-
+|[[Patch 1.1.3]]
+|(Weapon): Damage threshold 20 -> 25
+|-
+|[[Patch 1.1.2]]
+|(Weapon): Damage threshold 16 -> 20
+|-
+|[[Patch 1.1.1]]
+|(Weapon): Damage threshold 12 -> 16
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

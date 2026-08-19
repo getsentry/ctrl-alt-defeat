@@ -1,0 +1,67 @@
+{{Item infobox
+|name=Broom
+|image=Broom.png
+|rarity=Common
+|icontype=melee
+|type=Weapon
+|cost=4
+|effect=
+* '''Opponent misses attack:''' Gain +2 damage for the next attack.
+* '''On hit:''' 33% chance to inflict 1 {{icon/blind}}.
+|mindamage=2
+|maxdamage=4
+|stamina=1.2
+|accuracy=95
+|cooldown=1.7
+|sockets=1
+|grid=
+1
+1
+1
+1
+}}
+
+For each attack the opponent misses before the [[Broom]] attacks, it gains +2 damage for that attack only. When it hits the bonus damage gets reset to 0.
+
+The Broom has multiple one-step crafts in the early-game, but it is also the starting point for all [[Staff]]s in the game, once the [[Magic Staff]] is created from the Broom + [[Mana Orb]].
+
+[[File:BroomCraftingTree.png|500px]]
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.17
+|{{icon/blind}} Chance 35% -> 33%
+|-
+|0.7.3
+|Stamina usage 1.5 -> 1.2
+|-
+|0.6.4
+|Removed {{icon/mana}} requirement
+|-
+|0.6.0
+|Can be combined into new item: [[Shovel]]
+|-
+|0.5.6
+|No longer triggers an extra attack, now gains +2 damage for next attack. Accuracy 85% -> 95%. {{icon/blind}} Chance 25% -> 35%
+|-
+|0.5.0
+|{{icon/blind}} chance 30% -> 25%
+|-
+|0.4.3
+|{{icon/blind}}chance 35% -> 30%
+|-
+|0.3.5
+|{{icon/blind}} chance 30% -> 35%
+|-
+|0.3.4
+|{{icon/blind}} chance 25% -> 30%
+|-
+|0.3.1
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,55 @@
+{{Item infobox
+|name=Magic Torch
+|image=MagicTorch.png
+|rarity=Legendary
+|icontype=magic, fire, melee
+|type=Weapon
+|cost=11
+|effect='''On hit:''' Use 1 {{icon/mana}}: This and {{icon/star}} [[Weapon]]s gain 1 damage.
+|mindamage=3
+|maxdamage=6
+|stamina=0.7
+|accuracy=200
+|cooldown=1.4
+|sockets=1
+|grid=
+212
+-1-
+}}
+{{Recipe infobox
+|recipename=Magic Torch
+|ingredients=Torch, Mana Potion
+|requirementcost=11 (5+6)
+|image=MagicTorch_recipe.png
+}}
+{{Recipe infobox
+|recipename=Magic Torch
+|ingredients=Burning Torch, Mana Potion
+|requirementcost=11 (5+6)
+|image=MagicTorchBurningRecipe.png
+}}
+The [[Magic Torch]] is a neutral [[Weapon]] normally obtained by combining a [[Torch]] or [[Burning Torch]] with a [[Mana Potion]]. On hit, it spends a {{icon/mana}} to permanently buff the damage of itself and any adjacent weapons slightly.
+
+While it isn't better than the [[Torch]] or [[Burning Torch]], strictly speaking, it is substantially more damaging than those options, as long as the player has access to {{icon/mana}}.
+
+Starting in version 1.1.3, the [[Burning Torch]] + [[Mana Potion]] recipe was added, presumably to be more consistent with the recipes available for crafting the [[Electric Torch]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|1.1.3
+|Can now additionally be crafted from Burning Torch
+|-
+|0.9.24
+|Stamina cost 1 -> 0.7
+|-
+|0.9.14
+|Cooldown 1.4s -> 1.5s
+|-
+|0.7.2
+|Added to the game
+|}
+
+{{Items}}

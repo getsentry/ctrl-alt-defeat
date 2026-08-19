@@ -1,0 +1,53 @@
+{{Item infobox
+|name=Jynx torquilla
+|image=JynxTorquilla.png
+|rarity=Legendary
+|icontype=nature, musical
+|type=Pet
+|cost=6
+|effect='''Every 3s:''' {{icon/star}} items trigger 5% faster (up to 50%). Remove 1 {{icon/luck}} from your opponent.
+|grid=
+-----2
+----22
+---222
+-12222
+11-222
+----22
+-----2
+}}
+The [[Jynx torquilla]] is a legendary [[Pet]] available in the shop for all classes. It speeds up all items in a wide cone in front of it over time, and also removes {{icon/luck}} from the opponent. This can be useful for any '''Every x seconds''' or '''After x seconds''' items, or [[weapon]]s, although with stamina-using [[weapon]]s this could have diminishing returns once the stamina is used up.
+
+There is one non-class-specific craft for the [[Jynx torquilla]] and two class-specific crafts.
+
+The [[Birb of Paradise]] can be crafted by any class by combining the [[Jynx torquilla]] with a [[Prismatic Orb]]. It takes up one more space, but triggers faster, speeds up more per trigger, and also grants additional heal and buff duplication to those items.
+
+The [[Jynx Staff]] can be crafted by [[Adventurer]]s by combining a [[Jynx torquilla]] with a [[Magic Staff]] using a [[Twine]]. It behaves very similarly to the [[Magic Staff]] but also emits a cone with effects mirroring the [[Jynx torquilla]] when {{icon/mana}} is spent by the [[Jynx Staff]], and with enough {{icon/mana}}, a much larger amount of speed can be granted to the {{icon/star}} items in a much shorter amount of time than with the [[Jynx torquilla]].
+
+The [[Crow]] can be crafted by [[Reaper]]s by combining the [[Jynx torquilla]] with a [[Demonic Flask]]. It is strictly better than the [[Jynx torquilla]], granting more speed to the {{icon/star}} items and additionally granting them a chance to duplicate their debuffs. It also steals {{icon/luck}} rather than simply removing it from the opponent.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|1.0.2
+|Cost 7g -> 6g
+|-
+|0.9.41
+|Cost 8g -> 7g
+|-
+|0.9.19
+|Cost 9g -> 8g
+|-
+|0.5.1
+|Cost 8g -> 9g
+|-
+|0.3.6
+|Speed cap 50% -> 40%
+|-
+|0.3.4
+|Added to the game
+|}
+
+{{Items}}
+[[zh:歪脖鸟]]

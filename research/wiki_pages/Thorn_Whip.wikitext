@@ -1,0 +1,64 @@
+{{Item infobox
+|name=Thorn Whip
+|image=ThornWhip.png
+|rarity=Epic
+|icontype=nature, melee
+|type=Weapon
+|cost=8
+|effect=
+* '''On hit:''' Gain 1 {{icon/spikes}}.
+* Deals +1 damage per {{icon/spikes}}.
+|mindamage=4
+|maxdamage=9
+|stamina=2.2
+|accuracy=80
+|cooldown=2.2
+|sockets=2
+|grid=
+11-
+-1-
+-11
+}}
+The [[Thorn Whip]] is a an epic item available in the shop for all classes. It takes up a lot of space and can be an awkward shape, but does respectable damage, increased by the amount of {{icon/spikes}} the player has, and gains the player {{icon/spikes}} on every hit, making it deal more damage over time.
+
+There are a number of [[Thorn Whip]] crafts, some of which are clear upgrades and others which have their own quirks and requirements.
+
+The [[Thornbloom]] is made by combining the [[Thorn Whip]] and [[Heroic Potion]]. Other than taking up one more space, it's a strict upgrade, dealing strictly more damage and also gaining the player {{icon/empower}}.
+
+The [[Bloodthorne]] is made by combining the [[Thorn Whip]] and [[Hungry Blade]], and is more like an improved [[Hungry Blade]] which also generates and scales off of {{icon/spikes}}, though it does use more stamina than the [[Hungry Blade]].
+
+The [[Flame Whip]] is made by combining [[Thorn Whip]] with two [[Flame]]s. Rather than generating {{icon/spikes}}, it consumes {{icon/spikes}} to generate large amounts of {{icon/heat}}.
+
+Berserkers can trivially convert the [[Thorn Whip]] into the [[Chain Whip]] using the [[Utility Pouch]] or [[Forging Hammer]]. It has nothing to do with {{icon/spikes}}, instead removing buffs from the opponent and scaling off of doing that. It also heals during [[Battle Rage]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.4
+|Cooldown 2.4s -> 2.2s, stamina cost 2.4 -> 2.2
+|-
+|0.9.3
+|Stamina usage 2.5 -> 2.4
+|-
+|0.6.2
+|Reworked: No longer gives {{icon/spikes}} start of battle. Now gives {{icon/spikes}} on hit. Accuracy 85% -> 80% Cooldown 2.3s -> 2.4s
+|-
+|0.4.0
+|Stamina usage 2.0 -> 2.5, cooldown 2.2s -> 2.3s, damage +1
+|-
+|0.3.9
+|Cooldown 2s -> 2.2s
+|-
+|0.3.3
+|Start of battle {{icon/spikes}} 1 -> 2
+|-
+|0.3.2
+|Damage 3-7 -> 3-8
+|-
+|0.2.0
+|Now gains +1 {{icon/spikes}} on Crit
+|}
+
+{{Items}}

@@ -1,0 +1,27 @@
+{{Item infobox
+|name=Star of Courage
+|image=Star_of_Courage.png
+|rarity=Unique
+|icontype=
+|type=Accessory
+|cost=1
+|class=Neutral
+|effect=
+*Chance to find {{icon/treasure}}-items +5%.
+*Your [[Weapon|Weapons]] use -5% stamina.
+*(Rewarded for starting as a random character.)
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.16]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,33 @@
+{{Item infobox
+|name=Double Rainbow
+|image=Double_Rainbow.png
+|rarity=Unique
+|icontype=
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*{{icon/star}} items have 20% chance to duplicate buffs they gain.
+*'''Every 6s:''' Gain a random buff.
+*Triggers 35% faster for each {{icon/diamond}} {{icon/holy}}-item.
+|skillround=any
+|grid=
+02220
+23332
+23132
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.4]]
+|Speed bonus 30% -> 35%
+|-
+|[[Patch 0.9.37]]
+|Added into game.
+|}
+
+{{Items}}

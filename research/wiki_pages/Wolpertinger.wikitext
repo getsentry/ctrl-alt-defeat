@@ -1,0 +1,38 @@
+{{Item infobox
+|name=Wolpertinger
+|image=Wolpertinger.png
+|rarity=Godly
+|icontype=nature
+|type=Pet
+|cost=12
+|effect=
+* Increase base stamina regeneration by 0.7% for each [[buff]] you have.
+* '''Every 5s:''' Gain 3 of the [[buff]] you have least of.
+* Triggers 15% faster for each {{icon/star}} [[Pet]].
+|grid=
+-22-
+2112
+2112
+-22-
+}}
+The [[Wolpertinger]] is a godly [[Pet]] available in the shop for all classes. It passively increases the player's stamina regeneration for each buff they have. Every once in a while it will grant 3 of the buffs the player has the least of. It also triggers faster for each adjacent [[Pet]], up to an unlikely maximum of 120% faster.
+
+With a lot of buff gain, having a [[Wolpertinger]] can help a lot with wielding multiple weapons.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.8.1
+|Stamina gain 1% per stack -> 0.7% per stack
+Now has the [[Nature]] tag
+|-
+|0.8.0b
+|Cooldown 4s -> 5s
+|-
+|0.8.0
+|Added to the game
+|}
+
+{{Items}}

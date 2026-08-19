@@ -1,0 +1,16 @@
+{{Item infobox
+|name=Fanny Pack
+|image=FannyPack.png
+|rarity=Rare
+|type=Bag
+|cost=3
+|effect=
+* Add 2 backpack slots.
+* Items inside trigger 10% faster.
+|grid=
+11
+}}
+The [[Fanny Pack]] is a rare [[Bag|bag]] available in the shop for all classes. It speeds up items placed inside it by 10%. While not listed on the item itself, this is a form of start of battle effect, and the [[Cooldown|cooldown]] of the items contained within it won't be lowered until the battle actually begins. 
+
+This speed increase is useful with a wide-variety of items, especially repeatedly triggering items that don't consume stamina, although it can also be useful with stamina-using [[Weapon|weapons]] when stamina isn't fully utilized, or with slow one-time trigger items, like [[Dark Ritual]].
+{{Items}}

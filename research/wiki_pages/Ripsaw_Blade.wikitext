@@ -1,0 +1,63 @@
+{{Item infobox
+|name=Ripsaw Blade
+|image=RipsawBlade.png
+|rarity=Legendary
+|icontype=melee
+|type=Weapon
+|cost=7
+|effect='''On hit:''' Remove 1 damage gained in battle from all opponent [[Weapon]]s and gain 0.5 damage.
+|mindamage=8
+|maxdamage=10
+|stamina=1.5
+|accuracy=90
+|cooldown=1.8
+|sockets=3
+|grid=
+1
+1
+1
+1
+}}
+The [[Ripsaw Blade]] is a legendary [[Weapon]] available in the shop for all classes. It deals relatively high damage by default, and slowly gains damage while also removing the damage gained in battle from all opponent's [[weapon]]s. This only applies to a subset of possible weapons one might encounter. It works against weapons like the [[Torch]], which gains damage due to its triggered on hit effect, but doesn't apply to weapons like the [[Thorn Whip]], which has damage increases related to a passive effect.
+
+When combined with a [[Whetstone]], the [[Ripsaw Blade]] becomes the [[Katana]], which is better in every way, attacking faster, gaining more damage, and removing buffs from the opponent.
+
+[[Engineer]]s can combine the [[Ripsaw Blade]] with a [[Coil]] to obtain the [[Chainsaw]], which steals buffs and is mostly better, but attacks slower over time.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.4]]
+|Cost 8g -> 7g
+|-
+|[[Patch 1.1.2]]
+|Cost 9g -> 8g
+|-
+|1.0.7
+|Cost 10 -> 9
+|-
+|0.9.24
+|Now removes gained damage from items and gains damage. No longer removes [[buff]]s.
+|-
+|0.6.4
+|Cooldown 1.7s -> 1.8s
+|-
+|0.5.1
+|Damage +1
+|-
+|0.4.2
+|Damage +1
+|-
+|0.3.6
+|Damage 5-7 -> 6-8
+|-
+|0.3.4
+|Rib Saw Blade removes {{icon/spikes}}/{{icon/regeneration}} only when hitting and before dealing the damage
+|-
+|0.2.0
+|Stamina cost 2 -> 1.5
+|}
+
+{{Items}}

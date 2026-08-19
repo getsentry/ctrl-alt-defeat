@@ -1,0 +1,80 @@
+{{Item infobox
+|name=Bloodthorne
+|image=Bloodthorne.png
+|rarity=Godly
+|icontype=vampiric, nature, melee
+|type=Weapon
+|cost=15
+|effect='''On hit:''' Use 1 {{icon/regeneration}} to gain 1 {{icon/vampirism}} and 1 {{icon/spikes}}. 
+* Deals +1 damage per {{icon/spikes}} and {{icon/vampirism}}.
+|mindamage=4
+|maxdamage=8
+|stamina=1.5
+|accuracy=90
+|cooldown=1.6
+|sockets=2
+|grid=
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Bloodthorne
+|ingredients=Hungry Blade, Thorn Whip
+|requirementcost= 15 (7+8)
+|image=Bloodthorne_recipe.png
+}}
+The [[Bloodthorne]] is a [[Weapon]] normally obtained by combining a [[Hungry Blade]] with a [[Thorn Whip]]. On hit, it uses a {{icon/regeneration}} to gain both a {{icon/vampirism}} and a {{icon/spikes}}, and it scales damage with both {{icon/vampirism}} and {{icon/spikes}}.
+
+The [[Bloodthorne]] is better in almost every way compared to both the [[Hungry Blade]] and [[Thorn Whip]].
+
+Compared to the [[Hungry Blade]], the [[Bloodthorne]] does cost significantly more stamina, but has the strong upside of scaling its damage rather than its maximum damage, making it a much more damaging weapon, especially when considering the additional {{icon/spikes}} gained and {{icon/spikes}}-scaling.
+
+Compared to the [[Thorn Whip]], the [[Bloodthorne]] is smaller and of a much less awkward shape. As long as there's enough {{icon/regeneration}} to feed the [[Bloodthorne]] on every hit, it will gain even more {{icon/spikes}} and deal more damage than the [[Thorn Whip]], on top of all the {{icon/vampirism}}-based benefits, since it attacks faster.
+
+Overall, the [[Bloodthorne]] is a great end-game weapon, since it scales off of two different buffs that have a high potential to be stacked.
+
+[[Ranger]]s can add [[Wisp]]s on [[Bloodthorne]] to increase the {{icon/spikes}} gained from dealing damage.
+
+[[Adventurer]]s have the unique option to craft the [[Impractically Large Bloodthorne]] by combining a [[Bloodthorne]] and an [[Impractically Large Greatsword]] using a [[Twine]]. It's essentially a huger but slower [[Bloodthorne]] with drastically amped-up effects.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Stamina cost 1.6 -> 1.5
+|-
+|[[Patch 0.9.4]]
+|Cooldown 1.7s -> 1.6s, stamina cost 1.8 -> 1.6
+|-
+|[[Patch 0.8.2]]
+|Cooldown 1.6s -> 1.7s
+|-
+|[[Patch 0.8.1]]
+|Now “use” {{icon/regeneration}} instead of removing it (also adapted the wording)
+|-
+|[[Patch 0.7.3]]
+|Stamina cost 1.5 -> 1.8
+|-
+|[[Patch 0.5.0]]
+|Is now affected by [[Blood Harvester]]
+|-
+|[[Patch 0.3.9]]
+| +1 minimum damage
+|-
+|[[Patch 0.3.2]]
+|Cooldown 1.4 -> 1.6, stamina cost 1.0 -> 1.5, damage 3-6 -> 3-8
+|-
+|[[Patch 0.3.1]]
+|Generated {{icon/vampirism}} 2 -> 1
+|-
+|[[Patch 0.2.0]]
+|Reduced {{icon/vampirism}} conversion from 3 to 2. Damage reduced to 3-6
+|-
+|[[Patch 0.1.1]]
+|Increased cooldown 1.3s -> 1.4s, Damage -1
+|}
+
+{{Items}}

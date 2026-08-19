@@ -1,0 +1,28 @@
+{{Item infobox
+|name=Dig Deeper
+|image=Dig_Deeper.png
+|rarity=Unique
+|icontype=
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*'''Requires:''' [[Shovel]].
+*Shovels dig up more valuable items.
+*'''Start of battle:''' Inflict 2 {{icon/blind}}.
+|skillround=3
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.28]]
+|Added into game.
+|}
+
+{{Items}}

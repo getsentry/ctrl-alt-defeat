@@ -1,0 +1,47 @@
+{{Item infobox
+|name=Heroic Potion
+|image=HeroicPotion.png
+|rarity=Legendary
+|type=Potion
+|cost=6
+|effect='''Out of stamina:''' Consume this and regenerate 2 stamina and gain 1 {{icon/empower}}.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+The [[Heroic Potion]] is a legendary [[Potion]] available in the shop for all classes. When the player runs out of stamina the [[ Heroic Potion]] is consumed, regenerating 2 stamina and gaining 1 {{icon/empower}}, as well as applying the effect of the [[Potion]] above it. It is mostly useless (other than from potion spillover) unless the build is well-exceeding 1.0 stamina per second, and having higher stamina demands will make it more likely to trigger and/or cause it to trigger more quickly.
+
+The single {{icon/empower}} the [[Heroic Potion]] and [[Strong Heroic Potion]] can provide may seem fairly minor, but with potion spillover, [[Amulet of Alchemy]], and/or [[Heavy Drinking]], there are ways to retrigger it often enough that the damage could add up, especially along with multiple weapons.
+
+There are a number of [[Heroic Potion]] crafts:
+
+By combining a [[Heroic Potion]] with a [[Banana]] or catalytically with a [[Cauldron]] grants the [[Strong Heroic Potion]], which gives twice the stamina.
+
+By combining a [[Pan]] with a [[Heroic Potion]] grants the [[Eggscalibur]], which is a stronger, late-game version of the [[Pan]], although it requires large amounts of {{icon/mana}} to activate its most unique effect.
+
+By combining a [[Thorn Whip]] with a [[Heroic Potion]] grants the [[Thornbloom]], which is like a more powerful [[Thorn Whip]] which also generates {{icon/empower}}.
+
+Combining the [[Hedgehog]] with a [[Heroic Potion]] grants the [[Hyper Hedgehog]], which is a straight [[Hedgehog]] upgrade.
+
+Combining the [[Broccoli]] with a [[Heroic Potion]] grants the [[Broccotree]], which is a huger and stronger [[Broccoli]] that gives a large stamina payoff for large amounts of {{icon/regeneration}} generated.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.6.2
+|No longer gives {{icon/regeneration}}
+|-
+|0.4.0
+|Can be combined into new item: [[Eggscalibur]]
+|-
+|0.3.9
+|[[Heroic Potion]]/[[Strong Heroic Potion]]: Reworked, now gives {{icon/empower}} instead of {{icon/luck}}. Reduced stamina gain by 1.
+|-
+|0.3.1
+|Now gives +3 stamina on use
+|}
+
+{{Items}}

@@ -1,0 +1,52 @@
+{{Item infobox
+|name=Carrot
+|image=Carrot.png
+|rarity=Rare
+|icontype=nature
+|type=Food
+|cost=3
+|class=Ranger
+|effect='''Every 2.7s:''' Cleanse 1 [[debuff]]. If you have at least 4 {{icon/luck}}: 55% chance to gain 1 {{icon/empower}}.
+|grid=
+-22-
+2112
+-22-
+}}
+The [[Carrot]] is a rare [[Food]] available in the shop for [[Ranger]]s. It occasionally cleanses a debuff, and if the character has enough {{icon/luck}} it has a chance to grant an {{icon/empower}}.
+
+Two [[Carrot]]s can combine with a [[Goobert]] to give a [[Carrot Goobert]], which has debuff cleansing and {{icon/empower}}-granting effects, although unlike most [[Goobert]]s, it doesn't heal or block whatsoever.
+
+A [[Carrot]], [[Snowball]], and [[Lump of Coal]] can combine into a [[Snowmaster]], which is a powerful {{icon/cold}}-inflicting and {{icon/empower}}-gaining [[pet]].
+
+
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.27
+|Cooldown 2.9s -> 2.7s
+|-
+|0.9.26
+|Cooldown 3.2s -> 2.9s
+|-
+|0.9.19
+|Cooldown 3.4s -> 3.2s
+|-
+|0.9.17
+|Cooldown 3.5s -> 3.4s
+|-
+|0.9.12
+|Cooldown 4s -> 3.5s
+|-
+|0.9.7
+|{{icon/empower}} chance 50% -> 55%
+|-
+|0.9.3
+|{{icon/luck}} requirement: 5 -> 4
+|-
+|0.4.0
+|Added to the game
+|}
+
+{{Items}}

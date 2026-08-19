@@ -1,0 +1,39 @@
+{{Item infobox
+|name=Gloves of Haste
+|image=GlovesofHaste.png
+|rarity=Rare
+|type=Gloves
+|cost=4
+|effect='''Start of battle:''' {{icon/star}} items trigger 20% faster.
+|grid=2112
+}}
+
+The [[Gloves of Haste]] are a rare item available in the shop for all characters. It speeds up items near the "wrists" by 20%, which can be useful with [[Weapon]]s, [[Pet]]s, or other '''Every Xs''' items. This can be especially useful with items that count activations such as [[Storage Coffin]] or [[Goobert]]s.
+
+There are a number of upgrades to the [[Gloves of Haste]], although they aren't strictly better, each having their own unique properties. Combining the [[Gloves of Haste]] with a [[Blood Amulet]] gives [[Vampiric Gloves]], which gives a bigger speed bonus and a large amount of [[Vampirism]], but doesn't do anything until '''After 4s'''. The [[Gloves of Haste]] can combine with a [[Walrus Tusk]], which grants an {{icon/empower}}-granting weapon, that attacks faster per the player's {{icon/spikes}}, with no trace of a "Gloves of Haste"-type effect. The [[Gloves of Haste]] can also combine with a [[Stone Skin Potion]] to create the [[Gloves of Power]], which powers up [[Weapon]]s near the wrist. Finally, [[Berserker]]s can use the [[Utility Pouch]] or [[Forging Hammer]] to craft the [[Dragon Claws]], which give {{icon/poison}} resistance, and during [[Battle Rage]] only, massively hasten items at the wrists.
+
+Two [[Gloves of Haste]] can also craft with a [[Hero Sword]] to create the [[Falcon Blade]], which is a great weapon with mass-hastening effects.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.3
+|Is now "Start of Battle" effect.
+|-
+|0.5.3
+|Speed bonus 25% -> 20%
+|-
+|0.3.9
+|Can now be combined into new item: [[Claws of Attack]]
+|-
+|0.3.2
+|Attack speed 30% -> 25%
+|-
+|0.3.1
+|35% speed -> 30% speed. Cost 3 -> 4 Gold
+|}
+
+{{Items}}

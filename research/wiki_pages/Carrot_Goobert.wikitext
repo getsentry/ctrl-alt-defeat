@@ -1,0 +1,48 @@
+{{Item infobox
+|name=Carrot Goobert
+|image=CarrotGoobert.png
+|rarity=Epic
+|icontype=nature
+|type=Pet
+|cost=12
+|class=Ranger
+|effect='''6 {{icon/star}} item activations:''' Cleanse 4 random [[debuff]]s and gain 2 {{icon/empower}} for 8s.
+|grid=
+2112
+2112
+}}
+{{Recipe infobox
+|recipename=Carrot Goobert
+|ingredients=Goobert, Carrot, Carrot
+|requirementcost=12 (6+3+3)
+|image=CarrotGoobert_recipe.png
+}}
+The [[Carrot Goobert]] is a [[Pet]] normally obtainable by combining a [[Goobert]] with two [[Carrot]]s, making it a [[Ranger]]-exclusive. Unlike most other [[Gooberts]], it doesn't directly heal in any way, instead cleansing debuffs and giving temporary {{icon/empower}}. With fast enough triggers on its lateral {{icon/star}}s, multiple temporary {{icon/empower}} could overlap and cause a large amount of additional damage, especially if the player has multiple weapons.
+
+[[Carrot Goobert]] is a component of the [[Rainbow Goobert Megasludge Alphapuddle]], also requiring the [[Light Goobert]], [[Steel Goobert]], and [[Blood Goobert]]. This is a very difficult craft and thankfully the end-product is undeniably very powerful.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.26
+|{{icon/empower}} duration 6s -> 8s
+|-
+|0.9.22
+|Activations 5 -> 6, {{icon/empower}} duration 5s -> 6s
+|-
+|0.9.19
+|Cleanse 3 -> 4
+|-
+|0.9.4
+|{{icon/empower}} Duration 4s -> 5s
+|-
+|0.6.1
+|{{icon/empower}} duration 5s -> 4s
+|-
+|0.5.6
+|Added to the game
+|}
+
+{{Items}}

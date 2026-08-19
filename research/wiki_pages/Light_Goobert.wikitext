@@ -1,0 +1,58 @@
+{{Item infobox
+|name=Light Goobert
+|image=LightGoobert.png
+|rarity=Godly
+|icontype=holy
+|type=Pet
+|cost=15
+|effect='''6 {{icon/star}} item activations:''' [[Heal]] for 25  and inflict 7 {{icon/blind}} for 3s.
+|grid=
+2112
+2112
+}}
+{{Recipe infobox
+|recipename=Light Goobert
+|ingredients=Goobert, Lightsaber
+|requirementcost=15 (6+9)
+|image=LightGoobert_recipe.png
+}}
+
+The {{icon/blind}} inflicted by [[Light Goobert]] is temporary and will be removed by [[Light Goobert]] after 3 seconds.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.9]]
+|[[Heal]] 22 -> 25
+|-
+|[[Patch 0.6.0]]
+|[[Heal]] 18 -> 20
+|-
+|[[Patch 0.5.6]]
+|{{icon/blind}} 5 -> 6
+|-
+|[[Patch 0.4.1]]
+|{{icon/blind}} 6 -> 5
+|-
+|[[Patch 0.3.8]]
+|Duration 4s -> 3s
+<p>Fixed [[Light Goobert]] sometimes cleansing all {{icon/blind}} after the first timeout</p>
+Added visual effects
+|-
+|[[Patch 0.3.4]]
+|{{icon/blind}} duration 3s -> 4s, [[heal]] 15 -> 18
+|-
+|[[Patch 0.3.2]]
+|{{icon/blind}} 5 -> 6, duration 2s -> 3s
+|-
+|[[Patch 0.3.1]]
+|[[Heal]] 12 -> 15
+|-
+|[[Patch 0.3.0]]
+|Added into game.
+|}
+
+{{Items}}

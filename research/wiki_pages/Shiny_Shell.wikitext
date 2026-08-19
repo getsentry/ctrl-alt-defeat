@@ -1,0 +1,26 @@
+{{Item infobox
+|name=Shiny Shell
+|image=ShinyShell.png
+|rarity=Common
+|icontype=holy, nature
+|type=Accessory
+|cost=2
+|effect='''After 5s:''' [[Heal]] for 5 + 3 for each {{icon/star}} {{icon/holy}}-item.
+|grid=
+212
+}}
+The [[Shiny Shell]] is an item available in the shop for all characters, at common rarity. Its only effect is that it heals a small amount once after 5 seconds, defaulting at 5 health, but reaching up to 11 health if it's between two [[Holy]] items. This isn't a particularly efficient item, but its crafts, [[Shell Totem]] and [[Shelly]], are significantly more usable and build-defining. Holy items aren't particularly common, so the [[Shiny Shell]] is one of the best options if all the player cares about is having [[Holy]] items for other items' adjacencies, such as with [[Double Rainbow]] or [[Holy Armor]], especially since it's only one tile.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.14
+|Now has the [[Nature]] type
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

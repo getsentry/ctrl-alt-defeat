@@ -1,0 +1,75 @@
+{{Item infobox
+|name=Darksaber
+|image=Darksaber.png
+|rarity=Godly
+|icontype=dark, melee
+|type=Weapon
+|cost=16
+|effect=
+* '''On attack:''' Use 1 {{icon/mana}} to inflict 1 {{icon/blind}}.
+* Deals +0.5 damage for each [[debuff]] of your opponent.
+|mindamage=12
+|maxdamage=17
+|stamina=1
+|accuracy=95
+|cooldown=1.5
+|sockets=2
+|grid=
+1
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Darksaber
+|ingredients=Lightsaber, Corrupted Crystal
+|requirementcost=16 (9+7)
+|image=Darksaber_recipe.png
+}}
+The [[Darksaber]] is a [[Weapon]] normally obtained by combining a [[Lightsaber]] with a [[Corrupted Crystal]]. It deals high base damage and scales off of all debuffs on the opponent. On hit, it spends a {{icon/mana}} to inflict a {{icon/blind}}.
+
+Compared to the [[Lightsaber]], the [[Darksaber]] deals more base damage, has better scaling, and has a better {{icon/blind}}-inflicting ability, although the differences leave room for a [[Lightsaber]] to be better in certain rare situations. The [[Darksaber]] needs {{icon/mana}} to inflict permanent {{icon/blind}}, while the [[Lightsaber]] requires {{icon/regeneration}} to inflict lots of temporary {{icon/blind}}. As such, the [[Lightsaber]] can possibly do more early in the battle, but in a longer fight, the permanent {{icon/blind}} of the [[Darksaber]] would eventually pay off. The [[Darksaber]] also requires the less precious of the two buffs. The debuff scaling of the [[Darksaber]] damage is also far superior compared to the {{icon/blind}} scaling of the [[Lightsaber]], even though the [[Lightsaber]] scales better off of {{icon/blind}} specifically. {{icon/blind}} is just too rare and difficult to stack compared to {{icon/cold}} and {{icon/poison}}, so the practical damage-ceiling of the [[Darksaber]] is likely much higher.
+==Description==
+''So you found the switch.''
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Damage +2
+|-
+|[[Patch 0.9.38]]
+|Stamina cost 1.2 -> 1.0
+|-
+|[[Patch 0.8.4]]
+|Stamina cost 1.2 -> 1.4
+|-
+|[[Patch 0.8.0]]
+|Cooldown 1.4s -> 1.5s
+|-
+|[[Patch 0.7.6]]
+|Stamina cost 1.0 -> 1.2
+|-
+|[[Patch 0.7.2]]
+|Is now crafted with [[Corrupted Crystal]]
+|-
+|[[Patch 0.7.1]]
+|Base damage 5-9 -> 7-12
+|-
+|[[Patch 0.4.0]]
+|Damage per [[debuff]] stack 0.35 -> 0.5
+|-
+|[[Patch 0.3.9]]
+|Damage per [[debuff]] 0.3 -> 0.35
+|-
+|[[Patch 0.3.8]]
+|Damage +1
+|-
+|[[Patch 0.3.3]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,50 @@
+{{Item infobox
+|name=Amulet of Steel
+|image=AmuletofSteel.png
+|rarity=Rare
+|type=Accessory
+|cost=6
+|effect=
+* '''Start of battle:''' Gain 30 {{icon/block}}.
+* '''{{icon/star}} items gained 40 {{icon/block}}:''' Gain 1 {{icon/empower}}.
+|grid=
+222222222
+222212222
+222222222
+}}
+{{Recipe infobox
+|recipename=Amulet of Steel
+|ingredients=Unidentified Amulet
+|catalysts=
+|requirementcost=6 (6)
+|image=Amulets_transform.png
+}}
+
+[[Amulet of Steel]] is a rare item normally obtained by buying the [[Unidentified Amulet]] from the shop. The 30 {{icon/block}} gained is fairly significant as a baseline, but with other {{icon/block}}-giving items as well, such as [[Armor]]s, it can also give a large amount of {{icon/empower}} early in the fight, which is great for weapon builds.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown patch
+|{{icon/block}} 25 -> 30. {{icon/block}} needed 35 -> 40.
+|-
+|0.9.18
+|{{icon/block}} needed 40 -> 35
+|-
+|0.9.17
+|{{icon/block}} needed 45 -> 40
+|-
+|0.9.16
+|{{icon/block}} needed for {{icon/empower}} 50 -> 45
+|-
+|0.9.15
+|{{icon/block}} 20 -> 25
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

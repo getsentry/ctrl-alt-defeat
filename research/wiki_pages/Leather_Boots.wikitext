@@ -1,0 +1,49 @@
+{{Item infobox
+|name=Leather Boots
+|image=LeatherBoots.png
+|rarity=Epic
+|type=Shoes
+|cost=6
+|effect='''Health drops below 70%:''' Gain 1 {{icon/luck}}, 1 {{icon/empower}} and 15 {{icon/block}} (once).
+|sockets=1
+|grid=
+1
+1
+}}
+[[Leather Boots]] are an epic pair of [[shoes]] available in the shop for all classes. Once the player's health falls somewhat, it will activate, giving 1 {{icon/luck}}, 1 {{icon/empower}}, and 15 {{icon/block}}, once. This is a mildly useful effect, but the [[Leather Boots]] need to be crafted or synergized to be well-worth the space they take up.
+
+The [[Dragonskin Boots]] can be trivially crafted by a [[Berserker]], using the [[Forging Hammer]] or [[Utility Pouch]]. It's slightly better than the original [[Leather Boots]]. It gives {{icon/cold}} resistance, cleanses debuffs, still gives 1 {{icon/empower}}, and gives slightly more {{icon/block}}.
+
+The other crafts are clearer upgrades.
+
+[[Leather Boots]] and [[Stone Skin Potion]] combine into the [[Stone Shoes]], which gives much more {{icon/block}} than the [[Leather Boots]], and also gives a big damage reduction for certain damage types for a significant period after triggering.
+
+[[Leather Boots]] and [[Divine Potion]] combine into the [[Winged Boots]], which, while taking up one more square than the other boots, has the powerful effect of cleansing 20 debuffs and dodging three attacks.
+
+The [[Full Body Protection]] skill requires the player to have one [[helmet]], one [[armor]], and one [[shoes]] to take full effect, which makes buying a [[Leather Boots]] very important.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.19
+|{{icon/block}} 10 -> 15
+|-
+|0.9.17
+|{{icon/block}} 8 -> 10
+|-
+|0.8.4
+|Renamed to Leather Boots. Sprite changed.
+|-
+|0.4.2
+|{{icon/luck}} 2 -> 1
+|-
+|0.3.9
+|Reworked, they now add +1 {{icon/empower}} instead of cleansing {{icon/poison}}
+|-
+|0.3.0
+|Now trigger at 70%, they also remove 2 {{icon/poison}}
+|}
+
+{{Items}}

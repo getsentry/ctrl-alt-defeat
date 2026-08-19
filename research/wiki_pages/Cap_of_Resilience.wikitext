@@ -1,0 +1,40 @@
+{{Item infobox
+|name=Cap of Resilience
+|image=CapofResilience.png
+|rarity=Epic
+|type=Helmet
+|cost=7
+|effect=
+* '''Start of battle:''' Reduce damage taken by 25% for 3s.
+* 15% chance to resist [[Critical_hits|critical hits]].
+* 15% chance to resist [[stun]]s.
+|sockets=1
+|grid=
+1
+1
+}}
+The [[Cap of Resilience]] is an epic [[Helmet]] available in the shop for all classes. It reduces damage taken in the first few seconds of the battle, and gives resistance to critical hits and stuns.
+
+There are two upgrades to the [[Cap of Resilience]]. Combining it with a [[Stone Skin Potion]] gives the [[Stone Helm]], which does mostly the same thing but is strictly enhanced. Combining the [[Cap of Resilience]] with a [[Corrupted Crystal]] gives the [[Cap of Discomfort]], which trades in the crit and stun resistance for opponent buff nullification and heal reduction, along with longer damage reduction at the start of the battle.
+
+The [[Cap of Resilience]] is the most common item which satisfies the helmet condition for [[Full Body Protection]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.5.6
+|[[Stun]]/[[Critical_hits|Crit]] resist chance: 10% -> 15%
+|-
+|0.5.5
+|Also adds 10% chance to resist a [[stun]]
+|-
+|0.4.2
+|Initial damage reduction 20% -> 25%
+|-
+|0.4.1
+|Added to the game
+|}
+
+{{Items}}

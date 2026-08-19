@@ -1,0 +1,39 @@
+{{Item infobox
+|name=Rope
+|image=Rope.png
+|rarity=Rare
+|type=Accessory
+|cost=4
+|effect=
+*'''{{icon/star}} item activates:''' The {{icon/diamond}} item triggers 10% faster for 6s (up to 50% shared by all ropes)
+|sockets=0
+|grid=
+113
+200
+}}
+{{Recipe infobox
+|recipename=Rope
+|ingredients=Twine, Twine
+|requirementcost=4 (2+2)
+|image=RopeRecipe.png
+}}
+The [[Rope]] is an item obtained by combining two [[Twine]]. [[Twine]] is a common available in the shop for [[Adventurer]]s or players with [[Twine Badge]]. Twine crafts into lots of useful items, with [[Rope]] certainly not being the most enticing, but the [[Sewing Case]] and [[Twine Badge]] both open up the possibility of buying many of them at once. It can be difficult to craft good recipes with every single [[Twine]] the player has, and with enough of an excess, one can at least craft this [[Rope]]. 
+
+The [[Rope]] causes the {{icon/diamond}} item to temporarily trigger faster for each time the {{icon/star}} item activates. One can therefore put a quickly triggering item at the {{icon/star}} position to garner a relatively high speed boost to the {{icon/diamond}} item, which can certainly be effective if the {{icon/diamond}} item is good enough.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown small patch (7-11-2025)
+|Duration 5 -> 6
+|-
+|1.0.3
+|Duration 4 -> 5
+|-
+|1.0
+|Added
+|}
+
+{{Items}}

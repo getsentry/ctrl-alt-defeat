@@ -1,0 +1,28 @@
+{{Item infobox
+|name=No Rush Please
+|image=No_Rush_Please.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*'''Start of battle:''' Both players take -35% damage for 10s. Inflict 5 {{icon/cold}}.
+|skillround=any
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.4]]
+|Cold 4 -> 5
+|-
+|[[Patch 0.9.33]]
+|Added into game.
+|}
+
+{{Items}}

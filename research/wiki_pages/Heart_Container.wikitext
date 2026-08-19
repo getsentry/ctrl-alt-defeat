@@ -1,0 +1,49 @@
+{{Item infobox
+|name=Heart Container
+|image=HeartContainer.png
+|rarity=Godly
+|icontype=holy
+|type=Accessory
+|cost=11
+|effect=
+* '''Every 3s:''' Gain 1 {{icon/regeneration}}.
+* '''Use 7 {{icon/regeneration}}:''' Gain 100 maximum health, 2 {{icon/empower}} and your [[heal|healing]] is increased by 15% (once).
+|sockets=1
+|grid=
+11
+11
+}}
+The [[Heart Container]] is a godly [[Accessory]] available in the shop for all classes. It occasionally gives a {{icon/regeneration}}. Once the player has enough {{icon/regeneration}}, the [[Heart Container]] will spend it to give some {{icon/empower}}, gain tons of maximum health, and boost the player's healing for the rest of the fight.
+
+The [[Heart Container]] is a welcome consistent source of {{icon/regeneration}} for builds that need to spend it for payoff, such as builds containing [[Hungry Blade]], [[Bloodthorne]], or [[Lightsaber]], although the [[Heart Container]] can also be a payoff all its own, with the massive defensive benefit of its '''Use 7 {{icon/regeneration}}''' ability. This ability would normally take 21 seconds to activate on its own, which would usually be too slow. Additional sources of {{icon/regeneration}} can help unlock the full power of the [[Heart Container]] sooner.
+
+There are a number of crafts involving the [[Heart Container]]:
+
+Combining a [[Heart Container]] with a [[Corrupted Crystal]] grants a [[Heart of Darkness]], which is a buff-stealing, heal-preventing twist on the [[Heart Container]].
+
+Combining a [[Heart Container]] with four [[Stone]]s grants a [[Stone Golem]] which is a stunning, {{icon/empower}} gaining, damaging [[Pet]] that attacks slowly, but gains {{icon/block}} and permanently attacks faster if it uses 7 {{icon/regeneration}}.
+
+[[Adventurer]]s can combine a [[Heart Container]] with a [[Shield of Valor]] using a [[Twine]] to craft a [[Heart Shield]], which is an exquisite {{icon/block}}-boosting, {{icon/regeneration}}-boosting, and heal-boosting [[Shield]] that itself gains {{icon/regeneration}} and has a strong defensive '''Use 7 {{icon/regeneration}}''' ability.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.3]]
+|Cost 12g -> 11g
+|-
+|0.9.24
+|Maximum health gain: 90 -> 100
+|-
+|0.9.4
+|Health bonus 80 -> 90
+|-
+|0.8.4
+|{{icon/empower}} 3 -> 2
+|-
+|0.8.1
+|Added to the game
+|}
+
+{{Items}}

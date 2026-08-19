@@ -1,0 +1,49 @@
+{{Item infobox
+|name=Poison Spear
+|image=Poison_Spear.png
+|rarity=Legendary
+|icontype=melee
+|type=Weapon
+|cost=13
+|class=Neutral
+|effect=
+*'''On hit:''' Inflict 3 {{icon/poison}} and 2 {{icon/poison}} to yourself. Destroy 6 {{icon/block}} for each {{icon/star}} free slot or {{icon/nature}}-item.
+|mindamage=9
+|maxdamage=14
+|stamina=1
+|accuracy=85
+|cooldown=1.5
+|sockets=1
+|grid=
+2
+2
+2
+2
+2
+1
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Poison Spear
+|ingredients=Spear, Pestilence Flask
+|requirementcost=13 (6+7)
+|image=Poison_Spear_recipe.png
+}}
+The [[Poison Spear]] is a neutral item normally obtained by combining a [[Spear]] with a [[Pestilence Flask]]. When compared with the [[Spear]], it does massively more damage and destroys more {{icon/block}}, with the added upside that [[Nature]] items can occupy the {{icon/star}} slots in addition to the standard option of leaving them free. 
+
+On hit, it also inflicts {{icon/poison}} to '''both''' players, but more to the opponent, which is good in general for dealing damage, but even better in a build with payoff for poisoning the opponent ([[Poison Ivy]], [[Death Scythe]], [[Critical Poison]] etc...). It helps to have a way to cleanse the self-inflicted {{icon/poison}}, like [[Holy Armor]]. Consider the synergy with [[Harold, the Hateful Hat]] if playing [[Mage]].
+
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.28]]
+|Added into game.
+|}
+
+{{Items}}

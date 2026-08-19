@@ -1,0 +1,76 @@
+{{Item infobox
+|name=Blood Harvester
+|image=BloodHarvester.png
+|rarity=Unique
+|icontype=treasure, vampiric, melee
+|type=Weapon
+|cost=7
+|effect=
+* {{icon/star}} Items give +100% {{icon/vampirism}}.
+* Attacks 5% faster for every {{icon/vampirism}}.
+|mindamage=10
+|maxdamage=16
+|stamina=0
+|accuracy=90
+|cooldown=4
+|sockets=3
+|grid=
+111
+122
+122
+122
+}}
+Blood Harvester's inherent speed boost of +5% for every {{icon/vampirism}} can at maximum give +200% (at 40 {{icon/vampirism}} stacks).
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.23
+|Damage +2
+|-
+|0.9.21
+|Stamina cost 0.2 -> 0
+|-
+|0.9.20
+|Stamina cost 0.4 -> 0.2
+|-
+|0.9.18
+|Cost 8 {{icon/gold}} -> 7 {{icon/gold}}
+|-
+|0.9.16
+|Stamina cost 0.5 -> 0.4
+|-
+|0.9.15
+|Cost 9 {{icon/gold}} -> 8 {{icon/gold}}
+|-
+|0.9.8
+|Cost 10 {{icon/gold}} -> 9 {{icon/gold}}
+|-
+|0.9.7
+|Cost 11g -> 10g
+|-
+|0.7.6
+|Cost 12g -> 11g
+|-
+|0.7.2
+|Damage +2
+|-
+|0.6.3
+|Maximum damage +2
+|-
+|0.6.0
+|Stamina cost 1.6 -> 0.5, cooldown 1.4s -> 4.0s, cost 14g -> 12g
+|-
+|0.5.3
+|Stamina cost 1.8 -> 1.6
+|-
+|0.5.2
+|Stamina usage 2.0 -> 1.8
+|-
+|0.4.3
+|Added to the game
+|}
+
+{{Items}}

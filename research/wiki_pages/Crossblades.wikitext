@@ -1,0 +1,86 @@
+{{Item infobox
+|name=Crossblades
+|image=Crossblades.png
+|rarity=Godly
+|icontype=melee
+|type=Weapon
+|cost=30
+|effect=
+* '''Start of battle:''' The {{icon/star}} [[Weapon]] gains 10 damage. The {{icon/diamond}} item triggers 65% faster.
+* '''On hit:''' Gain 1 damage and attack 4% faster.
+|mindamage=8
+|maxdamage=11
+|stamina=1
+|accuracy=100
+|cooldown=1.4
+|sockets=3
+|grid=
+-2--
+-1--
+1113
+-1--
+}}
+{{Recipe infobox
+|recipename=Crossblades
+|ingredients=Falcon Blade, Hero Longsword
+|requirementcost=30 (15+15)
+|image=Crossblades_recipe.png
+}}
+The [[Crossblades]] are a [[Weapon]] normally obtained by combining a [[Hero Longsword]] with a [[Falcon Blade]]. This is one of the more difficult crafts, as it requires two [[Wooden Sword]]s, four [[Whetstone]]s, and two [[Gloves of Haste]] total, along with at least three rounds of crafting. It has effects resembling the [[Hero Longsword]] and [[Falcon Blade]], but focused into a single point at the tips of their respective swords. It drastically raises the damage of any [[Weapon]] at the tip of the Hero Longsword and drastically speeds the item at the tip of the Falcon Blade. It also deals more damage and attacks faster the more times it hits.
+
+If the [[Crossblades]] can be successfully crafted, it makes for a powerful main weapon that will always be able to do something spectacular with its abilities. It's important to have at least one other [[Weapon]] and one other item that benefits from speed, but this isn't much of a hurdle compared to the craft itself.
+
+Consider the synergy with [[Echoing Battlecry]] and [[Repeater]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.10]]
+|Speed bonus 60% -> 65%
+|-
+|[[Patch 0.9.23]]
+|Damage +2
+|-
+|[[Patch 0.9.21]]
+|Damage +2
+|-
+|[[Patch 0.9.16]]
+|Speed increase 3% -> 4%
+|-
+|[[Patch 0.9.12]]
+|Damage +3
+|-
+|[[Patch 0.9.5]]
+|Cooldown 1.5s -> 1.4s
+|-
+|[[Patch 0.8.0]]
+|Cooldown 1.6s -> 1.5s
+|-
+|[[Patch 0.7.6]]
+|Damage +1
+|-
+|[[Patch 0.7.5]]
+|Damage +1
+|-
+|[[Patch 0.7.3]]
+|Is now "Start of Battle" effect.
+|-
+|[[Patch 0.7.2]]
+|Damage +1
+|-
+|[[Patch 0.6.2]]
+|Damage +1
+|-
+|[[Patch 0.5.4d]]
+|Damage -2
+|-
+|[[Patch 0.5.4]]
+|Cooldown 1.2s -> 1.6s, speed Scaling 5% -> 3%
+|-
+|[[Patch 0.5.3]]
+|Added into game.
+|}
+
+{{Items}}

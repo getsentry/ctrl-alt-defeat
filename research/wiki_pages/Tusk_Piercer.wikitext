@@ -1,0 +1,68 @@
+{{Item infobox
+|name=Tusk Piercer
+|image=TuskPiercer.png
+|rarity=Legendary
+|icontype=nature, ranged
+|type=Weapon
+|cost=10
+|class=Ranger
+|effect=
+* '''Start of battle:''' Gain 4 {{icon/spikes}}.
+* '''{{icon/star}} [[Weapon]] hits:''' Use 1 {{icon/spikes}} to deal +9 damage on the next attack.
+|mindamage=9
+|maxdamage=12
+|stamina=1.2
+|accuracy=85
+|cooldown=3
+|sockets=1
+|grid=
+-1--
+1112
+-1--
+}}
+{{Recipe infobox
+|recipename=Tusk Piercer
+|ingredients=Bow and Arrow, Walrus Tusk
+|requirementcost=10 (6+4)
+|image=TuskPiercer_recipe.png
+}}
+The [[Tusk Piercer]] is a [[Ranger]] [[Weapon]] normally obtained by combining a [[Bow and Arrow]] with a [[Walrus Tusk]]. It deals more damage than the [[Bow and Arrow]] and has a somewhat different ability, gaining {{icon/spikes}} at the start of battle, but it subsequently spends {{icon/spikes}} on {{icon/star}} weapon hit to increase the damage of its next attack.
+
+In a long fight, the [[Tusk Piercer]] could actually net '''cost''' the player {{icon/spikes}}, so this should be kept in mind for {{icon/spikes}} builds. Still, it can do respectable moderate damage, with the elevated starting {{icon/spikes}} dealing some extra damage in the early part of the fight.
+
+The [[Tusk Piercer]] probably is not the best [[Bow and Arrow]] upgrade, but it's definitely the easiest to craft, and this has its advantages when looking for a quick power boost, in time for the next fight. It's something to use the [[Walrus Tusk]] on, at the very least, which really doesn't do much on its own.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.14
+|{{icon/spikes}} 3 -> 4
+|-
+|0.9.12
+|Stamina usage 1.5 -> 1.2
+|-
+|0.9.8
+|Bonus damage 8 -> 9
+|-
+|0.9.4
+|Start of Battle {{icon/spikes}} 2 -> 3
+|-
+|0.7.5
+|Damage +1
+|-
+|0.7.4
+|Stamina usage 1 -> 1.5. Damage +1
+|-
+|0.6.4
+|Damage +2
+|-
+|0.6.3
+|Start of Battle {{icon/spikes}} 1 -> 2
+|-
+|0.6.2
+|Added to the game
+|}
+
+{{Items}}

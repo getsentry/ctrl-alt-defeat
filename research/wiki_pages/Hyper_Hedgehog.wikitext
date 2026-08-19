@@ -1,0 +1,40 @@
+{{Item infobox
+|name=Hyper Hedgehog
+|image=Hyper_Hedgehog.png
+|rarity=Godly
+|icontype=holy,nature
+|type=Pet
+|cost=12
+|class=Ranger
+|effect=
+*'''Every 5s:''' Deal 10 {{icon/effect}}-damage + 0.5 for each {{icon/spikes}} + 1 for each {{icon/empower}}.
+*'''Health drops below 70%:''' Gain 4 {{icon/spikes}}, 3 {{icon/empower}} and 35 {{icon/block}} (once).
+*Triggers 15% faster for each {{icon/star}} [[Pet]] or [[Food]].
+|grid=
+02
+21
+21
+02
+}}
+{{Recipe infobox
+|recipename=Hyper Hedgehog
+|ingredients=Hedgehog, Heroic Potion
+|requirementcost=12 (6+6)
+|image=Hyper_Hedgehog_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|{{Icon/spikes}} 3 -> 4
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}
+[[zh:超级刺猬]]

@@ -1,0 +1,80 @@
+{{Item infobox
+|name=Puzzle Badge
+|image=Puzzle_Badge.png
+|rarity=Unique
+|type=Accessory
+|icontype=treasure
+|cost=5
+|class=Neutral
+|effect=
+*{{icon/star}} item triggers 20% slower.
+*'''After 5s:''' They trigger 50% faster instead.
+*'''Bag bought:''' 35% chance to restock with a Puzzlebag.
+|grid=
+0200
+2220
+0122
+2220
+}}
+The [[Puzzle Badge]] can cause the following puzzlebags to appear in the shop when a [[Bag|bag]] is purchased:
+
+{| class="styled items nostyle-list sortable"
+! class="unsortable" |
+!'''Name'''
+! class="unsortable" | '''Effect'''
+!'''Class'''
+!'''Rarity'''
+!'''Cost'''
+{{#cargo_query:
+|tables=Items
+|fields=image,name,effect,class,rarity,cost
+|where=name LIKE '%Puzzlebag%' AND rarity='Common'
+|format=template
+|template=item table/row
+|named args=yes
+}}
+{{#cargo_query:
+|tables=Items
+|fields=image,name,effect,class,rarity,cost
+|where=name LIKE '%Puzzlebag%' AND rarity='Rare'
+|format=template
+|template=item table/row
+|named args=yes
+}}
+{{#cargo_query:
+|tables=Items
+|fields=image,name,effect,class,rarity,cost
+|where=name LIKE '%Puzzlebag%' AND rarity='Epic'
+|format=template
+|template=item table/row
+|named args=yes
+}}
+{{#cargo_query:
+|tables=Items
+|fields=image,name,effect,class,rarity,cost
+|where=name LIKE '%Puzzlebag%' AND rarity='Legendary'
+|format=template
+|template=item table/row
+|named args=yes
+}}
+{{#cargo_query:
+|tables=Items
+|fields=image,name,effect,class,rarity,cost
+|where=name LIKE '%Puzzlebag%' AND rarity='Godly'
+|format=template
+|template=item table/row
+|named args=yes
+}}
+|}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,27 @@
+{{Item infobox
+|name=Happy Bomb
+|image=Happy_Bomb.png
+|rarity=Unique
+|icontype=treasure
+|type=Accessory
+|cost=7
+|class=Neutral
+|effect=
+*'''After 12s:''' Use all your buffs, your opponent takes +4% damage for each buff used. Deal 30 {{icon/effect}}-damage.
+|grid=
+11
+11
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.33]]
+|Added into game.
+|}
+
+
+{{Items}}

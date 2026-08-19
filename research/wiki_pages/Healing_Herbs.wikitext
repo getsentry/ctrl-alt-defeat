@@ -1,0 +1,22 @@
+{{Item infobox
+|name=Healing Herbs
+|image=HealingHerbs.png
+|rarity=Common
+|icontype=nature
+|type=Accessory
+|cost=4
+|effect='''Start of battle:''' Gain 2 {{icon/regeneration}}.
+|grid=1
+}}
+The [[Healing Herbs]] are an item available in the shop for all characters, at common rarity. Besides the obvious small amount of healing the [[Healing Herbs]] provides for any character, the [[Healing Herbs]] make a great addition to a [[Ranger]]'s [[Vineweave Basket]], increasing their healing while providing some healing of its own. The [[Healing Herbs]] also segue nicely into a [[Hungry Blade]] build, since the [[Hungry Blade]] requires {{icon/regeneration}} to produce {{icon/vampirism}}, which then powers it up. The [[Healing Herbs]] can also be used to craft the [[Health Potion]] into the much stronger [[Strong Health Potion]]. Because of this, the [[Healing Herbs]] have even more to offer a [[Vampirism]] build, since the [[Strong Health Potion]] can then be crafted into the [[Vampiric Potion]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Changes
+|-
+|0.5.6
+|Regen 1 -> 2, Cost 2g -> 4g
+|}
+
+{{Items}}

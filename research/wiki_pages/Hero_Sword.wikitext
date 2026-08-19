@@ -1,0 +1,59 @@
+{{Item infobox
+|name=Hero Sword
+|image=HeroSword.png
+|rarity=Epic
+|icontype=melee
+|type=Weapon
+|cost=7
+|effect='''Start of battle:''' {{icon/star}} [[Weapon]]s gain 1 damage.
+|mindamage=2
+|maxdamage=4
+|stamina=0.7
+|accuracy=90
+|cooldown=1.4
+|sockets=1
+|grid=
+-2-
+212
+212
+-2-
+}}
+{{Recipe infobox
+|recipename=Hero Sword
+|ingredients=Wooden Sword, Whetstone
+|requirementcost=7 (3+4)
+|image=HeroSword_recipe.png
+}}
+The [[Hero Sword]] is a [[weapon]] attained by combining the [[Wooden Sword]] with a [[Whetstone]]. It gives touching weapons +1 damage at start of battle. It's not a particularly impressive weapon on its own (though, much better than the [[Wooden Sword]]), but does craft into a number of stronger weapons, and also the [[Steel Goobert]].
+
+[[File:WoodenSwordCraftingTree.png|300px]]
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.29
+|Recipe changed to Wooden Sword + Whetstone. Damage bonus 2->1.
+|-
+|0.7.3
+|Is now "Start of Battle" effect.
+|-
+|0.3.5
+|Can be combined into new item: [[Hero Longsword]]
+Can be combined into new item: [[Falcon Blade]]
+|-
+|0.3.3
+|Damage 3-5 -> 2-4
+|-
+|0.3.2
+|Damage 3-6 -> 3-5, stamina cost 0.5 -> 0.7
+|-
+|0.3.0
+|Deals 3-6 damage and gives +2 damage
+|-
+|0.2.0
+|Max damage +1
+|}
+
+{{Items}}

@@ -1,0 +1,81 @@
+{{Item infobox
+|name=Holy Armor
+|image=HolyArmorNew.png
+|rarity=Legendary
+|icontype=holy
+|type=Armor
+|cost=12
+|effect=
+* '''Start of battle:''' Gain 65 {{icon/block}}. Gain 2 {{icon/regeneration}} for each {{icon/star}} {{icon/holy}}-item.
+* '''Every 2.2s:''' Cleanse 2 {{icon/poison}}.
+|sockets=3
+|grid=
+-22-
+2112
+2112
+2112
+-22-
+}}
+[[Holy Armor]] is a legendary [[Armor]] available in the shop to all classes. It's generally stronger than the [[Leather Armor]], granting more {{icon/block}} and with a stronger cleansing ability (although it only works on {{icon/poison}}). It also can grant a lot of {{icon/regeneration}} if multiple [[Holy]] items are placed next to it.
+
+There are multiple strong crafts for the [[Holy Armor]].
+
+When combined with a [[Corrupted Crystal]], the [[Holy Armor]] becomes [[Corrupted Armor]], which grants much more {{icon/block}}, protects debuffs on the opponent from being cleansed, and cleanses the player's own debuffs to put them on the opponent.
+
+When combined with a [[Mana Orb]], the [[Holy Armor]] becomes the [[Moon Armor]], which grants large amounts of {{icon/mana}} and reflects debuffs. It can also gain a large amount of armor if many [[Magic]] items are placed around it.
+
+Pyromancers can use two [[Flame]]s to turn the [[Holy Armor]] into [[Sun Armor]], which isn't a massive improvement, but spends {{icon/heat}} to cleanse and heal, and gains {{icon/heat}} from adjacent [[Holy]] or [[Fire]] items.
+
+Combining the [[Holy Armor]] with either a [[Bunch of Coins]] or a [[Maneki-neko]], will grant the [[Gold armor]], which is superior in almost every way, granting more {{icon/block}}, more {{icon/regeneration}}, cleansing more and a wider variety of debuffs, and even granting 3 {{icon/gold}} per turn, although it has the possibly significant drawback of making all the player's weapons attack much slower.
+
+Crafting any Collar item ([[Acorn Collar]] and its derivatives) with [[Holy Armor]] will convert the Collar into a [[White Lily Collar]] without consuming the [[Holy Armor]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown Patch (6-13-2025)
+|Cost 13g -> 12g
+|-
+|Unknown Patch (2-14-2025)
+|Cooldown 2.6s -> 2.2s
+|-
+|0.9.22
+|{{icon/block}} 60 -> 65
+|-
+|0.9.16
+|Cooldown 2.8s -> 2.6s
+|-
+|0.9.15
+|Cooldown 3s -> 2.8s
+|-
+|0.9.12
+|{{icon/block}} 55 -> 60
+|-
+|0.7.6
+|Cost 14g -> 13g
+|-
+|0.5.3
+|{{icon/block}} 45 -> 55
+|-
+|0.5.0
+|{{icon/regeneration}} per [[Holy]] item 1 -> 2
+|-
+|0.4.3
+|Reworked: Now gives {{icon/regeneration}} based on adjacent [[Holy]] items instead of empty slots.
+|-
+|0.4.0
+|Now always activate on cooldown even if there is nothing to cleanse.
+|-
+|0.3.8
+|{{icon/block}} 40 -> 45, now cleanses 2 {{icon/poison}} every 3s (up from 1 every 2s)
+|-
+|0.3.3
+|{{icon/block}} 35 -> 40
+|-
+|0.2.0
+|{{icon/poison}} cleanse cooldown 3s -> 2s
+|}
+
+{{Items}}

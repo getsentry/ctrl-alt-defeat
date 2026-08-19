@@ -1,0 +1,39 @@
+{{Item infobox
+|name=Maneki-neko
+|image=Maneki-neko.png
+|rarity=Legendary
+|icontype=holy
+|type=Accessory
+|cost=10
+|effect=
+* Sale chance +3%.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Value of {{icon/star}} items > 20 {{icon/gold}}</font></div>
+* 15% chance to resist [[critical hits]].
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Value of {{icon/star}} items > 40 {{icon/gold}}</font></div>
+* [[Godly]] and [[Unique]] items trigger 15% faster.
+|grid=
+-2-
+212
+212
+-2-
+}}
+The [[Maneki-neko]] is a legendary [[accessory]] available in the shop for all classes. It slightly increases the chance of a sale in the shop, although this is minor compared the effects which it can provide if enough value of items are touching it. With >20 {{icon/gold}} or more of items, the player has a 15% chance to resist critical hits, and with >40 {{icon/gold}}, all godly or unique items are sped up by 15%. This speed boost can massively enhance a late-game high value board.
+
+Another important property of the [[Maneki-neko]] is that it catalytically "opens" the [[Box of Riches]] into the [[Box of Prosperity]], most importantly granting 4 backpack slots (could be considered 6, if one considers the slots no longer taken up by the [[Box of Riches]] as freed up).
+
+The only craft which consumes the [[Maneki-neko]] is the [[Gold Armor]] which can be made by combining the [[Maneki-neko]] with [[Holy Armor]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.17
+|Speed bonus 20% -> 15%, now has “[[Holy]]” type
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}
+[[zh:幸运招财猫]]

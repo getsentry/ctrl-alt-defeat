@@ -1,0 +1,45 @@
+{{Item infobox
+|name=Stone Shoes
+|image=StoneShoes.png
+|rarity=Legendary
+|type=Shoes
+|cost=12
+|effect='''Health drops below 70%:''' Gain 1 {{icon/luck}}, 1 {{icon/empower}}, and 45 {{icon/block}}. Reduce {{icon/ranged}}/{{icon/effect}}-damage taken by 35% for 7s (once).
+|sockets=1
+|grid=
+1
+1
+}}
+{{Recipe infobox
+|recipename=Stone Shoes
+|ingredients=Leather Boots, Stone Skin Potion
+|catalysts=
+|requirementcost=12 (6+6)
+|image=StoneShoes_recipe.png
+}}
+The [[Stone Shoes]] are neutral [[Shoes]] normally obtained by combining the [[Leather Boots]] with a [[Stone Skin Potion]]. It has an effect similar to the [[Leather Boots]], granting {{icon/luck}}, {{icon/empower}}, and {{icon/block}} once the player is somewhat injured, although it gives much more {{icon/block}} and has the added effect of reducing ranged and effect damage taken for a time after it triggers.
+
+Once triggered, if the damage the player would take comes from a source that is both {{icon/ranged}} AND {{icon/effect}}, the damage is reduced twice for 70% (35%+35%) damage reduction.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.29
+|{{icon/block}} 40 -> 45
+|-
+|0.9.28
+|{{icon/block}} 35 -> 40
+|-
+|0.9.26
+|{{icon/block}} 30 -> 35, damage reduction duration 6s -> 7s
+|-
+|0.9.25
+|Damage reduction 30% -> 35%, duration 5s -> 6s
+|-
+|0.9.24
+|Added to the game
+|}
+
+{{Items}}

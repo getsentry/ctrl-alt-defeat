@@ -1,0 +1,58 @@
+{{Item infobox
+|name=King Goobert
+|image=KingGoobert.png
+|rarity=Godly
+|icontype=holy, magic
+|type=Pet
+|cost=23
+|effect=
+* '''6 {{icon/star}} item activations:''' Heal for 35, protect 3 [[buff]]s from removal and use 4 {{icon/mana}} to become [[Invulnerability|invulnerable]] for 1.5s (up to 3 times).
+* Effects of [[Gemstone]]s socketed in this are increased by 50%.
+|sockets=2
+|grid=
+2112
+2112
+2112
+}}
+{{Recipe infobox
+|recipename=King Goobert
+|ingredients=Goobert, King Crown
+|catalysts=
+|requirementcost=23 (6+17)
+|image=KingGoobert_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.23
+|[[Heal]] 30 -> 35
+|-
+|0.9.19
+|[[Buff]] protection 2 -> 3, {{icon/mana}} cost 5 -> 4
+|-
+|0.9.14
+|[[Heal]] 25 -> 30
+|-
+|0.9.13
+|[[Invulnerability]] 1.3s -> 1.5s
+|-
+|0.9.12
+|
+* Now have the [[Magic]] type
+* [[Invulnerability]] 1.2s -> 1.3s
+|-
+|0.9.10
+|[[Invulnerability]] duration 1s -> 1.2s
+|-
+|0.9.9
+|{{icon/mana}} cost 6 -> 5
+|-
+|0.9.8
+|Added to the game
+|}
+
+{{Items}}

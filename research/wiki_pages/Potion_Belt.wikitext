@@ -1,0 +1,59 @@
+{{Item infobox
+|name=Potion Belt
+|image=PotionBelt.png
+|rarity=Legendary
+|type=Bag
+|cost=5
+|effect=
+* Add 4 backpack slots.
+* '''First [[Potion]] inside consumed:''' Gain a random [[buff]].
+* '''4 [[Potion]]s inside consumed:''' Cleanse 10 [[debuff]]s.
+|grid=
+1
+1
+1
+1
+}}
+
+The [[Potion Belt]] is a legendary [[Bag]] available in the shop for all classes. It has four spaces arranged in a line, and has synergies related to [[Potion]]s. The first time a [[Potion]] inside is consumed, a random buff is gained. If four [[Potion]]s inside are consumed, many debuffs are cleansed.
+
+Getting the single [[Potion]] buff is fairly trivial, but consuming four [[Potion]]s requires a bit of planning. Each of the four [[Potion]]s would need to be halfway in the bag, and the entire setup should be vertical to make the most of the [[Potion]] spillover. Also the particular [[Potion]]s would need to be likely to meet their consume condition, which isn't always guaranteed. Relying entirely on [[Potion]]s that trigger too quickly, like [[Stone Skin Potion]]s, also isn't advised, as there likely wouldn't be enough debuffs to cleanse yet. Ideally, two [[Potion Belt]]s side-by-side can be used to double up on the effect.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.41
+|Cleanse: 8 -> 10
+|-
+|0.9.24
+|Cleanse: 7 -> 8
+|-
+|0.9.15
+|Cleanse 6 -> 7
+|-
+|0.9.13
+|Cleansed [[debuff]]s 5 -> 6
+|-
+|0.9.12
+|Cleanses 4 -> 5
+|-
+|0.7.2
+|Random [[buff]] is now gained when the first [[potion]] is consumed
+|-
+|0.7.1
+|Cleanse 3 -> 4
+|-
+|0.7.0
+|Reworked Potion Belt
+|-
+|0.3.6b
+|Now triggers after the [[potion]]’s effect
+|-
+|0.3.6
+|Added to the game
+|}
+
+{{Items}}

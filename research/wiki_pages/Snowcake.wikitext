@@ -1,0 +1,26 @@
+{{Item infobox
+|name=Snowcake
+|image=Snowcake.png
+|rarity=Unique
+|icontype=treasure, ice
+|type=Food
+|cost=6
+|effect=
+*'''Every 3s:''' Inflict 1 {{icon/cold}}.
+*If your opponent has at least 10 {{icon/cold}}, increase {{icon/effect}}-damage by 10% and deal 10 {{icon/effect}}-damage.
+|grid=
+11
+11
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.24
+|Added to the game
+|}
+
+{{Items}}

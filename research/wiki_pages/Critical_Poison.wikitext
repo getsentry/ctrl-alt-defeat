@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Critical Poison
+|image=Critical_Poison.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Ranger, Reaper
+|effect=
+*{{icon/poison}} on your opponent has 5% critical hit chance per {{icon/luck}}.
+*'''{{icon/star}} Weapon deals 5 damage:''' Inflict 1 {{icon/poison}}.
+|skillround=3
+|grid=
+1
+2
+}}
+'''Critical Poison''' is a round 3 hybrid [[Skill]] available to both the [[Ranger]] and [[Reaper]]. It grants {{icon/poison}} critical chance based on {{icon/luck}}, and inflicts {{icon/poison}} based on the damage dealt by the {{icon/star}} [[weapon]].
+
+Critical Poison is particularly strong with [[Belladonna's Whisper]], as the effects become a circular loop. Critical Poison will apply additional {{icon/poison}} for damage that is greater than 5, making poison increase over time massively.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

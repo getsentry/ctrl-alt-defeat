@@ -1,0 +1,26 @@
+{{Item infobox
+|name=Unidentified Skill
+|image=Unidentified_Skill.png
+|rarity=Unique
+|type=Skill
+|cost=3
+|class=Neutral
+|effect=
+*'''On buy:''' Replace this with a random other [[Skill]] from your pool.
+*Always offered in rounds 3 and 10.
+|skillround=any
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}

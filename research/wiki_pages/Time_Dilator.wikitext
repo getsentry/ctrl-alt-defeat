@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Time Dilator
+|image=TimeDilator.png
+|rarity=Unique
+|icontype=treasure
+|type=Accessory
+|cost=8
+|effect= 
+* Your and your opponent's [[Weapon]]s attack 30% slower.
+* '''Every 1s:''' Your item with the highest cooldown triggers 6% faster.
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.20
+|Speed increase 5% -> 6%
+|-
+|0.9.19
+|Cost 10 {{icon/gold}} -> 8 {{icon/gold}}
+|-
+|0.9.16
+|Added to the game
+|}
+
+{{Items}}

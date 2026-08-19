@@ -1,0 +1,50 @@
+{{Item infobox
+|name=Snow Stick
+|image=SnowStick.png
+|rarity=Legendary
+|icontype=ice, melee
+|type=Weapon
+|cost=8
+|effect='''On hit:''' Inflict 3 {{icon/cold}} and 2 {{icon/cold}} to yourself.
+|mindamage=6
+|maxdamage=9
+|stamina=1.2
+|accuracy=95
+|cooldown=2.1
+|sockets=1
+|grid=
+1
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Snow Stick
+|ingredients=Broom, Snowball
+|catalysts=
+|requirementcost=8 (4+4)
+|image=SnowStick_recipe.png
+}}
+The [[Snow Stick]] is a neutral [[Weapon]] normally obtained by combining a [[Broom]] with a [[Snowball]], although it could also be obtained in the shop by [[Pyromancer]]s with the [[Frozen Flame]]. It deals mild-moderate damage, and inflicts {{icon/cold}} to '''both''' players on hit, but gives more to the opponent. 
+
+The Snow Stick can be useful for a build that cares about the {{icon/cold}} of the opponent, with something like [[Frostbite]], [[Snowmaster]], or [[Frozen Flame]]. It helps to have a way to cleanse the self-inflicted {{icon/cold}}. Also consider the synergy with [[Harold, the Hateful Hat]] if playing [[Mage]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown Update
+|Cooldown 1.9s -> 2.1s
+|-
+|0.9.26
+|Cooldown 1.8s -> 1.9s
+|-
+|0.9.25
+|Cooldown 1.7s -> 1.8s
+|-
+|0.9.24
+|Added to the game
+|}
+
+{{Items}}

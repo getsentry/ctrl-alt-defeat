@@ -1,0 +1,41 @@
+{{Item infobox
+|name=Mana Potion
+|image=ManaPotion.png
+|rarity=Epic
+|icontype=magic
+|type=Potion
+|cost=6
+|effect='''{{icon/mana}} used or health drops below 50%:''' Consume this and gain 4 {{icon/mana}} and 18 maximum health.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+{{Recipe infobox
+|recipename=Mana Potion
+|ingredients=Health Potion, Blueberries
+|requirementcost=6 (4+2)
+|image=ManaPotion_recipe.png
+}}
+The [[Mana Potion]] is a [[Potion]] normally obtained by combining the [[Health Potion]] with a [[Blueberries]]. Other than the fact that it doesn't cleanse {{icon/poison}}, it's more-or-less a strict upgrade of the [[Health Potion]], since it gives more max health (which is better than normal healing) than the [[Health Potion]] heals. It also gives 4 {{icon/mana}}, which can be useful if there are other items which utilize it. Since it triggers on {{icon/mana}} used, it can also be used to trigger other [[Potion]]s early in the fight.
+
+The [[Mana Potion]] can be upgraded to the [[Strong Mana Potion]] using a [[Cauldron]], if the player is a [[Reaper]].
+
+The [[Mana Potion]] can be combined with a [[Torch]] to create the much more powerful [[Magic Torch]], although it does require {{icon/mana}} to use its powerful effect.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.16
+|Max health 15 -> 18
+|-
+|0.7.3
+|Now gives 15 max HP instead of {{icon/luck}}, triggers when using {{icon/mana}} OR falling below 50% HP
+|-
+|0.6.3
+|Added to the game
+|}
+
+{{Items}}

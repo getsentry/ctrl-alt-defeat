@@ -1,0 +1,13 @@
+{{Item infobox
+|name=Leather Bag
+|image=LeatherBag.png
+|rarity=Common
+|type=Bag
+|cost=4
+|effect=Add 4 backpack slots.
+|grid=
+11
+11
+}}
+The [[Leather Bag]] is a [[Bag]] available in the shop for all characters, at common rarity. It provides 4 backpack slots and has no other effects. In terms of the {{icon/gold}} cost to slots ratio, it is the most efficient bag in the game. Every starting class preset has at least one [[Leather Bag]] in its build.
+{{Items}}

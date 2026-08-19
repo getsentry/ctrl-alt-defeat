@@ -1,0 +1,64 @@
+{{Item infobox
+|name=Mana Orb
+|image=ManaOrb.png
+|rarity=Epic
+|icontype=magic
+|type=Accessory
+|cost=6
+|effect=
+* '''{{icon/star}} item activates:''' 50% chance to gain 1 {{icon/mana}}.
+* '''Use 35 {{icon/mana}}:''' Gain 20 random other [[buff]]s (once).
+|grid=
+2-2
+-1-
+2-2
+}}
+
+The [[Mana Orb]] is an epic [[accessory]] available in the shop for all classes. It generates {{icon/mana}} proportional to the amount of triggers occurring at its corners, and is one of the most efficient methods of doing so. It is also used in the creation of {{icon/mana}}-based [[weapon]]s and other items, some of which spend {{icon/mana}}, and some of which generate it. If a large amount of {{icon/mana}} is reached, the [[Mana Orb]] uses 35 {{icon/mana}} and generates 20 non-{{icon/mana}} buffs. This aspect is enhanced by the [[Mana Mastery]] [[skill]].
+
+Gaining {{icon/mana}} from [[Mana Orb]] does not count as an activation. Using {{icon/mana}} to gain [[buff]]s does count as an activation.
+
+The [[Mana Orb]] is generally important for any {{icon/mana}}-based build, as it can generate a lot of {{icon/mana}} when placed next to fast-triggering items, and is also part of some very {{icon/mana}}-synergistic crafts, including all Staves (starting with [[Magic Staff]]), [[Manathirst]], and [[Spectral Dagger]], along with the [[Moon Armor]] and [[Moon Shield]].
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|1.0.4
+|Buffs gained 22 -> 20
+|-
+|1.0.3
+|Buffs gained 25 -> 22
+|-
+|0.9.40
+|Buffs gained 20 -> 25
+|-
+|0.9.12
+|Now only triggers once. {{icon/mana}} cost 30 -> 35, [[buff]]s gained 12 -> 17
+|-
+|0.7.4
+|{{icon/mana}} generation chance 66.6% -> 50% chance, {{icon/mana}} used 33 -> 30, [[buff]]s gained 15 -> 12, random [[buff]]s no longer can be {{icon/mana}}
+|-
+|0.7.3
+|Added effect: Use 33 {{icon/mana}} to gain 15 random [[buff]]s
+|-
+|0.6.1
+|Removed {{icon/mana}} limit and overflow effect
+|-
+|0.5.4
+|No longer triggers [[Emerald]] (Armor) and [[Topaz]] (Armor)
+|-
+|0.3.3
+|Cost 7g -> 6g
+Fixed [[Hero Sword]] impacting Mana Orb
+|-
+|0.3.2
+|Chance 50% -> 66.6%
+|-
+|0.3.1
+|Added to the game
+|}
+
+{{Items}}

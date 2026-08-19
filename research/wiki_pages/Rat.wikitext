@@ -1,0 +1,46 @@
+{{Item infobox
+|name=Rat
+|image=Rat.png
+|rarity=Common
+|icontype=nature
+|type=Pet
+|cost=4
+|class=Ranger
+|effect=
+* '''Every 3.3s:''' Deal 5 {{icon/effect}}-damage. 75% to inflict 1 {{icon/poison}}. 10% to inflict 1 {{icon/blind}}.
+* Triggers 15% faster for each {{icon/star}} [[Pet]] or [[Food]].
+|grid=
+-22-
+2112
+-22-
+}}
+The [[Rat]] is a [[Pet]] available in the shop to [[Ranger]]s who have [[Big Bowl of Treats]], at common rarity. Every few seconds, the [[Rat]] deals 5 {{icon/effect}}-damage and has a chance of inflicting {{icon/poison}} and/or {{icon/blind}}. The [[Rat]] crafts into the [[Rat Chef]] using a [[Healing Herbs]], although this isn't a straight upgrade, as the [[Rat Chef]] does something completely different.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.21
+|Cooldown 3.5s -> 3.3s
+|-
+|0.9.19
+|Cooldown 3.8s -> 3.5s
+|-
+|0.9.18
+|Cooldown 4s -> 3.8s
+|-
+|0.9.9
+|{{icon/poison}} chance 70% -> 75%
+|-
+|0.9.3
+|Chance to inflict {{icon/poison}} 50% -> 70%, chance to inflict {{icon/blind}} 15% -> 10%
+|-
+|0.9.1
+|[[Pet]]/[[Food]] speed bonus 20% -> 15%, Cooldown 3s -> 4s
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

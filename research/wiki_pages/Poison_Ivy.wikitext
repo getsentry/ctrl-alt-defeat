@@ -1,0 +1,53 @@
+{{Item infobox
+|name=Poison Ivy
+|subclassname=Pathfinder
+|image=PoisonIvy.png
+|rarity=Unique
+|icontype=nature
+|type=Accessory
+|cost=10
+|class=Ranger
+|effect=
+* You have a 5% chance to [[resist]] [[debuff]]s for each {{icon/star}} {{icon/nature}}-item.
+* '''{{icon/spikes}} gained:''' Inflict 2 {{icon/poison}}.
+* '''Opponent reaches 18 {{icon/poison}}:''' They take +25% damage.
+|grid=
+2-2-2
+-212-
+2-2-2
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.3
+|{{icon/poison}} threshold 19 -> 18, bonus damage 20% -> 25%
+|-
+|0.7.0
+|No longer applies +5 {{icon/poison}} when reaching the threshold. Damage bonus 25% -> 20%
+|-
+|0.6.4
+|Inflicts 2 {{icon/poison}} per {{icon/spikes}} now. {{icon/poison}} threshold: 13 -> 19. {{icon/poison}} when reaching threshold: 5
+|-
+|0.6.3
+|Now gives [[resist]]ance against all [[debuff]]s
+|-
+|0.6.2
+|Now inflicts 7 {{icon/poison}} when applying the damage [[resist]]ance [[debuff]], the [[debuff]] is now permanent
+|-
+|0.5.3
+|Damage bonus 20% -> 25%, {{icon/poison}} threshold 15 -> 13
+|-
+|0.5.2
+|Extra damage {{icon/poison}} threshold 20 -> 15 (still deals 20% extra damage)
+|-
+|0.5.1
+|Added to the game
+|}
+
+{{Items}}
+
+[[Category:Subclass]]

@@ -1,0 +1,35 @@
+{{Item infobox
+|name=Chtulhu
+|image=Chtulhu.png
+|rarity=Unique
+|icontype=treasure, dark
+|type=Pet
+|cost=8
+|effect=
+*'''Every 3.3s:''' Deal 10 {{icon/effect}}-damage with 100% lifesteal and trigger a random {{icon/star}} [[Food]].
+*{{icon/star}} [[Food]] gains {{icon/dark}}.
+*Triggers 15% faster for each {{icon/star}} {{icon/dark}}-item.
+|grid=
+-222-
+21112
+21112
+-222-
+}}
+
+==Description==
+''They call him the "Hungry Void" for a reason. Go give him some snacks!''
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.38
+|Cooldown 3.5s -> 3.3s
+|-
+|0.9.23d
+|Added to the game
+|}
+
+{{Items}}

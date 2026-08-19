@@ -1,0 +1,39 @@
+{{Item infobox
+|name=Enchanted Weapons
+|image=Enchanted_Weapons.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*Attack effects of the {{icon/star}} [[Weapon|Weapons]] have a 25% chance to repeat.
+*'''Every 5.2s:''' Gain 1 of the [[Buff|buff]] you have least of.
+|skillround=any
+|grid=
+00022
+00222
+22220
+01200
+20200
+}}
+'''Enchanted Weapons''' is a round 3 or 10 [[skill]] that gives the attack effects of the {{icon/star}} [[weapon|weapons]] a chance to repeat. It also occasionally gives you one of a buff you have the least of.
+
+By "attack effect," it refers to an On Hit or On Attack effect of a weapon. This does not apply to effects that would likely be negative to the player, such as the attack effect of the [[Phoenix]] which causes the player to lose health.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Repeat chance 22% -> 25%
+|-
+|[[Patch 1.1.4]]
+|Repeat chance 20% -> 22%
+|-
+|[[Patch 0.9.33]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,50 @@
+{{Item infobox
+|name=Serpent Staff
+|image=SerpentStaff.png
+|rarity=Legendary
+|icontype=magic, ranged
+|type=Weapon
+|cost=17
+|effect=
+* '''On attack:''' Use 4 {{icon/mana}} to gain 2 damage and inflict 1 {{icon/poison}} for each 4 damage dealt.
+* You have 40% chance to duplicate {{icon/poison}} you inflict.
+|mindamage=8
+|maxdamage=10
+|stamina=1
+|accuracy=90
+|cooldown=1.8
+|sockets=1
+|grid=
+1
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Serpent Staff
+|ingredients=Magic Staff, Pestilence Flask
+|catalysts=
+|requirementcost=17 (10+7)
+|image=SerpentStaff_recipe.png
+}}
+The [[Serpent Staff]] is a neutral [[Weapon]] normally obtained by combining the [[Magic Staff]] with a [[Pestilence Flask]], although Mages with the [[Rainbow Potion]] can also find it in the shop. It is the only class-neutral upgraded [[Magic Staff]]. It does slightly more default damage than the [[Magic Staff]], but costs more {{icon/mana}} to activate its effect, which also gains it less permanent damage. Thankfully, activating this effect also inflicts {{icon/poison}} equal to a quarter of the damage. The [[Serpent Staff]] also grants a massive 40% chance of duplicating any {{icon/poison}} inflicted on the opponent through any means, including its own ability. Naturally, this makes it incredible for any {{icon/poison}} build, although, like all [[Staff|staves]], a steady supply of {{icon/mana}} is needed to get the most out of it.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Duplicate {{icon/poison}} chance 35% -> 40%
+|-
+|[[Patch 1.0.9]]
+|Duplicate {{icon/poison}} chance 30% -> 35%
+|-
+|[[Patch 0.9.9]]
+|Damage +2
+|-
+|[[Patch 0.9.8]]
+|Added into game.
+|}
+
+{{Items}}

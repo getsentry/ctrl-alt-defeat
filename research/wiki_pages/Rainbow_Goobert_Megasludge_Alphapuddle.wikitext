@@ -1,0 +1,36 @@
+{{Item infobox
+|name=Rainbow Goobert Megasludge Alphapuddle
+|image=RainbowGoobertMegasludgeAlphapuddle.png
+|rarity=Godly
+|icontype=vampiric, holy, nature
+|type=Pet
+|cost=54
+|class=Ranger
+|effect='''9 {{icon/star}} item activations:''' [[Heal]] for 40, gain 20 {{icon/block}}, 2 {{icon/vampirism}} and 2 {{icon/empower}}, inflict 3 {{icon/blind}}, and {{icon/star}} [[Weapon]]s gain 4 damage.
+|grid=
+2222
+2112
+2112
+2222
+}}
+{{Recipe infobox
+|recipename=Rainbow Goobert Megasludge Alphapuddle
+|ingredients=Blood Goobert, Light Goobert, Carrot Goobert, Steel Goobert
+|requirementcost=54 (14+15+12+13)
+|image=RainbowGoobertMegasludgeAlphapuddle_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.8]]
+|[[Heal]] 30 -> 40
+|-
+|[[Patch 0.5.6]]
+|Added into game.
+|}
+
+{{Items}}

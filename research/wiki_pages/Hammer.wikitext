@@ -1,0 +1,82 @@
+{{Item infobox
+|name=Hammer
+|image=Hammer.png
+|rarity=Rare
+|icontype=melee
+|type=Weapon
+|cost=8
+|effect='''On hit:''' 45% chance to [[stun]] your opponent for 0.5s.
+|mindamage=10
+|maxdamage=13
+|stamina=3
+|accuracy=75
+|cooldown=2
+|sockets=2
+|grid=
+111
+-1-
+-1-
+}}
+The [[Hammer]] is a [[Weapon]] available in the shop for all characters, at rare rarity. It has no crafting options, other than its ability to break open a [[Piggybank]] for a [[Bunch of Coins]], which only has the purpose of selling for 5 {{icon/gold}}. The [[Hammer]] deals relatively high DPS for a non-crafted weapon at rare rarity, although it is also one of the few [[Weapon]]s in the game which uses over 1 stamina per second, at 1.5 stamina per second. After about three attacks, without some kind of help (like maybe backpack [[Topaz]]es), the [[Hammer]] will start to skip attacks. The [[Hammer]] has a chance to [[Stun]], which is an unusual trait, and opens up some build opportunities, since [[Dagger]]s attack an extra time whenever the opponent is stunned.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown patch: 2-14-2025
+|Damage +1
+|-
+|0.9.31
+|Damage +1
+|-
+|0.9.12
+|[[Stun]] chance 50% -> 45%
+|-
+|0.9.10
+|Damage -1
+|-
+|0.7.1
+|Max damage +2
+|-
+|0.7.0
+|Damage +1
+|-
+|0.6.4
+|Damage +1
+|-
+|0.6.2
+|Minimum damage +1
+|-
+|0.5.6
+|[[Stun]] chance 60% -> 50%
+|-
+|0.5.4
+|Damage -1
+|-
+|0.5.3
+|[[Stun]] duration 0.6s -> 0.5s
+|-
+|0.5.0
+|[[Stun]] duration 0.7 -> 0.6
+|-
+|0.4.1
+|[[Piggybank]] can now be destroyed using the [[Hammer]] to gain [[Bunch of Coins|coins]]
+|-
+|0.4.0
+|[[Stun]] duration 0.8s -> 0.7s
+|-
+|0.3.9
+|Damage 6-8 -> 6-9
+|-
+|0.3.5
+|[[Stun]] chance 50% -> 60%, duration 1s -> 0.8s
+|-
+|0.3.4
+|Damage 5-8 -> 6-8
+|-
+|0.3.0
+|[[Stun]] chance 40% -> 50%
+|}
+
+{{Items}}

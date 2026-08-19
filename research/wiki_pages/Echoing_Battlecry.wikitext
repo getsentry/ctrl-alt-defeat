@@ -1,0 +1,37 @@
+{{Item infobox
+|name=Echoing Battlecry
+|image=Echoing_Battlecry.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*'''Every 14s:''' Repeat a random {{icon/star}} Start of battle effect (one time per time).
+*Triggers 65% faster for each {{icon/star}} Start of battle item.
+|skillround=any
+|grid=
+222
+212
+222
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Speed bonus 60% -> 65%
+|-
+|[[Patch 1.1.5]]
+|Bonus speed 55% -> 60%
+|-
+|[[Patch 1.1.4]]
+|Speed bonus 50% -> 55%
+|-
+|[[Patch 0.9.33]]
+|Added into game.
+|}
+
+{{Items}}

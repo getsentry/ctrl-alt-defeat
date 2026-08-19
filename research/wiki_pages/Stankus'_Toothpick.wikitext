@@ -1,0 +1,48 @@
+{{Item infobox
+|name=Stankus' Toothpick
+|image=Stankus'_Toothpick.png
+|rarity=Legendary
+|icontype=melee
+|type=Weapon
+|cost=9
+|class=Neutral
+|effect=
+*'''On hit:''' Your opponent takes +2% damage.
+*Attacks 12% faster for each {{icon/star}} [[Food]].
+|mindamage=2
+|maxdamage=4
+|stamina=0.5
+|accuracy=90
+|cooldown=1.4
+|sockets=1
+|grid=
+00200
+00200
+02120
+22122
+00200
+00200
+}}
+{{Recipe infobox
+|recipename=Stankus' Toothpick
+|ingredients=Hero Sword, Garlic
+|requirementcost=9 (7+2)
+|image=Stankus'_Toothpick_recipe.png
+}}
+The [[Stankus' Toothpick]] is a neutral [[Weapon]] normally obtained by combining the [[Hero Sword]] with a [[Garlic]]. Compared to the [[Hero Sword]], [[Stankus' Toothpick]] deals identical damage by default, but costs less stamina. Rather than buffing the weapons around it, [[Stankus' Toothpick]] increases all damage the opponent takes slightly on hit. Since this is a multiplicative and all-encompassing effect rather than the small flat bonus of the [[Hero Sword]], it scales much better into the late game. 
+
+Like all [[Food]]s, [[Stankus' Toothpick]] is faster the more [[Food]]s are around it, although it isn't actually a [[Food]] itself. It can attack up to 100% faster from this, which plays very well with the powerful on hit effect.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|Speed per food 10% -> 12%
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

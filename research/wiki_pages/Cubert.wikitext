@@ -1,0 +1,37 @@
+{{Item infobox
+|name=Cubert
+|image=Cubert.png
+|rarity=Unique
+|icontype=treasure
+|type=Pet
+|cost=8
+|effect= 
+* '''{{icon/star}} activates:''' 35% chance to gain 1 {{icon/regeneration}}.
+* '''{{icon/diamond}} activates:''' 30% chance to use 1 {{icon/regeneration}} to gain 1 {{icon/empower}}.
+|grid=
+-33-
+2112
+2112
+-33-
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.24
+|{{icon/empower}} chance 25% -> 30%
+|-
+|0.9.23
+|{{icon/regeneration}} chance 30% -> 35%
+|-
+|0.9.22
+|Chance to gain {{icon/regeneration}} 25% -> 30%
+|-
+|0.9.16
+|Added to the game
+|}
+
+{{Items}}

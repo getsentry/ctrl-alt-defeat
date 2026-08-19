@@ -1,0 +1,45 @@
+{{Item infobox
+|name=Acorn Collar
+|image=AcornCollar.png
+|rarity=Epic
+|icontype=nature
+|type=Accessory
+|cost=8
+|class=Ranger
+|effect={{icon/star}} items gain 5% [[Critical_hits|critical]] hit chance for each {{icon/luck}}.
+|grid=
+222
+212
+222
+}}
+The [[Acorn Collar]] is an [[accessory]] available in the shop for [[Ranger]]s. Similarly to the [[Ranger Bag]], it gives adjacent items crit chance proportional to the player's {{icon/luck}}. 
+
+There are three [[Acorn Collar]] variants that can be crafted. They all at least somewhat care about the player's {{icon/luck}}.
+
+The [[Red Orchid Collar]] can be crafted catalytically by using a [[Blood Amulet]]. It gives lifesteal to the adjacent items proportional to the player's {{icon/luck}}, and still gives critical chance, but proportional to {{icon/vampirism}} instead. 
+
+The [[Blue Sage Collar]] can be crafted catalytically by using a [[Mana Orb]]. It gives {{icon/mana}} whenever adjacent [[weapon]]s hit, more often the higher the player's {{icon/luck}}.
+
+The [[White Lily Collar]] can be crafted catalytically by using a [[Holy Armor]]. When adjacent items activate it gives the player {{icon/luck}} and {{icon/regeneration}}. It also gives those items crit chance proportional to both the {{icon/luck}} and {{icon/regeneration}} of the player. 
+
+The [[Acorn Collar]] can also be used to craft the [[Critwood Staff]] when combined with the [[Magic Staff]], which uses {{icon/mana}} to deal more damage and make all hits crit for a time.
+
+The [[Acorn Ace]] skill makes collar items have a much larger {{icon/star}} area and also makes items in that area use less stamina. It also makes the [[Critwood Staff]] use much less stamina.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|1.0.5
+|Cost 7 -> 8
+|-
+|1.0.3
+|Cost 6 -> 7
+|-
+|0.3.3
+|Class: [[Ranger]]
+Cost 5 -> 6
+|}
+
+{{Items}}

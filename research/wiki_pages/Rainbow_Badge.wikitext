@@ -1,0 +1,32 @@
+{{Item infobox
+|name=Rainbow Badge
+|image=RainbowBadge.png
+|rarity=Unique
+|icontype=treasure
+|type=Accessory
+|cost=5
+|effect=
+* Items of all classes are offered in the shop.
+* '''After 7s''': Gain 1 of every type of [[buff]].
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.6
+|Activation delay 6s -> 7s
+|-
+|0.9.5
+|Activation delay 5s -> 6s
+Now have a 10% chance to appear in the first 3 rounds (previously 25%/3%/3%)
+|-
+|0.9.4
+|Added to the game
+|}
+
+{{Items}}

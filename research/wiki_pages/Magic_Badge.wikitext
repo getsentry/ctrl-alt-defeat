@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Magic Badge
+|image=Magic_Badge.png
+|rarity=Unique
+|type=Accessory
+|icontype=treasure, magic
+|cost=5
+|class=Neutral
+|effect=
+*[[Mage items|Mage items]] are offered in the shop.
+*'''Start of battle:''' Gain 5 {{icon/mana}}.
+*{{icon/star}} items gain 30% chance to duplicate {{icon/mana}} they gain.
+|grid=
+02200
+02220
+22122
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}
+[[zh:魔法徽章]]

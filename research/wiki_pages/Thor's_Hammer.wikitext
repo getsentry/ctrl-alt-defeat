@@ -1,0 +1,48 @@
+{{Item infobox
+|name=Thor's Hammer
+|image=ThorsHammer.png
+|rarity=Epic
+|icontype=magic, melee
+|type=Weapon
+|cost=8
+|class=Engineer
+|effect=
+*'''On hit:''' 50% chance to stun your opponent for 0.5s. Use 2 {{icon/mana}} to deal 12 {{icon/effect}}-damage and inflict 5 {{icon/blind}} for 2s.
+|mindamage=10
+|maxdamage=13
+|stamina=2
+|accuracy=90
+|cooldown=1.8
+|sockets=3
+|grid=
+111
+010
+010
+}}
+{{Recipe infobox
+|recipename=Thor's Hammer
+|ingredients=Hammer
+|catalysts=Mana Crystal
+|requirementcost=18 (8+10)
+|image=ThorsHammerRecipe.png
+}}
+[[Thor's Hammer]] is an [[Engineer]] item normally obtained by catalytically crafting a [[Hammer]] with the [[Mana Crystal]], which is an [[Engineer]] subclass item. It is a straight upgrade of the [[Hammer]], with higher accuracy, more sockets, and an additional {{icon/mana}} consuming ability which deals {{icon/effect}}-damage and inflicts temporary {{icon/blind}}.
+
+[[Thor's Hammer]] is one of the four required items to craft the [[Automanaton]], along with the [[Magitecc Armor]], [[Cap of Brilliance]], and [[Arcane Boots]], all of which are obtained by catalytically crafting shop items with the [[Mana Crystal]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|Stun chance 45% -> 50%, accuracy 85% -> 90%
+|-
+|[[Patch 1.1.2]]
+|Effect damage 10 -> 12, accuracy 75% -> 85%
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

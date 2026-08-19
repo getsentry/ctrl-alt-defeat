@@ -1,0 +1,58 @@
+{{Item infobox
+|name=Amulet of Alchemy
+|image=AmuletofAlchemy.png
+|rarity=Rare
+|type=Accessory
+|cost=6
+|effect=
+* '''Start of battle:''' Gain 3 random [[buff]]s.
+* '''{{icon/star}} [[Potion]] consumed:''' 70% chance to repeat its effect after 2.5s.
+|grid=
+222
+222
+222
+222
+212
+222
+222
+222
+222
+}}
+{{Recipe infobox
+|recipename=Amulet of Alchemy
+|ingredients=Unidentified Amulet
+|catalysts=
+|requirementcost=6 (6)
+|image=Amulets_transform.png
+}}
+
+The [[Amulet of Alchemy]] is a rare item normally obtained by buying the [[Unidentified Amulet]] from the shop. Most of the time, it repeats the effects of the player's {{icon/star}} potions, on a delay. This milks much more value out of a potion build.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.24
+|Added more {{icon/star}} slots
+|-
+|0.9.18
+|Chance 60% -> 70%
+|-
+|0.9.16
+|Activation delay 3s -> 2.5s
+|-
+|0.9.15
+|[[Potion]] activate chance 50% -> 60%
+|-
+|0.9.14
+|[[Potion]] trigger chance 40% -> 50%
+|-
+|0.9.13
+|[[Potion]] repeat chance 35% -> 40%
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

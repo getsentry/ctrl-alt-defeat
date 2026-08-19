@@ -1,0 +1,52 @@
+{{Item infobox
+|name=Hero Shield
+|image=HeroShield.png
+|rarity=Rare
+|type=Shield
+|cost=10
+|effect=
+*'''Start of battle:''' {{icon/star}} weapons deal +2 + 15% damage.
+*'''On attacked ({{icon/melee}}):''' 30% chance to prevent 15 damage, remove 0.4 stamina from opponent.
+|sockets=1
+|grid=
+0220
+2112
+2112
+0220
+}}
+{{Recipe infobox
+|recipename=Hero Shield
+|ingredients=Twine, Wooden Buckler, Whetstone
+|requirementcost=10 (2+4+4)
+|image=HeroShieldCraft.png
+}}
+The [[Hero Shield]] is a [[Shield]] obtained by combining a [[Wooden Buckler]] and a [[Whetstone]] using a [[Twine]]. All of these components are available commonly in the shop, but only [[Adventurer]] can normally obtain [[Twine]].
+
+The [[Hero Shield]] is a solid [[shield]] for its size, blocking more damage than even most of the 6-square shields, and sapping more stamina than the easier-to-craft [[Spiked Shield]]. It also significantly buffs adjacent weapons, up to eight of them, with a bonus that scales off of the weapon's damage, making it great with high damage weapons like [[Impractically Large Greatsword]] and its derivatives, but also just great in the early-game in general.
+
+It is worth noting that the percent damage bonus to the weapons provided by [[Hero Shield]] is a persistent effect, multiplying the weapon's damage even as they gain damage in other ways.
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|Damage bonus 1 -> 2
+|-
+|[[Patch 1.0.6]]
+|Damage blocked 12 -> 15
+|-
+|[[Patch 1.0.4]]
+|Damage bonus 13% -> 15%
+|-
+|[[Patch 1.0.3]]
+|Percent damage 10 -> 13
+|-
+|[[Patch 1.0.1]]
+|Damage Prevention 10 -> 12
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}

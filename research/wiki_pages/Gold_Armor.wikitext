@@ -1,0 +1,57 @@
+{{Item infobox
+|name=Gold Armor
+|image=Gold_Armor.png
+|rarity=Godly
+|icontype=holy
+|type=Armor
+|cost=22
+|class=Neutral
+|effect=
+*'''Shop entered:''' Gain 3 {{icon/gold}}.
+*'''Start of battle:''' Gain 120 {{icon/block}}. Gain 3 {{icon/regeneration}} for each {{icon/star}} {{icon/holy}}-item.
+*'''Every 2.2s:''' Cleanse 5 debuffs. If you have no debuffs, gain 25 {{icon/block}}.
+*Your [[Weapon|Weapons]] attack 50% slower.
+|sockets=3
+|grid=
+0220
+2112
+2112
+2112
+0220
+}}
+{{Recipe infobox
+|recipename=Gold Armor
+|ingredients=Holy Armor, Bunch of Coins
+|requirementcost=21 (12+9)
+|image=Gold_Armor_recipe1.png
+}}
+{{Recipe infobox
+|recipename=Gold Armor
+|ingredients=Holy Armor, Maneki-neko
+|requirementcost=22 (12+10)
+|image=Gold_Armor_recipe2.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|{{icon/block}} 30 -> 25
+|-
+|[[Patch 1.1.5]]
+|Attack slow 35% -> 50%
+|-
+|[[Patch 1.1.3]]
+|Slow 30% -> 35%
+|-
+|[[Patch 1.1.2]]
+|Regeneration 4 -> 3, attack slow 25% -> 30%
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

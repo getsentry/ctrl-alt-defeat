@@ -1,0 +1,75 @@
+{{Item infobox
+|name=Steel Goobert
+|image=SteelGoobert.png
+|rarity=Legendary
+|type=Pet
+|cost=17
+|effect='''6 {{icon/star}} item activations:''' {{icon/diamond}} [[Weapon]]s gain +2 damage. Gain 16 {{icon/block}}.
+|grid=
+-33-
+2112
+2112
+-33-
+}}
+{{Recipe infobox
+|recipename=Steel Goobert
+|ingredients=Goobert, Hero Sword
+|requirementcost=17 (6+11)
+|image=SteelGoobert_recipe.png
+}}
+The [[Steel Goobert]] is a neutral [[Pet]] normally obtained by combining a [[Goobert]] with a [[Hero Sword]]. Every few activations of the items on its sides, the [[Steel Goobert]] will permanently raise the damage of the [[weapon]]s above and below it, and gain some {{icon/block}}.
+
+The [[Steel Goobert]], along with the [[Blood Goobert]] and [[Light Goobert]], are part of every "Rainbow" goobert craft.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.29
+|Activations 5 -> 6
+|-
+|0.9.24
+|{{icon/block}} 13 -> 16
+|-
+|0.9.5
+|{{icon/block}} 14 -> 13
+|-
+|0.9.4
+|{{icon/block}} 16 -> 14
+|-
+|0.6.1
+|{{icon/block}} gain 14 -> 16
+|-
+|0.5.6
+|{{icon/block}} gain 18 -> 14
+|-
+|0.5.4
+|{{icon/block}} gain 20 -> 18
+|-
+|0.5.3
+|Damage increase +3 -> +2, {{icon/block}} gain 18 -> 20
+|-
+|0.4.0
+|{{icon/block}} 15 -> 18
+|-
+|0.3.9
+|{{icon/block}} 12 -> 15
+|-
+|0.3.6
+|Activations 4 -> 5, damage bonus 2 -> 3
+|-
+|0.3.5
+|Activations 5 -> 4
+|-
+|0.3.4
+|{{icon/block}} 10 -> 12
+|-
+|0.3.3
+|{{icon/block}} 8 -> 10, activations 6 -> 5
+|-
+|0.3.0
+|Added to the game
+|}
+
+{{Items}}

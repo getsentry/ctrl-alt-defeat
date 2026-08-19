@@ -1,0 +1,47 @@
+{{Item infobox
+|name=Health Potion
+|image=HealthPotion.png
+|rarity=Rare
+|type=Potion
+|cost=4
+|effect='''Health drops below 50%:''' Consume this and [[heal]] for 12 and cleanse 4 {{icon/poison}}.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+The [[Health Potion]] is a rare [[Potion]] available in the shop for all characters. It heals a small amount and cleanses some {{icon/poison}}. While the [[Health Potion]] itself isn't particularly powerful except in the early-game, it can get the player started in a [[Potion]] build, where, with certain synergies, it can become more useful. A [[Healing Herbs]] can craft the [[Health Potion]] into the much stronger [[Strong Health Potion]], and a [[Blueberries]] can craft it into a [[Mana Potion]]. The [[Health Potion]] can also craft with the [[Shiny Shell]] into [[Shelly]], a strong [[Potion]] synergy item which will usually heal much more than a [[Health Potion]] unless the opponent kills the player very quickly.
+
+Like all [[Potion]]s, when used, it will apply the affect of the [[Potion]] above it, without consuming the one above. This adjacency is unlike most in that the {{icon/star}} will always be placed above the [[Potion]], rather than rotating along with the item.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.4
+|[[Heal]] 11 -> 12
+|-
+|0.7.6
+|[[Heal]] 12 -> 11
+|-
+|0.6.3
+|Can be combined into [[Mana Potion]]
+|-
+|0.5.4b
+|Wording improvement
+|-
+|0.5.2
+|[[Heal]] 10 -> 12
+|-
+|0.4.2
+|{{icon/poison}} cleanse 3 -> 4
+|-
+|0.4.0
+|{{icon/poison}} cleansed 2 -> 3
+|-
+|0.3.7
+|[[Heal]] 8 -> 10
+|}
+
+{{Items}}

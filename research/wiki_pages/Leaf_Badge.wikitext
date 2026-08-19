@@ -1,0 +1,40 @@
+{{Item infobox
+|name=Leaf Badge
+|image=LeafBadge.png
+|rarity=Unique
+|icontype=treasure
+|type=Accessory
+|cost=5
+|effect=
+* [[Ranger]] items are offered in the shop.
+* {{icon/star}} items gain 2% [[critical_hits|critical]] hit chance for each {{icon/luck}}.
+* '''Every 2.2s:''' Gain 1 {{icon/luck}}.
+|grid=
+-2-
+212
+-2-
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.23
+|Cooldown 2.3s -> 2.2s
+|-
+|0.9.16
+|Cooldown 2.5s -> 2.3s
+|-
+|0.9.7
+|Cooldown 3s -> 2.5s
+|-
+|0.9.5
+|Now have a 10% chance to appear in the first 3 rounds (previously 25%/3%/3%)
+|-
+|0.9.4
+|Added to the game
+|}
+
+{{Items}}

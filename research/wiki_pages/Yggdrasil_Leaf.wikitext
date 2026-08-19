@@ -1,0 +1,79 @@
+{{Item infobox
+|name=Yggdrasil Leaf
+|subclassname=Lifebinder
+|image=YggdrasilLeaf.png
+|rarity=Unique
+|icontype=nature, magic
+|type=Accessory
+|cost=10
+|class=Ranger
+|effect=
+* '''Start of battle:''' Gain 2 {{icon/mana}} and 1 {{icon/regeneration}} for each {{icon/star}} {{icon/nature}}-item.
+* '''5 {{icon/mana}} used:''' [[Heal]] for 18 and cleanse 2 [[debuff]]s.
+|grid=
+--2--
+2-2-2
+-222-
+--1--
+-2-2-
+}}
+
+== Advanced usage == 
+If the Yggdrasil Leaf is boosted from at least 5 starred slots and hero's backpack also contains the [[Glowing Crown]], the crown will instantly use 10 {{icon/mana}} and trigger the invulnerability period at 0.0s, which in turn triggers the Yggdrasil Leaf's heal and cleanse abilities, which will likely be wasted.
+
+== Trivia ==
+[https://en.wikipedia.org/wiki/Yggdrasil Yggdrasil] is a sacred tree in Norse cosmology. Around it exists all else, including the Nine Worlds.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|[[Heal]] 15 -> 18
+|-
+|[[Patch 1.0.9]]
+|Added 1 {{icon/star}} slot
+|-
+|[[Patch 0.9.23]]
+|[[Heal]] 13 -> 17
+|-
+|[[Patch 0.9.22]]
+|[[Heal]] 10 -> 13
+|-
+|[[Patch 0.9.21]]
+|[[Heal]] 7 -> 10
+|-
+|[[Patch 0.9.16]]
+|Now has the “[[Magic]]” type
+|-
+|[[Patch 0.9.15]]
+|[[Heal]] 5 -> 7
+|-
+|[[Patch 0.9.14]]
+|Added one {{icon/star}} tile
+|-
+|[[Patch 0.9.7]]
+|Reduced number of {{icon/star}} slots by 1
+|-
+|[[Patch 0.9.6]]
+|Number of {{icon/star}} slots reduced from 10 to 8
+|-
+|[[Patch 0.9.5]]
+|{{icon/mana}} 1 -> 2, [[Heal]] 10 -> 5
+|-
+|[[Patch 0.9.4]]
+|[[Heal]] 8 -> 10
+|-
+|[[Patch 0.9.3]]
+|[[Heal]] 5 -> 8
+|-
+|[[Patch 0.5.3]]
+|{{icon/mana}} gain 2 -> 1
+|-
+|[[Patch 0.5.0]]
+|Added into game.
+|}
+
+{{Items}}

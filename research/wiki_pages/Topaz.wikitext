@@ -1,0 +1,32 @@
+{{Item infobox
+|name=Topaz
+|image=BPB_Topaz_Line.png
+|rarity=Varies
+|type=Gemstone
+|cost=1/2/4/8/16
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+Attacks 10/15/20/25/40% faster.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+*10/15/20/30/50% chance to [[resist]] [[stun]]s.
+*5/7/10/15/30% chance to resist [[Critical hits|critical hits]].
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+Base stamina regeneration +8/12/20/30/50%.
+|inshop=Box of Riches
+|grid=1
+}}
+One of five kinds of gemstones that can be acquired from having the [[Box of Riches]].
+
+There are five rarities of Rubies, Chipped/Flawed/Regular/Flawless/Perfect, corresponding to the five rarities of items in the game. Each rarity has better stats than the previous one. Higher rarities can be found in the shop if the player has a Box of Riches, or by combining identical ones in the inventory.
+
+The gemstones have varying effects depending on where they are placed.
+
+When socketed in a [[Weapon]], the [[Topaz]] makes it attack faster. In Armor and other sockets, the [[Topaz]] has a chance of resisting stuns and critical hits. Loose in the backpack, the [[Topaz]] grants base stamina regeneration. The [[Weapon]] and backpack positions of the [[Topaz]] are especially unique, since they can allow the character to tune their stamina consumption for maximum efficiency. A number of [[Topaz]]es placed in the backpack can allow the character to use an entire extra weapon or more without having to worry about exceeding the stamina regeneration rate. The [[Armor]] placement of the [[Topaz]] can be useful too, but without knowing the nature of the player's opponents, may not accomplish much at all, depending on the match up.
+
+{{Items}}
+
+[[Category:Common]]
+[[Category:Rare]]
+[[Category:Epic]]
+[[Category:Legendary]]
+[[Category:Godly]]

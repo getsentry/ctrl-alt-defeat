@@ -1,0 +1,39 @@
+{{Item infobox
+|name=Ruby Egg
+|image=RubyEgg.png
+|rarity=Legendary
+|icontype=fire
+|type=Pet
+|cost=10
+|effect=
+* '''Start of battle:''' Gain 4 {{icon/heat}}. [[Reflect]] 3 [[debuff]]s.
+* Hatches after 2 rounds in your backpack.
+|grid=
+11
+11
+}}
+The [[Ruby Egg]] is a legendary [[Pet]] available in the shop for all classes. It doesn't do a whole lot for its size, granting the player 4 {{icon/heat}} at start of battle and reflecting 3 debuffs. The true purpose of the egg, however, is that it hatches into the [[Ruby Whelp]], which is a powerful [[Weapon]] [[Pet]].
+
+The [[Pyromancer]] subclass item, [[Dragon Nest]], allows the [[Ruby Egg]] and other dragon eggs to hatch in a single round, as long as they are in the {{icon/star}} slots.
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.15
+|[[Reflect]]s 2 -> 3
+|-
+|0.9.9
+|{{icon/heat}} 3 -> 4
+|-
+|0.9.8
+|{{icon/heat}} 2 -> 3
+|-
+|0.9.7
+|Now also gains 2 {{icon/heat}} start of battle
+|-
+|0.3.2
+|Now [[reflect]]s 2 [[debuff]]s (up from 1)
+|}
+
+{{Items}}

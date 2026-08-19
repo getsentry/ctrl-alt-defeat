@@ -1,0 +1,57 @@
+{{Item infobox
+|name=Stone Armor
+|image=StoneArmor.png
+|rarity=Legendary
+|type=Armor
+|cost=13
+|effect=
+* Items use +20% stamina.
+* '''Start of battle:''' Gain 120 {{icon/block}}.
+* '''Every 4s:''' Remove 1 {{icon/spikes}} and 2 {{icon/empower}} from opponent.
+* '''Health drops below 50%:''' Gain {{icon/block}} equal to 40% of your missing health (once).
+|sockets=2
+|grid=
+11
+11
+11
+}}
+{{Recipe infobox
+|recipename=Stone Armor
+|ingredients=Leather Armor, Stone Skin Potion
+|requirementcost=13 (7+6)
+|image=StoneArmor_recipe.png
+}}
+
+[[Stone Armor]] is a neutral [[Armor]] normally obtained by combining a [[Leather Armor]] with a [[Stone Skin Potion]]. It gives a very large amount of {{icon/block}} on battle start, and slowly depletes the opponent's {{icon/spikes}} and {{icon/empower}}, which can be very useful against such builds. It also gains a large chunk of block proportional to the player's health when they drop below 50% for the first time in the fight. These are some significant advantages, but they come along with the significant disadvantage of +20% stamina consumption. Of course, this drawback can be offset by not relying too heavily on high stamina-demand weapons.
+
+Because of the high start of battle {{icon/block}}, [[Stone Armor]] is one of the best targets for [[Echoing Battlecry]].
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|{{icon/block}} 110 -> 120
+|-
+|[[Patch 0.9.25]]
+|{{icon/block}} 90 -> 110
+|-
+|[[Patch 0.9.24]]
+|Removed on-hit effect, now removes {{icon/spikes}} and {{icon/empower}} every 4s
+|-
+|[[Patch 0.9.22]]
+|{{icon/block}} 35% -> 40%
+|-
+|[[Patch 0.9.10]]
+|{{icon/block}} 80 -> 90
+|-
+|[[Patch 0.9.7]]
+|Health-based {{icon/block}} 30% -> 35%
+|-
+|[[Patch 0.9.0]]
+|Added into game.
+|}
+
+{{Items}}

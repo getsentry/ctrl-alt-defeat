@@ -1,0 +1,60 @@
+{{Item infobox
+|name=Fortuna's Grace
+|image=FortunasGrace.png
+|rarity=Legendary
+|icontype=nature, ranged
+|type=Weapon
+|cost=10
+|class=Ranger
+|effect=
+* '''Start of battle:''' Gain 5 {{icon/luck}}.
+* '''{{icon/star}} [[Weapon]] [[Critical_hits|crits]]:''' Attack twice on the next attack.
+|mindamage=6
+|maxdamage=9
+|stamina=1.2
+|accuracy=85
+|cooldown=2.8
+|sockets=1
+|grid=
+-1--
+1112
+-1--
+}}
+{{Recipe infobox
+|recipename=Fortuna's Grace
+|ingredients=Bow and Arrow, Lucky Clover, Lucky Clover
+|requirementcost=10 (6+2+2)
+|image=FortunasGrace_recipe.png
+}}
+The [[Fortuna's Grace]] is a [[Ranger]] [[Weapon]] normally obtained by combining a [[Bow and Arrow]] with two [[Lucky Clover]]s. It is an upgrade of the [[Bow and Arrow]], but doesn't inherently deal more damage. It gains a bunch of {{icon/luck}} at the start of battle, enough to raise most weapons' accuracy to 100%, including itself. When the {{icon/star}} weapon at the tip of the arrow crits, the [[Fortuna's Grace]] will hit twice on the next attack.
+
+Weapons don't crit inherently, so some method to make the {{icon/star}} weapon crit will be needed to make the most of the {{icon/star}} weapon ability, most likely the [[Ranger Bag]] or an [[Acorn Collar]]. That said, the damage of the [[Fortuna's Grace]] isn't especially high and the main advantage it confers may well be the {{icon/luck}} itself when playing these {{icon/luck}} crit builds. It provides much more {{icon/luck}} than the two needed [[Lucky Clover]]s would have provided, at the very least.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.9]]
+|{{icon/luck}} 4 -> 5
+|-
+|[[Patch 1.0.7]]
+|{{icon/luck}} 3 -> 4
+|-
+|[[Patch 0.9.37]]
+|Cooldown 3s -> 2.8s
+|-
+|[[Patch 0.9.12]]
+|Stamina usage 1.5 -> 1.2
+|-
+|[[Patch 0.9.10]]
+|{{icon/luck}} 2 -> 3
+|-
+|[[Patch 0.7.4]]
+|Stamina usage 1 -> 1.5
+|-
+|[[Patch 0.6.2]]
+|Added into game.
+|}
+
+{{Items}}

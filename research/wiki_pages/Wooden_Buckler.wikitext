@@ -1,0 +1,57 @@
+{{Item infobox
+|name=Wooden Buckler
+|image=WoodenBuckler.png
+|rarity=Common
+|type=Shield
+|cost=4
+|effect='''On attacked ({{icon/melee}}):''' 30% chance to prevent 7 damage and remove 0.3 stamina from opponent.
+|sockets=1
+|grid=
+11
+11
+}}
+The [[Wooden Buckler]] is a common [[Shield]] available in the shop to all characters. When the character is hit by a [[Melee]] attack, it prevents 7 damage and removes 0.3 stamina from the opponent. It can be upgraded to the [[Spiked Shield]], [[Frozen Buckler]], or [[Hero Shield]], all of which block more damage and have additional positive effects. The [[Frozen Buckler]] and [[Hero Shield]] also remove more stamina than the [[Wooden Buckler]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.23
+|Damage prevented 6 -> 7
+|-
+|0.9.20
+|Damage prevented 5 -> 6
+|-
+|0.9.17
+|Damage prevention 4 -> 5
+|-
+|0.9.4
+|[[Shield]]s remove stamina even when opponent has less than the amount that should be removed. Reduced Block chance to 30% to compensate.
+|-
+|0.7.1
+|Stamina drain 0.4 -> 0.3
+|-
+|0.6.2
+|Stamina removal 0.5 -> 0.4
+|-
+|0.6.0
+|Reworked: [[Wooden Buckler]]/[[Spiked Shield]]/[[Shield of Valor]] now prevent damage instead of generating {{icon/block}}, slightly increased amount to compensate
+|-
+|0.5.4
+|Chance 25% -> 35%, {{icon/block}} 6 -> 3, stamina drain 1.0 -> 0.5
+|-
+|0.5.3
+|Block chance 30% -> 25%
+|-
+|0.4.3
+|Block chance 25% -> 30%
+|-
+|0.3.6
+|Cost 5g -> 4g
+|-
+|0.3.3
+|Block chance 20% -> 25%
+|}
+
+{{Items}}

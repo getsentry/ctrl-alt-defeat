@@ -1,0 +1,64 @@
+{{Item infobox
+|name=Vampiric Potion
+|image=VampiricPotion.png
+|rarity=Legendary
+|icontype=vampiric
+|type=Potion
+|cost=8
+|effect='''Both characters drop below 80% health:''' Consume this and gain 3 {{icon/vampirism}} and deal 15 {{icon/effect}}-damage with 100% lifesteal.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+{{Recipe infobox
+|recipename=Vampiric Potion
+|ingredients=Strong Health Potion
+|catalysts=Blood Amulet
+|requirementcost=17 (8+9)
+|image=VampiricPotion_transform.png
+}}
+The [[Vampiric Potion]] is a neutral [[Potion]] normally obtained by catalytically converting a [[Strong Health Potion]] using a [[Blood Amulet]]. When both characters are slightly damaged, the [[Vampiric Potion]] will be consumed, dealing some lifesteal damage and gaining some {{icon/vampirism}}, as well as applying the effects of the potion above. The numbers, choice of buffs, activation condition, and fact that it pressures the opponent's health arguably make it better than the [[Strong Health Potion]], but a build could care a lot about {{icon/regeneration}} and not at all about {{icon/vampirism}}, so it's not a pure upgrade.
+
+[[Reaper]]s can catalytically convert a [[Vampiric Potion]] into a [[Strong Vampiric Potion]] using the [[Cauldron]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.22
+|{{icon/vampirism}} 2 -> 3
+|-
+|0.9.20
+|Lifesteal 13 -> 15
+|-
+|0.9.16
+|Lifesteal 19 -> 13 , {{icon/vampirism}} 1 -> 2
+|-
+|0.9.15
+|Lifesteal 17 -> 19
+|-
+|0.9.9
+|Lifesteal 15 -> 17
+|-
+|0.9.8
+|Lifesteal 14 -> 15
+|-
+|0.9.5
+|Lifesteal 12 -> 14
+|-
+|0.9.4
+|Life steal 10 -> 12
+|-
+|0.9.2
+|Lifesteal 8 -> 10
+|-
+|0.9.1
+|Is now crafted from a [[Strong Health Potion]] using a [[Blood Amulet]]. Lifesteal 5 -> 8.
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,29 @@
+{{Item infobox
+|name=Sloth
+|image=Sloth.png
+|rarity=Unique
+|icontype=treasure,nature
+|type=Pet
+|cost=5
+|class=Neutral
+|effect=
+*'''{{icon/star}} items trigger 30% slower.
+*'''Start of battle:''' Gain 10% maximum health + 15% per {{icon/star}} item.
+*'''After 25s:''' Awaken hidden sloth powers! (Gain 10 of each buff and stun the opponent for 1.5s).
+|grid=
+0220
+2112
+2112
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

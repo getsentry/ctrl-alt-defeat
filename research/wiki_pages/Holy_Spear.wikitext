@@ -1,0 +1,83 @@
+{{Item infobox
+|name=Holy Spear
+|image=HolySpear.png
+|rarity=Godly
+|icontype=holy, magic, melee
+|type=Weapon
+|cost=18
+|effect=
+* '''On hit:''' Destroy 10 {{icon/block}} and cleanse 1 [[debuff]] for each {{icon/star}} free slot or {{icon/holy}}-item.
+* '''Use 10 {{icon/mana}}:''' Become [[Invulnerability|invulnerable]] and attack 100% faster for 3s (once).
+|mindamage=10
+|maxdamage=15
+|stamina=0.4
+|accuracy=200
+|cooldown=1.8
+|sockets=2
+|grid=
+020
+020
+020
+222
+020
+010
+010
+010
+010
+}}
+{{Recipe infobox
+|recipename=Holy Spear
+|ingredients=Spear, Glowing Crown
+|requirementcost=18 (6+12)
+|image=HolySpear_recipe.png
+}}
+The [[Holy Spear]] is a [[Weapon]] normally obtained by combining a [[Spear]] with a [[Glowing Crown]]. It deals moderate damage and costs very little stamina. Like all [[Spear]]s, the [[Holy Spear]] breaks extra {{icon/block}} on hit proportional to the {{icon/star}} spaces that meet the requirements. In this case, the [[Holy Spear]] destroys lots of {{icon/block}}, second only to the [[Very Long Spear]], and cleanses a debuff, per {{icon/star}} left empty or containing a {{icon/holy}}-item. The {{icon/star}}s are arranged in a cross-pattern that's often easier to accommodate than the typical [[Spear]] pattern. The [[Holy Spear]] also boasts an improved [[Glowing Crown]] invincibility ability that costs the same 10 {{icon/mana}}, but lasts longer, and additionally doubles the speed of the [[Holy Spear]]. The [[Holy Spear]] also has an unusual 200% accuracy, which makes it all-but immune to the effects of {{icon/blind}}.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Damage -3
+|-
+|[[Patch 1.0.9]]
+|Cooldown 2s -> 1.8s
+|-
+|[[Patch 0.9.21]]
+|Stamina cost 0.6 -> 0.4
+|-
+|[[Patch 0.9.20]]
+|[[Accuracy]] 150% -> 200%
+|-
+|[[Patch 0.9.19]]
+|Stamina cost 0.8 -> 0.6
+|-
+|[[Patch 0.9.18]]
+|Stamina cost 1 -> 0.8
+|-
+|[[Patch 0.9.17]]
+|{{icon/mana}} cost 14 -> 10
+|-
+|[[Patch 0.9.16]]
+|{{icon/mana}} Cost 18 -> 14
+|-
+|[[Patch 0.9.15]]
+|{{icon/mana}} Cost 22 -> 18
+|-
+|[[Patch 0.9.14]]
+|{{icon/mana}} Cost 25 -> 22
+|-
+|[[Patch 0.9.13]]
+|[[Accuracy]] 100% -> 150%
+|-
+|[[Patch 0.9.12]]
+|
+* Now have the [[Magic]] type
+* Cooldown 1.4s -> 2.5s, damage 5-12 -> 13-18, {{icon/block}} removal 6 -> 10
+|-
+|[[Patch 0.7.3]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Winged Boots
+|image=WingedBoots.png
+|rarity=Godly
+|type=Shoes
+|cost=13
+|effect='''Health drops below 70%:''' Gain 1 {{icon/empower}}, cleanse 15 debuffs and dodge the next 3 {{icon/melee}}/{{icon/ranged}}-attacks (once).
+|sockets=1
+|grid=
+11
+01
+}}
+{{Recipe infobox
+|recipename=Winged Boots
+|ingredients=Leather Boots
+|catalysts=Divine Potion
+|requirementcost=13 (6+7)
+|image=WingedBoots_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.33]]
+|Added into game.
+|}
+
+{{Items}}

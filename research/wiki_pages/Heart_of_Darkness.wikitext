@@ -1,0 +1,45 @@
+{{Item infobox
+|name=Heart of Darkness
+|image=HeartofDarkness.png
+|rarity=Godly
+|icontype=dark
+|type=Accessory
+|cost=19
+|effect=
+* '''Every 4s:''' Steal 2 [[buff]]s, prioritizing {{icon/regeneration}}.
+* Triggers 20% faster for each {{icon/star}} {{icon/dark}}-item.
+* '''Use 7 {{icon/regeneration}}:''' Gain 100 maximum health, 4 {{icon/empower}} and your opponent's [[heal]]ing is reduced by 40% (once).
+|sockets=1
+|grid=
+-22-
+2112
+2112
+-22-
+}}
+{{Recipe infobox
+|recipename=Heart of Darkness
+|ingredients=Heart Container, Corrupted Crystal
+|requirementcost=19 (12+7)
+|image=HeartofDarkness_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.24
+|Maximum health gain: 90 -> 100
+|-
+|0.9.4
+|Health bonus 80 -> 90
+|-
+|0.8.4
+|{{icon/empower}} 5 -> 4
+|-
+|0.8.3
+|Added to the game
+|}
+
+{{Items}}

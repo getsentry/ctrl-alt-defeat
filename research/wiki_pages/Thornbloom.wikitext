@@ -1,0 +1,67 @@
+{{Item infobox
+|name=Thornbloom
+|image=Thornbloom.png
+|rarity=Godly
+|icontype=nature, melee
+|type=Weapon
+|cost=14
+|effect=
+* '''On hit:''' Gain 1 {{icon/spikes}}. 60% chance to gain 1 {{icon/empower}}.
+* '''{{icon/empower}} gained:''' Gain 11 maximum health.
+* Deals +1 damage per {{icon/spikes}}.
+|mindamage=7
+|maxdamage=12
+|stamina=2.1
+|accuracy=80
+|cooldown=2.1
+|sockets=2
+|grid=
+11-
+11-
+-11
+}}
+{{Recipe infobox
+|recipename=Thornbloom
+|ingredients=Thorn Whip, Heroic Potion
+|catalysts=
+|requirementcost=14 (8+6)
+|image=Thornbloom_recipe.png
+}}
+The [[Thornbloom]] is a [[Weapon]] normally obtained by combining a [[Thorn Whip]] with a [[Heroic Potion]]. It is better in every way when compared with the [[Thorn Whip]], dealing more base damage and attacking slightly faster, while retaining the [[Thorn Whip]]'s {{icon/spikes}} scaling and {{icon/spikes}} gain on hit. Additionally, the [[Thornbloom]] has {{icon/empower}}-related abilities, having a chance to gain an {{icon/empower}} on hit, and giving the player some maximum health whenever {{icon/empower}} is gained from any source.
+
+Overall, the [[Thornbloom]] is an excellent choice for the main weapon of a {{icon/spikes}} or {{icon/empower}} build. There are many class neutral options for {{icon/spikes}} gain, including [[Spiked Shield]], [[Pineapple]], [[Djinn Lamp]], and, should [[Furcifer]] bless you, [[Thorn Elemental]]. [[Ranger]] and [[Mage]] have the best class options for gaining lots of {{icon/spikes}}. {{icon/empower}} gain is somewhat more difficult, but is most easily done by [[Ranger]], [[Berserker]], and [[Mage]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.26
+|Health per {{icon/empower}} 10 -> 11
+|-
+|0.9.19
+|Health per {{icon/empower}} 8 -> 10
+|-
+|0.9.16
+|Stamina cost 2.2 -> 2.1, cooldown 2.2s -> 2.1s
+|-
+|0.9.14
+|Maximum health gained 7 -> 8
+|-
+|0.9.13
+|{{icon/empower}} chance 50% -> 60%, damage +1
+|-
+|0.9.12
+|Chance to gain {{icon/empower}} 40% -> 50%, damage +1
+|-
+|0.9.10
+|{{icon/empower}} chance 35% -> 40%, damage +1
+|-
+|0.9.9
+|{{icon/empower}} chance 30% -> 35%
+|-
+|0.9.8
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,71 @@
+{{Item infobox
+|name=Critwood Staff
+|image=CritwoodStaff.png
+|rarity=Legendary
+|icontype=magic, nature, ranged
+|type=Weapon
+|cost=18
+|class=Ranger
+|effect='''On attack:''' Use 3 {{icon/mana}} to deal +7 damage and for the next 1.5s, all your attacks are [[Critical hits|critical]].
+|mindamage=6
+|maxdamage=8
+|stamina=1
+|accuracy=90
+|cooldown=1.8
+|sockets=1
+|grid=
+1
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Critwood Staff
+|ingredients=Magic Staff, Acorn Collar
+|requirementcost=18 (10+8)
+|image=CritwoodStaff_recipe.png
+}}
+The [[Critwood Staff]] is a [[Ranger]] [[Weapon]] normally obtained by combining a [[Magic Staff]] with an [[Acorn Collar]]. Like all [[Staff|staves]], it spends {{icon/mana}} to cause a powerful effect, which in this case, is to cause all the player's attacks to critical hit for a short time. The effect lasts about 2/3 of the cooldown period, meaning about 2/3s of the time can be spent in this critical state, as long as enough {{icon/mana}} is supplied. This could be brought to nearly 100% of the time by using methods for speeding up items or by lengthening item duration with something like [[Time Melting]].
+
+While the [[Critwood Staff]] can be expected to do moderate-to-high damage on its own when supplied with {{icon/mana}}, combining it with other [[weapon]]s can drastically raise the damage output. Unlike many other staves, the [[Critwood Staff]] does not somehow permanently gain damage the more it's used, meaning it doesn't inherently ramp up as the fight goes on, and is equally powerful at all times.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Crit buff duration 1.4s -> 1.5s
+|-
+|[[Patch 1.0.5]]
+|Duration 1.2s -> 1.4s
+|-
+|[[Patch 0.9.24]]
+|{{icon/mana}} cost 4 -> 3
+|-
+|[[Patch 0.9.9]]
+|Damage +1
+|-
+|[[Patch 0.9.5]]
+|Duration 1s -> 1.2s
+|-
+|[[Patch 0.8.2]]
+|Is now [[Legendary]]
+|-
+|[[Patch 0.5.3]]
+|Cooldown +0.2s
+|-
+|[[Patch 0.5.2]]
+|Is now a [[Nature]] item
+|-
+|[[Patch 0.3.4]]
+|{{icon/mana}} usage 6 -> 4
+|-
+|[[Patch 0.3.2]]
+|{{icon/mana}}-based extra damage 5 -> 7
+|-
+|[[Patch 0.3.1]]
+|Added into game.
+|}
+
+{{Items}}

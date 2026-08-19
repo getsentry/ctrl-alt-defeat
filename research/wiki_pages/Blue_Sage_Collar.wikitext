@@ -1,0 +1,57 @@
+{{Item infobox
+|name=Blue Sage Collar
+|image=Blue_Sage_Collar.png
+|rarity=Legendary
+|icontype=magic, nature
+|type=Accessory
+|cost=8
+|class=Ranger
+|effect=
+*'''{{icon/star}} [[Weapon]] hits:''' 7% chance for each {{icon/luck}} to gain 3 {{icon/mana}}.
+|grid=
+222
+212
+222
+}}
+{{Recipe infobox
+|recipename=Blue Sage Collar
+|ingredients=Acorn Collar, Mana Orb
+|requirementcost=14 (8+6)
+|image=Blue_Sage_Collar_recipe.png
+}}
+{{Recipe infobox
+|recipename=Blue Sage Collar
+|ingredients=White Lily Collar, Mana Orb
+|requirementcost=14 (8+6)
+|image=Blue_Sage_Collar_recipe2.png
+}}
+{{Recipe infobox
+|recipename=Blue Sage Collar
+|ingredients=Red Orchid Collar, Mana Orb
+|requirementcost=14 (8+6)
+|image=Blue_Sage_Collar_recipe3.png
+}}
+The [[Blue Sage Collar]] is a [[Ranger]] [[Accessory]] which is an upgrade of the [[Acorn Collar]]. Normally obtained by combining the [[Acorn Collar]] with a [[Mana Orb]], the other upgrades of the [[Acorn Collar]] (the [[Red Orchid Collar]] and [[White Lily Collar]]) can also be converted to the [[Blue Sage Collar]] in the same way.
+
+Like all collar items, it cares about {{icon/luck}}, in this case giving the weapons around it a 7% chance to gain 3 {{icon/mana}} for each {{icon/luck}} per {{icon/star}} weapon hit. 
+
+Faster-attacking, low stamina weapons may be most optimal for maximum {{icon/mana}} generation.
+
+The [[Acorn Ace]] skill gives the [[Blue Sage Collar]] and the other collars more {{icon/star}} slots.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|Activation chance 6% -> 7%
+|-
+|[[Patch 1.1.5]]
+|Mana chance per Luck 5% -> 6%
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}

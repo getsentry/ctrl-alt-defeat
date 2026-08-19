@@ -1,0 +1,46 @@
+{{Item infobox
+|name=King Crown
+|image=KingCrown.png
+|rarity=Godly
+|icontype=holy, magic
+|type=Helmet
+|cost=17
+|effect=
+* '''Every 2.4s:''' [[Heal]] for 8 and protect 1 [[buff]] from removal.
+* '''Use 10 {{icon/mana}}:''' Become [[Invulnerability|invulnerable]] for 2.5s (once).
+* Effects of [[Gemstone]]s socketed in this are increased by 50%.
+|sockets=2
+|grid=
+11
+11
+}}
+{{Recipe infobox
+|recipename=King Crown
+|ingredients=Glowing Crown, Box of Riches
+|catalysts=
+|requirementcost=17 (12+5)
+|image=KingCrown_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.12
+|
+* Now have the [[Magic]] type
+* Cooldown 2.5s -> 2.4s
+|-
+|0.9.10
+|[[Invulnerability]] duration 2s -> 2.5s
+|-
+|0.9.9
+|{{icon/mana}} cost 12 -> 10
+|-
+|0.9.8
+|Added to the game
+|}
+
+{{Items}}

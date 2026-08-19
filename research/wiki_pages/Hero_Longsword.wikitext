@@ -1,0 +1,66 @@
+{{Item infobox
+|name=Hero Longsword
+|image=HeroLongsword.png
+|rarity=Legendary
+|icontype=melee
+|type=Weapon
+|cost=19
+|effect='''Start of battle:''' {{icon/star}} [[Weapon]]s gain 3 damage.
+|mindamage=8
+|maxdamage=10
+|stamina=1
+|accuracy=90
+|cooldown=1.6
+|sockets=2
+|grid=
+-2-
+212
+212
+212
+-2-
+}}
+{{Recipe infobox
+|recipename=Hero Longsword
+|ingredients=Hero Sword, Whetstone, Whetstone
+|requirementcost=15 (7+4+4)
+|image=HeroLongsword_recipe.png
+}}
+The [[Hero Longsword]] is a neutral [[weapon]] normally only obtainable by combining a [[Hero Sword]] with two [[Whetstone]]s. It is a much upgraded [[Hero Sword]], dealing much more damage and granting much more damage to the adjacent weapons. Its only drawbacks over the [[Hero Sword]] are its larger size and using slightly more stamina, but it does also have more sockets and {{icon/star}} slots.
+
+There are two subsequent upgrades for the [[Hero Longsword]]:
+
+By combining the [[Hero Longsword]] with the [[Falcon Blade]]s, the [[Crossblades]] can be created, which is a powerful +-shaped weapon which grants a large amount of damage to one weapon and massively speeds up another item. It also deals more damage and attacks faster with every hit.
+
+By combining the [[Hero Longsword]] with two [[Flame]]s (which are easily obtainable by [[Pyromancer]]s, and consistently obtainable by [[Berserker]]s if they select the [[Anvil]] as their subclass item), the [[Burning Blade]] can be created, which is a more {{icon/heat}} themed version of the [[Hero Longsword]], likely dealing more damage than the [[Hero Longsword]] in a build capable of generating lots of {{icon/heat}}, but probably weaker otherwise.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.29
+|Damage bonus 4 -> 3, damage -2
+|-
+|0.9.6
+|Damage +2
+|-
+|0.9.5
+|Damage +2
+|-
+|0.9.4
+|Damage +1
+|-
+|0.7.3
+|Is now "Start of Battle" effect.
+|-
+|0.6.2
+|Damage +1
+|-
+|0.5.3
+|Can now be combined into [[Crossblades]]
+|-
+|0.3.5
+|Added to the game
+|}
+
+{{Items}}

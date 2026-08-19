@@ -1,0 +1,47 @@
+{{Item infobox
+|name=Katana
+|image=Katana.png
+|rarity=Godly
+|icontype=melee
+|type=Weapon
+|cost=11
+|effect='''On hit:''' Remove 1 damage gained in battle from all opponent [[Weapon]]s and gain 1 damage. If your opponent has at least 20 [[buff]]s, remove 2 of the type they have the most of.
+|mindamage=8
+|maxdamage=10
+|stamina=1.3
+|accuracy=90
+|cooldown=1.5
+|sockets=3
+|grid=
+1
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Katana
+|ingredients=Ripsaw Blade, Whetstone
+|catalysts=
+|requirementcost=11 (7+4)
+|image=Katana_recipe.png
+}}
+The [[Katana]] is a [[neutral]] [[weapon]] normally obtained by combining a [[Ripsaw Blade]] with a [[Whetstone]]. It is a strict upgrade of the [[Ripsaw Blade]], attacking more quickly and costing less stamina per swing, although the faster swing causes it to use more stamina-per-second. Additionally, the [[Katana]] retains the damage removal ability of the [[Ripsaw Blade]] while gaining double the damage. It also removes buffs from the opponent if they have enough (which they likely will).
+
+The damage of the [[Katana]] isn't the most spectacular among the [[godly]] [[weapon]]s, but the overall utility of the damage reduction and buff removal, as well as the decent damage in a longer fight, ensure that the [[Katana]] is a sensible craft at times, especially when considering its relative ease of acquisition. If the [[Ripsaw Blade]] is being used already, there is little reason to not upgrade it into the [[Katana]] if a [[Whetstone]] is found, unless the player is an [[Engineer]] and prefers the [[Chainsaw]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|1.0.0
+|Stamina Cost 1.4 -> 1.3
+|-
+|0.9.31
+|Stamina cost 1.5 -> 1.4, cooldown 1.8s -> 1.7s
+|-
+|0.9.24
+|Added to the game
+|}
+
+{{Items}}

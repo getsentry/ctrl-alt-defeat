@@ -1,0 +1,61 @@
+{{Item infobox
+|name=White Lily Collar
+|image=White_Lily_Collar.png
+|rarity=Legendary
+|icontype=holy, nature
+|type=Accessory
+|cost=8
+|class=Ranger
+|effect=
+*'''{{icon/star}} item activates:''' 22% chance to gain 1 {{icon/luck}} and 1 {{icon/regeneration}}.
+*{{icon/star}} item gains 1% critical hit chance for each {{icon/luck}} and {{icon/regeneration}}.
+|grid=
+222
+212
+222
+}}
+{{Recipe infobox
+|recipename=White Lily Collar
+|ingredients=Acorn Collar, Holy Armor
+|requirementcost=20 (8+12)
+|image=White_Lily_Collar_recipe.png
+}}
+{{Recipe infobox
+|recipename=White Lily Collar
+|ingredients=Blue Sage Collar, Holy Armor
+|requirementcost=20 (8+12)
+|image=White_Lily_Collar_recipe2.png
+}}
+{{Recipe infobox
+|recipename=White Lily Collar
+|ingredients=Red Orchid Collar, Holy Armor
+|requirementcost=20 (8+12)
+|image=White_Lily_Collar_recipe3.png
+}}
+The [[White Lily Collar]] is a [[Ranger]] [[Accessory]] which is an upgrade of the [[Acorn Collar]]. Normally obtained by combining the [[Acorn Collar]] with [[Holy Armor]], the other upgrades of the [[Acorn Collar]] (the [[Blue Sage Collar]] and [[Red Orchid Collar]]) can also be converted to the [[White Lily Collar]] in the same way.
+
+Like all collar items, it cares about {{icon/luck}}, in this case generating {{icon/luck}} and {{icon/regeneration}} from item activations. Additionally, it provides {{icon/star}} items 1% critical hit chance for each {{icon/luck}} and {{icon/regeneration}}. 
+
+Quickly triggering items of any kind will be most useful for generating {{icon/luck}} and {{icon/regeneration}} with this, but damaging items will be required to benefit from the critical hit chance.
+
+The [[Acorn Ace]] skill gives the [[White Lily Collar]] and the other collars more {{icon/star}} slots.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|Activation chance 25% -> 22%
+|-
+|[[Patch 1.1.5]]
+|{{icon/luck}}/{{icon/regeneration}} chance 30% -> 25%
+|-
+|[[Patch 1.1.0]]
+|Gains {{Icon/holy}} type, {{Icon/regeneration}} chance 35% -> 30%
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}

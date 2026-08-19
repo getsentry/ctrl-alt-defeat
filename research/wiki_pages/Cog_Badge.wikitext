@@ -1,0 +1,36 @@
+{{Item infobox
+|name=Cog Badge
+|image=Cog_Badge.png
+|rarity=Unique
+|icontype=treasure
+|type=Accessory
+|cost=5
+|class=Neutral
+|effect=
+*[[Engineer]] items are offered in the shop.
+*Items won't fuse when entering the shop.
+*'''Shop entered:''' Generate a [[Cog]].
+*'''After 4s:''' Emit a charge, traveling 1 {{icon/lightning}} every 2s.
+*Items under the charge trigger 10% faster + 3% for each {{icon/lightning}} traveled.
+|grid=
+0005000
+0055000
+0505050
+5001005
+0500050
+0050500
+0005000
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+
+{{Items}}

@@ -1,0 +1,33 @@
+{{Item infobox
+|name=Present
+|image=Present.png
+|rarity=Unique
+|icontype=treasure
+|type=Accessory
+|cost=10
+|effect=
+* '''Shop entered:''' Instead of gold, you receive items with a higher value.
+* '''Start of battle:''' Gain 5 random  [[buff]]s.
+|grid=
+11
+11
+}}
+
+The '''Present''' is a [[:Category:Unique|unique]] [[Items|item]].
+
+The Present's "shop entered" effect sets your gold to 0. It removes unused gold from the previous round. The effect can be sorted to activate before other "shop entered" effects like [[Piggybank]] by ordering the sequence the items are placed into the backpack. To move an item's "shop entered" effect to the end, move the item into the storage and back into the backpack. If Piggybanks activate after the Present, you will have a few gold as you enter the shop.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.2
+|Reduced value of generated items
+|-
+|0.7.1
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,52 @@
+{{Item infobox
+|name=Box of Prosperity
+|image=BoxofProsperity.png
+|rarity=Epic
+|type=Bag
+|cost=5
+|effect=
+* Add 4 backpack slots.
+* '''Shop entered:''' If this has at least 2 [[Godly]] or [[Unique]] items inside, generate a chipped [[Gemstone]].
+|grid=
+11
+11
+}}
+{{Recipe infobox
+|recipename=Box of Prosperity
+|ingredients=Box of Riches
+|catalysts=Maneki-neko
+|requirementcost=15 (5+10)
+|image=BoxofProsperity_recipe.png
+}}
+{{Recipe infobox
+|recipename=Box of Prosperity
+|ingredients=Box of Riches
+|catalysts=Hammer
+|requirementcost=15 (5+8)
+|image=BoxofProsperity_recipe2.png
+}}
+{{Recipe infobox
+|recipename=Box of Prosperity
+|ingredients=Box of Riches
+|catalysts=Thor's Hammer
+|requirementcost=15 (5+8)
+|image=BoxofProsperity_recipe3.png
+}}
+The [[Box of Prosperity]] is a [[Bag]] normally obtainable by catalytically "opening" the [[Box of Riches]] using a [[Maneki-neko]], [[Hammer]], or [[Thor's Hammer]]. If crafted with either hammer, the hammer will not be consumed. After crafting, without any other Box of Riches present the player will lose the ability to buy [[gemstone|gemstones]] in the shop, as granted by the [[Box of Prosperity]], but they can still gain a chipped gemstone every round as long as there are two or more Godly or Unique items inside the four tiles of the [[Box of Prosperity]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Can now also be crafted using Hammer (without consuming it)
+|-
+|[[Patch 0.9.15]]
+|[[Unique|Uniques]] required 3 -> 2
+|-
+|[[Patch 0.9.12]]
+|Added into game.
+|}
+
+{{Items}}

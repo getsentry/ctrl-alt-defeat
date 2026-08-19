@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Thorn Elemental
+|image=Thorn_Elemental.png
+|rarity=Unique
+|icontype=treasure,nature
+|type=Pet
+|cost=6
+|class=Neutral
+|effect=
+*Return damage limit of {{icon/spikes}} against {{icon/ranged}}- and {{icon/effect}}-attacks +50%.
+*{{icon/spikes}} have 10% critical hit chance per {{icon/star}} {{icon/nature}}-item.
+*'''Every 3s:''' Gain 3 {{icon/spikes}}.
+|sockets=2
+|grid=
+0220
+0110
+2112
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

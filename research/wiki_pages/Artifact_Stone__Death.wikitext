@@ -1,0 +1,58 @@
+{{Item infobox
+|name=Artifact Stone: Death
+|image=ArtifactStoneDeath.png
+|rarity=Unique
+|icontype=treasure, dark, ranged
+|type=Weapon
+|cost=8
+|effect=
+* Can only be thrown once per battle.
+* '''On hit:''' Inflict [[Fatigue]] damage.
+* {{icon/star}} items have +8% [[Critical hits|critical hit]] chance per [[Fatigue]] level of your opponent.
+|mindamage=7
+|maxdamage=9
+|stamina=0
+|accuracy=90
+|cooldown=1.5
+|grid=
+2
+1
+2
+}}
+[[Artifact Stone: Death]] can continue to attack if used together with a [[Bag of Stones]], just like for [[Stone]]. For more information on how Fatigue damage works, read the [[Fatigue]] page.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|Cooldown 1.7s -> 1.5s
+|-
+|[[Patch 0.9.24]]
+|Damage +5
+|-
+|[[Patch 0.9.23]]
+|Cooldown 2.5s -> 2.3s
+|-
+|[[Patch 0.9.21]]
+|[[Critical hits|Crit]] bonus 5% -> 7%
+|-
+|[[Patch 0.9.20]]
+|Cooldown 3s -> 2.5s
+|-
+|[[Patch 0.9.19]]
+|Cooldown 4s -> 3s
+|-
+|[[Patch 0.9.18]]
+|Cost 9 {{icon/gold}} -> 8 {{icon/gold}}
+|-
+|[[Patch 0.9.17]]
+|Cost 10g -> 9g
+|-
+|[[Patch 0.9.16]]
+|Added into game.
+|}
+
+{{Items}}

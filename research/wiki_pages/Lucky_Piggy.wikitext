@@ -1,0 +1,61 @@
+{{Item infobox
+|name=Lucky Piggy
+|image=LuckyPiggy.png
+|rarity=Epic
+|type=Accessory
+|cost=7
+|class=Ranger
+|effect=
+* '''Shop entered:''' Gain 1 {{icon/gold}}.
+* '''Start of battle:''' Gain 2 {{icon/luck}}.
+* Chance-based effects of the {{icon/star}} items are 12% more likely to trigger.
+|grid=
+-2-
+112
+}}
+{{Recipe infobox
+|recipename=Lucky Piggy
+|ingredients=Piggybank, Lucky Clover, Lucky Clover
+|requirementcost=7 (3+2+2)
+|image=LuckyPiggy_recipe.png
+}}
+
+The [[Lucky Piggy]] is an item normally obtained by combining the [[Piggybank]] with two [[Lucky Clover]]s, making it a [[Ranger]]-exclusive. It increases the chance of chance-based effects, including [[Shield]]s and many other assorted things. It also gives two {{icon/luck}} and the gold-giving effect of the [[Piggybank]], compacting the two effects into half the total space.
+
+The 12% chance increase stacks additively with other [[Lucky Piggy]]s and each increases the base chance of the item on the {{icon/star}} slot.
+So, with one [[Lucky Piggy]], a 40% chance would become 44.8%, and with two it would be 49.6%.
+
+The "shop entered" effect does not activate if the item is in storage.
+
+Since update 0.9.38, critical hit chance buffs are considered "chance-based" effects and can be improved by Lucky Piggy.
+
+==Description==
+''You are so lucky to have that piggy.''
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|1.0.3
+|Chance increase 15% -> 12%
+|-
+|0.9.38
+|Now the increased chance does affect critical hit buffs
+|-
+|0.8.2
+|Now has two {{icon/star}} tiles, chance bonus 25% -> 15%
+|-
+|0.6.1
+|Chance 20% -> 25%
+|-
+|0.4.0
+|Chance increased 10% -> 20%
+Wording changes
+|-
+|0.3.9
+|Added to the game
+|}
+
+{{Items}}

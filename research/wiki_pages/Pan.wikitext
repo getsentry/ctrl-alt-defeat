@@ -1,0 +1,56 @@
+{{Item infobox
+|name=Pan
+|image=Pan.png
+|rarity=Common
+|icontype=melee
+|type=Weapon
+|cost=4
+|effect=Deals +1 damage for each {{icon/star}} [[Food]].
+|mindamage=5
+|maxdamage=6
+|stamina=2
+|accuracy=85
+|cooldown=2.2
+|sockets=1
+|grid=
+--2-
+-212
+2112
+-22-
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.19
+|Damage +1
+|-
+|0.6.4
+|Cooldown 2.1s -> 2.2s
+|-
+|0.6.2
+|Cooldown 2s -> 2.1s
+|-
+|0.6.0
+|Can be combined into new item: [[Shovel]]
+|-
+|0.5.4
+|Can be combined into new item: [[Pandamonium]]
+|-
+|0.4.0
+|Can be combined into new item: [[Eggscalibur]]
+|-
+|0.3.4
+|Damage 2-4 -> 3-4
+|-
+|0.3.2
+|Now occupies 3 slots (down from 4)
+|-
+|0.2.0
+|Max damage +1
+|}
+
+{{Items}}

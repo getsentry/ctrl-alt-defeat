@@ -1,0 +1,70 @@
+{{Item infobox
+|name=Corrupted Crystal
+|image=CorruptedCrystal.png
+|rarity=Epic
+|icontype=dark
+|type=Gemstone
+|cost=7
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+'''Opponent below 30% health:''' Deal +50% damage.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+'''7 [[debuff]]s inflicted:''' Gain  6 {{icon/block}}.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+'''Every 3.9s:''' Inflict [[Fatigue]] damage.
+|grid=1
+}}
+The [[Corrupted Crystal]] is an epic [[gemstone]] available in the shop for all classes. It has different effects depending on where it is socketed. In [[weapon]]s, it greatly increases damage when the opponent is at low life. This is useful, but because of when it is active, will usually only decide close battles. In [[armor]] or other items, it gives the character {{icon/block}} proportional to the number of debuffs inflicted, which is nice for defense in a debuff build, able to generate well over 100 {{icon/block}} in a highly synergistic composition. In the backpack, it inflicts [[fatigue]] damage, which begins very small, but will ultimately cause the fatigue phase of the fight to be much deadlier for the opponent, great for a defensive late-game build. [[Artifact Stone: Death]] is a great synergy with this mode.
+
+The [[Corrupted Crystal]] is a crafting material for a number of debuff or passive-effects-that-harm-the-opponent type items, like the [[Corrupted Armor]], [[Cap of Discomfort]] and [[Pandamonium]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.4]]
+|(Inventory): Cooldown 4.1s -> 3.9s
+|-
+|[[Patch 1.0.9]]
+|(Inventory): Cooldown 4.3s -> 4.1s
+|-
+|[[Patch 1.0.2]]
+|(Inventory): Cooldown 4.5s -> 4.3s
+|-
+|[[Patch 1.0.0]]
+|(Inventory): Cooldown 4.7s -> 4.5s
+|-
+|[[Patch 0.9.40]]
+|(Inventory): Cooldown 5.0s -> 4.7s
+|-
+|[[Patch 0.9.37]]
+|(Inventory): Cooldown 5.2s -> 5.0s
+|-
+|[[Patch 0.9.35]]
+|(Inventory): Cooldown 5.5s -> 5.2s
+|-
+|[[Patch 0.6.2]]
+|(Armor): {{icon/block}} gain 5 -> 6
+|-
+|[[Patch 0.6.1b]]
+|(Inventory): Cooldown 5s -> 5.5s
+|-
+|[[Patch 0.6.1]]
+|(Inventory): Cooldown 4.5s -> 5s
+|-
+|[[Patch 0.5.6]]
+|Cooldown (Backpack): 5s -> 4.5s
+|-
+|[[Patch 0.5.5]]
+|(Armor): [[Debuff]]s needed 5 -> 7 (it generates {{icon/block}} less often now)
+|-
+|[[Patch 0.5.4d]]
+|(Armor): {{icon/block}} generation 8 -> 5
+|-
+|[[Patch 0.5.4]]
+|Added to the game
+|}
+
+{{Items}}
+[[zh:腐败水晶]]

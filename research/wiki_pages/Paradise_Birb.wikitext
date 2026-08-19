@@ -1,0 +1,37 @@
+{{Item infobox
+|name=Paradise Birb
+|image=Paradise_Birb.png
+|rarity=Godly
+|icontype=magic,vampiric,holy,dark,musical,nature
+|type=Pet
+|cost=20
+|class=Neutral
+|effect=
+*'''Every 2.7s:''' {{icon/star}} items gain 7% chance to duplicate buffs they gain, heal 7% more and trigger 7% faster (up to 10 times).
+|grid=
+000002
+000022
+000222
+012222
+110222
+100022
+000002
+}}
+{{Recipe infobox
+|recipename=Paradise Birb
+|ingredients=Jynx torquilla, Prismatic Orb
+|requirementcost=20 (6+14)
+|image=Paradise_Birb_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.37]]
+|Added into game.
+|}
+
+{{Items}}

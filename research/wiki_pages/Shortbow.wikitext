@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Shortbow
+|image=Shortbow.png
+|rarity=Common
+|icontype=ranged
+|type=Weapon
+|cost=4
+|class=Ranger
+|mindamage=2
+|maxdamage=3
+|stamina=0.7
+|accuracy=85
+|cooldown=1.7
+|sockets=1
+|grid=
+1
+1
+}}
+The [[Shortbow]] is a [[Weapon]] available in the shop for [[Ranger]]s, at common rarity. It has low damage, but also costs relatively low stamina, and mainly is useful to craft into the [[Tusk Poker]], [[Fortuna's Hope]], [[Belladonna's Shade]], or [[Squirrel Archer]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

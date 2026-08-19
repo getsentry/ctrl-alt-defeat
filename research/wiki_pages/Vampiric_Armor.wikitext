@@ -1,0 +1,56 @@
+{{Item infobox
+|name=Vampiric Armor
+|image=VampiricArmor.png
+|rarity=Legendary
+|icontype=vampiric
+|type=Armor
+|cost=15
+|effect=
+* '''Start of battle:''' Convert 50 health into 100 {{icon/block}} and gain 5 {{icon/vampirism}}.
+* '''Every 2.8s:''' Convert 10 health into 20 {{icon/block}}.
+|sockets=2
+|grid=
+11
+11
+11
+}}
+{{Recipe infobox
+|recipename=Vampiric Armor
+|ingredients=Leather Armor, Blood Amulet
+|requirementcost=15 (7+8)
+|image=VampiricArmor_recipe.png
+}}
+[[Vampiric Armor]] is a neutral [[Armor]] normally obtained by combining [[Leather Armor]] with a [[Blood Amulet]]. It immediately converts a chunk of health into double that in {{icon/block}} and gives {{icon/vampirism}} at start of battle. Every so often it will convert a small amount of health into double that in {{icon/block}}.
+
+As it gives {{icon/vampirism}}, it's obviously good in a {{icon/vampirism}} build, but indeed, any healing build can benefit from the health "spending" this provides. Other choices of [[Armor]] may do a good job of protecting the player, but they often do so while leaving the player at full health early in the fight, unable to benefit from healing effects or synergies with those heals (i.e. unhealing). Only a handful of armors raise the player's effective hit points over time, which is another advantage of the [[Vampiric Armor]] in a more drawn-out fight. 
+
+While the initial conversion of 50 health into 100 {{icon/block}} only nets 50 effective HP, making [[Vampiric Armor]] relatively flimsy upfront, there are ways to make this {{icon/block}} more valuable than normal health (i.e. [[Stoned]]) and ways to amplify the {{icon/block}} generation (i.e. [[Shield of Valor]]), which can offset the disadvantages a bit.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|{{icon/vampirism}} 4 -> 5
+|-
+|[[Patch 1.1.0]]
+|Health used 45 -> 50, {{Icon/vampirism}} 2 -> 4
+|-
+|[[Patch 0.9.28]]
+|Health convert: 30 health to 75 {{icon/block}} -> 45 health to 100 {{icon/block}}
+|-
+|[[Patch 0.9.26]]
+|Start of battle {{icon/block}} 65 -> 75 {{icon/block}}
+|-
+|[[Patch 0.9.22]]
+|{{icon/block}} 60 -> 65
+|-
+|[[Patch 0.9.16]]
+|Cooldown 3s -> 2.8s
+|-
+|[[Patch 0.2.0]]
+|Added into game.
+|}
+
+{{Items}}

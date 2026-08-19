@@ -1,0 +1,44 @@
+{{Item infobox
+|name=Vampiric Gloves
+|image=VampiricGloves.png
+|rarity=Godly
+|icontype=vampiric
+|type=Gloves
+|cost=12
+|effect='''After 4s:''' Gain 5 {{icon/vampirism}}, {{icon/star}} items trigger 35% faster.
+|grid=2112
+}}
+{{Recipe infobox
+|recipename=Vampiric Gloves
+|ingredients=Gloves of Haste, Blood Amulet
+|requirementcost=12 (4+8)
+|image=VampiricGloves_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.2
+|{{icon/vampirism}} 6 -> 5
+|-
+|0.5.3
+|Speed bonus 40% -> 35%
+Fixed Vampiric Gloves stars showing up as filled too often
+|-
+|0.4.3
+|Now trigger after 4 seconds instead of 10 activations
+|-
+|0.4.2
+|Reworked Vampiric Gloves
+|-
+|0.3.2
+|Max attack speed 60% -> 40%
+|-
+|0.1.1
+|Added to the game
+|}
+
+{{Items}}

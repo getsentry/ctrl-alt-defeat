@@ -1,0 +1,35 @@
+{{Item infobox
+|name=Fortuna's Kiss
+|image=Fortuna's_Kiss.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*Chance-based effects of the {{icon/star}} item are 35% more likely to trigger.
+*'''Every 3.5s:''' Gain 1 {{icon/luck}}. If you have at least 5 {{icon/luck}}, gain a random other buff instead.
+|skillround=any
+|grid=
+21
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Chance bonus 33% -> 35%
+|-
+|[[Patch 1.1.4]]
+|Chance increase 30% -> 33%
+|-
+|[[Patch 1.1.0]]
+|Cooldown 4s -> 3.5s
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}

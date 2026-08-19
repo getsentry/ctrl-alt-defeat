@@ -1,0 +1,44 @@
+{{Item infobox
+|name=Unstable Recombobulator
+|image=UnstableRecombobulator.png
+|rarity=Epic
+|icontype=dark, magic
+|type=Accessory
+|cost=6
+|effect=
+*'''Shop entered:''' Consume this and {{icon/star}} items. Create different items based on the combined value.
+*'''Every 4s:''' Gain 1 random [[buff]] and cleanse 1 [[debuff]].
+|grid=
+2---2
+-2-2-
+--1--
+-2-2-
+2---2
+}}
+The [[Unstable Recombombulator]] is an epic [[Accessory]] available in the shop for all classes. It has the very unusual effect of consuming all items in a large X, including itself, on shop entered and returning items based on the value. This acts as essentially a massive reroll, and is capable of giving items that are normally only attainable through crafting.
+
+It does also give and cleanse debuffs slowly, so it has a purpose in combat at least.
+
+One can avoid having it consume other items by combine locking it, or selectively avoid combining with certain items that are within range by combine locking them, although the value the Recombobulator lists will include all items in range. There is, however, no way to prevent the Recombobulator from consuming itself, so it is always a one-turn item.
+
+It can be thought of as a small goodie-bag if one doesn't desire to consume their own items. It sometimes gives more value worth of items than was consumed, so it could be considered a good deal, especially when on sale.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.20
+|Now have an in-combat effect (partially reduced the value increases of the last patches to compensate for this)
+|-
+|0.9.19
+|Generated {{icon/gold}} value +1
+|-
+|0.9.18
+|Output {{icon/gold}} value +1
+|-
+|0.9.16
+|Added to the game
+|}
+
+{{Items}}

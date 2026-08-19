@@ -1,0 +1,27 @@
+{{Item infobox
+|name=Repeater
+|image=Repeater.png
+|rarity=Unique
+|icontype=treasure
+|type=Accessory
+|cost=8
+|class=Neutral
+|effect=
+*'''After 12s:''' Repeat the Start of battle effects of the {{icon/star}} items.
+|grid=
+20002
+02120
+20002
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.37]]
+|Added into game.
+|}
+
+{{Items}}

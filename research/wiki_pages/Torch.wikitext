@@ -1,0 +1,44 @@
+{{Item infobox
+|name=Torch
+|image=Torch.png
+|rarity=Rare
+|icontype=melee
+|type=Weapon
+|cost=5
+|effect='''On hit:''' 25% chance to gain 1 damage.
+|mindamage=2
+|maxdamage=3
+|stamina=1
+|accuracy=90
+|cooldown=1.4
+|sockets=1
+|grid=
+1
+1
+}}
+{{Recipe infobox
+|recipename=Torch
+|ingredients=Wooden Sword, Lump of Coal
+|requirementcost=5 (3+2)
+|image=Torch_recipe.png
+}}
+The [[Torch]] is an item obtainable by combining the [[Lump of Coal]] and the [[Wooden Sword]], which are each common items available in the shop for all characters. At the start of a battle, it deals higher DPS than the [[Wooden Sword]] (although comparable to a [[Wooden Sword]] socketed with a [[Lump of Coal]]). With each hit, the [[Torch]] has a chance of gaining 1 damage, which makes it deal more damage the longer the fight goes. Still, this damage doesn't generally reach extreme heights, usually capping at around 6 or 7 damage by the time the fight is over.
+
+The [[Torch]] can be crafted into the [[Burning Torch]] by placing it next to any [[Fire]] item, which is a straight upgrade, giving 2 {{icon/heat}} on start of battle and having a higher chance of gaining damage. The [[Torch]] can also be crafted into the [[Magic Torch]] using a [[Mana Potion]], although this is a bit more difficult to acquire. The [[Magic Torch]] deals higher DPS, and trades the probabilistic +1 damage on hit for guaranteed +1 damage on hit to itself and two of its neighbor [[weapon]]s, at the cost of a {{icon/mana}}.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.2
+|Damage increase now triggers “on Hit” instead “on Attack” (this is mostly for consistency)
+|-
+|0.7.1
+|Stamina cost 0.7 -> 1.0, Damage increase chance 30% -> 25%
+|-
+|0.7.0
+|Added to the game
+|}
+
+{{Items}}

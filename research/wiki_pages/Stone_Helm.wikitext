@@ -1,0 +1,51 @@
+{{Item infobox
+|name=Stone Helm
+|image=StoneHelm.png
+|rarity=Legendary
+|type=Helmet
+|cost=13
+|effect=
+* '''Start of battle:''' Reduce damage taken by 25% for 5s and gain 35 {{icon/block}}.
+* 30% chance to resist [[Critical_hits|critical hits]].
+* 40% chance to resist [[stun]]s.
+|sockets=1
+|grid=
+1
+1
+}}
+{{Recipe infobox
+|recipename=Stone Helm
+|ingredients=Cap of Resilience, Stone Skin Potion
+|requirementcost=13 (7+6)
+|image=StoneHelm_recipe.png
+}}
+The [[Stone Helm]] is a neutral [[Helmet]] normally obtained by combining a [[Cap of Resilience]] with a [[Stone Skin Potion]]. It has effects resembling an improved [[Cap of Resilience]], giving the same damage reduction at the start of battle, but for longer, and with some additional {{icon/block}}. Also like the [[Cap of Resilience]], it gives critical hit and stun resistance, but gives much more of it.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Critical hit resistance 25% -> 30%
+|-
+|[[Patch 1.0.3]]
+|Stun Resistance 30% -> 40%
+|-
+|[[Patch 0.9.12]]
+|{{icon/block}} 30 -> 35
+|-
+|[[Patch 0.9.10]]
+|{{icon/block}} 25 -> 30
+|-
+|[[Patch 0.9.9]]
+|{{icon/block}} 20 -> 25
+|-
+|[[Patch 0.9.8]]
+|[[Stun]] [[resist]] chance 25% -> 30%
+|-
+|[[Patch 0.8.4]]
+|Added into game.
+|}
+
+{{Items}}

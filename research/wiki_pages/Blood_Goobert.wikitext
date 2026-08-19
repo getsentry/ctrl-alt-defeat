@@ -1,0 +1,70 @@
+{{Item infobox
+|name=Blood Goobert
+|image=BloodGoobert.png
+|rarity=Legendary
+|icontype=vampiric
+|type=Pet
+|cost=14
+|effect=
+* '''Start of battle:''' Gain 5 {{icon/vampirism}}.
+* '''6 {{icon/star}} item activations:''' Deal 10 {{icon/effect}}-damage with 100% lifesteal. Deal +1 for each {{icon/vampirism}}.
+|grid=
+2112
+2112
+}}
+{{Recipe infobox
+|recipename=Blood Goobert
+|ingredients=Goobert, Blood Amulet
+|requirementcost=14 (6+8)
+|image=BloodGoobert_recipe.png
+}}
+
+The [[Blood Goobert]] is a neutral [[Pet]] normally obtained by combining a [[Goobert]] with a [[Blood Amulet]]. It grants a bunch of {{icon/vampirism}} at start of battle, more than twice what the [[Blood Amulet]] gives, and deals {{icon/vampirism}}-scaling effect damage with lifesteal every few activations of the items on its sides.
+
+It can be expected to do '''substantially''' more healing than the required [[Goobert]], with the added upside of dealing some moderate damage, or possibly even massive damage if {{icon/vampirism}} is high enough.
+
+'''Blood Goobert''' can deal critical damage from having critical hit chance. Some items that give critical hit chance are [[Ranger Bag]] and [[Acorn Collar]]. The amount of health regenerated will be equal to the amount of damage dealt.
+
+The [[Blood Goobert]], along with the [[Steel Goobert]] and [[Light Goobert]], is part of every "Rainbow" goobert craft.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.9]]
+|{{icon/vampirism}} 4 -> 5
+|-
+|[[Patch 1.0.8]]
+|{{icon/vampirism}} 3 -> 4
+|-
+|[[Patch 1.0.4]]
+|{{icon/vampirism}} 2 -> 3
+|-
+|[[Patch 0.6.1]]
+|Reworded
+|-
+|[[Patch 0.5.4]]
+|Base lifesteal 8 -> 10
+|-
+|[[Patch 0.5.3]]
+|Base lifesteal 5 -> 8
+|-
+|[[Patch 0.3.6]]
+|Blood Goobert is now affected by crit buffs
+|-
+|[[Patch 0.3.5]]
+|Now heal based on the damage done - it also heals more when critting
+|-
+|[[Patch 0.3.4]]
+|Activations 7 -> 6
+|-
+|[[Patch 0.3.3]]
+|Activations: 8 -> 7
+|-
+|[[Patch 0.3.0]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,31 @@
+{{Item infobox
+|name=False Life
+|image=False_Life.png
+|rarity=Unique
+|icontype=dark
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*Items give +20% maximum health.
+*'''Overhealed:''' Gain the overheal as maximum health.
+*'''Every 7s:''' [[Heal]] for 10 + 4 for each {{icon/star}} {{icon/dark}}-item.
+|skillround=any
+|grid=
+22022
+22222
+02120
+00200
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.37]]
+|Added into game.
+|}
+
+{{Items}}

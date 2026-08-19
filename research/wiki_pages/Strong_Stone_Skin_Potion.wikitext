@@ -1,0 +1,57 @@
+{{Item infobox
+|name=Strong Stone Skin Potion
+|image=StrongStoneSkinPotion.png
+|rarity=Legendary
+|type=Potion
+|cost=9
+|effect='''45 {{icon/block}} reached:''' Consume this and convert 15 health to 35 {{icon/block}} and gain 2 {{icon/spikes}} for 4s.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+{{Recipe infobox
+|recipename=Strong Stone Skin Potion
+|ingredients=Stone Skin Potion, Stone, Stone
+|requirementcost=8 (6+1+1)
+|image=StrongStoneSkinPotion_recipe.png
+}}
+{{Recipe infobox
+|recipename=Strong Stone Skin Potion
+|ingredients=Stone Skin Potion
+|catalysts=Cauldron
+|requirementcost=16 (6+10)
+|image=StrongStoneSkinPotion_transform.png
+}}
+The [[Strong Stone Skin Potion]] is a neutral [[Potion]] normally obtained by combining a [[Stone Skin Potion]] with two [[Stone]]s, although [[Reaper]]s can also catalytically convert the [[Stone Skin Potion]] to the [[Strong Stone Skin Potion]] with the [[Cauldron]]. When the player reaches 45 {{icon/block}}, it will be consumed and convert some health into a greater amount of {{icon/block}}, and give some temporary {{icon/spikes}}, as well as apply the effect of the above [[Potion]]. The health conversion cannot kill the player and will leave them with at least 1 health left. If not enough health was left for the full effect, it will give 2x the health that it could convert into {{icon/block}}.
+
+At worst, it raises the player's effective HP and deals some {{icon/spikes}} damage, as long as the 45 {{icon/block}} condition will reliably be met.
+
+As even basic [[Leather Armor]] generates 45 {{icon/block}} at battle start, a [[Stone Skin Potion]] or [[Strong Stone Skin Potion]] can be used to immediately trigger any other potion immediately at the start of battle, if tactically relevant.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.8.1
+|Trigger threshold 20 {{icon/block}} -> 45 {{icon/block}}
+|-
+|0.7.0
+|{{icon/spikes}} 3 -> 2, Duration 3s -> 4s
+|-
+|0.5.4
+|Changed wording
+|-
+|0.5.3
+|Convert 15 -> 35 (previously 8 -> 24). Now also gives 3 {{icon/spikes}} for 3s
+|-
+|0.3.7
+|Health converted 12 -> 8
+|-
+|0.1.1
+|Reduced number of [[Stone]]s needed for [[Strong Stone Skin Potion]] from 4 to 2
+|}
+
+{{Items}}

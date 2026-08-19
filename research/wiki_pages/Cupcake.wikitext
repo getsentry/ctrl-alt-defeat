@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Cupcake
+|image=Cupcake.png
+|effect='''Every 6s:''' [[Heal]] for 10 and gain 2 [[Buff|buffs]] of the type of which you have the most.
+|rarity=Legendary
+|icontype=magic
+|type=Food
+|cost=5
+|grid=
+020
+212
+020
+}}
+
+[[Cupcake|Cupcakes]] are a type of [[Food|food]] which are helpful for healing and gaining your most prevalent buff type.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.4]]
+|Cost 6g -> 5g
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}

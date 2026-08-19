@@ -1,0 +1,36 @@
+{{Item infobox
+|name=Whetstone
+|image=Whetstone.png
+|rarity=Common
+|type=Accessory
+|cost=4
+|effect='''Start of battle:''' {{icon/star}} [[Weapon]]s gain 1 damage.
+|grid=
+2
+1
+2
+}}
+The [[Whetstone]] is a common [[Accessory]] available in the shop for all classes. Buying the [[Smithing for Dummies]] [[Skill]] also grants one [[Whetstone]]. The [[Whetstone]] can give up to two [[Weapon]]s +1 damage, which can be a strong boon in the early game. The Whetstone also acts as a crafting material which upgrades a number of items, mostly [[Weapon]]s. 
+
+Fully upgrading the [[Wooden Sword]] to the [[Hero Longsword]] or [[Burning Blade]] requires a total of three [[Whetstone]]s. Upgrading two [[Wooden Sword]]s to [[Crossblades]] would require four [[Whetstone]]s.
+
+[[Adventurer]]s can combine the [[Whetstone]] with a [[Wooden Buckler]] using a [[Twine]], granting the [[Hero Shield]], which a high quality shield with [[Whetstone]]-like effects (but much stronger).
+
+[[Berserker]]s can catalytically use their [[Utility Pouch]] or [[Forging Hammer]] to improve a [[Whetstone]] into an [[Improved Whetstone]], and then the [[Improved Whetstone]] into an [[Essence of Steel]]. The [[Improved Whetstone]] has more {{icon/star}} slots but is otherwise identical. The [[Essence of Steel]] gives more damage, has even more {{icon/star}} slots, and even buffs {{icon/block}} gain, in addition to being part of some strong crafts.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.3
+|Is now "Start of Battle" effect.
+|-
+|0.3.3
+|Cost 3g -> 4g
+|-
+|0.3.0
+|Now gives +1 damage (min and max) and costs 3 gold
+|}
+
+{{Items}}

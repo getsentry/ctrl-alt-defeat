@@ -1,0 +1,56 @@
+{{Item infobox
+|name=Stone Golem
+|image=StoneGolem.png
+|rarity=Godly
+|icontype=effect, ranged
+|type=Weapon, Pet
+|cost=16
+|effect=
+* '''On hit:''' Gain 1 {{icon/empower}}. 30% chance to [[stun]] for 0.5s.
+* '''Use 7 {{icon/regeneration}}:''' Reduce [[cooldown]] to 2.6s and gain 150 {{icon/block}} (once).
+* Deals +10 damage for each {{icon/star}} [[Bag of Stones]].
+|mindamage=8
+|maxdamage=13
+|stamina=0
+|accuracy=85
+|cooldown=5.5
+|sockets=1
+|grid=
+-22-
+-11-
+2112
+}}
+{{Recipe infobox
+|recipename=Stone Golem
+|ingredients=Heart Container, Stone, Stone, Stone, Stone
+|catalysts=
+|requirementcost=16 (12+1+1+1+1)
+|image=StoneGolem_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.23
+|Damage +3
+|-
+|0.9.22
+|Activated Cooldown 2.8s -> 2.6s
+|-
+|0.9.19
+|[[Bag of Stones]] bonus damage 8 -> 10
+|-
+|0.9.16
+|Cooldown 6s / 3s -> 5.5s / 2.8s
+|-
+|0.9.13
+|Damage per [[Bag of Stones]]: 7 -> 8
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

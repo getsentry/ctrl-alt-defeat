@@ -1,0 +1,23 @@
+{{Item infobox
+|name=Unidentified Amulet
+|image=UnidentifiedAmulet.png
+|rarity=Rare
+|type=Accessory
+|cost=6
+|effect='''On buy:''' Gain a random effect.
+|grid=1
+}}
+
+[[Unidentified Amulet]] is a rare item available in the shop for all characters. After buying '''Unidentified Amulet''', it instantly transforms into one of the nine possible amulets: [[Amulet of Life]], [[Amulet of Steel]], [[Amulet of Feasting]], [[Amulet of Energy]], [[Amulet of the Wild]], [[Amulet of Alchemy]], [[Amulet of Darkness]], [[Amulet of Fortune]], or [[Amulet of Light]]. In general, these Amulets are build-defining and powerful for 1 tile items.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

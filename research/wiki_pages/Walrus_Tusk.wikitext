@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Walrus Tusk
+|image=WalrusTusk.png
+|rarity=Common
+|icontype=nature
+|type=Accessory
+|cost=4
+|effect='''Start of battle:''' Gain 1 {{icon/spikes}}.
+|grid=
+1
+1
+}}
+The [[Walrus Tusk]] is a common [[Accessory]] available in the shop for all classes. It does very little on its own, especially for an item that takes up two spaces, giving only a single {{icon/spikes}} at start of battle, but it crafts into a number of different {{icon/spikes}}-themed items.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.3.9
+|Can now be combined into new item: [[Claws of Attack]]
+|-
+|0.3.5
+|Cost 3g -> 4g
+|-
+|0.3.3
+|Cost 4s -> 3s
+|}
+
+{{Items}}

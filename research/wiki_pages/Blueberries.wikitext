@@ -1,0 +1,41 @@
+{{Item infobox
+|name=Blueberries
+|image=Blueberries.png
+|rarity=Rare
+|icontype=nature, magic
+|type=Food
+|cost=2
+|effect='''Every 3.5s:''' Gain 1 {{icon/mana}}. If you have at least 10 {{icon/mana}}: gain 1 {{icon/luck}} instead.
+|grid=
+-2-
+212
+-2-
+}}
+
+[[Blueberries]] are a [[Food]] available in the shop for all characters, at rare rarity. [[Blueberries]] can be helpful with generating {{icon/mana}} and {{icon/luck}}, due to its size, and it's effects can be very helpful in configuring builds which focus on {{icon/luck}} or {{icon/mana}} (though there are [[Mana Orb|more efficient methods]] to generate {{icon/mana}} in particular).
+
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.12
+|Now have the [[Magic]] type
+|-
+|0.6.3
+|Can be combined into [[Mana Potion]]
+|-
+|0.5.3
+|Cooldown 3.0s -> 3.5s
+|-
+|0.3.9
+|Cooldown 4s -> 3s
+|-
+|0.3.3
+|Cost 3g -> 2g
+|-
+|0.3.1
+|Added to the game
+|}
+
+{{Items}}

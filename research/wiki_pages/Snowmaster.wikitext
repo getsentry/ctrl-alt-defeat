@@ -1,0 +1,72 @@
+{{Item infobox
+|name=Snowmaster
+|image=SnowMaster.png
+|rarity=Legendary
+|icontype=ice
+|type=Pet
+|cost=9
+|class=Ranger
+|effect=
+* '''Every 1.3s:''' Inflict 1 {{icon/cold}}. If your opponent has at least 10 {{icon/cold}}, gain 1 {{icon/empower}} instead. Cleanse 1 debuff.
+* Triggers 10% faster for each {{icon/ice}} item.
+|grid=
+-1-
+212
+222
+}}
+{{Recipe infobox
+|recipename=Snowmaster
+|ingredients=Carrot, Snowball, Lump of Coal
+|catalysts=
+|requirementcost=9 (3+4+2)
+|image=SnowmasterRecipe.png
+}}
+
+The [[Snowmaster]] is a [[Ranger]] [[Pet]] normally obtained by combining a [[Carrot]], a [[Snowball]], and a [[Lump of Coal]]. The [[Carrot]] needs to be the one touching both other items for the craft, despite how making a snowman would work in real life. The [[Snowmaster]] could also appear in the shop for [[Pyromancer]]s with the [[Frozen Flame]] or any class with the [[Speak with Animals]] [[Skill]].
+
+The [[Snowmaster]] triggers quickly, inflicting a {{icon/cold}} to the enemy and cleansing a debuff with each activation. If the opponent has at least 10 {{icon/cold}}, {{icon/empower}} is gained instead of inflicting any more {{icon/cold}}.
+
+It triggers faster for each {{icon/ice}} item near its base, up to a maximum of 50% faster.
+
+Ice builds will certainly enjoy the [[Snowmaster]], as it does have a powerful effect, and the ability to inflict {{icon/cold}}, but as it can't inflict any {{icon/cold}} above 10, it's not particularly good for stacking high amounts of it, which is what one would want with something like the [[Frostbite]]. That said, mass amounts of {{icon/empower}} is generally not something that is gained easily, usually requiring jumping through some hoops, and as far as hoops go, 10 {{icon/cold}} can be pretty doable with the right supporting items, like maybe whatever can be crafted with the other [[Snowball]] from the [[Wonky Snowman]] purchased. If the {{icon/empower}} gain can be turned online early in the fight, and multiple [[Weapon]]s are used, this can go from a decent debuff source to a significant source of direct damage.
+
+[[Snowmaster]] is one of the fastest-triggering items in the game, making it great with [[Goobert]]s and a few other items that count item triggers.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Cooldown 1.5s -> 1.3s
+|-
+|[[Patch 1.0.10]]
+|Cooldown 1.7s -> 1.5s
+|-
+|[[Patch 1.0.9]]
+|Cooldown 1.9s -> 1.7s
+|-
+|[[Patch 1.0.8]]
+|Cooldown 2.1s -> 1.9s
+|-
+|[[Patch 1.0.7]]
+|Cooldown 2.4s -> 2.1s
+|-
+|[[Patch 1.0.6]]
+|Cooldown 2.8s -> 2.4s
+|-
+|[[Patch 1.0.5]]
+|Cooldown 3.1s -> 2.8s
+|-
+|[[Patch 1.0.4]]
+|Cooldown 3.3s -> 3.1s
+|-
+|[[Patch 1.0.3]]
+|Cooldown 3.8s -> 3.3s
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}
+[[zh:大师雪人]]

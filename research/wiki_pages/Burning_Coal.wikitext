@@ -1,0 +1,56 @@
+{{Item infobox
+|name=Burning Coal
+|image=BurningCoal.png
+|rarity=Rare
+|icontype=fire
+|type=Gemstone
+|cost=2
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+'''On hit:''' 12% chance to deal +6 damage and gain 1 {{icon/heat}}.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+'''Start of battle:''' Gain 12 {{icon/block}}.
+[[Resist]] 7 {{icon/cold}}.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+'''After 5s:''' Gain 2 {{icon/heat}}, cleanse 3 [[debuff|debuffs]].
+|grid=1
+}}
+{{Recipe infobox
+|recipename=Burning Coal
+|ingredients=Lump of Coal
+|catalysts=Fire
+|requirementcost=
+|image=BurningCoal_transform.png
+}}
+The [[Burning Coal]] is a [[gemstone]] obtained by "lighting" the [[Lump of Coal]]. It can gain the character {{icon/heat}} when in a [[weapon]] or in the backpack, or {{icon/block}} with {{icon/cold}} resist when in other items. While it is slightly different than the [[Lump of Coal]], it is more or less an improvement, especially when {{icon/heat}} is desired.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|(Armor): {{icon/cold}} [[resist]] 6 -> 7
+|-
+|[[Patch 1.0.7]]
+|Block 15 -> 12, Cold Resist 5 -> 6
+|-
+|[[Patch 0.9.24]]
+|(Armor): {{icon/cold}} [[resist]] 4 -> 5
+|-
+|[[Patch 0.9.15]]
+|(Armor): {{icon/cold}} stacks resisted 3 -> 4
+|-
+|[[Patch 0.7.6]]
+|(Armor): {{icon/block}} 12 -> 15
+(Backpack): Cleanse 2 -> 3
+|-
+|[[Patch 0.7.1]]
+|(Weapon): Chance 15%, damage 5 -> Chance 12%, damage 6
+(Inventory): Activation delay 3s -> 5s
+|-
+|[[Patch 0.7.0]]
+|Added into game.
+|}
+
+{{Items}}

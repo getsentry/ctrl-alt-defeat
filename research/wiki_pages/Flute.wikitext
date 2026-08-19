@@ -1,0 +1,44 @@
+{{Item infobox
+|name=Flute
+|image=Flute.png
+|rarity=Epic
+|icontype=magic, musical
+|type=Accessory
+|cost=6
+|effect=
+* '''Every 4.7s:''' Randomly gain 14 {{icon/block}} or 2 stamina or 2 {{icon/luck}}.
+* Triggers 10% faster for each {{icon/star}} item.
+|grid=
+-----2
+----22
+111222
+----22
+-----2
+}}
+The [[Flute]] is an epic [[accessory]] available in the shop for all classes. It will either gain {{icon/block}}, stamina, or {{icon/luck}}, more quickly the more items are in a cone in front of it.
+
+[[Flute]] can't give same effect multiple times in a row.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.19
+|Cooldown 5s -> 4.7s
+|-
+|0.9.14
+|Now have the [[Magic]] type
+|-
+|0.8.0
+|No longer does the same effect multiple times in a row, {{icon/block}} 12 -> 14
+|-
+|0.3.7
+|{{icon/block}} 10 -> 12
+|-
+|0.2.0
+|Now randomly gives 10 {{icon/block}}, 2 stamina, or 2 {{icon/luck}}
+|}
+
+{{Items}}

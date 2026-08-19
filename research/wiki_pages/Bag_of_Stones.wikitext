@@ -1,0 +1,32 @@
+{{Item infobox
+|name=Bag of Stones
+|image=BagofStones.png
+|rarity=Rare
+|type=Accessory
+|cost=3
+|effect={{icon/star}} Stones above can be thrown repeatedly.
+|grid=
+0002
+2201
+1101
+}}
+
+[[Bag of Stones]] is a rare item available in the shop for all characters. "Stone" items above the [[Bag of Stones]] can be thrown repeatedly, preventing them from being relatively useless one-and-done throwaway items. Valid targets are: [[Stone]], [[Artifact Stone: Cold]], [[Artifact Stone: Heat]] and [[Artifact Stone: Death]]. The latter three are all [[Treasure]]s and would therefore need to be found with good luck from the player, with only one being obtainable without increasing the character's treasure limit. The treasure stones are substantially stronger for the most part, but even basic [[Stone]]s can act as an effective damage supplement which does good damage against {{icon/block}}. Having the [[Bag of Stones]] is very important with the [[Stoned]] skill.
+
+Similarly to [[Potion]]s, the [[Bag of Stones]] only has {{icon/star}} slots vertically above it, regardless of the orientation of the [[Bag of Stones]]. It should usually be laid horizontally, because this ensures there are two {{icon/star}} slots.
+
+The only craft possible with [[Bag of Stones]] is [[Sir Sand]], which is somewhat niche.
+
+Each [[Bag of Stones]] next to a [[Stone Golem]] gives it a massive +10 damage. This is probably a bit of a bone to throw the player since the four [[Stone]]s needed to craft the [[Stone Golem]] would be sorely missed in a [[Stone]]-throwing build.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.3.0
+|Cost 2 -> 3
+|}
+
+{{Items}}

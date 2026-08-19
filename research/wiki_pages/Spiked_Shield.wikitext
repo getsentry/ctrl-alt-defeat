@@ -1,0 +1,65 @@
+{{Item infobox
+|name=Spiked Shield
+|image=SpikedShield.png
+|rarity=Rare
+|type=Shield
+|cost=8
+|effect='''On attacked ({{icon/melee}}):''' 30% chance to prevent 9 damage, remove 0.3 stamina from opponent, and gain 1 {{icon/spikes}} (up to 5).
+|sockets=1
+|grid=
+11
+11
+}}
+{{Recipe infobox
+|recipename=Spiked Shield
+|ingredients=Wooden Buckler, Walrus Tusk
+|requirementcost=8 (4+4)
+|image=SpikedShield_recipe.png
+}}
+The [[Spiked Shield]] is a [[Shield]] obtained by combining the [[Wooden Buckler]] and the [[Walrus Tusk]]. It blocks more damage than the [[Wooden Buckler]] and also gives a {{icon/spikes}} on-block, up to 5, making it useful both defensively and offensively, especially in a [[Spikes]] or [[Shield]] build.
+
+The [[Berserker]] can craft the [[Spiked Shield]] into the [[Spiked Wall]] using a [[Spiked Collar]], which, other than greatly increasing stamina costs of weapons and taking up more space, is a superior [[Shield]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown Patch: 6-13-2025
+|Damage prevented 7 -> 9
+|-
+|0.9.25
+|{{icon/spikes}} limit 4 -> 5
+|-
+|0.9.23
+|Damage prevented 6 -> 7
+|-
+|0.9.20
+|Damage prevented 5 -> 6
+|-
+|0.9.18
+|{{icon/spikes}} limit 3 -> 4
+|-
+|0.9.17
+|Damage prevention 4 -> 5
+|-
+|0.9.4
+|[[Shield]]s remove stamina even when opponent has less than the amount that should be removed. Reduced Block chance to 30% to compensate.
+|-
+|0.7.1
+|Stamina drain 0.4 -> 0.3
+|-
+|0.6.2
+|Reworked Spiked Shield: Now keeps everything from [[Wooden Buckler]] and generates {{icon/spikes}} when it blocks something. (up to 3)
+|-
+|0.6.0
+|Reworked: [[Wooden Buckler]]/[[Spiked Shield]]/[[Shield of Valor]] now prevent damage instead of generating {{icon/block}}, slightly increased amount to compensate
+|-
+|0.5.4
+|{{icon/spikes}} cap 3 -> 2, {{icon/block}} needed for {{icon/spikes}} generation 20 -> 30
+|-
+|0.3.3
+|Now generates +1 {{icon/spikes}} start of battle, next {{icon/spikes}} requires 20 {{icon/block}} (total number of {{icon/spikes}} therefore 3 -> 4)
+|}
+
+{{Items}}

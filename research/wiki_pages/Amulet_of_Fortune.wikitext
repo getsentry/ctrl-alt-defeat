@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Amulet of Fortune
+|image=AmuletofFortune.png
+|rarity=Rare
+|type=Accessory
+|cost=6
+|effect=
+*Chance-based effects of the {{icon/star}} items are 15% more likely to trigger.
+*'''After 5s:''' Gain 2 buffs of the type of which you have the most.
+|grid=
+222
+212
+222
+}}
+{{Recipe infobox
+|recipename=Amulet of Fortune
+|ingredients=Unidentified Amulet
+|catalysts=
+|requirementcost=6 (6)
+|image=Amulets_transform.png
+}}
+
+The [[Amulet of Fortune]] is a rare item normally obtained by buying the [[Unidentified Amulet]] from the shop. Most importantly, it raises the likelihood of chance-based effects in the nearby items. This works great with a wide-variety of items, including some [[weapon]]s and all [[shield]]s.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|}
+
+{{Items}}

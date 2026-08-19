@@ -1,0 +1,29 @@
+{{Item infobox
+|name=Blood Amulet
+|image=BloodAmulet.png
+|rarity=Legendary
+|icontype=vampiric
+|type=Accessory
+|cost=8
+|effect='''Start of battle:''' Gain 2 {{icon/vampirism}} and 20 maximum health.
+|grid=
+1
+}}
+The [[Blood Amulet]] is a legendary [[Accessory]] available in the shop for all classes. It gives some {{icon/vampirism}} and maximum health. On its own, it is a useful defensive item, especially with multiple [[melee]] [[weapon]]s, but it's at its best as a crafting material for various [[Vampiric]] items. In general, these crafts deliver slightly more {{icon/vampirism}} than the base [[Blood Amulet]]. The [[Blood Amulet]] is also a needed catalyst to create the [[Vampiric Potion]] from the [[Strong Health Potion]] and the [[Red Orchid Collar]] from the [[Acorn Collar]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.22
+|Cost 9 {{icon/gold}} -> 8 {{icon/gold}}
+|-
+|0.6.4
+|Now additionally gives +20 max health start of battle
+|-
+|0.1.1
+|Added to the game
+|}
+
+{{Items}}

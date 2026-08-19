@@ -1,0 +1,43 @@
+{{Item infobox
+|name=Mega Clover
+|subclassname=Grovekeeper
+|image=MegaClover.png
+|rarity=Unique
+|icontype=nature
+|type=Accessory
+|cost=10
+|class=Ranger
+|effect=
+* Sale chance +5%
+* Chance to find {{icon/treasure}}-items +20%.
+* '''Shop entered:''' Generate two [[Lucky Clover]]s
+* '''15 {{icon/luck}} reached:''' Gain 25 random other [[buff]]s.
+|grid=
+11
+11
+}}
+
+Note : The Mega Clover needs to be equipped to trigger its "shop entered" effect.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.12
+|[[Buff]] threshold 20 -> 15, [[Buff]] amount 40 -> 25
+|-
+|0.9.3
+|Bonus sale chance: 6% -> 5%
+|-
+|0.9.2
+|Sale chance bonus 8% -> 6%
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}
+
+[[Category:Subclass]]

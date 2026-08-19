@@ -1,0 +1,27 @@
+{{Item infobox
+|name=Furcifer Prime Subscription
+|image=Furcifer_Prime_Subscription.png
+|rarity=Unique
+|type=Accessory
+|cost=5
+|class=Neutral
+|effect=
+*'''Shop entered:''' Pay 2 {{icon/gold}} fees. For the next shop:
+*Sales chance +10%. Crafted items are offered in the shop.
+|skillround=
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+
+{{Items}}

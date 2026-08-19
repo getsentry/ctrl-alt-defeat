@@ -1,0 +1,45 @@
+{{Item infobox
+|name=Squirrel Archer
+|image=SquirrelArcher.png
+|rarity=Epic
+|icontype=nature, effect, ranged
+|type=Weapon, Pet
+|cost=9
+|class=Ranger
+|effect=
+*'''On hit:''' Steal a random [[buff]].
+*Triggers 15% faster for each {{icon/star}} [[Pet]] or [[Food]].
+|mindamage=2
+|maxdamage=3
+|stamina=0
+|accuracy=85
+|cooldown=3.2
+|grid=
+--2-
+-212
+2112
+-22-
+}}
+{{Recipe infobox
+|recipename=Squirrel Archer
+|ingredients=Squirrel, Shortbow
+|catalysts=
+|requirementcost=9 (5+4)
+|image=SquirrelArcher_recipe.png
+}}
+The [[Squirrel Archer]] is an item normally obtainable by combining the [[Squirrel]] with the [[Shortbow]]. The [[Squirrel]] is only available to [[Ranger]]s with [[Big Bowl of Treats]]. The [[Squirrel Archer]] does the same damage as the [[Shortbow]] (but attacks slower), with the added benefit of costing no stamina, and still has the effect of [[Squirrel]], but faster. It's therefore a strict [[Squirrel]] upgrade and arguably a [[Shortbow]] upgrade as well. 
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.22
+|Cooldown 3s -> 3.2s
+|-
+|0.9.21
+|Added to the game
+|}
+
+{{Items}}

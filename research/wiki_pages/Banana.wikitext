@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Banana
+|image=Banana.png
+|effect='''Every 5s:''' [[Heal]] for 4 and regenerate 1 stamina.
+|rarity=Common
+|icontype=nature
+|type=Food
+|cost=3
+|grid=
+-2--
+212-
+2112
+-22-
+}}
+
+[[Banana]]s are a type of [[Food]] which are used for health and stamina regeneration. It can be very useful in the early-game especially because [[Health Potion]]s and [[Heroic Potion]]s are not yet readily available at that stage. The [[Spicy Banana]] is a skill which specifically powers up [[Banana]]s, giving them a chance of giving [[Heat]]. The [[Spicy Banana]] also heals whenever a stamina is spent, rewarding the character for spending all of the stamina put out by their [[Banana]]s.
+
+==History==
+{|class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.4.0
+|[[Heal]] 5 -> 4
+|-
+|0.3.1
+|Can be combined into new item: [[Strong Heroic Potion]]
+|}
+
+{{Items}}

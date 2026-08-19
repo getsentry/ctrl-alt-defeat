@@ -1,0 +1,32 @@
+{{Item infobox
+|name=Snowball
+|image=Snowball.png
+|rarity=Epic
+|icontype=ice
+|type=Accessory
+|cost=4
+|effect=
+*'''Start of battle:''' Inflict 2 {{icon/cold}}.
+*Your opponent gains 15% less maximum health from items.
+|grid=
+1
+}}
+{{Recipe infobox
+|recipename=Snowball
+|ingredients=Wonky Snowman
+|catalysts=
+|requirementcost=8
+|image=Snowball_transform.png
+}}
+The [[Snowball]] is an epic [[accessory]] attained in a pair by buying the [[Wonky Snowman]] from the shop. It inflicts some {{icon/cold}} at start of battle and makes your opponent gain less maximum health for the entire battle. It can be crafted into various {{icon/cold}}-related [[weapon]]s, [[armor]], and [[shield]]s.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.24]]
+|Added into game.
+|}
+
+{{Items}}

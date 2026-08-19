@@ -1,0 +1,35 @@
+{{Item infobox
+|name=Garlic
+|image=Garlic.png
+|rarity=Common
+|icontype=nature
+|type=Food
+|cost=2
+|effect='''Every 4s:''' Gain 3 {{icon/block}}. 30% chance to remove 1 {{icon/vampirism}} from your opponent.
+|grid=
+-2-
+212
+212
+-2-
+}}
+[[Garlic]] is a [[Food]] item available in the shop to all characters, at common rarity. It slowly gives {{icon/block}}, and also has a chance to remove {{icon/vampirism}}. While normally not a particularly efficient [[Food]], with the [[Smelly Wall]] skill, [[Garlic]] nearby more than doubles its {{icon/block}} generation, and this {{icon/block}} gain also gives {{icon/poison}}, vastly raising the power of any [[Garlic]] the character may have.
+==History==
+{|class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.5.5
+|{{icon/vampirism}} removal chance 40% -> 30%
+|-
+|0.5.4
+|{{icon/vampirism}} removal chance 50% -> 40%
+|-
+|0.4.0
+|Cooldown 6s -> 4s, {{icon/block}} 4 -> 3, now has 50% chance to remove {{icon/vampirism}}
+|-
+|0.2.0
+|{{icon/block}} 5 -> 4
+|}
+
+{{Items}}

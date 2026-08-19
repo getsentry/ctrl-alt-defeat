@@ -1,0 +1,32 @@
+{{Item infobox
+|name=Amulet of Life
+|image=AmuletofLife.png
+|rarity=Rare
+|type=Accessory
+|cost=6
+|effect=
+* '''Start of battle:''' Gain 20 maximum health.
+* Your [[heal]]ing is increased by 20%.
+|grid=1
+}}
+{{Recipe infobox
+|recipename=Amulet of Life
+|ingredients=Unidentified Amulet
+|catalysts=
+|requirementcost=6 (6)
+|image=Amulets_transform.png
+}}
+
+[[Amulet of Life]] is a rare item normally obtained by buying the [[Unidentified Amulet]] from the shop. Its healing increase can be a massive boon to a healing deck, and the 20 maximum health it also gives ensures that it has some use in nearly any backpack.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

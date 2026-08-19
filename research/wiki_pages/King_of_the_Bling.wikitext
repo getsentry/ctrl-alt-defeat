@@ -1,0 +1,44 @@
+{{Item infobox
+|name=King of the Bling
+|image=King_of_the_Bling.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*'''On buy:''' Generate a chipped [[Gemstone]].
+*'''Accessory bought:''' 75% chance to restock with an amulet or ring.
+*{{icon/star}} rings have a 35% chance to duplicate buffs and debuffs.
+*Amulets have a +30% chance to be on sale.
+|skillround=3
+|grid=
+00200
+20202
+02220
+02120
+00200
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Restock chance 70% -> 75%
+|-
+|[[Patch 1.1.5]]
+|Restock chance 60% -> 70%
+|-
+|[[Patch 1.1.3]]
+|Restock chance 50% -> 60%
+|-
+|[[Patch 1.1.2]]
+|Restock chance 35% -> 50%
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

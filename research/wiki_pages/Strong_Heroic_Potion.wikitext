@@ -1,0 +1,45 @@
+{{Item infobox
+|name=Strong Heroic Potion
+|image=StrongHeroicPotion.png
+|rarity=Legendary
+|type=Potion
+|cost=9
+|effect='''Out of stamina:''' Consume this and regenerate 4 stamina and gain 1 {{icon/empower}}.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+{{Recipe infobox
+|recipename=Strong Heroic Potion
+|ingredients=Heroic Potion, Banana
+|requirementcost=9 (6+3)
+|image=StrongHeroicPotion_recipe.png
+}}
+{{Recipe infobox
+|recipename=Strong Heroic Potion
+|ingredients=Heroic Potion
+|catalysts=Cauldron
+|requirementcost=16 (6+10)
+|image=StrongHeroicPotion_transform.png
+}}
+The [[Strong Heroic Potion]] is a neutral [[Potion]] normally obtained by combining a [[Heroic Potion]] with a [[Banana]], although [[Reaper]]s can also catalytically convert the [[Heroic Potion]] into the [[Strong Heroic Potion]] using the [[Cauldron]]. When the player runs out of stamina the [[Strong Heroic Potion]] is consumed, regenerating 4 stamina and gaining 1 {{icon/empower}}, as well as applying the effect of the [[Potion]] above it. It is mostly useless (other than from potion spillover) unless the build is well-exceeding 1.0 stamina per second, and having higher stamina demands will make it more likely to trigger and/or cause it to trigger more quickly.
+
+The single {{icon/empower}} the [[Heroic Potion]] and [[Strong Heroic Potion]] can provide may seem fairly minor, but with potion spillover, [[Amulet of Alchemy]], and/or [[Heavy Drinking]], there are ways to retrigger it often enough that the damage could add up, especially along with multiple weapons.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.6.2
+|No longer gives {{icon/regeneration}}
+|-
+|0.3.9
+|[[Heroic Potion]]/[[Strong Heroic Potion]]: Reworked, now gives {{icon/empower}} instead of {{icon/luck}}. Reduced stamina gain by 1.
+|-
+|0.3.1
+|Added to the game
+|}
+
+{{Items}}

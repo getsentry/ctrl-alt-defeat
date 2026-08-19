@@ -1,0 +1,56 @@
+{{Item infobox
+|name=Corrupted Armor
+|image=CorruptedArmor.png
+|rarity=Godly
+|icontype=dark
+|type=Armor
+|cost=20
+|effect=
+* {{icon/star}} {{icon/holy}}-Items gain {{icon/dark}}.
+* 10% chance for each {{icon/star}} {{icon/dark}}-item to protect [[debuff]]s on your opponent from being cleansed.
+* '''Start of battle:''' Gain 85 {{icon/block}}.
+* '''Every 2.4s:''' Cleanse 2 [[debuff]]s and inflict them on your opponent.
+|sockets=3
+|grid=
+-22-
+2112
+2112
+2112
+-22-
+}}
+{{Recipe infobox
+|recipename=Corrupted Armor
+|ingredients=Holy Armor, Corrupted Crystal
+|requirementcost=20 (13+7)
+|image=CorruptedArmor_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.22
+|{{icon/block}} 75 -> 85
+|-
+|0.9.19
+|Cooldown 2.6s -> 2.4s
+|-
+|0.9.16
+|Cooldown 2.8s -> 2.6s
+|-
+|0.9.15
+|Cooldown 3s -> 2.8s
+|-
+|0.9.12
+|{{icon/block}} 70 -> 75
+|-
+|0.8.1
+|Gains an additional effect: {{icon/star}} [[Holy]] items are [[Dark]] items
+|-
+|0.7.6
+|Added to the game
+|}
+
+{{Items}}

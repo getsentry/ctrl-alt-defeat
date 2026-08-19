@@ -1,0 +1,45 @@
+{{Item infobox
+|name=Rat Chef
+|image=RatChef.png
+|rarity=Rare
+|icontype=nature
+|type=Pet
+|cost=8
+|class=Ranger
+|effect=
+*'''Start of battle:''' Gain 1 {{icon/regeneration}} for each {{icon/star}} [[Food]].
+*'''Every 7s:''' Regenerate 2 stamina and gain 1 {{icon/empower}}.
+*Triggers 15% faster for each {{icon/star}} [[Pet]] or [[Food]].
+|grid=
+-2-
+212
+212
+-2-
+}}
+{{Recipe infobox
+|recipename=Rat Chef
+|ingredients=Rat, Healing Herbs
+|catalysts=
+|requirementcost=8 (4+4)
+|image=RatChef_recipe.png
+}}
+The [[Rat Chef]] is a [[pet]] obtainable by combining a [[Rat]] and a [[Healing Herbs]]. This normally requires being [[Ranger]] and having [[Big Bowl of Treats]] to obtain the [[Rat]]. Its effects are completely different from the [[Rat]], gaining {{icon/regeneration}} for each [[food]] touching it, up to 6. Every once in a while it will regain stamina and give an {{icon/empower}}, faster for each touching [[food]] or [[pet]].
+
+To get the most out of this [[pet]], the player will want several [[food]]s and higher than normal stamina-worth of [[weapon]]s.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.23
+|Cooldown 6s -> 7s
+|-
+|0.9.22
+|Cooldown 5s -> 6s
+|-
+|0.9.21
+|Added to the game
+|}
+
+{{Items}}

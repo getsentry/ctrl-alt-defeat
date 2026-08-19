@@ -1,0 +1,99 @@
+{{Item infobox
+|name=Falcon Blade
+|image=FalconBlade.png
+|rarity=Legendary
+|icontype=melee
+|type=Weapon
+|cost=15
+|effect=
+* '''Start of battle:''' {{icon/star}} items trigger 40% faster.
+* Attacks twice.
+|mindamage=4
+|maxdamage=5
+|stamina=1
+|accuracy=100
+|cooldown=1.7
+|sockets=2
+|grid=
+00200
+02120
+02120
+22122
+00200
+}}
+{{Recipe infobox
+|recipename=Falcon Blade
+|ingredients=Hero Sword, Gloves of Haste, Gloves of Haste
+|requirementcost=15 (7+4+4)
+|image=FalconBlade_recipe.png
+}}
+The [[Falcon Blade]] is a neutral [[Weapon]] normally obtained by combining a [[Hero Sword]] with two [[Gloves of Haste]]. It deals moderate damage overall, and attacks twice, which can be useful for {{icon/vampirism}} builds, but could cause problems against large amounts of {{icon/spikes}}. It also massively speeds up any items near it, which is especially good with items that don't consume stamina.
+
+The player can play into it attacking twice as a strength as [[Gemstone|gemstones]] will essentially get doubled value, and effects that increase the '''Falcon Blade's''' base damage make it very powerful. [[Djinn Lamp|Djinn Lamps]] can make this item very powerful in the right build, and each activation of the '''Falcon Blade''' essentially counts as two activations, which makes it excellent for gaining {{icon/mana}} from the [[Mana Orb]]. This synergy can make [[Mana Mastery]] + Mana Orb builds with '''Falcon Blade''' and potentially a few Djinn Lamps powerful.
+
+However, because it attacks twice per attack, it will interact with [[Shield|Shields]] twice as well, which can make it relatively weak against builds with one or several shields. Despite attacking twice, the item will only use [[Stamina]] once. As long as the player has enough stamina to attack, both hits will occur. Shields will have a separate chance to interact with both of the Blade's hits, potentially blocking one, both, or neither.
+
+By combining the [[Falcon Blade]] with the [[Hero Longsword]]s, the [[Crossblades]] can be created, which is a powerful +-shaped weapon which grants a large amount of damage to one weapon and massively speeds up another item. It also deals more damage and attacks faster with every hit.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.10]]
+|Added two {{icon/star}} slots.
+|-
+|[[Patch 0.9.33]]
+|Speed bonus 35% -> 40%
+|-
+|[[Patch 0.9.29]]
+|Damage -2
+|-
+|[[Patch 0.9.28]]
+|Speed bonus 30% -> 35%
+|-
+|[[Patch 0.9.7]]
+|Cooldown 1.8s -> 1.7s
+|-
+|[[Patch 0.9.6]]
+|Cooldown 1.9s -> 1.8s
+|-
+|[[Patch 0.9.5]]
+|Cooldown 2s -> 1.9s
+|-
+|[[Patch 0.9.4]]
+|Damage +1
+|-
+|[[Patch 0.8.3]]
+|Cooldown 2.1s -> 2s
+|-
+|[[Patch 0.8.0]]
+|Cooldown 2.2s -> 2.1s
+|-
+|[[Patch 0.7.3]]
+|Is now "Start of Battle" effect.
+|-
+|[[Patch 0.6.1]]
+|Cooldown 2s -> 2.2s
+|-
+|[[Patch 0.6.0]]
+|Stamina cost 0.7 -> 1.0, bonus trigger speed 35% -> 30%, cooldown 1.8s -> 2.0s
+|-
+|[[Patch 0.5.6]]
+|Cooldown 1.4s -> 1.8s, damage +1
+|-
+|[[Patch 0.5.3]]
+|Damage 2-4 -> 3-4<br />
+Can now be combined into [[Crossblades]]
+|-
+|[[Patch 0.4.1]]
+|Added a [[gemstone]] socket
+|-
+|[[Patch 0.3.6]]
+|Speed bonus 30% -> 35%
+|-
+|[[Patch 0.3.5]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,36 @@
+{{Item infobox
+|name=Oil Lamp
+|image=OilLamp.png
+|rarity=Epic
+|icontype=fire
+|type=Accessory
+|cost=7
+|effect=
+* '''Start of battle:''' Gain 2 {{icon/heat}}.
+* '''Every 3.4s:''' The {{icon/star}} [[Weapon]] gains 1 damage and 5% [[accuracy]].
+|grid=
+-1
+21
+}}
+The [[Oil Lamp]] is an item available in the shop for all classes. Every so often, it will grant a [[weapon]] touching its base +1 damage and +5% accuracy. It also grants 2 {{icon/heat}} at the start of battle, which increases all item speed by 4%. In general, this makes for a useful enhancement to an existing board, but especially so if the player has ways to spend or use {{icon/heat}}.
+
+As the [[Oil Lamp]] is a [[Fire]] item, it can be used to light [[Lump of Coal]], but otherwise has no crafting options.
+
+[[Buy the Holy Light]] specifically converts the [[Oil Lamp]] and [[Djinn Lamp]] into [[Holy]] items and speeds up the [[Holy]] items near it.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.24
+|Cooldown 3.2s -> 3.4s
+|-
+|0.9.14
+|Cooldown 3s -> 3.2s
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,72 @@
+{{Item infobox
+|name=Frostbite
+|image=Frostbite.png
+|rarity=Legendary
+|icontype=ice, vampiric, melee
+|type=Weapon
+|cost=11
+|effect=
+* '''On hit:''' 45% chance to inflict 1 {{icon/cold}}.
+* '''Opponent reaches 30 {{icon/cold}}:''' Gain 12 {{icon/vampirism}} (once).
+* Deals +1 damage per {{icon/vampirism}} and +0.4 per {{icon/cold}} of your opponent.
+|mindamage=4
+|maxdamage=7
+|stamina=1
+|accuracy=90
+|cooldown=1.7
+|sockets=2
+|grid=
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Frostbite
+|ingredients=Hungry Blade, Snowball
+|requirementcost=11 (7+4)
+|image=Frostbite_recipe.png
+}}
+The [[Frostbite]] is a neutral [[Weapon]] normally obtained by combining a [[Hungry Blade]] with a [[Snowball]], although a [[Pyromancer]] with [[Frozen Flame]] could also find it in the shop. It is a more powerful {{icon/cold}}-themed variant of the [[Hungry Blade]]. On hit, it has a chance to inflict 1 {{icon/cold}}, and deals more damage the more {{icon/vampirism}} the player has and the more {{icon/cold}} the opponent has. Rather than the slow conversion of {{icon/regeneration}} into {{icon/vampirism}} used by the [[Hungry Blade]], the [[Frostbite]] generates a large amount of {{icon/vampirism}} once the opponent reaches a high enough {{icon/cold}} threshold.
+
+The [[Hungry Blade]] only gains maximum damage from {{icon/vampirism}}, while the [[Frostbite]] gains general damage, meaning it scales about twice as well with {{icon/vampirism}}, not to mention the added effect of {{icon/cold}}-scaling. Since the [[Hungry Blade]] would likely generate more {{icon/vampirism}} outside of a {{icon/cold}} build, there are likely some niche builds where the [[Hungry Blade]] is actually better, but the [[Frostbite]] will usually be better and has a much higher ceiling when incorporated into a high {{icon/vampirism}} or high {{icon/cold}} build.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|{{Icon/vampirism}} 10 -> 12
+|-
+|[[Patch 1.1.5]]
+|{{Icon/vampirism}} 8 -> 10
+|-
+|[[Patch 1.1.0]]
+|{{Icon/vampirism}} 7 -> 8
+|-
+|[[Patch 1.0.10]]
+|{{Icon/vampirism}} 5 -> 7
+|-
+|[[Patch 0.9.26]]
+|Cooldown 1.6s -> 1.7s
+|-
+|[[Patch 0.9.25]]
+|Chance to inflict {{icon/cold}} 60% -> 45%
+|-
+|[[Patch 0.9.20]]
+|Damage per {{icon/cold}} 0.5 -> 0.4, chance to inflict {{icon/cold}} 50% -> 60%
+|-
+|[[Patch 0.9.15]]
+|{{icon/cold}} chance 60% -> 50%
+|-
+|[[Patch 0.9.14]]
+|Now has the [[Vampiric]] type
+|-
+|[[Patch 0.9.3]]
+|Chance to inflict {{icon/cold}} 70% -> 60%
+|-
+|[[Patch 0.9.0]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,33 @@
+{{Item infobox
+|name=Stone Badge
+|image=StoneBadge.png
+|rarity=Unique
+|icontype=treasure
+|type=Accessory
+|cost=5
+|effect=
+* Your starting class items are no longer offered in the shop (even when this item is in storage).
+* '''Shop entered:''' Generate items worth 1 {{icon/gold}}.
+* '''Every 3s:''' Gain 4 {{icon/block}}.
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.6
+|Item value 2g -> 1g
+|-
+|0.9.5
+|{{icon/block}} 5 -> 4
+Now have a 10% chance to appear in the first 3 rounds (previously 25%/3%/3%)
+|-
+|0.9.4
+|Added to the game
+|}
+
+{{Items}}

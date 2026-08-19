@@ -1,0 +1,68 @@
+{{Item infobox
+|name=Stone
+|image=Stone.png
+|rarity=Common
+|icontype=nature, ranged
+|type=Weapon
+|cost=1
+|effect=
+* Can only be thrown once per battle.
+* '''On hit:''' Destroy 4 {{icon/block}}.
+|mindamage=2
+|maxdamage=4
+|stamina=0
+|accuracy=70
+|cooldown=2.5
+|grid=1
+}}
+
+[[Stone]]s are a [[Weapon]] available in the shop for all characters, at common rarity. It can normally only be thrown once, unlike most other [[Weapon]]s. Stones can be used with [[Bag of Stones]] to be able to throw them multiple times per battle, like a normal weapon, making for a decent zero stamina method for destroying {{icon/block}} and dealing some general low-grade damage. When combined with the [[Stoned]] [[Skill]], a fraction of the [[Stone]]s damage also grants the user {{icon/block}}. 
+
+Since the [[Stone]] only costs a single {{icon/gold}}, and no item can sell for less than 1{{icon/gold}}, there is no drawback to purchasing one, as it can be resold whenever needed for a full refund.
+
+The [[Stone Golem]] requires four [[Stone]]s to be crafted, which can be difficult to naturally find in the shop. Consider using a [[Shovel]], [[Offering Bowl]], or [[Stone Badge]] to ease the process.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.8
+|Cooldown 2.7s -> 2.5s
+|-
+|0.9.7
+|Cooldown 3s -> 2.7s
+|-
+|0.9.6
+|Cooldown 3.2s -> 3s
+|-
+|0.9.4
+|Cooldown 3.5s -> 3.2s, {{icon/block}} removal 3 -> 4
+|-
+|0.8.4
+|Cooldown 4s -> 3.5s
+|-
+|0.8.2
+|Accuracy 65% -> 70%
+|-
+|0.5.6
+|Cooldown 3.5s -> 4s, Accuracy 85% -> 65%
+|-
+|0.5.5
+|Cooldown 3s -> 3.5s
+|-
+|0.5.2
+|{{icon/block}} removal 4 -> 3
+|-
+|0.5.0
+|Damage 1-3 -> 2-4 , Cooldown 2s -> 3s, Accuracy 70% -> 85%
+|-
+|0.2.1
+|{{icon/block}} removal 3 -> 4
+|-
+|0.2.0
+|Now tagged as a [[Ranged Weapon|weapon]]
+|}
+
+{{Items}}

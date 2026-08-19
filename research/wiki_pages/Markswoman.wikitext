@@ -1,0 +1,37 @@
+{{Item infobox
+|name=Markswoman
+|image=Markswoman.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Ranger
+|effect={{icon/star}} {{icon/ranged}}-[[Weapon|Weapons]] deal +20% damage, attack +40% faster and have +15% accuracy.
+|skillround=3
+|grid=
+1----
+-22--
+-222-
+--222
+---22
+}}
+
+==Description==
+''There is really no reason to miss the target, it just wastes damage.''
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.4]]
+|Attack speed 35% -> 40%
+|-
+|[[Patch 0.9.38]]
+|[[Weapon]] Speed bonus 25% -> 30%
+|-
+|[[Patch 0.9.20]]
+|Added into game.
+|}
+
+{{Items}}

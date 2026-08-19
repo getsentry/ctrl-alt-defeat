@@ -1,0 +1,35 @@
+{{Item infobox
+|name=Sapphire
+|image=BPB_Sapphire_Line.png
+|rarity=Varies
+|type=Gemstone
+|cost=1/2/4/8/16
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+'''On hit:''' 15/25/40/60/100% chance to ignore {{icon/block}}, gain 1 {{icon/mana}} and inflict 1 {{icon/cold}}.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+'''5 {{icon/mana}} gained:''' Gain 2/3/4/5/8 {{icon/block}}.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+'''After 4.5/4.5/4/3.5/3s:''' Inflict 2/3/4/5/8 {{icon/cold}}.
+|inshop=Box of Riches
+|grid=1
+}}
+One of five kinds of gemstones that can be acquired from having the [[Box of Riches]].
+
+There are five rarities of Sapphires, Chipped/Flawed/Regular/Flawless/Perfect, corresponding to the five rarities of items in the game. Each rarity has better stats than the previous one. Higher rarities can be found in the shop if the player a Box of Riches, or by combining identical ones in the inventory.
+
+The gemstones have varying effects depending on where they are placed.
+
+[[Sapphire]] effects are related to [[Mana]] or [[Cold]]. When socketed in a [[Weapon]], [[Sapphire]]s have a chance to ignore {{icon/block}}, gain 1 {{icon/mana}}, and inflict 1 {{icon/cold}}, with the probability increased by the rarity. [[Sapphire]]s socketed in [[Armor]] or other items give some {{icon/block}} each time 5 {{icon/mana}} is gained, with the amount of {{icon/block}} increased by the rarity. [[Sapphire]]s loose in the backpack inflict some {{icon/cold}} once after a short amount of time, with the amount of {{icon/cold}} increased by the rarity and the time required reduced by the rarity.
+
+Characters using a [[Cold]] build or with ways to spend or gain [[Mana]] may prioritize [[Sapphire]]s more highly.
+
+There are some complicated implications of ignoring {{icon/block}}, like [[Sapphire]]s allow [[Weapon]]s to do. If there was a near-100% chance to ignore {{icon/block}}, such as through a [[Perfect Sapphire]] on all [[Weapon]]s, the attacking character would essentially skip all of the {{icon/block}} the defending character might have, significantly softening them. With only a partial chance of ignoring {{icon/block}}, the attacking character likely does not have enough enough damage to reduce their opponent's health to zero without also spending hits to destroy most if not all of the {{icon/block}}, meaning this effect may not have much impact on the total amount of damage the attacker needs to deal. One would need approximately an X% chance of ignoring {{icon/block}}, where X = (Opponent's total health)/(Opponent's total {{icon/block}} + health), to expect to circumvent any amount of {{icon/block}}. There are actually potential drawbacks to having some damage ignore {{icon/block}}, since it may allow an opponent who would otherwise have full health, to heal themselves.
+
+{{Items}}
+
+[[Category:Common]]
+[[Category:Rare]]
+[[Category:Epic]]
+[[Category:Legendary]]
+[[Category:Godly]]

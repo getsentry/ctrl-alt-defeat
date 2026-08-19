@@ -1,0 +1,42 @@
+{{Item infobox
+|name=Tim
+|image=Tim.png
+|rarity=Unique
+|icontype=treasure, dark
+|type=Gemstone
+|cost=10
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+'''On hit:''' 50% chance to steal a random [[buff]].
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+25% chance to [[resist]] [[debuff]]s or [[Critical_hits|critical hits]].
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+'''Opponent drops below 30%:''' [[Heal]] for 50 and gain 5 {{icon/empower}}.
+|grid=1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.12
+|[[Critical hits|Crit]]ical hit and [[debuff]] [[resist]]ance 30% -> 25%, cost 11 {{icon/gold}} -> 10 {{icon/gold}}
+|-
+|0.7.6
+|Cost 12g -> 11g
+|-
+|0.6.2
+|Chance to steal [[buff]] 66.6% -> 50% (Weapon)
+<p>[[Debuff]] [[resist]]ance 25% -> 30% (Armor)</p>
+Cost 13g -> 12g
+|-
+|0.5.6
+|Chance to steal [[buff]] 100% -> 66.6% (Weapon)
+|-
+|0.5.5
+|Added to the game
+|}
+
+{{Items}}

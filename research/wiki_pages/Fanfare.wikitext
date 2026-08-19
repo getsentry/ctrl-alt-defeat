@@ -1,0 +1,69 @@
+{{Item infobox
+|name=Fanfare
+|image=Fanfare.png
+|rarity=Godly
+|icontype=magic,musical
+|type=Accessory
+|cost=7
+|effect=
+* '''Every 3s:''' Randomly gain 1 {{icon/empower}} or gain 3 {{icon/mana}} and remove 2 {{icon/mana}} from opponent or remove 1 stamina from opponent.
+* Triggers 10% faster for each {{icon/star}} item.
+|grid=
+----2-
+---22-
+111222
+---22-
+----2-
+}}
+The [[Fanfare]] is a godly [[Accessory]] available in the shop for all classes. Occasionally it randomly either gains an {{icon/empower}}, gains some {{icon/mana}} and removes some {{icon/mana}} from the opponent, or removes a stamina from the opponent. It triggers faster for each item in a cone-like zone in front of it, up to a maximum of 90% faster.
+
+It's best to have a use for {{icon/mana}} to get the most out of the overall effect.
+
+The [[Fanfare]] is one of the few {{icon/musical}}-items in the game that synergizes with the [[Adventurer]] [[Ukulele]] subclass item.
+
+[[Engineer]]s can combine the [[Fanfare]] with a [[Charge Splitter]] to create the [[Stuff-Throwinator]], which is a very unique weapon.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.22
+|Cooldown 3.2s -> 3s
+|-
+|0.9.19
+|Cooldown 3.4s -> 3.2s
+|-
+|0.9.18
+|Cooldown 3.6s -> 3.4s
+|-
+|0.9.17
+|Cooldown 3.8s -> 3.6s
+|-
+|0.9.16
+|Cooldown 4s -> 3.8s
+|-
+|0.9.14
+|Now have the [[Magic]] type
+|-
+|0.9.4
+|Cooldown 4.5s -> 4s
+|-
+|0.9.3
+|Cooldown 5s -> 4.5s
+|-
+|0.8.1
+|Effect reworked
+[[Rarity]] changed to [[Godly]]
+|-
+|0.5.2
+|Reworked
+|-
+|0.3.5
+|Now also removes 1 {{icon/spikes}} on activation.
+|-
+|0.2.0
+|Cooldown 5s -> 3s
+|}
+
+{{Items}}

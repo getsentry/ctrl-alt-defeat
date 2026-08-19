@@ -1,0 +1,18 @@
+{{Item infobox
+|name=Stamina Sack
+|image=StaminaSack.png
+|rarity=Epic
+|type=Bag
+|cost=5
+|effect=
+* Add 3 backpack slots.
+* Gain 1 maximum stamina.
+|grid=
+1
+1
+1
+}}
+The [[Stamina Sack]] is an epic [[Bag]] available in the shop for all classes. It gives three backpack slots, and gives 1 maximum stamina.
+
+The [[Bagtacular]] skill gives the [[Stamina Sack]] the additional property of increasing stamina regeneration 5%, which is a more effective long-term way of ensuring that stamina isn't fully depleted.
+{{Items}}

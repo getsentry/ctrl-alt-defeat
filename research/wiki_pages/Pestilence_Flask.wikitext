@@ -1,0 +1,41 @@
+{{Item infobox
+|name=Pestilence Flask
+|image=PestilenceFlask.png
+|rarity=Epic
+|type=Potion
+|cost=7
+|effect='''Opponent [[heal]]s:''' Consume this and inflict 3 {{icon/poison}} and 1 {{icon/poison}} to yourself.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+The [[Pestilence Flask]] is an epic [[Potion]] available in the shop for all classes. It inflicts {{icon/poison}} on the opponent, and a smaller amount to the player, when the opponent heals. The amount isn't all that significant, so it's best to either abuse it with potion synergies (like [[Heavy Drinking]]) in a {{icon/poison}} build, or use it as a crafting material.
+
+The [[Pestilence Flask]] can combine with the [[Dagger]], [[Spear]], [[Magic Staff]], [[Shortbow]], or [[Bow and Arrow]] to create generally improved {{icon/poison}}-inflicting weapons.
+
+[[Reaper]]s can combine the [[Fly Agaric]] with the [[Pestilence Flask]] or catalytically convert the [[Pestilence Flask]] using the [[Cauldron]] into the [[Strong Pestilence Flask]], which is the same except it inflicts twice the {{icon/poison}} to the opponent.
+
+[[Engineer]]s can combine the [[Pestilence Flask]] with a [[Stone]] and a [[Resistor]] to craft the [[Poison Grenade]], which is a good way of giving a large bulk of {{icon/poison}} to the opponent, though it will also poison the user themselves.
+
+Like all [[Potion]]s, when used, it will apply the affect of the [[Potion]] above it, without consuming the one above. This adjacency is unlike most in that the {{icon/star}} will always be placed above the [[Potion]], rather than rotating along with the item. The [[Pestilence Flask]] has a relatively easy trigger condition, making it good for triggering other [[Potion]]s early in the fight.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.6.3
+|Can now be combined into [[Strong Pestilence Flask]]
+|-
+|0.5.5
+|Cost 5g -> 7g
+|-
+|0.3.8
+|Now applies 3 {{icon/poison}} to the enemy and 1 {{icon/poison}} to self (down from 4 and 2)
+|-
+|0.3.0
+|{{icon/poison}} 5 -> 4
+|}
+
+{{Items}}

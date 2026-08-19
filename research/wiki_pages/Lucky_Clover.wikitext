@@ -1,0 +1,30 @@
+{{Item infobox
+|name=Lucky Clover
+|image=LuckyClover.png
+|rarity=Rare
+|icontype=nature
+|type=Accessory
+|cost=2
+|class=Ranger
+|effect='''Start of battle:''' Gain 1 {{icon/luck}}.
+|grid=1
+}}
+
+The [[Lucky Clover]] is a rare item available in the shop for [[Ranger]]s. It can also be generated from the [[Mega Clover]]. Two are required for multiple [[Ranger]] recipes: [[Fortuna's Hope]], [[Fortuna's Grace]], and [[Lucky Piggy]], all of which generate {{icon/luck}} more effectively than a plain [[Lucky Clover]]. When using the [[Ranger Bag]] default class, one [[Lucky Clover]] is provided at the start of the run.
+== Trivia ==
+The [https://en.wikipedia.org/wiki/Four-leaf_clover Four-leaf clover] is a rare variation of the common three-leaf clover. According to traditional sayings, such clovers bring good luck, though it is not clear when or how this idea began.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.3.9
+|Can be combined into new item: [[Lucky Piggy]]
+|-
+|0.3.3
+|Now class-specific to [[Ranger]]
+|}
+
+{{Items}}

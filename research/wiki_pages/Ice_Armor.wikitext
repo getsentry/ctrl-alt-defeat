@@ -1,0 +1,46 @@
+{{Item infobox
+|name=Ice Armor
+|image=IceArmor.png
+|rarity=Epic
+|icontype=ice
+|type=Armor
+|cost=11
+|effect=
+* '''Start of battle:''' Gain 100 {{icon/block}} and inflict 4 {{icon/cold}}.
+* '''Every 4.7s:''' Use 1 {{icon/heat}} to inflict 2 {{icon/cold}} and gain 10 {{icon/block}}.
+|sockets=2
+|grid=
+11
+11
+11
+}}
+{{Recipe infobox
+|recipename=Ice Armor
+|ingredients=Leather Armor, Snowball
+|requirementcost=11 (7+4)
+|image=IceArmor_recipe.png
+}}
+[[Ice Armor]] is an [[Armor]] normally obtained by combining the [[Leather Armor]] with a [[Snowball]], although it can also be obtained in the shop if playing as a [[Pyromancer]] with [[Frozen Flame]]. It gives much more {{icon/block}} than the [[Leather Armor]] and inflicts {{icon/cold}}. It can consume {{icon/heat}} to inflict additional {{icon/cold}} and gain additional {{icon/block}}.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.5]]
+|Block 90 -> 100, cooldown 5s -> 4.7s
+|-
+|[[Patch 1.1.0]]
+|Block 80 -> 90
+|-
+|[[Patch 0.9.29]]
+|Start of battle block 60 -> 75
+|-
+|[[Patch 0.9.26]]
+|Start of battle block 45 -> 60
+|-
+|[[Patch 0.9.0]]
+|Added to the game
+|}
+
+{{Items}}

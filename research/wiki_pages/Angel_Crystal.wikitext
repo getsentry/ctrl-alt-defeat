@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Angel Crystal
+|image=Angel_Crystal.png
+|rarity=Unique
+|icontype=treasure,holy
+|type=Accessory
+|cost=6
+|class=Neutral
+|effect=
+*'''Start of battle:''' Gain 3 {{icon/regeneration}} + 2 {{icon/regeneration}} per {{icon/star}} {{icon/holy}}-item.
+*'''After 7s:''' Gain 3 {{icon/empower}} + 1 {{icon/empower}} per {{icon/star}} {{icon/holy}}-item.
+*'''{{icon/regeneration}} gained:''' Gain 4 maximum health.
+|grid=
+0200020
+2200022
+0221220
+0021200
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+
+{{Items}}

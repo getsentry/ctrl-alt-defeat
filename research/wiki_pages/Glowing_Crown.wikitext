@@ -1,0 +1,59 @@
+{{Item infobox
+|name=Glowing Crown
+|image=GlowingCrown.png
+|rarity=Godly
+|icontype=holy, magic
+|type=Helmet
+|cost=12
+|effect=
+* '''Every 2.4s:''' Cleanse 1 {{icon/blind}} and [[heal]] for 5.
+* '''Use 10''' {{icon/mana}}''':''' Become [[Invulnerability|invulnerable]] for 2s (once).
+|sockets=1
+|grid=
+11
+}}
+The [[Glowing Crown]] is a godly [[Helmet]] available in the shop for all classes. Occasionally, it cleanses a {{icon/blind}} and heals a bit. Once the player has 10 {{icon/mana}}, the [[Glowing Crown]] will spend it to grant invulnerability for 2s, which could prevent a lot of damage.
+
+Consider the synergy with {{icon/blind}} self-inflicting items such as [[Sir Sand]] and [[Blazing Spear]]. It takes quite a bit of {{icon/mana}} to activate its most impactful aspect, so have some {{icon/mana}} sources around to get the most out of it.
+
+There are multiple crafts using the [[Glowing Crown]]:
+
+Combining the [[Glowing Crown]] with a [[Box of Riches]] grants a [[King Crown]], which has enhanced [[Glowing Crown]] effects in addition to enhancing the gemstones it contains.
+
+Combining the [[Glowing Crown]] with a [[Spear]] grants a [[Holy Spear]], which is a powerful enhanced spear that costs very little stamina, does good damage, destroys {{icon/block}}, cleanses debuffs, and even has an improved [[Glowing Crown]] invincibility ability that also doubles the [[Holy Spear]]'s attack speed.
+
+Finally, [[Reaper]]s can combine a [[Glowing Crown]] with a [[Toad]] to create a [[Frog Prince]], which is roughly a larger, better [[Toad]] with some [[Glowing Crown]] abilities. Notably, the invulnerability on this one is triggered by other items using 30 buffs, which might not always be as easy as the [[Glowing Crown]]'s '''Use 10''' {{icon/mana}}.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.12
+|
+* Now have the [[Magic]] type
+* Cooldown 2.5s -> 2.4s
+|-
+|0.7.3
+|Book of Light: Is now [[Glowing Crown]] that has one socket. [[Heal]] 6 -> 5
+|-
+|0.6.2
+|Cooldown 3s -> 2.5s, [[Heal]] 8 -> 6
+|-
+|0.3.6
+|Can no longer trigger when you are already [[Invulnerability|invulnerable]]. It now waits until it ended. Duration 3s -> 2s, [[heal]]ing 5 -> 8
+|-
+|0.3.4
+|[[Heal]]ing 4 -> 5
+|-
+|0.3.3
+|Now also [[heal]]s for 4, cooldown 4s -> 3s.
+|-
+|0.3.2
+|[[Invulnerability]] 2s -> 3s
+|-
+|0.3.1
+|Added to the game
+|}
+
+{{Items}}

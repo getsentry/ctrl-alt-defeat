@@ -1,0 +1,40 @@
+{{Item infobox
+|name=Knife to Meet You
+|image=Knife_to_Meet_You.png
+|rarity=Unique
+|icontype=
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*Daggers attack 40% faster.
+*'''After 12s:''' Your [[Weapon|Weapons]] deal +50% damage.
+*Triggers 60% faster for each {{icon/star}} Dagger.
+|skillround=3
+|grid=
+20202
+02220
+00100
+00200
+00200
+}}
+
+'''Knife to Meet You''' is a round 3 [[skill]] available to any class. After an extended period of time, the player's [[weapon]] damage of all weapons will be increased substantially. It triggers faster for each {{icon/star}} dagger. [[Daggerang]] counts for this effect.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Speed per dagger 50% -> 60%
+|-
+|[[Patch 1.1.4]]
+|Triggers faster per dagger 40% -> 50%
+|-
+|[[Patch 0.9.28]]
+|Added into game.
+|}
+
+{{Items}}

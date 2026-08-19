@@ -1,0 +1,66 @@
+{{Item infobox
+|name=Manathirst
+|image=Manathirst.png
+|rarity=Legendary
+|icontype=magic, vampiric, melee
+|type=Weapon
+|cost=13
+|effect=
+* '''On hit:''' Gain 2 {{icon/mana}}.
+* '''30 {{icon/mana}} gained:''' Deal 10 {{icon/effect}}-damage with 100% lifesteal. Deal +1 for each {{icon/vampirism}}.
+|mindamage=5
+|maxdamage=7
+|stamina=0.5
+|accuracy=200
+|cooldown=1.4
+|sockets=1
+|grid=
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Manathirst
+|ingredients=Hungry Blade, Mana Orb
+|requirementcost=13 (7+6)
+|image=Manathirst_recipe.png
+}}
+The [[Manathirst]] is a [[Weapon]] normally obtained by combining the [[Hungry Blade]] with the [[Mana Orb]]. It gains 2 {{icon/mana}} on hit, which is almost guaranteed every 1.4s, making it a great {{icon/mana}} source. It also deals some lifesteal damage when enough {{icon/mana}} is gained from all sources. It uses less stamina than the [[Hungry Blade]], making it a good pair for something like a [[Staff]].
+
+Manathirst's second effect, "'''30 {{icon/mana}} gained:''' activates separately from its regular attacks. It activates one time for every 30 accumulative {{icon/mana}} gained by any of your items. The center of the sword's blade will progressively light up from the hilt to the tip while you spend {{icon/mana}}, when it gets fully lit up, it means you have gained 30 {{icon/mana}} and Manathirst will steal 10 life (or more if you have any {{icon/vampirism}}) and reset the count (and the visual effect of the blade).
+
+The life stealing effect can deal [[critical hits]].
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.24
+|{{icon/mana}} gained 1 -> 2. {{icon/mana}} needed to steal life 20 -> 30.
+|-
+|0.7.6
+|Lifesteal 12 -> 10, damage +1
+|-
+|0.7.1
+|Damage +1
+|-
+|0.6.2
+|Accuracy 100% -> 200%
+|-
+|0.6.1
+|Reworked Manathirst: Removed {{icon/mana}} limit, life steal triggers on {{icon/mana}} gained and is increased by {{icon/vampirism}}. 
+Accuracy 90% -> 100%
+|-
+|0.3.4
+|Lifesteal 10 -> 12
+|-
+|0.3.3
+|Damage 2-4 -> 3-5, cooldown 1.6s -> 1.4s. Lifesteal now triggers once 20 {{icon/mana}} are used in any way. Lifesteal amount is 10, it can be triggered multiple times.
+|-
+|0.3.2
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,43 @@
+{{Item infobox
+|name=Piggybank
+|image=Piggybank.png
+|rarity=Common
+|type=Accessory
+|cost=3
+|effect=
+* '''Shop entered:''' Gain 1 {{icon/gold}}.
+* '''Start of battle:''' Gain 2 maximum health for each {{icon/star}} Start of battle item.
+|grid=
+22
+11
+22
+}}
+
+The [[Piggybank]] is an item available in the shop for all characters, at common rarity. It does very little in an actual battle, giving only a maximum of 8 maximum health, with all four {{icon/star}}s filled by start of battle items. If a battle is completed with the [[Piggybank]] in the slots of the character's bag, the "shop entered" effect will trigger and they will gain 1{{icon/gold}}. This can't be achieved by simply leaving the [[Piggybank]] in storage. This {{icon/gold}} gain makes the [[Piggybank]] pay for itself after a single round, and beyond that it becomes economically net-positive, the only drawback being the space it might take up.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.4
+|Reduced numbers of affected slots by 2
+|-
+|0.7.3
+|Piggy Bank now additionally increased max HP for each adjacent “Start of Battle” effect item
+|-
+|0.4.1
+|Piggybank can now be destroyed using the [[Hammer]] to gain [[Bunch of Coins|coins]]
+|-
+|0.3.9
+|Can be combined into new item: [[Lucky Piggy]]
+|-
+|0.3.2
+|Gold cost reduced to 3, gold gain reduced to +1 per round
+|-
+|0.2.1
+|Gold cost 4 -> 5
+|}
+
+{{Items}}

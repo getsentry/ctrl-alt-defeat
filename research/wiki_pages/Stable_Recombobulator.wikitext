@@ -1,0 +1,41 @@
+{{Item infobox
+|name=Stable Recombobulator
+|image=StableRecombobulator.png
+|rarity=Unique
+|icontype=treasure, dark, magic
+|type=Accessory
+|cost=6
+|effect=
+*'''Shop entered:''' Consume {{icon/star}} items. Create different items based on the combined value.
+*'''Every 2.5s:''' Gain 1 random [[buff]] and cleanse 1 [[debuff]].
+|grid=
+2-2-2
+-222-
+22122
+-222-
+2-2-2
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.21
+|Cooldown 3s -> 2.5s
+|-
+|0.9.20
+|Now have an in-combat effect (partially reduced the value increases of the last patches to compensate for this)
+|-
+|0.9.19
+|Cost 9 {{icon/gold}} -> 6 {{icon/gold}}
+|-
+|0.9.18
+|Cost 12 {{icon/gold}} -> 9 {{icon/gold}}
+|-
+|0.9.16
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,48 @@
+{{Item infobox
+|name=Lump of Coal
+|image=LumpofCoal.png
+|rarity=Common
+|type=Gemstone
+|cost=2
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+'''On attack:''' 70% chance to deal +1 damage.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+'''Start of battle:''' Gain 8 {{icon/block}}.
+[[Resist]] 1 [[debuff]].
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+'''After 3s:''' Gain a random [[buff]], inflict a random [[debuff]].
+|grid=1
+}}
+
+The [[Lump of Coal]] is a [[Gemstone]] available in the shop for all classes, at common rarity. It is the only [[Gemstone]] which doesn't require the [[Box of Riches]], [[Shaman Mask]], or crafting to acquire. None of the effects are particularly powerful, but still, in the early game, it can fill sockets and give some space-free value.
+
+The [[Lump of Coal]] can be lit using any [[Fire]] item, turning it into the different but arguably better [[Burning Coal]].
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.4
+|(Armor): {{icon/block}} +1
+|-
+|0.7.0
+|(Armor): {{icon/block}} 6 -> 7
+|-
+|0.6.4
+|(Armor): {{icon/block}} generation 5 -> 6
+|-
+|0.6.3
+|(Weapon): Trigger chance 60% -> 70%
+(Armor): {{icon/block}} 4 -> 5
+|-
+|0.6.2
+|(Armor): Start of battle {{icon/block}} 3 -> 4
+|-
+|0.6.1
+|Added to the game
+|}
+
+{{Items}}

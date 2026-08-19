@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Lil Chestnut
+|image=Lil Chestnut.png
+|rarity=Unique
+|icontype=treasure
+|type=Pet
+|cost=6
+|class=Neutral
+|effect=
+*'''Shop refreshes:''' 40% chance for a Trade offer.
+*'''Every 6s:''' Gain 3 buffs of the type you have most of.
+*Triggers 1% faster for each {{icon/gold}} the {{icon/star}} items are worth.
+|grid=
+22211222
+22211222
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Trade chance 30% -> 40%
+|-
+|[[Patch 0.9.28]]
+|Added into game.
+|}
+
+{{Items}}

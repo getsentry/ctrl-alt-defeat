@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Lightning in a Bottle
+|image=Lightning_in_a_Bottle.png
+|rarity=Unique
+|icontype=treasure
+|type=Potion
+|cost=7
+|class=Neutral
+|effect=
+*'''After 2s-7s:''' Consume this and deal 10 {{icon/effect}} damage, inflict 10 {{icon/blind}} for 5s and for each {{Icon/diamond}} {{icon/holy}}-item, [[Heal|heal]] for 5.
+|sockets=1
+|grid=
+030
+323
+010
+313
+303
+030
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

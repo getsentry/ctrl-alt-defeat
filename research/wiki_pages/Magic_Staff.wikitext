@@ -1,0 +1,71 @@
+{{Item infobox
+|name=Magic Staff
+|image=MagicStaff.png
+|rarity=Epic
+|icontype=magic, ranged
+|type=Weapon
+|cost=10
+|class=
+|effect='''On attack:''' Use 3 {{icon/mana}} to deal +6 damage and gain 2 damage.
+|mindamage=6
+|maxdamage=8
+|stamina=1
+|accuracy=90
+|cooldown=1.8
+|sockets=1
+|grid=
+1
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Magic Staff
+|ingredients=Broom, Mana Orb
+|requirementcost=10 (4+6)
+|image=MagicStaff_recipe.png
+}}
+
+The [[Magic Staff]] is a [[weapon]] obtained by combining the [[Mana Orb]] with the [[Broom]]. By spending {{icon/mana}}, it deals extra damage and permanently increases its damage, making it a relatively high damage weapon with enough {{icon/mana}}.
+
+There are a number of further upgrades to the [[Magic Staff]], one of which can be done by any class ([[Serpent Staff]]), but six of which are class-specific. All of these staves spend {{icon/mana}} to do something and deal damage.
+
+The [[Serpent Staff]] is made by combining the [[Magic Staff]] with a [[Pestilence Flask]]. It inflicts {{icon/poison}} and has a chance to duplicate {{icon/poison}} generated from all sources.
+
+The [[Critwood Staff]] is craftable by [[Ranger]]s by combining the [[Magic Staff]] with an [[Acorn Collar]]. It makes all attacks critical for a time.
+
+The [[Staff of Unhealing]] is craftable by [[Reaper]]s by combining the [[Magic Staff]] with a [[Demonic Flask]]. It doesn't directly deal damage, but uses {{icon/mana}} to turn all healing into damage, and heals.
+
+The [[Staff of Fire]] is craftable by [[Pyromancer]]s by combining the [[Magic Staff]] with a [[Draconic Orb]]. It uses both {{icon/mana}} and {{icon/heat}} to gain large amounts of damage.
+
+The [[Spiked Staff]] is craftable by [[Berserker]]s by combining the [[Magic Staff]] with a [[Spiked Collar]]. It generates {{icon/empower}}, and also {{icon/spikes}} during [[Battle Rage]].
+
+The [[Cupcake Staff]] is craftable by [[Mage]]s by combining the [[Magic Staff]] with a [[Cupcake]]. Like the [[Cupcake]], it duplicates the buffs the player has the most of.
+
+The [[Jynx Staff]] is craftable by the [[Adventurer]] by combining the [[Magic Staff]] with a [[Jynx Torquilla]] using a [[Twine]]. Unlike all other staffs it is 5 tiles in length rather than 4. It behaves similarly to a normal [[Magic Staff]] that triggers a [[Jynx Torquilla]] at its tip whenever it spends {{icon/mana}}.
+
+The [[Lightning Staff]] is craftable by the [[Engineer]] by combining the [[Magic Staff]] with a [[Battery]]. It emits a charge that increases the damage of any [[weapon]]s in the charge's erratic path.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.6
+|Cooldown 2s -> 1.8s
+|-
+|0.9.4
+|Damage +1
+|-
+|0.8.1
+|Damage +1
+|-
+|0.5.3
+|Cooldown +0.2s
+|-
+|0.3.1
+|Added to the game
+|}
+
+{{Items}}

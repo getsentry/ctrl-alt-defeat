@@ -1,0 +1,46 @@
+{{Item infobox
+|name=Forest Dragon
+|image=Forest_Dragon.png
+|rarity=Godly
+|icontype=nature,effect,ranged
+|type=Weapon, Pet
+|cost=18
+|class=Ranger
+|effect=
+*'''On hit:''' Gain 1 {{icon/regeneration}} and 1 {{icon/luck}}.
+*Deals +0.8 damage per {{icon/regeneration}}.
+*Triggers 10% faster for each {{icon/star}} {{icon/nature}}-item.
+|mindamage=5
+|maxdamage=10
+|stamina=0
+|accuracy=90%
+|cooldown=2.1
+|sockets=2
+|grid=
+00220
+02112
+02112
+21122
+02200
+}}
+{{Recipe infobox
+|recipename=Forest Dragon
+|ingredients=Ruby Whelp, Wisp
+|requirementcost=18 (10+8)
+|image=Forest_Dragon_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.3]]
+|Damage per Regeneration 1 -> 0.8
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

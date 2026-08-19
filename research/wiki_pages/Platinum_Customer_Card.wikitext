@@ -1,0 +1,72 @@
+{{Item infobox
+|name=Platinum Customer Card
+|image=PlatinumCustomerCard.png
+|rarity=Epic
+|type=Accessory
+|cost=8
+|effect=
+* Chance to find {{icon/treasure}}-items +30%.
+* You can obtain +1 {{icon/treasure}}-item.
+* 25% chance for a [[Trade]] offer.
+* '''Start of battle:''' [[Reflect]] 2 [[debuff]]s for each {{icon/star}} [[Legendary]], [[Godly]] or [[Unique]] item.
+|grid=
+2-2
+-1-
+2-2
+}}
+{{Recipe infobox
+|recipename=Platinum Customer Card
+|ingredients=Customer Card, Customer Card
+|requirementcost=8 (4+4)
+|image=PlatinumCustomerCard_recipe.png
+}}
+The [[Platinum Customer Card]] is an [[accessory]] obtainable by combining two [[Customer Card]]s. It has a number of (mainly shop-related) effects. It increases [[Treasure]] frequency in the shop and allows the player to collect an additional one. It also gives a chance of [[Trade]] offer. Relatively rare items placed near its corners will each cause 2 debuff reflections.
+
+The [[Uniquely Unique]] skill scales with [[Customer Card]] and [[Platinum Customer Card]], along with any other Uniques.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown Patch 6/13/2025
+|No longer protects buffs. Now gives +20% Trade chance.
+|-
+|Unknown Patch 2/14/2025
+|Treasure chance 25% -> 30%
+|-
+|0.9.22
+|[[Buff]] Protection 15% -> 20%
+|-
+|0.9.17
+|[[Buff]] protection chance 10% -> 15%
+|-
+|0.9.16
+|[[Unique]] chance 15% -> 25%
+|-
+|0.9.9
+|Is now affected by [[Piggybank]] and activates at the start of battle
+|-
+|0.9.8
+|Now also gives 10% chance to protect your [[buff]]s from removal
+|-
+|0.9.4
+|[[Unique]] chance 10% -> 15%
+|-
+|0.7.6
+|[[Unique]] Chance 8% -> 10%
+|-
+|0.7.5
+|[[Unique]] Chance 6% -> 8%
+|-
+|0.7.4
+|[[Unique]] Chance 4% -> 6%
+|-
+|0.7.3
+|[[Reflect]] 1 -> 2, [[Unique]] Chance: 3% -> 4%
+|-
+|0.7.2
+|Added to the game
+|}
+
+{{Items}}

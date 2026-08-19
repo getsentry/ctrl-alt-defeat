@@ -1,0 +1,54 @@
+{{Item infobox
+|name=Prismatic Orb
+|image=PrismaticOrb.png
+|rarity=Godly
+|icontype=magic, vampiric, holy, dark
+|type=Accessory
+|cost=14
+|effect=
+* '''Start of battle:''' For each...
+* {{icon/star}} {{icon/magic}}-item: Gain 2 {{icon/mana}}.
+* {{icon/star}} {{icon/vampiric}}-item: Gain 1 {{icon/vampirism}}.
+* {{icon/star}} {{icon/holy}}-item: Increase your [[heal]]ing by 4%.
+* {{icon/star}} {{icon/dark}}-item: Inflict a random [[debuff]].
+<br>
+* '''Every 8s:''' Gain 1 of every type of [[buff]].
+|grid=
+--2--
+-2-2-
+2-1-2
+-2-2-
+--2--
+}}
+The [[Prismatic Orb]] is a godly [[Accessory]] available in the shop for all classes. At the start of battle, it has a few effects depending on the item-types placed around it in its diamond-shaped {{icon/star}} zone. {{icon/magic}}-items around it will generate {{icon/mana}}, {{icon/vampiric}}-items around it will generate {{icon/vampirism}}, {{icon/holy}}-items around it will increase healing effectiveness, and {{icon/dark}}-items around it will inflict a random debuff. It will also gain the player one of each type of buff infrequently.
+
+For the cost, these effects are somewhat minor, but the [[Prismatic Orb]] has multiple powerful crafts:
+
+Combining a [[Prismatic Orb]] with a [[Wooden Sword]] grants the [[Prismatic Sword]], which deals very high base damage and has some additional effects for {{icon/magic}}, {{icon/vampiric}}, {{icon/holy}}, or {{icon/dark}}-items around it.
+
+Combining a [[Prismatic Orb]] with a [[Jynx torquilla]] grants the [[Paradise Birb]], which is an improved [[Jynx torquilla]] that also duplicates buffs and improves healing.
+
+[[Mage]]s can additionally combine a [[Prismatic Orb]] with a [[Wand of Equilibrium]] to create a [[Prismatic Wand]], which a powerful buff-gaining machine.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.29
+|Cost 13 {{icon/gold}} -> 14 {{icon/gold}}
+|-
+|0.9.19
+|Cost 12 {{icon/gold}} -> 13 {{icon/gold}}
+|-
+|0.9.17
+|Cooldown 7s -> 8s
+|-
+|0.9.14
+|[[Heal]] increase 5% -> 4%
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

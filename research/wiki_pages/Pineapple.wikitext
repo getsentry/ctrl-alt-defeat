@@ -1,0 +1,56 @@
+{{Item infobox
+|name=Pineapple
+|image=Pineapple.png
+|rarity=Legendary
+|icontype=nature
+|type=Food
+|cost=6
+|effect='''Every 2.9s:''' Gain 1 {{icon/spikes}} and [[heal]] for 4.
+|grid=
+-2-
+212
+212
+212
+-2-
+}}
+
+The '''Pineapple''' is a legendary [[Food]] available in the shop for all classes.
+
+The [[Pineapple]] heals and grants {{icon/spikes}} over time, which can be useful in {{icon/spikes}}, heal, or [[Food]] builds.
+
+Starting in patch 1.1, the [[Pineapple]] can be combined with the [[Spiked Shield]] to give the [[Pine Protector]] which is strictly better than the [[Spiked Shield]], blocking more damage, and with an array of synergies with nearby [[Food]]s.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.5]]
+|Cooldown 3.1s -> 2.9s
+|-
+|[[Patch 1.1.2]]
+|Cooldown 3.3s -> 3.1s
+|-
+|[[Patch 1.1.0]]
+|Can now be crafted into the Pine Protector.
+|-
+|[[Patch 1.0.9]]
+|cost 7g -> 6g
+|-
+|[[Patch 0.9.17]]
+|Cooldown 3.5s -> 3.3s
+|-
+|[[Patch 0.9.4]]
+|[[Heal]] 3 -> 4
+|-
+|[[Patch 0.9.3]]
+|Cooldown 4s -> 3.5s
+|-
+|[[Patch 0.6.4]]
+|Cost 8g -> 7g
+|-
+|[[Patch 0.4.2]]
+|Cooldown 5s -> 4s
+|}
+
+{{Items}}

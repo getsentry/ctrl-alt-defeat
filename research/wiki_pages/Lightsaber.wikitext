@@ -1,0 +1,83 @@
+{{Item infobox
+|name=Lightsaber
+|image=Lightsaber.png
+|rarity=Godly
+|icontype=holy, melee
+|type=Weapon
+|cost=9
+|effect=
+* '''Use 3 {{icon/regeneration}}:''' Inflict 8 {{icon/blind}} for 6s (unstackable).
+* Deals '''+1''' damage for each {{icon/blind}} of your opponent.
+|mindamage=8
+|maxdamage=12
+|stamina=1
+|accuracy=95
+|cooldown=1.5
+|sockets=2
+|grid=
+1
+1
+1
+1
+}}
+The [[Lightsaber]] is a godly [[Weapon]] available in the shop for all classes. It deals moderate damage, increased by {{icon/blind}} on the opponent, and can spend {{icon/regeneration}} to inflict temporary {{icon/blind}}.
+
+Other than the [[Adventurer]]-exclusive [[Scissorswords]], the [[Lightsaber]] is the biggest source of {{icon/blind}} scaling in the game, although there are very few actual sources of {{icon/blind}} to get this number up, with the only simple-to-acquire, permanent source being [[Pocket Sand]]. The damage can become fairly respectable as long as the {{icon/regeneration}} use ability is activated routinely, but there is a somewhat low practical limit to the amount of supplementary {{icon/blind}} that can be inflicted by all items.
+
+Consider upgrading the [[Lightsaber]] to the [[Darksaber]] using a [[Corrupted Crystal]]. The [[Darksaber]] deals more base damage, inflicts permanent {{icon/blind}} using {{icon/mana}}, and scales off of all debuffs, although it scales worse off of {{icon/blind}} in particular. In general, the other debuffs are much easier to accumulate in high quantity, drastically raising the damage ceiling of the [[Darksaber]] compared to the [[Lightsaber]]. 
+==Description==
+''Never look directly into it.''
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.10]]
+|Cost 10g -> 9g
+|-
+|[[Patch 0.9.38]]
+|Stamina cost 1.2 -> 1.0
+|-
+|[[Patch 0.9.7]]
+|{{icon/blind}} 7 -> 8
+|-
+|[[Patch 0.9.4]]
+|Damage +1
+|-
+|[[Patch 0.6.3]]
+|{{icon/blind}} 8 -> 7
+|-
+|[[Patch 0.5.6]]
+|{{icon/blind}} effect can no longer be stacked, but is repeatable now. Stamina Cost: 1.5 -> 1.2, Cooldown 1.6 -> 1.5, {{icon/blind}} 6 -> 8
+|-
+|[[Patch 0.4.2]]
+|Cooldown 1.4s -> 1.6s
+|-
+|[[Patch 0.4.0]]
+|Stamina usage 1.0 -> 1.5, damage +1
+|-
+|[[Patch 0.3.9]]
+|8 {{icon/blind}} for 3s -> 6 {{icon/blind}} for 5s
+|-
+|[[Patch 0.3.3]]
+|Overhauled lightsaber artwork. Added particle effects for the activation of Lightsaber.
+|-
+|[[Patch 0.3.2b]]
+|Fixed Lightsaber not losing the damage after the {{icon/blind}} ended
+|-
+|[[Patch 0.3.2]]
+|Removed “cast Blinding Light” keyword that was used in Lightsaber.
+|-
+|[[Patch 0.3.0]]
+|Blinding Light: {{icon/blind}} 7 -> 8
+|-
+|[[Patch 0.2.0]]
+|Reduced Blinding Light stacks 10 -> 7
+|-
+|[[Patch 0.1.1]]
+|Damage -1
+|}
+
+{{Items}}

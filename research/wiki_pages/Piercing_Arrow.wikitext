@@ -1,0 +1,80 @@
+{{Item infobox
+|name=Piercing Arrow
+|subclassname=Hunter
+|image=PiercingArrow.png
+|rarity=Unique
+|type=Accessory
+|cost=10
+|class=Ranger
+|effect=
+* {{icon/star}} [[Weapon|Weapons]] deal +50% [[Critical hits|critical]] damage. They remove 15 {{icon/block}} on [[Critical hits|crit]].
+* {{icon/diamond}} '''Item activates:''' 40% chance to gain 1 {{icon/luck}}.
+|grid=
+-23-
+3112
+-23-
+}}
+
+The bonus [[Critical hits|critical]] damage is additive to normal [[Critical hits|critical]] damage multiplier, which means [[Critical hits|critical]] hits will deal +150% of base damage instead of +100%.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.7]]
+|{{icon/luck}} chance 35% -> 40%
+|-
+|[[Patch 1.1.0]]
+|{{icon/luck}} chance 40% -> 35%
+|-
+|[[Patch 1.0.8]]
+|{{icon/luck}} chance 45% -> 40%
+|-
+|[[Patch 0.9.28]]
+|{{icon/luck}} chance 55% -> 65%
+|-
+|[[Patch 0.9.20]]
+|[[Critical hits|Crit]]ical damage 40% -> 50%
+|-
+|[[Patch 0.9.10]]
+|{{icon/luck}} chance 50% -> 55%
+|-
+|[[Patch 0.9.9]]
+|[[Critical hits|Crit]]ical damage bonus 35% -> 40%
+|-
+|[[Patch 0.9.8]]
+|{{icon/luck}} chance 45% -> 50%
+|-
+|[[Patch 0.9.7]]
+|{{icon/luck}} chance 40% -> 45%
+|-
+|[[Patch 0.9.6]]
+|{{icon/block}} removal 10 -> 15
+|-
+|[[Patch 0.9.5]]
+|Bonus [[critical hits|crit]] damage 30% -> 35%, {{icon/block}} removal 8 -> 10
+|-
+|[[Patch 0.9.4]]
+|{{icon/block}} removal 5 -> 8
+|-
+|[[Patch 0.6.1]]
+|Changed star shape, {{icon/luck}} chance 50% -> 40%.
+|-
+|[[Patch 0.5.3]]
+|Moved {{icon/diamond}} to make them easier to place. Generating {{icon/luck}} no longer counts as an activation.
+|-
+|[[Patch 0.5.2]]
+|[[Critical hits|Critical]] damage 25% -> 30%, {{icon/luck}} chance 40% -> 50%.
+|-
+|[[Patch 0.5.1]]
+|[[Critical hits|Critical]] damage 20% -> 25%, {{icon/luck}} chance 20% -> 40%.
+|-
+|[[Patch 0.5.0]]
+|Added into game.
+|}
+
+{{Items}}
+
+[[Category:Subclass]]

@@ -1,0 +1,38 @@
+{{Item infobox
+|name=Divine Potion
+|image=DivinePotion.png
+|rarity=Godly
+|icontype=holy
+|type=Potion
+|cost=7
+|effect='''You reached 10 [[debuff]]:''' Consume this and cleanse 10 [[debuff]]s.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+The [[Divine Potion]] is a godly [[Potion]] available in the shop for all classes. When the player has enough debuffs, the [[Divine Potion]] will consume and cleanse a significant number of them.
+
+Like all [[Potion]]s, when used, it will apply the affect of the [[Potion]] above it, without consuming the one above. This adjacency is unlike most in that the {{icon/star}} will always be placed above the [[Potion]], rather than rotating along with the item.
+
+Combining a [[Divine Potion]] with a [[Leather Boots]] crafts the [[Winged Boots]], which have the power to dodge a few attacks outright.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.17
+|Cost 8g -> 7g
+|-
+|0.9.8
+|Cost 9 {{icon/gold}} -> 8 {{icon/gold}}
+|-
+|0.9.7
+|Cleanse threshold 20 -> 10 [[debuff]]s
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

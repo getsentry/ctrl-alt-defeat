@@ -1,0 +1,43 @@
+{{Item infobox
+|name=Pumpkin
+|image=Pumpkin.png
+|rarity=Unique
+|icontype=treasure, nature, ranged
+|type=Weapon, Food
+|cost=8
+|effect=
+* '''On hit:''' 50% chance to [[stun]] for 0.5s.
+* '''[[Fatigue]] starts:''' gain 10 {{icon/heat}}.
+|mindamage=6
+|maxdamage=12
+|stamina=0
+|accuracy=90
+|cooldown=5
+|sockets=2
+|grid=
+-22-
+2112
+2112
+-22-
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.17
+|Cost 9g -> 8g
+|-
+|0.7.6
+|Cost 11g -> 9g
+|-
+|0.6.3
+|Maximum damage +2
+|-
+|0.5.5
+|Added to the game
+|}
+
+{{Items}}

@@ -1,0 +1,62 @@
+{{Item infobox
+|name=Goobert
+|image=Goobert.png
+|rarity=Rare
+|type=Pet
+|cost=6
+|effect='''5 {{icon/star}} item activations:''' [[Heal]] for 9.
+|grid=
+2112
+2112
+}}
+{{Recipe infobox
+|recipename=Goobert
+|ingredients=Goobling, Goobling
+|requirementcost=4 (2+2)
+|image=Goobert_recipe.png
+}}
+[[Goobert]] is a rare item available in the shop for all characters. It activates based on the amount of activations of the {{icon/star}}-items around it. Faster items lead to '''Goobert''' triggering faster.
+
+There are a large number of [[Goobert]] upgrades, all of which are (at least arguably or conditionally) better. They all have at least some sort of defensive purpose, although some of them also give offensive boons. Every class has a class-specific Goobert, and a unique rainbow Goobert, which is extremely difficult to craft, requiring the [[Steel Goobert]], [[Blood Goobert]], and [[Light Goobert]] in addition to that class' specific unique Goobert. For more information, see [[Rainbow Goobert]].
+
+The base [[Goobert]] can also convert the [[Leather Armor]] into the [[Holdall]], which has an enormous 6 squares of space.
+
+In [[Adventurer]], the base [[Goobert]] can be combined with the [[Ruby Whelp]] using a [[Twine]], to create the very powerful [[Dragon Knight]].
+
+Due to how much space the base [[Goobert]] takes up, there are more case-effective methods to generate health.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.7.2]]
+|[[Heal]] 10 -> 9
+|-
+|[[Patch 0.7.1]]
+|[[Heal]] 11 -> 10
+|-
+|[[Patch 0.6.0]]
+|[[Heal]] 12 -> 11
+|-
+|[[Patch 0.5.2]]
+|[[Heal]]: 15 -> 12 
+|-
+|[[Patch 0.4.0]]
+|[[Heal]]: 12 -> 15 
+|-
+|[[Patch 0.3.5]]
+|Activations 6 -> 5
+|-
+|[[Patch 0.3.4]]
+|[[Heal]]: 10 -> 12 
+|-
+|[[Patch 0.3.3]]
+|[[Heal]]: 8 -> 10
+|-
+|[[Patch 0.3.0]]
+|Added into game.
+|}
+
+{{Items}}

@@ -1,0 +1,50 @@
+{{Item infobox
+|name=Shelly
+|image=Shelly.png
+|rarity=Rare
+|icontype=holy, nature
+|type=Pet
+|cost=6
+|class=Neutral
+|effect=
+*Cleanse effects have a 25% chance to cleanse an additional debuff.
+*'''Every 13s:''' Cleanse 6 debuffs and heal for 40.
+*Triggers 20% faster for each {{icon/star}} [[Potion]].
+|grid=
+0110
+2222
+}}
+{{Recipe infobox
+|recipename=Shelly
+|ingredients=Shiny Shell, Health Potion
+|requirementcost=6 (2+4)
+|image=ShellyRecipe.png
+}}
+[[Shelly]] is a [[Pet]] obtainable by combining a [[Health Potion]] with a [[Shiny Shell]]. It has a chance to enhance all cleanse effects, which is useful, but needs other items to be applicable except to its own ability, which is slow and therefore not really the best target. Fast-triggering items that cleanse small amounts of debuffs are best, like [[Amethyst]]s. Its heal and cleanse ability is often the main appeal of the item, since they are at substantial quantity, much larger than the original [[Health Potion]]. It takes a long time to trigger, but [[Potion]]s can speed this along significantly.
+
+Because of the large effect, force triggering [[Turbo-Shelly]] with something like [[Amulet of the Wild]] can be very effective.
+
+[[Shelly]] can be converted into [[Turbo-Shelly]] using two [[Flame]]s (normally only available to [[Pyromancer]]), which is an improvement across the board.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Cooldown 12s -> 13s, speed up per Potion 15% -> 20%
+|-
+|Unknown Patch (2-14-2025)
+|Cleanse increase 30 -> 25, Potion speed bonus 10% -> 15%
+|-
+|Unknown Patch
+|Cleanse increase 35 -> 30
+|-
+|[[Patch 0.9.29]]
+|Cleanse increase 40 -> 35
+|-
+|[[Patch 0.9.28]]
+|Added into game.
+|}
+
+{{Items}}

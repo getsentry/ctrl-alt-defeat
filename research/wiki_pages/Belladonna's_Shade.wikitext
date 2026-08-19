@@ -1,0 +1,69 @@
+{{Item infobox
+|name=Belladonna's Shade
+|image=BelladonnasShade.png
+|rarity=Legendary
+|icontype=nature, ranged
+|type=Weapon
+|cost=11
+|class=Ranger
+|effect='''On hit:''' 70% chance to inflict 2 {{icon/poison}} and a random [[debuff]].
+|mindamage=4
+|maxdamage=11
+|stamina=0.7
+|accuracy=85
+|cooldown=1.7
+|sockets=1
+|grid=
+1
+1
+}}
+{{Recipe infobox
+|recipename=Belladonna's Shade
+|ingredients=Shortbow, Pestilence Flask
+|requirementcost=11 (4+7)
+|image=BelladonnasShade_recipe.png
+}}
+The [[Belladonna's Shade]] is a [[Ranger]] [[Weapon]] normally obtained by combining the [[Shortbow]] with a [[Pestilence Flask]]. It is an upgrade of the [[Shortbow]], and arguably the strongest one, as it deals the most base damage, and has a high chance of inflicting 2 {{icon/poison}} on hit, along with another debuff.
+
+Debuff and {{icon/poison}} builds would surely appreciate the low stamina cost and high debuff buildup of the [[Belladonna's Shade]]. Consider the synergy with [[Poison Ivy]], which can always be obtained by [[Ranger]]s as their subclass.
+==Description==
+''It is all kinds of disgusting, every single one.''
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.38
+|Minimum damage +2
+|-
+|0.9.8
+|Maximum damage +2
+|-
+|0.9.7
+|Maximum damage +3
+|-
+|0.9.6
+|Damage 2-3 -> 2-6
+|-
+|0.9.5
+|Chance 60% -> 70%
+|-
+|0.9.4
+|Inflict chance 70% -> 60%, {{icon/poison}} 1 -> 2
+|-
+|0.9.3
+|{{icon/poison}}/[[debuff]] inflict chance 60% -> 70%
+|-
+|0.9.2
+|Trigger chance 50% -> 60%
+|-
+|0.9.1
+|Damage 2-10 -> 2-3, now additionally inflicts a random [[debuff]] with 50% chance
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

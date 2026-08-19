@@ -1,0 +1,52 @@
+{{Item infobox
+|name=Fortuna's Hope
+|image=FortunasHope.png
+|rarity=Epic
+|icontype=nature, ranged
+|type=Weapon
+|cost=8
+|class=Ranger
+|effect='''On hit:''' 85% chance to gain 1 {{icon/luck}}.
+|mindamage=3
+|maxdamage=4
+|stamina=0.7
+|accuracy=100
+|cooldown=1.7
+|sockets=1
+|grid=
+1
+1
+}}
+{{Recipe infobox
+|recipename=Fortuna's Hope
+|ingredients=Shortbow, Lucky Clover, Lucky Clover
+|requirementcost=8 (4+2+2)
+|image=FortunasHope_recipe.png
+}}
+The [[Fortuna's Hope]] is a [[weapon]] normally obtained by combining the [[Shortbow]] with two [[Lucky Clover]]s, which can both normally only be obtained by [[Ranger]]s. It does the least damage of the [[Shortbow]] upgrades, but has a high chance of giving {{icon/luck}} on hit, making it very synergistic with the [[Ranger Bag]] and [[Acorn Collar]] (as well as the [[Acorn Collar]] variants).
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.9]]
+|{{icon/luck}} chance 75% -> 85%
+|-
+|[[Patch 1.0.5]]
+|Damage +1
+|-
+|[[Patch 0.9.29]]
+|{{icon/luck}} chance 70% -> 75%
+|-
+|[[Patch 0.9.4]]
+|{{icon/luck}} chance 60% -> 70%, [[accuracy]] 85% -> 100%
+|-
+|[[Patch 0.9.3]]
+|{{icon/luck}} chance 50% -> 60%
+|-
+|[[Patch 0.9.0]]
+|Added into game.
+|}
+
+{{Items}}

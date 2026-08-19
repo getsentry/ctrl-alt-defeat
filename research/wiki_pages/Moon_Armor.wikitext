@@ -1,0 +1,48 @@
+{{Item infobox
+|name=Moon Armor
+|image=MoonArmor.png
+|rarity=Godly
+|icontype=holy, magic
+|type=Armor
+|cost=19
+|effect=
+* '''Start of battle:''' Gain 50 {{icon/block}} + 20 {{icon/block}} for each {{icon/star}} {{icon/magic}}-item.
+* '''Every 2.6s:''' Gain 3 {{icon/mana}} and [[reflect]] 2 [[debuff]]s.
+|sockets=3
+|grid=
+-22-
+2112
+2112
+2112
+-22-
+}}
+{{Recipe infobox
+|recipename=Moon Armor
+|ingredients=Holy Armor, Mana Orb
+|requirementcost=19 (13+6)
+|image=MoonArmor_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.22
+|{{icon/block}} 45 -> 50
+|-
+|0.9.16
+|Cooldown 2.8s -> 2.6s
+|-
+|0.9.15
+|Cooldown 3s -> 2.8s
+|-
+|0.9.1
+|{{icon/mana}} gained 2 -> 3, {{icon/block}} 40 -> 45
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

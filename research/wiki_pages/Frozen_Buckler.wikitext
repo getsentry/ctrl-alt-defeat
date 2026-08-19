@@ -1,0 +1,59 @@
+{{Item infobox
+|name=Frozen Buckler
+|image=FrozenBuckler.png
+|rarity=Epic
+|icontype=ice
+|type=Shield
+|cost=8
+|effect='''On attacked ({{icon/melee}}):''' 30% chance to prevent 12 damage, remove 0.9 stamina from opponent and inflict 1 {{icon/cold}} (up to 10).
+|sockets=1
+|grid=
+11
+11
+}}
+{{Recipe infobox
+|recipename=Frozen Buckler
+|ingredients=Wooden Buckler, Snowball
+|requirementcost=8 (4+4)
+|image=FrozenBuckler_recipe.png
+}}
+The [[Frozen Buckler]] is a [[Shield]] mainly obtained by combining the [[Wooden Buckler]] with a [[Snowball]], although it can also be obtained from the shop while playing [[Pyromancer]] with [[Frozen Flame]]. It's one of the most powerful small shields, sapping as much stamina as the large shields, while having the second-highest damage block among shields of its size (beaten only by the [[Adventurer]]-exclusive [[Hero Shield]]). It also inflicts {{icon/cold}}, up to 10.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.5]]
+|Stamina reduction 0.8 -> 0.9
+|-
+|[[Patch 1.1.0]]
+|Stamina removal 0.7 -> 0.8
+|-
+|[[Patch 0.9.29]]
+|Damage blocked 10 -> 12
+|-
+|[[Patch 0.9.28]]
+|Stamina removal 0.6 -> 0.7
+|-
+|[[Patch 0.9.26]]
+|Stamina removal 0.5 -> 0.6
+|-
+|[[Patch 0.9.25]]
+|Damage block 7 -> 10
+|-
+|[[Patch 0.9.24]]
+|Damage prevention 6 -> 7
+|-
+|[[Patch 0.9.20]]
+|Damage prevented 5 -> 6
+|-
+|[[Patch 0.9.4]]
+|[[Shield]]s remove stamina even when opponent has less than the amount that should be removed. Reduced Block chance to 30% to compensate.
+|-
+|[[Patch 0.9.0]]
+|Added to the game
+|}
+
+{{Items}}

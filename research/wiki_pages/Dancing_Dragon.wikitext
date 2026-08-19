@@ -1,0 +1,47 @@
+{{Item infobox
+|name=Dancing Dragon
+|image=DancingDragon.png
+|rarity=Unique
+|icontype=treasure, fire, ranged
+|type=Weapon
+|cost=9
+|effect=
+* You have a 2% chance to [[resist]] [[debuff]]s for each {{icon/luck}}.
+* '''Start of battle: ''' Gain 2 {{icon/heat}} and 2 {{icon/luck}} for each {{icon/star}} {{icon/magic}}-item.
+* Deals +0.5 damage per {{icon/heat}}.
+|mindamage=15
+|maxdamage=20
+|stamina=2
+|accuracy=85
+|cooldown=2.2
+|sockets=2
+|grid=
+--222-
+-21112
+21112-
+-222--
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.18
+|Cost 11 {{icon/gold}} -> 9 {{icon/gold}}
+|-
+|0.9.17
+|Cost 12g -> 11g
+|-
+|0.9.3
+|Damage per {{icon/heat}}: 1 -> 0.5, {{icon/heat}} / {{icon/luck}} per [[Magic]] item: 1 -> 2
+|-
+|0.8.2
+|Cooldown 2s -> 2.2s
+|-
+|0.8.0
+|Added to the game
+|}
+
+{{Items}}

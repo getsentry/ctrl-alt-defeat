@@ -1,0 +1,34 @@
+{{Item infobox
+|name=Seal the Deal
+|image=Seal_the_Deal.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*'''Shop refreshes:''' 30% chance for a Trade offer. Trade value +1 {{Icon/gold}}.
+*'''Every 5.2s:''' Use 2 {{icon/regeneration}} to gain 3 {{icon/vampirism}}.
+*Use 2 {{icon/luck}} to gain 3 {{Icon/spikes}}.
+*Use 2 {{icon/mana}} to gain 2 {{Icon/empower}}.
+|skillround=3
+|grid=
+1
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Cooldown 5s -> 5.2s
+|-
+|[[Patch 1.1.1]]
+|Cooldown 4.5s -> 5.0s
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

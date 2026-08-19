@@ -1,0 +1,39 @@
+{{Item infobox
+|name=Artifact Stone: Cold
+|image=ArtifactStoneCold.png
+|rarity=Unique
+|icontype=treasure, ice, ranged
+|type=Weapon
+|cost=10
+|effect=
+* Can only be thrown once per battle.
+* '''On hit:''' Inflict 3 {{icon/cold}}.
+* '''{{icon/star}} [[Weapon]] hits:''' Inflict 1 {{icon/cold}}.
+|mindamage=2
+|maxdamage=4
+|stamina=0
+|accuracy=90
+|cooldown=4
+|grid=
+2
+1
+2
+}}
+
+[[Artifact Stone: Cold]] can continue to attack if used together with a [[Bag of Stones]], just like for [[Stone]].
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.5.1
+|Reduced numbers of {{icon/star}}. 
+Cost 7g -> 10g
+|-
+|0.4.3
+|Added to the game
+|}
+
+{{Items}}

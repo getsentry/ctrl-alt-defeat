@@ -1,0 +1,28 @@
+{{Item infobox
+|name=Twine Badge
+|image=Twine_Badge.png
+|rarity=Unique
+|type=Accessory
+|icontype=treasure
+|cost=5
+|class=Neutral
+|effect=
+*[[Adventurer items|Adventurer items]] are offered in the shop.
+*'''[[Twine]] bought:''' 40% chance to restock with another Twine.
+*{{icon/star}} crafted items trigger 20% faster and have 20% chance to duplicate their [[Buff|buffs]].
+|grid=
+2221222
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.0]]
+|Added into game.
+|}
+
+{{Items}}
+[[zh:细绳徽章]]

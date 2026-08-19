@@ -1,0 +1,71 @@
+{{Item infobox
+|name=Bloody Dagger
+|image=BloodyDagger.png
+|rarity=Legendary
+|icontype=vampiric, melee
+|type=Weapon
+|cost=12
+|effect=
+* '''On hit:''' Gain 1 {{icon/vampirism}} (up to 5 per battle). [[Heal]] 4 per {{icon/star}} {{icon/vampiric}}-item.
+* '''On [[stun]]:''' Triggers extra attack.
+|mindamage=5
+|maxdamage=7
+|stamina=0
+|accuracy=95
+|cooldown=2.1
+|sockets=1
+|grid=
+-2-
+212
+212
+-2-
+}}
+The [[Vampiric Dagger]] is an item normally obtained by combining a [[Dagger]] with a [[Blood Amulet]]. It deals more damage and attacks more rapidly than a normal [[Dagger]], also gaining {{icon/vampirism}} on hit (up to 5) and healing for each [[Vampiric]] item touching the [[Vampiric Dagger]]. It also attacks an extra time for free on stun, like all 
+daggers.
+
+When comparing the {{icon/vampirism}} gain between the [[Vampiric Dagger]] and [[Blood Amulet]], the [[Vampiric Dagger]] gains more {{icon/vampirism}} in the long term, but leaves the player with less {{icon/vampirism}} for the first 5 seconds or so, which could matter in some builds.
+
+Overall, an excellent weapon for any [[Melee]]-[[Weapon]]-based, [[Vampirism]]-based or stun-containing build, but also generally helpful no matter what, regardless of build, since it costs no stamina.
+{{Recipe infobox
+|recipename=Bloody Dagger
+|ingredients=Dagger, Blood Amulet
+|requirementcost=12 (4+8)
+|image=BloodyDagger_recipe.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.4]]
+|Cooldown 2.3s -> 2.1s
+|-
+|[[Patch 1.1.2]]
+|Cooldown 2.4s -> 2.3s
+|-
+|0.7.4
+|[[Heal]] +1
+|-
+|0.7.3
+|Cooldown 3.5s -> 3.0s. {{icon/vampirism}} generation +1, bonus [[heal]] 2 -> 3
+|-
+|0.5.2
+|[[Heal]] per [[Vampiric]] item 1 -> 2
+|-
+|0.4.3
+|Reworked Bloody Dagger: Now [[heal]]s based on adjacent [[Vampiric]] items
+|-
+|0.4.2
+|{{icon/vampirism}} 3 -> 4
+|-
+|0.3.2
+|Damage 3-6 -> 4-7
+|-
+|0.3.0
+|Added to the game
+|}
+
+{{Items}}
+[[zh:吸血匕首]]

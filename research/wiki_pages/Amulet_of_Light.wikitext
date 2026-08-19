@@ -1,0 +1,39 @@
+{{Item infobox
+|name=Amulet of Light
+|image=Amulet_of_Light.png
+|rarity=Rare
+|icontype=holy
+|type=Accessory
+|cost=6
+|class=Neutral
+|effect=
+* '''{{icon/regeneration}} gained:''' Gain 3 maximum health.
+* '''{{icon/star}} item activates:''' 10% chance to gain 1 {{icon/regeneration}}, 30% if the item is {{icon/holy}}.
+|grid=
+0002000
+0202020
+0022200
+2221222
+0022200
+0202020
+0002000
+}}
+{{Recipe infobox
+|recipename=Amulet of Light
+|ingredients=Unidentified Amulet
+|catalysts=
+|requirementcost=6 (6)
+|image=Amulets_transform.png
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

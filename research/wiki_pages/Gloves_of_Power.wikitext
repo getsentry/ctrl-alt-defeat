@@ -1,0 +1,41 @@
+{{Item infobox
+|name=Gloves of Power
+|image=GlovesofPower.png
+|rarity=Legendary
+|type=Gloves
+|cost=10
+|effect=
+* {{icon/star}} [[Weapon]]s deal +20% damage but attack 10% slower.
+* '''{{icon/star}} [[Weapon]] hits:''' gain 7 {{icon/block}}.
+|grid=2112
+}}
+{{Recipe infobox
+|recipename=Gloves of Power
+|ingredients=Gloves of Haste, Stone Skin Potion
+|requirementcost=10 (4+6)
+|image=GlovesofPower_recipe.png
+}}
+The [[Gloves of Power]] are neutral [[Gloves]] normally obtained by combining [[Gloves of Haste]] with a [[Stone Skin Potion]]. They make [[Weapon]]s near the "wrists" deal more damage and gain some {{icon/block}} on hit, but attack slower. Inherently this effect is mostly good, since the damage raises more than the speed is reduced, the speed reduction saves stamina, and {{icon/block}} is granted on top of it, but there may be a handful of builds and/or weapons where the attack speed reduction isn't worth it due to existing powerful '''on hit''' effects.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.22
+|{{icon/block}} 6 -> 7
+|-
+|0.9.16
+|{{icon/block}} 5 -> 6
+|-
+|0.9.4
+|{{icon/block}} 4 -> 5
+|-
+|0.9.1
+|{{icon/block}} 2 -> 4
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

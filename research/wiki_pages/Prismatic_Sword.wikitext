@@ -1,0 +1,71 @@
+{{Item infobox
+|name=Prismatic Sword
+|image=PrismaticSword.png
+|rarity=Godly
+|icontype=magic, vampiric, holy, dark, melee
+|type=Weapon
+|cost=17
+|effect=
+* For each...
+* {{icon/star}} {{icon/magic}}-item: +8% attack speed.
+* {{icon/star}} {{icon/vampiric}}-item: +15% lifesteal.
+* {{icon/star}} {{icon/holy}}-item: Gain +0.3 damage on hit.
+* {{icon/star}} {{icon/dark}}-item: +10% chance to inflict 4 random [[debuff]]s on hit.
+|mindamage=14
+|maxdamage=20
+|stamina=1
+|accuracy=90
+|cooldown=1.4
+|sockets=2
+|grid=
+-2-
+212
+212
+212
+-2-
+}}
+{{Recipe infobox
+|recipename=Prismatic Sword
+|ingredients=Wooden Sword, Prismatic Orb
+|catalysts=
+|requirementcost=17 (3+14)
+|image=PrismaticSword_recipe.png
+}}
+The [[Prismatic Sword]] is a [[Weapon]] normally obtained by combining a [[Wooden Sword]] with a [[Prismatic Orb]]. It deals high base damage and additionally has enhanced effects depending on the item types that are touching it, gaining attack speed for each {{icon/magic}}-item, gaining lifesteal for each {{icon/vampiric}}-item, gaining damage on hit for each {{icon/holy}}-item, and inflicting debuffs for each {{icon/dark}}-item.
+
+The extra bonuses do certainly enhance the [[Prismatic Sword]], and maximizing them will maximize the weapon, but with such high base damage, it's hard to go wrong with crafting it unless some more synergistic weapon was already in the player's possession, especially if the normally very expensive [[Prismatic Orb]] happens to be on sale.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.9]]
+|Damage +2
+|-
+|[[Patch 1.0.0]]
+|Damage +2
+|-
+|[[Patch 0.9.28]]
+|Debuff chance 12% -> 10%, damage +2
+|-
+|[[Patch 0.9.23]]
+|[[Debuff]]s 3 -> 4
+|-
+|[[Patch 0.9.19]]
+|Damage +2
+|-
+|[[Patch 0.9.16]]
+|Cooldown 1.5s -> 1.4s
+|-
+|[[Patch 0.9.15]]
+|Cooldown 1.6s -> 1.5s
+|-
+|[[Patch 0.9.14]]
+|[[Dark]] item bonus chance 10% -> 12%
+|-
+|[[Patch 0.9.12]]
+|Added into game.
+|}
+
+{{Items}}

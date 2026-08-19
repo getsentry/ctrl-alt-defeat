@@ -1,0 +1,82 @@
+{{Item infobox
+|name=Ruby Whelp
+|image=RubyWhelp.png
+|rarity=Godly
+|icontype=fire, effect, ranged
+|type=Weapon, Pet
+|cost=10
+|effect='''Start of battle:''' Gain 5 {{icon/heat}}. [[Reflect]] 3 [[debuff]]s.
+|mindamage=5
+|maxdamage=10
+|stamina=0
+|accuracy=90
+|cooldown=2.1
+|sockets=1
+|grid=
+11
+11
+}}
+{{Recipe infobox
+|recipename=Ruby Whelp
+|ingredients=Ruby Egg
+|catalysts=
+|requirementcost=10
+|image=RubyWhelp_transform.png
+}}
+The [[Ruby Whelp]] is a [[Weapon]] [[Pet]] normally obtained by hatching a [[Ruby Egg]] after two turns spent in the slots of the player's backpack. It deals low-moderate damage, but costs no stamina. At the start of battle, it gains some {{icon/heat}} and reflects some debuffs.
+
+[[Pyromancer]]s have an affinity for the [[Ruby Egg]] and [[Ruby Whelp]] because of [[Dragon Nest]] and the {{icon/heat}} gain, and [[Ranger]]s have an affinity for all [[Pet]]s because of [[Big Bowl of Treats]], so these classes may prioritize the [[Ruby Egg]] slightly more highly.
+
+Every class has their own upgrade on the [[Ruby Whelp]], which is always a larger [[Weapon]] [[Pet]].
+
+[[Mage]]s can combine the [[Ruby Whelp]] with a [[Cupcake]] to craft the [[Cupdrake]], which removes buffs from the opponent and gains buffs on hit.
+
+[[Reaper]]s can combine the [[Ruby Whelp]] with a [[Holo Fire Lizard]] (which requires [[Deck of Cards]]) to craft the [[Ruby Chonk]], which deals higher damage, gains {{icon/heat}} on hit, and stuns once enough {{icon/heat}} is had.
+
+[[Reaper]]s can additionally combine the [[Ruby Whelp]] with a [[White-Eyes Blue Dragon]] (which also requires [[Deck of Cards]]) to craft the [[Ice Dragon]], which deals higher damage, inflicts {{icon/cold}} on hit, and gains loads of {{icon/block}} and reduces {{icon/effect}} damage taken once the opponent reaches enough {{icon/cold}}.
+
+[[Pyromancer]]s can combine the [[Ruby Whelp]] with an [[Draconic Orb]] to craft the [[Obsidian Dragon]], which deals higher damage, and when enough {{icon/heat}} is gained, boosts its damage for the fight and ensures a crit with the [[Weapon]] in front of it.
+
+[[Ranger]]s can combine the [[Ruby Whelp]] with a [[Wisp]] to craft the [[Forest Dragon]], which deals slightly higher base damage, but also gains {{icon/regeneration}} and {{icon/luck}} on hit, and scales off of {{icon/regeneration}}.
+
+[[Berserker]]s can combine the [[Ruby Whelp]] with an [[Essence of Steel]] to craft the [[Panzer Dragon]], which deals slightly higher base damage and additionally, behaves like a larger, more powerful [[Essence of Steel]], which also reflects a bunch of debuffs.
+
+[[Engineer]]s can combine the [[Ruby Whelp]] with a [[Battery]] to craft the [[Thunder Drake]], which deals slightly higher base damage and charges and speeds items in a cone in front of it every few hits.
+
+Finally, [[Adventurer]]s can combine the [[Ruby Whelp]] with a [[Goobert]] using a [[Twine]] to craft the [[Dragon Knight]], which deals slightly higher damage and has some [[Ruby Whelp]]-like properties along with some [[Goobert]] properties, healing on hit, and triggering more often the more items on its sides trigger.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.10]]
+|{{icon/heat}} 4 -> 5
+|-
+|[[Patch 0.9.16]]
+|Cooldown 2.2s -> 2.1s
+|-
+|[[Patch 0.9.15]]
+|[[Reflect]]s 2 -> 3
+|-
+|[[Patch 0.9.9]]
+|{{icon/heat}} 3 -> 4
+|-
+|[[Patch 0.9.8]]
+|{{icon/heat}} 2 -> 3
+|-
+|[[Patch 0.3.8]]
+|Attack cooldown 2s -> 2.2s, added socket
+|-
+|[[Patch 0.3.7]]
+|Cooldown 1.8s -> 2s
+|-
+|[[Patch 0.3.6]]
+|Cooldown 1.5s -> 1.8s (this time for real!)
+Can now be combined into new item: [[Ruby Chonk]]
+|-
+|[[Patch 0.3.4]]
+|Now gains 2 {{icon/heat}}. Cooldown 1.5s -> 1.8s
+|}
+
+{{Items}}

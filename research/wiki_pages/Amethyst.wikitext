@@ -1,0 +1,35 @@
+{{Item infobox
+|name=Amethyst
+|image=BPB_Amethyst_Line.png
+|rarity=Varies
+|type=Gemstone
+|cost=1/2/4/8/16
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+'''On hit:''' 25/35/50/75/70% chance to remove 1/1/1/1/2 random [[buff]]s from your opponent.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+Reduce opponent's [[heal]]ing by 12/18/25/30/45%.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+'''Every 3.2/2.5/2/1.6/1s:''' Cleanse 1 [[debuff]].
+|inshop=Box of Riches
+|grid=1
+}}
+One of five kinds of gemstones that can be acquired from having the [[Box of Riches]].
+
+There are five rarities of Rubies, Chipped/Flawed/Regular/Flawless/Perfect, corresponding to the five rarities of items in the game. Each rarity has better stats than the previous one. Higher rarities can be found in the shop if the player has a Box of Riches, or by combining identical ones in the inventory.
+
+The gemstones have varying effects depending on where they are placed.
+
+Socketed in [[Weapon]]s, the [[Amethyst]] has a chance of removing a number of random buffs from the opponent on hit, with most [[Amethyst]]s removing one buff, and the [[Perfect Amethyst]] removing two. with a [[Perfect Amethyst]]. [[Amethyst]]s in [[Armor]] or other sockets reduces the opponent's healing. [[Amethyst]]s in the backpack slowly cleanse one debuff at a time, with the frequency increased by the rarity.
+
+All of these purposes can be useful, with buffs, debuffs, and healing all being ubiquitous across many builds.
+
+Backpack [[Amethyst]]s, especially at high rarity, trigger relatively frequently, making them excellent with [[Goobert]]s or other items that count these triggers.
+
+{{Items}}
+
+[[Category:Common]]
+[[Category:Rare]]
+[[Category:Epic]]
+[[Category:Legendary]]
+[[Category:Godly]]

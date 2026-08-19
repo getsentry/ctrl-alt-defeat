@@ -1,0 +1,26 @@
+{{Item infobox
+|name=Customer Card
+|image=CustomerCard.png
+|rarity=Rare
+|type=Accessory
+|cost=4
+|effect=
+*'''Shop refreshes:''' Increase the rarity of 1 item. 10% chance for a [[Trade]] offer.
+|grid=1
+}}
+
+The [[Customer Card]] is an item available in the shop for all characters, at rare rarity. Its only effect is that when the shop is refreshed (including on entering the shop after a fight), the rarity of 1 item will be increased and there is a 10% chance of trade. The text of the item doesn't make this abundantly clear, but when an item has its rarity increased, it seems to only increase by one level.
+
+The [[Customer Card]] is quite useful, especially in the early-game, where if the player is lucky, they can get certain powerful, high rarity items, much earlier than is normally possible. Two [[Customer Card]]s can craft into a [[Platinum Customer Card]], which helps for finding [[Treasure]], gives a higher trade chance, and even mildly effects the combat itself.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown patch: 6-13-2025
+|Now gives +10% [[Trade]] chance.
+|}
+
+{{Items}}

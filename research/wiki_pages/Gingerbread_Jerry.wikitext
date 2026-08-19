@@ -1,0 +1,37 @@
+{{Item infobox
+|name=Gingerbread Jerry
+|image=GingerbreadJerry.png
+|rarity=Unique
+|icontype=treasure, magic
+|type=Food
+|cost=8
+|effect=
+* '''Start of battle:''' Gain 40 maximum health.
+* '''Every 3s:''' Use 1 {{icon/luck}}, 1 {{icon/heat}} and 1 {{icon/mana}}: Gain 1 {{icon/empower}}, 3 {{icon/regeneration}} and 20 maximum health.
+|grid=
+-2-
+212
+212
+-2-
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.0.9]]
+|Added {{Icon/magic}} type.
+|-
+|[[Patch 0.7.6]]
+|Cost 10g -> 8g
+|-
+|[[Patch 0.7.2]]
+|Cooldown 4s -> 3s, {{icon/regeneration}} 2 -> 3
+|-
+|[[Patch 0.7.1]]
+|Added into game.
+|}
+
+{{Items}}

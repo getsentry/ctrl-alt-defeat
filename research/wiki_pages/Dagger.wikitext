@@ -1,0 +1,31 @@
+{{Item infobox
+|name=Dagger
+|image=Dagger.png
+|rarity=Rare
+|icontype=melee
+|type=Weapon
+|cost=4
+|effect='''On [[stun]]:''' Triggers extra attack.
+|mindamage=2
+|maxdamage=5
+|stamina=0
+|accuracy=95
+|cooldown=3.5
+|sockets=1
+|grid=
+1
+1
+}}
+The [[Dagger]] is a rare [[Weapon]] available in the shop for all classes. It does low damage-per-second, but costs no stamina to use. On stun, the [[Dagger]] attacks an extra time, making it stronger with stunning items like the [[Hammer]] or [[Brass Knuckles]]. As it costs no stamina and is a [[Melee]] [[Weapon]], the [[Dagger]] is also excellent in a [[Vampirism]] build. The [[Dagger]] can be upgraded into the [[Poison Dagger]], [[Spectral Dagger]], [[Bloody Dagger]], [[Molten Dagger]] (if [[Flame]]s can be obtained), or [[Daggerang]] (if [[Twine]] and therefore the [[Boomerang]] can be obtained). These are all strict damage upgrades with the exception of the [[Spectral Dagger]], which requires {{icon/mana}} to deal more damage.
+
+While it may be tempting to include the [[Dagger]] in any build, as it is "free" damage, consider the implications against an opponent with many {{icon/spikes}}, and whether the extremely low damage is actually worth it.
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.2.0
+|Max damage +1
+|}
+
+{{Items}}

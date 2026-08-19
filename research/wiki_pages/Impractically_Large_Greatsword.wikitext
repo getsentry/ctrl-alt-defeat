@@ -1,0 +1,65 @@
+{{Item infobox
+|name=Impractically Large Greatsword
+|image=ImpracticallyLargeGreatsword.png
+|rarity=Godly
+|icontype=melee
+|type=Weapon
+|cost=14
+|effect=While you have at least 5 {{icon/empower}}, decrease stamina usage to 2 and cooldown to 2s.
+|mindamage=40
+|maxdamage=50
+|stamina=5
+|accuracy=90
+|cooldown=5
+|sockets=4
+|grid=
+11
+11
+11
+1-
+}}
+The [[Impractically Large Greatsword]] is a godly [[Weapon]] available in the shop for all classes. It deals the highest single-shot damage of any non-modified shop [[Weapon]] in the game, but attacks very infrequently, costing a massive chunk of stamina when it does. To unlock the true power of the [[Impractically Large Greatsword]], reach 5 {{icon/empower}}, which causes it to attack more than twice as often, therefore dealing more than twice the damage-per-second, with accordingly reduced stamina usage so that the net stamina-cost-per-second stays the same.
+
+[[Pyromancer]]s can craft the [[Impractically Large Greatsword]] into the [[Molten Greatsword]] using four [[Flame]]s, which is an improvement across-the-board, gaining an {{icon/empower}}-gain ability and costing even less stamina when empowered.
+
+[[Berserker]]s can trivially convert the [[Impractically Large Greatsword]] into the [[Busted Blade]] using either the [[Utility Pouch]] or [[Forging Hammer]], which is larger, becomes empowered by being in [[Battle Rage]], and scales massively off of each {{icon/empower}}.
+
+[[Adventurer]]s can craft the [[Impractically Large Bloodthorne]] by combining an [[Impractically Large Greatsword]] with a [[Bloodthorne]] using a [[Twine]]. It is essentially a slightly larger [[Impractically Large Greatsword]] with amped-up [[Bloodthorne]] abilities.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.7
+|Empowered cooldown / stamina cost 2.2 -> 2
+|-
+|0.9.5
+|Buffed stamina cost 2.5 -> 2.2, cooldown 2.5s -> 2.2s
+|-
+|0.9.4
+|Buffed stamina usage 3 -> 2.5, buffed cooldown 3s -> 2.5s
+|-
+|0.8.0
+|Cost 15g -> 14g
+|-
+|0.7.3
+|{{icon/empower}} threshold 6 -> 5
+|-
+|0.7.2
+|{{icon/empower}} threshold 7 -> 6
+|-
+|0.7.1
+|{{icon/empower}} threshold 8 -> 7
+|-
+|0.5.2
+|{{icon/empower}} needed 10 -> 8, accuracy 85% -> 90%
+|-
+|0.4.3
+|Accuracy 70% -> 85%, min damage 30 -> 40.
+|-
+|0.4.2
+|Added to the game
+|}
+
+{{Items}}

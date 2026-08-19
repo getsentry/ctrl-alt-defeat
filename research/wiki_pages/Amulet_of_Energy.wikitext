@@ -1,0 +1,38 @@
+{{Item infobox
+|name=Amulet of Energy
+|image=AmuletofEnergy.png
+|rarity=Rare
+|type=Accessory
+|cost=6
+|effect=
+* '''Start of battle:''' The {{icon/star}} item triggers 100% faster for 1s.
+<br>
+* '''[[Buff]] used:''' Refund 25% of the used [[buff]]s.
+|grid=
+2
+1
+}}
+{{Recipe infobox
+|recipename=Amulet of Energy
+|ingredients=Unidentified Amulet
+|catalysts=
+|requirementcost=6 (6)
+|image=Amulets_transform.png
+}}
+
+The [[Amulet of Energy]] is a rare item normally obtained by buying the [[Unidentified Amulet]] from the shop. It gives a brief 1s of 100% speed boost to one item next to it at start of battle. Probably more importantly, it refunds 25% of all used buffs, which, in the right build, could amount to a game-changing amount of saved buffs. This works great with {{icon/mana}}, or any other buffs that the player can manage to find ways to spend with item effects. Keep it in mind that refunded buffs can be duplicated by other items.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.16
+|Refund 20% -> 25%
+|-
+|0.9.12
+|Added to the game
+|}
+
+{{Items}}

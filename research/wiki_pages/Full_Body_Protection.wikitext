@@ -1,0 +1,41 @@
+{{Item infobox
+|name=Full Body Protection
+|image=Full_Body_Protection.png
+|rarity=Unique
+|icontype=
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*{{icon/star}} items give +35% {{icon/block}}.
+*'''If you have exactly 1 [[Armor]], [[Helmet]] and [[Shoes]]:''' Reduce {{icon/melee}}/{{icon/ranged}}/{{icon/effect}}-damage taken by 8.
+*'''Every 4s:''' Gain 10 {{icon/block}}.
+|skillround=10
+|grid=
+00200
+22222
+02120
+02220
+02020
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Cooldown 4.5s -> 4s
+|-
+|[[Patch 1.0.10]]
+|Cooldown 5s -> 4.5s
+|-
+|[[Patch 1.0.9]]
+|{{icon/block}} increase 30% -> 35%
+|-
+|[[Patch 0.9.37]]
+|Added into game.
+|}
+
+{{Items}}

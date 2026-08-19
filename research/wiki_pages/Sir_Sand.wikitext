@@ -1,0 +1,33 @@
+{{Item infobox
+|name=Sir Sand
+|image=SirSand.png
+|rarity=Epic
+|type=Accessory
+|cost=5
+|effect=
+*'''Start of Battle:''' Both players take -25% damage for 7s (unstackable). Inflict 3 {{icon/blind}} to both players. 
+|grid=
+1
+1
+}}
+{{Recipe infobox
+|recipename=Sir Sand
+|ingredients=Bag of Stones, Pocket Sand
+|requirementcost=5: (3+2)
+|image=SirSand_Recipe.png
+}}
+[[Sir Sand]] is an [[accessory]] normally obtained by combining the [[Bag of Stones]] with [[Pocket Sand]]. Its effect reduces the damage both players take for a time at the start of battle, and gives both players {{icon/blind}}. It's nominally a symmetric effect, but it slows the game down, so it tends to favor builds which build-up over time or have ways to cleanse the {{icon/blind}}.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|Unknown Patch: 6/13/2025
+|Blind Inflicted 2 -> 3
+|-
+|[[Patch 0.9.37]]
+|Added into game.
+|}
+
+{{Items}}

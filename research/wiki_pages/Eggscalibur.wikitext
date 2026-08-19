@@ -1,0 +1,81 @@
+{{Item infobox
+|name=Eggscalibur
+|image=Eggscalibur.png
+|rarity=Legendary
+|icontype=holy, magic, melee
+|type=Weapon
+|cost=10
+|effect=
+* '''On attack:''' Use 11 {{icon/mana}}: Trigger all {{icon/star}} [[Food]].
+* Deals +1 damage for each {{icon/star}} [[Food]].
+|mindamage=8
+|maxdamage=9
+|stamina=1.3
+|accuracy=90
+|cooldown=1.6
+|sockets=2
+|grid=
+--222
+-2112
+2112-
+222--
+}}
+{{Recipe infobox
+|recipename=Eggscalibur
+|ingredients=Pan, Heroic Potion
+|requirementcost=10 (4+6)
+|image=Eggscalibur_recipe.png
+}}
+The [[Eggscalibur]] is a neutral [[Weapon]] normally obtained by combining a [[Pan]] with a [[Heroic Potion]]. It uses less stamina than the [[Pan]], but deals about twice the damage, with the only drawback being the larger size, although this comes along with an extra socket and more accompanying {{icon/star}} slots. It has the same +1 damage per {{icon/star}} [[Food]] ability as the [[Pan]], but with three more {{icon/star}} slots raising the maximum possible bonus to +10 from the [[Pan]]'s +7.
+
+Aside from these advantages, the [[Eggscalibur]] can also spend a chunk of {{icon/mana}} to trigger all the {{icon/star}} [[Food]]s, which will of course be more powerful with more numerous and higher quality [[Food]]s. Casually using just a couple of [[Blueberries]] probably isn't enough to reach this 11 {{icon/mana}} threshold, especially since they explicitly can't generate {{icon/mana}} above 10. A more dedicated {{icon/mana}} generation apparatus, like one or more [[Mana Orb]]s, may be important to get the most out of [[Eggscalibur]].
+== Trivia ==
+It is a nod to the mythical King Arthur's sword, [https://en.wikipedia.org/wiki/Excalibur Excalibur].
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.16
+|Now has the “[[Magic]]” type
+|-
+|0.9.4
+|Cooldown 1.5s -> 1.6s
+|-
+|0.9.2
+|{{icon/mana}} cost 12 -> 11
+|-
+|0.8.0
+|{{icon/mana}} cost 13 -> 12
+|-
+|0.7.6
+|Damage +1
+|-
+|0.7.5
+|Damage +1
+|-
+|0.7.4
+|Damage +1
+|-
+|0.7.0
+|{{icon/mana}} Cost 15 -> 13
+|-
+|0.6.3
+|Reworked: It can now use {{icon/mana}} to trigger {{icon/star}} [[Food]].
+|-
+|0.6.0
+|Stamina cost 1.5 -> 1.3
+|-
+|0.5.6
+|Damage +1
+|-
+|0.5.4
+|Damage +1
+|-
+|0.4.0
+|Added to the game
+|}
+
+{{Items}}

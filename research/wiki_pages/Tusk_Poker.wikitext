@@ -1,0 +1,37 @@
+{{Item infobox
+|name=Tusk Poker
+|image=TuskPoker.png
+|rarity=Rare
+|icontype=nature, ranged
+|type=Weapon
+|cost=8
+|class=Ranger
+|effect='''On hit:''' 50% chance to gain 1 {{icon/spikes}}.
+|mindamage=2
+|maxdamage=3
+|stamina=0.7
+|accuracy=85
+|cooldown=1.7
+|sockets=1
+|grid=
+1
+1
+}}
+{{Recipe infobox
+|recipename=Tusk Poker
+|ingredients=Shortbow, Walrus Tusk
+|requirementcost=8 (4+4)
+|image=TuskPoker_recipe.png
+}}
+The [[Tusk Poker]] is a [[Ranger]] [[weapon]] obtained by combining the [[Shortbow]] and the [[Walrus Tusk]]. It deals the same damage as the [[Shortbow]], but has a chance to gain {{icon/spikes}} on hit, which makes it a strict upgrade, but it does less damage than the other possible [[Shortbow]] upgrades, making this the weakest and most early-game option. The [[Tusk Poker]] can still be useful, as it doesn't take much stamina and there are a number of items which synergize with {{icon/spikes}}.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.0
+|Added to the game
+|}
+
+{{Items}}

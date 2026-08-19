@@ -1,0 +1,66 @@
+{{Item infobox
+|name=Strong Health Potion
+|image=StrongHealthPotion.png
+|rarity=Epic
+|type=Potion
+|cost=8
+|effect='''Health drops below 50%:''' Consume this and [[heal]] for 24, gain 3 {{icon/regeneration}} and cleanse 4 {{icon/poison}}.
+|grid=
+2------
+1--2-2-
+1-11-11
+}}
+{{Recipe infobox
+|recipename=Strong Health Potion
+|ingredients=Health Potion, Healing Herbs
+|requirementcost=8 (4+4)
+|image=StrongHealthPotion_recipe.png
+}}
+{{Recipe infobox
+|recipename=Strong Health Potion
+|ingredients=Health Potion
+|catalysts=Cauldron
+|requirementcost=14 (4+10)
+|image=StrongHealthPotion_transform.png
+}}
+The [[Strong Health Potion]] is a [[Potion]] normally obtained by combining the [[Health Potion]] with a [[Healing Herbs]]. It can also be catalytically crafted from a [[Health Potion]] using the [[Cauldron]], if the player is a [[Reaper]]. It's very similar to the [[Health Potion]], but heals twice as much and gives some {{icon/regeneration}}.
+
+Like all [[Potion]]s, the [[Strong Health Potion]] applies its effect to the [[Potion]] below it when the lower [[Potion]] triggers, or vice versa. The player may want to use a slightly delayed [[Potion]] condition (like another [[Health Potion]]), to ensure that there is health to heal and possibly {{icon/poison}} to cleanse.
+
+The [[Strong Health Potion]] can be catalytically converted into the [[Vampiric Potion]] using the [[Blood Amulet]].
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.15
+|[[Heal]] 20 -> 24
+|-
+|0.9.5
+|{{icon/regeneration}} 2 -> 3
+|-
+|0.9.4
+|[[Heal]] 18 -> 20
+|-
+|0.5.6
+|[[Healing Herbs]] required 2 -> 1
+|-
+|0.5.3
+|[[Heal]] 15 -> 18
+|-
+|0.5.2
+|[[Heal]] 12 -> 15
+|-
+|0.4.2
+|{{icon/poison}} cleansed 3 -> 4
+[[Heal]] 10 -> 12
+|-
+|0.4.0
+|{{icon/poison}} cleansed 2 -> 3
+|-
+|0.3.7
+|[[Heal]] 8 -> 10
+|}
+
+{{Items}}

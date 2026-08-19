@@ -1,0 +1,42 @@
+{{Item infobox
+|name=Cap of Discomfort
+|image=CapofDiscomfort.png
+|rarity=Legendary
+|icontype=dark
+|type=Helmet
+|cost=14
+|effect=
+* '''Start of battle:''' Reduce damage taken by 25% for 5s.
+* '''Opponent gains [[buff]]:''' 15% chance to [[nullify]] it.
+* Your opponent's [[heal]]ing is reduced by 30%.
+|sockets=1
+|grid=
+1
+1
+}}
+{{Recipe infobox
+|recipename=Cap of Discomfort
+|ingredients=Cap of Resilience, Corrupted Crystal
+|requirementcost=14 (7+7)
+|image=CapofDiscomfort_recipe.png
+}}
+[[Cap of Discomfort]] is a neutral [[Helmet]] normally obtained by combining a [[Cap of Resilience]] with a [[Corrupted Crystal]]. It gives the same damage reduction at battle start as the [[Cap of Resilience]], but for longer, has a chance to nullify opponent buffs, and reduces the opponent's healing by a substantial amount.
+
+With multiple [[Cap of Discomfort]]s and/or [[Amethyst]]s, it can become feasible to reduce the opponent's healing to zero, which would be absolutely crushing to some otherwise extremely powerful healing builds. Of course, even a lesser degree of healing nullification would be of significant help in such a matchup.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.5
+|Now is a [[Dark]] item
+|-
+|0.6.4b
+|Cap of Discomfort is now tagged as [[Helmet]] instead of [[Armor]]
+|-
+|0.6.4
+|Added to the game
+|}
+
+{{Items}}

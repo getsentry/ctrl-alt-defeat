@@ -1,0 +1,26 @@
+{{Item infobox
+|name=Goobling
+|image=Goobling.png
+|rarity=Common
+|type=Pet
+|cost=2
+|effect='''3 {{icon/star}} item activations:''' [[Heal]] for 4.
+|grid=
+212
+}}
+
+The [[Goobling]] is a [[Pet]] that can only be obtained by purchasing the [[It's Slime Time!]] skill, or in the shop once [[It's Slime Time!]] is in the character's possession. The [[Goobling]] is essentially a tiny [[Goobert]]. It has the same type of effect, healing when items next to it are triggered, although it is one quarter the size, has two fewer {{icon/star}} slots, requires fewer activations per trigger, and heals less. Two [[Goobling]]s combine into a [[Goobert]], which is required in order to craft anything further.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.22
+|[[Heal]] 5 -> 4
+|-
+|0.9.20
+|Added to the game
+|}
+
+{{Items}}

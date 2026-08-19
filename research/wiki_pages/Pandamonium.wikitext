@@ -1,0 +1,92 @@
+{{Item infobox
+|name=Pandamonium
+|image=Pandamonium.png
+|rarity=Legendary
+|icontype=dark, melee
+|type=Weapon
+|cost=11
+|effect=
+* '''{{icon/star}} [[Food]] activates''': Inflict 1 {{icon/poison}}.
+*{{icon/poison}} on your opponent has 4% critical hit chance per {{icon/star}} [[Food]].
+|mindamage=9
+|maxdamage=11
+|stamina=0.7
+|accuracy=90
+|cooldown=2
+|sockets=2
+|grid=
+--22-
+-2222
+22222
+21112
+}}
+{{Recipe infobox
+|recipename=Pandamonium
+|ingredients=Pan, Corrupted Crystal
+|requirementcost=11 (4+7)
+|image=Pandamonium_recipe.png
+}}
+
+The [[Pandamonium]] is a neutral [[Weapon]] normally obtained by combining a [[Pan]] with a [[Corrupted Crystal]]. Compared to the [[Pan]], it uses substantially less stamina and deals a similar amount of damage on its own as a [[Pan]] with four or five [[Food]]s around it. In addition, the [[Pandamonium]] inflicts 1 {{icon/poison}} for each {{icon/star}} [[Food]] activation, and gives {{icon/poison}} a chance of critical hit per {{icon/star}} [[Food]]. Between these two abilities, there's a lot of additional damage possible, especially with other sources of {{icon/poison}}.
+
+There are 13 {{icon/star}} slots, so the maximum {{icon/poison}} crit chance is 52%, but the {{icon/star}} slots are tightly spaced, so this would require at least five 1-tile [[Food]]s for the innermost spaces.
+
+== Description ==
+''Prophecy says it brings chaos through the means of food poisoning.''
+
+== Trivia ==
+[https://en.wikipedia.org/wiki/Pand%C3%A6monium_(Paradise_Lost) Pandæmonium] is the capital of Hell in John Milton's epic poem ''Paradise Lost''.  
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.2]]
+|Crit chance 3% -> 4%
+|-
+|[[Patch 1.1.0]]
+|Now gives 3% {{icon/poison}} crit chance per ⭐Food
+|-
+|[[Patch 1.0.9]]
+|Added {{icon/star}} slots
+|-
+|[[Patch 1.0.6]]
+|Added {{icon/star}} slots
+|-
+|[[Patch 0.9.38]]
+|Added 2 {{icon/star}} slot
+|-
+|[[Patch 0.9.9]]
+|Added 1 {{icon/star}} slot
+|-
+|[[Patch 0.9.5]]
+|Damage +1
+|-
+|[[Patch 0.9.4]]
+|Damage +2
+|-
+|[[Patch 0.9.3]]
+|Now has one more {{icon/star}} slot, damage -3
+|-
+|[[Patch 0.8.0]]
+|Damage +1
+|-
+|[[Patch 0.7.6]]
+|Damage +1
+|-
+|[[Patch 0.7.5]]
+|Damage +1
+|-
+|[[Patch 0.7.4]]
+|Damage +1
+|-
+|[[Patch 0.6.3]]
+|Removed speedup effect. Stamina cost 0.8 -> 0.7
+|-
+|[[Patch 0.5.4]]
+|Added to the game
+|}
+
+{{Items}}

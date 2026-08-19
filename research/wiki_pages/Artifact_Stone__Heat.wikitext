@@ -1,0 +1,38 @@
+{{Item infobox
+|name=Artifact Stone: Heat
+|image=ArtifactStoneHeat.png
+|rarity=Unique
+|icontype=treasure, fire, ranged
+|type=Weapon
+|cost=9
+|effect=
+* Can only be thrown once per battle.
+* '''On hit:''' Gain 3 {{icon/heat}}.
+* '''10 {{icon/heat}} reached:''' {{icon/star}} [[Weapon]]s gain 8 damage.
+|mindamage=4
+|maxdamage=6
+|stamina=0
+|accuracy=90
+|cooldown=4
+|grid=
+2
+1
+2
+}}
+
+[[Artifact Stone: Heat]] can continue to attack if used together with a [[Bag of Stones]], just like for [[Stone]].
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.7.2
+|{{icon/heat}} threshold 15 -> 10, bonus damage 10 -> 8
+|-
+|0.7.0
+|Added to the game
+|}
+
+{{Items}}

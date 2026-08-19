@@ -1,0 +1,43 @@
+{{Item infobox
+|name=Box of Riches
+|image=BoxofRiches.png
+|rarity=Rare
+|type=Accessory
+|cost=5
+|effect=Shop entered: Generate a low-quality [[gemstone]]. [[Gemstone]]s are offered in the shop.
+|addshop=Amethyst, Emerald, Ruby, Sapphire, Topaz
+|grid=
+11
+}}
+
+The [[Box of Riches]] is a rare item available in the shop for all characters. 
+
+The [[Box of Riches]] is required to be able to get [[gemstone]]s. When entering the shop, if it is in your inventory, it will give the player one common rarity [[gemstone]] and put it next to the box in their inventory if it can, otherwise it gets thrown into the storage area.
+
+While the player has at least one Box of Riches in their inventory they will be able to find [[gemstone]]s of any rarity in the shop.
+
+The "shop entered" effect does not activate if the item is in storage.
+
+The [[Box of Riches]] can be crafted into a few eclectic items. Crafting a [[Box of Riches]] with a [[Maneki-neko]] (Maneki-neko not consumed), the Box "opens up" into the [[Box of Prosperity]], which gives four backpack slots, and still enables the player to generate [[Gemstones]] by putting at least two Godly or Unique items inside, although they will lose the ability to buy gemstones in the shop. [[Box of Riches]] + [[Glowing Crown]] gives the [[King Crown]], which makes for a great place to socket the player's rarer gemstones, increasing their effects by 50%. Finally, the [[Adventurer]] can combine the [[Box of Riches]] and a [[Piggybank]] with [[Twine]] to create the [[Piggy of Riches]], which is a straight [[Box of Riches]] upgrade. It gives two chipped gemstones each round instead of one, and additionally gives maximum health for each socketed gemstone.
+
+In general, the [[Box of Riches]] is a great choice whenever there are sockets to fill.
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.6.4
+|Cost 6g -> 5g
+|-
+|0.5.1
+|Cost 5g -> 6g
+|-
+|0.4.3
+|Now always generates a chipped [[gemstone]]
+|-
+|0.3.7
+|Added to the game
+|}
+
+{{Items}}

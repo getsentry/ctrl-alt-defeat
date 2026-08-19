@@ -1,0 +1,24 @@
+{{Item infobox
+|name=Wonky Snowman
+|image=WonkySnowman.png
+|rarity=Epic
+|icontype=ice
+|type=Accessory
+|cost=8
+|effect='''On Buy:''' Split into 2 [[Snowball]]s.
+|grid=
+1
+1
+}}
+The [[Wonky Snowman]] is an [[accessory]] available in the shop for all classes. It isn't a usable item in and of itself, only splitting into two [[Snowball]]s on purchase, which are useful for crafting, inflicting a bit of {{icon/cold}}, and applying a reduction to the opponent's maximum health gain..
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 0.9.24]]
+|Added into game.
+|}
+
+{{Items}}

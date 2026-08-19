@@ -1,0 +1,40 @@
+{{Item infobox
+|name=Speak with Animals
+|image=Speak_with_Animals.png
+|rarity=Unique
+|type=Skill
+|cost=5
+|class=Neutral
+|effect=
+*Pets of all classes are offered in the shop and have +25% chance to be on sale.
+*'''Every 3s:''' {{icon/star}} Pets gain 10% chance to trigger twice.
+|skillround=3
+|grid=
+00002
+00022
+00222
+12222
+00222
+00022
+00002
+}}
+'''Speak with Animals''' is a round 3 [[Skill]] available to any class that increases the chance [[Pet|pets]] will trigger twice on each activation. All pets from all classes are also able to be offered in the shop and have an increased chance to be on sale. While there are many potential applications for this skill, some apparent synergies include combining it with the [[Mage|Mage's]] [[Spirit Bells]], the [[Ranger|Ranger's]] [[Big Bowl of Treats]], and the [[Berserker|Berserker's]] [[Wolf Emblem]]. 
+
+While crafting [[Rainbow Goobert|Rainbow Gooberts]] is generally not reliable, the skill does make them substantially stronger, especially paired with the [[Goobling|Gooblings]] that can then be offered in the shop due the skill.
+
+[[Big Bowl of Treats]] also offers a chance to make pets activate twice, which will stack with '''Speak with Animals.''' However, this does not stack over 100% such that it will never cause pets to trigger more than twice at a time. It then follows that any activation of '''Speak with Animals''' past 100% chance will have no effect at all.
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.6]]
+|Sale chance 20% -> 25%
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+{{Items}}

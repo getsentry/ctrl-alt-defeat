@@ -1,0 +1,107 @@
+{{Item infobox
+|name=Shovel
+|image=Shovel_item.png
+|rarity=Rare
+|icontype=melee
+|type=Weapon
+|cost=8
+|effect=
+* '''Shop entered:''' Dig up a random item.
+* '''On hit:''' 40% chance to inflict 1 {{icon/blind}}.
+|mindamage=5
+|maxdamage=8
+|stamina=1.7
+|accuracy=95
+|cooldown=2.4
+|sockets=1
+|grid=
+1
+1
+1
+1
+}}
+{{Recipe infobox
+|recipename=Shovel
+|ingredients=Broom, Pan
+|requirementcost=8 (4+4)
+|image=Shovel_recipe.png
+}}
+The [[Shovel]] is a [[weapon]] obtainable by combining the [[Broom]] and [[Pan]], which are both common items available in the shop to all characters, reasonably obtainable as early as round 1. It deals better DPS than the Broom, with the the same {{icon/blind}} on hit effect, but higher chance. It also uses less stamina than the [[Pan]], but does less damage.
+
+Whenever the shop is entered, the [[Shovel]] digs up an item, which can be a wide range of items, but mainly cheap (<3 {{icon/gold}}) common items available in the shop, including the normally unobtainable [[gemstone]]s (mostly chipped). With the [[Dig Deeper]] skill, the [[Shovel]] can dig up much more valuable items. Regardless of what is dug up, the shovel slowly accumulates {{icon/gold}} value of items over time, which helps with economy.
+
+The [[Shovel]] can be crafted with the [[Resistor]] (Which is an [[Engineer]] shop item) to create the [[Shovel B01-3000]], which isn't a weapon at all, but rather a pet which gains {{icon/luck}} and {{icon/heat}}, and performs better when charged. The [[Shovel B01-3000]] also retains the [[Shovel]]'s ability to dig up items.
+
+{| class="styled"
+|+Items that can be dug up with a shovel (Likely deprecated, new large-scale data needed)
+!Item 
+!Chance
+|-
+|[[Stone]]
+|31.96%
+|-
+|[[Pocket Sand]]
+|18.26%
+|-
+|[[Garlic]]
+|13.70%
+|-
+|[[Healing Herbs]]
+|4.57%
+|-
+|[[Blueberries]]
+|4.57%
+|-
+|[[Ruby|Chipped Ruby]]
+|4.57%
+|-
+|[[Sapphire|Chipped Sapphire]]
+|4.57%
+|-
+|[[Emerald|Chipped Emerald]]
+|4.57%
+|-
+|[[Topaz|Chipped Topaz]]
+|4.57%
+|-
+|[[Amethyst|Chipped Amethyst]]
+|4.57%
+|-
+|[[Walrus Tusk]]
+|0.91%
+|-
+|[[Piggybank]]
+|0.91%
+|-
+|[[Pan]]
+|0.91%
+|-
+|[[Customer Card]]
+|0.91%
+|-
+|[[Protective Purse]]
+|0.46%
+|}
+The likelihoods of different items may have changed at some point since the creation of the above table, and would probably be at least slightly different for each class, since class items can be dug up. Anecdotally, here is an example of all of the items in storage with [[Ranger]], after 16 digs, in version 1.0.7c. Notice that it includes some items not represented on the table.
+
+[[File:ShovelStorage.png|400px]]
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|0.9.20
+|Damage +1
+|-
+|0.6.4
+|Cooldown 2.2s -> 2.4s, stamina cost 1.5 -> 1.7
+|-
+|0.6.2
+|Blind chance 60% -> 40%
+|-
+|0.6.0
+|Added to the game
+|}
+
+{{Items}}

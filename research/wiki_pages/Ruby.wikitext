@@ -1,0 +1,32 @@
+{{Item infobox
+|name=Ruby
+|image=BPB_Ruby_Line.png
+|rarity=Varies
+|type=Gemstone
+|cost=1/2/4/8/16
+|effect=
+<div style="font-size:100%; text-align:center;"><font color="gray">Weapon sockets:</font></div>
+'''On hit:''' Gain 7/10/15/20/35% lifesteal.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Armor & other sockets:</font></div>
+Your [[heal]]ing is increased by 10/15/20/25/40%.
+<br><div style="font-size:100%; text-align:center;"><font color="gray">Backpack:</font></div>
+'''After 5s:''' Deal 4/6/10/15/35 {{icon/effect}}-damage with 150% lifesteal.
+|inshop=Box of Riches
+|grid=1
+}}
+One of five kinds of gemstones that can be acquired from having the [[Box of Riches]].
+
+There are five rarities of Rubies, Chipped/Flawed/Regular/Flawless/Perfect, corresponding to the five rarities of items in the game. Each rarity has better stats than the previous one. Higher rarities can be found in the shop if the player has a Box of Riches, or by combining identical ones in the inventory.
+
+The gemstones have varying effects depending on where they are placed.
+
+[[Ruby]]s are generally themed around lifegain, giving socketed [[Weapon]]s fractional lifesteal, increasing overall healing when socketed in armor or other items, and dealing a small amount of 150% lifesteal [[Magic]] damage when loose in the backback.
+
+Characters that have built-in life gain payoffs, such as [[Ranger]], [[Reaper]], and [[Mage]], may value [[Ruby]]s more highly, but they can ultimately be useful to any character.
+{{Items}}
+
+[[Category:Common]]
+[[Category:Rare]]
+[[Category:Epic]]
+[[Category:Legendary]]
+[[Category:Godly]]
