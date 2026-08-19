@@ -54,11 +54,39 @@ func outline_color() -> Color:
 	return fill_color.darkened(OUTLINE_DARKENING)
 
 
+static func square_of(offset) -> Array:
+	"""One offset as a square, whatever form it arrives in.
+
+	Shapes off the server come through APITypes as Vector2i. Shapes written
+	out by hand -- tests, and the odd caller -- are still pairs. Anything that
+	is neither is not an offset at all, and drawing has to carry on without
+	it rather than take the rest of the shape down with it.
+
+	Returns the square in a one-item array, or an empty one for something that
+	is not an offset, because there is no Vector2i that means "no square".
+	"""
+	if offset is Vector2i:
+		return [offset]
+	if offset is Vector2:
+		return [Vector2i(offset)]
+	if offset is Array and offset.size() >= 2:
+		return [Vector2i(int(offset[0]), int(offset[1]))]
+	return []
+
+
+static func squares_in(item_shape: Array) -> Array[Vector2i]:
+	"""The squares a shape covers, in the order the shape gives them."""
+	var squares: Array[Vector2i] = []
+	for offset in item_shape:
+		squares.append_array(square_of(offset))
+	return squares
+
+
 static func squares_of(item_shape: Array) -> Dictionary[Vector2i, bool]:
 	"""The covered squares, as a set that can be asked about a neighbour."""
 	var squares: Dictionary[Vector2i, bool] = {}
-	for offset in item_shape:
-		squares[Vector2i(int(offset[0]), int(offset[1]))] = true
+	for square in squares_in(item_shape):
+		squares[square] = true
 	return squares
 
 

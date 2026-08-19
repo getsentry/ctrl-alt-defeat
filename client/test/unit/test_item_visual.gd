@@ -33,8 +33,11 @@ func _item(overrides: Dictionary = {}) -> Resource:
 # ============ Shape ============
 
 func test_reads_the_shape_from_the_item():
+	# A shape is written out as pairs and arrives as squares: APITypes turns
+	# what the server sends into Vector2i on the way in.
 	_make(_item({"shape": [[0, 0], [1, 0]]}))
-	assert_eq(visual.item_shape, [[0, 0], [1, 0]], "Should take the shape from the item")
+	assert_eq(visual.item_shape, [Vector2i(0, 0), Vector2i(1, 0)],
+		"Should take the shape from the item")
 
 
 func test_size_follows_a_single_cell_shape():
@@ -91,7 +94,9 @@ func test_hands_the_whole_shape_to_one_placeholder():
 	_make(_item({"slug": "no_such_item_anywhere", "shape": shape}))
 
 	assert_eq(visual.get_child_count(), 1, "One placeholder should draw the whole item")
-	assert_eq(visual.get_child(0).shape, shape, "It should be given every square")
+	assert_eq(visual.get_child(0).shape,
+		[Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)],
+		"It should be given every square")
 
 
 func test_the_placeholder_covers_the_whole_item():

@@ -37,6 +37,7 @@ class Rider extends RefCounted:
 
 const APITypes = preload("res://scripts/api_types.gd")
 const ItemVisual = preload("res://scripts/item_visual.gd")
+const ItemPlaceholder = preload("res://scripts/item_placeholder.gd")
 
 # Grid configuration - can be customized per instance
 var grid_width: int = 9
@@ -101,6 +102,16 @@ var valid_placement = false
 
 ## What the mark under a held item looks like. Green is "let go here", red is
 ## "not here" -- one glance, no reading.
+## Which layer the mark is drawn on. Above everything the grid holds, held
+## containers included. A container is a picture with a background of its own
+## now, so a mark drawn under one is a mark nobody sees -- and that is worst
+## while a container is in hand, because the thing hiding the mark is the very
+## thing being placed. The fill is faint and the edge is not, so on top it
+## reads as a highlight over the artwork rather than a patch across it.
+const MARK_LAYER := 20
+## How solid a container is drawn. A little short of solid, so the squares it
+## covers, and anything marked on them, show through the picture.
+const CONTAINER_ALPHA := 0.8
 const MARK_ALLOWED_FILL := Color(0.25, 1.0, 0.45, 0.3)
 const MARK_ALLOWED_EDGE := Color(0.45, 1.0, 0.6, 0.9)
 const MARK_REFUSED_FILL := Color(1.0, 0.2, 0.3, 0.28)
@@ -227,6 +238,7 @@ func _create_hover_preview():
 	hover_preview = Panel.new()
 	hover_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_preview.visible = false
+	hover_preview.z_index = MARK_LAYER
 	hover_preview.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(hover_preview)
 
@@ -299,6 +311,7 @@ func _add_container(container: APITypes.PlacedItem):
 
 	# Set up the visual
 	container_visual.setup(container, cell_size, cell_spacing)
+	container_visual.modulate.a = CONTAINER_ALPHA
 
 	# Update grid cells to show server pattern and mark as active
 	for square in container.covered_squares():
@@ -715,10 +728,14 @@ func mark_square(item_shape: Array, grid_pos: Vector2i, allowed: bool) -> void:
 		hover_preview.visible = false
 		return
 
+	# A shape reaches here as Vector2i from the server and as pairs from a
+	# caller that writes one out. Settle that once, here, so everything below
+	# is working with squares.
+	var squares := ItemPlaceholder.squares_in(item_shape)
 	hover_preview.visible = true
 	hover_preview.position = grid_to_pixel(grid_pos)
-	hover_preview.size = _shape_extent(item_shape)
-	_draw_mark(item_shape, allowed)
+	hover_preview.size = _shape_extent(squares)
+	_draw_mark(squares, allowed)
 
 
 func _on_the_board(grid_pos: Vector2i) -> bool:
@@ -740,12 +757,16 @@ func _shape_extent(item_shape: Array[Vector2i]) -> Vector2:
 	)
 
 
-func _draw_mark(item_shape: Array, allowed: bool) -> void:
+func _draw_mark(squares: Array[Vector2i], allowed: bool) -> void:
 	"""One patch per square the shape covers.
 
 	An L covers three squares out of the four its corners reach, and a mark
 	drawn as one rectangle claims the fourth as well -- which is the square the
 	player is trying to work out whether they can use.
+
+	Takes squares rather than a shape: this once took pairs only, and every
+	mark drawn for a real item -- whose shape is Vector2i -- came out with no
+	patches in it at all, which is a highlight the player never saw.
 	"""
 	for old in hover_preview.get_children():
 		old.queue_free()
@@ -756,14 +777,12 @@ func _draw_mark(item_shape: Array, allowed: bool) -> void:
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(3)
 
-	for offset in item_shape:
-		if not (offset is Array and offset.size() >= 2):
-			continue
+	for square in squares:
 		var patch := Panel.new()
 		patch.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		patch.position = Vector2(
-			int(offset[0]) * (cell_size + cell_spacing),
-			int(offset[1]) * (cell_size + cell_spacing)
+			square.x * (cell_size + cell_spacing),
+			square.y * (cell_size + cell_spacing)
 		)
 		patch.size = Vector2(cell_size, cell_size)
 		patch.add_theme_stylebox_override("panel", style)

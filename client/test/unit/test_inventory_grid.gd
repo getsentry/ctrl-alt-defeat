@@ -789,3 +789,54 @@ func test_moving_an_item_without_turning_it_is_a_change():
 
 	assert_false(grid.drop_changes_nothing(Vector2i(4, 3), item_data),
 		"A different square is a change, turned or not")
+
+
+# ============ The mark can be seen ============
+#
+# Containers used to be flat colour and the mark was drawn under them without
+# anyone noticing. They are pictures with backgrounds now, and the mark went
+# under the artwork: the highlight showing where an item would land was gone,
+# and picking a container up hid its own mark behind the container in hand.
+
+func test_the_mark_is_drawn_above_the_containers():
+	_load_default_containers()
+	grid.mark_square([[0, 0]], Vector2i(2, 3), true)
+
+	assert_gt(grid.hover_preview.z_index, grid.containers[0].visual.z_index,
+		"A mark under a container's artwork is a mark nobody sees")
+
+
+func test_the_mark_is_drawn_above_a_container_in_hand():
+	# The worst case: what hides the mark is the very thing being placed.
+	_load_default_containers()
+	grid._start_container_drag(grid.containers[0])
+
+	assert_gt(grid.hover_preview.z_index, grid.containers[0].visual.z_index,
+		"The container being carried should not cover its own mark")
+	grid.drop_container_at(Vector2.ZERO)
+
+
+func test_carrying_a_container_marks_where_it_would_stand():
+	_load_default_containers()
+	var held = grid.containers[0]
+	grid._start_container_drag(held)
+
+	grid.update_container_preview(
+		grid.get_global_transform() * grid.grid_to_pixel(Vector2i(5, 1)))
+
+	assert_true(grid.hover_preview.visible,
+		"Carrying a container should mark where it would go")
+	assert_gt(grid.hover_preview.get_child_count(), 0,
+		"and the mark should have a patch per square the container covers")
+	grid.drop_container_at(Vector2.ZERO)
+
+
+func test_a_container_is_drawn_a_little_short_of_solid():
+	# So the squares it covers, and anything marked on them, show through.
+	_load_default_containers()
+	var drawn = grid.containers[0].visual
+
+	assert_lt(drawn.modulate.a, 1.0,
+		"A solid container hides the grid and the marks underneath it")
+	assert_gt(drawn.modulate.a, 0.5,
+		"but it is furniture, not a ghost")
