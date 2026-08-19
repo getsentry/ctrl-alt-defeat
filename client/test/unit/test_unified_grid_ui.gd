@@ -88,8 +88,9 @@ func test_stats_display():
 
 
 func test_health_is_blank_while_nothing_counts_it():
-	# `player_health` has read 100 since the screen that decremented it was
-	# deleted. A bar that never moves is worse than no bar.
+	# Nothing counts a health figure for a run. The `player_health` that used
+	# to lose a point per defeat is gone: a run ends after five, so it never
+	# fell below 95. A bar that never moves is worse than no bar.
 	assert_eq(ui.stat_values["Health"].text, ui.NOT_KNOWN_YET,
 		"Nothing maintains a health figure, so the row says nothing")
 

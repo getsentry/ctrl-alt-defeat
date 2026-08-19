@@ -391,6 +391,46 @@ if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 
 
+class TestAnAnchorIsNotAlwaysOneOfTheSquares:
+    """Twelve items in the catalogue are plus or L shapes whose first square is
+    (1, 0). The square such an item's position names is not one it covers.
+
+    Removal used to ask the grid what stood at the item's own anchor, and for
+    these the grid answered "nothing" about the very item being removed.
+    Selling one returned a 500, moving one a 404, and 428 tests said nothing.
+    """
+
+    def _plus_on_the_grid(self, manager: InventoryManager, item_id: str):
+        plus = Item.of("nullshot", item_id)
+        assert (0, 0) not in plus.shape, "Fixture: this anchor is not covered"
+        # Put on the grid directly. Placement is not what is under test, and a
+        # plus needs three by three of container to be placed properly.
+        placed = plus.placed_at((1, 1), Rotation.NONE)
+        manager.grid.items.append(placed)
+        return placed
+
+    def test_it_can_still_be_taken_off_the_grid(self):
+        manager = InventoryManager()
+        self._plus_on_the_grid(manager, "plus1")
+
+        removed = manager.remove_item(item_id="plus1")
+
+        assert removed is not None, "The item should come off the grid"
+        assert removed.id == "plus1"
+        assert manager.grid.items == []
+
+    def test_it_can_still_be_moved(self):
+        manager = InventoryManager()
+        self._plus_on_the_grid(manager, "plus2")
+
+        manager.move_item(
+            item_id="plus2", from_location=(1, 1), to_location="storage"
+        )
+
+        assert manager.grid.items == []
+        assert [held.id for held in manager.storage.items] == ["plus2"]
+
+
 class TestStoredPositions:
     """Stored state holds (x, y) pairs, and encodes to arrays"""
 

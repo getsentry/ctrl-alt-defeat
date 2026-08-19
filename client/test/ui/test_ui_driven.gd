@@ -428,8 +428,12 @@ func test_selling_an_item_pays_the_player():
 	assert_eq(game_ui.inventory_grid.items.size(), 0, "The sold item leaves the grid")
 	assert_gt(GameStateManager.gold, gold_before_selling,
 		"Selling should pay the player, not take the item for nothing")
-	assert_eq(GameStateManager.gold, gold_before_selling + item_data.cost / 2,
-		"A sale pays half of what the item cost")
+	# The item's own sell_value, not cost / 2 worked out again here. Half price
+	# is rounded up (`sale_price` in items.py), and GDScript's integer division
+	# rounds down, so the two agreed only on even costs - and the shop roll
+	# decides which you get, which made this fail about half the time.
+	assert_eq(GameStateManager.gold, gold_before_selling + item_data.sell_value,
+		"A sale pays what the item says it sells for")
 
 
 func test_battle_button_and_full_battle():

@@ -291,18 +291,22 @@ class InventoryManager:
             ItemNotFoundError: If item not found at source location
             InvalidPlacementError: If destination is invalid
         """
-        # Find and remove from source
+        # Find and remove from source. By id rather than by asking the grid
+        # what stands at from_location: callers pass the item's own anchor, and
+        # an anchor is not necessarily one of the item's squares. Twelve items
+        # in the catalogue are plus or L shapes whose first square is (1, 0),
+        # so the grid answered "nothing there" about the very item being moved.
         if from_location == "storage":
             item = self.storage.remove_item(item_id)
         else:
-            # Remove from grid position
-            item = self.grid.remove_item_at(from_location)
-            if item.id != item_id:
-                # Wrong item, put it back
-                self.grid.place_item(item, from_location)
+            item = next(
+                (held for held in self.grid.items if held.id == item_id), None
+            )
+            if item is None:
                 raise ItemNotFoundError(
                     f"Item {item_id} not found at position {from_location}"
                 )
+            self.grid.items.remove(item)
 
         # Place at destination
         try:
@@ -360,10 +364,16 @@ class InventoryManager:
                 if item:
                     return self.storage.remove_item(item_id)
 
-                # Try grid
+                # Try grid. Removed by identity, not by asking the grid what
+                # is at the item's own anchor: an item's anchor is not
+                # necessarily one of its own squares. Twelve items in the
+                # catalogue are plus or L shapes whose first square is (1, 0),
+                # so looking them up at (x, y) found nothing and selling one
+                # answered 500.
                 for grid_item in self.grid.items:
                     if grid_item.id == item_id:
-                        return self.grid.remove_item_at(grid_item.position)
+                        self.grid.items.remove(grid_item)
+                        return grid_item
 
             return None
         except ItemNotFoundError:

@@ -1476,9 +1476,10 @@ func _reading(caption: String) -> String:
 		"Gold":
 			return str(GameStateManager.gold)
 		"Health":
-			# `player_health` has been 100 since the screen that took one off
-			# it per loss was deleted, and the backlog has it down for deletion
-			# too. Drawing it would be a health bar that never moves.
+			# Nothing counts a health figure for a run. There was a
+			# `player_health` that lost a point per defeat, but a run ends
+			# after five, so it never fell below 95 and it is gone now.
+			# Drawing it would be a bar that never moves.
 			return NOT_KNOWN_YET
 		"Stamina":
 			return _stamina_pool()

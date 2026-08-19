@@ -18,6 +18,24 @@ say, or the client would need to infer it from the artwork.
 calling `hit()` a few times with different numbers and picking between them in
 `BattleHud.item_fired`.
 
+## `test_multiple_rounds` fails about one run in five, but only in company
+
+Run on its own it passed eight times out of eight. Run as part of `test/ui/`
+it fails roughly one time in five, always the same way:
+
+```
+[1] expected to equal [2]:  Round should advance from 1 to 2
+```
+
+Passing alone and failing in company means the tests are not isolated from one
+another: they share one server and one GameStateManager, and something an
+earlier test leaves behind decides this one. The root backlog has the same
+complaint about the API tests ("share state and fail about one run in six"), so
+it may be one cause with two symptoms.
+
+Worth doing properly rather than by retry. `/test/start-session` exists for
+isolation and this suite does not use it between tests.
+
 ## There are two backlogs at the repo root
 
 `BACKLOG.md` (453 lines, current) and `docs/BACKLOG.md` (53 lines, untouched
