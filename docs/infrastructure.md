@@ -4,7 +4,7 @@ Infrastructure items provide passive bonuses, resource generation, and support e
 
 ## Basic Infrastructure
 
-### CPU Booster
+### Turbo Button
 - **Shape:** 1x1 (1 slot)
 - **Effect:** +5 maximum CPU, +1 CPU regeneration per second
 - **Cost:** 5 Gold
@@ -51,7 +51,7 @@ Infrastructure items provide passive bonuses, resource generation, and support e
 
 ## Sentaur Class Infrastructure
 
-### Quantum Probability Core
+### Schrodinger's Die
 - **Shape:** 1x1 (1 slot)
 - **Effect:** Battle start: Gain 1 Compute (luck equivalent)
 - **Cost:** 2 Gold
@@ -60,7 +60,7 @@ Infrastructure items provide passive bonuses, resource generation, and support e
 - **Description:** Luck generator using quantum uncertainty
 - **Backpack Battles Equivalent:** Lucky Clover
 
-### Neural Link Collar
+### Neural Collar
 - **Shape:** 2x1 (2 slots horizontal)
 - **Effect:** Items gain 5% critical hit chance for each Compute
 - **Cost:** 6 Gold

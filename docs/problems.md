@@ -4,7 +4,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 
 ## Basic Problems
 
-### Null blade
+### Null Blade
 - **Shape:** 2x1 (2 slots horizontal)
 - **Damage:** 1-3 (1.4 DPS)
 - **Cooldown:** 1.4s
@@ -15,7 +15,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 - **Description:** Basic exploit that dereferences null
 - **Backpack Battles Equivalent:** Wooden Sword
 
-### Ping Flood
+### Ping of Death
 - **Shape:** 1x1 (1 slot)
 - **Damage:** 2-4 (1.2 DPS)
 - **Cooldown:** 2.5s
@@ -156,7 +156,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 - **Description:** Advanced surveillance network with enhanced coverage
 - **Backpack Battles Equivalent:** Recurve Bow
 
-### Quantum Sniper
+### Pointer Rifle
 - **Shape:** 1x2 (2 slots vertical)
 - **Damage:** 2-3 (1.5 DPS)
 - **Cooldown:** 1.7s
@@ -192,7 +192,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 - **Description:** Advanced virus that scales with infection
 - **Backpack Battles Equivalent:** Belladonna's Whisper
 
-### Probability Manipulator
+### Loaded Dice Rig
 - **Shape:** 2x2 (4 slots square)
 - **Damage:** 6-9 (2.5 DPS)
 - **Cooldown:** 3.0s
@@ -204,7 +204,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 - **Description:** Quantum weapon that bends fortune
 - **Backpack Battles Equivalent:** Fortuna's Grace
 
-### Quantum Flux Rifle
+### Flux Rifle
 - **Shape:** 2x1 (2 slots horizontal)
 - **Damage:** 2-3 (1.5 DPS)
 - **Cooldown:** 1.7s
@@ -240,7 +240,7 @@ Exploits are the equivalent of "Weapons" from Backpack Battles. They deal damage
 - **Description:** Kinetic weapon that fires energy spikes
 - **Backpack Battles Equivalent:** Tusk Piercer
 
-### Spike Generator
+### Caltrop Hopper
 - **Shape:** 1x2 (2 slots vertical)
 - **Damage:** 2-3 (1.5 DPS)
 - **Cooldown:** 1.7s

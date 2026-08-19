@@ -2,7 +2,7 @@
   "category": "modules",
   "items": {
     "performance_module_chipped": {
-      "name": "Chipped Performance Module",
+      "name": "Salvaged Performance Module",
       "category": "module",
       "color": "orange",
       "pattern": "solid",
@@ -28,7 +28,7 @@
       "slug": "performance_module_chipped"
     },
     "performance_module_flawed": {
-      "name": "Flawed Performance Module",
+      "name": "Refurb Performance Module",
       "category": "module",
       "color": "orange",
       "pattern": "stripe_d_bold",
@@ -54,7 +54,7 @@
       "slug": "performance_module_flawed"
     },
     "performance_module_regular": {
-      "name": "Performance Module",
+      "name": "Stock Performance Module",
       "category": "module",
       "color": "orange",
       "pattern": "dot_large_grid",
@@ -80,7 +80,7 @@
       "slug": "performance_module_regular"
     },
     "performance_module_flawless": {
-      "name": "Flawless Performance Module",
+      "name": "Overclocked Performance Module",
       "category": "module",
       "color": "orange",
       "pattern": "stripe_v_bold",
@@ -106,7 +106,7 @@
       "slug": "performance_module_flawless"
     },
     "performance_module_perfect": {
-      "name": "Perfect Performance Module",
+      "name": "Golden Sample Performance Module",
       "category": "module",
       "color": "orange",
       "pattern": "check_large",
@@ -132,7 +132,7 @@
       "slug": "performance_module_perfect"
     },
     "memory_module_chipped": {
-      "name": "Chipped Memory Module",
+      "name": "Salvaged Memory Module",
       "category": "module",
       "color": "orange",
       "pattern": "stripe_h_bold",
@@ -158,7 +158,7 @@
       "slug": "memory_module_chipped"
     },
     "memory_module_flawed": {
-      "name": "Flawed Memory Module",
+      "name": "Refurb Memory Module",
       "category": "module",
       "color": "orange",
       "pattern": "hatch_diag",
@@ -184,7 +184,7 @@
       "slug": "memory_module_flawed"
     },
     "memory_module_regular": {
-      "name": "Memory Module",
+      "name": "Stock Memory Module",
       "category": "module",
       "color": "orange",
       "pattern": "dot_small_stagger",
@@ -210,7 +210,7 @@
       "slug": "memory_module_regular"
     },
     "processing_module_chipped": {
-      "name": "Chipped Processing Module",
+      "name": "Salvaged Processing Module",
       "category": "module",
       "color": "orange",
       "pattern": "chevron_up",
@@ -236,7 +236,7 @@
       "slug": "processing_module_chipped"
     },
     "processing_module_regular": {
-      "name": "Processing Module",
+      "name": "Stock Processing Module",
       "category": "module",
       "color": "orange",
       "pattern": "stripe_a_bold",
@@ -262,7 +262,7 @@
       "slug": "processing_module_regular"
     },
     "efficiency_module_chipped": {
-      "name": "Chipped Efficiency Module",
+      "name": "Salvaged Efficiency Module",
       "category": "module",
       "color": "orange",
       "pattern": "rings",
@@ -288,7 +288,7 @@
       "slug": "efficiency_module_chipped"
     },
     "efficiency_module_regular": {
-      "name": "Efficiency Module",
+      "name": "Stock Efficiency Module",
       "category": "module",
       "color": "orange",
       "pattern": "stripe_v_fine",
@@ -314,7 +314,7 @@
       "slug": "efficiency_module_regular"
     },
     "security_module_chipped": {
-      "name": "Chipped Security Module",
+      "name": "Salvaged Security Module",
       "category": "module",
       "color": "orange",
       "pattern": "dot_large_stagger",
@@ -340,7 +340,7 @@
       "slug": "security_module_chipped"
     },
     "security_module_regular": {
-      "name": "Security Module",
+      "name": "Stock Security Module",
       "category": "module",
       "color": "orange",
       "pattern": "check_small",
@@ -366,7 +366,7 @@
       "slug": "security_module_regular"
     },
     "burning_coal": {
-      "name": "Burning Coal",
+      "name": "Hot Cell",
       "category": "module",
       "color": "orange",
       "pattern": "stripe_h_fine",
@@ -392,7 +392,7 @@
       "icontype": "fire"
     },
     "corrupted_crystal": {
-      "name": "Corrupted Crystal",
+      "name": "Rotten Die",
       "category": "module",
       "color": "orange",
       "pattern": "hatch_ortho",
@@ -417,7 +417,7 @@
       "icontype": "dark"
     },
     "lump_of_coal": {
-      "name": "Lump of Coal",
+      "name": "Dead Cell",
       "category": "module",
       "color": "orange",
       "pattern": "chevron_right",
@@ -442,7 +442,7 @@
       ]
     },
     "tim": {
-      "name": "Tim",
+      "name": "Gremlin",
       "category": "module",
       "color": "orange",
       "pattern": "stripe_d_fine",
@@ -467,7 +467,7 @@
       "icontype": "treasure, dark"
     },
     "wisp": {
-      "name": "Wisp",
+      "name": "Stray Voltage",
       "category": "module",
       "color": "orange",
       "pattern": "dot_small_grid",

@@ -26,7 +26,7 @@ Defenses are items that protect your infrastructure from attacks through blockin
 - **Description:** Redirects attacks through proxy layers
 - **Backpack Battles Equivalent:** Stone Skin Potion effect
 
-### Quantum Firewall
+### Barbed Firewall
 - **Shape:** 1x1 (1 slot)
 - **Block Chance:** 35%
 - **Block Amount:** 12
@@ -37,7 +37,7 @@ Defenses are items that protect your infrastructure from attacks through blockin
 - **Description:** Advanced firewall using quantum encryption
 - **Backpack Battles Equivalent:** Spiked Shield
 
-### Encryption Layer
+### Cipher Lock
 - **Shape:** 2x2 (4 slots square)
 - **Block Chance:** 40%
 - **Block Amount:** 15
@@ -48,7 +48,7 @@ Defenses are items that protect your infrastructure from attacks through blockin
 - **Description:** Heavy encryption that reduces all damage
 - **Backpack Battles Equivalent:** Heavy Armor
 
-### Cryogenic Shield
+### Heatsink Wall
 - **Shape:** 2x1 (2 slots horizontal)
 - **Block Chance:** 30%
 - **Block Amount:** 10
@@ -61,7 +61,7 @@ Defenses are items that protect your infrastructure from attacks through blockin
 
 ## Sentaur Class Defenses
 
-### Adaptive Mesh Armor
+### Mesh Vest
 - **Shape:** 2x1 (2 slots horizontal)
 - **Block Chance:** 25%
 - **Block Amount:** 6

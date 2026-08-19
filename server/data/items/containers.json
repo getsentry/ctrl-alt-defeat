@@ -1,7 +1,7 @@
 {
   "containers": {
     "standard_vm": {
-      "name": "Standard VM",
+      "name": "Sandbox",
       "class": "neutral",
       "map": [
         "##",
@@ -14,7 +14,7 @@
       "slug": "standard_vm"
     },
     "edge_node": {
-      "name": "Edge Node",
+      "name": "Hot Pocket",
       "class": "neutral",
       "map": [
         "##"
@@ -55,7 +55,7 @@
       "slug": "memory_cache"
     },
     "load_balancer": {
-      "name": "Load Balancer",
+      "name": "Pocket Dimension",
       "class": "neutral",
       "map": [
         "#"
@@ -74,7 +74,7 @@
       "slug": "load_balancer"
     },
     "patch_registry": {
-      "name": "Patch Registry",
+      "name": "Bandolier",
       "class": "neutral",
       "map": [
         "#",
@@ -123,7 +123,7 @@
       "slug": "container_orchestrator"
     },
     "serverless_function": {
-      "name": "Serverless Function",
+      "name": "The Cloud",
       "class": "neutral",
       "map": [
         "##",
@@ -143,7 +143,7 @@
       "slug": "serverless_function"
     },
     "network_cache": {
-      "name": "Network Cache",
+      "name": "Dead Drop",
       "class": "sentaur",
       "map": [
         "##",
@@ -178,7 +178,7 @@
       "slug": "network_cache"
     },
     "mesh_network_hub": {
-      "name": "Mesh Network Hub",
+      "name": "Motherboard",
       "class": "sentaur",
       "map": [
         "###",
@@ -207,7 +207,7 @@
       "slug": "mesh_network_hub"
     },
     "chaos_experiment": {
-      "name": "Chaos Experiment",
+      "name": "Loot Box",
       "class": "neutral",
       "map": [
         "##",

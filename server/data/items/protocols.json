@@ -33,7 +33,7 @@
       "icontype": "nature"
     },
     "bitcoin_wallet": {
-      "name": "Bitcoin Wallet",
+      "name": "Cold Wallet",
       "category": "protocol",
       "color": "green",
       "pattern": "stripe_d_bold",
@@ -87,7 +87,7 @@
       "icontype": "nature"
     },
     "script_compiler": {
-      "name": "Script Compiler - Alchemy",
+      "name": "Build Step",
       "category": "protocol",
       "color": "green",
       "pattern": "stripe_v_bold",
@@ -121,7 +121,7 @@
       "slug": "script_compiler"
     },
     "dark_web_access": {
-      "name": "Dark Web Access",
+      "name": "Onion Router",
       "category": "protocol",
       "color": "green",
       "pattern": "check_large",
@@ -149,7 +149,7 @@
       "icontype": "dark"
     },
     "power_management_unit": {
-      "name": "Power Management Unit",
+      "name": "Power Brick",
       "category": "protocol",
       "color": "green",
       "pattern": "stripe_h_bold",
@@ -176,7 +176,7 @@
       "slug": "power_management_unit"
     },
     "auto_scaler": {
-      "name": "Auto-Scaler",
+      "name": "Elastic Waistband",
       "category": "protocol",
       "color": "green",
       "pattern": "hatch_diag",
@@ -211,7 +211,7 @@
       "slug": "auto_scaler"
     },
     "redundancy_protocol": {
-      "name": "Redundancy Protocol",
+      "name": "Buddy System",
       "category": "protocol",
       "color": "green",
       "pattern": "dot_small_stagger",
@@ -236,7 +236,7 @@
       "slug": "redundancy_protocol"
     },
     "encryption_module": {
-      "name": "Encryption Module",
+      "name": "Cipher Core",
       "category": "protocol",
       "color": "green",
       "pattern": "chevron_up",
@@ -269,7 +269,7 @@
       "slug": "encryption_module"
     },
     "machine_learning_core": {
-      "name": "Machine Learning Core",
+      "name": "Echo Chamber",
       "category": "protocol",
       "color": "green",
       "pattern": "stripe_a_bold",
@@ -323,7 +323,7 @@
       "slug": "crypto_mining_rig"
     },
     "transaction_log": {
-      "name": "Transaction Log",
+      "name": "Write-Ahead Log",
       "category": "protocol",
       "color": "green",
       "pattern": "stripe_v_fine",
@@ -349,7 +349,7 @@
       "slug": "transaction_log"
     },
     "premium_subscription": {
-      "name": "Premium Subscription",
+      "name": "Free Trial",
       "category": "protocol",
       "color": "green",
       "pattern": "dot_large_stagger",
@@ -400,7 +400,7 @@
       "icontype": "vampiric"
     },
     "amulet_of_fortune": {
-      "name": "Amulet of Fortune",
+      "name": "Lucky Bitflip",
       "category": "protocol",
       "color": "green",
       "pattern": "stripe_h_fine",
@@ -422,7 +422,7 @@
       ]
     },
     "amulet_of_light": {
-      "name": "Amulet of Light",
+      "name": "Green Light",
       "category": "protocol",
       "color": "green",
       "pattern": "hatch_ortho",
@@ -449,7 +449,7 @@
       "icontype": "holy"
     },
     "angel_crystal": {
-      "name": "Angel Crystal",
+      "name": "Halo Crystal",
       "category": "protocol",
       "color": "green",
       "pattern": "chevron_right",
@@ -474,7 +474,7 @@
       "icontype": "treasure,holy"
     },
     "bag_of_stones": {
-      "name": "Bag of Stones",
+      "name": "Packet Bag",
       "category": "protocol",
       "color": "green",
       "pattern": "stripe_d_fine",
@@ -495,7 +495,7 @@
       ]
     },
     "blue_sage_collar": {
-      "name": "Blue Sage Collar",
+      "name": "Amethyst Collar",
       "category": "protocol",
       "color": "green",
       "pattern": "dot_small_grid",
@@ -517,7 +517,7 @@
       "icontype": "magic, nature"
     },
     "boiling_pot": {
-      "name": "Boiling Pot",
+      "name": "CI Cauldron",
       "category": "protocol",
       "color": "green",
       "pattern": "stripe_a_fine",
@@ -542,7 +542,7 @@
       "sockets": 1
     },
     "djinn_lamp": {
-      "name": "Djinn Lamp",
+      "name": "Daemon Lamp",
       "category": "protocol",
       "color": "green",
       "pattern": "grid_fine",
@@ -563,7 +563,7 @@
       "icontype": "magic"
     },
     "fanfare": {
-      "name": "Fanfare",
+      "name": "Klaxon",
       "category": "protocol",
       "color": "green",
       "pattern": "zigzag_h",
@@ -588,7 +588,7 @@
       "icontype": "magic,musical"
     },
     "flute": {
-      "name": "Flute",
+      "name": "Screaming Modem",
       "category": "protocol",
       "color": "green",
       "pattern": "wave_h",
@@ -613,7 +613,7 @@
       "icontype": "magic, musical"
     },
     "furcifer_prime_subscription": {
-      "name": "Furcifer Prime Subscription",
+      "name": "Prime Subscription",
       "category": "protocol",
       "color": "green",
       "pattern": "wave_v",
@@ -633,7 +633,7 @@
       ]
     },
     "happy_bomb": {
-      "name": "Happy Bomb",
+      "name": "Logic Bomb",
       "category": "protocol",
       "color": "green",
       "pattern": "brick_h",
@@ -654,7 +654,7 @@
       "icontype": "treasure"
     },
     "heart_container": {
-      "name": "Heart Container",
+      "name": "Health Pool",
       "category": "protocol",
       "color": "green",
       "pattern": "brick_v",
@@ -677,7 +677,7 @@
       "icontype": "holy"
     },
     "heart_of_darkness": {
-      "name": "Heart of Darkness",
+      "name": "Null Heart",
       "category": "protocol",
       "color": "green",
       "pattern": "scale",
@@ -703,7 +703,7 @@
       "icontype": "dark"
     },
     "leaf_badge": {
-      "name": "Leaf Badge",
+      "name": "Ranger Badge",
       "category": "protocol",
       "color": "green",
       "pattern": "triangle_up",
@@ -727,7 +727,7 @@
       "icontype": "treasure"
     },
     "lucky_piggy": {
-      "name": "Lucky Piggy",
+      "name": "Entropy Piggy",
       "category": "protocol",
       "color": "green",
       "pattern": "triangle_down",
@@ -749,7 +749,7 @@
       ]
     },
     "maneki_neko": {
-      "name": "Maneki-neko",
+      "name": "Fortune Bot",
       "category": "protocol",
       "color": "green",
       "pattern": "diamond_stagger",
@@ -776,7 +776,7 @@
       "icontype": "holy"
     },
     "oil_lamp": {
-      "name": "Oil Lamp",
+      "name": "Soldering Iron",
       "category": "protocol",
       "color": "green",
       "pattern": "cross_grid",
@@ -798,7 +798,7 @@
       "icontype": "fire"
     },
     "platinum_customer_card": {
-      "name": "Platinum Customer Card",
+      "name": "Platinum Tier",
       "category": "protocol",
       "color": "green",
       "pattern": "plus_grid",
@@ -822,7 +822,7 @@
       ]
     },
     "present": {
-      "name": "Present",
+      "name": "Unmarked Package",
       "category": "protocol",
       "color": "green",
       "pattern": "speckle",
@@ -890,7 +890,7 @@
       "icontype": "treasure"
     },
     "red_orchid_collar": {
-      "name": "Red Orchid Collar",
+      "name": "Crimson Collar",
       "category": "protocol",
       "color": "citron",
       "pattern": "dot_large_grid",
@@ -934,7 +934,7 @@
       "icontype": "treasure"
     },
     "rope": {
-      "name": "Rope",
+      "name": "Patch Cable",
       "category": "protocol",
       "color": "citron",
       "pattern": "check_large",
@@ -954,7 +954,7 @@
       ]
     },
     "shepherds_crook": {
-      "name": "Shepherds Crook",
+      "name": "Cluster Wrangler",
       "category": "protocol",
       "color": "citron",
       "pattern": "stripe_h_bold",
@@ -979,7 +979,7 @@
       ]
     },
     "shiny_shell": {
-      "name": "Shiny Shell",
+      "name": "Secure Shell",
       "category": "protocol",
       "color": "citron",
       "pattern": "hatch_diag",
@@ -999,7 +999,7 @@
       "icontype": "holy, nature"
     },
     "sir_sand": {
-      "name": "Sir Sand",
+      "name": "Obfuscator",
       "category": "protocol",
       "color": "citron",
       "pattern": "dot_small_stagger",
@@ -1019,7 +1019,7 @@
       ]
     },
     "snowball": {
-      "name": "Snowball",
+      "name": "Cold Boot",
       "category": "protocol",
       "color": "citron",
       "pattern": "stripe_a_bold",
@@ -1040,7 +1040,7 @@
       "icontype": "ice"
     },
     "stable_recombobulator": {
-      "name": "Stable Recombobulator",
+      "name": "Stable Refactor",
       "category": "protocol",
       "color": "citron",
       "pattern": "rings",
@@ -1065,7 +1065,7 @@
       "icontype": "treasure, dark, magic"
     },
     "star_of_courage": {
-      "name": "Star of Courage",
+      "name": "Founder's Star",
       "category": "protocol",
       "color": "citron",
       "pattern": "stripe_v_fine",
@@ -1129,7 +1129,7 @@
       "icontype": "treasure"
     },
     "unidentified_amulet": {
-      "name": "Unidentified Amulet",
+      "name": "Undocumented Feature",
       "category": "protocol",
       "color": "citron",
       "pattern": "hatch_ortho",
@@ -1148,7 +1148,7 @@
       ]
     },
     "unstable_recombobulator": {
-      "name": "Unstable Recombobulator",
+      "name": "Unstable Refactor",
       "category": "protocol",
       "color": "citron",
       "pattern": "chevron_right",
@@ -1173,7 +1173,7 @@
       "icontype": "dark, magic"
     },
     "walrus_tusk": {
-      "name": "Walrus Tusk",
+      "name": "Walrus Operator",
       "category": "protocol",
       "color": "citron",
       "pattern": "stripe_d_fine",
@@ -1194,7 +1194,7 @@
       "icontype": "nature"
     },
     "whetstone": {
-      "name": "Whetstone",
+      "name": "Edge Cache",
       "category": "protocol",
       "color": "citron",
       "pattern": "dot_small_grid",
@@ -1215,7 +1215,7 @@
       ]
     },
     "white_lily_collar": {
-      "name": "White Lily Collar",
+      "name": "Ivory Collar",
       "category": "protocol",
       "color": "citron",
       "pattern": "stripe_a_fine",
@@ -1238,7 +1238,7 @@
       "icontype": "holy, nature"
     },
     "wonky_snowman": {
-      "name": "Wonky Snowman",
+      "name": "Fork Bomb",
       "category": "protocol",
       "color": "citron",
       "pattern": "grid_fine",

@@ -371,9 +371,9 @@ validates it and nothing owns it, so it fails silently in both directions:
 the Block resource, while shields are `PreventDamageEffect`. Even if an item
 set it, it would not bypass a shield.
 
-`crash` and `bypass_block` both come from the design document — Null blade's
+`crash` and `bypass_block` both come from the design document — Null Blade's
 "On Crit: 20% chance to crash for 15 damage" and SQL Injector's "Bypasses 50%
-of shields" — and neither item's JSON sets anything. For Null blade someone
+of shields" — and neither item's JSON sets anything. For Null Blade someone
 read the 20% crit chance as the crash chance.
 
 ### `stacking` is an on-hit effect, and the commonest one in the game
@@ -529,3 +529,7 @@ as severe as the one above.)*
   new player who needs a weak opponent is matched only against builds that won.
 
 
+
+- **Sentaur Badge**: `leaf_badge` is currently named "Ranger Badge" with a leaf
+  design, but its effect gates Sentaur-class items. Rename it to Sentaur Badge and
+  draw it as the (reworked) Sentaur character's emblem once that character exists.

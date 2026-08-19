@@ -4,7 +4,7 @@ Patches are the equivalent of "Potions" from Backpack Battles. They are one-time
 
 ## Rare Patches
 
-### Emergency Hotfix
+### Hotfix Ampoule
 - **Shape:** 1x1 (1 slot)
 - **Effect:** Infrastructure drops below 50%: Deploy this and restore 12 Infrastructure and clear 4 Bugs
 - **Cost:** 4 Gold
@@ -14,7 +14,7 @@ Patches are the equivalent of "Potions" from Backpack Battles. They are one-time
 
 ## Epic Patches
 
-### Memory Injection
+### Swap Shot
 - **Shape:** 1x1 (1 slot)
 - **Effect:** Memory used or Infrastructure drops below 50%: Deploy this and gain 4 Memory and 18 maximum Infrastructure
 - **Cost:** 6 Gold
@@ -22,7 +22,7 @@ Patches are the equivalent of "Potions" from Backpack Battles. They are one-time
 - **Description:** Injects additional memory when resources are low
 - **Backpack Battles Equivalent:** Mana Potion
 
-### Security Hardening
+### Hardening Serum
 - **Shape:** 1x1 (1 slot)
 - **Effect:** 45 Block reached: Deploy this and convert 15 Infrastructure to 30 Block
 - **Cost:** 6 Gold
@@ -30,7 +30,7 @@ Patches are the equivalent of "Potions" from Backpack Battles. They are one-time
 - **Description:** Sacrifices infrastructure for enhanced security
 - **Backpack Battles Equivalent:** Stone Skin Potion
 
-### Virus Payload
+### Payload Vial
 - **Shape:** 1x1 (1 slot)
 - **Effect:** Opponent repairs: Deploy this and inflict 3 Malware and 1 Malware to yourself
 - **Cost:** 7 Gold
@@ -40,7 +40,7 @@ Patches are the equivalent of "Potions" from Backpack Battles. They are one-time
 
 ## Legendary Patches
 
-### Performance Boost
+### Overclock Shot
 - **Shape:** 1x1 (1 slot)
 - **Effect:** Out of CPU: Deploy this and regenerate 2 CPU and gain 1 Overclock
 - **Cost:** 6 Gold
@@ -50,7 +50,7 @@ Patches are the equivalent of "Potions" from Backpack Battles. They are one-time
 
 ## Godly Patches
 
-### System Restore
+### Restore Point
 - **Shape:** 1x1 (1 slot)
 - **Effect:** You reached 10 errors: Deploy this and clear 10 errors
 - **Cost:** 7 Gold

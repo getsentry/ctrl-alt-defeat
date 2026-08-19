@@ -2,7 +2,7 @@
   "category": "defenses",
   "items": {
     "error_monitoring": {
-      "name": "Error Monitoring Shield",
+      "name": "Catch Block",
       "category": "defense",
       "color": "blue",
       "pattern": "solid",
@@ -68,7 +68,7 @@
       "sockets": 1
     },
     "rate_limiter": {
-      "name": "Rate Limiter",
+      "name": "Throttle Gate",
       "category": "defense",
       "color": "blue",
       "pattern": "dot_large_grid",
@@ -103,7 +103,7 @@
       "sockets": 1
     },
     "encryption_layer": {
-      "name": "Encryption Layer",
+      "name": "Cipher Lock",
       "category": "defense",
       "color": "blue",
       "pattern": "stripe_v_bold",
@@ -146,7 +146,7 @@
       "icontype": "ice"
     },
     "quantum_firewall": {
-      "name": "Quantum Firewall",
+      "name": "Barbed Firewall",
       "category": "defense",
       "color": "blue",
       "pattern": "check_large",
@@ -179,7 +179,7 @@
       "sockets": 1
     },
     "adaptive_mesh_armor": {
-      "name": "Adaptive Mesh Armor",
+      "name": "Mesh Vest",
       "category": "defense",
       "color": "blue",
       "pattern": "stripe_h_bold",
@@ -215,7 +215,7 @@
       "sockets": 2
     },
     "cap_of_discomfort": {
-      "name": "Cap of Discomfort",
+      "name": "Itchy Firmware",
       "category": "defense",
       "color": "blue",
       "pattern": "hatch_diag",
@@ -239,7 +239,7 @@
       "icontype": "dark"
     },
     "cap_of_resilience": {
-      "name": "Cap of Resilience",
+      "name": "Failover Helm",
       "category": "defense",
       "color": "blue",
       "pattern": "dot_small_stagger",
@@ -262,7 +262,7 @@
       "sockets": 1
     },
     "gloves_of_power": {
-      "name": "Gloves of Power",
+      "name": "Sudo Gauntlets",
       "category": "defense",
       "color": "blue",
       "pattern": "chevron_up",
@@ -282,7 +282,7 @@
       ]
     },
     "glowing_crown": {
-      "name": "Glowing Crown",
+      "name": "Self-Signed Cert",
       "category": "defense",
       "color": "blue",
       "pattern": "stripe_a_bold",
@@ -304,7 +304,7 @@
       "icontype": "holy, magic"
     },
     "gold_armor": {
-      "name": "Gold Armor",
+      "name": "Gilded Chassis",
       "category": "defense",
       "color": "blue",
       "pattern": "rings",
@@ -332,7 +332,7 @@
       "icontype": "holy"
     },
     "king_crown": {
-      "name": "King Crown",
+      "name": "Root Certificate",
       "category": "defense",
       "color": "blue",
       "pattern": "stripe_v_fine",
@@ -356,7 +356,7 @@
       "icontype": "holy, magic"
     },
     "leather_boots": {
-      "name": "Leather Boots",
+      "name": "Bootloader",
       "category": "defense",
       "color": "blue",
       "pattern": "dot_large_stagger",
@@ -377,7 +377,7 @@
       "sockets": 1
     },
     "moon_armor": {
-      "name": "Moon Armor",
+      "name": "Moonsteel Chassis",
       "category": "defense",
       "color": "blue",
       "pattern": "check_small",
@@ -403,7 +403,7 @@
       "icontype": "holy, magic"
     },
     "moon_shield": {
-      "name": "Moon Shield",
+      "name": "Moonsteel Shield",
       "category": "defense",
       "color": "blue",
       "pattern": "stripe_h_fine",
@@ -430,7 +430,7 @@
       "icontype": "holy, magic"
     },
     "pine_protector": {
-      "name": "Pine Protector",
+      "name": "Splinter Guard",
       "category": "defense",
       "color": "blue",
       "pattern": "hatch_ortho",
@@ -457,7 +457,7 @@
       "icontype": "nature"
     },
     "shield_of_valor": {
-      "name": "Shield of Valor",
+      "name": "Uptime Aegis",
       "category": "defense",
       "color": "blue",
       "pattern": "chevron_right",
@@ -483,7 +483,7 @@
       "icontype": "holy"
     },
     "stone_armor": {
-      "name": "Stone Armor",
+      "name": "Bare Metal Plate",
       "category": "defense",
       "color": "blue",
       "pattern": "stripe_d_fine",
@@ -508,7 +508,7 @@
       "sockets": 2
     },
     "stone_helm": {
-      "name": "Stone Helm",
+      "name": "Bare Metal Helm",
       "category": "defense",
       "color": "blue",
       "pattern": "dot_small_grid",
@@ -531,7 +531,7 @@
       "sockets": 1
     },
     "stone_shoes": {
-      "name": "Stone Shoes",
+      "name": "Bare Metal Boots",
       "category": "defense",
       "color": "blue",
       "pattern": "stripe_a_fine",
@@ -552,7 +552,7 @@
       "sockets": 1
     },
     "vampiric_armor": {
-      "name": "Vampiric Armor",
+      "name": "Leech Plate",
       "category": "defense",
       "color": "blue",
       "pattern": "grid_bold",
@@ -576,7 +576,7 @@
       "icontype": "vampiric"
     },
     "vampiric_gloves": {
-      "name": "Vampiric Gloves",
+      "name": "Keylogger Gloves",
       "category": "defense",
       "color": "blue",
       "pattern": "grid_fine",
@@ -596,7 +596,7 @@
       "icontype": "vampiric"
     },
     "winged_boots": {
-      "name": "Winged Boots",
+      "name": "Hot Swap Boots",
       "category": "defense",
       "color": "blue",
       "pattern": "zigzag_h",

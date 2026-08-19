@@ -120,9 +120,9 @@ class TestGameDesignCompliance:
 
     def test_item_specifications(self):
         """Test Section 2: All items match specifications"""
-        # Null blade, from Wooden Sword (Section 2.3)
+        # Null Blade, from Wooden Sword (Section 2.3)
         np = ITEM_CATALOG["null_blade"]
-        assert np.name == "Null blade"
+        assert np.name == "Null Blade"
         # Check it has a timer trigger with attack effect
         assert len(np.triggers) == 1
         assert isinstance(np.triggers[0], TimerTrigger)

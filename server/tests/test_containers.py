@@ -31,7 +31,7 @@ class TestAContainerIsAnItem:
         # just as much as the offer the player bought did.
         offer = Item.of("standard_vm", "vm1")
         placed = Container.of("standard_vm", (1, 1), "vm1")
-        assert placed.name == offer.name == "Standard VM"
+        assert placed.name == offer.name == "Sandbox"
         assert placed.item_type == offer.item_type
 
     def test_it_carries_no_look_of_its_own(self):

@@ -2,7 +2,7 @@
   "category": "scripts",
   "items": {
     "health_check_script": {
-      "name": "Health Check Script",
+      "name": "Smoke Test",
       "category": "script",
       "color": "lime",
       "pattern": "solid",
@@ -33,7 +33,7 @@
       "icontype": "nature"
     },
     "firewall_script": {
-      "name": "Firewall Script",
+      "name": "Nope Stamp",
       "category": "script",
       "color": "lime",
       "pattern": "stripe_d_bold",
@@ -66,7 +66,7 @@
       "icontype": "nature"
     },
     "cache_optimizer": {
-      "name": "Cache Optimizer",
+      "name": "Hot Path",
       "category": "script",
       "color": "lime",
       "pattern": "dot_large_grid",
@@ -98,7 +98,7 @@
       "icontype": "nature, magic"
     },
     "load_balancer_script": {
-      "name": "Load Balancer Script",
+      "name": "Round Robin",
       "category": "script",
       "color": "lime",
       "pattern": "stripe_v_bold",
@@ -129,7 +129,7 @@
       "icontype": "nature"
     },
     "ai_assistant_bot": {
-      "name": "AI Assistant Bot",
+      "name": "Autocomplete",
       "category": "script",
       "color": "lime",
       "pattern": "check_large",
@@ -163,7 +163,7 @@
       "icontype": "treasure, magic"
     },
     "ddos_protection_module": {
-      "name": "DDoS Protection Module",
+      "name": "Traffic Cop",
       "category": "script",
       "color": "lime",
       "pattern": "stripe_h_bold",
@@ -196,7 +196,7 @@
       "icontype": "treasure, nature, ranged"
     },
     "cryogenic_cooling_system": {
-      "name": "Cryogenic Cooling System",
+      "name": "Chill Loop",
       "category": "script",
       "color": "lime",
       "pattern": "hatch_diag",
@@ -224,7 +224,7 @@
       "icontype": "treasure, ice"
     },
     "cupcake": {
-      "name": "Cupcake",
+      "name": "Cron Cake",
       "category": "script",
       "color": "lime",
       "pattern": "dot_small_stagger",

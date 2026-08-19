@@ -4,7 +4,7 @@ Monitors are the equivalent of "Armor" from Backpack Battles. They provide defen
 
 ## Rare Monitors
 
-### Basic Firewall
+### Packet Filter
 - **Shape:** 2x2 (4 slots square)
 - **Effect:** +15 Block
 - **Cost:** 7 Gold
@@ -14,7 +14,7 @@ Monitors are the equivalent of "Armor" from Backpack Battles. They provide defen
 
 ## Epic Monitors
 
-### Cryogenic Shield
+### Heatsink Wall
 - **Shape:** 2x2 (4 slots square)
 - **Effect:** +30 Block. Opponent is inflicted with 1 Cold each time they hit you
 - **Cost:** 11 Gold
@@ -24,7 +24,7 @@ Monitors are the equivalent of "Armor" from Backpack Battles. They provide defen
 
 ## Legendary Monitors
 
-### Sanctified Firewall
+### Hardened Perimeter
 - **Shape:** 2x2 (4 slots square)
 - **Effect:** +45 Block. Start of battle: Cleanse 5 debuffs
 - **Cost:** 13 Gold

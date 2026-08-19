@@ -2,7 +2,7 @@
   "category": "monitors",
   "items": {
     "basic_firewall": {
-      "name": "Basic Firewall",
+      "name": "Packet Filter",
       "category": "monitor",
       "color": "sky",
       "pattern": "solid",
@@ -32,7 +32,7 @@
       "sockets": 2
     },
     "cryogenic_shield": {
-      "name": "Cryogenic Shield",
+      "name": "Heatsink Wall",
       "category": "monitor",
       "color": "sky",
       "pattern": "stripe_d_bold",
@@ -63,7 +63,7 @@
       "icontype": "ice"
     },
     "sanctified_firewall": {
-      "name": "Sanctified Firewall",
+      "name": "Lint Trap",
       "category": "monitor",
       "color": "sky",
       "pattern": "dot_large_grid",

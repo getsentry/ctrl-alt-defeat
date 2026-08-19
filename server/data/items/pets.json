@@ -2,7 +2,7 @@
   "category": "pets",
   "items": {
     "blood_goobert": {
-      "name": "Blood Goobert",
+      "name": "Leech Garbo",
       "category": "pet",
       "color": "sand",
       "pattern": "solid",
@@ -24,7 +24,7 @@
       "icontype": "vampiric"
     },
     "cthulhu": {
-      "name": "Cthulhu",
+      "name": "Legacy Code",
       "category": "pet",
       "color": "sand",
       "pattern": "stripe_d_bold",
@@ -49,7 +49,7 @@
       "icontype": "treasure, dark"
     },
     "cubert": {
-      "name": "Cubert",
+      "name": "Cube Garbo",
       "category": "pet",
       "color": "sand",
       "pattern": "dot_large_grid",
@@ -73,7 +73,7 @@
       "icontype": "treasure"
     },
     "hyper_hedgehog": {
-      "name": "Hyper Hedgehog",
+      "name": "Portspike",
       "category": "pet",
       "color": "sand",
       "pattern": "stripe_v_bold",
@@ -98,7 +98,7 @@
       "icontype": "holy,nature"
     },
     "jynx_torquilla": {
-      "name": "Jynx torquilla",
+      "name": "Backtrace",
       "category": "pet",
       "color": "sand",
       "pattern": "check_large",
@@ -124,7 +124,7 @@
       "icontype": "nature, musical"
     },
     "king_goobert": {
-      "name": "King Goobert",
+      "name": "Root Garbo",
       "category": "pet",
       "color": "sand",
       "pattern": "stripe_h_bold",
@@ -148,7 +148,7 @@
       "icontype": "holy, magic"
     },
     "light_goobert": {
-      "name": "Light Goobert",
+      "name": "Flare Garbo",
       "category": "pet",
       "color": "sand",
       "pattern": "hatch_diag",
@@ -169,7 +169,7 @@
       "icontype": "holy"
     },
     "lil_chestnut": {
-      "name": "Lil Chestnut",
+      "name": "Lil Broker",
       "category": "pet",
       "color": "sand",
       "pattern": "dot_small_stagger",
@@ -192,7 +192,7 @@
       "icontype": "treasure"
     },
     "paradise_birb": {
-      "name": "Paradise Birb",
+      "name": "Bird of Paradigm",
       "category": "pet",
       "color": "sand",
       "pattern": "chevron_up",
@@ -218,7 +218,7 @@
       "icontype": "magic,vampiric,holy,dark,musical,nature"
     },
     "rainbow_goobert_megasludge_alphapuddle": {
-      "name": "Rainbow Goobert Megasludge Alphapuddle",
+      "name": "Rainbow Garbo Megaheap Alphadump",
       "category": "pet",
       "color": "sand",
       "pattern": "stripe_a_bold",
@@ -241,7 +241,7 @@
       "icontype": "vampiric, holy, nature"
     },
     "rat_chef": {
-      "name": "Rat Chef",
+      "name": "Script Kitty",
       "category": "pet",
       "color": "sand",
       "pattern": "rings",
@@ -266,7 +266,7 @@
       "icontype": "nature"
     },
     "ruby_egg": {
-      "name": "Ruby Egg",
+      "name": "Random Seed",
       "category": "pet",
       "color": "sand",
       "pattern": "stripe_v_fine",
@@ -288,7 +288,7 @@
       "icontype": "fire"
     },
     "shelly": {
-      "name": "Shelly",
+      "name": "Shell Script",
       "category": "pet",
       "color": "sand",
       "pattern": "dot_large_stagger",
@@ -311,7 +311,7 @@
       "icontype": "holy, nature"
     },
     "sloth": {
-      "name": "Sloth",
+      "name": "Lazy Loader",
       "category": "pet",
       "color": "sand",
       "pattern": "check_small",
@@ -335,7 +335,7 @@
       "icontype": "treasure,nature"
     },
     "snowmaster": {
-      "name": "Snowmaster",
+      "name": "Frost Daemon",
       "category": "pet",
       "color": "sand",
       "pattern": "stripe_h_fine",
@@ -358,7 +358,7 @@
       "icontype": "ice"
     },
     "steel_goobert": {
-      "name": "Steel Goobert",
+      "name": "Hardened Garbo",
       "category": "pet",
       "color": "sand",
       "pattern": "hatch_ortho",
@@ -380,7 +380,7 @@
       ]
     },
     "thorn_elemental": {
-      "name": "Thorn Elemental",
+      "name": "Barb Daemon",
       "category": "pet",
       "color": "sand",
       "pattern": "chevron_right",
@@ -405,7 +405,7 @@
       "icontype": "treasure,nature"
     },
     "unsettling_presence": {
-      "name": "Unsettling Presence",
+      "name": "Zombie Process",
       "category": "pet",
       "color": "sand",
       "pattern": "stripe_d_fine",
@@ -427,7 +427,7 @@
       "icontype": "treasure, dark"
     },
     "wolpertinger": {
-      "name": "Wolpertinger",
+      "name": "The Kludge",
       "category": "pet",
       "color": "sand",
       "pattern": "dot_small_grid",

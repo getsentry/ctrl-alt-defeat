@@ -2,7 +2,7 @@
   "category": "infrastructure",
   "items": {
     "health_check": {
-      "name": "Health Check",
+      "name": "Heartbeat Node",
       "category": "infrastructure",
       "color": "violet",
       "pattern": "solid",
@@ -30,7 +30,7 @@
       "slug": "health_check"
     },
     "load_balancer_module": {
-      "name": "Load Balancer Module",
+      "name": "The Seesaw",
       "category": "infrastructure",
       "color": "violet",
       "pattern": "stripe_d_bold",
@@ -57,7 +57,7 @@
       "slug": "load_balancer_module"
     },
     "backup_system": {
-      "name": "Backup System",
+      "name": "Cold Storage",
       "category": "infrastructure",
       "color": "violet",
       "pattern": "dot_large_grid",
@@ -88,7 +88,7 @@
       "slug": "backup_system"
     },
     "quantum_processor": {
-      "name": "Quantum Processor",
+      "name": "Qubit Core",
       "category": "infrastructure",
       "color": "violet",
       "pattern": "stripe_v_bold",
@@ -130,7 +130,7 @@
       "icontype": "magic, vampiric, holy, dark"
     },
     "quantum_probability_core": {
-      "name": "Quantum Probability Core",
+      "name": "Schrodinger's Die",
       "category": "infrastructure",
       "color": "violet",
       "pattern": "check_large",
@@ -159,7 +159,7 @@
       "icontype": "nature"
     },
     "neural_link_collar": {
-      "name": "Neural Link Collar",
+      "name": "Neural Collar",
       "category": "infrastructure",
       "color": "violet",
       "pattern": "stripe_h_bold",

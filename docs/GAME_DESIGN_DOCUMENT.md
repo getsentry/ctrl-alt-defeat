@@ -163,7 +163,7 @@ Every number here comes from the Backpack Battles item it is based on,
 including CPU cost, which that game calls stamina. CPU costs are fractional
 as a result.
 
-- **Null blade** (Common Melee, from Wooden Sword)
+- **Null Blade** (Common Melee, from Wooden Sword)
   - Damage: 1-3
   - Cooldown: 1.4s
   - CPU Cost: 1.0
@@ -259,7 +259,7 @@ and so do we: `BlockEffect` against `PreventDamageEffect`.
   It shares its source with Error Monitoring, so the two are identical.
   One of them has the wrong item recorded as its source.
 
-- **Rate Limiter** (Rare Shield, from Hero Shield)
+- **Throttle Gate** (Rare Shield, from Hero Shield)
   - 30% chance to activate on attack
   - Blocks 15 damage
   - Removes 0.4 CPU from attacker
@@ -312,7 +312,7 @@ Items that are consumed after triggering once.
   - Effect: Heal 30 HP + 10 Block
   - Consumed after use
 
-- **CPU Booster** (Uncommon)
+- **Turbo Button** (Uncommon)
   - Trigger: Battle start
   - Effect: +10 max CPU for battle
   - Consumed after use
@@ -579,9 +579,9 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
 - **AI Assistant Plus** (Godly): AI Assistant + Machine Learning Model
 
 #### Potion/Consumable Recipes
-- **Emergency Hotfix** (Rare): Quick Fix + Deploy Script
-- **Full Recovery** (Epic): Health Check + Backup System
-- **CPU Overclock** (Rare): CPU Booster + Energy Drink
+- **Hotfix Ampoule** (Rare): Quick Fix + Deploy Script
+- **Full Recovery** (Epic): Heartbeat Node + Cold Storage
+- **CPU Overclock** (Rare): Turbo Button + Energy Drink
 - **Memory Cleaner** (Epic): Garbage Collector + Memory Optimizer
 
 #### Special Combinations

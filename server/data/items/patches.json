@@ -2,7 +2,7 @@
   "category": "patches",
   "items": {
     "emergency_hotfix": {
-      "name": "Emergency Hotfix",
+      "name": "Hotfix Ampoule",
       "category": "patch",
       "color": "yellow",
       "pattern": "solid",
@@ -29,7 +29,7 @@
       "slug": "emergency_hotfix"
     },
     "memory_injection": {
-      "name": "Memory Injection",
+      "name": "Swap Shot",
       "category": "patch",
       "color": "yellow",
       "pattern": "stripe_d_bold",
@@ -59,7 +59,7 @@
       "icontype": "magic"
     },
     "security_hardening": {
-      "name": "Security Hardening",
+      "name": "Hardening Serum",
       "category": "patch",
       "color": "yellow",
       "pattern": "dot_large_grid",
@@ -88,7 +88,7 @@
       "slug": "security_hardening"
     },
     "virus_payload": {
-      "name": "Virus Payload",
+      "name": "Payload Vial",
       "category": "patch",
       "color": "yellow",
       "pattern": "stripe_v_bold",
@@ -118,7 +118,7 @@
       "slug": "virus_payload"
     },
     "performance_boost": {
-      "name": "Performance Boost",
+      "name": "Overclock Shot",
       "category": "patch",
       "color": "yellow",
       "pattern": "check_large",
@@ -147,7 +147,7 @@
       "slug": "performance_boost"
     },
     "system_restore": {
-      "name": "System Restore",
+      "name": "Restore Point",
       "category": "patch",
       "color": "yellow",
       "pattern": "stripe_h_bold",
@@ -182,7 +182,7 @@
       "icontype": "holy"
     },
     "lightning_in_a_bottle": {
-      "name": "Lightning in a Bottle",
+      "name": "Capacitor Flask",
       "category": "patch",
       "color": "yellow",
       "pattern": "hatch_diag",
@@ -208,7 +208,7 @@
       "icontype": "treasure"
     },
     "strong_heroic_potion": {
-      "name": "Strong Heroic Potion",
+      "name": "Adrenaline Dump",
       "category": "patch",
       "color": "yellow",
       "pattern": "dot_small_stagger",
@@ -229,7 +229,7 @@
       ]
     },
     "strong_stone_skin_potion": {
-      "name": "Strong Stone Skin Potion",
+      "name": "Read-Only Mode",
       "category": "patch",
       "color": "yellow",
       "pattern": "chevron_up",
@@ -250,7 +250,7 @@
       ]
     },
     "vampiric_potion": {
-      "name": "Vampiric Potion",
+      "name": "Drain Vial",
       "category": "patch",
       "color": "yellow",
       "pattern": "stripe_a_bold",

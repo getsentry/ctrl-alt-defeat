@@ -2,7 +2,7 @@
   "category": "consumables",
   "items": {
     "health_potion": {
-      "name": "Health Potion",
+      "name": "Uptime Tonic",
       "category": "consumable",
       "color": "pink",
       "pattern": "solid",
@@ -42,7 +42,7 @@
       "slug": "health_potion"
     },
     "cpu_booster": {
-      "name": "CPU Booster",
+      "name": "Turbo Button",
       "category": "consumable",
       "color": "pink",
       "pattern": "stripe_d_bold",
@@ -74,7 +74,7 @@
       "icontype": "magic"
     },
     "emergency_patch": {
-      "name": "Emergency Patch",
+      "name": "Duct Tape Fix",
       "category": "consumable",
       "color": "pink",
       "pattern": "dot_large_grid",
@@ -118,7 +118,7 @@
       "slug": "emergency_patch"
     },
     "data_packets": {
-      "name": "Data Packets",
+      "name": "Packet Burst",
       "category": "consumable",
       "color": "pink",
       "pattern": "stripe_v_bold",
@@ -154,7 +154,7 @@
       "subclass": "Hunter"
     },
     "ai_companion_core": {
-      "name": "AI Companion Core",
+      "name": "Rubber Duck",
       "category": "consumable",
       "color": "pink",
       "pattern": "check_large",
@@ -204,7 +204,7 @@
       "icontype": "nature"
     },
     "surveillance_drone": {
-      "name": "Surveillance Drone",
+      "name": "Lil' Snitch",
       "category": "consumable",
       "color": "pink",
       "pattern": "stripe_h_bold",
@@ -236,7 +236,7 @@
       "icontype": "nature"
     },
     "data_crawler": {
-      "name": "Data Crawler",
+      "name": "Web Crawler",
       "category": "consumable",
       "color": "pink",
       "pattern": "hatch_diag",
@@ -300,7 +300,7 @@
       "icontype": "nature"
     },
     "healing_nanobots": {
-      "name": "Healing Nanobots",
+      "name": "Repair Swarm",
       "category": "consumable",
       "color": "pink",
       "pattern": "chevron_up",
@@ -331,7 +331,7 @@
       "icontype": "nature"
     },
     "auto_rollback": {
-      "name": "Auto Rollback",
+      "name": "Ctrl+Z",
       "category": "consumable",
       "color": "pink",
       "pattern": "stripe_a_bold",

@@ -2,7 +2,7 @@
   "category": "problems",
   "items": {
     "null_blade": {
-      "name": "Null blade",
+      "name": "Null Blade",
       "category": "problem",
       "color": "red",
       "pattern": "solid",
@@ -255,7 +255,7 @@
       "icontype": "ranged"
     },
     "neural_interface_blade": {
-      "name": "Neural Interface Blade",
+      "name": "Migraine",
       "category": "problem",
       "color": "red",
       "pattern": "chevron_up",
@@ -354,7 +354,7 @@
       "icontype": "nature,effect,ranged"
     },
     "quantum_sniper": {
-      "name": "Quantum Sniper",
+      "name": "Pointer Rifle",
       "category": "problem",
       "color": "red",
       "pattern": "rings",
@@ -436,7 +436,7 @@
       "icontype": "nature, ranged"
     },
     "malware_propagator": {
-      "name": "Malware Propagator",
+      "name": "Spam Cannon",
       "category": "problem",
       "color": "red",
       "pattern": "dot_large_stagger",
@@ -473,7 +473,7 @@
       "icontype": "nature, ranged"
     },
     "probability_manipulator": {
-      "name": "Probability Manipulator",
+      "name": "Loaded Dice Rig",
       "category": "problem",
       "color": "red",
       "pattern": "check_small",
@@ -522,7 +522,7 @@
       "icontype": "nature, ranged"
     },
     "quantum_flux_rifle": {
-      "name": "Quantum Flux Rifle",
+      "name": "Flux Rifle",
       "category": "problem",
       "color": "red",
       "pattern": "stripe_h_fine",
@@ -648,7 +648,7 @@
       "icontype": "nature, ranged"
     },
     "spike_generator": {
-      "name": "Spike Generator",
+      "name": "Caltrop Hopper",
       "category": "problem",
       "color": "red",
       "pattern": "stripe_d_fine",
@@ -839,7 +839,7 @@
       "icontype": "treasure, vampiric, melee"
     },
     "bloodthorne": {
-      "name": "Bloodthorne",
+      "name": "Thornstack",
       "category": "problem",
       "color": "red",
       "pattern": "zigzag_h",
@@ -877,7 +877,7 @@
       "icontype": "vampiric, nature, melee"
     },
     "bloody_dagger": {
-      "name": "Bloody Dagger",
+      "name": "Blood Ledger",
       "category": "problem",
       "color": "red",
       "pattern": "zigzag_v",
@@ -916,7 +916,7 @@
       "icontype": "vampiric, melee"
     },
     "broom": {
-      "name": "Broom",
+      "name": "Dust Blaster",
       "category": "problem",
       "color": "red",
       "pattern": "wave_h",
@@ -955,7 +955,7 @@
       "icontype": "melee"
     },
     "burning_torch": {
-      "name": "Burning Torch",
+      "name": "Thermal Torch",
       "category": "problem",
       "color": "red",
       "pattern": "wave_v",
@@ -992,7 +992,7 @@
       "icontype": "fire, melee"
     },
     "claws_of_attack": {
-      "name": "Claws of Attack",
+      "name": "Grep Claws",
       "category": "problem",
       "color": "red",
       "pattern": "brick_h",
@@ -1028,7 +1028,7 @@
       "icontype": "melee"
     },
     "crossblades": {
-      "name": "Crossblades",
+      "name": "Cross-Site Blades",
       "category": "problem",
       "color": "red",
       "pattern": "brick_v",
@@ -1067,7 +1067,7 @@
       "icontype": "melee"
     },
     "dancing_dragon": {
-      "name": "Dancing Dragon",
+      "name": "Race Condition",
       "category": "problem",
       "color": "red",
       "pattern": "scale",
@@ -1107,7 +1107,7 @@
       "icontype": "treasure, fire, ranged"
     },
     "darksaber": {
-      "name": "Darksaber",
+      "name": "Dark Mode",
       "category": "problem",
       "color": "red",
       "pattern": "triangle_up",
@@ -1146,7 +1146,7 @@
       "icontype": "dark, melee"
     },
     "eggscalibur": {
-      "name": "Eggscalibur",
+      "name": "Eggsploit",
       "category": "problem",
       "color": "red",
       "pattern": "triangle_down",
@@ -1185,7 +1185,7 @@
       "icontype": "holy, magic, melee"
     },
     "falcon_blade": {
-      "name": "Falcon Blade",
+      "name": "Double Tap",
       "category": "problem",
       "color": "red",
       "pattern": "diamond_grid",
@@ -1225,7 +1225,7 @@
       "icontype": "melee"
     },
     "fancy_fencing_rapier": {
-      "name": "Fancy Fencing Rapier",
+      "name": "Fencepost Error",
       "category": "problem",
       "color": "red",
       "pattern": "diamond_stagger",
@@ -1264,7 +1264,7 @@
       "icontype": "melee"
     },
     "frostbite": {
-      "name": "Frostbite",
+      "name": "Cold Snap",
       "category": "problem",
       "color": "red",
       "pattern": "cross_grid",
@@ -1303,7 +1303,7 @@
       "icontype": "ice, vampiric, melee"
     },
     "hammer": {
-      "name": "Hammer",
+      "name": "Percussive Maintenance",
       "category": "problem",
       "color": "red",
       "pattern": "plus_grid",
@@ -1340,7 +1340,7 @@
       "icontype": "melee"
     },
     "hero_longsword": {
-      "name": "Hero Longsword",
+      "name": "Long Poll",
       "category": "problem",
       "color": "red",
       "pattern": "speckle",
@@ -1379,7 +1379,7 @@
       "icontype": "melee"
     },
     "hero_sword": {
-      "name": "Hero Sword",
+      "name": "Main Branch",
       "category": "problem",
       "color": "ember",
       "pattern": "solid",
@@ -1417,7 +1417,7 @@
       "icontype": "melee"
     },
     "holy_spear": {
-      "name": "Holy Spear",
+      "name": "Cert Lance",
       "category": "problem",
       "color": "ember",
       "pattern": "stripe_d_bold",
@@ -1461,7 +1461,7 @@
       "icontype": "holy, magic, melee"
     },
     "hungry_blade": {
-      "name": "Hungry Blade",
+      "name": "Memory Eater",
       "category": "problem",
       "color": "ember",
       "pattern": "dot_large_grid",
@@ -1500,7 +1500,7 @@
       "icontype": "vampiric, melee"
     },
     "impractically_large_greatsword": {
-      "name": "Impractically Large Greatsword",
+      "name": "Blade Server",
       "category": "problem",
       "color": "ember",
       "pattern": "stripe_v_bold",
@@ -1538,7 +1538,7 @@
       "icontype": "melee"
     },
     "katana": {
-      "name": "Katana",
+      "name": "Vim Katana",
       "category": "problem",
       "color": "ember",
       "pattern": "check_large",
@@ -1576,7 +1576,7 @@
       "icontype": "melee"
     },
     "lightsaber": {
-      "name": "Lightsaber",
+      "name": "Laser Pointer",
       "category": "problem",
       "color": "ember",
       "pattern": "stripe_h_bold",
@@ -1615,7 +1615,7 @@
       "icontype": "holy, melee"
     },
     "magic_staff": {
-      "name": "Magic Staff",
+      "name": "Query Staff",
       "category": "problem",
       "color": "ember",
       "pattern": "hatch_diag",
@@ -1653,7 +1653,7 @@
       "icontype": "magic, ranged"
     },
     "magic_torch": {
-      "name": "Magic Torch",
+      "name": "Arc Torch",
       "category": "problem",
       "color": "ember",
       "pattern": "dot_small_stagger",
@@ -1689,7 +1689,7 @@
       "icontype": "magic, fire, melee"
     },
     "manathirst": {
-      "name": "Manathirst",
+      "name": "Memory Leak",
       "category": "problem",
       "color": "ember",
       "pattern": "chevron_up",
@@ -1764,7 +1764,7 @@
       "icontype": "melee"
     },
     "pandamonium": {
-      "name": "Pandamonium",
+      "name": "Pandemic",
       "category": "problem",
       "color": "ember",
       "pattern": "rings",
@@ -1803,7 +1803,7 @@
       "icontype": "dark, melee"
     },
     "poison_dagger": {
-      "name": "Poison Dagger",
+      "name": "Tainted Shiv",
       "category": "problem",
       "color": "ember",
       "pattern": "stripe_v_fine",
@@ -1840,7 +1840,7 @@
       "icontype": "melee"
     },
     "poison_spear": {
-      "name": "Poison Spear",
+      "name": "Venom Lance",
       "category": "problem",
       "color": "ember",
       "pattern": "dot_large_stagger",
@@ -1883,7 +1883,7 @@
       "icontype": "melee"
     },
     "pop": {
-      "name": "Pop",
+      "name": "Stack Pop",
       "category": "problem",
       "color": "ember",
       "pattern": "check_small",
@@ -1919,7 +1919,7 @@
       "icontype": "treasure, magic, effect, ranged"
     },
     "prismatic_sword": {
-      "name": "Prismatic Sword",
+      "name": "Polyglot Blade",
       "category": "problem",
       "color": "ember",
       "pattern": "stripe_h_fine",
@@ -1962,7 +1962,7 @@
       "icontype": "magic, vampiric, holy, dark, melee"
     },
     "ripsaw_blade": {
-      "name": "Ripsaw Blade",
+      "name": "Ripsaw",
       "category": "problem",
       "color": "ember",
       "pattern": "hatch_ortho",
@@ -2000,7 +2000,7 @@
       "icontype": "melee"
     },
     "serpent_staff": {
-      "name": "Serpent Staff",
+      "name": "Snake Case",
       "category": "problem",
       "color": "ember",
       "pattern": "chevron_right",
@@ -2039,7 +2039,7 @@
       "icontype": "magic, ranged"
     },
     "shell_totem": {
-      "name": "Shell Totem",
+      "name": "Watchdog Totem",
       "category": "problem",
       "color": "ember",
       "pattern": "stripe_d_fine",
@@ -2100,7 +2100,7 @@
       "icontype": "melee"
     },
     "snow_stick": {
-      "name": "Snow Stick",
+      "name": "Coolant Rod",
       "category": "problem",
       "color": "ember",
       "pattern": "stripe_a_fine",
@@ -2181,7 +2181,7 @@
       "icontype": "melee"
     },
     "spectral_dagger": {
-      "name": "Spectral Dagger",
+      "name": "Phantom Read",
       "category": "problem",
       "color": "ember",
       "pattern": "grid_fine",
@@ -2218,7 +2218,7 @@
       "icontype": "magic, melee"
     },
     "stankus_toothpick": {
-      "name": "Stankus' Toothpick",
+      "name": "Off By One",
       "category": "problem",
       "color": "ember",
       "pattern": "zigzag_h",
@@ -2259,7 +2259,7 @@
       "icontype": "melee"
     },
     "ping_flood": {
-      "name": "Ping Flood",
+      "name": "Ping of Death",
       "category": "problem",
       "color": "ember",
       "pattern": "zigzag_v",
@@ -2294,7 +2294,7 @@
       "icontype": "nature, ranged"
     },
     "stone_golem": {
-      "name": "Stone Golem",
+      "name": "Build Golem",
       "category": "problem",
       "color": "ember",
       "pattern": "wave_h",
@@ -2333,7 +2333,7 @@
       "icontype": "effect, ranged"
     },
     "thornbloom": {
-      "name": "Thornbloom",
+      "name": "Razorvine",
       "category": "problem",
       "color": "ember",
       "pattern": "brick_h",

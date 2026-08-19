@@ -74,7 +74,7 @@ back as unbuilt rather than marked unavailable.
 
 - **Skills** (39). Handed out at a level rather than bought.
 - **Subclass items** (4: Beastmaster, Grovekeeper, Pathfinder, Lifebinder).
-  Subclasses do not exist yet. **Data Packets**, already in the catalogue, is a
+  Subclasses do not exist yet. **Packet Burst**, already in the catalogue, is a
   fifth: its source Piercing Arrow is a Hunter item, so it is held back with a
   `needs` line rather than deleted, because subclasses are meant to arrive.
 
@@ -131,7 +131,7 @@ a second colour close to its first. See `server/item_looks.py`.
 | Manathirst |  | legendary | 13 | 1x3 | 1 | 2 |
 | Mobius Lash | Thorn Whip | epic | 8 | 3x3 | 2 | 2 |
 | Pandamonium |  | legendary | 11 | 5x4 | 2 | 2 |
-| Ping Flood | Stone | common | 1 | 1x1 |  | 2 |
+| Ping of Death | Stone | common | 1 | 1x1 |  | 2 |
 | Poison Dagger |  | epic | 11 | 1x2 | 1 | 2 |
 | Poison Spear |  | legendary | 13 | 1x9 | 1 | 1 |
 | Pop |  | unique | 6 | 2x2 | 4 | 1 |
