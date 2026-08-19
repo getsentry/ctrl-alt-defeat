@@ -267,8 +267,10 @@ func _show_tooltip():
 		beside.get_center().y - tooltip_panel.size.y / 2.0
 	)
 
-	# Make sure it stays on screen
-	var viewport_size = get_viewport().size
+	# Make sure it stays on screen. get_viewport_rect() is the 1680 by 1050
+	# space the tooltip is positioned in; get_viewport().size would be the
+	# real window in pixels, which the stretch mode makes a different number.
+	var viewport_size = get_viewport_rect().size
 
 	# If tooltip would go off the left edge, show it on the right instead
 	if tooltip_panel.position.x < 0:

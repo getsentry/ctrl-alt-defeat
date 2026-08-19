@@ -446,12 +446,6 @@ var _gold_shown: int = -1
 func _ready():
 	print("UnifiedGridUI starting...")
 
-	# Set window size for consistency (scaling to 1680x1050)
-	if not OS.has_feature("headless"):
-		DisplayServer.window_set_size(Vector2i(1680, 1050))
-		get_window().min_size = Vector2i(1680, 1050)
-		get_window().max_size = Vector2i(1680, 1050)
-
 	# Connect to API signals for typed responses
 	BattleServerAPI.purchase_completed.connect(_on_purchase_completed)
 

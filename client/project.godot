@@ -26,7 +26,10 @@ BattleServerAPI="*res://scripts/battle_server_api.gd"
 window/size/viewport_width=1680
 window/size/viewport_height=1050
 window/size/initial_position_type=2
-window/size/resizable=false
+window/size/window_width_override=1400
+window/size/window_height_override=875
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
 
 [editor_plugins]
 
@@ -34,6 +37,6 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
 [rendering]
 
-textures/canvas_textures/default_texture_filter=0
+textures/canvas_textures/default_texture_filter=1
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"

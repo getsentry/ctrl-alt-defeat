@@ -325,6 +325,13 @@ func test_read_only_grids_still_show_their_contents():
 
 # ============ Dropping on the chest ============
 
+func _where_the_drop_lands() -> Vector2:
+	# _end_drag() reads the pointer, and nothing here moves it. The pointer is
+	# not at the origin: the window stretches a 1680 by 1050 canvas to fit, and
+	# the letterbox that keeps the aspect ratio shifts the canvas away from it.
+	return grid.get_global_mouse_position()
+
+
 func test_dropping_on_the_chest_takes_the_item_off_the_grid():
 	# The grid does not talk to the server. It takes the item off and says so,
 	# and whoever owns it asks for the move and puts it back if that fails.
@@ -334,6 +341,7 @@ func test_dropping_on_the_chest_takes_the_item_off_the_grid():
 	zone.size = Vector2(100, 100)
 	add_child(zone)
 	autofree(zone)
+	zone.global_position = _where_the_drop_lands() - zone.size / 2
 	grid.storage_zone = zone
 
 	watch_signals(grid)
@@ -350,10 +358,10 @@ func test_a_drop_away_from_the_chest_is_an_ordinary_move():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "staying"}), Vector2i(2, 3))
 	var zone = Control.new()
-	zone.position = Vector2(5000, 5000)  # nowhere near the drop
 	zone.size = Vector2(10, 10)
 	add_child(zone)
 	autofree(zone)
+	zone.global_position = _where_the_drop_lands() + Vector2(5000, 5000)
 	grid.storage_zone = zone
 
 	watch_signals(grid)
@@ -383,7 +391,7 @@ func test_a_grid_with_no_chest_still_drops():
 func _grid_under_the_drop() -> InventoryGrid:
 	# The grid an item would move to, sitting where the drop will land so the
 	# hit test finds it.
-	return _other_grid(Vector2.ZERO)
+	return _other_grid(_where_the_drop_lands() - Vector2(10, 10))
 
 
 func test_dropping_on_the_main_grid_hands_the_item_over():

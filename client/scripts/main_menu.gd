@@ -10,11 +10,9 @@ const Presentation = preload("res://scripts/presentation.gd")
 @onready var name_input = $NameInputContainer/NameInput
 
 func _ready():
-	# Set window size for consistency
-	if not OS.has_feature("headless"):  # Only set window size if we have a display
-		DisplayServer.window_set_size(Vector2i(1680, 1050))  # Match new target resolution
-		get_window().min_size = Vector2i(1680, 1050)  # Prevent resizing smaller
-		get_window().max_size = Vector2i(1680, 1050)  # Prevent resizing larger for fixed size
+	# The window is free to be any size. Every screen is laid out in one
+	# 1680 by 1050 space, and the canvas_items stretch mode scales that space
+	# to whatever the window is, so nothing here has to know the real size.
 	_setup_ui()
 
 	# Load saved player name if it exists
