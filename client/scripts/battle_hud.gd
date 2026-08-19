@@ -35,10 +35,24 @@ const ENEMY_AT := Vector2(0.915, 0.62)
 # width to each rack, about half of it to the stats in the middle, and the
 # fighters shrunk into the bottom corners. The racks and the numbers are what a
 # player reads; the characters are scenery.
-const CLOCK_SIZE := Vector2(452, 68)
+## The clock carries the time and nothing else. Its buttons used to sit inside
+## it, which made the plate wide enough to hold three things in a row -- and
+## the racks either side could only be as wide as what that plate left them.
+## Out from under it, the plate is no wider than the number it shows.
+const CLOCK_SIZE := Vector2(240, 52)
+## The row of buttons under the clock: pause, speed, and the log. All the same
+## size, so a row of them reads as a row rather than as three separate things.
+const CONTROL_SIZE := Vector2(84, 32)
+const CONTROL_GAP := 8.0
+const CONTROLS_TOP := 78.0
 const LOG_SIZE := Vector2(700, 344)
-const LOG_BUTTON_SIZE := Vector2(126, 46)
-const RACK_TOP := 78.0
+## How far down the racks start. Below the clock, not beside it: the racks
+## are as wide as the room allows now, so their backdrops reach in under the
+## clock plate and a rack's title was being read as "R RACK". With the clock
+## narrowed to the width of the time and its buttons moved into a row beneath
+## it, nothing reaches over the racks any more and they start at the top of
+## the window instead of below the middle of it.
+const RACK_TOP := 30.0
 const RACK_MARGIN := 36.0
 const RACK_PAD := Vector2(20, 20)
 const STATS_SIZE := Vector2(780, 372)
@@ -105,6 +119,9 @@ func build(time_label: Label, speed_button: Button, log_panel: Control,
 		stats: Dictionary, grids: Dictionary, art: Dictionary) -> void:
 	_build_clock(time_label, speed_button)
 	_build_log_drawer(log_panel)
+	# In a row under the clock, once both of them have made their buttons. The
+	# log used to sit in the top corner, over a rack that now runs to the top.
+	_lay_out_controls([pause_button, speed_button, log_button])
 	_place_racks(grids)
 	_frame(grids["player"], PLAYER_ACCENT, "YOUR RACK")
 	_frame(grids["enemy"], ENEMY_ACCENT, "THEIR RACK")
@@ -136,33 +153,28 @@ func _build_clock(time_label: Label, speed_button: Button) -> void:
 	timeline = Timeline.new()
 	timeline.name = "Timeline"
 	timeline.accent = CLOCK_ACCENT
-	timeline.position = Vector2(26, 13)
-	timeline.size = Vector2(CLOCK_SIZE.x - 52, 9)
+	timeline.position = Vector2(16, 9)
+	timeline.size = Vector2(CLOCK_SIZE.x - 32, 8)
 	timeline.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clock_plate.add_child(timeline)
 
 	_reparent(time_label, clock_plate)
 	time_label.scale = Vector2.ONE
-	time_label.position = Vector2(26, 28)
-	time_label.size = Vector2(120, 32)
-	time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	time_label.position = Vector2(0, 20)
+	time_label.size = Vector2(CLOCK_SIZE.x, 26)
+	time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	time_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	time_label.add_theme_font_size_override("font_size", 24)
+	# The plate is drawn with a chevron at either end, so the time has the
+	# middle of it and not the whole of it to sit in.
+	time_label.add_theme_font_size_override("font_size", 20)
 	time_label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.8))
-
-	_reparent(speed_button, clock_plate)
-	speed_button.position = Vector2(CLOCK_SIZE.x - 140, 29)
-	speed_button.size = Vector2(94, 30)
-	speed_button.custom_minimum_size = Vector2(94, 30)
-	_style_button(speed_button, CLOCK_ACCENT)
 
 	pause_button = Button.new()
 	pause_button.name = "PauseButton"
 	pause_button.text = PAUSE_GLYPH
-	_put(pause_button, Vector2(CLOCK_SIZE.x - 240, 29), Vector2(84, 30))
-	pause_button.custom_minimum_size = Vector2(84, 30)
-	_style_button(pause_button, CLOCK_ACCENT)
-	clock_plate.add_child(pause_button)
+
+	_reparent(speed_button, screen)
+	screen.add_child(pause_button)
 
 
 ## Say whether the battle is running or held.
@@ -184,12 +196,37 @@ func tick(elapsed: float, total: float) -> void:
 ## It used to sit open in the middle of the screen, over the ground the two
 ## fighters stand on and over the numbers flying off them. Now it is a drawer
 ## on the right, shut until the button is pressed.
+func _lay_out_controls(buttons: Array) -> void:
+	"""Lay the buttons out in one row, centred under the clock.
+
+	All one size and evenly spaced, so the row reads as a set of controls
+	rather than three things that happened to land near each other. Under the
+	clock rather than in it or in a corner: the plate stays as narrow as the
+	number it holds, and the racks get the rest of the window.
+	"""
+	var count := buttons.size()
+	if count < 1:
+		return
+	var wide: float = CONTROL_SIZE.x * count + CONTROL_GAP * (count - 1)
+	var left: float = (_window().x - wide) / 2.0
+	for i in count:
+		var button: Button = buttons[i]
+		if button == null:
+			continue
+		# Before it is put anywhere: the speed button comes out of the scene
+		# asking for 150 by 40, and a Control cannot be made smaller than the
+		# minimum it is carrying, so sizing it first has no effect at all.
+		button.custom_minimum_size = CONTROL_SIZE
+		_put(button, Vector2(left + i * (CONTROL_SIZE.x + CONTROL_GAP), CONTROLS_TOP),
+			CONTROL_SIZE)
+		_style_button(button, CLOCK_ACCENT)
+		button.z_index = 80
+
+
 func _build_log_drawer(log_panel: Control) -> void:
 	log_button = Button.new()
 	log_button.name = "LogButton"
 	log_button.text = "LOG"
-	_put(log_button, Vector2(_window().x - LOG_BUTTON_SIZE.x - 26, 24), LOG_BUTTON_SIZE)
-	_style_button(log_button, PLAYER_ACCENT)
 	log_button.pressed.connect(toggle_log)
 	screen.add_child(log_button)
 

@@ -352,7 +352,7 @@ func _setup_inventories():
 	# fire and what is written over it. Everything else about a rack -- where
 	# it stands, its backdrop, the frame behind it -- is measured off the grid,
 	# so this is the one number that decides how big an item is drawn.
-	const CELL_SIZE = 60
+	const CELL_SIZE = 70
 
 	# Create inventory grids using InventoryGrid class (not scene)
 	# Player inventory - standard 9x7 grid like UnifiedGridUI
