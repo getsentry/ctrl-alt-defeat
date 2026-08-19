@@ -349,35 +349,50 @@ class TestGameDesignCompliance:
         # Should see CPU_FAIL actions in the result
         # Item can't activate with 20 CPU cost when max is 10
 
-    def test_infrastructure_effects(self):
-        """Infrastructure items apply their stat mods before the battle"""
-        sim = BattleSimulator(seed=TEST_SEED)
-        player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
+    def _pool_in_a_battle(self, slug):
+        """The pool and the regen a player fights with, carrying this item.
 
-        quantum = BattleItem(
-            spec=deepcopy(ITEM_CATALOG["quantum_processor"]), position=(0, 0)
-        )
-        sim._apply_infrastructure([quantum], player)
-
-        assert player.max_cpu == 13  # 3 base + 10 from JSON
-        assert player.cpu_regen == 4.0  # 1 base + 3 from JSON
-
-    def test_only_infrastructure_items_apply_stat_mods(self):
-        """
-        _apply_infrastructure skips anything whose category is not
-        "infrastructure". auto_scaler is a protocol, so it must not change CPU.
+        Read off a real battle rather than off a helper. The doubling this
+        guards against lived between two passes that each looked right on its
+        own, so only the battle could show it.
         """
         sim = BattleSimulator(seed=TEST_SEED)
-        player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
-
-        autoscaler = BattleItem(
-            spec=deepcopy(ITEM_CATALOG["auto_scaler"]), position=(0, 0)
+        items = [
+            BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0)),
+            BattleItem(spec=deepcopy(ITEM_CATALOG[slug]), position=(1, 0)),
+        ]
+        p1_containers, p2_containers = get_test_containers()
+        result = sim.simulate_battle(
+            items, [], round_number=1,
+            p1_containers=p1_containers, p2_containers=p2_containers,
         )
-        sim._apply_infrastructure([autoscaler], player)
+        for action in result["actions"]:
+            details = action.details or {}
+            if "max_cpu" in details:
+                return details["max_cpu"][0]
+        raise AssertionError("No action carried a CPU level")
 
-        assert player.max_cpu == 3, "A protocol should not raise max CPU"
-        assert player.cpu_regen == 1.0, "A protocol should not raise CPU regen"
-        # So no passive effects to test here
+    def test_a_passive_stat_mod_is_applied_once(self):
+        """An item raises the pool by what its own data says, and no more.
+
+        The quantum processor is the only item in the infrastructure category,
+        and it used to be counted twice: once by an infrastructure pass and
+        once by the general passive handling. It came into every battle with a
+        pool of 23 against the 13 its JSON asks for.
+        """
+        assert self._pool_in_a_battle("quantum_processor") == 13.0
+
+    def test_an_item_outside_infrastructure_raises_the_pool_too(self):
+        """The category does not decide it; the passive effect does.
+
+        Memory Cache is a container and gives one cycle. Modules and protocols
+        do the same for regeneration, which is most of where regeneration
+        lives.
+        """
+        assert self._pool_in_a_battle("memory_cache") == 4.0
+
+    def test_an_item_with_no_stat_mod_leaves_the_pool_alone(self):
+        assert self._pool_in_a_battle("auto_scaler") == 3.0
 
     def test_special_item_effects(self):
         """Test specific item special effects from Section 2"""

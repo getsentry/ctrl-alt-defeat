@@ -299,11 +299,11 @@ class BattleSimulator:
         player1.reset_for_battle()
         player2.reset_for_battle()
 
-        # Apply infrastructure effects (Section 2.3)
-        self._apply_infrastructure(p1_items, player1)
-        self._apply_infrastructure(p2_items, player2)
-
-        # Set up event handlers for items
+        # Set up event handlers for items. Passive effects are applied here as
+        # the handlers go on, which is the only place they are applied: an
+        # infrastructure pass of its own used to run first and add the same
+        # stat mods a second time, so the one item in that category came into
+        # every battle with twice the pool its own data gives it.
         self._setup_item_handlers(p1_items, player1, player2)
         self._setup_item_handlers(p2_items, player2, player1)
 
@@ -441,22 +441,6 @@ class BattleSimulator:
         """Get quota based on round number (Section 1.1)"""
         index = min(max(round_num, 1), len(self.ROUND_QUOTA)) - 1
         return self.ROUND_QUOTA[index]
-
-    def _apply_infrastructure(self, items: List[BattleItem], player: Player):
-        """Apply infrastructure passive effects (Section 2.3)"""
-        for item in items:
-            if item.spec.category != "infrastructure":
-                continue
-
-            # Apply passive effects immediately
-            for trigger in item.spec.triggers:
-                if isinstance(trigger, PassiveTrigger):
-                    for effect in trigger.effects:
-                        if isinstance(effect, StatModEffect):
-                            if effect.stat_name == "max_cpu":
-                                player.max_cpu += effect.value
-                            elif effect.stat_name == "cpu_regen":
-                                player.cpu_regen += effect.value
 
     def _setup_item_handlers(
         self, items: List[BattleItem], owner: Player, enemy: Player

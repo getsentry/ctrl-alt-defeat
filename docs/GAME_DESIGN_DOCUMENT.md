@@ -30,8 +30,11 @@ A Sentry-themed autobattler where players manage a "server rack" (backpack) fill
 - **Loss Penalty**: Lose health based on remaining enemy health
 
 ### 1.2 CPU Cycles (Stamina)
-- **CPU Pool**: 3 cycles, increased by infrastructure items
-- **CPU Regeneration**: 1 cycle/second base rate
+- **CPU Pool**: 3 cycles, raised by any item carrying a passive `max_cpu`
+  effect — infrastructure most of all, but a container or a module may do it
+  too, and each such item counts once
+- **CPU Regeneration**: 1 cycle/second base rate, raised the same way by a
+  passive `cpu_regen` effect. Modules and protocols are where most of it lives
 - **CPU Usage**: Each item activation consumes CPU cycles, in fractions
 - **Throttling**: When CPU hits 0, items skip activations but maintain schedule
 
