@@ -3,7 +3,8 @@
 [ext_resource type="Script" uid="uid://bsjwiwbja4ewd" path="res://scripts/unified_grid_ui.gd" id="1_unified"]
 [ext_resource type="Texture2D" uid="uid://c3y3cdghsx4wu" path="res://assets/ui/backgrounds/inventory_background.png" id="2_bg"]
 [ext_resource type="Texture2D" uid="uid://dt8utxaf3hedf" path="res://assets/characters/player_character_animation.png" id="3_nenkm"]
-[ext_resource type="Texture2D" uid="uid://p6rkneqswoo6" path="res://assets/ui/sell_chest.svg" id="6_chest"]
+[ext_resource type="Texture2D" uid="uid://bxostxe5sotec" path="res://assets/ui/sell_derez_bay.png" id="6_chest"]
+[ext_resource type="Texture2D" uid="uid://csqdv2agcpdol" path="res://assets/ui/storage_tray.png" id="7_tray"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_b08fh"]
 atlas = ExtResource("3_nenkm")
@@ -409,37 +410,52 @@ offset_right = 637.0
 offset_bottom = 590.0
 
 [node name="StoragePanel" type="Panel" parent="."]
-modulate = Color(1, 1, 1, 0.2)
 layout_mode = 0
-offset_left = 661.0
-offset_top = 779.0
-offset_right = 1053.0
-offset_bottom = 1008.0
+offset_left = 600.0
+offset_top = 744.0
+offset_right = 920.0
+offset_bottom = 1020.0
+
+[node name="Tray" type="TextureRect" parent="StoragePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("7_tray")
+expand_mode = 1
 
 [node name="SellChest" type="Panel" parent="."]
 layout_mode = 0
-offset_left = 1090.0
-offset_top = 800.0
-offset_right = 1330.0
-offset_bottom = 1000.0
+offset_left = 1216.0
+offset_top = 824.0
+offset_right = 1386.0
+offset_bottom = 946.0
 
-[node name="Chest" type="TextureRect" parent="SellChest"]
+[node name="Bay" type="TextureRect" parent="SellChest"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 4.0
-offset_right = 232.0
-offset_bottom = 144.0
+offset_left = -31.0
+offset_top = -34.0
+offset_right = 201.0
+offset_bottom = 216.0
+mouse_filter = 2
 texture = ExtResource("6_chest")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Prompt" type="Label" parent="SellChest"]
 layout_mode = 0
-offset_top = 146.0
-offset_right = 240.0
-offset_bottom = 196.0
+offset_left = 6.0
+offset_top = 4.0
+offset_right = 164.0
+offset_bottom = 56.0
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 17
 text = "Drop here to sell"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -447,24 +463,24 @@ autowrap_mode = 2
 
 [node name="ShopContainer" type="Control" parent="."]
 anchors_preset = 0
-offset_left = 1054.0
-offset_top = 118.0
-offset_right = 1654.0
-offset_bottom = 727.0
+offset_left = 952.0
+offset_top = 165.0
+offset_right = 1633.0
+offset_bottom = 803.0
 
 [node name="ShopItem1" type="Control" parent="ShopContainer"]
 anchors_preset = 0
-offset_left = 312.0
-offset_top = 4.0
-offset_right = 513.0
-offset_bottom = 154.0
+offset_left = 388.0
+offset_top = 17.0
+offset_right = 588.0
+offset_bottom = 217.0
 
 [node name="ShopPrice1" type="Label" parent="ShopContainer"]
 layout_mode = 0
-offset_left = 238.0
-offset_top = 114.0
-offset_right = 338.0
-offset_bottom = 149.0
+offset_left = 444.0
+offset_top = 183.0
+offset_right = 532.0
+offset_bottom = 217.0
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
 theme_override_font_sizes/font_size = 18
 text = "0g"
@@ -473,16 +489,16 @@ horizontal_alignment = 1
 [node name="ShopItem2" type="Control" parent="ShopContainer"]
 anchors_preset = 0
 offset_left = 94.0
-offset_top = 209.0
+offset_top = 238.0
 offset_right = 294.0
-offset_bottom = 359.0
+offset_bottom = 438.0
 
 [node name="ShopPrice2" type="Label" parent="ShopContainer"]
 layout_mode = 0
-offset_left = 21.0
-offset_top = 328.0
-offset_right = 121.0
-offset_bottom = 363.0
+offset_left = 150.0
+offset_top = 404.0
+offset_right = 238.0
+offset_bottom = 438.0
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
 theme_override_font_sizes/font_size = 18
 text = "0g"
@@ -490,17 +506,17 @@ horizontal_alignment = 1
 
 [node name="ShopItem3" type="Control" parent="ShopContainer"]
 anchors_preset = 0
-offset_left = 365.0
-offset_top = 209.0
-offset_right = 565.0
-offset_bottom = 359.0
+offset_left = 388.0
+offset_top = 238.0
+offset_right = 588.0
+offset_bottom = 438.0
 
 [node name="ShopPrice3" type="Label" parent="ShopContainer"]
 layout_mode = 0
-offset_left = 276.0
-offset_top = 330.0
-offset_right = 376.0
-offset_bottom = 365.0
+offset_left = 444.0
+offset_top = 404.0
+offset_right = 532.0
+offset_bottom = 438.0
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
 theme_override_font_sizes/font_size = 18
 text = "0g"
@@ -509,16 +525,16 @@ horizontal_alignment = 1
 [node name="ShopItem4" type="Control" parent="ShopContainer"]
 anchors_preset = 0
 offset_left = 94.0
-offset_top = 443.0
+offset_top = 458.0
 offset_right = 294.0
-offset_bottom = 593.0
+offset_bottom = 658.0
 
 [node name="ShopPrice4" type="Label" parent="ShopContainer"]
 layout_mode = 0
-offset_left = 17.0
-offset_top = 571.0
-offset_right = 117.0
-offset_bottom = 606.0
+offset_left = 150.0
+offset_top = 624.0
+offset_right = 238.0
+offset_bottom = 658.0
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
 theme_override_font_sizes/font_size = 18
 text = "0g"
@@ -526,17 +542,17 @@ horizontal_alignment = 1
 
 [node name="ShopItem5" type="Control" parent="ShopContainer"]
 anchors_preset = 0
-offset_left = 365.0
-offset_top = 443.0
-offset_right = 565.0
-offset_bottom = 593.0
+offset_left = 388.0
+offset_top = 458.0
+offset_right = 588.0
+offset_bottom = 658.0
 
 [node name="ShopPrice5" type="Label" parent="ShopContainer"]
 layout_mode = 0
-offset_left = 275.0
-offset_top = 567.0
-offset_right = 375.0
-offset_bottom = 602.0
+offset_left = 444.0
+offset_top = 624.0
+offset_right = 532.0
+offset_bottom = 658.0
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
 theme_override_font_sizes/font_size = 18
 text = "0g"
@@ -552,17 +568,18 @@ theme_override_constants/separation = 4
 
 [node name="RefreshButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 1085.0
-offset_top = 119.0
-offset_right = 1212.0
-offset_bottom = 213.0
+offset_left = 1046.0
+offset_top = 246.0
+offset_right = 1246.0
+offset_bottom = 332.0
 tooltip_text = "Reroll the shop for 1 gold"
+text = "REROLL 1g"
 
 [node name="ReadyButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 664.0
-offset_top = 77.0
-offset_right = 1015.0
-offset_bottom = 229.0
+offset_left = 645.0
+offset_top = 100.0
+offset_right = 920.0
+offset_bottom = 220.0
 theme_override_font_sizes/font_size = 18
 text = "Ready for Battle!"

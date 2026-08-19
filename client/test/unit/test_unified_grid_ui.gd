@@ -942,3 +942,166 @@ func test_the_wheel_is_left_alone_when_nothing_is_held():
 	# The turn only swallows the input if it used it, so the wheel still
 	# scrolls when the player is not carrying anything.
 	assert_false(ui.turn(1), "Nothing to turn means the input was not used")
+
+
+# ============ The shop stands on the shelves that are painted ============
+#
+# The wall was repainted, and the shelves moved with it. What went wrong the
+# first time is what these hold: items hung in mid-air a hundred pixels above
+# the lit shelf they were meant to stand on, tall items grew up through the
+# ceiling of their alcove, and the bottom shelf's price tags hung out below
+# the shelving onto the storage tray and the de-rez bay standing on the floor.
+
+func _shelf_slots() -> Array:
+	var slots := []
+	for i in range(1, 6):
+		var slot = ui.shop_container.get_node_or_null("ShopItem" + str(i))
+		if slot:
+			slots.append(slot)
+	return slots
+
+
+func test_every_shelf_slot_stands_on_a_shelf():
+	# Three shelves, and every slot's floor is on one of them. Measured from
+	# the top of the shop container, which is the top of the shelving.
+	var floors := {}
+	for slot in _shelf_slots():
+		floors[slot.position.y + ui.ART_FLOOR] = true
+	assert_eq(floors.size(), 3,
+		"Five slots should stand on three shelf lines, not %d different ones. "
+		% floors.size() + "Got: %s" % [floors.keys()])
+
+
+func test_a_shelf_slot_leaves_room_under_the_alcove_ceiling():
+	# The alcoves are boxes. A slot taller than one is drawn through its roof.
+	for slot in _shelf_slots():
+		assert_gte(slot.position.y, 0.0,
+			"A slot above the shelving is drawn through the top of it")
+		assert_lte(slot.position.y + ui.SLOT_SIZE.y, ui.shop_container.size.y,
+			"A slot below the shelving is drawn onto the floor furniture")
+
+
+func _art_for(shape: Array) -> Control:
+	"""The artwork the shop would put on a shelf for an item of this shape."""
+	var slot = ui._create_shop_item_from_data(TestHelpers.item({"shape": shape}))
+	var art = slot.get_meta("art")
+	slot.queue_free()
+	return art
+
+
+func test_a_tall_item_is_drawn_small_enough_for_its_alcove():
+	# Items run to nine squares tall. At the size the grid draws them that is
+	# over four hundred pixels, in an alcove a hundred and sixty tall.
+	var tall := []
+	for y in range(9):
+		tall.append([0, y])
+	var art = _art_for(tall)
+	assert_lte(art.size.y, ui.SHELF_ART.y,
+		"Nine squares came out %d tall, and an alcove has %d"
+		% [art.size.y, ui.SHELF_ART.y])
+
+	var wide := []
+	for x in range(9):
+		wide.append([x, 0])
+	art = _art_for(wide)
+	assert_lte(art.size.x, ui.SHELF_ART.x,
+		"and the same across, or it is drawn into the slot beside it")
+
+
+func test_an_ordinary_item_is_drawn_at_the_size_the_grid_uses():
+	# Shrinking is for what will not fit. Everything else is drawn as the
+	# inventory draws it, or the same item changes size when it is bought.
+	var art = _art_for([[0, 0], [1, 0]])
+	assert_eq(art.size.y, ui.SHELF_CELL,
+		"A two-square item fits an alcove with room to spare")
+
+
+func test_no_price_tag_hangs_below_the_shelving():
+	# The bottom shelf has no lip under it -- the tray and the de-rez bay
+	# stand on the floor there -- so a tag hung below it lands on furniture.
+	for i in range(1, 6):
+		var slot = ui.shop_container.get_node_or_null("ShopItem" + str(i))
+		var tag = ui.shop_container.get_node_or_null("ShopPrice" + str(i))
+		if slot == null or tag == null:
+			continue
+		ui._hang_price_tag(tag, slot, TestHelpers.item())
+		assert_lte(tag.position.y + tag.size.y, ui.shop_container.size.y,
+			"Slot %d's tag hangs %d past the bottom of the shelving"
+			% [i, tag.position.y + tag.size.y - ui.shop_container.size.y])
+
+
+func test_a_price_tag_stays_beside_its_own_item():
+	# Wherever it ends up, a tag belongs to the item above it.
+	for i in range(1, 6):
+		var slot = ui.shop_container.get_node_or_null("ShopItem" + str(i))
+		var tag = ui.shop_container.get_node_or_null("ShopPrice" + str(i))
+		if slot == null or tag == null:
+			continue
+		ui._hang_price_tag(tag, slot, TestHelpers.item())
+		var tag_middle = tag.position.x + tag.size.x / 2.0
+		var slot_middle = slot.position.x + ui.SLOT_SIZE.x / 2.0
+		assert_almost_eq(tag_middle, slot_middle, 1.0,
+			"Slot %d's tag should be centred under its own slot" % i)
+
+
+# ============ The tray and the de-rez bay are pictures, not panels ============
+#
+# Both are their own layer on purpose: the tray is to gain falling items and
+# the bay a de-rez animation, and neither can be a Panel's stylebox.
+
+func test_the_tray_is_a_picture_behind_the_squares():
+	var tray = ui.get_node_or_null("StoragePanel/Tray")
+	assert_not_null(tray, "The storage panel should hold the tray picture")
+	assert_true(tray is TextureRect,
+		"The tray has to be its own node to gain layers later, not a stylebox")
+	assert_lt(tray.get_index(), ui.storage_grid.get_index(),
+		"The tray is drawn before the squares, or it covers what is in it")
+
+
+func test_what_is_in_the_tray_sits_inside_the_opening():
+	# The tray's walls are part of its picture. Squares drawn over them sit on
+	# the wall rather than inside the tray.
+	var shelf = ui.STORAGE_SHELF
+	var grid = ui.storage_grid
+	assert_gte(grid.position.x, shelf.position.x, "It should clear the left wall")
+	assert_gte(grid.position.y, shelf.position.y, "and the top of the back")
+	assert_lte(grid.position.x + grid.size.x, shelf.end.x, "and the right wall")
+	assert_lte(grid.position.y + grid.size.y, shelf.end.y, "and the front lip")
+
+
+func test_what_is_in_the_tray_rests_on_the_bottom_of_it():
+	# The tray is deeper than three rows need, so that items can fall into it
+	# later. What is in it settles at the bottom rather than floating.
+	var shelf = ui.STORAGE_SHELF
+	var grid = ui.storage_grid
+	var below = shelf.end.y - (grid.position.y + grid.size.y)
+	assert_lte(below, ui.STORAGE_PADDING,
+		"The squares should rest on the bottom of the tray, not %d above it"
+		% below)
+
+
+func test_the_bay_is_a_picture_larger_than_the_drop_zone():
+	# The panel is the opening in the bay, so a drop lands in the field the
+	# item de-rezzes in rather than anywhere on the cabinet.
+	var bay = ui.sell_chest.get_node_or_null("Bay")
+	assert_not_null(bay, "The sell chest should hold the de-rez bay picture")
+	assert_true(bay is TextureRect,
+		"The bay has to be its own node for the de-rez pass to animate it")
+	assert_lt(bay.position.x, 0.0, "The cabinet reaches left of its opening")
+	assert_lt(bay.position.y, 0.0, "and above it")
+	assert_gt(bay.size.x, ui.sell_chest.size.x, "and is wider than the opening")
+	assert_gt(bay.size.y, ui.sell_chest.size.y, "and taller")
+
+
+func test_an_item_carried_to_the_bay_is_drawn_in_front_of_it():
+	# An item held over the bay has to look like it is in the field, not
+	# behind the cabinet.
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.load_storage()
+	var held = ui.storage_grid.items[0]
+	ui.storage_grid._start_drag(held)
+	await get_tree().process_frame
+
+	assert_gt(held.z_index, ui.sell_chest.z_index,
+		"What is in hand should draw over the bay, not under it")
+	ui.storage_grid._end_drag()

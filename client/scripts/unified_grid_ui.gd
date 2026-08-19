@@ -16,16 +16,22 @@ const CELL_SPACING = 1
 
 # Storage settings
 #
-# Twenty-four squares either way, but eight by three fills the shelf painted
-# inside the chest, where twelve by two left it a band across the middle with
-# empty chest above and below.
+# Twenty-four squares either way, but eight by three fills the width of the
+# tray, where twelve by two left it a band across the middle with empty tray
+# either side of it.
 const STORAGE_WIDTH = 8
 const STORAGE_HEIGHT = 3
 const STORAGE_PADDING = 4
-## The shelf inside the chest, measured from the corner of the chest's panel.
-## The rest of the panel is the frame drawn around it and the word STORAGE
-## across the bottom, and squares drawn there sit on the picture.
-const STORAGE_SHELF := Rect2(39, 31, 320, 130)
+## The opening of the tray, measured from the corner of the storage panel.
+## Everything outside it is the tray's own walls -- the two posts either side
+## and the lit lip along the front -- and squares drawn there sit on the
+## picture rather than inside it.
+##
+## The tray is deeper than three rows need. That room is deliberate: items are
+## meant to drop into it later, and they need somewhere to fall from. It is as
+## big as it can be and still stand clear of the shelving above it, which
+## reaches down to the floor on the right of the room.
+const STORAGE_SHELF := Rect2(40, 21, 240, 214)
 
 # Runtime calculated cell size
 var actual_cell_size: float = CELL_SIZE
@@ -745,35 +751,42 @@ func _create_storage_area():
 
 	# Use existing nodes from scene if available
 	if has_node("StoragePanel"):
-		# The chest is painted into the background, frame and all.
+		# The tray is its own picture, hung behind the squares by the scene.
+		# The panel is only the box it and the squares are measured from, so it
+		# draws nothing itself.
 		var storage_bg = $StoragePanel
 		storage_bg.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
-		# The panel is faded in the scene, and modulate multiplies down into
-		# children, so everything in the chest was drawn at a fifth opacity.
-		# self_modulate fades the panel alone, and the style above is already
-		# see-through, so the chest keeps its look and its contents are solid.
+		# modulate multiplies down into children, so anything less than white
+		# here fades the tray and everything standing in it together.
 		storage_bg.modulate = Color.WHITE
 
 		# Create storage grid
 		storage_grid = InventoryGrid.new()
-		# The chest is drawn in the scene, so the squares are sized to the
-		# shelf inside it rather than to the grid's own cell size. At 45 they
-		# are wider than the chest and most of it is drawn off the edge.
+		# The tray draws its own walls, so a border here is a second box drawn
+		# inside the first. The squares still show, to say where things land.
+		storage_grid.border_color = Color.TRANSPARENT
+		# The tray is drawn in the scene, so the squares are sized to the
+		# opening in it rather than to the grid's own cell size.
 		storage_grid.configure(
 			STORAGE_WIDTH, STORAGE_HEIGHT,
 			_storage_cell_size(STORAGE_SHELF.size), CELL_SPACING
 		)
-		# The background already paints STORAGE across the front of the chest,
-		# so a title here is the word twice.
+		# The tray carries no caption, and one over the squares would be a
+		# word floating in the middle of the picture.
 		storage_grid.title = ""
 		storage_grid.read_only = read_only_mode
 		storage_bg.add_child(storage_grid)
 
-		# Sit it in the middle of the shelf rather than of the whole panel, so
-		# it fills the chest and not the frame drawn around it.
-		storage_grid.position = (STORAGE_SHELF.position
-			+ (STORAGE_SHELF.size - storage_grid.size) / 2).floor()
+		# Across the middle of the opening, but resting on the bottom of it
+		# rather than floating in the middle. The tray is open at the top and
+		# deeper than the squares need, so what is in it settles at the bottom
+		# the way things in a tray do.
+		storage_grid.position = Vector2(
+			STORAGE_SHELF.position.x
+				+ floor((STORAGE_SHELF.size.x - storage_grid.size.x) / 2.0),
+			STORAGE_SHELF.end.y - STORAGE_PADDING - storage_grid.size.y
+		)
 
 		# The whole panel takes a drop, not only the squares, so a drop that
 		# lands on the frame still goes in the chest.
@@ -803,11 +816,11 @@ func _create_storage_area():
 
 
 static func _storage_cell_size(shelf: Vector2) -> float:
-	"""How big a chest square can be and still fit on the chest's shelf.
+	"""How big a tray square can be and still fit through the tray's opening.
 
 	Eight across and three down, with a gap between each pair and a little
 	padding all round. Whichever way runs out first decides, so the squares
-	stay square. Never larger than a grid square, so the chest cannot end up
+	stay square. Never larger than a grid square, so the tray cannot end up
 	drawing items bigger than the inventory does.
 	"""
 	var across = shelf.x - 2 * STORAGE_PADDING - (STORAGE_WIDTH - 1) * CELL_SPACING
@@ -904,14 +917,30 @@ const UNAFFORDABLE_COLOR := Color(1.0, 0.42, 0.45)
 const OUT_OF_REACH := Color(0.5, 0.5, 0.58, 1.0)
 
 ## The room one shelf slot has, and how the item sits in it: the artwork above,
-## the price tag on the front of the shelf below it. The item is not named
-## here -- the card the shelf puts out under the pointer names it, and a
-## caption on every slot is five names to read past to find one item.
-const SLOT_SIZE := Vector2(200, 150)
+## the price tag on the lip of the shelf below it. The item is not named here
+## -- the card the shelf puts out under the pointer names it, and a caption on
+## every slot is five names to read past to find one item.
+##
+## Tall enough to hold the artwork and reach a little past the item's feet,
+## and no taller: the bottom shelf ends where the floor furniture begins, and
+## a slot that overhangs it lights up over the tray when the pointer is
+## nowhere near the shelf.
+const SLOT_SIZE := Vector2(200, 180)
 const SHELF_CELL := 45.0
+## The most room an item's artwork may take on a shelf. An alcove is a box
+## with a ceiling, so anything that would not fit under it is drawn smaller
+## rather than standing up through the shelf above.
+const SHELF_ART := Vector2(190, 150)
 ## The line every item stands on, whatever its height.
-const ART_FLOOR := 112.0
-const TAG_TOP := 118.0
+const ART_FLOOR := 150.0
+## Far enough below the line to clear the light along the front of the shelf,
+## so the plate hangs on the lip rather than over the lamp.
+const TAG_TOP := 166.0
+## How far a tag with no lip to hang from drops past the item's feet instead.
+## Far enough to clear the item and land on the lit strip it stands on, so it
+## reads as a label clipped to the shelf rail rather than a plate over the
+## goods, and still stops short of the bottom edge of the shelving.
+const TAG_ON_SHELF := 28.0
 const TAG_SIZE := Vector2(88, 34)
 ## A sale plate carries a word as well as a number, so it is the wider of the
 ## two. Both stay centred on the same point, so the shelf still reads as a row.
@@ -921,29 +950,51 @@ const SHELF_LIFT := 6.0
 
 
 func _dress_buttons() -> void:
-	"""Let the painted signs show through the buttons standing on them.
+	"""Give the two buttons a look the wall behind them does not supply.
 
-	Both buttons sit on artwork that already draws the sign -- the neon slab
-	for the battle, the reroll plate for the shop -- and a default button
-	covers it with a grey slab of its own.
+	Both used to stand on artwork that drew the sign for them -- the neon slab
+	for the battle, the reroll plate for the shop -- and wanted nothing of
+	their own. The wall that replaced it is bare panelling and lit shelves, so
+	each carries its own faint plate instead.
 	"""
 	var ready_button := get_node_or_null("ReadyButton")
 	if ready_button:
-		_make_button_transparent(ready_button, Color(1.0, 0.85, 0.45), 30)
+		# The neon slab it used to stand on went with the old wall, so it
+		# carries its own outline now rather than floating on bare panelling.
+		_dress_button(ready_button, Color(1.0, 0.85, 0.45), 26, 0, true)
 
 	var refresh_button := get_node_or_null("RefreshButton")
 	if refresh_button:
-		# REROLL and its price are painted into the background, so the button
-		# is the plate itself and says nothing of its own.
-		_make_button_transparent(refresh_button, PRICE_TAG_COLOR, 17)
+		# The wall used to have REROLL and its price painted on it, and the
+		# button was that plate and said nothing of its own. The shelves that
+		# replaced the painting carry no writing, so a button with nothing on
+		# it is a button nobody can see. It stands on the top shelf now and
+		# says what it is.
+		_dress_button(refresh_button, PRICE_TAG_COLOR, 20, 0, true)
 
 
-func _make_button_transparent(
-	button: Button, ink: Color, font_size: int, text_top: int = 0
+func _dress_button(
+	button: Button, ink: Color, font_size: int, text_top: int = 0,
+	plate: bool = false
 ) -> void:
+	"""Give a button its look: its ink, and either a plate or nothing at all.
+
+	A button standing on painted artwork wants nothing of its own, or it
+	covers the sign it is meant to be. A button standing on bare panelling
+	wants a plate, or there is nothing there to press. `plate` says which.
+	"""
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		var style := StyleBoxFlat.new()
-		style.bg_color = Color(1, 1, 1, 0.07) if state == "hover" else Color.TRANSPARENT
+		if plate:
+			# Faint on purpose: enough of an edge to read as a control, not
+			# enough to become another lit box competing with the shelves.
+			style.bg_color = Color(0.05, 0.05, 0.07, 0.75 if state == "hover" else 0.55)
+			style.border_color = Color(ink, 0.2 if state == "disabled" else 0.55)
+			style.set_border_width_all(2)
+		else:
+			style.bg_color = (
+				Color(1, 1, 1, 0.07) if state == "hover" else Color.TRANSPARENT
+			)
 		style.set_corner_radius_all(10)
 		style.content_margin_top = text_top
 		button.add_theme_stylebox_override(state, style)
@@ -1024,7 +1075,7 @@ func _create_shop_item_from_data(data: APITypes.Item) -> Control:
 	art.show_border = false  # Cleaner look in shop
 	art.enable_tooltip = true
 	art.tooltip_shows_price = true
-	art.setup(data, SHELF_CELL, 1)
+	art.setup(data, _shelf_cell(data), 1)
 	# Standing on the shelf, not floating above it. A tall item grows upwards
 	# from the same line a short one rests on, which is how a shelf of things
 	# of different heights actually looks.
@@ -1051,6 +1102,29 @@ func _create_shop_item_from_data(data: APITypes.Item) -> Control:
 	return slot
 
 
+static func _shelf_cell(data: APITypes.Item) -> float:
+	"""How big a square this item's artwork is drawn at on the shelf.
+
+	The shelves are alcoves, not open ledges: each has a ceiling a little over
+	three squares above the floor. An item nine squares tall drawn at the size
+	the inventory uses stands straight up through the shelf above it, so it is
+	drawn smaller instead. Whichever way runs out first decides, so the item
+	keeps its shape, and nothing is ever drawn larger than the grid draws it.
+	"""
+	var across := 0
+	var down := 0
+	for offset in data.turned_shape():
+		across = max(across, offset[0] + 1)
+		down = max(down, offset[1] + 1)
+	if across < 1 or down < 1:
+		return SHELF_CELL
+	return min(
+		SHELF_CELL,
+		floor((SHELF_ART.x - (across - 1) * CELL_SPACING) / across),
+		floor((SHELF_ART.y - (down - 1) * CELL_SPACING) / down)
+	)
+
+
 func _shelf_style(data: APITypes.Item, lit: bool) -> StyleBoxFlat:
 	"""The glow behind an item on the shelf, in the colour of its rarity.
 
@@ -1072,10 +1146,22 @@ func _shelf_style(data: APITypes.Item, lit: bool) -> StyleBoxFlat:
 
 
 func _hang_price_tag(tag: Label, slot_node: Control, data: APITypes.Item) -> void:
-	"""Put the tag on the front of the shelf the item stands on"""
+	"""Put the tag on the lip of the shelf the item stands on.
+
+	Below the item's feet wherever the shelving has a front to hang it from.
+	The bottom shelf has none: the floor is what is under it, and the tray and
+	the de-rez bay stand there, so a tag hung below that shelf lands on the
+	furniture. There the tag stands on the shelf in front of the item instead.
+	"""
 	tag.size = SALE_TAG_SIZE if data.on_sale else TAG_SIZE
-	tag.position = slot_node.position + Vector2(
-		floor((SLOT_SIZE.x - tag.size.x) / 2.0), TAG_TOP)
+	var across: float = floor((SLOT_SIZE.x - tag.size.x) / 2.0)
+	var below: float = slot_node.position.y + TAG_TOP
+	if below + tag.size.y <= shop_container.size.y:
+		tag.position = Vector2(slot_node.position.x + across, below)
+		return
+	tag.position = Vector2(
+		slot_node.position.x + across,
+		slot_node.position.y + ART_FLOOR - tag.size.y + TAG_ON_SHELF)
 
 
 func _dress_price_tag(tag: Label, data: APITypes.Item) -> void:
