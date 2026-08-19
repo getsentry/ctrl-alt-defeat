@@ -17,11 +17,24 @@
       "cost": 4,
       "triggers": [
         {
-          "type": "battle_start",
+          "type": "health_threshold",
+          "threshold": 0.5,
           "effects": [
             {
               "type": "heal",
-              "amount": 5
+              "min_heal": 12,
+              "max_heal": 12,
+              "description": "Heal for 12"
+            },
+            {
+              "type": "cleanse",
+              "count": 4,
+              "target": "self",
+              "removes": "memory_leaked",
+              "description": "Cleanse 4 Memory Leaked"
+            },
+            {
+              "type": "consume"
             }
           ]
         }
@@ -42,21 +55,13 @@
       "source": "Mana Potion",
       "rarity": "epic",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "buff",
-              "buff_name": "credits",
-              "value": 10,
-              "target": "self"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "memory_injection",
-      "icontype": "magic"
+      "icontype": "magic",
+      "in_shop": false,
+      "unbuilt": [
+        "Mana used or health drops below 50%: Consume this and gain 4 Mana and 18 maximum health."
+      ]
     },
     "security_hardening": {
       "name": "Hardening Serum",
@@ -72,21 +77,12 @@
       "source": "Stone Skin Potion",
       "rarity": "epic",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "modify",
-              "stat": "damage_reduction",
-              "value": 0.15,
-              "target": "own",
-              "description": ""
-            }
-          ]
-        }
-      ],
-      "slug": "security_hardening"
+      "triggers": [],
+      "slug": "security_hardening",
+      "in_shop": false,
+      "unbuilt": [
+        "45 Block reached: Consume this and convert 15 health to 30 Block."
+      ]
     },
     "virus_payload": {
       "name": "Payload Vial",
@@ -102,21 +98,12 @@
       "source": "Pestilence Flask",
       "rarity": "epic",
       "cost": 7,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "debuff",
-              "debuff_name": "memory_leaked",
-              "value": 3,
-              "target": "enemy",
-              "description": "Inflict 3 Memory Leaked"
-            }
-          ]
-        }
-      ],
-      "slug": "virus_payload"
+      "triggers": [],
+      "slug": "virus_payload",
+      "in_shop": false,
+      "unbuilt": [
+        "Opponent heals: Consume this and inflict 3 Poison and 1 Poison to yourself."
+      ]
     },
     "performance_boost": {
       "name": "Overclock Shot",
@@ -132,21 +119,12 @@
       "source": "Heroic Potion",
       "rarity": "legendary",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "modify",
-              "stat": "trigger_speed",
-              "value": 0.5,
-              "target": "own",
-              "description": ""
-            }
-          ]
-        }
-      ],
-      "slug": "performance_boost"
+      "triggers": [],
+      "slug": "performance_boost",
+      "in_shop": false,
+      "unbuilt": [
+        "Out of stamina: Consume this and regenerate 2 stamina and gain 1 Empower."
+      ]
     },
     "system_restore": {
       "name": "Restore Point",
@@ -162,26 +140,13 @@
       "source": "Divine Potion",
       "rarity": "godly",
       "cost": 7,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "cleanse",
-              "count": 10,
-              "target": "self",
-              "removes": "debuff",
-              "description": "Cleanse 10 debuffs"
-            },
-            {
-              "type": "heal",
-              "amount": 20
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "system_restore",
-      "icontype": "holy"
+      "icontype": "holy",
+      "in_shop": false,
+      "unbuilt": [
+        "You reached 10 debuffs: Consume this and cleanse 10 debuffs."
+      ]
     },
     "lightning_in_a_bottle": {
       "name": "Capacitor Flask",

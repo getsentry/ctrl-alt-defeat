@@ -100,7 +100,11 @@
         }
       ],
       "slug": "rate_limiter",
-      "sockets": 1
+      "sockets": 1,
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Star Weapons deal +2 + 15% damage."
+      ]
     },
     "encryption_layer": {
       "name": "Cipher Lock",
@@ -118,6 +122,7 @@
       "triggers": [
         {
           "type": "on_attacked",
+          "chance": 0.3,
           "effects": [
             {
               "type": "prevent_damage",
@@ -135,8 +140,7 @@
               "target": "enemy",
               "description": "Inflict 1 Throttled. The source caps it at 10."
             }
-          ],
-          "chance": 0.3
+          ]
         }
       ],
       "slug": "encryption_layer",
@@ -159,6 +163,7 @@
       "triggers": [
         {
           "type": "on_attacked",
+          "chance": 0.3,
           "effects": [
             {
               "type": "prevent_damage",
@@ -169,12 +174,15 @@
               "value": 0.3,
               "target": "attacker"
             }
-          ],
-          "chance": 0.3
+          ]
         }
       ],
       "slug": "quantum_firewall",
-      "sockets": 1
+      "sockets": 1,
+      "in_shop": false,
+      "unbuilt": [
+        "On attacked (Melee): The same 30% roll also gains 1 Spiked (up to 5)."
+      ]
     },
     "adaptive_mesh_armor": {
       "name": "Mesh Vest",
@@ -192,25 +200,22 @@
       "cost": 7,
       "triggers": [
         {
-          "type": "on_attacked",
+          "type": "battle_start",
           "effects": [
             {
-              "type": "prevent_damage",
-              "value": 6
-            },
-            {
-              "type": "adaptive_buff",
-              "stat": "damage_reduction",
-              "value": 0.02,
-              "max_stacks": 10,
-              "description": "Gain 2% damage reduction per attack survived (max 20%)"
+              "type": "block",
+              "value": 45,
+              "description": "Start of battle: Gain 45 Block"
             }
-          ],
-          "chance": 0.3
+          ]
         }
       ],
       "slug": "adaptive_mesh_armor",
-      "sockets": 2
+      "sockets": 2,
+      "in_shop": false,
+      "unbuilt": [
+        "Resist 3 debuffs."
+      ]
     },
     "cap_of_discomfort": {
       "name": "Itchy Firmware",

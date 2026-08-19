@@ -13,19 +13,14 @@
       "source": "Ruby",
       "rarity": "common",
       "cost": 1,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "crit_chance",
-              "value": 0.04
-            }
-          ]
-        }
-      ],
-      "slug": "performance_module_chipped"
+      "triggers": [],
+      "slug": "performance_module_chipped",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: Gain 7% lifesteal.",
+        "Armor & other sockets: Your healing is increased by 10%.",
+        "Backpack: After 5s: Deal 4 Effect-damage with 150% lifesteal."
+      ]
     },
     "performance_module_flawed": {
       "name": "Refurb Performance Module",
@@ -39,19 +34,14 @@
       "source": "Ruby",
       "rarity": "rare",
       "cost": 2,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "crit_chance",
-              "value": 0.08
-            }
-          ]
-        }
-      ],
-      "slug": "performance_module_flawed"
+      "triggers": [],
+      "slug": "performance_module_flawed",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: Gain 10% lifesteal.",
+        "Armor & other sockets: Your healing is increased by 15%.",
+        "Backpack: After 5s: Deal 6 Effect-damage with 150% lifesteal."
+      ]
     },
     "performance_module_regular": {
       "name": "Stock Performance Module",
@@ -65,19 +55,14 @@
       "source": "Ruby",
       "rarity": "epic",
       "cost": 4,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "crit_chance",
-              "value": 0.12
-            }
-          ]
-        }
-      ],
-      "slug": "performance_module_regular"
+      "triggers": [],
+      "slug": "performance_module_regular",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: Gain 15% lifesteal.",
+        "Armor & other sockets: Your healing is increased by 20%.",
+        "Backpack: After 5s: Deal 10 Effect-damage with 150% lifesteal."
+      ]
     },
     "performance_module_flawless": {
       "name": "Overclocked Performance Module",
@@ -91,19 +76,14 @@
       "source": "Ruby",
       "rarity": "legendary",
       "cost": 8,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "crit_chance",
-              "value": 0.16
-            }
-          ]
-        }
-      ],
-      "slug": "performance_module_flawless"
+      "triggers": [],
+      "slug": "performance_module_flawless",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: Gain 20% lifesteal.",
+        "Armor & other sockets: Your healing is increased by 25%.",
+        "Backpack: After 5s: Deal 15 Effect-damage with 150% lifesteal."
+      ]
     },
     "performance_module_perfect": {
       "name": "Golden Sample Performance Module",
@@ -117,19 +97,14 @@
       "source": "Ruby",
       "rarity": "godly",
       "cost": 16,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "crit_chance",
-              "value": 0.2
-            }
-          ]
-        }
-      ],
-      "slug": "performance_module_perfect"
+      "triggers": [],
+      "slug": "performance_module_perfect",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: Gain 35% lifesteal.",
+        "Armor & other sockets: Your healing is increased by 40%.",
+        "Backpack: After 5s: Deal 35 Effect-damage with 150% lifesteal."
+      ]
     },
     "memory_module_chipped": {
       "name": "Salvaged Memory Module",
@@ -143,19 +118,14 @@
       "source": "Sapphire",
       "rarity": "common",
       "cost": 1,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "max_memory",
-              "value": 1
-            }
-          ]
-        }
-      ],
-      "slug": "memory_module_chipped"
+      "triggers": [],
+      "slug": "memory_module_chipped",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 15% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
+        "5 Mana gained: Gain 2 Block.",
+        "After 4.5s: Inflict 2 Cold."
+      ]
     },
     "memory_module_flawed": {
       "name": "Refurb Memory Module",
@@ -169,19 +139,14 @@
       "source": "Sapphire",
       "rarity": "rare",
       "cost": 2,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "max_memory",
-              "value": 2
-            }
-          ]
-        }
-      ],
-      "slug": "memory_module_flawed"
+      "triggers": [],
+      "slug": "memory_module_flawed",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 25% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
+        "5 Mana gained: Gain 3 Block.",
+        "After 4.5s: Inflict 3 Cold."
+      ]
     },
     "memory_module_regular": {
       "name": "Stock Memory Module",
@@ -195,19 +160,14 @@
       "source": "Sapphire",
       "rarity": "epic",
       "cost": 4,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "max_memory",
-              "value": 3
-            }
-          ]
-        }
-      ],
-      "slug": "memory_module_regular"
+      "triggers": [],
+      "slug": "memory_module_regular",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 40% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
+        "5 Mana gained: Gain 4 Block.",
+        "After 4s: Inflict 4 Cold."
+      ]
     },
     "processing_module_chipped": {
       "name": "Salvaged Processing Module",
@@ -221,19 +181,14 @@
       "source": "Topaz",
       "rarity": "common",
       "cost": 1,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "cpu_regen",
-              "value": 1
-            }
-          ]
-        }
-      ],
-      "slug": "processing_module_chipped"
+      "triggers": [],
+      "slug": "processing_module_chipped",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: Attacks 10% faster.",
+        "Armor & other sockets: 10% chance to resist stuns. 5% chance to resist critical hits.",
+        "Backpack: Base stamina regeneration +8%."
+      ]
     },
     "processing_module_regular": {
       "name": "Stock Processing Module",
@@ -247,19 +202,14 @@
       "source": "Topaz",
       "rarity": "epic",
       "cost": 4,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "cpu_regen",
-              "value": 3
-            }
-          ]
-        }
-      ],
-      "slug": "processing_module_regular"
+      "triggers": [],
+      "slug": "processing_module_regular",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: Attacks 20% faster.",
+        "Armor & other sockets: 20% chance to resist stuns. 10% chance to resist critical hits.",
+        "Backpack: Base stamina regeneration +20%."
+      ]
     },
     "efficiency_module_chipped": {
       "name": "Salvaged Efficiency Module",
@@ -273,19 +223,14 @@
       "source": "Emerald",
       "rarity": "common",
       "cost": 1,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "attack_speed",
-              "value": 0.1
-            }
-          ]
-        }
-      ],
-      "slug": "efficiency_module_chipped"
+      "triggers": [],
+      "slug": "efficiency_module_chipped",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 35% chance to inflict 1 Poison.",
+        "10% chance to resist Poison.",
+        "After 3s: Gain 1 Regeneration."
+      ]
     },
     "efficiency_module_regular": {
       "name": "Stock Efficiency Module",
@@ -299,19 +244,14 @@
       "source": "Emerald",
       "rarity": "epic",
       "cost": 4,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "attack_speed",
-              "value": 0.3
-            }
-          ]
-        }
-      ],
-      "slug": "efficiency_module_regular"
+      "triggers": [],
+      "slug": "efficiency_module_regular",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 80% chance to inflict 1 Poison.",
+        "20% chance to resist Poison.",
+        "After 4s: Gain 3 Regeneration."
+      ]
     },
     "security_module_chipped": {
       "name": "Salvaged Security Module",
@@ -325,19 +265,14 @@
       "source": "Amethyst",
       "rarity": "common",
       "cost": 1,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "damage_reduction",
-              "value": 0.04
-            }
-          ]
-        }
-      ],
-      "slug": "security_module_chipped"
+      "triggers": [],
+      "slug": "security_module_chipped",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 25% chance to remove 1 random buff from your opponent.",
+        "Reduce opponent's healing by 12%.",
+        "Every 3.2s: Cleanse 1 debuff."
+      ]
     },
     "security_module_regular": {
       "name": "Stock Security Module",
@@ -351,19 +286,14 @@
       "source": "Amethyst",
       "rarity": "epic",
       "cost": 4,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "damage_reduction",
-              "value": 0.12
-            }
-          ]
-        }
-      ],
-      "slug": "security_module_regular"
+      "triggers": [],
+      "slug": "security_module_regular",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 50% chance to remove 1 random buff from your opponent.",
+        "Reduce opponent's healing by 25%.",
+        "Every 2s: Cleanse 1 debuff."
+      ]
     },
     "burning_coal": {
       "name": "Hot Cell",

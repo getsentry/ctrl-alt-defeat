@@ -55,23 +55,14 @@
       "source": "Mana Orb",
       "rarity": "epic",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "max_cpu",
-              "value": 10
-            },
-            {
-              "type": "consume"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "cpu_booster",
-      "icontype": "magic"
+      "icontype": "magic",
+      "in_shop": false,
+      "unbuilt": [
+        "Star item activates: 50% chance to gain 1 Mana.",
+        "Use 35 Mana: Gain 20 random other buffs (once)."
+      ]
     },
     "emergency_patch": {
       "name": "Duct Tape Fix",
@@ -99,15 +90,18 @@
               "description": "Heal for 24"
             },
             {
-              "type": "block",
-              "value": 10
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 3,
+              "target": "self",
+              "description": "Gain 3 Regenerating"
             },
             {
               "type": "cleanse",
               "count": 4,
               "target": "self",
-              "description": "Cleanse 4 memory_leaked",
-              "removes": "memory_leaked"
+              "removes": "memory_leaked",
+              "description": "Cleanse 4 Memory Leaked"
             },
             {
               "type": "consume"
@@ -131,172 +125,15 @@
       "source": "Piercing Arrow",
       "rarity": "unique",
       "cost": 10,
-      "max_stack": 5,
-      "triggers": [
-        {
-          "type": "on_attack",
-          "effects": [
-            {
-              "type": "damage_bonus",
-              "value": 2,
-              "per_stack": true
-            },
-            {
-              "type": "consume",
-              "amount": 1
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "data_packets",
       "in_shop": false,
       "needs": "the Hunter subclass, which its source Piercing Arrow belongs to",
-      "subclass": "Hunter"
-    },
-    "ai_companion_core": {
-      "name": "Rubber Duck",
-      "category": "consumable",
-      "color": "pink",
-      "pattern": "check_large",
-      "class": "sentaur",
-      "map": [
-        "*##*",
-        "*##*"
-      ],
-      "source": "Carrot Goobert",
-      "rarity": "epic",
-      "cost": 12,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "spawn_companion",
-              "companion_type": "ai_tactical_drone",
-              "health": 15,
-              "description": "Summon AI Tactical Drone with 15 health"
-            }
-          ]
-        },
-        {
-          "type": "timer",
-          "cooldown": 4.0,
-          "cpu_cost": 2,
-          "effects": [
-            {
-              "type": "modify",
-              "stat": "accuracy",
-              "value": 0.15,
-              "target": "own",
-              "description": "AI targeting assistance: +15% accuracy for 5 seconds"
-            },
-            {
-              "type": "heal",
-              "min_heal": 3,
-              "max_heal": 6,
-              "description": "Nano-repair protocols"
-            }
-          ]
-        }
-      ],
-      "slug": "ai_companion_core",
-      "icontype": "nature"
-    },
-    "surveillance_drone": {
-      "name": "Lil' Snitch",
-      "category": "consumable",
-      "color": "pink",
-      "pattern": "stripe_h_bold",
-      "class": "sentaur",
-      "map": [
-        "#*",
-        "#*",
-        "*."
-      ],
-      "source": "Hedgehog",
-      "rarity": "epic",
-      "cost": 6,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "spawn_companion",
-              "companion_type": "surveillance_drone",
-              "health": 10,
-              "block_chance": 0.25,
-              "block_amount": 5,
-              "description": "Summon Surveillance Drone (10 HP, 25% block chance)"
-            }
-          ]
-        }
-      ],
-      "slug": "surveillance_drone",
-      "icontype": "nature"
-    },
-    "data_crawler": {
-      "name": "Web Crawler",
-      "category": "consumable",
-      "color": "pink",
-      "pattern": "hatch_diag",
-      "class": "sentaur",
-      "map": [
-        ".**.",
-        "*##*",
-        ".**."
-      ],
-      "source": "Rat",
-      "rarity": "common",
-      "cost": 4,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "spawn_companion",
-              "companion_type": "data_crawler",
-              "health": 8,
-              "damage": 2,
-              "attack_speed": 1.5,
-              "description": "Summon Data Crawler (8 HP, 2 damage/1.5s)"
-            }
-          ]
-        }
-      ],
-      "slug": "data_crawler",
-      "icontype": "nature"
-    },
-    "cache_spider": {
-      "name": "Cache Spider",
-      "category": "consumable",
-      "color": "pink",
-      "pattern": "dot_small_stagger",
-      "class": "sentaur",
-      "map": [
-        ".*..",
-        "*#*.",
-        "*##*",
-        ".**."
-      ],
-      "source": "Squirrel",
-      "rarity": "rare",
-      "cost": 5,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "spawn_companion",
-              "companion_type": "cache_spider",
-              "health": 6,
-              "cpu_generation": 0.5,
-              "description": "Summon Cache Spider (6 HP, +0.5 CPU/s)"
-            }
-          ]
-        }
-      ],
-      "slug": "cache_spider",
-      "icontype": "nature"
+      "subclass": "Hunter",
+      "unbuilt": [
+        "Star Weapons deal +50% critical damage. They remove 15 Block on crit.",
+        "Diamond item activates: 40% chance to gain 1 Luck."
+      ]
     },
     "healing_nanobots": {
       "name": "Repair Swarm",
@@ -312,16 +149,14 @@
       "cost": 4,
       "triggers": [
         {
-          "type": "health_threshold",
-          "threshold": 0.4,
+          "type": "battle_start",
           "effects": [
             {
-              "type": "heal",
-              "min_heal": 12,
-              "max_heal": 18
-            },
-            {
-              "type": "consume"
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 2,
+              "target": "self",
+              "description": "Start of battle: Gain 2 Regenerating"
             }
           ]
         }
@@ -354,14 +189,18 @@
               "count": 1,
               "target": "self",
               "removes": "debuff",
-              "description": "Cleanse 1 debuffs"
+              "description": "Cleanse 1 debuff"
             }
           ],
           "description": "Every 2.7s: Cleanse 1 debuff"
         }
       ],
       "slug": "auto_rollback",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 2.7s: If you have at least 4 Luck: 55% chance to gain 1 Empower."
+      ]
     }
   }
 }

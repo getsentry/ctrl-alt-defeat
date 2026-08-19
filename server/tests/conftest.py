@@ -126,12 +126,14 @@ def clean_database():
 
 # A game seed whose round-one shop is five non-container items. Tests that buy
 # something use it so the shop is the same every run.
-SHOP_SEED = 424242
+# (Reseeded when the catalogue correction changed what shops offer.)
+SHOP_SEED = 2
 
 # Same, but one of the five covers more than one square, and the first three
 # together cost less than the starting gold. Tests that need a multi-square
 # item, or that buy several items in a row, use this one.
-MULTI_SQUARE_SHOP_SEED = 2
+# (Reseeded when the catalogue correction changed what shops offer.)
+MULTI_SQUARE_SHOP_SEED = 59
 
 
 @pytest.fixture

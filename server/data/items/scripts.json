@@ -19,18 +19,25 @@
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 3.0,
-          "cpu_cost": 1,
+          "cooldown": 5.0,
+          "cpu_cost": 0,
           "effects": [
             {
               "type": "heal",
-              "amount": 2
+              "min_heal": 4,
+              "max_heal": 4,
+              "description": "Heal for 4"
             }
-          ]
+          ],
+          "description": "Every 5s: Heal for 4"
         }
       ],
       "slug": "health_check_script",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 5s: Regenerate 1 stamina."
+      ]
     },
     "firewall_script": {
       "name": "Nope Stamp",
@@ -51,18 +58,23 @@
         {
           "type": "timer",
           "cooldown": 4.0,
-          "cpu_cost": 2,
+          "cpu_cost": 0,
           "effects": [
             {
               "type": "block",
               "value": 3,
-              "description": ""
+              "description": "Gain 3 Block"
             }
-          ]
+          ],
+          "description": "Every 4s: Gain 3 Block"
         }
       ],
       "slug": "firewall_script",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 4s: 30% chance to remove 1 Vampirism from your opponent."
+      ]
     },
     "cache_optimizer": {
       "name": "Hot Path",
@@ -81,20 +93,26 @@
       "triggers": [
         {
           "type": "timer",
-          "cooldown": 5.0,
-          "cpu_cost": 3,
+          "cooldown": 3.5,
+          "cpu_cost": 0,
           "effects": [
             {
               "type": "buff",
               "buff_name": "credits",
               "value": 1,
-              "target": "self"
+              "target": "self",
+              "description": "Gain 1 Credits"
             }
-          ]
+          ],
+          "description": "Every 3.5s: Gain 1 Credits"
         }
       ],
       "slug": "cache_optimizer",
-      "icontype": "nature, magic"
+      "icontype": "nature, magic",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3.5s: If you have at least 10 Mana: gain 1 Luck instead."
+      ]
     },
     "load_balancer_script": {
       "name": "Round Robin",
@@ -114,14 +132,25 @@
       "cost": 6,
       "triggers": [
         {
-          "type": "passive",
+          "type": "timer",
+          "cooldown": 2.9,
+          "cpu_cost": 0,
           "effects": [
             {
-              "type": "stat_mod",
-              "stat": "damage_reduction",
-              "value": 0.2
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Spiked"
+            },
+            {
+              "type": "heal",
+              "min_heal": 4,
+              "max_heal": 4,
+              "description": "Heal for 4"
             }
-          ]
+          ],
+          "description": "Every 2.9s: Gain 1 Spiked and heal for 4"
         }
       ],
       "slug": "load_balancer_script",
@@ -144,22 +173,22 @@
       "cost": 8,
       "triggers": [
         {
-          "type": "timer",
-          "cooldown": 2.0,
-          "cpu_cost": 0,
+          "type": "battle_start",
           "effects": [
             {
-              "type": "attack",
-              "min_damage": 5,
-              "max_damage": 10,
-              "accuracy": 0.95,
-              "crit_chance": 0.15
+              "type": "stat_mod",
+              "stat": "max_health",
+              "value": 40
             }
           ]
         }
       ],
       "slug": "ai_assistant_bot",
-      "icontype": "treasure, magic"
+      "icontype": "treasure, magic",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3s: Use 1 Luck, 1 Heat and 1 Mana: Gain 1 Empower, 3 Regeneration and 20 maximum health."
+      ]
     },
     "ddos_protection_module": {
       "name": "Traffic Cop",
@@ -178,21 +207,27 @@
       "cost": 8,
       "triggers": [
         {
-          "type": "on_big_damage",
-          "threshold": 10,
+          "type": "timer",
+          "cooldown": 5.0,
+          "cpu_cost": 0,
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "optimized",
-              "value": 1,
-              "target": "self"
+              "type": "attack",
+              "min_damage": 6,
+              "max_damage": 12,
+              "accuracy": 0.9
             }
           ]
         }
       ],
       "slug": "ddos_protection_module",
       "sockets": 2,
-      "icontype": "treasure, nature, ranged"
+      "icontype": "treasure, nature, ranged",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: 50% chance to stun for 0.5s.",
+        "Fatigue starts: gain 10 Heat."
+      ]
     },
     "cryogenic_cooling_system": {
       "name": "Chill Loop",
@@ -209,18 +244,27 @@
       "cost": 6,
       "triggers": [
         {
-          "type": "passive",
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 0,
           "effects": [
             {
-              "type": "stat_mod",
-              "stat": "cooldown_reduction",
-              "value": 0.3
+              "type": "debuff",
+              "debuff_name": "throttled",
+              "value": 1,
+              "target": "enemy",
+              "description": "Inflict 1 Throttled"
             }
-          ]
+          ],
+          "description": "Every 3s: Inflict 1 Throttled"
         }
       ],
       "slug": "cryogenic_cooling_system",
-      "icontype": "treasure, ice"
+      "icontype": "treasure, ice",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3s: If your opponent has at least 10 Cold, increase Effect-damage by 10% and deal 10 Effect-damage."
+      ]
     },
     "cupcake": {
       "name": "Cron Cake",

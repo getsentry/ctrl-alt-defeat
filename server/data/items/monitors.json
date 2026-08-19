@@ -21,14 +21,18 @@
           "effects": [
             {
               "type": "block",
-              "value": 5,
-              "description": ""
+              "value": 45,
+              "description": "Start of battle: Gain 45 Block"
             }
           ]
         }
       ],
       "slug": "basic_firewall",
-      "sockets": 2
+      "sockets": 2,
+      "in_shop": false,
+      "unbuilt": [
+        "Resist 3 debuffs."
+      ]
     },
     "cryogenic_shield": {
       "name": "Heatsink Wall",
@@ -50,15 +54,26 @@
           "effects": [
             {
               "type": "block",
-              "value": 10,
-              "description": ""
+              "value": 100,
+              "description": "Gain 100 Block"
+            },
+            {
+              "type": "debuff",
+              "debuff_name": "throttled",
+              "value": 4,
+              "target": "enemy",
+              "description": "Inflict 4 Throttled"
             }
           ]
         }
       ],
       "slug": "cryogenic_shield",
       "sockets": 2,
-      "icontype": "ice"
+      "icontype": "ice",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 4.7s: Use 1 Heat to inflict 2 Cold and gain 10 Block."
+      ]
     },
     "sanctified_firewall": {
       "name": "Lint Trap",
@@ -82,14 +97,8 @@
           "effects": [
             {
               "type": "block",
-              "value": 15,
-              "description": ""
-            },
-            {
-              "type": "buff",
-              "buff_name": "regenerating",
-              "value": 2,
-              "target": "self"
+              "value": 65,
+              "description": "Start of battle: Gain 65 Block"
             }
           ]
         },
@@ -102,8 +111,8 @@
               "type": "cleanse",
               "count": 2,
               "target": "self",
-              "description": "Cleanse 2 memory_leaked",
-              "removes": "memory_leaked"
+              "removes": "memory_leaked",
+              "description": "Cleanse 2 Memory Leaked"
             }
           ],
           "description": "Every 2.2s: Cleanse 2 Memory Leaked"
@@ -111,7 +120,11 @@
       ],
       "slug": "sanctified_firewall",
       "sockets": 3,
-      "icontype": "holy"
+      "icontype": "holy",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 2 Regeneration for each Star Holy-item."
+      ]
     },
     "corrupted_kernel": {
       "name": "Corrupted Kernel",
@@ -135,15 +148,21 @@
           "effects": [
             {
               "type": "block",
-              "value": 20,
-              "description": ""
+              "value": 85,
+              "description": "Start of battle: Gain 85 Block"
             }
           ]
         }
       ],
       "slug": "corrupted_kernel",
       "sockets": 3,
-      "icontype": "dark"
+      "icontype": "dark",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Holy-items gain Dark.",
+        "10% chance for each Star Dark-item to protect debuffs on your opponent from being cleansed.",
+        "Every 2.4s: Cleanse 2 debuffs and inflict them on your opponent."
+      ]
     }
   }
 }

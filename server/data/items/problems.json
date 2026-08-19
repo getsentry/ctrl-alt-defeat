@@ -24,8 +24,7 @@
               "type": "attack",
               "min_damage": 1,
               "max_damage": 3,
-              "accuracy": 0.9,
-              "crit_chance": 0.2
+              "accuracy": 0.9
             }
           ]
         }
@@ -57,15 +56,18 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 5,
-              "accuracy": 0.95,
-              "crit_chance": 0.3
+              "accuracy": 0.95
             }
           ]
         }
       ],
       "slug": "deadlock_twins",
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "in_shop": false,
+      "unbuilt": [
+        "On stun: Triggers extra attack."
+      ]
     },
     "mobius_lash": {
       "name": "Mobius Lash",
@@ -131,15 +133,18 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 4,
-              "accuracy": 0.9,
-              "pierce": true
+              "accuracy": 0.9
             }
           ]
         }
       ],
       "slug": "sql_injector",
       "sockets": 1,
-      "icontype": "treasure, dark, melee"
+      "icontype": "treasure, dark, melee",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Melee-Weapons deal -2 damage. Deals +4 damage per Star Melee-Weapon."
+      ]
     },
     "denier_of_service": {
       "name": "Denier of Service",
@@ -164,15 +169,19 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 10,
-              "accuracy": 0.9,
-              "hits": 5
+              "accuracy": 0.9
             }
           ]
         }
       ],
       "slug": "denier_of_service",
       "sockets": 1,
-      "icontype": "fire, effect, ranged"
+      "icontype": "fire, effect, ranged",
+      "in_shop": false,
+      "pet": true,
+      "unbuilt": [
+        "Start of battle: Gain 5 Heat. Reflect 3 debuffs."
+      ]
     },
     "day_zero": {
       "name": "Day Zero",
@@ -196,28 +205,19 @@
               "type": "attack",
               "min_damage": 7,
               "max_damage": 9,
-              "accuracy": 0.9,
-              "pierce": true
-            }
-          ]
-        },
-        {
-          "type": "timer",
-          "cooldown": 4.0,
-          "cpu_cost": 6,
-          "effects": [
-            {
-              "type": "attack",
-              "min_damage": 10,
-              "max_damage": 15,
-              "accuracy": 0.9,
-              "crit_chance": 0.25
+              "accuracy": 0.9
             }
           ]
         }
       ],
       "slug": "day_zero",
-      "icontype": "treasure, dark, ranged"
+      "icontype": "treasure, dark, ranged",
+      "in_shop": false,
+      "unbuilt": [
+        "Can only be thrown once per battle.",
+        "On hit: Inflict Fatigue damage.",
+        "Star items have +8% critical hit chance per Fatigue level of your opponent."
+      ]
     },
     "nullshot": {
       "name": "Nullshot",
@@ -243,16 +243,18 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 9,
-              "accuracy": 0.85,
-              "crit_chance": 0.15,
-              "range": "long"
+              "accuracy": 0.85
             }
           ]
         }
       ],
       "slug": "nullshot",
       "sockets": 1,
-      "icontype": "ranged"
+      "icontype": "ranged",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Weapon hits: Gain +1 damage (up to 7)."
+      ]
     },
     "neural_interface_blade": {
       "name": "Migraine",
@@ -279,29 +281,18 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 8,
-              "accuracy": 0.9,
-              "crit_chance": 0.25,
-              "range": "melee"
-            }
-          ]
-        },
-        {
-          "type": "on_crit",
-          "effects": [
-            {
-              "type": "attack",
-              "min_damage": 3,
-              "max_damage": 5,
-              "accuracy": 1.0,
-              "range": "long",
-              "special": "neural_pulse"
+              "accuracy": 0.9
             }
           ]
         }
       ],
       "slug": "neural_interface_blade",
       "sockets": 1,
-      "icontype": "magic, nature, ranged"
+      "icontype": "magic, nature, ranged",
+      "in_shop": false,
+      "unbuilt": [
+        "On attack: Use 3 Mana to deal +7 damage and for the next 1.5s, all your attacks are critical."
+      ]
     },
     "querystorm": {
       "name": "Querystorm",
@@ -329,29 +320,21 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 10,
-              "accuracy": 0.95,
-              "crit_chance": 0.2,
-              "range": "long",
-              "pierce": true
-            }
-          ]
-        },
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "modify",
-              "stat": "accuracy",
-              "value": 0.1,
-              "target": "own",
-              "description": "All Sentaur items gain +10% accuracy"
+              "accuracy": 0.9
             }
           ]
         }
       ],
       "slug": "querystorm",
       "sockets": 2,
-      "icontype": "nature,effect,ranged"
+      "icontype": "nature,effect,ranged",
+      "in_shop": false,
+      "pet": true,
+      "unbuilt": [
+        "On hit: Gain 1 Regeneration and 1 Luck.",
+        "Deals +0.8 damage per Regeneration.",
+        "Triggers 10% faster for each Star Nature-item."
+      ]
     },
     "quantum_sniper": {
       "name": "Pointer Rifle",
@@ -376,10 +359,7 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.85,
-              "crit_chance": 0.1,
-              "ranged": true,
-              "description": "Quick precision shot"
+              "accuracy": 0.85
             }
           ]
         }
@@ -411,9 +391,7 @@
               "type": "attack",
               "min_damage": 4,
               "max_damage": 11,
-              "accuracy": 0.85,
-              "ranged": true,
-              "description": "Ranged virus attack"
+              "accuracy": 0.85
             }
           ]
         },
@@ -425,15 +403,20 @@
               "type": "debuff",
               "debuff_name": "memory_leaked",
               "value": 2,
+              "target": "enemy",
               "description": "Inflict 2 Memory Leaked"
             }
           ],
-          "description": "70% chance to inflict 2 Memory Leaked"
+          "description": "On hit: 70% chance to inflict 2 Memory Leaked"
         }
       ],
       "slug": "virus_injector",
       "sockets": 1,
-      "icontype": "nature, ranged"
+      "icontype": "nature, ranged",
+      "in_shop": false,
+      "unbuilt": [
+        "On hit: The same 70% roll also inflicts a random debuff."
+      ]
     },
     "malware_propagator": {
       "name": "Spam Cannon",
@@ -459,18 +442,18 @@
               "type": "attack",
               "min_damage": 11,
               "max_damage": 14,
-              "accuracy": 0.85,
-              "ranged": true,
-              "scaling_damage": "memory_leaked",
-              "scale_ratio": 0.5,
-              "description": "+0.5 damage per Memory Leaked on enemy"
+              "accuracy": 0.85
             }
           ]
         }
       ],
       "slug": "malware_propagator",
       "sockets": 1,
-      "icontype": "nature, ranged"
+      "icontype": "nature, ranged",
+      "in_shop": false,
+      "unbuilt": [
+        "For every 5 damage Star Weapon deals: Inflict +1 Poison on the next attack. Deals +0.5 damage per Poison of your opponent."
+      ]
     },
     "probability_manipulator": {
       "name": "Loaded Dice Rig",
@@ -493,9 +476,9 @@
             {
               "type": "buff",
               "buff_name": "calibrated",
-              "value": 3,
-              "description": "Start: Gain 3 Compute",
-              "target": "self"
+              "value": 5,
+              "target": "self",
+              "description": "Start of battle: Gain 5 Compute"
             }
           ]
         },
@@ -508,18 +491,18 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 9,
-              "accuracy": 0.85,
-              "crit_chance": 0.25,
-              "ranged": true,
-              "double_attack_on_crit": true,
-              "description": "Crits trigger double attack next turn"
+              "accuracy": 0.85
             }
           ]
         }
       ],
       "slug": "probability_manipulator",
       "sockets": 1,
-      "icontype": "nature, ranged"
+      "icontype": "nature, ranged",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Weapon crits: Attack twice on the next attack."
+      ]
     },
     "quantum_flux_rifle": {
       "name": "Flux Rifle",
@@ -544,19 +527,23 @@
               "type": "attack",
               "min_damage": 3,
               "max_damage": 4,
-              "accuracy": 1.0,
-              "ranged": true,
-              "description": "Perfect accuracy shot"
-            },
-            {
-              "type": "buff",
-              "chance": 0.7,
-              "buff_name": "calibrated",
-              "value": 1,
-              "description": "70% chance to gain 1 Compute",
-              "target": "self"
+              "accuracy": 1.0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 0.85,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "calibrated",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Compute"
+            }
+          ],
+          "description": "On hit: 85% chance to gain 1 Compute"
         }
       ],
       "slug": "quantum_flux_rifle",
@@ -588,16 +575,19 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.85,
-              "ranged": true,
-              "steal_buff": true,
-              "description": "Steals a random buff on hit"
+              "accuracy": 0.85
             }
           ]
         }
       ],
       "slug": "data_leech_swarm",
-      "icontype": "nature, effect, ranged"
+      "icontype": "nature, effect, ranged",
+      "in_shop": false,
+      "pet": true,
+      "unbuilt": [
+        "On hit: Steal a random buff.",
+        "Triggers 15% faster for each Star Pet or Food."
+      ]
     },
     "spike_launcher": {
       "name": "Spike Launcher",
@@ -621,8 +611,8 @@
               "type": "buff",
               "buff_name": "spiked",
               "value": 4,
-              "description": "Start: Gain 4 Energy Spikes",
-              "target": "self"
+              "target": "self",
+              "description": "Start of battle: Gain 4 Spiked"
             }
           ]
         },
@@ -635,17 +625,18 @@
               "type": "attack",
               "min_damage": 9,
               "max_damage": 12,
-              "accuracy": 0.85,
-              "ranged": true,
-              "consume_spike_damage": 9,
-              "description": "Use 1 Spike for +9 damage"
+              "accuracy": 0.85
             }
           ]
         }
       ],
       "slug": "spike_launcher",
       "sockets": 1,
-      "icontype": "nature, ranged"
+      "icontype": "nature, ranged",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Weapon hits: Use 1 Spikes to deal +9 damage on the next attack."
+      ]
     },
     "spike_generator": {
       "name": "Caltrop Hopper",
@@ -670,19 +661,23 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.85,
-              "ranged": true,
-              "description": "Energy shot"
-            },
-            {
-              "type": "buff",
-              "chance": 0.5,
-              "buff_name": "spiked",
-              "value": 1,
-              "description": "50% chance to gain 1 Energy Spike",
-              "target": "self"
+              "accuracy": 0.85
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 0.5,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Spiked"
+            }
+          ],
+          "description": "On hit: 50% chance to gain 1 Spiked"
         }
       ],
       "slug": "spike_generator",
@@ -712,11 +707,23 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.9,
-              "crit_chance": 0.15,
-              "description": "Energy slash with 15% crit chance"
+              "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 0.25,
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "damage",
+              "value": 1,
+              "target": "own",
+              "description": "Gain 1 damage"
+            }
+          ],
+          "description": "On hit: 25% chance to gain 1 damage"
         }
       ],
       "slug": "plasma_edge",
@@ -1916,7 +1923,8 @@
         "Attacks 3% faster for each Mana (up to 60%)."
       ],
       "sockets": 4,
-      "icontype": "treasure, magic, effect, ranged"
+      "icontype": "treasure, magic, effect, ranged",
+      "pet": true
     },
     "prismatic_sword": {
       "name": "Polyglot Blade",
@@ -2330,7 +2338,8 @@
         "Deals +10 damage for each Star Bag of Stones."
       ],
       "sockets": 1,
-      "icontype": "effect, ranged"
+      "icontype": "effect, ranged",
+      "pet": true
     },
     "thornbloom": {
       "name": "Razorvine",

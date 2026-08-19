@@ -69,18 +69,10 @@ from whatever `dict` iteration hands back.
 
 ### Two items sit on a trigger their source does not have
 
-`health_threshold` is right for two of the items using it. Two others were
-given a threshold their source never had:
-
-| Ours | Source | What the source actually says |
-|---|---|---|
-| `healing_nanobots` | Healing Herbs | "**Start of battle**: Gain 2 Regeneration" |
-| `backup_system` | Goobert | "**5 Star item activations**: Heal for 9" |
-
-Neither can be fixed yet. Regeneration does not tick, and no trigger counts
-activations. They are left healing on a threshold, which is at least
-something the engine does, rather than being moved to a trigger that would
-silently do nothing.
+*(Resolved by the item data audit.)* Both now carry their source's data:
+`healing_nanobots` gains 2 Regenerating at battle start — correct, though the
+buff does not tick yet (see "Five of the seven are still not read" below) —
+and `backup_system` is a pet with its activation-counting effect in `unbuilt`.
 
 `auto_rollback` was a third of these and is now right -- Carrot's "Every 2.7s:
 Cleanse 1 debuff" -- once the cleanse it was waiting on existed. Its heal,
@@ -163,19 +155,12 @@ scales with Luck, which nothing supports.
 The lesson for the rest of the list: a name the loader drops is not
 necessarily a mechanic to build. It may be an effect the item never had.
 
-**Four modifiers are invented.** Their source items say nothing about them:
-
-| Ours | Source | What the source actually says |
-|---|---|---|
-| `security_hardening` | Stone Skin Potion | "45 Block reached: Consume this and convert 15 health to 30 Block" |
-| `performance_boost` | Heroic Potion | "Out of stamina: Consume this and regenerate 2 stamina and gain 1 Empower" |
-| `ai_companion_core` | Carrot Goobert | "6 Star item activations: Cleanse 4 random debuffs and gain 2 Empower for 8s" |
-| `querystorm` | Forest Dragon | "On hit: Gain 1 Regeneration and 1 Luck. Deals +0.8 damage per Regeneration" |
-
-Each needs a trigger we do not have -- a Block threshold, running out of
-stamina, counting activations -- so they are left as modifiers rather than
-given a trigger that would silently do nothing. Covered by the per-item audit
-entry below.
+**Four modifiers are invented.** *(Resolved by the item data audit.)* All four
+now hold their source's wording in `unbuilt` instead of an invented modifier:
+`security_hardening` and `performance_boost` wait on their consume triggers,
+`ai_companion_core` is a pet, and `querystorm` keeps its swing with its three
+effect lines unbuilt. The triggers they wait on -- a Block threshold, running
+out of stamina, counting activations -- are still to build.
 
 **Three of the seven are still not read.** Optimized and Throttled decide how
 fast an item triggers, Calibrated decides accuracy, and Regenerating heals on
@@ -193,28 +178,20 @@ The first three all wait on one concept: an item's weapon type. That is the
 same concept the shield entry below needs, since every shield in the source
 game only rolls against melee.
 
-**Nothing can grant Optimized or Throttled**, so the mechanic that now works
-cannot be reached. One item would grant it -- `ddos_protection_module`, from
-Pumpkin -- and its trigger is `on_big_damage`, which the loader does not know,
-so `_parse_trigger` returns None and the whole trigger is dropped without a
-word. The item loads with no triggers at all.
+**Optimized and Throttled have sources now** *(updated by the item data
+audit)*. Throttled comes from `encryption_layer`'s proc, `cryogenic_shield`'s
+battle start and `cryogenic_cooling_system`'s timer; Optimized only from
+`quantum_processor`'s every-8s timer, which is out of the shop until its
+start-of-battle effect is built. `ddos_protection_module` now carries
+Pumpkin's real weapon swing, with "Fatigue starts: gain 10 Heat" in `unbuilt`
+waiting on a fatigue-start trigger.
 
-Pumpkin's real text is "Fatigue starts: gain 10 Heat", so it wants a
-fatigue-start trigger and a value of 10 rather than 1. Cold has no source
-either: no imported item inflicts it.
+**Spiked and Draining have items now** (`spike_launcher`, `spike_generator`,
+`load_balancer_script`; `vampire_rootkit`), though the buffs themselves are
+still unread. Monitored is granted only by `quantum_processor`'s timer.
 
-This is the sharpest instance of the silent-drop entry below. A trigger name
-the loader has never heard of costs the item everything behind it, and says
-nothing at startup or in a battle.
-
-**Three of the seven have no item.** Monitored, Spiked and Draining are
-declared and unreachable, because no imported item grants them.
-
-**Two items are still guesses.** `ddos_protection_module` was `immunity` and
-is now Optimized, because Pumpkin's text is "Fatigue starts: gain 10 Heat" --
-but we have no fatigue trigger, so it grants it at battle start instead.
-`cache_optimizer` was `double_damage` and is now Credits, from Blueberries'
-"Every 3.5s: Gain 1 Mana", without the "at least 10 Mana" branch.
+`cache_optimizer` is Credits from Blueberries' "Every 3.5s: Gain 1 Mana",
+with the "at least 10 Mana" branch recorded in its `unbuilt`.
 
 ### Fifteen more items want a cleanse they do not have
 
@@ -224,8 +201,8 @@ something other than the cleanse itself:
 
 - **A trigger we do not have.** `system_restore` is Divine Potion, "You
   reached 10 debuff: Consume this and cleanse 10 debuffs" -- a count of
-  debuffs held, which is a resource threshold. It cleanses at the start of
-  battle instead, where there is nothing to remove.
+  debuffs held, which is a resource threshold. The audit moved the whole
+  effect to `unbuilt`; it no longer cleanses at battle start.
 - **A condition we cannot express.** `holy_spear` cleanses "1 debuff for each
   Star free slot"; `shelly` gives cleanses "a 25% chance to cleanse an
   additional debuff", which modifies other items' cleanses.
@@ -239,13 +216,11 @@ they were waiting on now exists.
 
 Two smaller ones, both real:
 
-- **`emergency_patch` still gains Block it should not.** Strong Health Potion
-  is "heal for 24, gain 3 **Regeneration** and cleanse 4 Poison". The heal and
-  the cleanse are right now; the Block is invented and Regeneration does not
-  tick.
-- **`emergency_hotfix` is a second Health Potion** on a battle_start trigger,
-  where the real one is a health threshold. Two items, one source, one of them
-  wrong.
+- ~~`emergency_patch` gains Block it should not~~ *(fixed by the audit:
+  it now gains 3 Regenerating, and Regenerating ticks)*.
+- ~~`emergency_hotfix` is a second Health Potion on a battle_start trigger~~
+  *(fixed by the audit: it consumes on the 50% health threshold like its
+  source)*.
 
 ### A health threshold cannot say whether it re-arms
 
@@ -592,3 +567,30 @@ as severe as the one above.)*
 - **Sentaur Badge**: `leaf_badge` is currently named "Ranger Badge" with a leaf
   design, but its effect gates Sentaur-class items. Rename it to Sentaur Badge and
   draw it as the (reworked) Sentaur character's emblem once that character exists.
+
+## From the item data audit (all 222 items surveyed against their Backpack Battles sources)
+
+- **Weapon-pets need engine support.** Five weapons are typed "Weapon, Pet" on
+  the wiki (`querystorm`, `denier_of_service`, `data_leech_swarm`, `pop`,
+  `stone_golem`). They now carry `"pet": true` in their JSON, but nothing reads
+  it yet. Effects like "Triggers 15% faster for each Star Pet or Food" must
+  count them as pets when those effects are built.
+
+- **11 gem-module tiers are missing.** The wiki gems have five tiers each; the
+  catalogue has Performance 5/5 but Memory 3/5 (no flawless, perfect),
+  Processing 2/5, Efficiency 2/5, Security 2/5 (each missing flawed, flawless,
+  perfect). Adding them needs names, maps, looks and art, so they were left out
+  of the audit fix. Tier costs are 1/2/4/8/16; tier effect values are on the
+  gem wiki pages.
+
+- **Recipes are not imported.** The item JSON holds no recipe data, and the
+  Game Design Document's example recipes (5.4) name ingredients that do not
+  exist. The wiki pages carry a Recipe infobox (ingredients + cost) for every
+  craftable item; an import would map ingredient names to our slugs via each
+  item's `source` field.
+
+- **Melee/ranged lives only in `icontype`.** The wiki marks 61 items melee or
+  ranged in their `icontype`, which the catalogue carries as a string. Nothing
+  parses it into the engine; ranged/melee distinctions ("On attacked (Melee)",
+  Spikes' return-damage limits) will need it typed when those effects are
+  built.

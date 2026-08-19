@@ -1,34 +1,6 @@
 {
   "category": "infrastructure",
   "items": {
-    "health_check": {
-      "name": "Heartbeat Node",
-      "category": "infrastructure",
-      "color": "violet",
-      "pattern": "solid",
-      "class": "neutral",
-      "map": [
-        "*#*"
-      ],
-      "source": "Goobling",
-      "rarity": "common",
-      "cost": 2,
-      "triggers": [
-        {
-          "type": "timer",
-          "cooldown": 4.0,
-          "cpu_cost": 2,
-          "effects": [
-            {
-              "type": "heal",
-              "min_heal": 3,
-              "max_heal": 5
-            }
-          ]
-        }
-      ],
-      "slug": "health_check"
-    },
     "load_balancer_module": {
       "name": "The Seesaw",
       "category": "infrastructure",
@@ -57,37 +29,6 @@
       ],
       "slug": "load_balancer_module"
     },
-    "backup_system": {
-      "name": "Cold Storage",
-      "category": "infrastructure",
-      "color": "violet",
-      "pattern": "dot_large_grid",
-      "class": "neutral",
-      "map": [
-        "*##*",
-        "*##*"
-      ],
-      "source": "Goobert",
-      "rarity": "rare",
-      "cost": 6,
-      "triggers": [
-        {
-          "type": "health_threshold",
-          "threshold": 0.3,
-          "effects": [
-            {
-              "type": "heal",
-              "min_heal": 20,
-              "max_heal": 30
-            },
-            {
-              "type": "consume"
-            }
-          ]
-        }
-      ],
-      "slug": "backup_system"
-    },
     "quantum_processor": {
       "name": "Qubit Core",
       "category": "infrastructure",
@@ -106,30 +47,73 @@
       "cost": 14,
       "triggers": [
         {
-          "type": "passive",
+          "type": "timer",
+          "cooldown": 8.0,
+          "cpu_cost": 0,
           "effects": [
             {
-              "type": "stat_mod",
-              "stat": "max_cpu",
-              "value": 10
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Optimized"
             },
             {
-              "type": "stat_mod",
-              "stat": "cpu_regen",
-              "value": 3
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Monitored"
             },
             {
-              "type": "modify",
-              "stat": "cpu_cost",
-              "value": -0.2,
-              "target": "own",
-              "description": ""
+              "type": "buff",
+              "buff_name": "calibrated",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Compute"
+            },
+            {
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Regenerating"
+            },
+            {
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Spiked"
+            },
+            {
+              "type": "buff",
+              "buff_name": "draining",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Draining"
+            },
+            {
+              "type": "buff",
+              "buff_name": "credits",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Credits"
             }
-          ]
+          ],
+          "description": "Every 8s: Gain 1 of every type of buff"
         }
       ],
       "slug": "quantum_processor",
-      "icontype": "magic, vampiric, holy, dark"
+      "icontype": "magic, vampiric, holy, dark",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: For each...",
+        "Star Magic-item: Gain 2 Mana.",
+        "Star Vampiric-item: Gain 1 Vampirism.",
+        "Star Holy-item: Increase your healing by 4%.",
+        "Star Dark-item: Inflict a random debuff."
+      ]
     },
     "quantum_probability_core": {
       "name": "Schrodinger's Die",
@@ -174,22 +158,13 @@
       "source": "Acorn Collar",
       "rarity": "epic",
       "cost": 8,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "scaling_buff",
-              "buff_name": "crit_chance",
-              "scale_stat": "compute",
-              "scale_ratio": 0.05,
-              "description": "Items gain 5% critical hit chance for each Compute"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "neural_link_collar",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "Star items gain 5% critical hit chance for each Luck."
+      ]
     }
   }
 }

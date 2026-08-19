@@ -84,22 +84,12 @@
       "source": "Potion Belt",
       "rarity": "legendary",
       "cost": 5,
-      "effects": [
-        {
-          "type": "special",
-          "condition": "first_patch",
-          "effect": "random_buff",
-          "description": "First Patch deployed: Random buff"
-        },
-        {
-          "type": "special",
-          "condition": "four_patches",
-          "effect": "clear_errors",
-          "value": 8,
-          "description": "4 Patches deployed: Clear 8 errors"
-        }
-      ],
-      "slug": "patch_registry"
+      "effects": [],
+      "slug": "patch_registry",
+      "unbuilt": [
+        "First Potion inside consumed: Gain a random buff.",
+        "4 Potions inside consumed: Cleanse 10 debuffs."
+      ]
     },
     "container_orchestrator": {
       "name": "Container Orchestrator",
@@ -111,15 +101,11 @@
       "source": "Holdall",
       "rarity": "epic",
       "cost": 7,
-      "effects": [
-        {
-          "type": "battle_start",
-          "stat": "block_per_basic",
-          "value": 7,
-          "description": "Start of battle: gain 7 Block for each Basic module inside"
-        }
-      ],
-      "slug": "container_orchestrator"
+      "effects": [],
+      "slug": "container_orchestrator",
+      "unbuilt": [
+        "Start of battle: Gain 8 Block for each Neutral item inside."
+      ]
     },
     "serverless_function": {
       "name": "The Cloud",
@@ -131,15 +117,11 @@
       "source": "Box of Prosperity",
       "rarity": "epic",
       "cost": 5,
-      "effects": [
-        {
-          "type": "deploy_phase",
-          "condition": "2_legendary",
-          "effect": "free_api_credits",
-          "description": "Deploy phase: If has 2+ Legendary modules, generate free API credits"
-        }
-      ],
-      "slug": "serverless_function"
+      "effects": [],
+      "slug": "serverless_function",
+      "unbuilt": [
+        "Shop entered: If this has at least 2 Godly or Unique items inside, generate a chipped Gemstone."
+      ]
     },
     "network_cache": {
       "name": "Dead Drop",
@@ -152,23 +134,11 @@
       "source": "Ranger Bag",
       "rarity": "unique",
       "cost": 16,
-      "effects": [
-        {
-          "type": "modify",
-          "stat": "trigger_speed",
-          "value": 0.2,
-          "target": "contained",
-          "description": "Sentaur items inside have 20% faster cooldowns"
-        },
-        {
-          "type": "special",
-          "condition": "sentaur_synergy",
-          "effect": "network_boost",
-          "threshold": 3,
-          "description": "If contains 3+ Sentaur items: All gain +1 damage"
-        }
-      ],
-      "slug": "network_cache"
+"effects": [],
+      "slug": "network_cache",
+      "unbuilt": [
+        "Items inside gain 10% critical hit chance +3% for each Luck."
+      ]
     },
     "mesh_network_hub": {
       "name": "Motherboard",
@@ -181,23 +151,12 @@
       "source": "Vineweave Basket",
       "rarity": "unique",
       "cost": 20,
-      "effects": [
-        {
-          "type": "modify",
-          "stat": "trigger_speed",
-          "value": 0.1,
-          "target": "own",
-          "description": "Sentaur items activate 10% faster"
-        },
-        {
-          "type": "modify",
-          "stat": "accuracy",
-          "value": 0.1,
-          "target": "contained",
-          "description": "Items inside gain 10% accuracy"
-        }
-      ],
-      "slug": "mesh_network_hub"
+      "effects": [],
+      "slug": "mesh_network_hub",
+      "unbuilt": [
+        "Your healing is amplified by 12% + 5% per Nature-item inside.",
+        "In rounds 1 and 10, sale chance is increased by 20%."
+      ]
     },
     "chaos_experiment": {
       "name": "Loot Box",

@@ -287,8 +287,9 @@ class TestPurchaseValidation:
                 assert item["id"] != shop_item["id"]
 
 
-# Seed 15 offers a bitcoin_wallet on sale: 3 gold normally, 2 today.
-SALE_SEED = 15
+# A seed whose round-one shop has a non-container item on sale, costing less today.
+# (Reseeded when the catalogue correction changed what shops offer.)
+SALE_SEED = 4
 
 
 class TestBuyingOnSale:

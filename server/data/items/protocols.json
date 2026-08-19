@@ -15,16 +15,14 @@
       "cost": 4,
       "triggers": [
         {
-          "type": "timer",
-          "cooldown": 3.0,
-          "cpu_cost": 2,
+          "type": "battle_start",
           "effects": [
             {
-              "type": "attack",
-              "min_damage": 3,
-              "max_damage": 3,
-              "accuracy": 0.9,
-              "crit_chance": 0.1
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 2,
+              "target": "self",
+              "description": "Start of battle: Gain 2 Regenerating"
             }
           ]
         }
@@ -46,18 +44,13 @@
       "source": "Piggybank",
       "rarity": "common",
       "cost": 3,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "gold_gain",
-              "amount": 3
-            }
-          ]
-        }
-      ],
-      "slug": "bitcoin_wallet"
+      "triggers": [],
+      "slug": "bitcoin_wallet",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Gain 1 Gold.",
+        "Start of battle: Gain 2 maximum health for each Star Start of battle-item."
+      ]
     },
     "captcha_module": {
       "name": "CAPTCHA Module",
@@ -73,12 +66,14 @@
       "cost": 2,
       "triggers": [
         {
-          "type": "passive",
+          "type": "battle_start",
           "effects": [
             {
-              "type": "enemy_debuff",
-              "debuff_name": "accuracy",
-              "value": -0.2
+              "type": "debuff",
+              "debuff_name": "rate_limited",
+              "value": 1,
+              "target": "enemy",
+              "description": "Start of battle: Inflict 1 Rate Limited"
             }
           ]
         }
@@ -106,19 +101,13 @@
       "source": "Amulet of Alchemy",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "adjacent_buff",
-              "buff_name": "damage",
-              "value": 0.15
-            }
-          ]
-        }
-      ],
-      "slug": "script_compiler"
+      "triggers": [],
+      "slug": "script_compiler",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 3 random buffs.",
+        "Star Potion consumed: 70% chance to repeat its effect after 2.5s."
+      ]
     },
     "dark_web_access": {
       "name": "Onion Router",
@@ -134,19 +123,14 @@
       "source": "Amulet of Darkness",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "shop_discount",
-              "value": 1
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "dark_web_access",
-      "icontype": "dark"
+      "icontype": "dark",
+      "in_shop": false,
+      "unbuilt": [
+        "22 Effect-damage dealt: Inflict 1 random debuff.",
+        "Star item activates: 30% chance to deal 7 Effect-damage."
+      ]
     },
     "power_management_unit": {
       "name": "Power Brick",
@@ -161,19 +145,13 @@
       "source": "Amulet of Energy",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "cpu_regen",
-              "value": 2
-            }
-          ]
-        }
-      ],
-      "slug": "power_management_unit"
+      "triggers": [],
+      "slug": "power_management_unit",
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: The Star item triggers 100% faster for 1s.",
+        "Buff used: Refund 25% of the used buffs."
+      ]
     },
     "auto_scaler": {
       "name": "Elastic Waistband",
@@ -195,20 +173,13 @@
       "source": "Amulet of Feasting",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "scaling_buff",
-              "buff_name": "damage",
-              "scale_stat": "max_health",
-              "scale_ratio": 0.1
-            }
-          ]
-        }
-      ],
-      "slug": "auto_scaler"
+      "triggers": [],
+      "slug": "auto_scaler",
+      "in_shop": false,
+      "unbuilt": [
+        "Star Food triggers 40% faster.",
+        "Food bought: Restock with a random Food."
+      ]
     },
     "redundancy_protocol": {
       "name": "Buddy System",
@@ -224,16 +195,21 @@
       "cost": 6,
       "triggers": [
         {
-          "type": "on_damage",
+          "type": "battle_start",
           "effects": [
             {
-              "type": "damage_immunity",
-              "chance": 0.25
+              "type": "stat_mod",
+              "stat": "max_health",
+              "value": 20
             }
           ]
         }
       ],
-      "slug": "redundancy_protocol"
+      "slug": "redundancy_protocol",
+      "in_shop": false,
+      "unbuilt": [
+        "Your healing is increased by 20%."
+      ]
     },
     "encryption_module": {
       "name": "Cipher Core",
@@ -251,22 +227,21 @@
       "cost": 6,
       "triggers": [
         {
-          "type": "passive",
+          "type": "battle_start",
           "effects": [
             {
-              "type": "stat_mod",
-              "stat": "damage",
-              "value": 2
-            },
-            {
-              "type": "stat_mod",
-              "stat": "cpu_cost",
-              "value": 1
+              "type": "block",
+              "value": 30,
+              "description": "Start of battle: Gain 30 Block"
             }
           ]
         }
       ],
-      "slug": "encryption_module"
+      "slug": "encryption_module",
+      "in_shop": false,
+      "unbuilt": [
+        "Star items gained 40 Block: Gain 1 Empower."
+      ]
     },
     "machine_learning_core": {
       "name": "Echo Chamber",
@@ -281,20 +256,13 @@
       "source": "Amulet of the Wild",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "on_attack",
-          "effects": [
-            {
-              "type": "multicast",
-              "chance": 0.1,
-              "count": 2
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "machine_learning_core",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "After 5s: Trigger the Star Pet and gain 4 Spikes. Return damage limit of Spikes against Melee and Ranged attacks +50%."
+      ]
     },
     "crypto_mining_rig": {
       "name": "Crypto Mining Rig",
@@ -308,19 +276,12 @@
       "source": "Box of Riches",
       "rarity": "rare",
       "cost": 5,
-      "triggers": [
-        {
-          "type": "timer",
-          "cooldown": 5.0,
-          "effects": [
-            {
-              "type": "gold_gain",
-              "amount": 1
-            }
-          ]
-        }
-      ],
-      "slug": "crypto_mining_rig"
+      "triggers": [],
+      "slug": "crypto_mining_rig",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop entered: Generate a low-quality Gemstone. Gemstones are offered in the shop."
+      ]
     },
     "transaction_log": {
       "name": "Write-Ahead Log",
@@ -334,18 +295,7 @@
       "source": "Bunch of Coins",
       "rarity": "rare",
       "cost": 9,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "stat_mod",
-              "stat": "accuracy",
-              "value": 0.1
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "transaction_log"
     },
     "premium_subscription": {
@@ -360,18 +310,12 @@
       "source": "Customer Card",
       "rarity": "rare",
       "cost": 4,
-      "triggers": [
-        {
-          "type": "round_start",
-          "effects": [
-            {
-              "type": "free_refresh",
-              "count": 1
-            }
-          ]
-        }
-      ],
-      "slug": "premium_subscription"
+      "triggers": [],
+      "slug": "premium_subscription",
+      "in_shop": false,
+      "unbuilt": [
+        "Shop refreshes: Increase the rarity of 1 item. 10% chance for a Trade offer."
+      ]
     },
     "vampire_rootkit": {
       "name": "Vampire Rootkit",
@@ -387,11 +331,19 @@
       "cost": 8,
       "triggers": [
         {
-          "type": "on_damage_dealt",
+          "type": "battle_start",
           "effects": [
             {
-              "type": "lifesteal",
-              "value": 0.3
+              "type": "buff",
+              "buff_name": "draining",
+              "value": 2,
+              "target": "self",
+              "description": "Start of battle: Gain 2 Draining"
+            },
+            {
+              "type": "stat_mod",
+              "stat": "max_health",
+              "value": 20
             }
           ]
         }

@@ -174,15 +174,19 @@ class TestGameDesignCompliance:
         assert fw.triggers[0].chance == 0.3  # every shield rolls 30%
 
         # Test Infrastructure (Section 2.3)
+        # Qubit Core, from Prismatic Orb: every 8s, 1 of each of the seven
+        # buffs (Section 3.1). Its start-of-battle per-Star-type gains are
+        # still unbuilt.
         quantum_proc = ITEM_CATALOG["quantum_processor"]
-        # Should have passive trigger with stat mod effects
         assert len(quantum_proc.triggers) == 1
-        assert isinstance(quantum_proc.triggers[0], PassiveTrigger)
-        # Quantum processor has 3 effects: max_cpu, cpu_regen, and cpu_cost buff
-        assert len(quantum_proc.triggers[0].effects) == 3
-        stat_effect = quantum_proc.triggers[0].effects[0]
-        assert stat_effect.stat_name == "max_cpu"
-        assert stat_effect.value == 10  # From JSON
+        assert isinstance(quantum_proc.triggers[0], TimerTrigger)
+        assert quantum_proc.triggers[0].cooldown == 8.0
+        buffs_given = {e.buff_name for e in quantum_proc.triggers[0].effects}
+        assert len(quantum_proc.triggers[0].effects) == 7
+        assert buffs_given == {
+            "optimized", "monitored", "calibrated", "regenerating",
+            "spiked", "draining", "credits",
+        }
 
     def test_battle_duration(self):
         """Test Section 6.2: Battle max duration 60s"""
@@ -224,11 +228,15 @@ class TestGameDesignCompliance:
         # Fatigue at 40s = 2
 
     def test_critical_hits(self):
-        """Test Section 7.2: Base 5% crit chance, 2x damage"""
+        """Test Section 7.2: Base 5% crit chance, 2x damage.
+
+        No item in the catalogue states its own crit chance: the source
+        game's item pages carry no crit stat, so any crit above the base
+        comes from an effect, not from the weapon's numbers.
+        """
         item = ITEM_CATALOG["null_blade"]
-        # Check attack effect has crit chance
         attack_effect = item.triggers[0].effects[0]
-        assert attack_effect.crit_chance == 0.2  # Null pointer has 20% crit in JSON
+        assert attack_effect.crit_chance == 0  # Wooden Sword grants none
 
         # Critical hits should deal 2x damage (tested in simulation)
 
@@ -380,12 +388,13 @@ class TestGameDesignCompliance:
     def test_a_passive_stat_mod_is_applied_once(self):
         """An item raises the pool by what its own data says, and no more.
 
-        The quantum processor is the only item in the infrastructure category,
-        and it used to be counted twice: once by an infrastructure pass and
-        once by the general passive handling. It came into every battle with a
-        pool of 23 against the 13 its JSON asks for.
+        The quantum processor used to be counted twice: once by an
+        infrastructure pass and once by the general passive handling. Its
+        corrected data (Prismatic Orb) asks for no CPU at all, so the pool
+        stays at its base — and the double-count guard now lives in the
+        memory_cache test below, which still carries a passive max_cpu.
         """
-        assert self._pool_in_a_battle("quantum_processor") == 13.0
+        assert self._pool_in_a_battle("quantum_processor") == 3.0
 
     def test_an_item_outside_infrastructure_raises_the_pool_too(self):
         """The category does not decide it; the passive effect does.

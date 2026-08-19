@@ -380,7 +380,7 @@ battle.
 |---|---|---|
 | **Optimized** | Heat | Items trigger 2% faster per stack |
 | **Monitored** | Empower | +1 damage per stack |
-| **Calibrated** | Luck | +5% accuracy per stack |
+| **Compute** | Luck | +5% accuracy per stack (internal id stays `calibrated`) |
 | **Regenerating** | Regeneration | Heal 1 HP per stack every 2 seconds |
 | **Spiked** | Spikes | 1 damage per stack when hit by a melee weapon |
 | **Draining** | Vampirism | Heal 1 per stack when hitting with a melee weapon |

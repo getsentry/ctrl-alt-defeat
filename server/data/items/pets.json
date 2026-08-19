@@ -343,6 +343,7 @@
       "map": [
         ".#.",
         "*#*",
+        "***",
         "***"
       ],
       "source": "Snowmaster",
@@ -450,6 +451,136 @@
         "Triggers 15% faster for each Star Pet."
       ],
       "icontype": "nature"
+    },
+    "ai_companion_core": {
+      "name": "Rubber Duck",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "stripe_a_fine",
+      "class": "sentaur",
+      "map": [
+        "*##*",
+        "*##*"
+      ],
+      "source": "Carrot Goobert",
+      "rarity": "epic",
+      "cost": 12,
+      "triggers": [],
+      "slug": "ai_companion_core",
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "6 Star item activations: Cleanse 4 random debuffs and gain 2 Empower for 8s."
+      ]
+    },
+    "surveillance_drone": {
+      "name": "Lil' Snitch",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "grid_bold",
+      "class": "sentaur",
+      "map": [
+        "#*",
+        "#*",
+        "*."
+      ],
+      "source": "Hedgehog",
+      "rarity": "epic",
+      "cost": 6,
+      "triggers": [],
+      "slug": "surveillance_drone",
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 5s: Deal 10 Effect-damage + 0.5 for each Spikes.",
+        "Health drops below 70%: Gain 3 Spikes and 25 Block (once).",
+        "Triggers 15% faster for each Star Pet or Food."
+      ]
+    },
+    "data_crawler": {
+      "name": "Web Crawler",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "grid_fine",
+      "class": "sentaur",
+      "map": [
+        ".**.",
+        "*##*",
+        ".**."
+      ],
+      "source": "Rat",
+      "rarity": "common",
+      "cost": 4,
+      "triggers": [],
+      "slug": "data_crawler",
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 3.3s: Deal 5 Effect-damage. 75% to inflict 1 Poison. 10% to inflict 1 Blind.",
+        "Triggers 15% faster for each Star Pet or Food."
+      ]
+    },
+    "cache_spider": {
+      "name": "Cache Spider",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "zigzag_h",
+      "class": "sentaur",
+      "map": [
+        ".*..",
+        "*#*.",
+        "*##*",
+        ".**."
+      ],
+      "source": "Squirrel",
+      "rarity": "rare",
+      "cost": 5,
+      "triggers": [],
+      "slug": "cache_spider",
+      "icontype": "nature",
+      "in_shop": false,
+      "unbuilt": [
+        "Every 4s: Steal a random buff. Triggers 15% faster for each Star Pet or Food."
+      ]
+    },
+    "health_check": {
+      "name": "Heartbeat Node",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "zigzag_v",
+      "class": "neutral",
+      "map": [
+        "*#*"
+      ],
+      "source": "Goobling",
+      "rarity": "common",
+      "cost": 2,
+      "triggers": [],
+      "slug": "health_check",
+      "in_shop": false,
+      "unbuilt": [
+        "3 Star item activations: Heal for 4."
+      ]
+    },
+    "backup_system": {
+      "name": "Cold Storage",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "wave_h",
+      "class": "neutral",
+      "map": [
+        "*##*",
+        "*##*"
+      ],
+      "source": "Goobert",
+      "rarity": "rare",
+      "cost": 6,
+      "triggers": [],
+      "slug": "backup_system",
+      "in_shop": false,
+      "unbuilt": [
+        "5 Star item activations: Heal for 9."
+      ]
     }
   }
 }
