@@ -474,7 +474,7 @@ horizontal_alignment = 1
 anchors_preset = 0
 offset_left = 94.0
 offset_top = 209.0
-offset_right = 295.0
+offset_right = 294.0
 offset_bottom = 359.0
 
 [node name="ShopPrice2" type="Label" parent="ShopContainer"]
@@ -491,9 +491,9 @@ horizontal_alignment = 1
 [node name="ShopItem3" type="Control" parent="ShopContainer"]
 anchors_preset = 0
 offset_left = 365.0
-offset_top = 216.0
-offset_right = 566.0
-offset_bottom = 366.0
+offset_top = 209.0
+offset_right = 565.0
+offset_bottom = 359.0
 
 [node name="ShopPrice3" type="Label" parent="ShopContainer"]
 layout_mode = 0
@@ -509,9 +509,9 @@ horizontal_alignment = 1
 [node name="ShopItem4" type="Control" parent="ShopContainer"]
 anchors_preset = 0
 offset_left = 94.0
-offset_top = 449.0
-offset_right = 295.0
-offset_bottom = 599.0
+offset_top = 443.0
+offset_right = 294.0
+offset_bottom = 593.0
 
 [node name="ShopPrice4" type="Label" parent="ShopContainer"]
 layout_mode = 0
@@ -526,10 +526,10 @@ horizontal_alignment = 1
 
 [node name="ShopItem5" type="Control" parent="ShopContainer"]
 anchors_preset = 0
-offset_left = 355.0
-offset_top = 445.0
-offset_right = 556.0
-offset_bottom = 595.0
+offset_left = 365.0
+offset_top = 443.0
+offset_right = 565.0
+offset_bottom = 593.0
 
 [node name="ShopPrice5" type="Label" parent="ShopContainer"]
 layout_mode = 0
@@ -542,20 +542,13 @@ theme_override_font_sizes/font_size = 18
 text = "0g"
 horizontal_alignment = 1
 
-[node name="CharacterStats" type="Label" parent="."]
+[node name="CharacterStats" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 31.0
-offset_top = 671.0
-offset_right = 289.0
-offset_bottom = 1015.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 20
-text = "Round: 1
-Gold: 10
-Health: 20"
+offset_left = 48.0
+offset_top = 688.0
+offset_right = 296.0
+offset_bottom = 984.0
+theme_override_constants/separation = 4
 
 [node name="RefreshButton" type="Button" parent="."]
 layout_mode = 0
@@ -563,7 +556,7 @@ offset_left = 1085.0
 offset_top = 119.0
 offset_right = 1212.0
 offset_bottom = 213.0
-text = "Refresh (1g)"
+tooltip_text = "Reroll the shop for 1 gold"
 
 [node name="ReadyButton" type="Button" parent="."]
 layout_mode = 0

@@ -1,23 +1,29 @@
-[gd_scene load_steps=3 format=3 uid="uid://btooltip123"]
+[gd_scene load_steps=4 format=3 uid="uid://btooltip123"]
 
 [ext_resource type="Script" path="res://scripts/item_tooltip.gd" id="1_tooltip"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
-bg_color = Color(0.1, 0.1, 0.15, 0.95)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.04, 0.03, 0.11, 0.96)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.4, 0.7, 1.0, 1.0)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+border_color = Color(0.4, 0.7, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.55)
+shadow_size = 10
 
-[node name="ItemTooltip" type="Panel"]
-custom_minimum_size = Vector2(400, 200)
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_rule"]
+color = Color(0.45, 0.6, 0.9, 0.35)
+thickness = 1
+
+[node name="ItemTooltip" type="PanelContainer"]
+custom_minimum_size = Vector2(300, 0)
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_1")
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 script = ExtResource("1_tooltip")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
@@ -27,64 +33,180 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 15
-theme_override_constants/margin_top = 15
-theme_override_constants/margin_right = 15
-theme_override_constants/margin_bottom = 15
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 7
 
 [node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 22
 text = "Item Name"
+horizontal_alignment = 1
+autowrap_mode = 2
 
-[node name="InfoLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="TopRule" type="HSeparator" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
-theme_override_font_sizes/font_size = 24
-text = "Category • Rarity"
+theme_override_styles/separator = SubResource("StyleBoxLine_rule")
 
-[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+[node name="Stats" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 4
-theme_override_styles/separator = SubResource("StyleBoxFlat_1")
 
-[node name="DamageLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="DamageRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
 visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.5, 0.5, 1)
-theme_override_font_sizes/font_size = 20
-text = "⚔️ Damage: 5-10"
 
-[node name="HealLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="Caption" type="Label" parent="MarginContainer/VBoxContainer/Stats/DamageRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.68, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+text = "Damage"
+
+[node name="DamageLabel" type="Label" parent="MarginContainer/VBoxContainer/Stats/DamageRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.45, 1)
+theme_override_font_sizes/font_size = 17
+text = "5-10"
+horizontal_alignment = 2
+
+[node name="HealRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
 visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
-theme_override_font_sizes/font_size = 20
-text = "❤️ Heals: 3-5 HP"
 
-[node name="BlockLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="Caption" type="Label" parent="MarginContainer/VBoxContainer/Stats/HealRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.68, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+text = "Heals"
+
+[node name="HealLabel" type="Label" parent="MarginContainer/VBoxContainer/Stats/HealRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.55, 1)
+theme_override_font_sizes/font_size = 17
+text = "3-5 HP"
+horizontal_alignment = 2
+
+[node name="BlockRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
 visible = false
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="MarginContainer/VBoxContainer/Stats/BlockRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.68, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+text = "Blocks"
+
+[node name="BlockLabel" type="Label" parent="MarginContainer/VBoxContainer/Stats/BlockRow"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "🛡️ Blocks: 5 damage"
+theme_override_font_sizes/font_size = 17
+text = "5"
+horizontal_alignment = 2
+
+[node name="CooldownRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
+visible = false
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="MarginContainer/VBoxContainer/Stats/CooldownRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.68, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+text = "Cooldown"
+
+[node name="CooldownLabel" type="Label" parent="MarginContainer/VBoxContainer/Stats/CooldownRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "1.5s"
+horizontal_alignment = 2
+
+[node name="CpuRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
+visible = false
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="MarginContainer/VBoxContainer/Stats/CpuRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.68, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+text = "CPU"
+
+[node name="CpuLabel" type="Label" parent="MarginContainer/VBoxContainer/Stats/CpuRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.35, 1)
+theme_override_font_sizes/font_size = 17
+text = "2"
+horizontal_alignment = 2
+
+[node name="SizeRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
+visible = false
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="MarginContainer/VBoxContainer/Stats/SizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.68, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+text = "Takes up"
+
+[node name="SizeLabel" type="Label" parent="MarginContainer/VBoxContainer/Stats/SizeRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "1 square"
+horizontal_alignment = 2
+
+[node name="PriceRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
+visible = false
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="MarginContainer/VBoxContainer/Stats/PriceRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.68, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+text = "Price"
+
+[node name="PriceLabel" type="Label" parent="MarginContainer/VBoxContainer/Stats/PriceRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 17
+text = "4 gold"
+horizontal_alignment = 2
 
 [node name="SpecialLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
-theme_override_font_sizes/font_size = 20
-text = "✨ Special: Effect description"
+theme_override_font_sizes/font_size = 17
+text = "Effect description"
+autowrap_mode = 2
 
 [node name="DescriptionLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.9, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.78, 0.8, 0.9, 1)
+theme_override_font_sizes/font_size = 17
 text = "Item description text"
 autowrap_mode = 2
+
+[node name="FootRule" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_rule")
+
+[node name="InfoLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.65, 0.78, 1)
+theme_override_font_sizes/font_size = 16
+text = "Category • Rarity"
+horizontal_alignment = 1

@@ -457,14 +457,16 @@ func test_the_grid_marks_where_a_held_item_would_land():
 		"and mark the one the pointer is over")
 
 
-func test_a_pointer_off_the_containers_marks_nothing():
+func test_a_pointer_off_the_containers_is_marked_refused():
 	_load_default_containers()
 	grid.place_shop_item(_item(), Vector2i(2, 3))
 	grid._start_drag(grid.items[0])
 
 	grid.update_drag_preview(grid.global_position + grid.grid_to_pixel(Vector2i(0, 0)))
 
-	assert_false(grid.hover_preview.visible, "Bare floor is not somewhere it can land")
+	assert_true(grid.hover_preview.visible, "Bare floor is still a square worth answering about")
+	assert_eq(grid.hover_preview.get_child(0).get_theme_stylebox("panel").bg_color,
+		grid.MARK_REFUSED_FILL, "and the answer is no")
 
 
 func test_the_other_grid_marks_the_square_when_the_pointer_is_over_it():

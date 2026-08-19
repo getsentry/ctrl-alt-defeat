@@ -163,7 +163,7 @@ func test_leaving_the_tree_takes_the_tooltip_with_it():
 	# The tooltip is parented to the tree root, not to the item, so it has to be
 	# taken down explicitly or it outlives the thing it describes.
 	_make(_item())
-	visual.tooltip_panel = Panel.new()
+	visual.tooltip_panel = load("res://scenes/ItemTooltip.tscn").instantiate()
 	get_tree().root.add_child(visual.tooltip_panel)
 	var panel = visual.tooltip_panel
 

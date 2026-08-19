@@ -13,13 +13,19 @@ var container_color: Color = Color(0.3, 0.4, 0.5, 0.3)  # Transparent for contai
 var border_color: Color = Color(0.4, 0.7, 1.0, 1.0)
 var show_border: bool = false  # No border by default - cleaner look
 var enable_tooltip: bool = false  # Tooltip disabled by default
+## Whether the tooltip should say what the shop charges. Only a shelf sets it.
+var tooltip_shows_price: bool = false
+## What the tooltip stands beside, when that is not the artwork itself. A shelf
+## is a slot much wider than the picture in it, and a card measured from the
+## picture ends up drawn across the rest of the slot.
+var tooltip_anchor: Control = null
 
 # Item data
 var item_data
 var item_shape: Array = [[0, 0]]  # Array[Array[int]]: the [x, y] offsets it covers
 
 # Tooltip
-var tooltip_panel: Panel = null
+var tooltip_panel: ItemTooltip = null
 var is_hovering: bool = false
 
 # What the item is doing right now, as opposed to what it is.
@@ -202,15 +208,27 @@ func _placeholder_color() -> Color:
 
 func _on_mouse_entered():
 	"""Show tooltip on hover"""
-	if not enable_tooltip or not item_data:
-		return
-
-	# Check if this is a server container without real item data
-	is_hovering = true
-	_show_tooltip()
+	hover_started()
 
 func _on_mouse_exited():
 	"""Hide tooltip when mouse leaves"""
+	hover_ended()
+
+
+func hover_started() -> void:
+	"""The pointer has come to rest on this item.
+
+	Public because the artwork is not always what the pointer meets: a shelf is
+	a whole panel around a small picture, and hovering anywhere on it should
+	read the item, not just the few squares the picture covers.
+	"""
+	if not enable_tooltip or not item_data:
+		return
+	is_hovering = true
+	_show_tooltip()
+
+
+func hover_ended() -> void:
 	is_hovering = false
 	_hide_tooltip()
 
@@ -228,6 +246,7 @@ func _show_tooltip():
 	get_tree().root.add_child(tooltip_panel)
 
 	# Setup the tooltip with item data
+	tooltip_panel.show_price = tooltip_shows_price
 	tooltip_panel.setup_tooltip(item_data)
 
 	# Let the scene determine its own size
@@ -241,15 +260,20 @@ func _show_tooltip():
 
 	tooltip_panel.size = tooltip_panel.get_combined_minimum_size()
 
-	# Position tooltip to the left of the item to avoid covering it
-	tooltip_panel.position = global_position + Vector2(-tooltip_panel.size.x - 30, 0)
+	# Beside the item and level with the middle of it, so the card reads as
+	# belonging to the thing under the pointer rather than to the row above it.
+	var beside := _tooltip_anchor_rect()
+	tooltip_panel.position = Vector2(
+		beside.position.x - tooltip_panel.size.x - 24,
+		beside.get_center().y - tooltip_panel.size.y / 2.0
+	)
 
 	# Make sure it stays on screen
 	var viewport_size = get_viewport().size
 
 	# If tooltip would go off the left edge, show it on the right instead
 	if tooltip_panel.position.x < 0:
-		tooltip_panel.position.x = global_position.x + size.x + 30
+		tooltip_panel.position.x = beside.end.x + 24
 
 	# If tooltip would go off the right edge (when positioned on the right), adjust
 	if tooltip_panel.position.x + tooltip_panel.size.x > viewport_size.x:
@@ -260,6 +284,13 @@ func _show_tooltip():
 		tooltip_panel.position.y = 10
 	if tooltip_panel.position.y + tooltip_panel.size.y > viewport_size.y:
 		tooltip_panel.position.y = viewport_size.y - tooltip_panel.size.y - 10
+
+func _tooltip_anchor_rect() -> Rect2:
+	"""What the tooltip has to stand clear of"""
+	if is_instance_valid(tooltip_anchor) and tooltip_anchor.is_inside_tree():
+		return tooltip_anchor.get_global_rect()
+	return Rect2(global_position, size)
+
 
 func _hide_tooltip():
 	"""Remove the tooltip"""

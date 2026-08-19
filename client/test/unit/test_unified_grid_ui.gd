@@ -76,34 +76,71 @@ func test_storage_area_exists():
 		assert_true(storage.visible, "Storage should be visible by default")
 
 func test_stats_display():
-	var stats_label = ui.stats_label
-	assert_not_null(stats_label, "Stats label should exist")
+	assert_not_null(ui.stats_panel, "There should be somewhere to read the numbers")
 
-	var stats_text = stats_label.text
-	assert_true("Gold" in stats_text, "Stats should show gold")
-	assert_true("Round" in stats_text, "Stats should show round")
-	assert_true("Lives" in stats_text, "Stats should show lives")
-	assert_true("Wins" in stats_text, "Stats should show wins")
-	assert_true("Losses" in stats_text, "Stats should show losses")
+	for caption in ["Name", "Class", "Gold", "Health", "Stamina",
+			"Round", "Wins", "Tries"]:
+		assert_has(ui.stat_values, caption, "Stats should show %s" % caption.to_lower())
 
-	assert_true("Gold: 20" in stats_text, "Stats should show the current gold amount")
+	assert_eq(ui.stat_values["Gold"].text, "20", "Stats should show the current gold amount")
+	assert_eq(ui.stat_values["Tries"].text, str(GameStateManager.player_lives),
+		"Tries is how many goes are left in the run")
+
+
+func test_health_is_blank_while_nothing_counts_it():
+	# `player_health` has read 100 since the screen that decremented it was
+	# deleted. A bar that never moves is worse than no bar.
+	assert_eq(ui.stat_values["Health"].text, ui.NOT_KNOWN_YET,
+		"Nothing maintains a health figure, so the row says nothing")
+
+
+func test_the_class_is_named():
+	assert_eq(ui.stat_values["Class"].text, "Sentaur", "There is one kind of player")
+
+
+func test_stamina_is_blank_before_the_first_battle():
+	# The pool only reaches the client stamped on a battle action, so before
+	# any battle there is nothing to read. A number invented to fill the row is
+	# one the player cannot tell from a real one, and they play against it.
+	assert_eq(ui.stat_values["Stamina"].text, ui.NOT_KNOWN_YET,
+		"No battle has been fought, so no pool has been reported")
+
+
+func test_stamina_is_the_pool_the_last_battle_reported():
+	var action = APITypes.BattleAction.new({
+		"timestamp": 0, "source": "x", "action": "attack", "player": 1,
+		"target": null, "damage": null,
+		"details": {"cpu": [1.5, 3.0], "max_cpu": [4.0, 3.0]},
+	})
+	GameStateManager.last_battle_events = [action] as Array[APITypes.BattleAction]
+
+	ui._update_stats()
+
+	assert_eq(ui.stat_values["Stamina"].text, "4", "The player's pool, not the enemy's")
+
+
+func test_the_rows_waiting_on_data_still_have_their_place():
+	assert_not_null(ui.stamina_use_label, "Stamina usage keeps its spot")
+	assert_not_null(ui.rank_label, "and so does the rank")
+
+
+func test_spending_says_what_it_cost():
+	# The gold on its own cannot tell a purchase from a refund.
+	GameStateManager.gold = 20
+	ui._update_stats()
+	GameStateManager.gold = 14
+	ui._update_stats()
+
+	assert_eq(ui.gold_delta_label.text, "-6", "It should say what the gold just did")
+
+
+func test_the_first_reading_of_the_gold_is_not_a_change():
+	assert_eq(ui.gold_delta_label.text, "", "Arriving with 20 gold is not spending it")
 
 func test_refresh_shop_button():
-	# Find refresh button
-	var refresh_btn = null
-	for child in ui.get_children():
-		if child.has_method("get_text") and "Refresh" in str(child.get_text()):
-			refresh_btn = child
-			break
-
-	if not refresh_btn:
-		# Look in controls container
-		var controls = ui.find_child("Controls", true, false)
-		if controls:
-			for child in controls.get_children():
-				if child is Button and "Refresh" in child.text:
-					refresh_btn = child
-					break
+	# By name, not by caption: REROLL and its price are painted into the
+	# background, so the button carries no words of its own.
+	var refresh_btn = ui.find_child("RefreshButton", true, false)
 
 	assert_not_null(refresh_btn, "Refresh shop button should exist")
 
@@ -146,8 +183,11 @@ func test_drag_and_drop_initialization():
 	assert_eq(ui.inventory_grid.drag_offset, Vector2.ZERO, "Drag offset should be zero")
 	assert_false(ui.inventory_grid.valid_placement, "Placement should not be valid initially")
 
-	assert_not_null(ui.hover_preview, "Hover preview should be ready")
-	assert_false(ui.hover_preview.visible, "Hover preview should be hidden initially")
+	# The grid owns the mark: the squares are its, so it is the only thing that
+	# knows where one would land.
+	assert_not_null(ui.inventory_grid.hover_preview, "Hover preview should be ready")
+	assert_false(ui.inventory_grid.hover_preview.visible,
+		"Hover preview should be hidden initially")
 
 func test_grid_cell_creation():
 	# InventoryGrid owns the cell visuals
@@ -283,14 +323,27 @@ func test_the_preview_cells_sit_on_the_covered_squares():
 
 	assert_eq(drawn_at, expected, "Each cell sits on its own grid square")
 
-func test_the_preview_is_hidden_where_a_container_cannot_go():
-	# (2, 3) is already covered by container_a.
+func test_an_occupied_square_is_marked_refused():
+	# (2, 3) is already covered by container_a. Marking nothing would leave the
+	# player unable to tell a refusal from a pointer the game never saw.
 	var vm = TestHelpers.item({"is_container": true,
 		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0})
 
 	ui._show_container_preview(vm, Vector2i(2, 3))
 
-	assert_null(ui.container_preview, "No preview on an occupied square")
+	assert_not_null(ui.container_preview, "An occupied square still gets an answer")
+	assert_eq(
+		ui.container_preview.get_child(0).get_theme_stylebox("panel").bg_color,
+		InventoryGrid.MARK_REFUSED_FILL, "and the answer is no")
+
+
+func test_no_preview_off_the_board():
+	var vm = TestHelpers.item({"is_container": true,
+		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0})
+
+	ui._show_container_preview(vm, Vector2i(-1, -1))
+
+	assert_null(ui.container_preview, "There is no square out there to answer about")
 
 func test_the_preview_replaces_the_previous_one():
 	var vm = TestHelpers.item({"is_container": true,
@@ -746,14 +799,41 @@ func test_a_held_item_marks_where_it_would_land():
 		"and the one the pointer is over")
 
 
-func test_a_held_item_over_bare_floor_marks_nothing():
+func test_a_held_item_over_bare_floor_is_marked_refused():
+	# Blank would say only that nothing is happening. Red says the square was
+	# read and the answer is no.
 	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
 	ui.hold(GameStateManager.inventory_storage[0])
 	var grid = ui.inventory_grid
 
 	ui.follow_pointer(grid.global_position + grid.grid_to_pixel(Vector2i(0, 0)))
 
-	assert_false(grid.hover_preview.visible, "Bare floor is not somewhere it can go")
+	assert_true(grid.hover_preview.visible, "Bare floor should still be marked")
+	assert_eq(grid.hover_preview.get_child(0).get_theme_stylebox("panel").bg_color,
+		grid.MARK_REFUSED_FILL, "and marked as somewhere it cannot go")
+
+
+func test_a_held_item_off_the_board_marks_nothing():
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
+	ui.hold(GameStateManager.inventory_storage[0])
+	var grid = ui.inventory_grid
+
+	ui.follow_pointer(grid.global_position - Vector2(200, 200))
+
+	assert_false(grid.hover_preview.visible, "There is no square out there to answer about")
+
+
+func test_the_mark_covers_the_squares_the_item_covers():
+	# An L reaches four corners and covers three of them. A mark drawn as one
+	# rectangle claims the fourth, which is the square being asked about.
+	GameStateManager.inventory_storage = [
+		TestHelpers.item({"id": "held", "shape": [[0, 0], [0, 1], [1, 1]]})]
+	ui.hold(GameStateManager.inventory_storage[0])
+	var grid = ui.inventory_grid
+
+	ui.follow_pointer(grid.global_position + grid.grid_to_pixel(Vector2i(2, 3)))
+
+	assert_eq(grid.hover_preview.get_child_count(), 3, "One patch per covered square")
 
 
 func test_letting_go_clears_the_mark():

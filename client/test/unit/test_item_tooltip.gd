@@ -82,12 +82,20 @@ func test_shows_damage_range():
 	assert_true("2-5" in tooltip.damage_label.text, "Should show the damage range")
 
 
-func test_damage_includes_cooldown_and_cpu():
+func test_cooldown_and_cpu_get_rows_of_their_own():
 	tooltip.setup_tooltip(_item({
 		"min_damage": 2, "max_damage": 5, "cooldown": 1.5, "cpu_cost": 3
 	}))
-	assert_true("1.5" in tooltip.damage_label.text, "Should show the cooldown")
-	assert_true("CPU: 3" in tooltip.damage_label.text, "Should show the CPU cost")
+	assert_true(tooltip.cooldown_label.visible, "Cooldown should be shown")
+	assert_true("1.5" in tooltip.cooldown_label.text, "Should show the cooldown")
+	assert_true(tooltip.cpu_label.visible, "CPU cost should be shown")
+	assert_eq(tooltip.cpu_label.text, "3", "Should show the CPU cost")
+
+
+func test_a_cooldown_on_an_item_that_does_nothing_is_not_shown():
+	# Nothing paces, so the number is not a stat the player can use.
+	tooltip.setup_tooltip(_plain_item({"cooldown": 4.0}))
+	assert_false(tooltip.cooldown_label.visible, "A cooldown alone says nothing")
 
 
 func test_shows_healing():
@@ -114,6 +122,48 @@ func test_hides_every_effect_row_for_a_plain_item():
 	assert_false(tooltip.heal_label.visible, "No heal row for a plain item")
 	assert_false(tooltip.block_label.visible, "No block row for a plain item")
 	assert_false(tooltip.special_label.visible, "No special row for a plain item")
+
+
+# ============ How much room it takes ============
+
+func test_a_single_square_item_does_not_say_so():
+	tooltip.setup_tooltip(_item({"shape": [[0, 0]]}))
+	assert_false(tooltip.size_label.visible, "One square is the ordinary case")
+
+
+func test_a_bigger_item_says_how_many_squares():
+	tooltip.setup_tooltip(_item({"shape": [[0, 0], [0, 1]]}))
+	assert_true(tooltip.size_label.visible, "Room taken up is worth knowing")
+	assert_eq(tooltip.size_label.text, "2 squares")
+
+
+# ============ Price ============
+
+func test_the_price_is_only_named_on_the_shelf():
+	tooltip.setup_tooltip(_item({"price": 4}))
+	assert_false(tooltip.price_label.visible, "An item already owned has no price")
+
+
+func test_a_shop_item_names_its_price():
+	tooltip.show_price = true
+	tooltip.setup_tooltip(_item({"price": 4}))
+	assert_true(tooltip.price_label.visible, "The shelf should say what it charges")
+	assert_true("4" in tooltip.price_label.text, "Should show the price")
+
+
+# ============ Rules ============
+
+func test_an_item_with_nothing_to_say_draws_no_rules():
+	# Otherwise the card is a name with two lines under it and nothing between.
+	tooltip.setup_tooltip(_plain_item({"cpu_cost": 0, "shape": [[0, 0]]}))
+	assert_false(tooltip.top_rule.visible, "Nothing to divide from the name")
+	assert_false(tooltip.foot_rule.visible, "Nothing to divide from the footer")
+
+
+func test_an_item_with_stats_draws_its_rules():
+	tooltip.setup_tooltip(_item({"min_damage": 2, "max_damage": 5}))
+	assert_true(tooltip.top_rule.visible, "The stats are divided from the name")
+	assert_true(tooltip.foot_rule.visible, "and from the footer")
 
 
 # ============ Description ============

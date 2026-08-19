@@ -99,6 +99,13 @@ var original_facing := 0
 var hover_preview: Panel = null
 var valid_placement = false
 
+## What the mark under a held item looks like. Green is "let go here", red is
+## "not here" -- one glance, no reading.
+const MARK_ALLOWED_FILL := Color(0.25, 1.0, 0.45, 0.3)
+const MARK_ALLOWED_EDGE := Color(0.45, 1.0, 0.6, 0.9)
+const MARK_REFUSED_FILL := Color(1.0, 0.2, 0.3, 0.28)
+const MARK_REFUSED_EDGE := Color(1.0, 0.35, 0.45, 0.9)
+
 # Signals
 signal item_clicked(item)
 signal item_placed(item_data, grid_pos)
@@ -212,15 +219,15 @@ func _create_cell_visual(x: int, y: int) -> Panel:
 	return cell
 
 func _create_hover_preview():
-	"""Create the hover preview panel for placement feedback"""
+	"""Create the hover preview panel for placement feedback.
+
+	It draws nothing itself: the mark is one patch per square the shape covers,
+	and this is what holds them and puts them where the pointer is.
+	"""
 	hover_preview = Panel.new()
 	hover_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_preview.visible = false
-	var hover_style = StyleBoxFlat.new()
-	hover_style.bg_color = Color(0.3, 1.0, 0.3, 0.3)
-	hover_style.border_color = Color(0.5, 1.0, 0.5, 0.8)
-	hover_style.set_border_width_all(2)
-	hover_preview.add_theme_stylebox_override("panel", hover_style)
+	hover_preview.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(hover_preview)
 
 func item_visual(item_id: String) -> ItemVisual:
@@ -688,35 +695,78 @@ func place_shop_item(item: APITypes.Item, grid_pos: Vector2i, facing: int = -1) 
 	return true
 
 func mark_square(item_shape: Array, grid_pos: Vector2i, allowed: bool) -> void:
-	"""Mark where something of this shape would land, or mark nothing.
+	"""Mark where something of this shape would land, and whether it can.
 
 	The one place that draws the mark. Whether the square is allowed is the
 	caller's question to answer, because an item asks whether a container has
 	made a square usable and a container asks whether a square is free.
+
+	A square it cannot go in is marked red rather than left blank. Blank says
+	only that nothing is happening, and the player is left guessing whether the
+	game saw the pointer at all; red says the game saw it and the answer is no.
+	Off the board there is nothing to answer about, so nothing is drawn.
 	"""
 	if not hover_preview or not is_instance_valid(hover_preview):
 		_create_hover_preview()
-	if not allowed:
+
+	if not _on_the_board(grid_pos):
 		hover_preview.visible = false
 		return
 
+	hover_preview.visible = true
+	hover_preview.position = grid_to_pixel(grid_pos)
+	hover_preview.size = _shape_extent(item_shape)
+	_draw_mark(item_shape, allowed)
+
+
+func _on_the_board(grid_pos: Vector2i) -> bool:
+	"""Whether this square is one of the grid's own"""
+	return grid_pos.x >= 0 and grid_pos.y >= 0 \
+		and grid_pos.x < grid_width and grid_pos.y < grid_height
+
+
+func _shape_extent(item_shape: Array) -> Vector2:
+	"""How far a shape reaches from the square it starts on"""
 	var max_x := 0
 	var max_y := 0
 	for offset in item_shape:
 		if offset is Array and offset.size() >= 2:
 			max_x = max(max_x, int(offset[0]))
 			max_y = max(max_y, int(offset[1]))
-
-	hover_preview.visible = true
-	hover_preview.position = grid_to_pixel(grid_pos)
-	hover_preview.size = Vector2(
+	return Vector2(
 		(max_x + 1) * (cell_size + cell_spacing) - cell_spacing,
 		(max_y + 1) * (cell_size + cell_spacing) - cell_spacing
 	)
-	var style = hover_preview.get_theme_stylebox("panel")
-	if style:
-		style.bg_color = Color(0.3, 1.0, 0.3, 0.3)
-		style.border_color = Color(0.5, 1.0, 0.5, 0.8)
+
+
+func _draw_mark(item_shape: Array, allowed: bool) -> void:
+	"""One patch per square the shape covers.
+
+	An L covers three squares out of the four its corners reach, and a mark
+	drawn as one rectangle claims the fourth as well -- which is the square the
+	player is trying to work out whether they can use.
+	"""
+	for old in hover_preview.get_children():
+		old.queue_free()
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = MARK_ALLOWED_FILL if allowed else MARK_REFUSED_FILL
+	style.border_color = MARK_ALLOWED_EDGE if allowed else MARK_REFUSED_EDGE
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(3)
+
+	for offset in item_shape:
+		if not (offset is Array and offset.size() >= 2):
+			continue
+		var patch := Panel.new()
+		patch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		patch.position = Vector2(
+			int(offset[0]) * (cell_size + cell_spacing),
+			int(offset[1]) * (cell_size + cell_spacing)
+		)
+		patch.size = Vector2(cell_size, cell_size)
+		patch.add_theme_stylebox_override("panel", style)
+		hover_preview.add_child(patch)
 
 
 func show_hover_preview_for_shop(item_data: APITypes.Item, grid_pos: Vector2i):

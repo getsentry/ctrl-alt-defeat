@@ -39,3 +39,88 @@ because that smoke test needs a running server to verify against.
 `BACKLOG.md` (453 lines, current) and `docs/BACKLOG.md` (53 lines, untouched
 since `5a7407a`). The second looks abandoned rather than separate. Someone who
 knows which is which should delete one.
+
+## Selling an item off the grid does nothing
+
+`test/ui/test_ui_driven.gd::test_selling_an_item_pays_the_player` fails, and
+has been failing since before the shop was reworked (it fails the same way on
+`47da445` with no changes on top). Right-clicking a placed item is meant to
+sell it. All three assertions go the wrong way at once:
+
+```
+[1] expected to equal [0]:  The sold item leaves the grid
+[9] expected to be > than [9]:  Selling should pay the player
+[9] expected to equal [11]:  A sale pays half of what the item cost
+```
+
+The item stays on the grid and the gold does not move, so the sale is not
+reaching the server at all. It is the only failing test in the suite, and it is
+about the one way a player gets gold back, so it is worth someone's afternoon.
+
+Start at `InventoryGrid._on_item_input`, which is what the test drives, and
+follow the right-click through to `BattleServerAPI.sell_item`.
+
+## The grid marks a square against a preview that has been freed
+
+Every headless run of `test_inventory_grid.gd` prints:
+
+```
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of
+type 'bool' on a base object of type 'previously freed'.
+   at: InventoryGrid._end_drag (res://scripts/inventory_grid.gd:562)
+```
+
+`_end_drag` sets `hover_preview.visible = false` without asking whether the
+preview is still there, and by teardown it is not. `mark_square` guards the
+same field with `is_instance_valid` and rebuilds it; `_end_drag` does not.
+
+It is one line, but it is printed on every run, and a run whose output always
+has an error in it is a run nobody reads.
+
+## Three of the character stats still have nothing behind them
+
+The panel reads Name, Class, Gold, Health, Stamina, Round, Wins, Tries, in the
+order Backpack Battles uses, with a plate for the rank under it. Five of those
+rows have a real reading. Three draw a dash, and one of the dashes is only
+half a dash:
+
+- **Health.** There is no health figure to show. `player_health` has read 100
+  since the post-battle screen was deleted, and the entry above has it down for
+  deletion — so the row draws a dash rather than a bar that never moves. It
+  becomes a reading if the server ever sends one, and goes if it does not.
+- **Stamina usage.** The column beside the Stamina row is held open and draws
+  nothing. It needs a reading of how hard a build leans on its pool, which
+  nothing computes yet on either side.
+- **Rank.** There is no ranking, so the plate says Unranked, which is true of
+  everyone. It becomes a real reading the day a ladder exists.
+
+**Stamina is right only until the player buys something.** The pool now reaches
+the client, but only stamped on a battle action, so the shop reads the last
+battle's `max_cpu` off `GameStateManager.last_battle_events`. That is correct at
+the top of every shop phase and wrong the moment a purchase raises the pool —
+containers, infrastructure and consumables all have items carrying a `max_cpu`
+effect — and it is blank for the whole of round one, before any battle has been
+fought.
+
+**Fix.** Put `max_cpu` on what the session and the move responses already send
+back. The engine works it out from the placed items at the top of a battle
+(`battle_engine.py`, the `max_cpu` effects around line 456); the same sum over
+the current inventory is what the shop needs, and it would let the shop say what
+the *next* battle will open with rather than what the last one did.
+
+**Class is settled**: there is one kind of player, `Sentaur`, and the panel says
+so from a constant. Give it a second class and it needs a session field.
+
+## `test_multiple_rounds` hangs since the post-battle screen was taken out
+
+`test/ui/test_ui_driven.gd::test_multiple_rounds` times out at 45 seconds —
+"waiting on something that has not happened" — on `0a6034e` with nothing on top
+of it. It passed before that commit.
+
+That commit routes the end of a battle straight to the shop instead of through
+`PostBattleScreen`, so the click the test waits for is a click on a screen that
+no longer appears. Whatever the test waits on now needs to be whatever the new
+route actually reaches.
+
+It is the second of the two red UI tests, alongside the sale above, and both
+are about what happens after a battle rather than during one.
