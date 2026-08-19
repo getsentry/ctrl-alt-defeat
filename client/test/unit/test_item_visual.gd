@@ -193,3 +193,58 @@ func test_drawing_an_item_again_does_not_connect_its_tooltip_twice():
 		"Drawn twice, connected once")
 	assert_eq(visual.mouse_exited.get_connections().size(), 1,
 		"and the same going out")
+
+
+# ============ Turning ============
+#
+# The squares an item covers are turned without the picture of it, and for as
+# long as items were drawn as coloured shapes that was the whole of turning.
+# With artwork it was not: a sword on its side was fitted to the squares it
+# now covered and left standing upright, so it was drawn upright and shrunk
+# until its own length fitted across their width. It did not turn, it dwindled.
+
+func _artwork_of(visual_node: Control) -> TextureRect:
+	for child in visual_node.get_children():
+		if child is TextureRect:
+			return child
+	return null
+
+
+func _sword(facing: int) -> Resource:
+	return TestHelpers.placed_item({
+		"slug": "darksaber", "shape": [[0, 0], [0, 1], [0, 2], [0, 3]],
+		"rotation": facing})
+
+
+func test_the_artwork_turns_with_the_item():
+	_make(_sword(90))
+	var art := _artwork_of(visual)
+	assert_not_null(art, "A slug with artwork should be drawn as artwork")
+	assert_eq(art.rotation_degrees, 90.0,
+		"An item on its side should have its picture on its side")
+
+
+func test_the_artwork_stays_upright_when_the_item_does():
+	_make(_sword(0))
+	assert_eq(_artwork_of(visual).rotation_degrees, 0.0,
+		"An item facing its own way should not have its picture turned")
+
+
+func test_turning_does_not_shrink_the_artwork():
+	# The bug this is here for: turned, the sword was drawn at a quarter of
+	# the size it stands at, because it was fitted upright into its own width.
+	_make(_sword(0))
+	var standing: Vector2 = _artwork_of(visual).scale
+	_make(_sword(90))
+	var lying: Vector2 = _artwork_of(visual).scale
+	assert_almost_eq(lying.x, standing.x, 0.001,
+		"An item should be drawn the same size whichever way it faces")
+
+
+func test_turned_artwork_still_fits_the_squares_it_covers():
+	_make(_sword(90))
+	var art := _artwork_of(visual)
+	# Turned a quarter, what the picture covers is its own size the other way.
+	var covers := Vector2(art.size.y * art.scale.y, art.size.x * art.scale.x)
+	assert_lte(covers.x, visual.size.x + 1.0, "It should not run past its squares")
+	assert_lte(covers.y, visual.size.y + 1.0, "nor past them downwards")

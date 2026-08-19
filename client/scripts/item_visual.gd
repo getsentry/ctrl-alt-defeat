@@ -125,22 +125,30 @@ func _create_texture_visual(texture_path: String):
 	var texture_rect = TextureRect.new()
 	texture_rect.texture = texture
 
-	# Calculate scale factor to fit the texture in our cell size
+	# An item's artwork is drawn for the way it is held in the catalogue, and
+	# the squares it covers are turned without it. Fitted to the turned
+	# squares and left standing upright, a sword on its side is drawn upright
+	# and shrunk until its own length fits across their width: it does not
+	# turn, it dwindles. It has to turn with them.
+	#
+	# Which way it faces is held in degrees -- 0, 90, 180, 270 -- and not in
+	# quarters, so it is already the angle to turn the artwork by.
+	var facing: int = item_data.facing()
 	var texture_size = texture.get_size()
-	var scale_x = custom_minimum_size.x / texture_size.x
-	var scale_y = custom_minimum_size.y / texture_size.y
-	var scale_factor = min(scale_x, scale_y)  # Use smaller scale to fit
+	# On its side, the squares it covers are its own shape laid the other way,
+	# so the artwork has to be fitted to that rather than to what it covers.
+	var upright := custom_minimum_size
+	if facing % 180 != 0:
+		upright = Vector2(custom_minimum_size.y, custom_minimum_size.x)
+	var scale_factor = min(upright.x / texture_size.x, upright.y / texture_size.y)
 
-	# Apply the scale
-	texture_rect.scale = Vector2(scale_factor, scale_factor)
-
-	# Calculate scaled size for centering
-	var scaled_size = texture_size * scale_factor
-
-	# Center the texture within the cell
-	var center_offset = (custom_minimum_size - scaled_size) / 2.0
-	texture_rect.position = center_offset
 	texture_rect.size = texture_size  # Keep original size, let scale handle it
+	# Turned about its own middle, so that whichever way it faces it is the
+	# middle of the artwork that sits in the middle of the squares.
+	texture_rect.pivot_offset = texture_size / 2.0
+	texture_rect.scale = Vector2(scale_factor, scale_factor)
+	texture_rect.rotation_degrees = facing
+	texture_rect.position = (custom_minimum_size - texture_size) / 2.0
 	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(texture_rect)
 
