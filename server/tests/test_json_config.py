@@ -708,3 +708,106 @@ class TestCleanseLoading:
         assert by_type["CleanseEffect"].count == 4
         assert by_type["CleanseEffect"].removes == MEMORY_LEAKED
         assert isinstance(by_type["ConsumeEffect"], ConsumeEffect)
+
+
+class TestABuffIsNotAStat:
+    """Section 3.1: seven buffs, and a number on an item is not one of them"""
+
+    def loader(self):
+        return ConfigLoader()
+
+    def test_a_stat_written_as_a_buff_is_refused(self):
+        """`speed`, `accuracy`, `cpu_cost` and the rest were all filed as
+        buffs, and the player carried them where nothing read them."""
+        for stat in ["trigger_speed", "accuracy", "cpu_cost", "damage_reduction"]:
+            with pytest.raises(ValueError, match="modify"):
+                self.loader()._parse_effect(
+                    {"type": "buff", "stat": stat, "value": 0.1, "target": "self"},
+                    "some_item",
+                )
+
+    def test_a_buff_nothing_stacks_is_refused(self):
+        with pytest.raises(ValueError, match="not a buff"):
+            self.loader()._parse_effect(
+                {"type": "buff", "buff_name": "immunity", "value": 1,
+                 "target": "self"},
+                "some_item",
+            )
+
+    def test_a_modifier_has_to_change_something_real(self):
+        with pytest.raises(ValueError, match="not something an item modifier"):
+            self.loader()._parse_effect(
+                {"type": "modify", "stat": "morale", "value": 1, "target": "own"},
+                "some_item",
+            )
+
+    def test_a_modifier_says_what_it_reaches(self):
+        for missing in ["value", "target"]:
+            config = {"type": "modify", "stat": "trigger_speed",
+                      "value": 0.1, "target": "own"}
+            del config[missing]
+            with pytest.raises(ValueError, match=missing):
+                self.loader()._parse_effect(config, "some_item")
+
+    def test_the_catalogue_has_no_stat_left_among_the_buffs(self):
+        from item_effects import BUFFS, MODIFIERS, BuffEffect, ModifyEffect
+
+        buffs, modifiers = [], []
+        for spec in config_loader.items.values():
+            for trigger in spec.triggers or []:
+                for effect in getattr(trigger, "effects", []) or []:
+                    if isinstance(effect, BuffEffect):
+                        buffs.append(effect.buff_name)
+                    if isinstance(effect, ModifyEffect):
+                        modifiers.append(effect.stat)
+
+        assert buffs and modifiers, "the catalogue should have both"
+        assert set(buffs) <= BUFFS
+        assert set(modifiers) <= MODIFIERS
+        assert not set(buffs) & MODIFIERS, "no stat is filed as a buff"
+
+    def test_a_modifier_reaches_somewhere_real(self):
+        """`adjacent` was a scope until adjacency turned out not to be a
+        mechanic this game has. An aura zone is drawn on the item's own map."""
+        for bad in ["adjacent", "neighbours", "everything"]:
+            with pytest.raises(ValueError, match="not somewhere a modifier"):
+                self.loader()._parse_effect(
+                    {"type": "modify", "stat": "trigger_speed", "value": 0.1,
+                     "target": bad},
+                    "some_item",
+                )
+
+    def test_gloves_of_haste_reaches_its_star(self):
+        """"Start of battle: Star items trigger 20% faster." The aura is drawn
+        on the map as `*`, so the effect names that zone rather than guessing
+        at what sits nearby."""
+        from item_effects import BattleStartTrigger, ModifyEffect
+
+        spec = config_loader.items["load_balancer_module"]
+        (trigger,) = spec.triggers
+        assert isinstance(trigger, BattleStartTrigger)
+        (effect,) = trigger.effects
+        assert isinstance(effect, ModifyEffect)
+        assert effect.stat == "trigger_speed"
+        assert effect.value == 0.2
+        assert effect.target_type == "star"
+
+    def test_an_item_reaching_a_zone_actually_draws_one(self):
+        """A modifier scoped to an aura is meaningless if the item's map has
+        no such zone on it."""
+        from item_effects import ModifyEffect
+
+        for item_id, spec in config_loader.items.items():
+            for trigger in spec.triggers or []:
+                for effect in getattr(trigger, "effects", []) or []:
+                    if isinstance(effect, ModifyEffect) and effect.target_type in (
+                        "star", "diamond"
+                    ):
+                        zones = (
+                            spec.shape.star
+                            if effect.target_type == "star"
+                            else spec.shape.diamond
+                        )
+                        assert zones, (
+                            f"{item_id} reaches a {effect.target_type} it never draws"
+                        )

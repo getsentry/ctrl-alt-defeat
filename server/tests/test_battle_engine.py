@@ -20,13 +20,17 @@ from battle_engine import (
 from containers import Container
 from grid_system import parse_map
 from item_effects import (
+    BUFFS,
+    MODIFIERS,
     AttackEffect,
+    BuffEffect,
     CleanseEffect,
     CpuDrainEffect,
     DebuffEffect,
     HealEffect,
     HealthThresholdTrigger,
     ItemSpec,
+    ModifyEffect,
     OnAttackedTrigger,
     OnHitTrigger,
     PassiveTrigger,
@@ -235,12 +239,12 @@ class TestGameDesignCompliance:
         attacker = Player(id=2, quota=100, max_quota=100, cpu=10.0)
 
         # Give player 10 block
-        player.buffs["block"] = 10
+        player.block = 10
 
         # Block is spent stopping an attack, so it belongs to mitigation.
         got_through = sim._mitigate_attack(player, 15, attacker, "test_item")
         assert got_through == 5, "10 of the 15 absorbed"
-        assert "block" not in player.buffs, "all of it consumed"
+        assert player.block == 0, "all of it consumed"
 
         # What is left lands.
         sim._take_damage(
@@ -267,10 +271,11 @@ class TestGameDesignCompliance:
         result = sim.simulate_battle(
             [
                 BattleItem(
-                    # Any item that buffs will do. auto_rollback used to,
-                    # until it was corrected to Carrot's "Every 2.7s: Cleanse
-                    # 1 debuff", which is all Carrot has ever done.
-                    spec=deepcopy(ITEM_CATALOG["basic_firewall"]), position=(0, 0)
+                    # Any item granting a real buff will do. basic_firewall
+                    # used to, until "block" stopped being one: Block is an
+                    # attribute a player has, not a status.
+                    spec=deepcopy(ITEM_CATALOG["quantum_probability_core"]),
+                    position=(0, 0),
                 )
             ],
             [BattleItem(spec=deepcopy(ITEM_CATALOG["stack_smasher"]), position=(4, 0))],
@@ -281,7 +286,7 @@ class TestGameDesignCompliance:
 
         buffs = [a for a in result["actions"] if a.action == "buff"]
         assert buffs, "Seed 0 should produce a buff"
-        assert buffs[0].details["buff_name"] == "speed"
+        assert buffs[0].details["buff_name"] == "calibrated"
 
     def test_compact_action_format(self):
         """Test Section 10.2: Compact action log format - now using BattleAction models"""
@@ -1338,3 +1343,74 @@ class TestCleansing:
         assert result["player1_quota"] > 0
         assert not [a for a in sim.actions if a.action == "dot"
                     and a.timestamp > 10_000], "no poison left to tick"
+
+
+class TestBuffsAreNotStats:
+    """Section 3.1: a buff is a stack a player carries. Block is an attribute,
+    and a number on an item is a modifier. All three used to share a dict."""
+
+    def test_block_is_an_attribute_not_a_buff(self):
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        player.block = 10
+        assert player.buffs == {}, "Block does not live among the buffs"
+
+    def test_block_is_spent_absorbing_damage(self):
+        sim = BattleSimulator(seed=TEST_SEED)
+        target = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        attacker = Player(id=2, quota=100, max_quota=100, cpu=3.0)
+        target.block = 10
+
+        got_through = sim._mitigate_attack(target, 15, attacker, "sword")
+
+        assert got_through == 5
+        assert target.block == 0
+
+    def test_a_cleanse_cannot_strip_block(self):
+        """It used to be reachable: Block sat in `buffs`, and an unnamed
+        cleanse picks a kind at random."""
+        sim = BattleSimulator(seed=TEST_SEED)
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        player.block = 20
+        player.buffs["regenerating"] = 2
+
+        removed = sim._cleanse(player, "buff", 5)
+
+        assert player.block == 20, "Block is not a buff and cannot be cleansed"
+        assert removed == {"regenerating": 2}
+
+    def test_reset_clears_the_block_too(self):
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        player.block = 30
+        player.reset_for_battle()
+        assert player.block == 0, "nothing a battle wrote may reach the next"
+
+    def test_a_modifier_is_not_filed_among_the_buffs(self):
+        """load_balancer_module says items trigger faster. That is a number on
+        an item, so it must not end up on the player, which is where it went
+        before -- and where nothing read it."""
+        booster = BattleItem(
+            spec=deepcopy(ITEM_CATALOG["load_balancer_module"]),
+            position=(0, 0), uid="boost",
+        )
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 0.2
+        sim.simulate_battle([booster], [], 1, p1, p2)
+
+        assert not [a for a in sim.actions if a.action == "buff"], (
+            "changing a number on an item is not a buff and must not log one"
+        )
+
+    def test_every_buff_in_the_catalogue_is_one_of_the_seven(self):
+        for item_id, spec in ITEM_CATALOG.items():
+            for trigger in spec.triggers or []:
+                for effect in getattr(trigger, "effects", []) or []:
+                    if isinstance(effect, BuffEffect):
+                        assert effect.buff_name in BUFFS, item_id
+
+    def test_every_modifier_changes_something_the_engine_reads(self):
+        for item_id, spec in ITEM_CATALOG.items():
+            for trigger in spec.triggers or []:
+                for effect in getattr(trigger, "effects", []) or []:
+                    if isinstance(effect, ModifyEffect):
+                        assert effect.stat in MODIFIERS, item_id

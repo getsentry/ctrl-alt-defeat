@@ -43,13 +43,14 @@
       "cost": 4,
       "triggers": [
         {
-          "type": "passive",
+          "type": "battle_start",
           "effects": [
             {
-              "type": "buff",
-              "target": "adjacent",
-              "stat": "speed",
-              "value": 0.15
+              "type": "modify",
+              "stat": "trigger_speed",
+              "value": 0.2,
+              "target": "star",
+              "description": "Star items trigger 20% faster"
             }
           ]
         }
@@ -118,10 +119,11 @@
               "value": 3
             },
             {
-              "type": "buff",
-              "target": "all_friendly",
+              "type": "modify",
               "stat": "cpu_cost",
-              "value": -0.2
+              "value": -0.2,
+              "target": "own",
+              "description": ""
             }
           ]
         }
@@ -147,10 +149,10 @@
           "effects": [
             {
               "type": "buff",
-              "buff_name": "compute",
+              "buff_name": "calibrated",
               "value": 1,
-              "duration": -1,
-              "description": "Start of battle: Gain 1 Compute (luck equivalent)"
+              "description": "Start of battle: Gain 1 Compute",
+              "target": "self"
             }
           ]
         }

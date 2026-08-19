@@ -114,24 +114,77 @@ class CpuDrainEffect(Effect):
 
 @dataclass
 class BuffEffect(Effect):
-    """Apply a buff"""
+    """Put stacks of a buff on a player."""
 
-    buff_name: str  # "speed", "damage", "accuracy", etc
+    buff_name: str
     value: float
-    duration: Optional[float] = None  # None = permanent
-    target_type: str = "self"
+    target_type: str
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "buff",
             "buff_name": self.buff_name,
             "value": self.value,
-            "duration": self.duration,
+            "target_type": self.target_type,
+        }
+
+
+@dataclass
+class ModifyEffect(Effect):
+    """Change a number on some items.
+
+    "Items inside trigger 10% faster", "+15% accuracy", "costs 1 less CPU".
+    Nobody carries these and they do not stack, so they are not buffs. Each
+    says which items it reaches, and the engine already keeps a field for it:
+    `speed_mult`, `accuracy_bonus`, `damage_mult`, `cpu_discount`.
+
+    Heat looks like a counter-example and is not. Heat is a stack a player
+    carries which happens to speed their items up. This is a number on the
+    items themselves, carried by no one.
+    """
+
+    stat: str
+    value: float
+
+    #: Who it reaches, the same word every other effect uses. `star` and
+    #: `diamond` are the aura zones an item draws on its own map; `contained`
+    #: is what a container holds; `own` is everything the player has.
+    target_type: str
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {
+            "type": "modify",
+            "stat": self.stat,
+            "value": self.value,
             "target_type": self.target_type,
         }
 
 
 DEBUFFS = frozenset({"throttled", "memory_leaked", "rate_limited"})
+
+# Section 3.1. Ours for Heat, Empower, Luck, Regeneration, Spikes, Vampirism
+# and Mana.
+BUFFS = frozenset({
+    "optimized",
+    "monitored",
+    "calibrated",
+    "regenerating",
+    "spiked",
+    "draining",
+    "credits",
+})
+
+# What an item modifier can change. Each is a field the engine already keeps,
+# so a modifier that parses has somewhere to land.
+MODIFIER_TARGETS = frozenset({"star", "diamond", "contained", "own"})
+
+MODIFIERS = frozenset({
+    "trigger_speed",
+    "accuracy",
+    "damage",
+    "cpu_cost",
+    "damage_reduction",
+})
 
 
 @dataclass

@@ -371,13 +371,47 @@ Special items that provide periodic effects or triggered abilities.
 ## 3. Buffs & Debuffs
 
 ### 3.1 Buffs
-- **Optimized** (Heat): Items trigger 2% faster per stack
-- **Cached**: Next activation costs no stamina
-- **Monitored** (Empower): +1 damage per stack
-- **Load Balanced**: Damage distributed across multiple hits
-- **Encrypted** (Shield): Blocks next X damage
-- **Overclocked**: +50% speed but costs double CPU
-- **Regenerating**: Heal 1 HP per second per stack
+
+**There are seven, and that is all of them.** Backpack Battles has seven, so
+we have seven. Like debuffs they stack, and they last to the end of the
+battle.
+
+| Ours | Theirs | What it does |
+|---|---|---|
+| **Optimized** | Heat | Items trigger 2% faster per stack |
+| **Monitored** | Empower | +1 damage per stack |
+| **Calibrated** | Luck | +5% accuracy per stack |
+| **Regenerating** | Regeneration | Heal 1 HP per stack every 2 seconds |
+| **Spiked** | Spikes | 1 damage per stack when hit by a melee weapon |
+| **Draining** | Vampirism | Heal 1 per stack when hitting with a melee weapon |
+| **Credits** | Mana | Spent by items that need it |
+
+#### What is not a buff
+
+Three things kept ending up in the same place as buffs, and none of them
+belongs there.
+
+**Core attributes.** Health, CPU and Block are what a player *has*, not
+statuses laid on top. Block absorbs a point of damage per point of Block and
+is spent doing it; it is a resource, not a stack that lingers.
+
+**Item modifiers.** "Items inside trigger 10% faster", "+15% accuracy",
+"costs 1 less CPU". These change an item, not a player, and the engine has
+carried fields for them all along -- `speed_mult`, `accuracy_bonus`,
+`cpu_discount`, `damage_mult`. An item modifier says which items it reaches:
+the ones inside a container, the neighbours, everything the player owns.
+
+The difference from a buff is worth stating, because Heat looks like a
+counter-example and is not. Heat is a stack a *player* carries, and it happens
+to make their items faster. "Items inside trigger 10% faster" is an item
+modifier with a scope, carried by no one. In the source game 124 effects
+change trigger speed and only Heat and Cold do it by stacking on a player.
+
+**Trigger speed is one quantity**, written as a fraction, positive for faster.
+The source game says "triggers 10% faster" and never speaks of reducing a
+cooldown, so neither do we. Advancing a cooldown by a number of seconds is a
+different thing again -- a jump rather than a rate -- and every item that does
+it belongs to the Engineer, so it is out of reach and unbuilt.
 
 ### 3.2 Debuffs
 

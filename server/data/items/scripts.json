@@ -54,10 +54,9 @@
           "cpu_cost": 2,
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "block",
+              "type": "block",
               "value": 3,
-              "duration": -1
+              "description": ""
             }
           ]
         }
@@ -87,9 +86,9 @@
           "effects": [
             {
               "type": "buff",
-              "buff_name": "double_damage",
+              "buff_name": "credits",
               "value": 1,
-              "duration": 1
+              "target": "self"
             }
           ]
         }
@@ -184,9 +183,9 @@
           "effects": [
             {
               "type": "buff",
-              "buff_name": "immunity",
+              "buff_name": "optimized",
               "value": 1,
-              "duration": 1
+              "target": "self"
             }
           ]
         }

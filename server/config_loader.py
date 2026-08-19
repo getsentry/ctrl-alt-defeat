@@ -13,6 +13,9 @@ from item_effects import (
     AttackEffect,
     BattleStartTrigger,
     BlockEffect,
+    BUFFS,
+    MODIFIERS,
+    MODIFIER_TARGETS,
     BuffEffect,
     CleanseEffect,
     ConsumeEffect,
@@ -21,6 +24,7 @@ from item_effects import (
     DebuffEffect,
     HealEffect,
     ItemSpec,
+    ModifyEffect,
     OnAttackedTrigger,
     OnHitTrigger,
     PassiveTrigger,
@@ -294,10 +298,45 @@ class ConfigLoader:
                 stat_name=config.get("stat", "max_cpu"), value=config.get("value", 1)
             )
         elif effect_type == "buff":
+            name = config.get("buff_name") or config.get("stat")
+            if name in MODIFIERS:
+                raise ValueError(
+                    f"{item_id}: `{name}` changes a number on an item, so it "
+                    f"is a `modify` effect rather than a `buff`."
+                )
+            if name not in BUFFS:
+                raise ValueError(
+                    f"{item_id}: `{name}` is not a buff. Section 3.1 has "
+                    f"seven: {', '.join(sorted(BUFFS))}."
+                )
+            if "value" not in config:
+                raise ValueError(f"{item_id}: a buff needs a `value`")
+            if "target" not in config:
+                raise ValueError(f"{item_id}: a buff needs a `target`")
             return BuffEffect(
-                buff_name=config.get("stat", "speed"),
-                value=config.get("value", 0.1),
-                target_type=config.get("target", "self"),
+                buff_name=name,
+                value=config["value"],
+                target_type=config["target"],
+            )
+        elif effect_type == "modify":
+            stat = config.get("stat")
+            if stat not in MODIFIERS:
+                raise ValueError(
+                    f"{item_id}: `{stat}` is not something an item modifier "
+                    f"can change. There are {len(MODIFIERS)}: "
+                    f"{', '.join(sorted(MODIFIERS))}."
+                )
+            for needed in ("value", "target"):
+                if needed not in config:
+                    raise ValueError(f"{item_id}: a modify needs a `{needed}`")
+            if config["target"] not in MODIFIER_TARGETS:
+                raise ValueError(
+                    f"{item_id}: `{config['target']}` is not somewhere a "
+                    f"modifier can reach. There are {len(MODIFIER_TARGETS)}: "
+                    f"{', '.join(sorted(MODIFIER_TARGETS))}."
+                )
+            return ModifyEffect(
+                stat=stat, value=config["value"], target_type=config["target"]
             )
         elif effect_type == "cleanse":
             if "count" not in config:
@@ -341,7 +380,9 @@ class ConfigLoader:
                 target_type=config.get("target", "enemy"),
             )
         elif effect_type == "block":
-            return BlockEffect(block_amount=config.get("value", 5))
+            if "value" not in config:
+                raise ValueError(f"{item_id}: a block needs a `value`")
+            return BlockEffect(block_amount=config["value"])
         elif effect_type == "consume":
             return ConsumeEffect()
 

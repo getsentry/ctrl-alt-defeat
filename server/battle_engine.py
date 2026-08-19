@@ -28,11 +28,11 @@ from item_effects import (
     HealEffect,
     HealthThresholdTrigger,
     ItemSpec,
+    ModifyEffect,
     OnAttackedTrigger,
     OnHitTrigger,
     PassiveTrigger,
     PreventDamageEffect,
-    ReflectEffect,
     StatModEffect,
     TimerTrigger,
 )
@@ -159,6 +159,8 @@ class Player:
     max_cpu: float = 3.0
     cpu_regen: float = 1.0  # Per second
 
+    block: int = 0  # Block absorbs a point of damage per point and is spent
+
     # Section 3: Buffs & Debuffs
     buffs: Dict[str, int] = field(default_factory=dict)
     debuffs: Dict[str, int] = field(default_factory=dict)
@@ -177,6 +179,7 @@ class Player:
         into a later round. Adding a new piece of battle state means clearing
         it here, and nowhere else.
         """
+        self.block = 0
         self.buffs.clear()
         self.debuffs.clear()
         self.recorded_attacks.clear()
@@ -629,7 +632,7 @@ class BattleSimulator:
                 )
             elif isinstance(effect, BlockEffect):
                 # Handle block effect
-                owner.buffs["block"] = owner.buffs.get("block", 0) + result["amount"]
+                owner.block += result["amount"]
                 self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
@@ -688,9 +691,6 @@ class BattleSimulator:
                             },
                         )
                     )
-            elif isinstance(effect, ReflectEffect):
-                # Reflect is handled in damage events
-                owner.buffs["reflect"] = result["percent"]
             elif isinstance(effect, StatModEffect):
                 # Handle stat modification
                 if result["stat"] == "max_cpu":
@@ -715,6 +715,13 @@ class BattleSimulator:
                         details={"amount": result["amount"]},
                     )
                 )
+            elif isinstance(effect, ModifyEffect):
+                # Declared, not applied. A modifier changes a number on the
+                # items an aura reaches, and nothing reads an aura during a
+                # battle yet. Kept so the catalogue can record what an item
+                # does, and checked at load so the name is real. See
+                # BACKLOG.md.
+                continue
             elif isinstance(effect, CleanseEffect):
                 cleansed = self._cleanse(
                     owner if result["target_type"] == "self" else enemy,
@@ -827,8 +834,7 @@ class BattleSimulator:
             item.damage_gained += 1
             damage += item.damage_gained
         elif attack_data.get("special") == "bypass_block":
-            if "block" in enemy.buffs:
-                enemy.buffs["block"] = int(enemy.buffs["block"] * 0.5)
+            enemy.block = int(enemy.block * 0.5)
 
         # Shields roll and Block is spent, both because this was an attack.
         damage = self._mitigate_attack(enemy, damage, owner, item.uid)
@@ -876,13 +882,10 @@ class BattleSimulator:
         damage = max(0, damage - prevented)
 
         # Then Block, the resource, which is spent a point at a time.
-        held = target.buffs.get("block", 0)
-        if held > 0 and damage > 0:
-            absorbed = min(damage, held)
+        if target.block > 0 and damage > 0:
+            absorbed = min(damage, target.block)
             damage -= absorbed
-            target.buffs["block"] = held - absorbed
-            if target.buffs["block"] <= 0:
-                del target.buffs["block"]
+            target.block -= absorbed
 
             self._record(
                 BattleAction(

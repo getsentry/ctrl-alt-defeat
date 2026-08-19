@@ -115,47 +115,65 @@ change with nothing else in it.
 Runtime state keeps its defaults. `fired` and `current_cooldown` are the
 engine's bookkeeping, not something an item can say.
 
-### `player.buffs` is four different things in one dictionary
+### The buff work that is still open
 
-Calling a player's core attributes "buffs" is the root of it. `Player.buffs`
-currently holds:
+`player.buffs` now holds only the seven real buffs. Block is an attribute,
+`reflect` is gone, and a number that changes an item is a `modify` rather than
+a buff. What remains:
 
-| What | Examples | Should be |
+**A modifier is declared and never applied.** Ten items carry one, saying
+things like "items trigger 10% faster". The effect parses, its stat and scope
+are both checked, and a star or diamond scope is checked against the zones the
+item actually draws -- but nothing acts on it, because the battle cannot yet
+see an aura. `grid_system` reads the zones off the map; `battle_engine` has no
+reference to them. Wiring the two together is the job.
+
+**An aura can be a trigger, and that half does not exist.** A zone reaches
+items two different ways in the source game, and only one of them is a target:
+
+| | Items | Example |
 |---|---|---|
-| Real buffs | `regeneration` | A stacking status, like debuffs |
-| A resource | `block` | Its own field. Block absorbs damage a point at a time; it is not a status |
-| Core attributes | `accuracy`, `speed`, `cpu_cost`, `attack_speed`, `damage_reduction`, `max_memory`, `compute` | Attributes of the player or its items, modified, not stacked |
-| Engine bookkeeping | `reflect` | Not player state at all |
+| **Aura as target** | 22 | "Start of battle: Star items trigger 20% faster" |
+| **Aura as trigger** | 43 | "Star item activates: ...", "6 Star item activations: ..." |
 
-**Only `block` is ever read.** Every other name in that table is written into
-the dictionary and consulted by nothing, while logging a `buff` action that
-makes it look as though it worked. An item that says "adjacent items act 10%
-faster" writes `speed` and changes nothing.
+The first is built: an ordinary trigger fires and the effect names the zone it
+lands on, the same way `cleanse` names `self` or `enemy`. Crow's "Every 3s:
+Star items trigger 6% faster" is a timer whose effect targets `star`, so no
+trigger needs composing with another.
 
-It is also not type-safe: `reflect` is stored as a fraction beside integer
-stack counts, so summing the dictionary is meaningless and a cleanse could
-remove `0.3` of something.
+The second cannot be written at all. Something happening *to* an item in the
+zone is the cause, which needs an `aura` trigger -- and a counted form, since
+several say "6 Star item activations". No item using one is imported yet, so
+nothing is broken today, but 43 of them wait on it.
 
-**Three consequences, all live:**
+**Four modifiers are invented.** Their source items say nothing about them:
 
-- **`cleanse: buff` is unsafe.** It picks a kind at random and could strip
-  somebody's Block, which is not a buff. Nothing does it today because no item
-  removes buffs yet, but the effect allows it.
-- **No buff can be named or checked.** `buff_name` is unvalidated, unlike
-  `debuff_name`, so a typo is silent. There is no `BUFFS` allowlist to check
-  against because nobody has decided what our buffs are.
-- **Named buff removal cannot be written.** Six items in the source game want
-  it: "Remove 2 Luck", "Remove 1 Spikes and 2 Empower", "Remove 1 Vampirism".
+| Ours | Source | What the source actually says |
+|---|---|---|
+| `security_hardening` | Stone Skin Potion | "45 Block reached: Consume this and convert 15 health to 30 Block" |
+| `performance_boost` | Heroic Potion | "Out of stamina: Consume this and regenerate 2 stamina and gain 1 Empower" |
+| `ai_companion_core` | Carrot Goobert | "6 Star item activations: Cleanse 4 random debuffs and gain 2 Empower for 8s" |
+| `querystorm` | Forest Dragon | "On hit: Gain 1 Regeneration and 1 Luck. Deals +0.8 damage per Regeneration" |
 
-**Fix.** Separate the four. Real buffs become a stacking status set with an
-allowlist, the way `DEBUFFS` already works -- Backpack Battles has seven:
-Empower, Heat, Luck, Mana, Regeneration, Spikes, Vampirism. Block becomes a
-field on the player. Attribute modifiers stop pretending to be statuses and
-act on the attribute they name. `reflect` moves out of player state.
+Each needs a trigger we do not have -- a Block threshold, running out of
+stamina, counting activations -- so they are left as modifiers rather than
+given a trigger that would silently do nothing. Covered by the per-item audit
+entry below.
 
-Do this with the Section 3.1 entry below, which is the same job seen from the
-design document's side: that list has four invented buffs and is missing four
-real ones.
+**Nothing reads a buff either.** All seven are carried and none consulted.
+Optimized should make items trigger faster, Monitored add damage, Calibrated
+add accuracy, Spiked and Draining fire on melee hits, Credits be spent.
+Regenerating has the clearest home: it is an over-time effect, second in the
+table on `OverTimeEffect`, needing only a subclass.
+
+**Three of the seven have no item.** Monitored, Spiked and Draining are
+declared and unreachable, because no imported item grants them.
+
+**Two items are still guesses.** `ddos_protection_module` was `immunity` and
+is now Optimized, because Pumpkin's text is "Fatigue starts: gain 10 Heat" --
+but we have no fatigue trigger, so it grants it at battle start instead.
+`cache_optimizer` was `double_damage` and is now Credits, from Blueberries'
+"Every 3.5s: Gain 1 Mana", without the "at least 10 Mana" branch.
 
 ### Fifteen more items want a cleanse they do not have
 

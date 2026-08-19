@@ -340,10 +340,10 @@
           "type": "passive",
           "effects": [
             {
-              "type": "buff",
-              "target": "all_sentaur",
+              "type": "modify",
               "stat": "accuracy",
               "value": 0.1,
+              "target": "own",
               "description": "All Sentaur items gain +10% accuracy"
             }
           ]
@@ -492,10 +492,10 @@
           "effects": [
             {
               "type": "buff",
-              "buff_name": "compute",
+              "buff_name": "calibrated",
               "value": 3,
-              "duration": -1,
-              "description": "Start: Gain 3 Compute"
+              "description": "Start: Gain 3 Compute",
+              "target": "self"
             }
           ]
         },
@@ -551,10 +551,10 @@
             {
               "type": "buff",
               "chance": 0.7,
-              "buff_name": "compute",
+              "buff_name": "calibrated",
               "value": 1,
-              "duration": -1,
-              "description": "70% chance to gain 1 Compute"
+              "description": "70% chance to gain 1 Compute",
+              "target": "self"
             }
           ]
         }
@@ -619,10 +619,10 @@
           "effects": [
             {
               "type": "buff",
-              "buff_name": "energy_spikes",
+              "buff_name": "spiked",
               "value": 4,
-              "duration": -1,
-              "description": "Start: Gain 4 Energy Spikes"
+              "description": "Start: Gain 4 Energy Spikes",
+              "target": "self"
             }
           ]
         },
@@ -677,10 +677,10 @@
             {
               "type": "buff",
               "chance": 0.5,
-              "buff_name": "energy_spikes",
+              "buff_name": "spiked",
               "value": 1,
-              "duration": -1,
-              "description": "50% chance to gain 1 Energy Spike"
+              "description": "50% chance to gain 1 Energy Spike",
+              "target": "self"
             }
           ]
         }

@@ -48,9 +48,9 @@
           "effects": [
             {
               "type": "buff",
-              "buff_name": "max_memory",
+              "buff_name": "credits",
               "value": 10,
-              "duration": -1
+              "target": "self"
             }
           ]
         }
@@ -77,10 +77,11 @@
           "type": "battle_start",
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "damage_reduction",
+              "type": "modify",
+              "stat": "damage_reduction",
               "value": 0.15,
-              "duration": -1
+              "target": "own",
+              "description": ""
             }
           ]
         }
@@ -136,10 +137,11 @@
           "type": "battle_start",
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "attack_speed",
+              "type": "modify",
+              "stat": "trigger_speed",
               "value": 0.5,
-              "duration": 10
+              "target": "own",
+              "description": ""
             }
           ]
         }

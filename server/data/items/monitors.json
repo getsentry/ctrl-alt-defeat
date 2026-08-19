@@ -20,10 +20,9 @@
           "type": "battle_start",
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "block",
+              "type": "block",
               "value": 5,
-              "duration": -1
+              "description": ""
             }
           ]
         }
@@ -50,10 +49,9 @@
           "type": "battle_start",
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "block",
+              "type": "block",
               "value": 10,
-              "duration": -1
+              "description": ""
             }
           ]
         }
@@ -83,16 +81,15 @@
           "type": "battle_start",
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "block",
+              "type": "block",
               "value": 15,
-              "duration": -1
+              "description": ""
             },
             {
               "type": "buff",
-              "buff_name": "regeneration",
+              "buff_name": "regenerating",
               "value": 2,
-              "duration": -1
+              "target": "self"
             }
           ]
         },
@@ -137,10 +134,9 @@
           "type": "battle_start",
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "block",
+              "type": "block",
               "value": 20,
-              "duration": -1
+              "description": ""
             }
           ]
         }

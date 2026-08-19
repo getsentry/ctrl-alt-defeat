@@ -60,7 +60,8 @@ Two of the three are built.
 |---|---|---|
 | `attack` | yes | 23 |
 | `stat_mod` | yes | 23 |
-| `buff` | yes | 21 |
+| `buff` | yes | 9 |
+| `modify` | yes | 10 |
 | `heal` | yes | 10 |
 | `consume` | yes | 7 |
 | `prevent_damage` | yes | 6 |

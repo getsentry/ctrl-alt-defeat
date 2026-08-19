@@ -92,15 +92,14 @@ class TestEffects:
     def test_buff_effect(self):
         """Test buff effect properties"""
         effect = BuffEffect(
-            buff_name="speed", value=0.25, duration=5.0, target_type="adjacent"
+            buff_name="optimized", value=2, target_type="self"
         )
         result = effect.apply(None, None, None)
 
         assert result["type"] == "buff"
-        assert result["buff_name"] == "speed"
-        assert result["value"] == 0.25
-        assert result["duration"] == 5.0
-        assert result["target_type"] == "adjacent"
+        assert result["buff_name"] == "optimized"
+        assert result["value"] == 2
+        assert result["target_type"] == "self"
 
     def test_stat_mod_effect(self):
         """Test stat modification effect"""
@@ -209,7 +208,7 @@ class TestTriggers:
     def test_kill_trigger(self):
         """Test kill trigger"""
         trigger = KillTrigger(
-            effects=[BuffEffect(buff_name="damage", value=2, duration=5.0)]
+            effects=[BuffEffect(buff_name="monitored", value=2, target_type="self")]
         )
 
         assert trigger.should_activate("enemy_killed", None, None, None) is True
@@ -232,14 +231,14 @@ class TestItemSpecs:
             player_class="neutral",
             triggers=[
                 BattleStartTrigger(
-                    effects=[BuffEffect(buff_name="speed", value=0.5, duration=3.0)]
+                    effects=[BuffEffect(buff_name="optimized", value=3, target_type="self")]
                 ),
                 TimerTrigger(
                     cooldown=2.0,
                     cpu_cost=3,
                     effects=[
                         AttackEffect(min_damage=5, max_damage=10),
-                        DebuffEffect(debuff_name="slow", value=0.2, duration=2.0),
+                        DebuffEffect(debuff_name="throttled", value=2),
                     ],
                 ),
                 KillTrigger(effects=[HealEffect(min_heal=3, max_heal=5)]),

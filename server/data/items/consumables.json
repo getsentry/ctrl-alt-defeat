@@ -184,11 +184,10 @@
           "cpu_cost": 2,
           "effects": [
             {
-              "type": "buff",
-              "target": "self",
+              "type": "modify",
               "stat": "accuracy",
               "value": 0.15,
-              "duration": 5,
+              "target": "own",
               "description": "AI targeting assistance: +15% accuracy for 5 seconds"
             },
             {
