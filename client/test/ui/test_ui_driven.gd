@@ -188,33 +188,16 @@ func test_full_user_journey_through_ui():
 
 	if current_scene.name == "BattleScreen":
 		print("   6. Battle in progress...")
-		await _wait_for_scene("PostBattleScreen", 20.0)
+		# The battle ends straight in the shop. There was a screen in between
+		# that named the result and asked for a click; the round result overlay
+		# says all of that over the battle itself now.
+		await _wait_for_scene("UnifiedGridUI", 20.0)
+		await _wait_for_shop_ready()
 	else:
-		# If we're not in BattleScreen, we should be in PostBattleScreen
-		assert_eq(current_scene.name, "PostBattleScreen", "Should be in either BattleScreen or PostBattleScreen")
+		assert_eq(current_scene.name, "UnifiedGridUI",
+			"Should be in either the battle or the shop it ends in")
 
-	# 8. Handle post-battle screen
-	current_scene = get_tree().current_scene
-	if current_scene.name == "PostBattleScreen":
-		print("   7. Post-battle results...")
-		# Check if we won or lost
-		var result_label = current_scene.find_child("ResultLabel", true, false)
-		if result_label:
-			print("   - Battle result: %s" % result_label.text)
-
-		# Continue to next round
-		var continue_btn = current_scene.find_child("ContinueButton", true, false)
-		if not continue_btn:
-			for child in current_scene.get_children():
-				if child is Button and "Continue" in str(child.text):
-					continue_btn = child
-					break
-
-		if continue_btn:
-			continue_btn.pressed.emit()
-			await _wait_for_shop_ready()
-
-	# 9. Verify we're back in game UI for next round
+	# 8. Verify we're back in game UI for next round
 	current_scene = get_tree().current_scene
 	if current_scene.name == "UnifiedGridUI":
 		print("   8. Back to shop for round %d" % GameStateManager.current_round)
@@ -397,7 +380,12 @@ func test_shop_purchase_and_item_placement():
 
 
 func test_selling_an_item_pays_the_player():
-	"""Right-clicking a placed item should sell it, not destroy it"""
+	"""Dropping a placed item on the chest should sell it, not destroy it.
+
+	This drove a right click until fd2ff8d took that gesture away for being
+	undiscoverable and replaced it with the chest, and the test was left
+	driving an input nothing listens for any more.
+	"""
 	print("\n=== UI TEST: Sell ===")
 
 	var main_menu = load("res://scenes/MainMenu.tscn").instantiate()
@@ -430,11 +418,11 @@ func test_selling_an_item_pays_the_player():
 	var gold_before_selling = GameStateManager.gold
 	var placed_visual = game_ui.inventory_grid.items[0]
 
-	# Right-click the item on the grid
-	var right_click = InputEventMouseButton.new()
-	right_click.button_index = MOUSE_BUTTON_RIGHT
-	right_click.pressed = true
-	game_ui.inventory_grid._on_item_input(right_click, placed_visual)
+	# Pick the item up and drop it on the chest, which is what selling is.
+	var grid = game_ui.inventory_grid
+	assert_not_null(grid.sell_zone, "Setup: the shop should give the grid a chest")
+	grid._start_drag(placed_visual)
+	grid._end_drag(grid.sell_zone.get_global_rect().get_center())
 	await _wait_for_server()
 
 	assert_eq(game_ui.inventory_grid.items.size(), 0, "The sold item leaves the grid")
@@ -526,14 +514,14 @@ func test_battle_button_and_full_battle():
 
 	# Should transition to battle screen
 	var current_scene = get_tree().current_scene
-	assert_true(current_scene.name == "BattleScreen" or current_scene.name == "PostBattleScreen",
+	assert_true(current_scene.name == "BattleScreen" or current_scene.name == "UnifiedGridUI",
 		"Should transition to battle or post-battle screen")
 
 	# If in battle screen, wait for it to complete
 	if current_scene.name == "BattleScreen":
 		print("   - Battle is playing...")
 		# Mock battle takes time to complete and then 2s to transition
-		await _wait_for_scene("PostBattleScreen", 25.0)
+		await _wait_for_scene("UnifiedGridUI", 25.0)
 
 		# Look for skip button
 		var skip_btn = current_scene.find_child("SkipButton", true, false)
@@ -541,27 +529,12 @@ func test_battle_button_and_full_battle():
 			skip_btn.pressed.emit()
 			await _wait_for_server()
 
-	# Should now be in post-battle
+	# The battle lands in the shop. There used to be a screen in between with a
+	# Continue button on it, and the round result overlay says what it said.
 	current_scene = get_tree().current_scene
-	if current_scene.name == "PostBattleScreen":
-		print("   - In post-battle screen")
-
-		# Find continue button
-		var continue_btn = current_scene.find_child("ContinueButton", true, false)
-		if not continue_btn:
-			for child in current_scene.get_children():
-				if child is Button and "Continue" in child.text:
-					continue_btn = child
-					break
-
-		if continue_btn:
-			continue_btn.pressed.emit()
-			await _wait_for_shop_ready()
-
-			# Should be back in game UI
-			current_scene = get_tree().current_scene
-			assert_eq(current_scene.name, "UnifiedGridUI", "Should return to game UI after battle")
-			assert_eq(GameStateManager.current_round, 2, "Round should advance after battle")
+	if current_scene.name == "UnifiedGridUI":
+		await _wait_for_shop_ready()
+		assert_eq(GameStateManager.current_round, 2, "Round should advance after battle")
 
 	print("   ✓ Full battle flow completed with real server")
 
@@ -649,7 +622,7 @@ func test_complete_round_cycle():
 		if current_scene.name == "BattleScreen":
 			print("   - In battle screen, waiting for completion...")
 			# Wait longer for battle with empty inventory (mock battle)
-			await _wait_for_scene("PostBattleScreen", 25.0)
+			await _wait_for_scene("UnifiedGridUI", 25.0)
 
 			# Try skip button if available. Re-read the scene: playback may have
 			# already moved on and freed the node this local pointed at.
@@ -662,17 +635,9 @@ func test_complete_round_cycle():
 			# Re-check current scene
 			current_scene = get_tree().current_scene
 
-		# Handle post-battle
-		if current_scene.name == "PostBattleScreen":
-			var continue_btn = current_scene.find_child("ContinueButton", true, false)
-			if not continue_btn:
-				for child in current_scene.get_children():
-					if child is Button and "Continue" in str(child.text):
-						continue_btn = child
-						break
-			if continue_btn:
-				continue_btn.pressed.emit()
-				await _wait_for_shop_ready()
+		# The battle lands in the shop directly.
+		if current_scene.name == "UnifiedGridUI":
+			await _wait_for_shop_ready()
 
 		# Verify we're in next round
 		current_scene = get_tree().current_scene
@@ -683,7 +648,7 @@ func test_complete_round_cycle():
 		else:
 			# Battle might get stuck with empty inventory - that's ok for this test
 			print("   - Warning: Battle did not complete, may be due to empty inventory")
-			assert_true(current_scene.name == "BattleScreen" or current_scene.name == "PostBattleScreen",
+			assert_true(current_scene.name == "BattleScreen" or current_scene.name == "UnifiedGridUI",
 				"Should be in battle-related screen")
 	else:
 		# If no battle button, that's a test failure
@@ -848,22 +813,12 @@ func test_inventory_persistence_across_battle():
 	var current_scene = get_tree().current_scene
 	if current_scene.name == "BattleScreen":
 		print("   - Battle in progress...")
-		await _wait_for_scene("PostBattleScreen", 25.0)
+		await _wait_for_scene("UnifiedGridUI", 25.0)
 		current_scene = get_tree().current_scene
 
-	# Handle post-battle screen
-	if current_scene.name == "PostBattleScreen":
-		print("   - In post-battle screen...")
-		var continue_btn = current_scene.find_child("ContinueButton", true, false)
-		if not continue_btn:
-			for child in current_scene.get_children():
-				if child is Button and "Continue" in str(child.text):
-					continue_btn = child
-					break
-
-		if continue_btn:
-			continue_btn.pressed.emit()
-			await _wait_for_shop_ready()
+	# The battle lands in the shop directly.
+	if current_scene.name == "UnifiedGridUI":
+		await _wait_for_shop_ready()
 
 	# Verify we're back in game UI
 	current_scene = get_tree().current_scene
@@ -1127,7 +1082,7 @@ func test_multiple_rounds():
 		if current_scene.name == "BattleScreen":
 			print("   - Battle in progress for round %d..." % current_round)
 			# Wait longer for mock battle to complete
-			await _wait_for_scene("PostBattleScreen", 25.0)
+			await _wait_for_scene("UnifiedGridUI", 25.0)
 			# Skip battle if possible. Re-read the scene: playback may have already
 			# moved on and freed the node this local pointed at.
 			current_scene = get_tree().current_scene
@@ -1137,18 +1092,9 @@ func test_multiple_rounds():
 			await _wait_for_server()
 			current_scene = get_tree().current_scene
 
-		if current_scene.name == "PostBattleScreen":
-			# Continue to next round
-			var continue_btn = current_scene.find_child("ContinueButton", true, false)
-			if not continue_btn:
-				for child in current_scene.get_children():
-					if child is Button and "Continue" in str(child.text):
-						continue_btn = child
-						break
-
-			if continue_btn:
-				continue_btn.pressed.emit()
-				await _wait_for_shop_ready()
+		# The battle lands in the shop directly.
+		if current_scene.name == "UnifiedGridUI":
+			await _wait_for_shop_ready()
 
 		# Verify round advanced
 		game_ui = get_tree().current_scene

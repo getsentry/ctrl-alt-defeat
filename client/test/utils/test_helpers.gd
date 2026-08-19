@@ -179,8 +179,3 @@ static func create_test_inventory_state() -> Dictionary:
 static func assert_valid_gold(test: GutTest, gold: int, message: String = ""):
 	test.assert_gte(gold, 0, message if message else "Gold should not be negative")
 	test.assert_lte(gold, 999999, message if message else "Gold should not exceed maximum")
-
-# Helper to verify health constraints
-static func assert_valid_health(test: GutTest, health: int, message: String = ""):
-	test.assert_gte(health, 0, message if message else "Health should not be negative")
-	test.assert_lte(health, 100, message if message else "Health should not exceed maximum")

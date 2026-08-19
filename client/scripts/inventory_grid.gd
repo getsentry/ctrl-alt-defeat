@@ -544,8 +544,16 @@ func _grid_zone_square(pointer: Vector2) -> Vector2i:
 		grid_zone.get_global_transform().affine_inverse() * pointer)
 
 
-func _end_drag():
-	"""End dragging and place item"""
+func _end_drag(dropped_at := Vector2.INF):
+	"""Finish a drag, at the pointer unless told somewhere else.
+
+	The shop's own drag already takes its drop point as an argument. This one
+	read the pointer four times over, which a test cannot place: headless has
+	no pointer to warp.
+	"""
+	if dropped_at == Vector2.INF:
+		dropped_at = get_global_mouse_position()
+
 	if not dragging_object:
 		return
 	if grid_zone:
@@ -560,7 +568,7 @@ func _end_drag():
 
 	# Dropped on the chest, so sell it rather than place it. The cells were
 	# already cleared when the drag began.
-	if sell_zone and sell_zone.get_global_rect().has_point(get_global_mouse_position()):
+	if sell_zone and sell_zone.get_global_rect().has_point(dropped_at):
 		items.erase(temp_object)
 		temp_object.queue_free()
 		item_sold.emit(item_data)
@@ -568,7 +576,7 @@ func _end_drag():
 
 	# Dropped on the chest, so take it off the grid and let the owner ask the
 	# server to store it. The cells were already cleared when the drag began.
-	if storage_zone and storage_zone.get_global_rect().has_point(get_global_mouse_position()):
+	if storage_zone and storage_zone.get_global_rect().has_point(dropped_at):
 		items.erase(temp_object)
 		temp_object.queue_free()
 		item_stored.emit(item_data)
@@ -576,10 +584,10 @@ func _end_drag():
 
 	# Dragged out of the chest onto the main grid. Which square that is belongs
 	# to the other grid to decide, so this one only says where the drop landed.
-	if grid_zone and grid_zone.get_global_rect().has_point(get_global_mouse_position()):
+	if grid_zone and grid_zone.get_global_rect().has_point(dropped_at):
 		items.erase(temp_object)
 		temp_object.queue_free()
-		item_unstored.emit(item_data, get_global_mouse_position())
+		item_unstored.emit(item_data, dropped_at)
 		return
 
 	if drop_changes_nothing(grid_pos, item_data):

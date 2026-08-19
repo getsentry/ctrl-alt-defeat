@@ -12,7 +12,6 @@ func test_start_new_game():
 	assert_eq(GameStateManager.current_round, 1, "Should start at round 1")
 	assert_eq(GameStateManager.gold, 12, "Should start with 12 gold")
 	assert_eq(GameStateManager.player_lives, 5, "Should start with 5 lives")
-	assert_eq(GameStateManager.player_health, 100, "Should start with 100 health")
 	assert_eq(GameStateManager.wins, 0, "Should have 0 wins")
 	assert_eq(GameStateManager.losses, 0, "Should have 0 losses")
 	assert_false(GameStateManager.game_over, "Should not be game over")

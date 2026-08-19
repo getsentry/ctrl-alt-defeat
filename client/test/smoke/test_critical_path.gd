@@ -17,9 +17,7 @@ func test_game_can_start():
 	assert_eq(GameStateManager.current_round, 1, "Game should start at round 1")
 	assert_eq(GameStateManager.gold, 12, "Should have starting gold")
 	assert_eq(GameStateManager.player_lives, 5, "Should have full lives")
-	assert_eq(GameStateManager.player_health, 100, "Should have full health")
 	TestHelpers.assert_valid_gold(self, GameStateManager.gold)
-	TestHelpers.assert_valid_health(self, GameStateManager.player_health)
 
 func test_can_load_main_menu():
 	"""Critical: Main menu must load without errors"""
@@ -138,7 +136,7 @@ func test_gold_cannot_be_spent_below_zero():
 
 func test_no_negative_values():
 	"""Critical: Game values should never go negative"""
-	# gold, player_health and player_lives are plain properties. Only gold has a
-	# guard, update_gold(), covered above. A direct assignment is not clamped,
-	# so health and lives can still be driven negative.
-	pending("GameStateManager does not clamp player_health or player_lives.")
+	# gold and player_lives are plain properties. Only gold has a guard,
+	# update_gold(), covered above. A direct assignment is not clamped, so
+	# lives can still be driven negative.
+	pending("GameStateManager does not clamp player_lives.")

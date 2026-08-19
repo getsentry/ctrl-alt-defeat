@@ -18,22 +18,6 @@ say, or the client would need to infer it from the artwork.
 calling `hit()` a few times with different numbers and picking between them in
 `BattleHud.item_fired`.
 
-## `player_health` is a counter nothing counts
-
-`GameStateManager.player_health` starts at 100 and is now never changed by
-anything. The post-battle screen used to take one off it per loss, and that
-screen is gone; the only thing that read it was the game over screen, working
-out victory a second way, which now asks the server's flag instead.
-
-A run is decided by `player_lives`. Even when the health was maintained it
-could not reach zero, because the run ends after five losses and health only
-fell by one each time — so `player_health > 0` was true in every state the game
-could reach.
-
-**Fix.** Delete `player_health` and `max_player_health`, and the assertions in
-`test/smoke/test_critical_path.gd` that check them. Left in place for now
-because that smoke test needs a running server to verify against.
-
 ## There are two backlogs at the repo root
 
 `BACKLOG.md` (453 lines, current) and `docs/BACKLOG.md` (53 lines, untouched
