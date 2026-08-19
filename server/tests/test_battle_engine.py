@@ -74,12 +74,49 @@ class TestGameDesignCompliance:
         """Test Section 1.2: CPU Cycles (Stamina) system"""
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)
 
-        # Starting CPU is 10
-        assert player.max_cpu == 3
-        assert player.cpu == 10.0  # Starts full per battle_engine initialization
-
-        # CPU regeneration is 2/second
+        # The pool is three, and it regenerates one a second. The comments here
+        # used to say ten and two, which is neither what the document says nor
+        # what the assertions below check - and a made-up ten is exactly what
+        # the client drew for every battle until the level was sent to it.
+        assert player.max_cpu == 3.0
         assert player.cpu_regen == 1.0
+
+    def test_cpu_is_spent_in_fractions(self):
+        """Section 1.2: activations cost cycles "in fractions".
+
+        Two things have gone wrong here before. Costs were floored to a whole
+        cycle, which threw away every fractional cost the catalogue declares -
+        thirteen items declare one - and left the Load Balancer's discount with
+        nothing to discount, since no reduction can take a cost below one.
+
+        And the pool was a whole number while the level was not, so
+        min(max_cpu, cpu + regen) handed back an int whenever regeneration
+        topped the pool up: a full pool reported 3 and a spent one 2.7, from
+        the same field.
+        """
+        p1_containers, p2_containers = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        # sql_injector declares a cost of 0.3.
+        sim.simulate_battle(
+            [BattleItem(spec=deepcopy(ITEM_CATALOG["sql_injector"]), position=(0, 0))],
+            [BattleItem(spec=deepcopy(ITEM_CATALOG["sql_injector"]), position=(4, 0))],
+            1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
+
+        levels = [
+            action.details["cpu"][0]
+            for action in sim.actions
+            if action.details and "cpu" in action.details
+        ]
+        assert levels, "Every action should say where the CPU stood"
+        assert any(
+            abs(level - 2.7) < 1e-6 for level in levels
+        ), "A cost of 0.3 should take 0.3, not round up to a whole cycle"
+        assert all(
+            isinstance(level, float) for level in levels
+        ), "A full pool is as fractional as a spent one"
 
     def test_item_specifications(self):
         """Test Section 2: All items match specifications"""

@@ -447,24 +447,6 @@ Worth doing with the melee-only buffs, which have the same shape: Spikes
 "deals 1 damage per stack when hit with a Melee weapon" and Vampirism "heals
 1 health per stack when hitting with a Melee weapon".
 
-### Every activation is floored at 1 CPU
-
-`cpu_cost = max(1, trigger.get_cpu_cost() - item.cpu_discount)`
-(`battle_engine.py:637`) throws away every fractional cost:
-
-| Item | Declares | Charged |
-|---|---|---|
-| `deadlock_twins` | 0.0 | 1.0 |
-| `sql_injector` | 0.3 | 1.0 |
-| `virus_injector` | 0.7 | 1.0 |
-| `quantum_sniper` | 0.7 | 1.0 |
-
-Sections 1.2 and 2.3 both insist costs are fractional, and 1.2 describes the
-pressure this destroys: "a typical weapon of ours drains 0.5 a second, so two
-run level with regeneration and a third has to wait." It also makes Load
-Balancer's `cpu_discount` nearly inert, since no discount can take a cost
-below 1.
-
 ### 26 of 95 items silently do less than they say
 
 Seven trigger types and fourteen effect types in the catalogue have no

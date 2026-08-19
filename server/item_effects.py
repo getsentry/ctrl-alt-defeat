@@ -274,7 +274,7 @@ class Trigger(ABC):
         pass
 
     @abstractmethod
-    def get_cpu_cost(self) -> int:
+    def get_cpu_cost(self) -> float:
         """Get CPU cost for this trigger"""
         pass
 
@@ -297,7 +297,7 @@ class TimerTrigger(Trigger):
             return False
         return self.current_cooldown <= 0
 
-    def get_cpu_cost(self) -> int:
+    def get_cpu_cost(self) -> float:
         return self.cpu_cost
 
 
@@ -312,7 +312,7 @@ class BattleStartTrigger(Trigger):
     ) -> bool:
         return event_type == "battle_start"
 
-    def get_cpu_cost(self) -> int:
+    def get_cpu_cost(self) -> float:
         return 0  # Battle start effects are usually free
 
 
@@ -348,7 +348,7 @@ class HealthThresholdTrigger(Trigger):
         # since a battle starts at full health.
         return target.quota < self.threshold * target.max_quota
 
-    def get_cpu_cost(self) -> int:
+    def get_cpu_cost(self) -> float:
         return 0  # Nothing is spent noticing your own health
 
 
@@ -366,7 +366,7 @@ class DamageDealtTrigger(Trigger):
             return False
         return battle_state.rng.random() < self.chance
 
-    def get_cpu_cost(self) -> int:
+    def get_cpu_cost(self) -> float:
         return 0  # On-hit effects are usually free
 
 
@@ -389,7 +389,7 @@ class ChanceTrigger(Trigger):
             return True
         return battle_state.rng.random() < self.chance
 
-    def get_cpu_cost(self) -> int:
+    def get_cpu_cost(self) -> float:
         return 0  # Whatever caused the event has already paid
 
 
@@ -417,7 +417,7 @@ class PassiveTrigger(Trigger):
     ) -> bool:
         return event_type == "passive_apply"
 
-    def get_cpu_cost(self) -> int:
+    def get_cpu_cost(self) -> float:
         return 0  # Passives don't cost CPU
 
 
@@ -432,7 +432,7 @@ class KillTrigger(Trigger):
     ) -> bool:
         return event_type == "enemy_killed"
 
-    def get_cpu_cost(self) -> int:
+    def get_cpu_cost(self) -> float:
         return 0  # Kill effects are usually free
 
 

@@ -150,9 +150,13 @@ class Player:
     quota: int  # Current
     max_quota: int  # Based on round
 
-    # Section 1.2: CPU Cycles (Stamina)
+    # Section 1.2: CPU Cycles (Stamina). All three are fractional, and the
+    # pool has to be as much as the level does: min() returns whichever
+    # operand it picked, so an int pool turned a full float pool back into an
+    # int every time regeneration topped it up. Infrastructure adds to it, and
+    # nothing says those additions are whole either.
     cpu: float  # Current cycles
-    max_cpu: int = 3
+    max_cpu: float = 3.0
     cpu_regen: float = 1.0  # Per second
 
     # Section 3: Buffs & Debuffs
@@ -263,8 +267,8 @@ class BattleSimulator:
         # from max_cpu, which is what happened when the pool was last changed.
         player1 = Player(id=1, quota=quota, max_quota=quota, cpu=0.0)
         player2 = Player(id=2, quota=quota, max_quota=quota, cpu=0.0)
-        player1.cpu = float(player1.max_cpu)
-        player2.cpu = float(player2.max_cpu)
+        player1.cpu = player1.max_cpu
+        player2.cpu = player2.max_cpu
 
         # Deep copy items to avoid mutation
         p1_items = deepcopy(p1_items)
