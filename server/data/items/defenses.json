@@ -117,15 +117,6 @@
       "cost": 8,
       "triggers": [
         {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "damage_reduction",
-              "value": 0.25
-            }
-          ]
-        },
-        {
           "type": "on_attacked",
           "effects": [
             {
@@ -136,6 +127,13 @@
               "type": "cpu_drain",
               "value": 0.9,
               "target": "attacker"
+            },
+            {
+              "type": "debuff",
+              "debuff_name": "throttled",
+              "value": 1,
+              "target": "enemy",
+              "description": "Inflict 1 Throttled. The source caps it at 10."
             }
           ],
           "chance": 0.3

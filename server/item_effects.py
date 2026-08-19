@@ -176,6 +176,38 @@ BUFFS = frozenset({
 
 # What an item modifier can change. Each is a field the engine already keeps,
 # so a modifier that parses has somewhere to land.
+# Names the catalogue uses that nothing implements yet. Listing them is what
+# lets an unknown name be a typo rather than a shrug: one of these loads as a
+# gap the loader counts, anything else stops the load. Take a name off this
+# list when you build it. See BACKLOG.md.
+UNBUILT_TRIGGERS = frozenset({
+    "on_attack",
+    "on_crit",
+    "on_damage",
+    "on_damage_dealt",
+    "on_big_damage",
+    "round_start",
+})
+
+UNBUILT_EFFECTS = frozenset({
+    "adaptive_buff",
+    "adjacent_buff",
+    "battle_start",
+    "damage_bonus",
+    "damage_immunity",
+    "damage_reduction",
+    "deploy_phase",
+    "enemy_debuff",
+    "free_refresh",
+    "gold_gain",
+    "lifesteal",
+    "multicast",
+    "scaling_buff",
+    "shop_discount",
+    "spawn_companion",
+    "special",
+})
+
 MODIFIER_TARGETS = frozenset({"star", "diamond", "contained", "own"})
 
 MODIFIERS = frozenset({

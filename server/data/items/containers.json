@@ -65,8 +65,7 @@
       "cost": 2,
       "effects": [
         {
-          "type": "battle_start",
-          "stat": "block",
+          "type": "block",
           "value": 15,
           "description": "Start of battle: Gain 15 Block"
         }
@@ -154,12 +153,6 @@
       "rarity": "unique",
       "cost": 16,
       "effects": [
-        {
-          "type": "battle_start",
-          "stat": "cpu_regen",
-          "value": 2,
-          "description": "Start of battle: Gain +2 CPU regeneration"
-        },
         {
           "type": "modify",
           "stat": "trigger_speed",

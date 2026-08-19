@@ -16,6 +16,8 @@ from item_effects import (
     BUFFS,
     MODIFIERS,
     MODIFIER_TARGETS,
+    UNBUILT_EFFECTS,
+    UNBUILT_TRIGGERS,
     BuffEffect,
     CleanseEffect,
     ConsumeEffect,
@@ -54,6 +56,9 @@ class ConfigLoader:
         self.data_dir = Path(data_dir) if data_dir else self.DATA_DIR
         self.containers: dict[str, ItemSpec] = {}
         self.items = {}
+        # What loaded as a declared gap, as {name: [item ids]}. Empty means
+        # every item in the catalogue does everything it says.
+        self.unbuilt: Dict[str, List[str]] = {}
 
     def load_all(self):
         """Load all configurations"""
@@ -256,7 +261,13 @@ class ConfigLoader:
         elif trigger_type == "passive":
             return PassiveTrigger(effects=effects)
 
-        return None
+        if trigger_type in UNBUILT_TRIGGERS:
+            self.unbuilt.setdefault(trigger_type, []).append(item_id)
+            return None
+        raise ValueError(
+            f"{item_id}: `{trigger_type}` is not a trigger. Add it to "
+            f"UNBUILT_TRIGGERS if it is real and simply not built yet."
+        )
 
     def _parse_effect(self, config: Dict[str, Any], item_id: str) -> Optional[Any]:
         """Parse an effect configuration"""
@@ -386,7 +397,13 @@ class ConfigLoader:
         elif effect_type == "consume":
             return ConsumeEffect()
 
-        return None
+        if effect_type in UNBUILT_EFFECTS:
+            self.unbuilt.setdefault(effect_type, []).append(item_id)
+            return None
+        raise ValueError(
+            f"{item_id}: `{effect_type}` is not an effect. Add it to "
+            f"UNBUILT_EFFECTS if it is real and simply not built yet."
+        )
 
     def get_container(self, container_id: str) -> ItemSpec:
         """Get a container by ID"""

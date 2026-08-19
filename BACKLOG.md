@@ -146,6 +146,23 @@ zone is the cause, which needs an `aura` trigger -- and a counted form, since
 several say "6 Star item activations". No item using one is imported yet, so
 nothing is broken today, but 43 of them wait on it.
 
+**Checking a name against its source matters more than renaming it.** Three
+entries were converted from a wrong effect type to a right one, and two of the
+three were legitimising something the source item never had:
+
+| Ours | Source | What the source actually says |
+|---|---|---|
+| `network_cache` | Ranger Bag | "Items inside gain 10% critical hit chance +3% for each Luck" -- not CPU regen |
+| `encryption_layer` | Frozen Buckler | "...prevent 12 damage, remove 0.9 stamina and inflict 1 Cold" -- no damage reduction |
+
+Both invented effects are gone. Frozen Buckler's Cold is now wired, which
+gives Throttled its first source in the game. Ranger Bag's real effect needs
+`crit_chance` as a modifier stat, which does not exist, and a value that
+scales with Luck, which nothing supports.
+
+The lesson for the rest of the list: a name the loader drops is not
+necessarily a mechanic to build. It may be an effect the item never had.
+
 **Four modifiers are invented.** Their source items say nothing about them:
 
 | Ours | Source | What the source actually says |
