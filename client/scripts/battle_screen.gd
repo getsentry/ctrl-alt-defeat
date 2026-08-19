@@ -88,6 +88,10 @@ func _ready():
 	if not is_inside_tree():
 		return
 
+	# The racks are built and the window has settled, so the scenery has
+	# something real to measure itself against.
+	_place_battle_art()
+
 	# Load battle data from GameStateManager
 	if GameStateManager.last_battle_events.size() > 0:
 		_load_battle_from_state()
@@ -160,6 +164,179 @@ func _setup_ui_references():
 	})
 	hud.pause_button.pressed.connect(_on_toggle_pause)
 
+## How much of itself a rack's frame shows around the rack.
+const FRAME_MARGIN := 12.0
+## How far the parapet settles past the line the roof starts on. That line is
+## read off a painting rather than measured, and a wall standing exactly on it
+## leaves a hair of city showing under the join. A few pixels of overlap puts
+## the wall's foot into the roof and closes it for good.
+const PARAPET_SETTLE := 8.0
+func _place_battle_art() -> void:
+	"""Put the scenery where the room and the fighters actually are.
+
+	None of it is measured out in the scene. The parapet takes its shape from
+	its own picture and its place from the roof painted in the background; the
+	frames take theirs from the racks they sit behind. The numbers the scene
+	carries are only so the nodes can be seen while it is being edited.
+	"""
+	_lay_the_parapet()
+	_frame_the_rack(player_inventory, $Player1Inventory/GridFrame)
+	_frame_the_rack(enemy_inventory, $Player2Inventory/GridFrame)
+
+
+func _lay_the_parapet() -> void:
+	"""Across the whole window, standing on the roof painted behind it.
+
+	Not on the bottom of the window: the background already has a roof in it,
+	a dark strip running from the foot of the city down to the bottom edge,
+	and the wall belongs at the back of that strip rather than at the front.
+
+	That line is as high as the wall can go. Anything higher and the strip of
+	city between the foot of the buildings and the base of the wall shows
+	underneath it, which reads as a wall floating in the air.
+	"""
+	var parapet: TextureRect = $Parapet
+	var art: Vector2 = parapet.texture.get_size()
+	if art.x <= 0.0:
+		return
+	var window := get_viewport_rect().size
+	var tall: float = window.x * art.y / art.x
+	# The wall's own base, not the bottom of its picture. Only the corner
+	# returns reach that, and standing the picture's bottom on the roof leaves
+	# the wall itself hanging a strip of lit city underneath it.
+	var base: float = _wall_base_of(parapet.texture)
+	var bottom: float = _roof_line() + tall * (1.0 - base) + PARAPET_SETTLE
+	parapet.anchor_left = 0.0
+	parapet.anchor_right = 1.0
+	parapet.anchor_top = 0.0
+	parapet.anchor_bottom = 0.0
+	parapet.offset_left = 0.0
+	parapet.offset_right = 0.0
+	parapet.offset_top = bottom - tall
+	parapet.offset_bottom = bottom
+	parapet.size = Vector2(window.x, tall)
+
+
+static func _wall_base_of(texture: Texture2D) -> float:
+	"""How far down its picture the parapet's wall stands, as a fraction.
+
+	The corner returns run to the very bottom of the picture, but the wall
+	between them stops well short of it -- that space is the near side of the
+	roof, drawn as nothing so the floor behind shows through. So the bottom of
+	the picture is not the line the wall stands on, and standing the picture
+	on the roof puts the wall a good way above it.
+	"""
+	if texture == null:
+		return 1.0
+	var image := texture.get_image()
+	if image == null:
+		return 1.0
+	if image.is_compressed():
+		if image.decompress() != OK:
+			return 1.0
+	var high := image.get_height()
+	var wide := image.get_width()
+	if high < 4 or wide < 4:
+		return 1.0
+	# The middle of the picture, well clear of the returns at either end.
+	var lowest := 0
+	for x in range(int(wide * 0.35), int(wide * 0.65), 8):
+		for y in range(high - 1, -1, -1):
+			if image.get_pixel(x, y).a > 0.25:
+				lowest = maxi(lowest, y)
+				break
+	if lowest < 1:
+		return 1.0
+	return float(lowest + 1) / float(high)
+
+
+func _roof_line() -> float:
+	"""Where the city stops and the roof starts, down the window.
+
+	Read off the background rather than measured out here, so it still lands
+	on the roof if the picture is repainted or the window changes shape. The
+	background is drawn to cover the window, so part of it is off the edges,
+	and where a line of it comes out on screen has to be worked out from what
+	is actually shown rather than from the picture's own height.
+	"""
+	var back: TextureRect = $Background
+	var window := get_viewport_rect().size
+	if back == null or back.texture == null:
+		return window.y
+	var art: Vector2 = back.texture.get_size()
+	if art.x <= 0.0 or art.y <= 0.0:
+		return window.y
+	var down := _roof_line_of(back.texture)
+	# Covering the window scales the picture up until neither side falls
+	# short, so the overflow hangs off both edges evenly.
+	var cover: float = maxf(window.x / art.x, window.y / art.y)
+	var shown := art * cover
+	return (shown.y - window.y) / -2.0 + down * shown.y
+
+
+static func _roof_line_of(texture: Texture2D) -> float:
+	"""Where the lit city gives way to the dark roof, as a fraction down.
+
+	The roof is much darker than the city standing on it, so the line between
+	them is the sharpest drop in brightness in the lower part of the picture.
+	The middle is skipped: the seam of fire runs up it and is brighter than
+	anything else, which would drag the reading around with it.
+	"""
+	var image := texture.get_image()
+	if image == null:
+		return 1.0
+	if image.is_compressed():
+		if image.decompress() != OK:
+			return 1.0
+	var high := image.get_height()
+	var wide := image.get_width()
+	if high < 32 or wide < 32:
+		return 1.0
+
+	var rows := PackedFloat32Array()
+	rows.resize(high)
+	for y in high:
+		var lit := 0.0
+		var counted := 0
+		for x in range(0, wide, 16):
+			# The fire seam is brighter than the city and would drown the
+			# reading, so the middle of the picture is left out of it.
+			if absf(float(x) / float(wide) - 0.5) < 0.08:
+				continue
+			var pixel := image.get_pixel(x, y)
+			lit += pixel.r + pixel.g + pixel.b
+			counted += 1
+		rows[y] = lit / float(maxi(counted, 1))
+
+	# The sharpest fall between the eight rows above a line and the eight
+	# below it, looked for only in the bottom third where a roof can be.
+	var step := 8
+	var sharpest := 0.0
+	var found := high
+	for y in range(int(high * 0.6), high - step):
+		var above := 0.0
+		var below := 0.0
+		for i in step:
+			above += rows[y - step + i]
+			below += rows[y + i]
+		var fall := (above - below) / float(step)
+		if fall > sharpest:
+			sharpest = fall
+			found = y
+	if found >= high:
+		return 1.0
+	return float(found) / float(high)
+
+
+func _frame_the_rack(rack: Control, frame: TextureRect) -> void:
+	"""Sit a frame behind a rack, showing a margin of itself all round."""
+	if rack == null or not is_instance_valid(rack) or frame == null:
+		return
+	var margin := Vector2(FRAME_MARGIN, FRAME_MARGIN)
+	frame.position = rack.position - margin
+	frame.size = rack.size + margin * 2.0
+
+
 func _setup_inventories():
 	# Constants for grid configuration
 	const GRID_WIDTH = 9
@@ -169,6 +346,12 @@ func _setup_inventories():
 	# space was left over came out at 48 pixels, and an item drawn that small
 	# is a smudge - and the racks are what the battle is decided by, so they
 	# are what there has to be room for.
+	#
+	# As big as the room allows: the racks stand clear of the clock above them
+	# and the stats below, and leave the middle of the screen to the seam of
+	# fire and what is written over it. Everything else about a rack -- where
+	# it stands, its backdrop, the frame behind it -- is measured off the grid,
+	# so this is the one number that decides how big an item is drawn.
 	const CELL_SIZE = 60
 
 	# Create inventory grids using InventoryGrid class (not scene)
