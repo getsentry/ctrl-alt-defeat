@@ -10,6 +10,8 @@ difference between the two types. So a position is never null, and nothing has
 to work out what a missing one means.
 """
 
+from typing import Dict
+
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from config_loader import config_loader
@@ -113,6 +115,19 @@ class Item(BaseModel):
     cost: int = Field(description="Gold cost")
     is_container: bool = Field(description="Whether this item is a container")
     shape: Shape = Field(description="Covered squares, as [x, y] offsets")
+    # The zones the item reaches into, in the same frame as `shape`, so a square
+    # above or left of the item is negative. Sent so the client can show a
+    # player what an item reaches; nothing draws them yet.
+    star: Shape = Field(default_factory=list, description="Star zone, as [x, y] offsets")
+    diamond: Shape = Field(
+        default_factory=list, description="Diamond zone, as [x, y] offsets"
+    )
+    # Covered squares whose zone points straight up on the grid however the item
+    # is turned. Sent because a client cannot work out the turned zone without
+    # them: it would turn the zone with the item and put it in the wrong place.
+    anchors: Shape = Field(
+        default_factory=list, description="Covered squares whose zone points up"
+    )
     description: str = Field(description="What the item does, in prose")
     color: str = Field(
         pattern=HEX_COLOR,
@@ -162,6 +177,9 @@ class Item(BaseModel):
             # follows from it rather than from a second lookup.
             is_container=spec.category == "container",
             shape=shape_of(spec),
+            star=[(x, y) for x, y in spec.shape.star],
+            diamond=[(x, y) for x, y in spec.shape.diamond],
+            anchors=[(x, y) for x, y in spec.shape.anchors],
             description=describe(stats),
             # The catalogue names a colour, the client is sent the value. That
             # way the client keeps no palette and a colour can be retuned
@@ -210,13 +228,34 @@ class PlacedItem(Item):
         default=Rotation.NONE, description="Quarter turns clockwise from the shape"
     )
 
+    def _turned(self) -> ItemShape:
+        """This item's shape and zones, turned the way it faces.
+
+        Rebuilt whole rather than turning the squares alone, because the zones
+        have to be settled against the footprint's corner. Turned on their own
+        they land on top of the item.
+        """
+        shape = ItemShape(
+            squares=list(self.shape),
+            star=tuple(self.star),
+            diamond=tuple(self.diamond),
+            anchors=tuple(self.anchors),
+        )
+        return shape.rotate(self.rotation)
+
     def covered_squares(self) -> Shape:
         """The grid squares this item covers, once turned"""
-        squares = self.shape
-        if self.rotation is not Rotation.NONE:
-            squares = ItemShape(squares=list(squares)).rotate(self.rotation).squares
         x, y = self.position
-        return [(x + dx, y + dy) for dx, dy in squares]
+        return [(x + dx, y + dy) for dx, dy in self._turned().squares]
+
+    def zone_squares(self) -> Dict[str, Shape]:
+        """The grid squares this item's zones cover, once turned and placed"""
+        x, y = self.position
+        turned = self._turned()
+        return {
+            "star": [(x + dx, y + dy) for dx, dy in turned.star],
+            "diamond": [(x + dx, y + dy) for dx, dy in turned.diamond],
+        }
 
     def stored(self) -> Item:
         """The same item, taken off the grid and put in the chest"""

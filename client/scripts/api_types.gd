@@ -8,36 +8,111 @@ class_name APITypes
 # squares it covers, not where it is. The server turns shapes the same way, and
 # the two have to agree or an item draws on squares the server has it standing
 # somewhere else.
-static func turn(shape: Array, rotation: int) -> Array:
+static func turn(shape: Array[Vector2i], rotation: int) -> Array[Vector2i]:
 	if rotation == 0 or shape.is_empty():
 		return shape.duplicate()
 
-	var turned := []
-	for offset in shape:
-		if not (offset is Array and offset.size() >= 2):
-			continue
-		var x := int(offset[0])
-		var y := int(offset[1])
-		match rotation:
-			90:
-				turned.append([y, -x])
-			180:
-				turned.append([-x, -y])
-			270:
-				turned.append([-y, x])
-			_:
-				turned.append([x, y])
-
-	var least_x: int = turned[0][0]
-	var least_y: int = turned[0][1]
-	for offset in turned:
-		least_x = mini(least_x, offset[0])
-		least_y = mini(least_y, offset[1])
-
-	var settled := []
-	for offset in turned:
-		settled.append([offset[0] - least_x, offset[1] - least_y])
+	var turned := _spin(shape, rotation)
+	var corner := _corner(turned)
+	var settled: Array[Vector2i] = []
+	for square in turned:
+		settled.append(square - corner)
 	return settled
+
+
+# The top left of a set of squares, which is what everything is settled against.
+static func _corner(squares: Array[Vector2i]) -> Vector2i:
+	if squares.is_empty():
+		return Vector2i.ZERO
+	var least := squares[0]
+	for square in squares:
+		least.x = mini(least.x, square.x)
+		least.y = mini(least.y, square.y)
+	return least
+
+
+# Read the [x, y] pairs a server response carries as squares. The parameter is
+# an untyped Array because that is what JSON hands over, and its numbers arrive
+# as floats: [[0.0, 0.0]]. Converting here is what stops a float reaching the
+# rest of the client, where `has(Vector2i(0, 0))` would quietly answer false.
+static func squares(offsets: Array) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for offset in offsets:
+		if offset is Array and offset.size() >= 2:
+			out.append(Vector2i(int(offset[0]), int(offset[1])))
+	return out
+
+
+# And back, for a response this client builds or echoes.
+static func offsets(squares_in: Array[Vector2i]) -> Array:
+	var out := []
+	for square in squares_in:
+		out.append([square.x, square.y])
+	return out
+
+
+# The squares a zone covers once its item has been turned.
+#
+# A zone cannot go through turn() on its own. That settles what it is given
+# against its own corner, and a zone settled against its own corner slides onto
+# the item. So both are turned and both are pushed back by the FOOTPRINT's
+# corner, which is the only frame the two share.
+#
+# `anchors` are covered squares whose zone points straight up on the grid
+# however the item is turned, so they are left out of the turn and their square
+# is worked out afterwards. It is dropped where it lands on the item itself.
+static func turn_zone(
+	shape: Array[Vector2i],
+	zone: Array[Vector2i],
+	anchors: Array[Vector2i],
+	rotation: int,
+) -> Array[Vector2i]:
+	var turned_shape := _spin(shape, rotation)
+	if turned_shape.is_empty():
+		return []
+
+	var corner := _corner(turned_shape)
+	var covered := {}
+	for square in turned_shape:
+		covered[square - corner] = true
+
+	# The square an anchor points into is drawn on the map, so it is in the zone
+	# already for the way the item faces now. Take it out before turning, or the
+	# item ends up with the old square and the new one.
+	var was_projected := {}
+	for anchor in anchors:
+		var above := anchor + Vector2i.UP
+		if not shape.has(above):
+			was_projected[above] = true
+
+	var reached := {}
+	for square in zone:
+		if not was_projected.has(square):
+			reached[_spin([square], rotation)[0] - corner] = true
+
+	# An anchor points up on the grid however the item is turned, so its square
+	# is worked out after the turn rather than turned with the rest.
+	for anchor in _spin(anchors, rotation):
+		reached[anchor - corner + Vector2i.UP] = true
+
+	var settled: Array[Vector2i] = []
+	for square in reached:
+		if not covered.has(square):
+			settled.append(square)
+	settled.sort()
+	return settled
+
+
+# The turn itself, without settling anything against a corner.
+static func _spin(offsets: Array[Vector2i], rotation: int) -> Array[Vector2i]:
+	var turned: Array[Vector2i] = []
+	for square in offsets:
+		match rotation:
+			90: turned.append(Vector2i(square.y, -square.x))
+			180: turned.append(Vector2i(-square.x, -square.y))
+			270: turned.append(Vector2i(-square.y, square.x))
+			_: turned.append(square)
+	return turned
 
 
 # Where an item faces after being turned this many quarters, clockwise for a
@@ -93,7 +168,15 @@ class Item extends Resource:
 	# Only ever true of a shop offer. Buying it ends the sale.
 	var on_sale: bool = false
 	var is_container: bool = false
-	var shape: Array = []  # Array[Array[int]]: the [x, y] offsets it covers
+	# The squares it covers, as offsets from its own corner.
+	var shape: Array[Vector2i] = []
+	# The zones this item reaches into, in the same frame as `shape`, so a
+	# square above or left of the item is negative. Nothing draws them yet.
+	var star: Array[Vector2i] = []
+	var diamond: Array[Vector2i] = []
+	# Covered squares whose zone points straight up on the grid however the item
+	# is turned. Needed to work out a turned zone; see turn_zone.
+	var anchors: Array[Vector2i] = []
 	var description: String = ""
 	# How to draw the item while it has no artwork. The colour arrives as a
 	# value, so the client keeps no palette; the pattern arrives as a name,
@@ -121,7 +204,10 @@ class Item extends Resource:
 		sell_value = int(data["sell_value"])
 		on_sale = data["on_sale"]
 		is_container = data["is_container"]
-		shape = data["shape"]
+		shape = APITypes.squares(data["shape"])
+		star = APITypes.squares(data.get("star", []))
+		diamond = APITypes.squares(data.get("diamond", []))
+		anchors = APITypes.squares(data.get("anchors", []))
 		description = data["description"]
 		color = data["color"]
 		pattern = data["pattern"]
@@ -147,7 +233,10 @@ class Item extends Resource:
 			"sell_value": sell_value,
 			"on_sale": on_sale,
 			"is_container": is_container,
-			"shape": shape,
+			"shape": APITypes.offsets(shape),
+			"star": APITypes.offsets(star),
+			"diamond": APITypes.offsets(diamond),
+			"anchors": APITypes.offsets(anchors),
 			"description": description,
 			"color": color,
 			"pattern": pattern,
@@ -165,8 +254,16 @@ class Item extends Resource:
 	# facing any particular way, so this is its shape; a placed one answers
 	# with the shape turned. Both answer, so nothing asking has to know which
 	# kind it was handed.
-	func turned_shape() -> Array:
+	func turned_shape() -> Array[Vector2i]:
 		return shape
+
+	# The squares a zone covers, turned the way this item faces. One that is not
+	# on the grid faces nowhere, so its zone is the one the catalogue drew.
+	func turned_star() -> Array[Vector2i]:
+		return star
+
+	func turned_diamond() -> Array[Vector2i]:
+		return diamond
 
 	# Which way this item faces. One that is not on the grid faces nowhere in
 	# particular, so it answers the same as one that has not been turned.
@@ -198,8 +295,16 @@ class PlacedItem extends Item:
 
 	# The catalogue holds a shape unturned, so anything asking which squares an
 	# item takes has to turn it first or it is asking about a different item.
-	func turned_shape() -> Array:
+	func turned_shape() -> Array[Vector2i]:
 		return APITypes.turn(shape, rotation)
+
+	func turned_star() -> Array[Vector2i]:
+		return APITypes.turn_zone(shape, star, anchors, rotation)
+
+	func turned_diamond() -> Array[Vector2i]:
+		# A diamond has no anchor rule, so it simply turns with the item.
+		var none: Array[Vector2i] = []
+		return APITypes.turn_zone(shape, diamond, none, rotation)
 
 	func facing() -> int:
 		return rotation
@@ -216,10 +321,21 @@ class PlacedItem extends Item:
 
 	# The grid squares this item covers.
 	func covered_squares() -> Array[Vector2i]:
-		var squares: Array[Vector2i] = []
-		for offset in turned_shape():
-			squares.append(Vector2i(position.x + int(offset[0]), position.y + int(offset[1])))
-		return squares
+		return _on_the_grid(turned_shape())
+
+	# The grid squares each zone reaches, once turned and put down.
+	func star_squares() -> Array[Vector2i]:
+		return _on_the_grid(turned_star())
+
+	func diamond_squares() -> Array[Vector2i]:
+		return _on_the_grid(turned_diamond())
+
+	func _on_the_grid(offsets: Array[Vector2i]) -> Array[Vector2i]:
+		var here := Vector2i(position.x, position.y)
+		var out: Array[Vector2i] = []
+		for offset in offsets:
+			out.append(here + offset)
+		return out
 
 	func to_dict() -> Dictionary:
 		var fields = super.to_dict()

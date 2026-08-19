@@ -105,7 +105,7 @@ func test_a_whole_item_survives_parsing():
 	assert_eq(item.category, "problem", "category should survive parsing")
 	assert_eq(item.position.x, 2, "x should survive parsing")
 	assert_eq(item.position.y, 3, "y should survive parsing")
-	assert_eq(item.shape, [[0, 0], [1, 0]], "shape should survive parsing")
+	assert_eq(item.shape, _at([[0, 0], [1, 0]]), "shape should survive parsing")
 	assert_eq(item.rarity, "rare", "rarity should survive parsing")
 	assert_eq(item.cost, 8, "cost should survive parsing")
 	assert_eq(item.min_damage, 2, "min_damage should survive parsing")
@@ -126,7 +126,8 @@ func test_a_whole_container_survives_parsing():
 	assert_eq(container.name, "Standard VM", "a container carries the name its tooltip shows")
 	assert_eq(container.position.x, 4, "x should survive parsing")
 	assert_eq(container.position.y, 3, "y should survive parsing")
-	assert_eq(container.shape, [[0, 0], [1, 0], [0, 1], [1, 1]], "shape should survive parsing")
+	assert_eq(container.shape, _at([[0, 0], [1, 0], [0, 1], [1, 1]]),
+		"shape should survive parsing")
 
 
 # ============ Round trips lose nothing ============
@@ -400,52 +401,52 @@ func test_sale_fields_survive_a_round_trip():
 # it should fit.
 
 func test_a_shape_turned_none_is_unchanged():
-	var wide = [[0, 0], [1, 0]]
+	var wide := _at([[0, 0], [1, 0]])
 	assert_eq(APITypes.turn(wide, 0), wide, "No turn, no change")
 
 
 func test_a_quarter_turn_stands_a_wide_shape_on_end():
 	# Two across becomes two down.
-	assert_eq(_sorted(APITypes.turn([[0, 0], [1, 0]], 90)), [[0, 0], [0, 1]],
+	assert_eq(_sorted_squares(APITypes.turn(_at([[0, 0], [1, 0]]), 90)), _at([[0, 0], [0, 1]]),
 		"A two-wide item turned clockwise is two tall")
 
 
 func test_a_quarter_turn_lays_a_tall_shape_flat():
-	assert_eq(_sorted(APITypes.turn([[0, 0], [0, 1]], 90)), [[0, 0], [1, 0]],
+	assert_eq(_sorted_squares(APITypes.turn(_at([[0, 0], [0, 1]]), 90)), _at([[0, 0], [1, 0]]),
 		"A two-tall item turned clockwise is two wide")
 
 
 func test_a_half_turn_of_a_wide_shape_is_still_wide():
-	var turned = APITypes.turn([[0, 0], [1, 0]], 180)
+	var turned = APITypes.turn(_at([[0, 0], [1, 0]]), 180)
 	assert_eq(turned.size(), 2, "It still covers two squares")
-	var xs = turned.map(func(o): return o[0])
+	var xs = turned.map(func(o): return o.x)
 	assert_true(0 in xs and 1 in xs, "and still lies across")
 
 
 func test_four_quarter_turns_come_back_to_the_start():
-	var shape = [[0, 0], [1, 0], [0, 1]]
+	var shape := _at([[0, 0], [1, 0], [0, 1]])
 	var once = APITypes.turn(shape, 90)
 	var twice = APITypes.turn(once, 90)
 	var thrice = APITypes.turn(twice, 90)
 	var round_trip = APITypes.turn(thrice, 90)
 
-	assert_eq(_sorted(round_trip), _sorted(shape), "Back where it started")
+	assert_eq(_sorted_squares(round_trip), _sorted_squares(shape), "Back where it started")
 
 
 func test_a_turn_never_moves_the_item_off_its_corner():
 	# A turn changes the squares an item covers, not where it stands, so the
 	# offsets always start at the origin.
 	for rotation in [90, 180, 270]:
-		var turned = APITypes.turn([[0, 0], [1, 0], [2, 0]], rotation)
-		var least_x = turned.map(func(o): return o[0]).min()
-		var least_y = turned.map(func(o): return o[1]).min()
+		var turned = APITypes.turn(_at([[0, 0], [1, 0], [2, 0]]), rotation)
+		var least_x = turned.map(func(o): return o.x).min()
+		var least_y = turned.map(func(o): return o.y).min()
 		assert_eq([least_x, least_y], [0, 0],
 			"Turned by %d it should still sit on its corner" % rotation)
 
 
 func test_an_L_keeps_its_three_squares_however_it_is_turned():
 	for rotation in [0, 90, 180, 270]:
-		assert_eq(APITypes.turn([[0, 0], [0, 1], [1, 1]], rotation).size(), 3,
+		assert_eq(APITypes.turn(_at([[0, 0], [0, 1], [1, 1]]), rotation).size(), 3,
 			"Turning changes the shape, never how much of it there is")
 
 
@@ -524,3 +525,83 @@ func test_turning_adds_up():
 	assert_eq(item.turned(1).turned(1).facing(), 180, "Two quarters is a half")
 	assert_eq(item.turned(1).turned(1).turned(1).turned(1).facing(), 0,
 		"and four is back where it started")
+# ============ Aura zones ============
+#
+# The server sends the zones in the item's own frame and the client turns them.
+# The two turn the same way or an item draws an aura on squares the server has
+# it reaching somewhere else, so these check against the values the server
+# produces for the same maps.
+
+# The squares a list of [x, y] pairs means, which is what the client holds them
+# as once parsed.
+func _at(offsets: Array) -> Array[Vector2i]:
+	return APITypes.squares(offsets)
+
+
+func _potion(overrides: Dictionary = {}) -> Dictionary:
+	# Health Potion: the map "*", "^", "#". Its star sits above the anchor and
+	# stays there however the item is turned.
+	var data = _item({
+		"shape": [[0, 0], [0, 1]],
+		"star": [[0, -1]],
+		"diamond": [],
+		"anchors": [[0, 0]],
+	})
+	data.merge(overrides, true)
+	return data
+
+
+func test_an_item_carries_its_zones():
+	var item = APITypes.Item.new(_potion())
+	assert_eq(item.star, _at([[0, -1]]), "the star zone comes across")
+	assert_eq(item.anchors, _at([[0, 0]]), "and the anchor that decides how it turns")
+
+
+func test_an_item_without_zones_gets_empty_ones():
+	# Not null: nothing asking should have to check first.
+	var item = APITypes.Item.new(_item())
+	assert_eq(item.star, _at([]), "no star")
+	assert_eq(item.diamond, _at([]), "no diamond")
+
+
+func test_zones_survive_a_round_trip():
+	var once = APITypes.Item.new(_potion())
+	var twice = APITypes.Item.new(once.to_dict())
+	assert_eq(twice.star, once.star)
+	assert_eq(twice.anchors, once.anchors)
+
+
+func test_an_unplaced_item_answers_with_the_zone_as_drawn():
+	var item = APITypes.Item.new(_potion())
+	assert_eq(item.turned_star(), _at([[0, -1]]), "facing nowhere, so nothing turns")
+
+
+func test_a_turned_zone_never_lands_on_its_own_item():
+	# The whole reason a zone cannot go through turn() alone.
+	for rotation in [0, 90, 180, 270]:
+		var placed = APITypes.PlacedItem.new(
+			_potion({"position": [4, 4], "rotation": rotation}))
+		for square in placed.turned_star():
+			assert_false(placed.turned_shape().has(square),
+				"a zone square landed on the item at %d degrees" % rotation)
+
+
+func test_an_anchored_zone_stays_above_the_anchor():
+	# The same four answers the server gives for this map.
+	var expected = {0: [[0, -1]], 90: [[0, -1]], 180: [], 270: [[1, -1]]}
+	for rotation in expected:
+		var placed = APITypes.PlacedItem.new(
+			_potion({"position": [0, 0], "rotation": rotation}))
+		assert_eq(placed.turned_star(), _at(expected[rotation]),
+			"star at %d degrees" % rotation)
+
+
+func test_a_zone_with_no_anchor_turns_with_the_item():
+	# One square to the right becomes one square above.
+	var reaching_right = _item({
+		"shape": [[0, 0]], "star": [[1, 0]], "diamond": [], "anchors": [],
+	})
+	reaching_right["position"] = [0, 0]
+	reaching_right["rotation"] = 90
+	var placed = APITypes.PlacedItem.new(reaching_right)
+	assert_eq(placed.turned_star(), _at([[0, -1]]))

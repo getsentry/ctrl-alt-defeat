@@ -349,11 +349,10 @@ func _add_item(item: APITypes.PlacedItem):
 
 	# Mark grid cells as occupied
 	for offset in item.turned_shape():
-		if offset is Array and offset.size() >= 2:
-			var cell_x = x + offset[0]
-			var cell_y = y + offset[1]
-			if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
-				item_grid[cell_y][cell_x] = item_visual
+		var cell_x = x + offset[0]
+		var cell_y = y + offset[1]
+		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
+			item_grid[cell_y][cell_x] = item_visual
 
 	# Connect input if not read-only
 	if not read_only:
@@ -410,8 +409,6 @@ func can_place_container(container: APITypes.PlacedItem, grid_pos: Vector2i) -> 
 			taken[square] = true
 
 	for offset in container.turned_shape():
-		if not (offset is Array and offset.size() >= 2):
-			continue
 		var square := Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1]))
 		if square.x < 0 or square.x >= grid_width:
 			return false
@@ -526,11 +523,10 @@ func _start_drag(item_visual: Control):
 	# Clear item from grid
 	var item_data = item_visual.get_meta("item_data")
 	for offset in item_data.turned_shape():
-		if offset is Array and offset.size() >= 2:
-			var cell_x = original_grid_pos.x + offset[0]
-			var cell_y = original_grid_pos.y + offset[1]
-			if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
-				item_grid[cell_y][cell_x] = null
+		var cell_x = original_grid_pos.x + offset[0]
+		var cell_y = original_grid_pos.y + offset[1]
+		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
+			item_grid[cell_y][cell_x] = null
 
 	# Move to top for dragging (visual hierarchy)
 	move_child(item_visual, get_child_count() - 1)
@@ -647,11 +643,10 @@ func _place_item_at(item_visual: Control, grid_pos: Vector2i):
 	var item_data = item_visual.get_meta("item_data").placed_at(grid_pos)
 	item_visual.set_meta("item_data", item_data)
 	for offset in item_data.turned_shape():
-		if offset is Array and offset.size() >= 2:
-			var cell_x = grid_pos.x + offset[0]
-			var cell_y = grid_pos.y + offset[1]
-			if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
-				item_grid[cell_y][cell_x] = item_visual
+		var cell_x = grid_pos.x + offset[0]
+		var cell_y = grid_pos.y + offset[1]
+		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
+			item_grid[cell_y][cell_x] = item_visual
 
 func can_place_item(item_data, grid_pos: Vector2i) -> bool:
 	"""Public method to check if item can be placed at position"""
@@ -664,21 +659,20 @@ func _can_place_item(item_data, grid_pos: Vector2i) -> bool:
 
 	# Check each cell in the item's shape
 	for offset in item_data.turned_shape():
-		if offset is Array and offset.size() >= 2:
-			var cell_x = grid_pos.x + offset[0]
-			var cell_y = grid_pos.y + offset[1]
+		var cell_x = grid_pos.x + offset[0]
+		var cell_y = grid_pos.y + offset[1]
 
-			# Check bounds
-			if cell_x < 0 or cell_x >= grid_width or cell_y < 0 or cell_y >= grid_height:
-				return false
+		# Check bounds
+		if cell_x < 0 or cell_x >= grid_width or cell_y < 0 or cell_y >= grid_height:
+			return false
 
-			# Check if on active grid (server)
-			if not active_grid[cell_y][cell_x]:
-				return false
+		# Check if on active grid (server)
+		if not active_grid[cell_y][cell_x]:
+			return false
 
-			# Check if occupied by another item
-			if item_grid[cell_y][cell_x] != null and item_grid[cell_y][cell_x] != dragging_object:
-				return false
+		# Check if occupied by another item
+		if item_grid[cell_y][cell_x] != null and item_grid[cell_y][cell_x] != dragging_object:
+			return false
 
 	return true
 
@@ -725,14 +719,13 @@ func _on_the_board(grid_pos: Vector2i) -> bool:
 		and grid_pos.x < grid_width and grid_pos.y < grid_height
 
 
-func _shape_extent(item_shape: Array) -> Vector2:
+func _shape_extent(item_shape: Array[Vector2i]) -> Vector2:
 	"""How far a shape reaches from the square it starts on"""
 	var max_x := 0
 	var max_y := 0
 	for offset in item_shape:
-		if offset is Array and offset.size() >= 2:
-			max_x = max(max_x, int(offset[0]))
-			max_y = max(max_y, int(offset[1]))
+		max_x = max(max_x, int(offset[0]))
+		max_y = max(max_y, int(offset[1]))
 	return Vector2(
 		(max_x + 1) * (cell_size + cell_spacing) - cell_spacing,
 		(max_y + 1) * (cell_size + cell_spacing) - cell_spacing
@@ -785,11 +778,10 @@ func _remove_item(item_visual: Control):
 
 	# Clear from grid
 	for offset in item_data.turned_shape():
-		if offset is Array and offset.size() >= 2:
-			var cell_x = grid_pos.x + offset[0]
-			var cell_y = grid_pos.y + offset[1]
-			if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
-				item_grid[cell_y][cell_x] = null
+		var cell_x = grid_pos.x + offset[0]
+		var cell_y = grid_pos.y + offset[1]
+		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
+			item_grid[cell_y][cell_x] = null
 
 	items.erase(item_visual)
 	item_visual.queue_free()

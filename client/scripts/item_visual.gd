@@ -69,9 +69,8 @@ func _create_visual():
 	var max_x = 0
 	var max_y = 0
 	for offset in item_shape:
-		if offset is Array and offset.size() >= 2:
-			max_x = max(max_x, offset[0])
-			max_y = max(max_y, offset[1])
+		max_x = max(max_x, offset[0])
+		max_y = max(max_y, offset[1])
 
 	var width = max_x + 1
 	var height = max_y + 1
