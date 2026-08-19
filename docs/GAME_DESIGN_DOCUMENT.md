@@ -386,6 +386,36 @@ battle.
 | **Draining** | Vampirism | Heal 1 per stack when hitting with a melee weapon |
 | **Credits** | Mana | Spent by items that need it |
 
+#### How fast an item triggers
+
+Optimized and Throttled pull against each other, and everything that changes a
+cooldown lands in the same sum. Backpack Battles' wiki gives the formula:
+
+```
+Faster = every speed-up added together      (Optimized is 2% a stack)
+Slower = every slow-down added together     (Throttled is 2% a stack)
+
+Faster > Slower:  cooldown = base / (1 + Faster - Slower)
+Slower > Faster:  cooldown = base * (1 + Slower - Faster)
+```
+
+**They add, they do not multiply**, and they are not applied one after the
+other. Ten Optimized is 20% off the sum, not 1.02 compounded ten times.
+
+**The two halves are asymmetric on purpose.** Dividing on the way down and
+multiplying on the way up means 100% faster halves a cooldown and 100% slower
+doubles it, and nothing divides by zero when a slow-down reaches 100%. At
+Faster equal to Slower both forms give the base, so they meet cleanly.
+
+**The most either way is 1000%**, ten times faster or ten times slower.
+
+**We work it out when the cooldown starts, and the source game works it out
+continuously.** There, an item fills up at a rate, so gaining Optimized part
+way through speeds up what is left of the fill. Here a timer is scheduled once
+for the whole cooldown, so a stack gained during it counts towards the next
+one instead. The steady state is the same; only a stack arriving mid-cooldown
+differs.
+
 #### What is not a buff
 
 Three things kept ending up in the same place as buffs, and none of them

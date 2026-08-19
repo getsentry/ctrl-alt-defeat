@@ -39,6 +39,15 @@ from item_effects import (
 from schemas import BattleAction
 
 MEMORY_LEAKED = "memory_leaked"
+
+# Section 3.1: the two statuses that pull on how fast an item triggers, and
+# what one stack of either is worth.
+OPTIMIZED = "optimized"
+THROTTLED = "throttled"
+SPEED_PER_STACK = 0.02
+
+# Ten times faster or ten times slower, and no further.
+SPEED_LIMIT = 10.0
 POISON_PERIOD = 2.0
 
 
@@ -568,7 +577,7 @@ class BattleSimulator:
         trigger_uid: str,
     ):
         """Schedule timer-based trigger activation using priority queue"""
-        next_time = self.current_time + trigger.cooldown
+        next_time = self.current_time + self._cooldown_for(trigger, owner)
 
         def activate():
             # Skip if item is consumed
@@ -603,6 +612,32 @@ class BattleSimulator:
                 self._schedule_timer_trigger(trigger, item, owner, enemy, trigger_uid)
 
         self.event_manager.schedule_timer(next_time, trigger_uid, activate)
+
+    def _cooldown_for(self, trigger: TimerTrigger, owner: Player) -> float:
+        """How long this item waits, once its owner's statuses are counted.
+
+        Section 3.1 has the formula, which is Backpack Battles'. Everything
+        that speeds an item up is added together, everything that slows it
+        down likewise, and only the difference is used:
+
+            faster > slower:  base / (1 + faster - slower)
+            slower > faster:  base * (1 + slower - faster)
+
+        Dividing one way and multiplying the other keeps the two halves
+        symmetric -- twice as fast against half as fast -- and means a 100%
+        slow-down does not divide by zero. At equal amounts both give the base.
+
+        Worked out when the cooldown starts rather than continuously, so a
+        stack gained part way through counts towards the next wait rather than
+        this one.
+        """
+        faster = owner.buffs.get(OPTIMIZED, 0) * SPEED_PER_STACK
+        slower = owner.debuffs.get(THROTTLED, 0) * SPEED_PER_STACK
+
+        difference = min(abs(faster - slower), SPEED_LIMIT)
+        if faster > slower:
+            return trigger.cooldown / (1 + difference)
+        return trigger.cooldown * (1 + difference)
 
     def _apply_effects(
         self, effects: List[Effect], item: BattleItem, owner: Player, enemy: Player

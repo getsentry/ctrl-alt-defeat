@@ -160,11 +160,25 @@ stamina, counting activations -- so they are left as modifiers rather than
 given a trigger that would silently do nothing. Covered by the per-item audit
 entry below.
 
-**Nothing reads a buff either.** All seven are carried and none consulted.
-Optimized should make items trigger faster, Monitored add damage, Calibrated
-add accuracy, Spiked and Draining fire on melee hits, Credits be spent.
-Regenerating has the clearest home: it is an over-time effect, second in the
-table on `OverTimeEffect`, needing only a subclass.
+**Five of the seven are still not read.** Optimized and Throttled now decide
+how fast an item triggers. Monitored should add damage, Calibrated accuracy,
+Spiked and Draining fire on melee hits, Credits be spent. Regenerating has the
+clearest home: it is an over-time effect, second in the table on
+`OverTimeEffect`, needing only a subclass.
+
+**Nothing can grant Optimized or Throttled**, so the mechanic that now works
+cannot be reached. One item would grant it -- `ddos_protection_module`, from
+Pumpkin -- and its trigger is `on_big_damage`, which the loader does not know,
+so `_parse_trigger` returns None and the whole trigger is dropped without a
+word. The item loads with no triggers at all.
+
+Pumpkin's real text is "Fatigue starts: gain 10 Heat", so it wants a
+fatigue-start trigger and a value of 10 rather than 1. Cold has no source
+either: no imported item inflicts it.
+
+This is the sharpest instance of the silent-drop entry below. A trigger name
+the loader has never heard of costs the item everything behind it, and says
+nothing at startup or in a battle.
 
 **Three of the seven have no item.** Monitored, Spiked and Draining are
 declared and unreachable, because no imported item grants them.

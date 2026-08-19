@@ -1414,3 +1414,91 @@ class TestBuffsAreNotStats:
                 for effect in getattr(trigger, "effects", []) or []:
                     if isinstance(effect, ModifyEffect):
                         assert effect.stat in MODIFIERS, item_id
+
+
+class TestHowFastAnItemTriggers:
+    """Section 3.1: Optimized and Throttled pull on the same sum"""
+
+    @staticmethod
+    def _cooldown(optimized: int = 0, throttled: int = 0, base: float = 2.0) -> float:
+        from battle_engine import OPTIMIZED, THROTTLED
+
+        sim = BattleSimulator(seed=TEST_SEED)
+        owner = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        if optimized:
+            owner.buffs[OPTIMIZED] = optimized
+        if throttled:
+            owner.debuffs[THROTTLED] = throttled
+        return sim._cooldown_for(TimerTrigger(cooldown=base, cpu_cost=0), owner)
+
+    def test_no_status_leaves_the_cooldown_alone(self):
+        assert self._cooldown() == 2.0
+
+    def test_optimized_divides(self):
+        """Ten stacks is 20% faster: 2.0 / 1.2"""
+        assert self._cooldown(optimized=10) == pytest.approx(2.0 / 1.2)
+
+    def test_throttled_multiplies(self):
+        """Ten stacks is 20% slower: 2.0 * 1.2"""
+        assert self._cooldown(throttled=10) == pytest.approx(2.0 * 1.2)
+
+    def test_the_two_halves_are_symmetric(self):
+        """100% faster halves it, 100% slower doubles it. Dividing one way and
+        multiplying the other is what makes that true."""
+        assert self._cooldown(optimized=50) == pytest.approx(1.0)
+        assert self._cooldown(throttled=50) == pytest.approx(4.0)
+
+    def test_stacks_add_rather_than_compound(self):
+        """Ten stacks is 20% off the sum, not 1.02 ten times over, which would
+        be 21.9%."""
+        assert self._cooldown(optimized=10) != pytest.approx(2.0 / 1.02**10)
+        assert self._cooldown(optimized=10) == pytest.approx(2.0 / 1.20)
+
+    def test_they_cancel_before_anything_is_applied(self):
+        """Only the difference counts, so equal amounts leave the base alone
+        rather than dividing and then multiplying."""
+        assert self._cooldown(optimized=7, throttled=7) == 2.0
+        assert self._cooldown(optimized=10, throttled=4) == self._cooldown(optimized=6)
+        assert self._cooldown(optimized=4, throttled=10) == self._cooldown(throttled=6)
+
+    def test_neither_runs_away_past_ten_times(self):
+        assert self._cooldown(optimized=10_000) == pytest.approx(2.0 / 11)
+        assert self._cooldown(throttled=10_000) == pytest.approx(2.0 * 11)
+
+    def test_a_throttled_weapon_swings_less_often_in_a_battle(self):
+        """The whole point, seen from the battle rather than the formula."""
+        from battle_engine import OPTIMIZED, THROTTLED
+        from item_effects import AttackEffect
+
+        def swings(optimized=0, throttled=0):
+            sword = BattleItem(
+                spec=ItemSpec(
+                    id="s", name="Sword", category="problem", cost=1,
+                    player_class="neutral", shape=parse_map(["#"], "s"), slug="s",
+                    triggers=[TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                        AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                                     crit_chance=0.0)])],
+                ),
+                position=(0, 0), uid="sword",
+            )
+            p1, p2 = get_test_containers()
+            sim = BattleSimulator(seed=TEST_SEED)
+            sim.max_duration = 10.0
+            original = sim._setup_item_handlers
+
+            def setup(items, owner, enemy):
+                result = original(items, owner, enemy)
+                if owner.id == 1:
+                    if optimized:
+                        owner.buffs[OPTIMIZED] = optimized
+                    if throttled:
+                        owner.debuffs[THROTTLED] = throttled
+                return result
+
+            sim._setup_item_handlers = setup
+            sim.simulate_battle([sword], [], 18, p1, p2)
+            return len([a for a in sim.actions if a.action == "damage"])
+
+        plain = swings()
+        assert swings(optimized=25) > plain, "Optimized should swing more often"
+        assert swings(throttled=25) < plain, "Throttled should swing less often"
