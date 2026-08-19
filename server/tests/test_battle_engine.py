@@ -1502,3 +1502,108 @@ class TestHowFastAnItemTriggers:
         plain = swings()
         assert swings(optimized=25) > plain, "Optimized should swing more often"
         assert swings(throttled=25) < plain, "Throttled should swing less often"
+
+
+class TestCalibratedAndRateLimited:
+    """Sections 3.1 and 3.2: one stack each way, on the same number"""
+
+    @staticmethod
+    def _hits(calibrated=0, rate_limited=0, accuracy=0.5, swings=40):
+        from battle_engine import CALIBRATED, RATE_LIMITED
+        from item_effects import AttackEffect
+
+        sword = BattleItem(
+            spec=ItemSpec(
+                id="s", name="Sword", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "s"), slug="s",
+                triggers=[TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=1, max_damage=1, accuracy=accuracy,
+                                 crit_chance=0.0)])],
+            ),
+            position=(0, 0), uid="sword",
+        )
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = swings * 0.5
+        original = sim._setup_item_handlers
+
+        def setup(items, owner, enemy):
+            result = original(items, owner, enemy)
+            if owner.id == 1:
+                if calibrated:
+                    owner.buffs[CALIBRATED] = calibrated
+                if rate_limited:
+                    owner.debuffs[RATE_LIMITED] = rate_limited
+            return result
+
+        sim._setup_item_handlers = setup
+        sim.simulate_battle([sword], [], 18, p1, p2)
+        return len([a for a in sim.actions if a.action == "damage"])
+
+    def test_calibrated_makes_an_attack_land_more_often(self):
+        assert self._hits(calibrated=8) > self._hits()
+
+    def test_rate_limited_still_makes_it_land_less_often(self):
+        assert self._hits(rate_limited=8) < self._hits()
+
+    def test_they_pull_on_the_same_number(self):
+        """Equal stacks cancel, rather than one overriding the other."""
+        assert self._hits(calibrated=6, rate_limited=6) == self._hits()
+
+    def test_enough_calibrated_never_misses(self):
+        """Accuracy over 1 means every swing lands, so a coin-flip weapon with
+        enough Calibrated lands as often as one that cannot miss."""
+        never_misses = self._hits(accuracy=1.0, swings=20)
+        assert self._hits(calibrated=20, accuracy=0.5, swings=20) == never_misses
+
+    def test_enough_rate_limited_never_lands(self):
+        assert self._hits(rate_limited=20, accuracy=0.5, swings=20) == 0
+
+
+class TestRegenerating:
+    """Section 3.1: 1 health per stack every 2 seconds"""
+
+    @staticmethod
+    def _run(stacks, seconds, start_at=None):
+        from battle_engine import REGENERATING
+
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        original = sim._setup_item_handlers
+
+        def setup(items, owner, enemy):
+            result = original(items, owner, enemy)
+            if owner.id == 1:
+                owner.buffs[REGENERATING] = stacks
+                if start_at is not None:
+                    owner.quota = start_at
+            return result
+
+        sim._setup_item_handlers = setup
+        result = sim.simulate_battle([], [], 18, p1, p2)
+        return sim, result["player1_quota"]
+
+    def test_it_heals_a_stack_every_two_seconds(self):
+        """Payouts at 2s, 4s, 6s -- the same clock as poison."""
+        sim, quota = self._run(3, seconds=7.0, start_at=100)
+        heals = [a for a in sim.actions if a.action == "heal"]
+        assert [h.timestamp for h in heals] == [2000, 4000, 6000]
+        assert all(h.damage == 3 for h in heals)
+        assert quota == 109
+
+    def test_it_stops_at_full_health(self):
+        """350 is the round 18 quota, so there is nothing to heal."""
+        sim, quota = self._run(5, seconds=7.0)
+        assert quota == 350
+        assert not [a for a in sim.actions if a.action == "heal"], (
+            "healing nobody should log nothing"
+        )
+
+    def test_it_heals_only_what_is_missing(self):
+        sim, quota = self._run(10, seconds=3.0, start_at=346)
+        assert quota == 350, "four missing, ten stacks, still only four healed"
+
+    def test_no_stacks_heals_nothing(self):
+        sim, quota = self._run(0, seconds=7.0, start_at=100)
+        assert quota == 100

@@ -44,6 +44,15 @@ MEMORY_LEAKED = "memory_leaked"
 # what one stack of either is worth.
 OPTIMIZED = "optimized"
 THROTTLED = "throttled"
+
+# Section 3.1 and 3.2: the pair that pull on an attack's accuracy, and what
+# one stack of either is worth.
+CALIBRATED = "calibrated"
+RATE_LIMITED = "rate_limited"
+ACCURACY_PER_STACK = 0.05
+
+# Section 3.1: healing, on the same clock as poison.
+REGENERATING = "regenerating"
 SPEED_PER_STACK = 0.02
 
 # Ten times faster or ten times slower, and no further.
@@ -112,10 +121,44 @@ class MemoryLeaked(OverTimeEffect):
         )
 
 
+class Regenerating(OverTimeEffect):
+    """Section 3.1: 1 health per stack, every 2 seconds.
+
+    The mirror of poison, on the same clock and with the same rules: the count
+    is read when it pays, so a stack gained since the last payout counts in
+    full, and paying spends none of them.
+    """
+
+    name = REGENERATING
+    period = POISON_PERIOD
+
+    def pay(self, player: "Player", battle: "BattleSimulator") -> None:
+        stacks = player.buffs.get(self.name, 0)
+        if stacks <= 0:
+            return
+
+        healed = min(stacks, player.max_quota - player.quota)
+        if healed <= 0:
+            return  # Already full, so there is nothing to log
+
+        player.quota += healed
+        battle._record(
+            BattleAction(
+                timestamp=battle._time_ms(),
+                source="system",  # No one item is behind it once stacked
+                action="heal",
+                target=None,
+                damage=healed,
+                player=player.id,
+                details={"buff_name": self.name},
+            )
+        )
+
+
 #: Every over-time effect in the game, in the order they pay out.
 #: Regeneration and Fatigue are not built yet -- see the table on
 #: OverTimeEffect for how each one fits.
-OVER_TIME: List[OverTimeEffect] = [MemoryLeaked()]
+OVER_TIME: List[OverTimeEffect] = [MemoryLeaked(), Regenerating()]
 
 
 # BattleItem will reference the new ItemSpec from item_effects.py
@@ -818,10 +861,14 @@ class BattleSimulator:
         self, attack_data: dict, item: BattleItem, owner: Player, enemy: Player
     ):
         """Process an attack effect"""
-        # Check accuracy
+        # Check accuracy. Calibrated and Rate Limited are one stack each way
+        # (Sections 3.1 and 3.2), so they are added and subtracted together
+        # rather than one overriding the other. Nothing is clamped: an
+        # accuracy over 1 always hits and one under 0 always misses, which is
+        # what those numbers mean.
         accuracy = attack_data["accuracy"]
-        if "rate_limited" in owner.debuffs:
-            accuracy -= owner.debuffs["rate_limited"] * 0.05
+        accuracy += owner.buffs.get(CALIBRATED, 0) * ACCURACY_PER_STACK
+        accuracy -= owner.debuffs.get(RATE_LIMITED, 0) * ACCURACY_PER_STACK
 
         if self.rng.random() > accuracy:
             # Miss

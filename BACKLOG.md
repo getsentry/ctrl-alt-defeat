@@ -177,11 +177,21 @@ stamina, counting activations -- so they are left as modifiers rather than
 given a trigger that would silently do nothing. Covered by the per-item audit
 entry below.
 
-**Five of the seven are still not read.** Optimized and Throttled now decide
-how fast an item triggers. Monitored should add damage, Calibrated accuracy,
-Spiked and Draining fire on melee hits, Credits be spent. Regenerating has the
-clearest home: it is an over-time effect, second in the table on
-`OverTimeEffect`, needing only a subclass.
+**Three of the seven are still not read.** Optimized and Throttled decide how
+fast an item triggers, Calibrated decides accuracy, and Regenerating heals on
+poison's clock. What is left:
+
+- **Monitored** (Empower) is "+1 **weapon** damage per stack", so it needs a
+  weapon to be distinguishable from anything else.
+- **Spiked** and **Draining** fire "when hit with a **Melee** weapon" and
+  "when hitting with a Melee weapon", so they need the same thing plus
+  melee against ranged.
+- **Credits** (Mana) is spent by items that need it, and no such item is
+  imported.
+
+The first three all wait on one concept: an item's weapon type. That is the
+same concept the shield entry below needs, since every shield in the source
+game only rolls against melee.
 
 **Nothing can grant Optimized or Throttled**, so the mechanic that now works
 cannot be reached. One item would grant it -- `ddos_protection_module`, from
