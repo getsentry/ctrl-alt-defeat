@@ -99,6 +99,8 @@ Items can have multiple effects with different triggers. Each effect specifies w
 - **ON_HEALTH_THRESHOLD**: Activates once, when health falls past a fraction
   of its maximum
 - **ON_ATTACK**: Activates whenever the item attacks, hit or miss
+- **AFTER**: Activates once, a fixed time into the battle. Not a cooldown: it
+  is scheduled at the start and never rescheduled
 - **ON_HIT**: Activates when the item's own attack lands
 - **ON_MISS**: Activates when the item's own attack fails
 - **ON_DEAL_DAMAGE**: Activates when this item deals damage
@@ -139,6 +141,11 @@ game's own wording:
 - **BLOCK**: Gain Block, the resource that absorbs damage a point at a time
 - **PREVENT_DAMAGE**: Stop one attack outright, keeping nothing
 - **CPU_DRAIN**: Take CPU off somebody, never below 0
+- **EFFECT_DAMAGE**: Damage that is not an attack. No accuracy roll, no shield
+  answers it, and Block does not absorb it. May carry lifesteal, healing its
+  owner that share of what lands
+- **MAX_HEALTH**: Raise the ceiling, and heal by the same amount, so gaining
+  maximum health gives you the health with it
 - **BUFF/DEBUFF**: Apply status effects
 - **MODIFY_STAT**: Change max CPU, CPU regen, etc.
 - **REFLECT**: Return damage to attacker

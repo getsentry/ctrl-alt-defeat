@@ -13,7 +13,12 @@ from item_effects import (
     DEBUFFS,
     AttackEffect,
     AuraTrigger,
+    AfterTrigger,
     ChanceEffect,
+    EffectDamageEffect,
+    MaxHealthEffect,
+    ModifyPerStatusEffect,
+    OnAttackTrigger,
     BattleStartTrigger,
     BlockEffect,
     BUFFS,
@@ -342,6 +347,20 @@ class ConfigLoader:
                 after=config["after"],
                 effects=effects,
             )
+        elif trigger_type == "after":
+            if "delay" not in config:
+                raise ValueError(
+                    f"{item_id}: an after trigger has to state its `delay`, "
+                    f"in seconds."
+                )
+            return AfterTrigger(delay=config["delay"], effects=effects)
+        elif trigger_type == "on_attack":
+            if "chance" not in config:
+                raise ValueError(
+                    f"{item_id}: an on_attack trigger has to state its "
+                    f"`chance`. Write 1.0 if it always happens."
+                )
+            return OnAttackTrigger(chance=config["chance"], effects=effects)
         elif trigger_type == "passive":
             return PassiveTrigger(effects=effects)
 
@@ -468,6 +487,44 @@ class ConfigLoader:
                 value=config["value"],
                 zone=config["zone"],
                 counting=counting,
+            )
+        elif effect_type == "effect_damage":
+            for needed in ("value", "lifesteal"):
+                if needed not in config:
+                    raise ValueError(
+                        f"{item_id}: effect_damage needs a `{needed}`. Write 0 "
+                        f"for lifesteal if it heals nothing."
+                    )
+            return EffectDamageEffect(
+                amount=config["value"], lifesteal=config["lifesteal"]
+            )
+        elif effect_type == "max_health":
+            if "value" not in config:
+                raise ValueError(f"{item_id}: max_health needs a `value`")
+            return MaxHealthEffect(amount=config["value"])
+        elif effect_type == "modify_per_status":
+            for needed in ("stat", "value", "status", "whose"):
+                if needed not in config:
+                    raise ValueError(
+                        f"{item_id}: modify_per_status needs a `{needed}`"
+                    )
+            if config["stat"] not in MODIFIERS:
+                raise ValueError(
+                    f"{item_id}: `{config['stat']}` is not something a "
+                    f"modifier can change."
+                )
+            status = config["status"]
+            if status not in BUFFS and status not in DEBUFFS:
+                raise ValueError(
+                    f"{item_id}: `{status}` is not a status to count."
+                )
+            if config["whose"] not in ("self", "enemy"):
+                raise ValueError(
+                    f"{item_id}: `whose` is `self` or `enemy`."
+                )
+            return ModifyPerStatusEffect(
+                stat=config["stat"], value=config["value"],
+                status=status, whose=config["whose"],
             )
         elif effect_type == "chance":
             if "chance" not in config:

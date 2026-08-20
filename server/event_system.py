@@ -21,6 +21,7 @@ class EventType(Enum):
     DAMAGE_DEALT = "damage_dealt"
     HEALTH_FELL = "health_fell"  # A player's health went down, from any source
     ON_ATTACKED = "on_attacked"  # Before damage when a player is hit
+    ON_ATTACK = "on_attack"  # An attack was made, hit or miss
     ON_HIT = "on_hit"  # An attack landed, for the attacking item's on-hit effects
     PLAYER_DEATH = "player_death"  # A player died (check target to see which one)
     TIMER_TICK = "timer_tick"

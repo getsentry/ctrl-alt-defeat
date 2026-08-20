@@ -2,6 +2,28 @@
 
 ## Bugs
 
+### Counting clauses by mechanic does not predict what a mechanic unlocks
+
+Three passes have now been sized this way and all three missed badly:
+
+| Expected | Landed | Why |
+|---|---|---|
+| chance on an effect: 39 | 8 | the rest also want resist, nullify or a condition |
+| five mechanics at once: ~60 | 0 | every one needed a second gap closed too |
+| "already buildable": 172 | 22 | counted clauses that mention a built effect, not clauses that can be said |
+
+Almost every remaining clause is held up by two or three things at once. A
+count per mechanic is an upper bound on what it could ever unlock, never a
+forecast of what it will.
+
+**What to do instead.** Pick an item, read its clauses, and build what that
+item needs until it is wholly expressible. The counts are still useful for
+choosing which item -- `Use N Mana` appears in 22 clauses and 8 of them are
+`On attack`, which is already built -- but the unit of work is the item.
+
+Worth knowing when planning: 391 clauses remain, 107 on modules waiting for
+sockets, 284 on everything else.
+
 ### A module does nothing until it is socketed
 
 A module -- Backpack Battles calls them gemstones -- has no effect on its own.

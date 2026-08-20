@@ -319,6 +319,57 @@ class ChanceEffect(Effect):
 
 
 @dataclass
+class ModifyPerStatusEffect(Effect):
+    """Change a number on this item, once for each stack of a status held.
+
+    "Triggers 10% faster for each Luck", "Deals +1 damage for each Blind of
+    your opponent". The counting direction of an aura asks the grid; this asks
+    the player.
+    """
+
+    stat: str
+    value: float
+    status: str
+    whose: str  # "self" or "enemy"
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "modify_per_status", "stat": self.stat,
+                "value": self.value, "status": self.status, "whose": self.whose}
+
+
+@dataclass
+class EffectDamageEffect(Effect):
+    """Damage that is not an attack.
+
+    It does not roll for accuracy, no shield answers it and Block does not
+    absorb it -- there is no weapon involved. `lifesteal` heals the owner that
+    share of what lands, which is how the source game writes it: "Deal 10
+    Effect-damage with 100% lifesteal".
+    """
+
+    amount: float
+    lifesteal: float
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "effect_damage", "amount": self.amount,
+                "lifesteal": self.lifesteal}
+
+
+@dataclass
+class MaxHealthEffect(Effect):
+    """Raise the ceiling, and heal by the same amount.
+
+    Gaining maximum health in the source game gives you the health with it,
+    rather than leaving a gap to fill.
+    """
+
+    amount: int
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "max_health", "amount": self.amount}
+
+
+@dataclass
 class CleanseEffect(Effect):
     """Take N of a status off somebody.
 
@@ -612,6 +663,38 @@ class AuraTrigger(Trigger):
 
     def get_cpu_cost(self) -> int:
         return 0  # The item that activated has already paid
+
+
+@dataclass
+class AfterTrigger(Trigger):
+    """Fires once, a fixed time into the battle. "After 12s: ..."
+
+    Not a cooldown. A timer trigger reschedules itself forever; this one is
+    scheduled at the start and never again.
+    """
+
+    delay: float = 0.0
+    effects: List[Effect] = field(default_factory=list)
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return event_type == "after"
+
+    def get_cpu_cost(self) -> int:
+        return 0
+
+
+@dataclass
+class OnAttackTrigger(ChanceTrigger):
+    """Fires whenever this item attacks, whether it hits or misses.
+
+    The sibling of OnHitTrigger, and the distinction matters: "'On attack'
+    effects will always trigger when a weapon successfully attempts to attack
+    (AKA when not out of stamina)." A miss still counts.
+    """
+
+    event_name: ClassVar[str] = "on_attack"
 
 
 @dataclass

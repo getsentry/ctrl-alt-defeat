@@ -18,7 +18,12 @@ from grid_system import ItemShape, Rotation
 from item_effects import (
     AttackEffect,
     AuraTrigger,
+    AfterTrigger,
     ChanceEffect,
+    EffectDamageEffect,
+    MaxHealthEffect,
+    ModifyPerStatusEffect,
+    OnAttackTrigger,
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
@@ -199,6 +204,10 @@ class BattleItem:
     accuracy_bonus: float = 0.0
     damage_mult: float = 1.0
     cpu_discount: float = 0.0
+
+    # Modifiers whose size depends on a status the player holds. Kept rather
+    # than folded in, because the count changes as the battle goes on.
+    per_status: List = field(default_factory=list)
 
     def aura_squares(self, zone: str) -> List[Tuple[int, int]]:
         """The grid squares this item's star or diamond zone falls on.
@@ -385,8 +394,8 @@ class BattleSimulator:
 
         # Let every aura change the items it falls on (Section 3.1), before
         # anything is scheduled, since an aura changes how fast things go.
-        self._apply_auras(p1_items)
-        self._apply_auras(p2_items)
+        self._apply_auras(p1_items, player1, player2)
+        self._apply_auras(p2_items, player2, player1)
 
         # Set up event handlers for items. Passive effects are applied here as
         # the handlers go on, which is the only place they are applied: an
@@ -539,7 +548,7 @@ class BattleSimulator:
                 return candidate
         return None
 
-    def _apply_auras(self, items: List[BattleItem]):
+    def _apply_auras(self, items: List[BattleItem], owner=None, enemy=None):
         """Let every aura change the items it falls on.
 
         Worked out once, before the battle. Nothing moves on the grid during a
@@ -553,6 +562,11 @@ class BattleSimulator:
                             effect.target_type, item, items
                         ):
                             self._modify(reached, effect)
+                    elif isinstance(effect, ModifyPerStatusEffect):
+                        # The player is asked rather than the grid. Statuses
+                        # from battle_start have not been granted yet, so this
+                        # reads what the player begins with.
+                        item.per_status.append(effect)
                     elif isinstance(effect, ModifyPerEffect):
                         # The other direction: what stands in the zone decides
                         # how much the item projecting it changes.
@@ -606,6 +620,26 @@ class BattleSimulator:
                 {k.lower() for k in other.spec.kinds}
                 | {other.spec.category.lower()}
             )
+        )
+
+    def _enemy_of(self, player: Player) -> Player:
+        """The other player, so a cooldown can count what they hold."""
+        return self.player2 if player is self.player1 else self.player1
+
+    def _held(self, effect, owner: Player, enemy: Player) -> int:
+        """How many of the status a modifier counts are held right now."""
+        holder = owner if effect.whose == "self" else enemy
+        return holder.buffs.get(
+            effect.status, holder.debuffs.get(effect.status, 0)
+        )
+
+    def _per_status(self, item: BattleItem, stat: str, owner: Player,
+                    enemy: Player) -> float:
+        """What the status-counting modifiers add to one stat, as it stands."""
+        return sum(
+            effect.value * self._held(effect, owner, enemy)
+            for effect in item.per_status
+            if effect.stat == stat
         )
 
     def _modify(self, item: BattleItem, effect, times: int = 1):
@@ -687,6 +721,34 @@ class BattleSimulator:
                         self._apply_effects(trigger.effects, item, owner, enemy)
 
                     self.event_manager.subscribe(EventType.ON_HIT, handle_on_hit)
+
+                elif isinstance(trigger, AfterTrigger):
+                    # Scheduled once. A timer trigger puts itself back on the
+                    # heap when it fires; this one does not.
+                    def once(trigger=trigger, item=item, owner=owner):
+                        if item.uid in self.consumed_items:
+                            return
+                        self._apply_effects(trigger.effects, item, owner, enemy)
+
+                    self.event_manager.schedule_timer(
+                        trigger.delay, f"{item.uid}_after", once
+                    )
+
+                elif isinstance(trigger, OnAttackTrigger):
+                    def handle_on_attack(
+                        event, trigger=trigger, item=item, owner=owner
+                    ):
+                        if event.data.attacker_item_id != item.uid:
+                            return
+                        if item.uid in self.consumed_items:
+                            return
+                        if not trigger.should_activate("on_attack", item, enemy, self):
+                            return
+                        self._apply_effects(trigger.effects, item, owner, enemy)
+
+                    self.event_manager.subscribe(
+                        EventType.ON_ATTACK, handle_on_attack
+                    )
 
                 elif isinstance(trigger, AuraTrigger):
                     trigger.seen = 0
@@ -849,6 +911,7 @@ class BattleSimulator:
         # together against everything that slows it down.
         faster = owner.buffs.get(OPTIMIZED, 0) * SPEED_PER_STACK
         faster += item.speed_mult - 1
+        faster += self._per_status(item, "trigger_speed", owner, self._enemy_of(owner))
         slower = owner.debuffs.get(THROTTLED, 0) * SPEED_PER_STACK
 
         difference = min(abs(faster - slower), SPEED_LIMIT)
@@ -967,6 +1030,32 @@ class BattleSimulator:
                         details={"amount": result["amount"]},
                     )
                 )
+            elif isinstance(effect, EffectDamageEffect):
+                landed = int(result["amount"])
+                if landed > 0:
+                    self._take_damage(
+                        enemy, landed, source=item.uid, action="damage",
+                        attacker=owner, details={"kind": "effect"},
+                    )
+                    drained = int(landed * result["lifesteal"])
+                    healed = min(drained, owner.max_quota - owner.quota)
+                    if healed > 0:
+                        owner.quota += healed
+                        self._record(BattleAction(
+                            timestamp=self._time_ms(), source=item.uid,
+                            action="heal", target=None, damage=healed,
+                            player=owner.id, details={"kind": "lifesteal"}))
+            elif isinstance(effect, MaxHealthEffect):
+                owner.max_quota += result["amount"]
+                owner.quota += result["amount"]
+                self._record(BattleAction(
+                    timestamp=self._time_ms(), source=item.uid, action="heal",
+                    target=None, damage=result["amount"], player=owner.id,
+                    details={"kind": "max_health"}))
+            elif isinstance(effect, ModifyPerStatusEffect):
+                # Applied where auras are, before the battle. Nothing to do
+                # per activation.
+                continue
             elif isinstance(effect, ChanceEffect):
                 # One roll for everything behind it, so a clause cannot
                 # half-happen.
@@ -1048,8 +1137,21 @@ class BattleSimulator:
         # what those numbers mean.
         accuracy = attack_data["accuracy"]
         accuracy += item.accuracy_bonus
+        accuracy += self._per_status(item, "accuracy", owner, enemy)
         accuracy += owner.buffs.get(CALIBRATED, 0) * ACCURACY_PER_STACK
         accuracy -= owner.debuffs.get(RATE_LIMITED, 0) * ACCURACY_PER_STACK
+
+        # Section 1.3: an attack that misses still counted as an attack, so
+        # this is emitted before the roll is judged rather than on the hit
+        # side of it.
+        self.event_manager.emit(
+            Event(
+                EventType.ON_ATTACK,
+                owner,
+                enemy,
+                EventData(attacker_item_id=item.uid, attacker_kinds=item.spec.kinds),
+            )
+        )
 
         if self.rng.random() > accuracy:
             # Miss
@@ -1072,7 +1174,8 @@ class BattleSimulator:
         # Section 3.1: Monitored is +1 damage a stack. It needs no check for
         # whether this is a weapon, because an attack is what a weapon does
         # and nothing else reaches here.
-        damage = int(damage * item.damage_mult)
+        damage = int(damage * (item.damage_mult
+                                + self._per_status(item, "damage", owner, enemy)))
         damage += owner.buffs.get(MONITORED, 0)
 
         # Check crit

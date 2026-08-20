@@ -2441,3 +2441,168 @@ class TestAChanceOnAnEffect:
         sim._setup_item_handlers = setup
         sim.simulate_battle([never], [], 18, p1, p2)
         assert not [a for a in sim.actions if a.action == "heal"]
+
+
+class _WithOneItem:
+    """A battle with one item of the caller's making, and a hook to set
+    the player up before it starts."""
+
+    @staticmethod
+    def _item(triggers, uid="item", position=(0, 0), category="problem"):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Item", category=category, cost=1,
+                player_class="neutral", shape=parse_map(["#"], "i"), slug=uid,
+                kinds=frozenset({"melee"}), triggers=triggers,
+            ),
+            position=position, uid=uid,
+        )
+
+    def _run(self, items, seconds=6.0, hurt=None, buffs=None):
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        original = sim._setup_item_handlers
+
+        def setup(its, owner, enemy):
+            if owner.id == 1 and buffs:
+                owner.buffs.update(buffs)
+            result = original(its, owner, enemy)
+            if owner.id == 1 and hurt is not None:
+                owner.quota = hurt
+            return result
+
+        sim._setup_item_handlers = setup
+        result = sim.simulate_battle(items, [], 18, p1, p2)
+        return sim, result
+
+
+class TestAfterATime(_WithOneItem):
+    """Section 2.1: "After 12s" fires once, a fixed time in. Not a
+    cooldown -- a timer trigger puts itself back on the heap and this
+    one does not."""
+
+    def test_after_fires_once_at_its_time(self):
+        from item_effects import AfterTrigger, HealEffect
+
+        sim, _ = self._run(
+            [self._item([AfterTrigger(delay=3.0, effects=[HealEffect(5, 5)])])],
+            hurt=100,
+        )
+        heals = [a for a in sim.actions if a.action == "heal"]
+        assert len(heals) == 1, "once, not on a cooldown"
+        assert heals[0].timestamp == 3000
+
+    def test_after_does_not_fire_before_its_time(self):
+        from item_effects import AfterTrigger, HealEffect
+
+        sim, _ = self._run(
+            [self._item([AfterTrigger(delay=5.0, effects=[HealEffect(5, 5)])])],
+            seconds=2.0, hurt=100,
+        )
+        assert not [a for a in sim.actions if a.action == "heal"]
+
+
+class TestOnAttack(_WithOneItem):
+    """Section 1.3: an attack that missed was still an attack. This is
+    the whole distinction from on_hit."""
+
+    def test_on_attack_fires_whether_it_hits_or_misses(self):
+        """The distinction from on_hit. A miss is still an attack."""
+        from item_effects import AttackEffect, HealEffect, OnAttackTrigger
+
+        def heals(accuracy):
+            sim, _ = self._run([self._item([
+                TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=1, max_damage=1, accuracy=accuracy,
+                                 crit_chance=0.0)]),
+                OnAttackTrigger(chance=1.0, effects=[HealEffect(1, 1)]),
+            ])], hurt=100)
+            return len([a for a in sim.actions if a.action == "heal"])
+
+        assert heals(1.0) == heals(0.0) > 0, "a miss counts as an attack"
+
+
+class TestCountingAStatusHeld(_WithOneItem):
+    """Section 3.1: "Triggers 10% faster for each Luck". The counting
+    direction of an aura asks the grid; this asks the player."""
+
+    def _counting_item(self):
+        from item_effects import ModifyPerStatusEffect, PassiveTrigger
+
+        return self._item([PassiveTrigger(effects=[
+            ModifyPerStatusEffect(stat="trigger_speed", value=0.1,
+                                  status="calibrated", whose="self")])])
+
+    def test_counting_a_status_changes_the_cooldown(self):
+        """Read when the cooldown is worked out, not once at the start, so a
+        status gained during the battle counts from then on."""
+        sim, result = self._run([self._counting_item()], seconds=0.2)
+        (item,) = result["player1_items"]
+        owner = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        sim.player1, sim.player2 = owner, Player(id=2, quota=100, max_quota=100, cpu=3.0)
+        base = TimerTrigger(cooldown=2.0, cpu_cost=0)
+
+        assert sim._cooldown_for(base, owner, item) == 2.0, "nothing held yet"
+        owner.buffs["calibrated"] = 3
+        assert sim._cooldown_for(base, owner, item) == pytest.approx(2.0 / 1.3)
+
+    def test_counting_a_status_nobody_holds_changes_nothing(self):
+        sim, result = self._run([self._counting_item()], seconds=0.2)
+        (item,) = result["player1_items"]
+        owner = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        sim.player1, sim.player2 = owner, Player(id=2, quota=100, max_quota=100, cpu=3.0)
+        assert sim._cooldown_for(TimerTrigger(cooldown=2.0, cpu_cost=0),
+                                 owner, item) == 2.0
+
+
+class TestEffectDamage(_WithOneItem):
+    """Section 2.2: damage that is not an attack. No accuracy roll, no
+    shield answers it, and Block does not absorb it."""
+
+    def test_effect_damage_ignores_block(self):
+        """No weapon is involved, so Block does not absorb it."""
+        from item_effects import EffectDamageEffect
+
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 2.5
+        original = sim._setup_item_handlers
+
+        def setup(its, owner, enemy):
+            result = original(its, owner, enemy)
+            if owner.id == 2:
+                owner.block = 100
+            return result
+
+        sim._setup_item_handlers = setup
+        sim.simulate_battle([self._item([TimerTrigger(
+            cooldown=1.0, cpu_cost=0,
+            effects=[EffectDamageEffect(amount=7, lifesteal=0.0)])])],
+            [], 18, p1, p2)
+
+        hits = [a for a in sim.actions if a.action == "damage"]
+        assert hits and all(a.damage == 7 for a in hits), "Block does not stop it"
+
+    def test_lifesteal_heals_a_share_of_what_lands(self):
+        from item_effects import EffectDamageEffect
+
+        sim, _ = self._run([self._item([TimerTrigger(
+            cooldown=1.0, cpu_cost=0,
+            effects=[EffectDamageEffect(amount=10, lifesteal=0.5)])])],
+            seconds=1.5, hurt=100)
+        healed = [a for a in sim.actions if a.action == "heal"]
+        assert healed and healed[0].damage == 5
+
+
+class TestMaxHealth(_WithOneItem):
+    """Section 2.2: raising the ceiling gives you the health with it."""
+
+    def test_max_health_raises_the_ceiling_and_fills_it(self):
+        from item_effects import BattleStartTrigger, MaxHealthEffect
+
+        sim, result = self._run(
+            [self._item([BattleStartTrigger(effects=[MaxHealthEffect(20)])])],
+            seconds=0.2,
+        )
+        assert result["player1_quota"] == 370, "350 for round 18, plus 20"
