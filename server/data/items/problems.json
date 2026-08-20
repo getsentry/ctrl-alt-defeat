@@ -2055,12 +2055,30 @@
               "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "any": [
+              "script"
+            ]
+          },
+          "after": 1,
+          "effects": [
+            {
+              "type": "debuff",
+              "debuff_name": "memory_leaked",
+              "value": 1,
+              "target": "enemy",
+              "description": "Inflict 1 Memory Leaked"
+            }
+          ]
         }
       ],
       "slug": "pandamonium",
       "in_shop": false,
       "unbuilt": [
-        "Star Food activates: Inflict 1 Poison.",
         "Poison on your opponent has 4% critical hit chance per Star Food."
       ],
       "sockets": 2,

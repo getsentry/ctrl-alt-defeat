@@ -2231,3 +2231,119 @@ class TestCountingAnyAndAll:
         assert per and per[0].counting == {"any": ["pet", "script"]}
         assert per[0].matches({"pet"}) and per[0].matches({"script"})
         assert not per[0].matches({"defense"})
+
+
+class TestAnAuraCanBeTheCause:
+    """Section 3.1, the third direction. "Star item activates:" -- the zone is
+    what sets the effect off, rather than what it reaches or counts."""
+
+    @staticmethod
+    def _watcher(after=1, counting="any", zone="star", uid="watcher",
+                 position=(1, 0)):
+        from item_effects import AuraTrigger, HealEffect
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Watcher", category="infrastructure", cost=1,
+                player_class="neutral", slug=uid,
+                shape=parse_map(["*##*"], "watcher"),
+                triggers=[AuraTrigger(
+                    zone=zone, counting=counting, after=after,
+                    effects=[HealEffect(1, 1)])],
+            ),
+            position=position, uid=uid,
+        )
+
+    @staticmethod
+    def _ticker(position, uid, cooldown=1.0, kinds=frozenset(),
+                category="problem"):
+        from item_effects import AttackEffect
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Ticker", category=category, cost=1,
+                player_class="neutral", shape=parse_map(["#"], "t"), slug=uid,
+                kinds=kinds | {"melee"},
+                triggers=[TimerTrigger(cooldown=cooldown, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                                 crit_chance=0.0)])],
+            ),
+            position=position, uid=uid,
+        )
+
+    def _run(self, items, seconds=6.5):
+        containers = [
+            Container.of("mesh_network_hub", (0, 0), "a"),
+            Container.of("mesh_network_hub", (3, 0), "c"),
+        ]
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        original = sim._setup_item_handlers
+
+        def setup(its, owner, enemy):
+            result = original(its, owner, enemy)
+            if owner.id == 1:
+                owner.quota = 100  # room to heal into
+            return result
+
+        sim._setup_item_handlers = setup
+        sim.simulate_battle(items, [], 18, containers,
+                            [Container.of("mesh_network_hub", (0, 4), "b")])
+        return [a for a in sim.actions if a.action == "heal"]
+
+    def test_an_activation_in_the_zone_sets_it_off(self):
+        heals = self._run([self._watcher(), self._ticker((0, 0), "inside")])
+        assert heals, "the watcher should have fired"
+
+    def test_an_activation_outside_the_zone_does_not(self):
+        heals = self._run([self._watcher(), self._ticker((4, 0), "outside")])
+        assert not heals
+
+    def test_it_does_not_answer_its_own_activation(self):
+        """A zone is drawn beside the item, so the item is never in it."""
+        from item_effects import AttackEffect, AuraTrigger, HealEffect
+
+        both = BattleItem(
+            spec=ItemSpec(
+                id="both", name="Both", category="problem", cost=1,
+                player_class="neutral", slug="both",
+                shape=parse_map(["*##*"], "both"), kinds=frozenset({"melee"}),
+                triggers=[
+                    TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                        AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                                     crit_chance=0.0)]),
+                    AuraTrigger(zone="star", counting="any", after=1,
+                                effects=[HealEffect(1, 1)]),
+                ],
+            ),
+            position=(1, 0), uid="both",
+        )
+        assert not self._run([both])
+
+    def test_after_counts_the_activations(self):
+        """"6 Star item activations" fires on every sixth, not every one."""
+        every = self._run([self._watcher(after=1),
+                           self._ticker((0, 0), "t", cooldown=1.0)])
+        sixth = self._run([self._watcher(after=6),
+                           self._ticker((0, 0), "t", cooldown=1.0)])
+        assert len(every) > len(sixth)
+        assert len(sixth) == len(every) // 6
+
+    def test_it_waits_only_on_what_it_names(self):
+        """"Star Food activates" ignores everything that is not a Food."""
+        wrong = self._run([
+            self._watcher(counting={"any": ["script"]}),
+            self._ticker((0, 0), "weapon", category="problem"),
+        ])
+        right = self._run([
+            self._watcher(counting={"any": ["script"]}),
+            self._ticker((0, 0), "food", category="script"),
+        ])
+        assert not wrong
+        assert right
+
+    def test_a_diamond_is_watched_separately(self):
+        heals = self._run([
+            self._watcher(zone="diamond"), self._ticker((0, 0), "in_star")
+        ])
+        assert not heals, "an item in the star is not in the diamond"

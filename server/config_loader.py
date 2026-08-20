@@ -12,6 +12,7 @@ from item_effects import (
     Recipe,
     DEBUFFS,
     AttackEffect,
+    AuraTrigger,
     BattleStartTrigger,
     BlockEffect,
     BUFFS,
@@ -306,6 +307,39 @@ class ConfigLoader:
                 )
             return OnAttackedTrigger(
                 chance=config["chance"], effects=effects, answers_to=answers_to
+            )
+        elif trigger_type == "aura":
+            for needed in ("zone", "counting", "after"):
+                if needed not in config:
+                    raise ValueError(
+                        f"{item_id}: an aura trigger has to state its "
+                        f"`{needed}`."
+                    )
+            if config["zone"] not in ("star", "diamond"):
+                raise ValueError(
+                    f"{item_id}: an aura watches a `star` or a `diamond`, "
+                    f"not `{config['zone']}`."
+                )
+            counting = config["counting"]
+            if counting != "any" and (
+                not isinstance(counting, dict)
+                or len(counting) != 1
+                or set(counting) - {"any", "all"}
+                or not next(iter(counting.values()))
+            ):
+                raise ValueError(
+                    f"{item_id}: `counting` is \"any\" for every item, or one "
+                    f"of {{\"any\": [...]}} and {{\"all\": [...]}}."
+                )
+            if config["after"] < 1:
+                raise ValueError(
+                    f"{item_id}: an aura fires after at least one activation."
+                )
+            return AuraTrigger(
+                zone=config["zone"],
+                counting=counting,
+                after=config["after"],
+                effects=effects,
             )
         elif trigger_type == "passive":
             return PassiveTrigger(effects=effects)

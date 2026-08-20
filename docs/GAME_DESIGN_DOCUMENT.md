@@ -430,8 +430,10 @@ A zone works in three directions, and they are separate mechanics:
 | What it counts | "Triggers 15% faster for each Star Food" | 37 |
 | What happens in it | "Star item activates: ..." | 17 |
 
-The first two are built. The third is not, and needs a trigger rather than an
-effect, since the zone is the cause rather than the target.
+All three are built. The third is a trigger rather than an effect, since the
+zone is the cause rather than the target: it waits on an item standing in the
+zone activating, and `after` says how many activations it waits for, so 1
+fires on every one and 6 on every sixth.
 
 Counting looks for a kind an item carries or the category it belongs to, so
 "for each Star Dark-item" and "for each Star Food" are the same question asked

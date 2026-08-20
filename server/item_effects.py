@@ -554,6 +554,43 @@ class OnAttackedTrigger(ChanceTrigger):
 
 
 @dataclass
+class AuraTrigger(Trigger):
+    """Fires when an item standing in this item's zone activates.
+
+    The third direction an aura works. The other two treat a zone as somewhere
+    to reach -- what it falls on, and what it counts. Here the zone is the
+    cause: "Star item activates:", "6 Star item activations:".
+
+    `after` is how many activations it waits for, so 1 fires on every one and
+    6 fires on every sixth. `counting` is the same syntax the counting
+    direction uses, so a trigger can wait on any item or only on a Food.
+    """
+
+    zone: str = "star"
+    counting: object = "any"
+    after: int = 1
+    effects: List[Effect] = field(default_factory=list)
+
+    # Runtime state: how many have happened since it last fired.
+    seen: int = 0
+
+    def matches(self, tags: set) -> bool:
+        """Whether an item carrying `tags` is one this waits on."""
+        if self.counting == "any":
+            return True
+        wanted = {t.lower() for t in next(iter(self.counting.values()))}
+        return bool(wanted & tags) if "any" in self.counting else wanted <= tags
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return event_type == "item_activated"
+
+    def get_cpu_cost(self) -> int:
+        return 0  # The item that activated has already paid
+
+
+@dataclass
 class PassiveTrigger(Trigger):
     """Always active (for stat modifications)"""
 

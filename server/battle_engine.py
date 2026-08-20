@@ -17,6 +17,7 @@ from event_system import Event, EventData, EventManager, EventType
 from grid_system import ItemShape, Rotation
 from item_effects import (
     AttackEffect,
+    AuraTrigger,
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
@@ -529,6 +530,14 @@ class BattleSimulator:
         index = min(max(round_num, 1), len(self.ROUND_QUOTA)) - 1
         return self.ROUND_QUOTA[index]
 
+    @staticmethod
+    def _who_activated(event, items: List[BattleItem]):
+        """The item behind an activation, or None if it is not one of these."""
+        for candidate in items:
+            if candidate.uid == event.data.item_id:
+                return candidate
+        return None
+
     def _apply_auras(self, items: List[BattleItem]):
         """Let every aura change the items it falls on.
 
@@ -678,6 +687,35 @@ class BattleSimulator:
 
                     self.event_manager.subscribe(EventType.ON_HIT, handle_on_hit)
 
+                elif isinstance(trigger, AuraTrigger):
+                    trigger.seen = 0
+
+                    def handle_activation(
+                        event, trigger=trigger, item=item, owner=owner
+                    ):
+                        if item.uid in self.consumed_items:
+                            return
+                        stood = self._who_activated(event, items)
+                        if stood is None or stood.uid == item.uid:
+                            return
+                        zone = set(item.aura_squares(trigger.zone))
+                        if not zone & set(stood.get_occupied_squares()):
+                            return
+                        tags = {k.lower() for k in stood.spec.kinds} | {
+                            stood.spec.category.lower()
+                        }
+                        if not trigger.matches(tags):
+                            return
+                        trigger.seen += 1
+                        if trigger.seen < trigger.after:
+                            return
+                        trigger.seen = 0
+                        self._apply_effects(trigger.effects, item, owner, enemy)
+
+                    self.event_manager.subscribe(
+                        EventType.ITEM_ACTIVATED, handle_activation
+                    )
+
                 elif isinstance(trigger, PassiveTrigger):
                     # Apply passive effects immediately
                     self._apply_effects(trigger.effects, item, owner, enemy)
@@ -755,6 +793,15 @@ class BattleSimulator:
                 self._apply_effects(trigger.effects, item, owner, enemy)
                 owner.cpu -= cpu_cost
                 trigger.current_cooldown = trigger.cooldown
+                # Anything watching this item's square can act on it now.
+                self.event_manager.emit(
+                    Event(
+                        EventType.ITEM_ACTIVATED,
+                        owner,
+                        None,
+                        EventData(item_id=item.uid),
+                    )
+                )
             else:
                 # Not enough CPU - log throttle but don't activate
                 self._record(

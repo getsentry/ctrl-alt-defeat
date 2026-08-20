@@ -790,12 +790,24 @@
       "source": "Goobert",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 5,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 9,
+              "max_heal": 9,
+              "description": "Heal for 9"
+            }
+          ]
+        }
+      ],
       "slug": "backup_system",
-      "in_shop": false,
-      "unbuilt": [
-        "5 Star item activations: Heal for 9."
-      ]
+      "in_shop": false
     }
   }
 }

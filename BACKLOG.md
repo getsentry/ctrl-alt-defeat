@@ -2,6 +2,68 @@
 
 ## Bugs
 
+### Names on the unbuilt list that are not mechanics
+
+Four entries are real mechanics under a wrong name, and one is not real at
+all. Each wants correcting in the data rather than building:
+
+| Name | What it really is |
+|---|---|
+| `damage_reduction` | already a valid `modify` stat |
+| `enemy_debuff` | `debuff` with `target: enemy` |
+| `adjacent_buff` | a `modify` with an aura target, now adjacency is gone |
+| `battle_start` as an *effect* | a trigger name written in the effect slot |
+| `spawn_companion` | not a mechanic this game has |
+
+Taking a name off the list is part of implementing the feature, in the same
+branch. `adjacent_buff` sat there for two commits after `modify` was built,
+which is the drift the list exists to prevent.
+
+The module-level list does not record aura-as-trigger, which was missing
+until it was built. A mechanic can be absent from both the list and the
+engine, so the per-item `unbuilt` clauses are the more reliable queue.
+
+### What the player is told an item does
+
+Two things are called a description and neither is right on its own.
+
+`describe()` in `items.py` generates the item-level one from damage, heal and
+block. It knows nothing else, so Virus Injector reads "Deals 4-11 damage every
+1.7s" and never mentions the poison that is the reason to buy it, and Legacy
+Code gets an empty string because its whole effect is an aura. Every effect
+added recently is invisible to it, and so will the next be.
+
+The per-effect descriptions in the catalogue are the better raw material: one
+per clause, taken from the item's own text. 56 of 133 effects carry one.
+
+**Fix.** Compose the item description from its effects rather than generating
+it from a fixed set of stats, so a new effect type shows up in the shop
+without teaching `describe()` about it. Three things to settle first: whether
+the server joins them or the client renders a list (a list suits the grid work
+better, since it can highlight the aura clause on hover); what to do about the
+77 effects with no description; and player-facing names, since "Cleanse 4
+memory_leaked" should read "Memory Leaked".
+
+Worth folding into the frontend instructions rather than deciding alone.
+
+### Two guards that cannot be reached
+
+An aura is stopped from reaching or answering the item that projects it. No
+shape in the catalogue draws a zone onto its own squares -- the geometry
+places them beside the footprint -- so neither guard can fire, and a mutation
+removing either passes the whole suite.
+
+Cheap and correct, but untested, and the tests that look like they cover them
+do not. Either find a shape that reaches itself, or drop the guards and say in
+the comment why they are unnecessary.
+
+### Running the tests from the repo root gives different answers
+
+`cd server && python -m pytest tests/` passes. `python -m pytest server/tests/`
+from the root reports failures, because the rootdir resolves differently.
+CLAUDE.md documents the working form, so this is a trap rather than a
+breakage, but it costs whoever falls into it an hour.
+
 ### Container placement is not bounds-checked, and it bricks the run
 
 `/purchase/item` validates a container against **overlap only** (`main.py:1080`
@@ -67,7 +129,7 @@ stop the shop depending on insertion order at all — the second is better, and
 it means drawing from a sorted list of ids at the point of use rather than
 from whatever `dict` iteration hands back.
 
-### Two items sit on a trigger their source does not have
+### An item sits on a trigger its source does not have
 
 *(Resolved by the item data audit.)* Both now carry their source's data:
 `healing_nanobots` gains 2 Regenerating at battle start — correct, though the
