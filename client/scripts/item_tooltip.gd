@@ -16,9 +16,7 @@ class_name ItemTooltip
 @onready var block_label = $MarginContainer/VBoxContainer/Stats/BlockRow/BlockLabel
 @onready var cooldown_label = $MarginContainer/VBoxContainer/Stats/CooldownRow/CooldownLabel
 @onready var cpu_label = $MarginContainer/VBoxContainer/Stats/CpuRow/CpuLabel
-@onready var size_label = $MarginContainer/VBoxContainer/Stats/SizeRow/SizeLabel
 @onready var price_label = $MarginContainer/VBoxContainer/Stats/PriceRow/PriceLabel
-@onready var special_label = $MarginContainer/VBoxContainer/SpecialLabel
 @onready var description_label = $MarginContainer/VBoxContainer/DescriptionLabel
 @onready var top_rule = $MarginContainer/VBoxContainer/TopRule
 @onready var foot_rule = $MarginContainer/VBoxContainer/FootRule
@@ -87,18 +85,13 @@ func _setup_tooltip_internal(item_data: APITypes.Item):
 	var acts: bool = damage_label.visible or heal_label.visible or block_label.visible
 	_set_row(cooldown_label, "%.1fs" % item_data.cooldown, acts and item_data.cooldown > 0)
 	_set_row(cpu_label, _tidy(item_data.cpu_cost), item_data.cpu_cost > 0)
-	_set_row(size_label, _squares(item_data), item_data.shape.size() > 1)
 	_set_row(price_label, _asking_price(item_data), show_price)
 
-	special_label.text = item_data.special_effect
-	special_label.visible = item_data.special_effect != ""
-
-	# The description is the server's own sentence about the item, and for most
-	# items it just reads back the rows above it. It earns its place only when
-	# there are no rows to read.
-	description_label.text = item_data.description
-	description_label.visible = item_data.description != "" \
-		and not (acts or special_label.visible)
+	# Everything the item does, a line at a time, as the server worked it out
+	# from the item's own effects. The rows above are the headline numbers; a
+	# build is decided on the rest, and there used to be nowhere to read it.
+	description_label.text = _coloured(item_data.effects)
+	description_label.visible = not item_data.effects.is_empty()
 
 	info_label.text = _identity(item_data)
 	info_label.visible = info_label.text != ""
@@ -109,12 +102,45 @@ func _setup_tooltip_internal(item_data: APITypes.Item):
 	foot_rule.visible = _has_body() and info_label.visible
 
 
+func _process(_delta: float) -> void:
+	"""Stand at the size of what the card holds, and nothing more.
+
+	A wrapping label works out how tall it is from how wide it is, and it only
+	learns its width when a layout pass reaches it -- a pass or two after the
+	card was put on screen. Measured before that reached it, the text counted
+	as one word a line and the card came out several times taller than what it
+	holds, with the empty space hanging below the footer.
+
+	So the card asks every frame instead of counting them. The answer settles
+	within a frame or two of appearing and then stops changing, and whatever
+	placed the card follows it there through `resized`.
+	"""
+	var wanted := get_combined_minimum_size()
+	if not size.is_equal_approx(wanted):
+		size = wanted
+
+
+## What marks a status out in a line: a colour, rather than capitals. The
+## server says which of the ten a name is, since it is the one that knows
+## which are worth having; which colour that becomes is the card's business.
+const BUFF_COLOUR := "8fe0a0"
+const DEBUFF_COLOUR := "ff9a9a"
+
+
+func _coloured(said: Array) -> String:
+	"""Everything the item does, with the statuses in it picked out"""
+	var text: String = "\n".join(said)
+	text = text.replace("[buff]", "[color=#%s]" % BUFF_COLOUR)
+	text = text.replace("[debuff]", "[color=#%s]" % DEBUFF_COLOUR)
+	return text.replace("[/buff]", "[/color]").replace("[/debuff]", "[/color]")
+
+
 func _has_body() -> bool:
 	"""Whether anything sits between the name and the footer"""
 	for row in stats.get_children():
 		if row.visible:
 			return true
-	return special_label.visible or description_label.visible
+	return description_label.visible
 
 
 func _asking_price(item_data: APITypes.Item) -> String:
@@ -148,12 +174,6 @@ func _tidy(number: float) -> String:
 	if is_equal_approx(number, roundf(number)):
 		return str(int(roundf(number)))
 	return str(snappedf(number, 0.1))
-
-
-func _squares(item_data: APITypes.Item) -> String:
-	"""How much room the item takes up, in squares"""
-	var count: int = item_data.shape.size()
-	return "%d squares" % count if count != 1 else "1 square"
 
 
 func _identity(item_data: APITypes.Item) -> String:

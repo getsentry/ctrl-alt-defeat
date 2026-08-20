@@ -266,16 +266,25 @@ func _show_tooltip():
 	tooltip_panel.show_price = tooltip_shows_price
 	tooltip_panel.setup_tooltip(item_data)
 
-	# Let the scene determine its own size
+	# The card takes its own size, which takes it a frame or two of being on
+	# screen -- see _process() in item_tooltip.gd. It is placed again each
+	# time that changes, so it stays beside the item while it settles.
+	tooltip_panel.resized.connect(_place_tooltip)
 	await get_tree().process_frame
 
-	# The item can be freed during that wait. Everything below reads
-	# get_viewport() and global_position, which are only valid inside the tree.
+	# The item can be freed during that wait. Placing it reads get_viewport()
+	# and global_position, which are only valid inside the tree.
 	if not is_inside_tree() or not is_instance_valid(tooltip_panel):
 		_hide_tooltip()
 		return
 
-	tooltip_panel.size = tooltip_panel.get_combined_minimum_size()
+	_place_tooltip()
+
+
+func _place_tooltip() -> void:
+	"""Stand the card beside the item, and keep it on screen"""
+	if not is_inside_tree() or not is_instance_valid(tooltip_panel):
+		return
 
 	# Beside the item and level with the middle of it, so the card reads as
 	# belonging to the thing under the pointer rather than to the row above it.

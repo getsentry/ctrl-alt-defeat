@@ -136,7 +136,8 @@ func test_every_kind_of_action_names_its_item():
 		_action({"source": "a", "action": "damage"}),
 		_action({"timestamp": 10, "source": "b", "action": "heal", "player": 1}),
 		_action({"timestamp": 20, "source": "c", "action": "buff", "player": 1,
-			"details": {"buff_name": "speed", "actual_value": 1}}),
+			"details": {"buff_name": "optimized", "shown": "Optimised",
+				"actual_value": 1, "hp": [25, 22], "max_hp": [25, 25]}}),
 	]))
 	processor.skip_to_end()
 

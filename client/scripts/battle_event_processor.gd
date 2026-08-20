@@ -177,13 +177,13 @@ func _process_event(event: APITypes.BattleAction):
 			log_msg = "[%.1fs] CRITICAL! Player %d's %s deals %d damage → Player %d" % [event_time, player, item_name, event.damage, struck]
 			log_color = Color(1.0, 0.8, 0.2)  # Orange for crits
 		"buff":
-			log_msg = "[%.1fs] Player %d's %s grants %s" % [event_time, player, item_name, event.details["buff_name"]]
+			log_msg = "[%.1fs] Player %d's %s grants %s" % [event_time, player, item_name, event.details["shown"]]
 			log_color = Color(0.6, 1.0, 0.8)  # Mint for buffs
 		"debuff":
-			log_msg = "[%.1fs] Player %d is afflicted with %s" % [event_time, player, event.details["debuff_name"]]
+			log_msg = "[%.1fs] Player %d is afflicted with %s" % [event_time, player, event.details["shown"]]
 			log_color = Color(0.8, 0.5, 1.0)  # Purple for debuffs
 		"dot":
-			log_msg = "[%.1fs] Player %d takes %d damage from %s" % [event_time, player, event.damage, event.details["debuff_name"]]
+			log_msg = "[%.1fs] Player %d takes %d damage from %s" % [event_time, player, event.damage, event.details["shown"]]
 			log_color = Color(0.8, 0.4, 0.6)  # Sickly pink for damage over time
 		"nightfall":
 			log_msg = "[%.1fs] Night falls. Fatigue sets in..." % [event_time]
@@ -269,10 +269,12 @@ func _process_event(event: APITypes.BattleAction):
 			block_activated.emit(player, amount)
 
 		"buff":
-			buff_applied.emit(player, event.details["buff_name"])
+			# Named as a player reads it. The engine writes the word beside the
+			# identifier, so nothing here keeps a second list of the ten.
+			buff_applied.emit(player, event.details["shown"])
 
 		"debuff":
-			debuff_applied.emit(player, event.details["debuff_name"])
+			debuff_applied.emit(player, event.details["shown"])
 
 		"cpu_fail":
 			# Nothing to show yet: the item simply did not activate

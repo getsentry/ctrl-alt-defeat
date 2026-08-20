@@ -10,13 +10,21 @@ difference between the two types. So a position is never null, and nothing has
 to work out what a missing one means.
 """
 
-from typing import Dict
+from typing import Dict, List
 
 from pydantic import BaseModel, Field, computed_field, field_validator
 
+import describe
 from config_loader import config_loader
 from grid_system import ItemShape, Rotation
-from item_effects import ItemSpec
+from item_effects import (
+    AttackEffect,
+    BlockEffect,
+    HealEffect,
+    ItemSpec,
+    TimerTrigger,
+    Trigger,
+)
 from item_looks import PATTERNS, hex_of
 from utils import Position, Shape
 
@@ -50,7 +58,6 @@ class ItemStats(BaseModel):
     block_amount: int = 0
     cooldown: float = 0.0
     cpu_cost: float = 0.0
-    special_effect: str = ""
 
 
 def stats_of(spec: ItemSpec) -> ItemStats:
@@ -64,8 +71,6 @@ def stats_of(spec: ItemSpec) -> ItemStats:
             if hasattr(effect, "min_damage"):
                 stats.min_damage = max(stats.min_damage, effect.min_damage)
                 stats.max_damage = max(stats.max_damage, effect.max_damage)
-                if getattr(effect, "special", ""):
-                    stats.special_effect = effect.special
             if hasattr(effect, "min_heal"):
                 stats.min_heal = max(stats.min_heal, effect.min_heal)
                 stats.max_heal = max(stats.max_heal, effect.max_heal)
@@ -74,28 +79,40 @@ def stats_of(spec: ItemSpec) -> ItemStats:
     return stats
 
 
-def describe(stats: ItemStats) -> str:
-    """One line of prose about what an item does, for the tooltip"""
-    if stats.min_damage > 0:
-        text = f"Deals {stats.min_damage}-{stats.max_damage} damage"
-        if stats.cooldown > 0:
-            text += f" every {stats.cooldown}s"
-        if stats.cpu_cost > 0:
-            text += f" (costs {stats.cpu_cost} CPU)"
-    elif stats.min_heal > 0:
-        text = f"Heals {stats.min_heal}-{stats.max_heal} HP"
-        if stats.cooldown > 0:
-            text += f" every {stats.cooldown}s"
-    elif stats.block_amount > 0:
-        text = f"Blocks {stats.block_amount} damage when attacked"
-    else:
-        text = ""
+def already_shown(trigger: Trigger, stats: ItemStats) -> bool:
+    """Whether a trigger says only what the item's own numbers already say.
 
-    if stats.special_effect:
-        if text:
-            return f"{text}. Special: {stats.special_effect}"
-        return f"Special: {stats.special_effect}"
-    return text
+    Damage, healing, Block, the cooldown and the CPU each have a row of their
+    own on the card, and they were read off this trigger to get there. A
+    weapon whose whole behaviour is "every 1.7s (0.7 CPU): deal 2-3 damage"
+    would then say all three of them twice.
+
+    Only where the clause is the numbers and nothing else. "Deal 3-4 damage
+    and never miss" is worth a line, because no row says the second half.
+    """
+    if not isinstance(trigger, TimerTrigger):
+        return False
+    if trigger.cooldown != stats.cooldown or trigger.cpu_cost != stats.cpu_cost:
+        return False
+
+    effects = trigger.effects or []
+    if len(effects) != 1:
+        return False
+
+    effect = effects[0]
+    if isinstance(effect, AttackEffect):
+        return (
+            effect.special is None
+            and effect.accuracy < 1.0
+            and effect.min_damage == stats.min_damage
+            and effect.max_damage == stats.max_damage
+        )
+    if isinstance(effect, HealEffect):
+        return (effect.min_heal == stats.min_heal
+                and effect.max_heal == stats.max_heal)
+    if isinstance(effect, BlockEffect):
+        return effect.block_amount == stats.block_amount
+    return False
 
 
 def shape_of(spec: ItemSpec) -> Shape:
@@ -128,7 +145,6 @@ class Item(BaseModel):
     anchors: Shape = Field(
         default_factory=list, description="Covered squares whose zone points up"
     )
-    description: str = Field(description="What the item does, in prose")
     color: str = Field(
         pattern=HEX_COLOR,
         description="Fill colour as #RRGGBB, empty on a container",
@@ -144,7 +160,10 @@ class Item(BaseModel):
     on_sale: bool = Field(
         default=False, description="Whether the shop is offering this at half price"
     )
-    special_effect: str = Field(description="Special effect name, empty if none")
+    effects: List[str] = Field(
+        default_factory=list,
+        description="What the item does, a line per trigger, in words",
+    )
 
     @field_validator("pattern")
     @classmethod
@@ -180,7 +199,8 @@ class Item(BaseModel):
             star=[(x, y) for x, y in spec.shape.star],
             diamond=[(x, y) for x, y in spec.shape.diamond],
             anchors=[(x, y) for x, y in spec.shape.anchors],
-            description=describe(stats),
+            effects=describe.lines(
+                spec, skipping=lambda trigger: already_shown(trigger, stats)),
             # The catalogue names a colour, the client is sent the value. That
             # way the client keeps no palette and a colour can be retuned
             # without shipping a new client.

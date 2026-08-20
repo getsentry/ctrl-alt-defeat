@@ -21,7 +21,7 @@ color = Color(0.45, 0.6, 0.9, 0.35)
 thickness = 1
 
 [node name="ItemTooltip" type="PanelContainer"]
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(340, 0)
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 script = ExtResource("1_tooltip")
@@ -148,24 +148,6 @@ theme_override_font_sizes/font_size = 17
 text = "2"
 horizontal_alignment = 2
 
-[node name="SizeRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
-visible = false
-layout_mode = 2
-
-[node name="Caption" type="Label" parent="MarginContainer/VBoxContainer/Stats/SizeRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.65, 0.68, 0.8, 1)
-theme_override_font_sizes/font_size = 17
-text = "Takes up"
-
-[node name="SizeLabel" type="Label" parent="MarginContainer/VBoxContainer/Stats/SizeRow"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.95, 1, 1)
-theme_override_font_sizes/font_size = 17
-text = "1 square"
-horizontal_alignment = 2
-
 [node name="PriceRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Stats"]
 visible = false
 layout_mode = 2
@@ -184,21 +166,15 @@ theme_override_font_sizes/font_size = 17
 text = "4 gold"
 horizontal_alignment = 2
 
-[node name="SpecialLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="DescriptionLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
 visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
-theme_override_font_sizes/font_size = 17
-text = "Effect description"
-autowrap_mode = 2
-
-[node name="DescriptionLabel" type="Label" parent="MarginContainer/VBoxContainer"]
-visible = false
-layout_mode = 2
-theme_override_colors/font_color = Color(0.78, 0.8, 0.9, 1)
-theme_override_font_sizes/font_size = 17
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+theme_override_colors/default_color = Color(0.78, 0.8, 0.9, 1)
+theme_override_font_sizes/normal_font_size = 17
 text = "Item description text"
-autowrap_mode = 2
 
 [node name="FootRule" type="HSeparator" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2

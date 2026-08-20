@@ -322,34 +322,34 @@ func test_a_heal_cannot_take_health_past_full():
 func test_a_buff_is_announced_by_name():
 	processor.load_battle_events(_battle([
 		_action({"timestamp": 0, "action": "buff", "player": 1,
-			"details": _standing([QUOTA, QUOTA], {"buff_name": "speed", "actual_value": 0.2})})
+			"details": _standing([QUOTA, QUOTA], {"buff_name": "optimized", "shown": "Optimised", "actual_value": 0.2})})
 	]))
 	watch_signals(processor)
 
 	processor.skip_to_end()
 
 	# The name travels in the server's details, under buff_name.
-	assert_signal_emitted_with_parameters(processor, "buff_applied", [1, "speed"])
+	assert_signal_emitted_with_parameters(processor, "buff_applied", [1, "Optimised"])
 
 
 func test_a_debuff_is_announced_by_name():
 	processor.load_battle_events(_battle([
 		_action({"timestamp": 0, "action": "debuff", "player": 2,
 			"details": _standing([QUOTA, QUOTA],
-				{"debuff_name": "memory_leaked", "actual_value": 1})})
+				{"debuff_name": "memory_leaked", "shown": "Memory Leak", "actual_value": 1})})
 	]))
 	watch_signals(processor)
 
 	processor.skip_to_end()
 
 	assert_signal_emitted_with_parameters(
-		processor, "debuff_applied", [2, "memory_leaked"])
+		processor, "debuff_applied", [2, "Memory Leak"])
 
 
 func test_damage_over_time_wears_health_down():
 	processor.load_battle_events(_battle([
 		_action({"timestamp": 0, "action": "dot", "damage": 3, "player": 2,
-			"details": _standing([QUOTA, 22], {"debuff_name": "memory_leaked"})})
+			"details": _standing([QUOTA, 22], {"debuff_name": "memory_leaked", "shown": "Memory Leak"})})
 	]))
 
 	processor.skip_to_end()
@@ -607,9 +607,9 @@ func test_the_client_handles_every_action_the_server_declares():
 	# What a well-formed action of each kind carries. Anything not listed here
 	# needs no details.
 	var details_for = {
-		"buff": {"buff_name": "speed", "actual_value": 0.2},
-		"debuff": {"debuff_name": "memory_leaked", "actual_value": 1},
-		"dot": {"debuff_name": "memory_leaked"},
+		"buff": {"buff_name": "optimized", "shown": "Optimised", "actual_value": 0.2},
+		"debuff": {"debuff_name": "memory_leaked", "shown": "Memory Leak", "actual_value": 1},
+		"dot": {"debuff_name": "memory_leaked", "shown": "Memory Leak"},
 		"cpu_fail": {"reason": "Insufficient CPU"},
 		"cpu_drain": {"amount": 1},
 		"cleanse": {"removed": {"memory_leaked": 2}},

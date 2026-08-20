@@ -34,9 +34,8 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 		"max_heal": 0,
 		"cooldown": 1.5,
 		"cpu_cost": 3,
-		"special_effect": "Memory leak",
 		"block_amount": 0,
-		"description": "Deals 2-5 damage",
+		"effects": ["Every 1.5s: deal 2-5 damage.", "On hit: apply 2 Memory Leak."],
 		"color": "#BE0032",
 		"pattern": "solid"
 	}
@@ -112,8 +111,9 @@ func test_a_whole_item_survives_parsing():
 	assert_eq(item.max_damage, 5, "max_damage should survive parsing")
 	assert_eq(item.cooldown, 1.5, "cooldown should survive parsing")
 	assert_eq(item.cpu_cost, 3, "cpu_cost should survive parsing")
-	assert_eq(item.special_effect, "Memory leak", "special_effect should survive parsing")
-	assert_eq(item.description, "Deals 2-5 damage", "description should survive parsing")
+	assert_eq(item.effects, ["Every 1.5s: deal 2-5 damage.",
+		"On hit: apply 2 Memory Leak."] as Array[String],
+		"what the item does should survive parsing")
 
 
 func test_a_whole_container_survives_parsing():

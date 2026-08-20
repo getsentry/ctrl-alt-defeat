@@ -17,7 +17,7 @@ static func item_data(overrides: Dictionary = {}) -> Dictionary:
 		"on_sale": false,
 		"is_container": false,
 		"shape": [[0, 0]],
-		"description": "Deals 2-5 damage",
+		"effects": ["Every 1.5s: deal 2-5 damage."],
 		"color": "#BE0032",
 		"pattern": "solid",
 		"min_damage": 2,
@@ -27,7 +27,6 @@ static func item_data(overrides: Dictionary = {}) -> Dictionary:
 		"block_amount": 0,
 		"cooldown": 1.5,
 		"cpu_cost": 3,
-		"special_effect": ""
 	}
 	data.merge(overrides, true)
 	return data
@@ -59,7 +58,7 @@ static func container_data(overrides: Dictionary = {}) -> Dictionary:
 		"cost": 4,
 		"price": 4,
 		"sell_value": 2,
-		"description": "",
+		"effects": [],
 		"color": "",
 		"pattern": "",
 		"min_damage": 0,

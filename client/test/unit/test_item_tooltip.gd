@@ -33,7 +33,7 @@ func _plain_item(overrides: Dictionary = {}) -> Resource:
 	# An item that does nothing, so the effect rows have nothing to show.
 	var data = {
 		"min_damage": 0, "max_damage": 0, "min_heal": 0, "max_heal": 0,
-		"block_amount": 0, "special_effect": "", "description": ""
+		"block_amount": 0, "effects": []
 	}
 	data.merge(overrides, true)
 	return _item(data)
@@ -110,10 +110,32 @@ func test_shows_block():
 	assert_true("4" in tooltip.block_label.text, "Should show how much is blocked")
 
 
-func test_shows_special_effect():
-	tooltip.setup_tooltip(_item({"special_effect": "Memory leak"}))
-	assert_true(tooltip.special_label.visible, "Special effect should be shown")
-	assert_true("Memory leak" in tooltip.special_label.text, "Should show the effect")
+func test_shows_everything_the_item_does():
+	# The rows are the headline numbers. A build is decided on the rest, and
+	# an item with three triggers used to show one sentence about one of them.
+	tooltip.setup_tooltip(_item({"effects": [
+		"Every 1.9s: deal 5-7 damage", "On hit: apply 2 [debuff]memory leak[/debuff]"]}))
+
+	assert_true(tooltip.description_label.visible, "What it does should be shown")
+	assert_true("memory leak" in tooltip.description_label.get_parsed_text(),
+		"including the parts no row has a number for")
+	assert_true("\n" in tooltip.description_label.get_parsed_text(),
+		"a line for each, rather than one run-on sentence")
+
+
+func test_a_status_is_picked_out_in_colour():
+	# The server marks which of the ten a name is, because it is the one that
+	# knows which are worth having. The colour is the card's to choose.
+	tooltip.setup_tooltip(_item({"effects": [
+		"On hit: gain 1 [buff]spiked[/buff] and apply 2 [debuff]memory leak[/debuff] to your opponent"]}))
+
+	var text: String = tooltip.description_label.text
+	assert_false("[buff]" in text, "The mark itself should never reach the player")
+	assert_false("[debuff]" in text, "nor the one for a debuff")
+	assert_true(ItemTooltip.BUFF_COLOUR in text, "A buff should be given its colour")
+	assert_true(ItemTooltip.DEBUFF_COLOUR in text, "and a debuff its own")
+	assert_true("gain 1 spiked" in tooltip.description_label.get_parsed_text(),
+		"and the words themselves should read as they were written")
 
 
 func test_hides_every_effect_row_for_a_plain_item():
@@ -121,20 +143,71 @@ func test_hides_every_effect_row_for_a_plain_item():
 	assert_false(tooltip.damage_label.visible, "No damage row for a plain item")
 	assert_false(tooltip.heal_label.visible, "No heal row for a plain item")
 	assert_false(tooltip.block_label.visible, "No block row for a plain item")
-	assert_false(tooltip.special_label.visible, "No special row for a plain item")
 
 
 # ============ How much room it takes ============
 
-func test_a_single_square_item_does_not_say_so():
-	tooltip.setup_tooltip(_item({"shape": [[0, 0]]}))
-	assert_false(tooltip.size_label.visible, "One square is the ordinary case")
+const LONG_EFFECTS = [
+	"When attacked (Melee, 30%):",
+	"\u2022 Prevent 7 damage",
+	"\u2022 Drain 0.3 CPU from your opponent",
+	"\u2022 Gain 1 [buff]spiked[/buff] (up to 5 times)",
+]
 
 
-func test_a_bigger_item_says_how_many_squares():
-	tooltip.setup_tooltip(_item({"shape": [[0, 0], [0, 1]]}))
-	assert_true(tooltip.size_label.visible, "Room taken up is worth knowing")
-	assert_eq(tooltip.size_label.text, "2 squares")
+func _shown(item) -> Control:
+	# A card put on screen the way the hover path puts one there, and left for
+	# a couple of frames: what the player is looking at a moment after the
+	# pointer arrives.
+	var card = tooltip_scene.instantiate()
+	get_tree().root.add_child(card)
+	card.setup_tooltip(item)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	return card
+
+
+func test_the_card_is_only_as_tall_as_its_text():
+	# A wrapping label works out its height from its width, and it only learns
+	# its width once a layout pass reaches it. Measured before that, the text
+	# counted as one word a line and the card came out several times taller
+	# than what it holds, with the empty space hanging below the footer.
+	var card = await _shown(_item({"effects": LONG_EFFECTS}))
+
+	assert_almost_eq(card.size.y, card.get_combined_minimum_size().y, 1.0,
+		"The card should stand at the height its own text asks for")
+
+	card.queue_free()
+
+
+func test_the_card_says_when_it_has_taken_its_size():
+	# Whatever placed the card is standing it beside an item and level with
+	# the middle of it, and cannot do that until it knows how tall the card
+	# is. So the card has to say when that changes.
+	var card = tooltip_scene.instantiate()
+	get_tree().root.add_child(card)
+	card.setup_tooltip(_item({"effects": LONG_EFFECTS}))
+	watch_signals(card)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_signal_emitted(card, "resized", "The card should say it has resized")
+
+	card.queue_free()
+
+
+func test_a_card_saying_more_is_taller_than_one_saying_less():
+	# The other way the measurement goes wrong is a card that never grows,
+	# with its text running off the bottom.
+	var few = await _shown(_item({"effects": ["Every 2s: deal 1-2 damage"]}))
+	var many = await _shown(_item({"effects": LONG_EFFECTS}))
+
+	assert_gt(many.size.y, few.size.y, "More lines should take more room")
+	assert_lt(many.size.y, few.size.y * 3.0,
+		"but four lines should not take the room of a dozen")
+
+	few.queue_free()
+	many.queue_free()
 
 
 # ============ Price ============
@@ -168,16 +241,21 @@ func test_an_item_with_stats_draws_its_rules():
 
 # ============ Description ============
 
-func test_description_shown_when_there_are_no_effects():
-	tooltip.setup_tooltip(_plain_item({"description": "Does nothing at all"}))
-	assert_true(tooltip.description_label.visible, "Description should fill the gap")
-	assert_eq(tooltip.description_label.text, "Does nothing at all", "Should show the description")
+func test_nothing_is_said_about_an_item_that_does_nothing():
+	# A container, or an item the catalogue carries without any behaviour yet.
+	tooltip.setup_tooltip(_plain_item({"effects": []}))
 
-
-func test_description_hidden_when_effects_say_it_better():
-	tooltip.setup_tooltip(_item({"description": "Does nothing at all", "min_damage": 2, "max_damage": 5}))
 	assert_false(tooltip.description_label.visible,
-		"The effect rows replace the description")
+		"An empty line is a gap in the card")
+
+
+func test_the_squares_it_covers_are_not_a_stat():
+	# The item is drawn on the grid in the shape it takes up, so a row saying
+	# "2 squares" is the card telling the player what they can see.
+	tooltip.setup_tooltip(_item({"shape": [[0, 0], [1, 0]]}))
+
+	for row in tooltip.stats.get_children():
+		assert_false("Size" in row.name, "There should be no size row left")
 
 
 # ============ Typed items ============
