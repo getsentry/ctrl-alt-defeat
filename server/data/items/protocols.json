@@ -1507,11 +1507,40 @@
       "source": "White Lily Collar",
       "rarity": "legendary",
       "cost": 8,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 1,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.22,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "calibrated",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Calibrated"
+                },
+                {
+                  "type": "buff",
+                  "buff_name": "regenerating",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Regenerating"
+                }
+              ],
+              "description": "22% chance"
+            }
+          ]
+        }
+      ],
       "slug": "white_lily_collar",
       "in_shop": false,
       "unbuilt": [
-        "Star item activates: 22% chance to gain 1 Luck and 1 Regeneration.",
         "Star item gains 1% critical hit chance for each Luck and Regeneration."
       ],
       "icontype": "holy, nature",

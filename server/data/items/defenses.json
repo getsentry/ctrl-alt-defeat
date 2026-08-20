@@ -518,13 +518,34 @@
       "source": "Moon Shield",
       "rarity": "godly",
       "cost": 18,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "answers_to": [
+            "melee",
+            "ranged"
+          ],
+          "chance": 0.3,
+          "effects": [
+            {
+              "type": "prevent_damage",
+              "value": 12,
+              "description": "Prevent 12 damage"
+            },
+            {
+              "type": "cpu_drain",
+              "value": 0.7,
+              "target": "attacker",
+              "description": "Remove 0.7 CPU from the attacker"
+            }
+          ]
+        }
+      ],
       "slug": "moon_shield",
       "in_shop": false,
       "unbuilt": [
         "Star items give +30% Block.",
-        "Star items gained 12 Block: Gain 1 Mana.",
-        "On attacked (Melee/Ranged): 30% chance to prevent 12 damage and remove 0.7 stamina from your opponent."
+        "Star items gained 12 Block: Gain 1 Mana."
       ],
       "sockets": 2,
       "icontype": "holy, magic",
@@ -588,12 +609,32 @@
       "source": "Shield of Valor",
       "rarity": "legendary",
       "cost": 11,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "on_attacked",
+          "answers_to": [
+            "melee"
+          ],
+          "chance": 0.3,
+          "effects": [
+            {
+              "type": "prevent_damage",
+              "value": 14,
+              "description": "Prevent 14 damage"
+            },
+            {
+              "type": "cpu_drain",
+              "value": 0.7,
+              "target": "attacker",
+              "description": "Remove 0.7 CPU from the attacker"
+            }
+          ]
+        }
+      ],
       "slug": "shield_of_valor",
       "in_shop": false,
       "unbuilt": [
-        "StarItems give 30% more Block.",
-        "On attacked (Melee): 30% chance to prevent 14 damage and remove 0.7 stamina from opponent."
+        "StarItems give 30% more Block."
       ],
       "sockets": 2,
       "icontype": "holy"

@@ -13,6 +13,7 @@ from item_effects import (
     DEBUFFS,
     AttackEffect,
     AuraTrigger,
+    ChanceEffect,
     BattleStartTrigger,
     BlockEffect,
     BUFFS,
@@ -468,6 +469,20 @@ class ConfigLoader:
                 zone=config["zone"],
                 counting=counting,
             )
+        elif effect_type == "chance":
+            if "chance" not in config:
+                raise ValueError(f"{item_id}: a chance effect needs a `chance`")
+            behind = [
+                e for e in (
+                    self._parse_effect(sub, item_id)
+                    for sub in config.get("effects", [])
+                ) if e
+            ]
+            if not behind:
+                raise ValueError(
+                    f"{item_id}: a chance effect needs something behind it."
+                )
+            return ChanceEffect(chance=config["chance"], effects=behind)
         elif effect_type == "cleanse":
             if "count" not in config:
                 raise ValueError(

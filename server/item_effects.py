@@ -295,6 +295,30 @@ class DebuffEffect(Effect):
 
 
 @dataclass
+class ChanceEffect(Effect):
+    """One roll, and everything behind it happens or none of it does.
+
+    The source game writes a chance in front of a whole clause -- "12% chance
+    to deal +6 damage and gain 1 Heat" -- so this holds effects rather than
+    sitting on one. It is ChanceTrigger's shape, a level down: there the roll
+    decides whether a trigger fires, here whether part of what it does
+    happens.
+
+    Rolling per effect instead would let the damage land and the Heat not,
+    which no item in the source game can do.
+    """
+
+    chance: float
+    effects: List[Effect] = field(default_factory=list)
+
+    def happens(self, battle_state: "BattleSimulator") -> bool:
+        return self.chance >= 1.0 or battle_state.rng.random() < self.chance
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "chance", "chance": self.chance}
+
+
+@dataclass
 class CleanseEffect(Effect):
     """Take N of a status off somebody.
 

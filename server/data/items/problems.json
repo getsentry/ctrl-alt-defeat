@@ -1140,13 +1140,32 @@
               "accuracy": 0.95
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.33,
+              "effects": [
+                {
+                  "type": "debuff",
+                  "debuff_name": "rate_limited",
+                  "value": 1,
+                  "target": "enemy",
+                  "description": "Inflict 1 Rate Limited"
+                }
+              ],
+              "description": "33% chance"
+            }
+          ]
         }
       ],
       "slug": "broom",
       "in_shop": false,
       "unbuilt": [
-        "Opponent misses attack: Gain +2 damage for the next attack.",
-        "On hit: 33% chance to inflict 1 Blind."
+        "Opponent misses attack: Gain +2 damage for the next attack."
       ],
       "sockets": 1,
       "icontype": "melee"
@@ -1549,12 +1568,31 @@
               "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.45,
+              "effects": [
+                {
+                  "type": "debuff",
+                  "debuff_name": "throttled",
+                  "value": 1,
+                  "target": "enemy",
+                  "description": "Inflict 1 Throttled"
+                }
+              ],
+              "description": "45% chance"
+            }
+          ]
         }
       ],
       "slug": "frostbite",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 45% chance to inflict 1 Cold.",
         "Opponent reaches 30 Cold: Gain 12 Vampirism (once).",
         "Deals +1 damage per Vampirism and +0.4 per Cold of your opponent."
       ],
@@ -2520,13 +2558,32 @@
               "accuracy": 0.95
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.4,
+              "effects": [
+                {
+                  "type": "debuff",
+                  "debuff_name": "rate_limited",
+                  "value": 1,
+                  "target": "enemy",
+                  "description": "Inflict 1 Rate Limited"
+                }
+              ],
+              "description": "40% chance"
+            }
+          ]
         }
       ],
       "slug": "data_miner",
       "in_shop": false,
       "unbuilt": [
-        "Shop entered: Dig up a random item.",
-        "On hit: 40% chance to inflict 1 Blind."
+        "Shop entered: Dig up a random item."
       ],
       "sockets": 1,
       "icontype": "melee",

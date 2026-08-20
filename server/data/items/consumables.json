@@ -55,12 +55,34 @@
       "source": "Mana Orb",
       "rarity": "epic",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 1,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.5,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "credits",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Credits"
+                }
+              ],
+              "description": "50% chance"
+            }
+          ]
+        }
+      ],
       "slug": "cpu_booster",
       "icontype": "magic",
       "in_shop": false,
       "unbuilt": [
-        "Star item activates: 50% chance to gain 1 Mana.",
         "Use 35 Mana: Gain 20 random other buffs (once)."
       ]
     },
@@ -133,14 +155,36 @@
       "source": "Piercing Arrow",
       "rarity": "unique",
       "cost": 10,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "diamond",
+          "counting": "any",
+          "after": 1,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.4,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "calibrated",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Calibrated"
+                }
+              ],
+              "description": "40% chance"
+            }
+          ]
+        }
+      ],
       "slug": "data_packets",
       "in_shop": false,
       "needs": "the Hunter subclass, which its source Piercing Arrow belongs to",
       "subclass": "Hunter",
       "unbuilt": [
-        "Star Weapons deal +50% critical damage. They remove 15 Block on crit.",
-        "Diamond item activates: 40% chance to gain 1 Luck."
+        "Star Weapons deal +50% critical damage. They remove 15 Block on crit."
       ]
     },
     "healing_nanobots": {

@@ -2347,3 +2347,97 @@ class TestAnAuraCanBeTheCause:
             self._watcher(zone="diamond"), self._ticker((0, 0), "in_star")
         ])
         assert not heals, "an item in the star is not in the diamond"
+
+
+class TestAChanceOnAnEffect:
+    """"12% chance to deal +6 damage and gain 1 Heat" -- one roll in front of
+    a clause, the same shape ChanceTrigger has a level up."""
+
+    @staticmethod
+    def _effect(chance, behind=None):
+        from item_effects import ChanceEffect, HealEffect
+
+        return ChanceEffect(chance=chance, effects=behind or [HealEffect(1, 1)])
+
+    class _Rolls:
+        def __init__(self, value):
+            self.rng = self
+            self.value = value
+
+        def random(self):
+            return self.value
+
+    def test_a_roll_under_the_chance_happens(self):
+        assert self._effect(0.3).happens(self._Rolls(0.29)) is True
+
+    def test_a_roll_over_it_does_not(self):
+        assert self._effect(0.3).happens(self._Rolls(0.31)) is False
+
+    def test_a_certainty_needs_no_roll(self):
+        class NoRng:
+            @property
+            def rng(self):
+                raise AssertionError("a certainty should not roll")
+
+        assert self._effect(1.0).happens(NoRng()) is True
+
+    def test_everything_behind_it_happens_together(self):
+        """A clause cannot half-happen: the damage and the Heat go together."""
+        from item_effects import BuffEffect, ChanceEffect, HealEffect
+
+        p1, p2 = get_test_containers()
+        watcher = BattleItem(
+            spec=ItemSpec(
+                id="w", name="Watcher", category="infrastructure", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "w"), slug="w",
+                triggers=[TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                    ChanceEffect(chance=1.0, effects=[
+                        HealEffect(1, 1),
+                        BuffEffect(buff_name="optimized", value=1,
+                                   target_type="self")])])],
+            ),
+            position=(0, 0), uid="watcher",
+        )
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 2.5
+        original = sim._setup_item_handlers
+
+        def setup(items, owner, enemy):
+            result = original(items, owner, enemy)
+            if owner.id == 1:
+                owner.quota = 100
+            return result
+
+        sim._setup_item_handlers = setup
+        sim.simulate_battle([watcher], [], 18, p1, p2)
+
+        heals = len([a for a in sim.actions if a.action == "heal"])
+        buffs = len([a for a in sim.actions if a.action == "buff"])
+        assert heals and heals == buffs, "both or neither, every time"
+
+    def test_nothing_behind_it_happens_when_the_roll_fails(self):
+        from item_effects import ChanceEffect, HealEffect
+
+        p1, p2 = get_test_containers()
+        never = BattleItem(
+            spec=ItemSpec(
+                id="n", name="Never", category="infrastructure", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "n"), slug="n",
+                triggers=[TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
+                    ChanceEffect(chance=0.0, effects=[HealEffect(5, 5)])])],
+            ),
+            position=(0, 0), uid="never",
+        )
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 4.0
+        original = sim._setup_item_handlers
+
+        def setup(items, owner, enemy):
+            result = original(items, owner, enemy)
+            if owner.id == 1:
+                owner.quota = 100
+            return result
+
+        sim._setup_item_handlers = setup
+        sim.simulate_battle([never], [], 18, p1, p2)
+        assert not [a for a in sim.actions if a.action == "heal"]

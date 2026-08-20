@@ -18,6 +18,7 @@ from grid_system import ItemShape, Rotation
 from item_effects import (
     AttackEffect,
     AuraTrigger,
+    ChanceEffect,
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
@@ -966,6 +967,11 @@ class BattleSimulator:
                         details={"amount": result["amount"]},
                     )
                 )
+            elif isinstance(effect, ChanceEffect):
+                # One roll for everything behind it, so a clause cannot
+                # half-happen.
+                if effect.happens(self):
+                    self._apply_effects(effect.effects, item, owner, enemy)
             elif isinstance(effect, (ModifyEffect, ModifyPerEffect)):
                 # Already applied, by _apply_auras before the battle began.
                 # An aura settles once: nothing moves on the grid during a
