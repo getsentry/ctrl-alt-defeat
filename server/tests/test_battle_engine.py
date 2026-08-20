@@ -2074,3 +2074,160 @@ class TestAnAuraReachesWhatItFallsOn:
             self._plain((0, 0), "inside"),
         ])
         assert by_uid["inside"].speed_mult == 1.0
+
+
+class TestAnAuraCountsWhatStandsInIt:
+    """Section 3.1, the other direction. "Triggers 15% faster for each Star
+    Food" changes the item projecting the zone, by how much is standing in it.
+
+    37 items in the source game read this way against 22 the other, so it is
+    the commoner half of an aura.
+    """
+
+    @staticmethod
+    def _counter(value=0.15, stat="trigger_speed", counting="any", zone="star",
+                 uid="counter", position=(1, 0)):
+        from item_effects import ModifyPerEffect, PassiveTrigger
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Counter", category="problem", cost=1,
+                player_class="neutral", slug=uid,
+                shape=parse_map(["*##*"], "counter"),
+                kinds=frozenset({"melee"}),
+                triggers=[PassiveTrigger(effects=[ModifyPerEffect(
+                    stat=stat, value=value, zone=zone, counting=counting)])],
+            ),
+            position=position, uid=uid,
+        )
+
+    @staticmethod
+    def _standing(position, uid, kinds=frozenset(), category="problem"):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Standing", category=category, cost=1,
+                player_class="neutral", shape=parse_map(["#"], "s"), slug=uid,
+                kinds=kinds, triggers=[],
+            ),
+            position=position, uid=uid,
+        )
+
+    def _run(self, items):
+        # The counter sits at (1,0) covering (1,0) and (2,0), so its star
+        # falls on (0,0) and (3,0). Both have to be standable.
+        containers = [
+            Container.of("mesh_network_hub", (0, 0), "a"),
+            Container.of("mesh_network_hub", (3, 0), "c"),
+        ]
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 0.2
+        result = sim.simulate_battle(
+            items, [], 1, containers,
+            [Container.of("mesh_network_hub", (0, 4), "b")],
+        )
+        return {i.uid: i for i in result["player1_items"]}
+
+    def test_an_empty_zone_changes_nothing(self):
+        by_uid = self._run([self._counter()])
+        assert by_uid["counter"].speed_mult == 1.0
+
+    def test_one_item_standing_there_counts_once(self):
+        by_uid = self._run([self._counter(), self._standing((0, 0), "one")])
+        assert by_uid["counter"].speed_mult == pytest.approx(1.15)
+
+    def test_two_items_count_twice(self):
+        """*##* projects either side, so both squares can be filled."""
+        by_uid = self._run([
+            self._counter(),
+            self._standing((0, 0), "left"),
+            self._standing((3, 0), "right"),
+        ])
+        assert by_uid["counter"].speed_mult == pytest.approx(1.30)
+
+    def test_it_counts_only_what_it_is_looking_for(self):
+        by_uid = self._run([
+            self._counter(counting={"any": ["nature"]}),
+            self._standing((0, 0), "nature_one", kinds=frozenset({"nature"})),
+            self._standing((3, 0), "holy_one", kinds=frozenset({"holy"})),
+        ])
+        assert by_uid["counter"].speed_mult == pytest.approx(1.15), "one of two"
+
+    def test_a_category_counts_as_well_as_a_kind(self):
+        """"for each Star Food" names a category, "for each Star Dark-item"
+        names a kind. Both have to work."""
+        by_uid = self._run([
+            self._counter(counting={"any": ["defense"]}),
+            self._standing((0, 0), "shield", category="defense"),
+        ])
+        assert by_uid["counter"].speed_mult == pytest.approx(1.15)
+
+    def test_an_item_outside_the_zone_is_not_counted(self):
+        by_uid = self._run([self._counter(), self._standing((4, 0), "far")])
+        assert by_uid["counter"].speed_mult == 1.0
+
+    def test_it_changes_the_item_projecting_the_zone(self):
+        """Not what stands in it -- that is the other direction."""
+        by_uid = self._run([self._counter(), self._standing((0, 0), "one")])
+        assert by_uid["one"].speed_mult == 1.0
+
+    def test_counting_reaches_damage_too(self):
+        by_uid = self._run([
+            self._counter(value=0.5, stat="damage"),
+            self._standing((0, 0), "left"),
+            self._standing((3, 0), "right"),
+        ])
+        assert by_uid["counter"].damage_mult == pytest.approx(2.0)
+
+
+class TestCountingAnyAndAll:
+    """`counting` says which items are worth counting. An item counts once
+    however many of the tags it matches."""
+
+    @staticmethod
+    def _effect(counting):
+        from item_effects import ModifyPerEffect
+
+        return ModifyPerEffect(
+            stat="trigger_speed", value=0.1, zone="star", counting=counting
+        )
+
+    def test_any_counts_everything(self):
+        assert self._effect("any").matches(set())
+        assert self._effect("any").matches({"pet"})
+
+    def test_any_of_a_list_needs_one(self):
+        effect = self._effect({"any": ["pet", "script"]})
+        assert effect.matches({"pet"})
+        assert effect.matches({"script"})
+        assert effect.matches({"pet", "script"}), "both is still a match"
+        assert not effect.matches({"defense"})
+
+    def test_all_of_a_list_needs_every_one(self):
+        effect = self._effect({"all": ["holy", "magic"]})
+        assert effect.matches({"holy", "magic"})
+        assert effect.matches({"holy", "magic", "melee"}), "extras are fine"
+        assert not effect.matches({"holy"})
+
+    def test_an_item_matching_twice_still_counts_once(self):
+        """"for each Star Pet or Food" counts items, not matching tags."""
+        counter = TestAnAuraCountsWhatStandsInIt._counter(
+            counting={"any": ["pet", "script"]}
+        )
+        both = TestAnAuraCountsWhatStandsInIt._standing(
+            (0, 0), "both", kinds=frozenset({"script"}), category="pet"
+        )
+        by_uid = TestAnAuraCountsWhatStandsInIt._run(
+            TestAnAuraCountsWhatStandsInIt(), [counter, both]
+        )
+        assert by_uid["counter"].speed_mult == pytest.approx(1.15), "once, not twice"
+
+    def test_rat_chef_counts_a_pet_beside_it(self):
+        """From the catalogue: "Triggers 15% faster for each Star Pet or Food"."""
+        from item_effects import ModifyPerEffect
+
+        spec = ITEM_CATALOG["rat_chef"]
+        per = [e for t in spec.triggers for e in getattr(t, "effects", [])
+               if isinstance(e, ModifyPerEffect)]
+        assert per and per[0].counting == {"any": ["pet", "script"]}
+        assert per[0].matches({"pet"}) and per[0].matches({"script"})
+        assert not per[0].matches({"defense"})

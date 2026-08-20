@@ -29,6 +29,7 @@ from item_effects import (
     HealEffect,
     ItemSpec,
     ModifyEffect,
+    ModifyPerEffect,
     OnAttackedTrigger,
     OnHitTrigger,
     PassiveTrigger,
@@ -396,6 +397,42 @@ class ConfigLoader:
                 )
             return ModifyEffect(
                 stat=stat, value=config["value"], target_type=config["target"]
+            )
+        elif effect_type == "modify_per":
+            stat = config.get("stat")
+            if stat not in MODIFIERS:
+                raise ValueError(
+                    f"{item_id}: `{stat}` is not something a modifier can "
+                    f"change. There are {len(MODIFIERS)}: "
+                    f"{', '.join(sorted(MODIFIERS))}."
+                )
+            for needed in ("value", "zone", "counting"):
+                if needed not in config:
+                    raise ValueError(f"{item_id}: a modify_per needs a `{needed}`")
+            if config["zone"] not in ("star", "diamond"):
+                raise ValueError(
+                    f"{item_id}: a modify_per counts a `star` or a `diamond`, "
+                    f"not `{config['zone']}`."
+                )
+            counting = config["counting"]
+            if counting != "any":
+                if not isinstance(counting, dict) or len(counting) != 1 or (
+                    set(counting) - {"any", "all"}
+                ):
+                    raise ValueError(
+                        f"{item_id}: `counting` is \"any\" for every item, or "
+                        f"one of {{\"any\": [...]}} and {{\"all\": [...]}}."
+                    )
+                if not next(iter(counting.values())):
+                    raise ValueError(
+                        f"{item_id}: `counting` lists nothing to count. Write "
+                        f"\"any\" if it counts every item."
+                    )
+            return ModifyPerEffect(
+                stat=stat,
+                value=config["value"],
+                zone=config["zone"],
+                counting=counting,
             )
         elif effect_type == "cleanse":
             if "count" not in config:

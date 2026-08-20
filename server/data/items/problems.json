@@ -338,6 +338,23 @@
               "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.1,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "nature"
+                ]
+              },
+              "description": "Triggers 10% faster for each Star nature-item"
+            }
+          ]
         }
       ],
       "slug": "querystorm",
@@ -347,8 +364,7 @@
       "pet": true,
       "unbuilt": [
         "On hit: Gain 1 Regeneration and 1 Luck.",
-        "Deals +0.8 damage per Regeneration.",
-        "Triggers 10% faster for each Star Nature-item."
+        "Deals +0.8 damage per Regeneration."
       ],
       "recipe": [
         {
@@ -429,8 +445,7 @@
               "target": "enemy",
               "description": "Inflict 2 Memory Leaked"
             }
-          ],
-          "description": "On hit: 70% chance to inflict 2 Memory Leaked"
+          ]
         }
       ],
       "slug": "virus_injector",
@@ -590,8 +605,7 @@
               "target": "self",
               "description": "Gain 1 Compute"
             }
-          ],
-          "description": "On hit: 85% chance to gain 1 Compute"
+          ]
         }
       ],
       "slug": "quantum_flux_rifle",
@@ -636,6 +650,24 @@
               "accuracy": 0.85
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "pet",
+                  "script"
+                ]
+              },
+              "description": "Triggers 15% faster for each Star Pet or Food"
+            }
+          ]
         }
       ],
       "slug": "data_leech_swarm",
@@ -643,8 +675,7 @@
       "in_shop": false,
       "pet": true,
       "unbuilt": [
-        "On hit: Steal a random buff.",
-        "Triggers 15% faster for each Star Pet or Food."
+        "On hit: Steal a random buff."
       ],
       "recipe": [
         {
@@ -750,8 +781,7 @@
               "target": "self",
               "description": "Gain 1 Spiked"
             }
-          ],
-          "description": "On hit: 50% chance to gain 1 Spiked"
+          ]
         }
       ],
       "slug": "spike_generator",
@@ -804,8 +834,7 @@
               "target": "own",
               "description": "Gain 1 damage"
             }
-          ],
-          "description": "On hit: 25% chance to gain 1 damage"
+          ]
         }
       ],
       "slug": "plasma_edge",
@@ -2557,13 +2586,29 @@
               "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.12,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "script"
+                ]
+              },
+              "description": "Attacks 12% faster for each Star Food"
+            }
+          ]
         }
       ],
       "slug": "stankus_toothpick",
       "in_shop": false,
       "unbuilt": [
-        "On hit: Your opponent takes +2% damage.",
-        "Attacks 12% faster for each Star Food."
+        "On hit: Your opponent takes +2% damage."
       ],
       "sockets": 1,
       "icontype": "melee",

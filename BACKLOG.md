@@ -113,7 +113,12 @@ engine's bookkeeping, not something an item can say.
 `reflect` is gone, and a number that changes an item is a `modify` rather than
 a buff. What remains:
 
-**Aura-as-trigger is the half still missing.** A zone reaches items two ways.
+**Aura-as-trigger is the half still missing.** Two of the three directions
+an aura works are built: what the zone falls on ("Star items trigger 20%
+faster", 22 items) and what the zone counts ("Triggers 15% faster for each
+Star Food", 37 items). The third is the zone as a cause.
+
+ A zone reaches items two ways.
 As a target -- "Start of battle: Star items trigger 20% faster" -- it works
 now. As a trigger -- "Star item activates:", "6 Star item activations:" -- it
 does not, and 43 items in the source game use that form.

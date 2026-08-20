@@ -46,13 +46,30 @@
       "source": "Cthulhu",
       "rarity": "unique",
       "cost": 8,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "dark"
+                ]
+              },
+              "description": "Triggers 15% faster for each Star dark-item"
+            }
+          ]
+        }
+      ],
       "slug": "cthulhu",
       "in_shop": false,
       "unbuilt": [
         "Every 3.3s: Deal 10 Effect-damage with 100% lifesteal and trigger a random Star Food.",
-        "Star Food gains Dark.",
-        "Triggers 15% faster for each Star Dark-item."
+        "Star Food gains Dark."
       ],
       "icontype": "treasure, dark"
     },
@@ -95,13 +112,31 @@
       "source": "Hyper Hedgehog",
       "rarity": "godly",
       "cost": 12,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "pet",
+                  "script"
+                ]
+              },
+              "description": "Triggers 15% faster for each Star Pet or Food"
+            }
+          ]
+        }
+      ],
       "slug": "hyper_hedgehog",
       "in_shop": false,
       "unbuilt": [
         "Every 5s: Deal 10 Effect-damage + 0.5 for each Spikes + 1 for each Empower.",
-        "Health drops below 70%: Gain 4 Spikes, 3 Empower and 35 Block (once).",
-        "Triggers 15% faster for each Star Pet or Food."
+        "Health drops below 70%: Gain 4 Spikes, 3 Empower and 35 Block (once)."
       ],
       "icontype": "holy,nature",
       "recipe": [
@@ -305,13 +340,31 @@
       "source": "Rat Chef",
       "rarity": "rare",
       "cost": 8,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "pet",
+                  "script"
+                ]
+              },
+              "description": "Triggers 15% faster for each Star Pet or Food"
+            }
+          ]
+        }
+      ],
       "slug": "rat_chef",
       "in_shop": false,
       "unbuilt": [
         "Start of battle: Gain 1 Regeneration for each Star Food.",
-        "Every 7s: Regenerate 2 stamina and gain 1 Empower.",
-        "Triggers 15% faster for each Star Pet or Food."
+        "Every 7s: Regenerate 2 stamina and gain 1 Empower."
       ],
       "icontype": "nature",
       "recipe": [
@@ -358,13 +411,30 @@
       "source": "Shelly",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.2,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "patch"
+                ]
+              },
+              "description": "Triggers 20% faster for each Star Potion"
+            }
+          ]
+        }
+      ],
       "slug": "shelly",
       "in_shop": false,
       "unbuilt": [
         "Cleanse effects have a 25% chance to cleanse an additional debuff.",
-        "Every 13s: Cleanse 6 debuffs and heal for 40.",
-        "Triggers 20% faster for each Star Potion."
+        "Every 13s: Cleanse 6 debuffs and heal for 40."
       ],
       "icontype": "holy, nature",
       "recipe": [
@@ -525,13 +595,30 @@
       "source": "Wolpertinger",
       "rarity": "godly",
       "cost": 12,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "pet"
+                ]
+              },
+              "description": "Triggers 15% faster for each Star Pet"
+            }
+          ]
+        }
+      ],
       "slug": "wolpertinger",
       "in_shop": false,
       "unbuilt": [
         "Increase base stamina regeneration by 0.7% for each buff you have.",
-        "Every 5s: Gain 3 of the buff you have least of.",
-        "Triggers 15% faster for each Star Pet."
+        "Every 5s: Gain 3 of the buff you have least of."
       ],
       "icontype": "nature"
     },
@@ -579,14 +666,32 @@
       "source": "Hedgehog",
       "rarity": "epic",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "pet",
+                  "script"
+                ]
+              },
+              "description": "Triggers 15% faster for each Star Pet or Food"
+            }
+          ]
+        }
+      ],
       "slug": "surveillance_drone",
       "icontype": "nature",
       "in_shop": false,
       "unbuilt": [
         "Every 5s: Deal 10 Effect-damage + 0.5 for each Spikes.",
-        "Health drops below 70%: Gain 3 Spikes and 25 Block (once).",
-        "Triggers 15% faster for each Star Pet or Food."
+        "Health drops below 70%: Gain 3 Spikes and 25 Block (once)."
       ]
     },
     "data_crawler": {
@@ -603,13 +708,31 @@
       "source": "Rat",
       "rarity": "common",
       "cost": 4,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "pet",
+                  "script"
+                ]
+              },
+              "description": "Triggers 15% faster for each Star Pet or Food"
+            }
+          ]
+        }
+      ],
       "slug": "data_crawler",
       "icontype": "nature",
       "in_shop": false,
       "unbuilt": [
-        "Every 3.3s: Deal 5 Effect-damage. 75% to inflict 1 Poison. 10% to inflict 1 Blind.",
-        "Triggers 15% faster for each Star Pet or Food."
+        "Every 3.3s: Deal 5 Effect-damage. 75% to inflict 1 Poison. 10% to inflict 1 Blind."
       ]
     },
     "cache_spider": {
@@ -627,7 +750,26 @@
       "source": "Squirrel",
       "rarity": "rare",
       "cost": 5,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "pet",
+                  "script"
+                ]
+              },
+              "description": "Triggers 15% faster for each Star Pet or Food"
+            }
+          ]
+        }
+      ],
       "slug": "cache_spider",
       "icontype": "nature",
       "in_shop": false,

@@ -100,8 +100,7 @@
               "target": "self",
               "description": "Gain 1 Credits"
             }
-          ],
-          "description": "Every 8s: Gain 1 of every type of buff"
+          ]
         }
       ],
       "slug": "quantum_processor",

@@ -29,6 +29,7 @@ from item_effects import (
     HealthThresholdTrigger,
     ItemSpec,
     ModifyEffect,
+    ModifyPerEffect,
     OnAttackedTrigger,
     OnHitTrigger,
     PassiveTrigger,
@@ -542,6 +543,12 @@ class BattleSimulator:
                             effect.target_type, item, items
                         ):
                             self._modify(reached, effect)
+                    elif isinstance(effect, ModifyPerEffect):
+                        # The other direction: what stands in the zone decides
+                        # how much the item projecting it changes.
+                        standing = self._counted_in(effect, item, items)
+                        if standing:
+                            self._modify(item, effect, times=standing)
 
     def _reached_by(
         self, target: str, source: BattleItem, items: List[BattleItem]
@@ -567,16 +574,40 @@ class BattleSimulator:
         # make an item quietly stronger than it should be.
         return []
 
-    def _modify(self, item: BattleItem, effect: ModifyEffect):
-        """Put one modifier onto one item."""
+    def _counted_in(
+        self, effect: ModifyPerEffect, source: BattleItem, items: List[BattleItem]
+    ) -> int:
+        """How many items in the zone are worth counting.
+
+        `counting` matches a kind an item carries or the category it belongs
+        to, so "nature" and "food" both work. Empty counts anything standing
+        there.
+        """
+        zone = set(source.aura_squares(effect.zone))
+        standing = [
+            other
+            for other in items
+            if other.uid != source.uid and zone & set(other.get_occupied_squares())
+        ]
+        return sum(
+            1
+            for other in standing
+            if effect.matches(
+                {k.lower() for k in other.spec.kinds}
+                | {other.spec.category.lower()}
+            )
+        )
+
+    def _modify(self, item: BattleItem, effect, times: int = 1):
+        """Put a modifier onto one item, `times` over."""
         if effect.stat == "trigger_speed":
-            item.speed_mult *= 1 + effect.value
+            item.speed_mult *= 1 + effect.value * times
         elif effect.stat == "accuracy":
-            item.accuracy_bonus += effect.value
+            item.accuracy_bonus += effect.value * times
         elif effect.stat == "damage":
-            item.damage_mult *= 1 + effect.value
+            item.damage_mult *= 1 + effect.value * times
         elif effect.stat == "cpu_cost":
-            item.cpu_discount += effect.value
+            item.cpu_discount += effect.value * times
 
     def _setup_item_handlers(
         self, items: List[BattleItem], owner: Player, enemy: Player
@@ -888,12 +919,13 @@ class BattleSimulator:
                         details={"amount": result["amount"]},
                     )
                 )
-            elif isinstance(effect, ModifyEffect):
-                # Declared, not applied. A modifier changes a number on the
-                # items an aura reaches, and nothing reads an aura during a
-                # battle yet. Kept so the catalogue can record what an item
-                # does, and checked at load so the name is real. See
-                # BACKLOG.md.
+            elif isinstance(effect, (ModifyEffect, ModifyPerEffect)):
+                # Already applied, by _apply_auras before the battle began.
+                # An aura settles once: nothing moves on the grid during a
+                # battle, so what it reaches cannot change. Passive triggers
+                # come through here as their handlers go on, so there is
+                # nothing left for a modifier to do per activation. Nothing
+                # will go here later.
                 continue
             elif isinstance(effect, CleanseEffect):
                 cleansed = self._cleanse(

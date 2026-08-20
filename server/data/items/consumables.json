@@ -199,8 +199,7 @@
               "removes": "debuff",
               "description": "Cleanse 1 debuff"
             }
-          ],
-          "description": "Every 2.7s: Cleanse 1 debuff"
+          ]
         }
       ],
       "slug": "auto_rollback",

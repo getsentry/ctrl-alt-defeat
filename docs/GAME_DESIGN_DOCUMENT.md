@@ -416,6 +416,42 @@ for the whole cooldown, so a stack gained during it counts towards the next
 one instead. The steady state is the same; only a stack arriving mid-cooldown
 differs.
 
+#### Auras
+
+An item can draw a zone on its own map, a star or a diamond, which lands on
+the grid beside it and turns with it. A zone is not the squares around an
+item: most items that project one reach further than that.
+
+A zone works in three directions, and they are separate mechanics:
+
+| Direction | Reads as | Items |
+|---|---|---|
+| What it falls on | "Star items trigger 20% faster" | 22 |
+| What it counts | "Triggers 15% faster for each Star Food" | 37 |
+| What happens in it | "Star item activates: ..." | 17 |
+
+The first two are built. The third is not, and needs a trigger rather than an
+effect, since the zone is the cause rather than the target.
+
+Counting looks for a kind an item carries or the category it belongs to, so
+"for each Star Dark-item" and "for each Star Food" are the same question asked
+of different tags. An item says what it counts three ways:
+
+```
+"counting": "any"                       every item standing in the zone
+"counting": {"any": ["pet", "script"]}  "for each Star Pet or Food"
+"counting": {"all": ["holy", "magic"]}  both tags at once
+```
+
+**An item counts once however many tags it matches.** "For each Star Pet or
+Food" counts items, not matching tags, so something that is both is still one.
+
+An item counting two different things in two different zones -- Boiling Pot is
+"for each Star Potion and Diamond Food" -- writes two of these rather than one
+with a list, because the zones differ as well as the tags. Nothing it counts can be changed by another aura, because a
+kind and a category are settled before a battle starts, so the order the auras
+are worked out in does not matter.
+
 #### What is not a buff
 
 Three things kept ending up in the same place as buffs, and none of them

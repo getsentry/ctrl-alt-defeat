@@ -160,6 +160,58 @@ class ModifyEffect(Effect):
         }
 
 
+@dataclass
+class ModifyPerEffect(Effect):
+    """Change a number on the item projecting the aura, once for each item
+    the aura falls on.
+
+    The other direction from ModifyEffect. "Star items trigger 20% faster"
+    changes what the zone lands on; "Triggers 15% faster for each Star Food"
+    changes the item projecting it, and how much depends on what is standing
+    there. 37 items in the source game are written this way against 22 the
+    other, so this is the commoner half.
+
+    `counting` narrows what is worth counting: a kind an item carries, or a
+    category it belongs to, or empty for anything at all. It reads the same
+    tags weapons do, so "nature" and "holy" work as well as "melee".
+
+    Nothing it counts can be changed by another aura -- a kind and a category
+    are fixed before a battle -- so it does not matter what order the auras
+    are worked out in.
+    """
+
+    stat: str
+    value: float
+    zone: str  # "star" or "diamond"
+
+    #: What is worth counting. `"any"` counts every item standing in the zone.
+    #: `{"any": [...]}` counts an item matching any of the tags, and
+    #: `{"all": [...]}` one matching every tag. A tag is a kind an item
+    #: carries or the category it belongs to, so "nature" and "pet" both work.
+    #: An item counts once however many tags it matches.
+    counting: object
+
+    def matches(self, tags: set) -> bool:
+        """Whether an item carrying `tags` is worth counting."""
+        if self.counting == "any":
+            return True
+        wanted = {t.lower() for t in next(iter(self.counting.values()))}
+        return (
+            bool(wanted & tags)
+            if "any" in self.counting
+            else wanted <= tags
+        )
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {
+            "type": "modify_per",
+            "stat": self.stat,
+            "value": self.value,
+            "zone": self.zone,
+            "counting": self.counting,
+        }
+
+
 DEBUFFS = frozenset({"throttled", "memory_leaked", "rate_limited"})
 
 # Section 3.1. Ours for Heat, Empower, Luck, Regeneration, Spikes, Vampirism
@@ -191,7 +243,6 @@ UNBUILT_TRIGGERS = frozenset({
 
 UNBUILT_EFFECTS = frozenset({
     "adaptive_buff",
-    "adjacent_buff",
     "battle_start",
     "damage_bonus",
     "damage_immunity",
@@ -202,7 +253,6 @@ UNBUILT_EFFECTS = frozenset({
     "gold_gain",
     "lifesteal",
     "multicast",
-    "scaling_buff",
     "shop_discount",
     "spawn_companion",
     "special",

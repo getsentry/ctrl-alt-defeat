@@ -28,8 +28,7 @@
               "max_heal": 4,
               "description": "Heal for 4"
             }
-          ],
-          "description": "Every 5s: Heal for 4"
+          ]
         }
       ],
       "slug": "health_check_script",
@@ -65,8 +64,7 @@
               "value": 3,
               "description": "Gain 3 Block"
             }
-          ],
-          "description": "Every 4s: Gain 3 Block"
+          ]
         }
       ],
       "slug": "firewall_script",
@@ -103,8 +101,7 @@
               "target": "self",
               "description": "Gain 1 Credits"
             }
-          ],
-          "description": "Every 3.5s: Gain 1 Credits"
+          ]
         }
       ],
       "slug": "cache_optimizer",
@@ -149,8 +146,7 @@
               "max_heal": 4,
               "description": "Heal for 4"
             }
-          ],
-          "description": "Every 2.9s: Gain 1 Spiked and heal for 4"
+          ]
         }
       ],
       "slug": "load_balancer_script",
@@ -255,8 +251,7 @@
               "target": "enemy",
               "description": "Inflict 1 Throttled"
             }
-          ],
-          "description": "Every 3s: Inflict 1 Throttled"
+          ]
         }
       ],
       "slug": "cryogenic_cooling_system",

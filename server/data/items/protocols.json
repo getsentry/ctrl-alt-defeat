@@ -576,13 +576,42 @@
       "source": "Boiling Pot",
       "rarity": "rare",
       "cost": 8,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.5,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "patch"
+                ]
+              },
+              "description": "Triggers 50% faster for each Star Potion"
+            },
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.5,
+              "zone": "diamond",
+              "counting": {
+                "any": [
+                  "script"
+                ]
+              },
+              "description": "and each Diamond Food"
+            }
+          ]
+        }
+      ],
       "slug": "boiling_pot",
       "in_shop": false,
       "unbuilt": [
         "Star Potion triggered: Heal for 10 + 2 per Diamond Food.",
-        "After 15s: Gain 6Heat and 6Regeneration.",
-        "Triggers 50% faster for each Star Potion and Diamond Food."
+        "After 15s: Gain 6Heat and 6Regeneration."
       ],
       "sockets": 1,
       "recipe": [
@@ -631,12 +660,25 @@
       "source": "Fanfare",
       "rarity": "godly",
       "cost": 7,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.1,
+              "zone": "star",
+              "counting": "any",
+              "description": "Triggers 10% faster for each Star item"
+            }
+          ]
+        }
+      ],
       "slug": "fanfare",
       "in_shop": false,
       "unbuilt": [
-        "Every 3s: Randomly gain 1 Empower or gain 3 Mana and remove 2 Mana from opponent or remove 1 stamina from opponent.",
-        "Triggers 10% faster for each Star item."
+        "Every 3s: Randomly gain 1 Empower or gain 3 Mana and remove 2 Mana from opponent or remove 1 stamina from opponent."
       ],
       "icontype": "magic,musical"
     },
@@ -656,12 +698,25 @@
       "source": "Flute",
       "rarity": "epic",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.1,
+              "zone": "star",
+              "counting": "any",
+              "description": "Triggers 10% faster for each Star item"
+            }
+          ]
+        }
+      ],
       "slug": "flute",
       "in_shop": false,
       "unbuilt": [
-        "Every 4.7s: Randomly gain 14 Block or 2 stamina or 2 Luck.",
-        "Triggers 10% faster for each Star item."
+        "Every 4.7s: Randomly gain 14 Block or 2 stamina or 2 Luck."
       ],
       "icontype": "magic, musical"
     },
@@ -744,12 +799,29 @@
       "source": "Heart of Darkness",
       "rarity": "godly",
       "cost": 19,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.2,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "dark"
+                ]
+              },
+              "description": "Triggers 20% faster for each Star dark-item"
+            }
+          ]
+        }
+      ],
       "slug": "heart_of_darkness",
       "in_shop": false,
       "unbuilt": [
         "Every 4s: Steal 2 buffs, prioritizing Regeneration.",
-        "Triggers 20% faster for each Star Dark-item.",
         "Use 7 Regeneration: Gain 100 maximum health, 4 Empower and your opponent's healing is reduced by 40% (once)."
       ],
       "sockets": 1,

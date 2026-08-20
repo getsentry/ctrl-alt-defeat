@@ -24,6 +24,7 @@ from containers import Container
 from main import generate_shop_items
 from grid_system import parse_map
 from item_effects import (
+    ModifyPerEffect,
     DEBUFFS,
     AttackEffect,
     CleanseEffect,
@@ -800,6 +801,12 @@ class TestABuffIsNotAStat:
         for item_id, spec in config_loader.items.items():
             for trigger in spec.triggers or []:
                 for effect in getattr(trigger, "effects", []) or []:
+                    if isinstance(effect, ModifyPerEffect):
+                        zones = (spec.shape.star if effect.zone == "star"
+                                 else spec.shape.diamond)
+                        assert zones, (
+                            f"{item_id} counts a {effect.zone} it never draws"
+                        )
                     if isinstance(effect, ModifyEffect) and effect.target_type in (
                         "star", "diamond"
                     ):
