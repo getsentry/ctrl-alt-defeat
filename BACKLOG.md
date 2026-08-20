@@ -113,6 +113,18 @@ engine's bookkeeping, not something an item can say.
 `reflect` is gone, and a number that changes an item is a `modify` rather than
 a buff. What remains:
 
+**Aura-as-trigger is the half still missing.** A zone reaches items two ways.
+As a target -- "Start of battle: Star items trigger 20% faster" -- it works
+now. As a trigger -- "Star item activates:", "6 Star item activations:" -- it
+does not, and 43 items in the source game use that form.
+
+**`contained` reaches nothing.** A container does not know which items sit
+inside it, so a modifier scoped to it is dropped rather than applied. Three
+items are affected. The pieces exist: `Container.covered_squares()` and the
+item's own squares, intersected.
+
+**Superseded, kept for the record:**
+
 **A modifier is declared and never applied.** Ten items carry one, saying
 things like "items trigger 10% faster". The effect parses, its stat and scope
 are both checked, and a star or diamond scope is checked against the zones the

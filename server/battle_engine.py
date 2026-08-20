@@ -190,6 +190,25 @@ class BattleItem:
         """Get shape from spec"""
         return self.spec.shape
 
+    # What an aura has done to this item, worked out before the battle. The
+    # engine reads these when it schedules, rolls and totals damage.
+    speed_mult: float = 1.0
+    accuracy_bonus: float = 0.0
+    damage_mult: float = 1.0
+    cpu_discount: float = 0.0
+
+    def aura_squares(self, zone: str) -> List[Tuple[int, int]]:
+        """The grid squares this item's star or diamond zone falls on.
+
+        A zone is drawn on the item's own map and turns with it, so it is read
+        off the rotated shape. It can land anywhere: a zone is not the squares
+        around an item, and most items that project one reach further.
+        """
+        turned = self.shape.rotate(self.rotation)
+        offsets = turned.star if zone == "star" else turned.diamond
+        x, y = self.position
+        return [(x + dx, y + dy) for dx, dy in offsets]
+
     def get_occupied_squares(self) -> List[Tuple[int, int]]:
         """Get all grid squares this item occupies"""
         rotated_shape = self.shape.rotate(self.rotation)
@@ -361,6 +380,11 @@ class BattleSimulator:
         player1.reset_for_battle()
         player2.reset_for_battle()
 
+        # Let every aura change the items it falls on (Section 3.1), before
+        # anything is scheduled, since an aura changes how fast things go.
+        self._apply_auras(p1_items)
+        self._apply_auras(p2_items)
+
         # Set up event handlers for items. Passive effects are applied here as
         # the handlers go on, which is the only place they are applied: an
         # infrastructure pass of its own used to run first and add the same
@@ -504,6 +528,56 @@ class BattleSimulator:
         index = min(max(round_num, 1), len(self.ROUND_QUOTA)) - 1
         return self.ROUND_QUOTA[index]
 
+    def _apply_auras(self, items: List[BattleItem]):
+        """Let every aura change the items it falls on.
+
+        Worked out once, before the battle. Nothing moves on the grid during a
+        battle, so an aura reaches the same items throughout.
+        """
+        for item in items:
+            for trigger in item.spec.triggers:
+                for effect in getattr(trigger, "effects", []) or []:
+                    if isinstance(effect, ModifyEffect):
+                        for reached in self._reached_by(
+                            effect.target_type, item, items
+                        ):
+                            self._modify(reached, effect)
+
+    def _reached_by(
+        self, target: str, source: BattleItem, items: List[BattleItem]
+    ) -> List[BattleItem]:
+        """The items a modifier reaches.
+
+        A star or diamond is a zone on the grid, so an item is reached when a
+        square it covers is in that zone. An item never reaches itself through
+        its own aura: a zone is drawn beside the footprint, not on it.
+        """
+        if target == "own":
+            return items
+        if target in ("star", "diamond"):
+            zone = set(source.aura_squares(target))
+            return [
+                other
+                for other in items
+                if other.uid != source.uid
+                and zone & set(other.get_occupied_squares())
+            ]
+        # `contained` waits on a container knowing what sits inside it.
+        # Reaching nothing is the safer of the two ways to be wrong: it cannot
+        # make an item quietly stronger than it should be.
+        return []
+
+    def _modify(self, item: BattleItem, effect: ModifyEffect):
+        """Put one modifier onto one item."""
+        if effect.stat == "trigger_speed":
+            item.speed_mult *= 1 + effect.value
+        elif effect.stat == "accuracy":
+            item.accuracy_bonus += effect.value
+        elif effect.stat == "damage":
+            item.damage_mult *= 1 + effect.value
+        elif effect.stat == "cpu_cost":
+            item.cpu_discount += effect.value
+
     def _setup_item_handlers(
         self, items: List[BattleItem], owner: Player, enemy: Player
     ):
@@ -633,7 +707,7 @@ class BattleSimulator:
         trigger_uid: str,
     ):
         """Schedule timer-based trigger activation using priority queue"""
-        next_time = self.current_time + self._cooldown_for(trigger, owner)
+        next_time = self.current_time + self._cooldown_for(trigger, owner, item)
 
         def activate():
             # Skip if item is consumed
@@ -641,7 +715,9 @@ class BattleSimulator:
                 return
 
             # Check CPU availability
-            cpu_cost = trigger.get_cpu_cost()
+            # An aura can make an item cheaper to run, never free: the floor
+            # is zero rather than a refund.
+            cpu_cost = max(0.0, trigger.get_cpu_cost() - item.cpu_discount)
 
             if owner.cpu >= cpu_cost:
                 # Have enough CPU - apply the effects
@@ -669,7 +745,9 @@ class BattleSimulator:
 
         self.event_manager.schedule_timer(next_time, trigger_uid, activate)
 
-    def _cooldown_for(self, trigger: TimerTrigger, owner: Player) -> float:
+    def _cooldown_for(
+        self, trigger: TimerTrigger, owner: Player, item: BattleItem
+    ) -> float:
         """How long this item waits, once its owner's statuses are counted.
 
         Section 3.1 has the formula, which is Backpack Battles'. Everything
@@ -687,7 +765,11 @@ class BattleSimulator:
         stack gained part way through counts towards the next wait rather than
         this one.
         """
+        # An aura and a status land in the same sum, which is what the source
+        # game's formula is for: everything that speeds an item up added
+        # together against everything that slows it down.
         faster = owner.buffs.get(OPTIMIZED, 0) * SPEED_PER_STACK
+        faster += item.speed_mult - 1
         slower = owner.debuffs.get(THROTTLED, 0) * SPEED_PER_STACK
 
         difference = min(abs(faster - slower), SPEED_LIMIT)
@@ -880,6 +962,7 @@ class BattleSimulator:
         # accuracy over 1 always hits and one under 0 always misses, which is
         # what those numbers mean.
         accuracy = attack_data["accuracy"]
+        accuracy += item.accuracy_bonus
         accuracy += owner.buffs.get(CALIBRATED, 0) * ACCURACY_PER_STACK
         accuracy -= owner.debuffs.get(RATE_LIMITED, 0) * ACCURACY_PER_STACK
 
@@ -904,6 +987,7 @@ class BattleSimulator:
         # Section 3.1: Monitored is +1 damage a stack. It needs no check for
         # whether this is a weapon, because an attack is what a weapon does
         # and nothing else reaches here.
+        damage = int(damage * item.damage_mult)
         damage += owner.buffs.get(MONITORED, 0)
 
         # Check crit

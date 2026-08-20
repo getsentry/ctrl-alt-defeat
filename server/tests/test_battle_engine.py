@@ -1463,7 +1463,17 @@ class TestHowFastAnItemTriggers:
             owner.buffs[OPTIMIZED] = optimized
         if throttled:
             owner.debuffs[THROTTLED] = throttled
-        return sim._cooldown_for(TimerTrigger(cooldown=base, cpu_cost=0), owner)
+        plain = BattleItem(
+            spec=ItemSpec(
+                id="t", name="Timed", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "t"), slug="t",
+                triggers=[],
+            ),
+            position=(0, 0), uid="timed",
+        )
+        return sim._cooldown_for(
+            TimerTrigger(cooldown=base, cpu_cost=0), owner, plain
+        )
 
     def test_no_status_leaves_the_cooldown_alone(self):
         assert self._cooldown() == 2.0
@@ -1866,3 +1876,201 @@ class TestAShieldAnswersOnlyWhatItSays:
                     found += 1
                     assert trigger.answers_to, f"{item_id} answers to nothing"
         assert found, "the catalogue should still have shields in it"
+
+
+class TestAnAuraReachesWhatItFallsOn:
+    """Section 3.1: a zone is drawn on an item's own map and lands on the grid.
+
+    It is not the squares around an item -- most items that project one reach
+    further than that -- which is why adjacency was the wrong model.
+    """
+
+    @staticmethod
+    def _projector(value=0.2, stat="trigger_speed", target="star",
+                   position=(1, 0), uid="boost"):
+        from item_effects import ModifyEffect, PassiveTrigger
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Aura", category="infrastructure", cost=1,
+                player_class="neutral", slug=uid,
+                shape=parse_map(["*##*"], "aura"),
+                triggers=[PassiveTrigger(effects=[
+                    ModifyEffect(stat=stat, value=value, target_type=target)])],
+            ),
+            position=position, uid=uid,
+        )
+
+    @staticmethod
+    def _plain(position, uid):
+        from item_effects import AttackEffect
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Plain", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "p"), slug=uid,
+                kinds=frozenset({"melee"}),
+                triggers=[TimerTrigger(cooldown=2.0, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=4, max_damage=4, accuracy=1.0,
+                                 crit_chance=0.0)])],
+            ),
+            position=position, uid=uid,
+        )
+
+    def _run(self, items):
+        containers = [
+            Container.of("mesh_network_hub", (0, 0), "a"),
+            Container.of("mesh_network_hub", (4, 0), "c"),
+        ]
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 0.2
+        result = sim.simulate_battle(
+            items, [], 1, containers,
+            [Container.of("mesh_network_hub", (0, 4), "b")],
+        )
+        return {i.uid: i for i in result["player1_items"]}
+
+    def test_the_zone_lands_where_the_map_draws_it(self):
+        aura = self._projector()
+        assert aura.get_occupied_squares() == [(1, 0), (2, 0)]
+        assert aura.aura_squares("star") == [(0, 0), (3, 0)]
+
+    def test_an_item_in_the_zone_is_reached(self):
+        by_uid = self._run([self._projector(), self._plain((0, 0), "inside")])
+        assert by_uid["inside"].speed_mult == pytest.approx(1.2)
+
+    def test_an_item_outside_the_zone_is_not(self):
+        by_uid = self._run([self._projector(), self._plain((4, 0), "outside")])
+        assert by_uid["outside"].speed_mult == 1.0
+
+    def test_an_aura_does_not_reach_the_item_projecting_it(self):
+        """A zone is drawn beside the footprint, never on it."""
+        by_uid = self._run([self._projector()])
+        assert by_uid["boost"].speed_mult == 1.0
+
+    def test_it_reaches_further_than_the_squares_around_it(self):
+        """The reason adjacency could not stand in for an aura."""
+        far = BattleItem(
+            spec=ItemSpec(
+                id="f", name="Far", category="infrastructure", cost=1,
+                player_class="neutral", slug="f",
+                shape=parse_map(["#..*"], "far reach"),
+                triggers=[],
+            ),
+            position=(0, 0), uid="far",
+        )
+        assert far.aura_squares("star") == [(3, 0)], "three squares away"
+
+    def test_a_speed_aura_reaches_the_cooldown(self):
+        """It lands in the same sum as Optimized, which is what the source
+        game's formula is for."""
+        by_uid = self._run([self._projector(), self._plain((0, 0), "inside")])
+        sim = BattleSimulator(seed=TEST_SEED)
+        owner = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        base = TimerTrigger(cooldown=2.0, cpu_cost=0)
+        assert sim._cooldown_for(base, owner, by_uid["inside"]) == pytest.approx(2.0 / 1.2)
+
+    def _swings(self, items, seconds=12.0):
+        """Run a battle and report what the item in the zone actually did."""
+        containers = [
+            Container.of("mesh_network_hub", (0, 0), "a"),
+            Container.of("mesh_network_hub", (4, 0), "c"),
+        ]
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        sim.simulate_battle(
+            items, [], 18, containers,
+            [Container.of("mesh_network_hub", (0, 4), "b")],
+        )
+        return [a for a in sim.actions if a.action in ("damage", "miss")]
+
+    def _coin_flip_weapon(self, uid="inside"):
+        weapon = self._plain((0, 0), uid)
+        weapon.spec.triggers[0].effects[0].accuracy = 0.5
+        return weapon
+
+    def test_an_accuracy_aura_changes_whether_swings_land(self):
+        """Setting the field is not the same as the roll reading it. Both
+        weapons are the same coin flip; only the aura differs."""
+        plain = self._swings([self._coin_flip_weapon()])
+        boosted = self._swings([
+            self._projector(value=0.5, stat="accuracy"),
+            self._coin_flip_weapon(),
+        ])
+
+        def landed(acts):
+            return len([a for a in acts if a.action == "damage"])
+
+        assert landed(plain) < landed(boosted)
+        assert not [a for a in boosted if a.action == "miss"], (
+            "half a coin flip plus 50% never misses"
+        )
+
+    def test_a_damage_aura_changes_what_lands(self):
+        plain = self._swings([self._plain((0, 0), "inside")])
+        boosted = self._swings([
+            self._projector(value=1.0, stat="damage"),
+            self._plain((0, 0), "inside"),
+        ])
+        first = lambda acts: next(a.damage for a in acts if a.action == "damage")
+        assert first(plain) == 4
+        assert first(boosted) == 8, "double damage should double the hit"
+
+    def test_an_accuracy_aura_reaches_the_roll(self):
+        by_uid = self._run([
+            self._projector(value=0.25, stat="accuracy"),
+            self._plain((0, 0), "inside"),
+        ])
+        assert by_uid["inside"].accuracy_bonus == pytest.approx(0.25)
+
+    def test_a_damage_aura_reaches_the_total(self):
+        by_uid = self._run([
+            self._projector(value=0.5, stat="damage"),
+            self._plain((0, 0), "inside"),
+        ])
+        assert by_uid["inside"].damage_mult == pytest.approx(1.5)
+
+    def test_a_cpu_aura_makes_an_item_cheaper_to_run(self):
+        from item_effects import AttackEffect
+
+        def swings(with_aura):
+            weapon = BattleItem(
+                spec=ItemSpec(
+                    id="w", name="Costly", category="problem", cost=1,
+                    player_class="neutral", shape=parse_map(["#"], "w"),
+                    slug="w", kinds=frozenset({"melee"}),
+                    triggers=[TimerTrigger(cooldown=0.5, cpu_cost=2.0, effects=[
+                        AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                                     crit_chance=0.0)])],
+                ),
+                position=(0, 0), uid="costly",
+            )
+            items = [weapon]
+            if with_aura:
+                items.append(self._projector(value=1.5, stat="cpu_cost"))
+            return len([a for a in self._swings(items, seconds=6.0)
+                        if a.action == "damage"])
+
+        assert swings(with_aura=True) > swings(with_aura=False), (
+            "a cheaper item runs more often when CPU is the limit"
+        )
+
+    def test_an_aura_never_makes_an_item_free(self):
+        """The floor is zero, not a refund."""
+        from item_effects import ModifyEffect
+
+        sim = BattleSimulator(seed=TEST_SEED)
+        item = self._plain((0, 0), "plain")
+        sim._modify(item, ModifyEffect(stat="cpu_cost", value=99.0,
+                                       target_type="star"))
+        cost = max(0.0, 1.0 - item.cpu_discount)
+        assert cost == 0.0
+
+    def test_contained_reaches_nothing_yet(self):
+        """A container does not know what sits inside it. Reaching nothing is
+        the safer way to be wrong: it cannot make an item quietly stronger."""
+        by_uid = self._run([
+            self._projector(target="contained"),
+            self._plain((0, 0), "inside"),
+        ])
+        assert by_uid["inside"].speed_mult == 1.0
