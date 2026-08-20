@@ -502,7 +502,9 @@ func test_the_client_handles_every_action_the_server_declares():
 		"dot": {"debuff_name": "memory_leaked"},
 		"cpu_fail": {"reason": "Insufficient CPU"},
 		"cpu_drain": {"amount": 1},
-		"cleanse": {"removed": {"memory_leaked": 2}}
+		"cleanse": {"removed": {"memory_leaked": 2}},
+		"spend": {"costs": {"credits": 3}},
+		"stun": {"until": 2.5}
 	}
 
 	for action_name in declared:

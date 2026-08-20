@@ -71,6 +71,10 @@ class TimerEvent:
     item_id: str
     callback: Callable
 
+    #: The player whose item this belongs to, so a stun can find every wait
+    #: it has to hold still. None for a timer nobody owns.
+    owner: Optional[int] = None
+
     def __lt__(self, other):
         """For heap ordering - earliest time first"""
         return self.activation_time < other.activation_time
@@ -142,11 +146,36 @@ class EventManager:
         return results
 
     def schedule_timer(
-        self, activation_time: float, item_id: str, callback: Callable
+        self,
+        activation_time: float,
+        item_id: str,
+        callback: Callable,
+        owner: Optional[int] = None,
     ) -> None:
         """Schedule a timer event"""
-        timer_event = TimerEvent(activation_time, item_id, callback)
+        timer_event = TimerEvent(activation_time, item_id, callback, owner)
         heapq.heappush(self.timer_queue, timer_event)
+
+    def hold_timers(self, owner: int, delay: float) -> int:
+        """Push every one of a player's waits back by `delay`, and say how
+        many were pushed.
+
+        This is what a stun does. A wait is kept as the time it comes due, so
+        holding it still is moving that time; an item halfway through keeps
+        the half it had left, because both ends move together.
+
+        The heap is rebuilt afterwards. Only one player's waits move, so the
+        order of the rest against them is no longer the order they were put
+        in.
+        """
+        moved = 0
+        for timer_event in self.timer_queue:
+            if timer_event.owner == owner:
+                timer_event.activation_time += delay
+                moved += 1
+        if moved:
+            heapq.heapify(self.timer_queue)
+        return moved
 
     def cancel_timer(self, item_id: str) -> bool:
         """Cancel all timer events for a specific item"""

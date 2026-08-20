@@ -6,7 +6,7 @@ Effects determine WHAT happens
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, ClassVar, List, Optional, Tuple
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Tuple
 
 from grid_system import ItemShape
 
@@ -129,8 +129,37 @@ class BuffEffect(Effect):
         }
 
 
+class Counting:
+    """What an effect looks at, when it does not look at everything.
+
+    `"any"` means every item: the zone or the loadout as it stands. A dict
+    narrows it -- `{"any": [...]}` for an item carrying one of the tags,
+    `{"all": [...]}` for one carrying all of them. A tag is a kind an item
+    carries or the category it belongs to, so "nature" and "pet" both work.
+    An item matches once however many tags it matches.
+
+    Three effects narrow this way and they narrow identically, so the rule
+    lives here rather than three times over.
+
+    A plain mixin rather than a dataclass: a base dataclass puts its fields
+    first, which would have reordered every constructor that inherits it.
+    Each effect declares `counting` itself, in the place it reads best.
+    """
+
+    def matches(self, tags: set) -> bool:
+        """Whether an item carrying `tags` is one of the ones meant."""
+        if self.counting == "any":
+            return True
+        wanted = {t.lower() for t in next(iter(self.counting.values()))}
+        return (
+            bool(wanted & tags)
+            if "any" in self.counting
+            else wanted <= tags
+        )
+
+
 @dataclass
-class ModifyEffect(Effect):
+class ModifyEffect(Counting, Effect):
     """Change a number on some items.
 
     "Items inside trigger 10% faster", "+15% accuracy", "costs 1 less CPU".
@@ -151,17 +180,36 @@ class ModifyEffect(Effect):
     #: is what a container holds; `own` is everything the player has.
     target_type: str
 
+    #: How much this effect may ever grant, or None for no limit. Only a
+    #: modifier handed out again and again -- "Star items trigger 5% faster
+    #: (up to 50%)" -- can reach a limit, so an aura leaves it None. Counted
+    #: per pair of items, because the limit is on what one item has given
+    #: another, not on what the receiver has been given by everybody.
+    cap: Optional[float]
+
+    #: Which of those it means. See Counting. "Star Weapons deal +2 damage"
+    #: is this zone narrowed to weapons; "Star items trigger 20% faster" is
+    #: the same zone narrowed to nothing.
+    #:
+    #: The source game writes the singular -- "The Star Weapon gains 10
+    #: damage" -- when an item draws a one-square star, where the only weapon
+    #: that can stand there is the one. It is the zone that is small, not the
+    #: rule, so a zone reaching two weapons reaches both.
+    counting: object
+
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "modify",
             "stat": self.stat,
             "value": self.value,
             "target_type": self.target_type,
+            "counting": self.counting,
+            "cap": self.cap,
         }
 
 
 @dataclass
-class ModifyPerEffect(Effect):
+class ModifyPerEffect(Counting, Effect):
     """Change a number on the item projecting the aura, once for each item
     the aura falls on.
 
@@ -184,23 +232,8 @@ class ModifyPerEffect(Effect):
     value: float
     zone: str  # "star" or "diamond"
 
-    #: What is worth counting. `"any"` counts every item standing in the zone.
-    #: `{"any": [...]}` counts an item matching any of the tags, and
-    #: `{"all": [...]}` one matching every tag. A tag is a kind an item
-    #: carries or the category it belongs to, so "nature" and "pet" both work.
-    #: An item counts once however many tags it matches.
+    #: What is worth counting in the zone. See Counting.
     counting: object
-
-    def matches(self, tags: set) -> bool:
-        """Whether an item carrying `tags` is worth counting."""
-        if self.counting == "any":
-            return True
-        wanted = {t.lower() for t in next(iter(self.counting.values()))}
-        return (
-            bool(wanted & tags)
-            if "any" in self.counting
-            else wanted <= tags
-        )
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
@@ -226,6 +259,153 @@ BUFFS = frozenset({
     "credits",
 })
 
+@dataclass
+class GainDamageEffect(Counting, Effect):
+    """Flat damage an item picks up during a battle and keeps.
+
+    "Gain 1 damage", "The Star Weapon gains 10 damage". It adds to what the
+    weapon rolls rather than scaling it, which is why it is not a `modify`:
+    a modifier multiplies, and these clauses add.
+
+    It is kept as its own number, apart from the item's range, because the
+    source game has clauses that read it back -- "remove 1 damage gained in
+    battle from all opponent Weapons" takes this and leaves the weapon's own
+    damage alone.
+    """
+
+    amount: int
+    target_type: str
+    counting: object
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {
+            "type": "gain_damage",
+            "amount": self.amount,
+            "target_type": self.target_type,
+        }
+
+
+@dataclass
+class PerCountEffect(Counting, Effect):
+    """Everything behind it, once for each item that counts.
+
+    "Gain 3 Regeneration for each Star Holy-item", "Heal 4 per Star
+    Vampiric-item". ModifyPerEffect is this shape pointed at a number on an
+    item; this one is pointed at what a trigger does.
+
+    Doing the effects again is what "for each" means, so it works with every
+    effect rather than needing each of them to grow an amount field. Counting
+    nothing does nothing at all, which is the same answer as multiplying by
+    zero and needs no special case.
+    """
+
+    where: str
+    counting: object
+    effects: List[Effect] = field(default_factory=list)
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "per_count", "where": self.where}
+
+
+@dataclass
+class CostEffect(Effect):
+    """Everything behind it, if the owner can pay for it.
+
+    "Use 3 Mana to deal +7 damage", "Use 1 Luck, 1 Heat and 1 Mana: gain 1
+    Empower". All of it or none of it, like a chance: paying part of a price
+    for part of a clause is not something any item does.
+
+    What the trigger already did stands either way. "On attack: Use 3 Mana to
+    deal +7 damage" swings whether or not the Mana is there -- the attack is
+    the trigger and only the bonus is bought. The wiki does not spell this
+    out; it is read off the way the clauses are written, where the paid part
+    is always an addition to something that happened anyway.
+    """
+
+    #: What it costs, as buff name to stacks. More than one is allowed.
+    costs: Dict[str, int]
+    effects: List[Effect] = field(default_factory=list)
+
+    def affordable(self, buffs: Dict[str, int]) -> bool:
+        return all(buffs.get(name, 0) >= n for name, n in self.costs.items())
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "cost", "costs": dict(self.costs)}
+
+
+@dataclass
+class ConditionEffect(Effect):
+    """Everything behind it, if the player is in the state named.
+
+    "If your opponent has at least 10 Cold, gain 1 Empower", "If your health
+    is above 70%, gain 1 Empower. Otherwise, heal for 8." The second half is
+    `otherwise`, so one effect holds the whole sentence and the two halves
+    cannot both happen.
+
+    A condition is not a cost: it reads a state and spends nothing. "If you
+    have at least 10 Cold" leaves the Cold where it is, where "Use 10 Cold"
+    would not.
+    """
+
+    #: What is read. `status` counts one named buff or debuff; `buffs` and
+    #: `debuffs` count every stack of every kind, for "If you have no
+    #: debuffs"; `health` reads a share of maximum quota.
+    subject: str
+
+    #: Whose state. "self" or "enemy".
+    whose: str
+
+    #: Which status, when `subject` is `status`. Empty otherwise.
+    status: str
+
+    #: How the reading is judged: "at_least", "above", "below", "none".
+    test: str
+
+    #: What it is judged against. A share for health, a count for a status,
+    #: and ignored by "none".
+    amount: float
+
+    effects: List[Effect] = field(default_factory=list)
+    otherwise: List[Effect] = field(default_factory=list)
+
+    def holds(self, reading: float) -> bool:
+        if self.test == "none":
+            return reading == 0
+        if self.test == "at_least":
+            return reading >= self.amount
+        if self.test == "above":
+            return reading > self.amount
+        return reading < self.amount
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "condition", "subject": self.subject}
+
+
+@dataclass
+class StunEffect(Effect):
+    """Hold every cooldown still for a while.
+
+    Backpack Battles' Stun page: "Stun pauses all cooldowns for a certain
+    amount of time." An item mid-wait keeps the wait it had left and takes it
+    up again afterwards, so nothing is lost and nothing is reset.
+
+    Two stuns at once do not add. The same page: they "exist concurrently and
+    as separate debuffs based on when they were applied and when they
+    individually expire" -- so what matters is the later of the two ends, and
+    a stun landing inside a longer one adds nothing.
+
+    Not a debuff, for all the page calls it one: nothing stacks and nothing
+    can cleanse it, so it is not one of the three in Section 3.2.
+    """
+
+    duration: float
+    target_type: str
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "stun", "duration": self.duration,
+                "target_type": self.target_type}
+
+
 # What an item modifier can change. Each is a field the engine already keeps,
 # so a modifier that parses has somewhere to land.
 # Names the catalogue uses that nothing implements yet. Listing them is what
@@ -233,7 +413,6 @@ BUFFS = frozenset({
 # gap the loader counts, anything else stops the load. Take a name off this
 # list when you build it. See BACKLOG.md.
 UNBUILT_TRIGGERS = frozenset({
-    "on_attack",
     "on_crit",
     "on_damage",
     "on_damage_dealt",
@@ -262,7 +441,7 @@ UNBUILT_EFFECTS = frozenset({
 # nature, fire -- which say what it is made of rather than how it swings.
 WEAPON_KINDS = frozenset({"melee", "ranged", "magic"})
 
-MODIFIER_TARGETS = frozenset({"star", "diamond", "contained", "own"})
+MODIFIER_TARGETS = frozenset({"self", "star", "diamond", "contained", "own"})
 
 MODIFIERS = frozenset({
     "trigger_speed",
@@ -406,23 +585,6 @@ class CleanseEffect(Effect):
             "removes": self.removes,
             "named": self.named(),
             "kind": self.kind(),
-            "target_type": self.target_type,
-        }
-
-
-@dataclass
-class StunEffect(Effect):
-    """Prevent target from acting"""
-
-    stun_duration: float
-    accuracy: float = 0.5
-    target_type: str = "enemy"
-
-    def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {
-            "type": "stun",
-            "duration": self.stun_duration,
-            "accuracy": self.accuracy,
             "target_type": self.target_type,
         }
 
@@ -629,7 +791,7 @@ class OnAttackedTrigger(ChanceTrigger):
 
 
 @dataclass
-class AuraTrigger(Trigger):
+class AuraTrigger(Counting, Trigger):
     """Fires when an item standing in this item's zone activates.
 
     The third direction an aura works. The other two treat a zone as somewhere
@@ -637,8 +799,8 @@ class AuraTrigger(Trigger):
     cause: "Star item activates:", "6 Star item activations:".
 
     `after` is how many activations it waits for, so 1 fires on every one and
-    6 fires on every sixth. `counting` is the same syntax the counting
-    direction uses, so a trigger can wait on any item or only on a Food.
+    6 fires on every sixth. `counting` narrows what it waits on, the same way
+    every other effect that reads a zone narrows it. See Counting.
     """
 
     zone: str = "star"
@@ -648,13 +810,6 @@ class AuraTrigger(Trigger):
 
     # Runtime state: how many have happened since it last fired.
     seen: int = 0
-
-    def matches(self, tags: set) -> bool:
-        """Whether an item carrying `tags` is one this waits on."""
-        if self.counting == "any":
-            return True
-        wanted = {t.lower() for t in next(iter(self.counting.values()))}
-        return bool(wanted & tags) if "any" in self.counting else wanted <= tags
 
     def should_activate(
         self, event_type: str, source, target, battle_state: "BattleSimulator"
