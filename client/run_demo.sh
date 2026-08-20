@@ -70,6 +70,11 @@ echo "  Hover or drag an item to see what it goes with, anywhere on screen."
 echo "  Stand two that combine next to each other for the orange glow, then"
 echo "  press Enter to fight and watch them merge as the shop comes back."
 echo ""
+echo "  For the auras instead: start a game, then run"
+echo "      python tools/stock_the_demo.py"
+echo "  which puts items that project a zone on the shelf. No shop offers"
+echo "  one otherwise -- every item with a working aura is in_shop: false."
+echo ""
 
 BATTLE_SERVER_URL="http://localhost:$PORT" BATTLE_TEST_SEED="$SEED" \
     godot --path .

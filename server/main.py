@@ -44,6 +44,7 @@ from schemas import (
     InventoryAfterBattle,
     Pending,
     RackRequest,
+    ShopRequest,
     BattleHistoryResponse,
     BattleResponse,
     BattleResult,
@@ -1533,6 +1534,37 @@ async def get_battle_history(
 if TEST_MODE:
     # Store active test transactions
     test_transactions = {}
+
+    @app.post("/test/shop")
+    async def stock_the_shop(request: ShopRequest) -> GameSession:
+        """Put these items on a player's shelf, in this order.
+
+        Every item that projects an aura the engine acts on is `in_shop:
+        false` -- all twenty-five of them -- so no seed will ever offer one.
+        Looking at what an aura draws by playing means saying what is for sale.
+
+        The shelf is replaced. It is rolled again at the next round like any
+        other, so this is for the round it is called in.
+        """
+        session = await session_manager.get_session(request.player_id)
+        if not session:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
+            )
+
+        for slug in request.items:
+            if slug not in config_loader.items:
+                raise HTTPException(
+                    status_code=HTTPStatus.BAD_REQUEST, detail=f"No such item: {slug}"
+                )
+
+        session.current_shop = [
+            Item.of(slug, str(uuid.uuid4())[:8]) for slug in request.items
+        ]
+        await session_manager.update_session(session)
+
+        session.pending = pending_for(session)
+        return session
 
     @app.post("/test/rack")
     async def stand_items_on_the_rack(request: RackRequest) -> GameSession:

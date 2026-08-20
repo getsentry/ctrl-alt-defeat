@@ -186,6 +186,13 @@ class Item extends Resource:
 	# Covered squares whose zone points straight up on the grid however the item
 	# is turned. Needed to work out a turned zone; see turn_zone.
 	var anchors: Array[Vector2i] = []
+	# What this item can be narrowed by, with its category: "Star Pets" and
+	# "Star nature-items" are matched from these. See aura.gd.
+	var kinds: Array[String] = []
+	# What each of its zones acts on, keyed "star" and "diamond". A zone the
+	# item draws but nothing acts through is absent, which is not the same as
+	# one that acts on everything: that is present and empty.
+	var aura: Dictionary = {}
 	# How to draw the item while it has no artwork. The colour arrives as a
 	# value, so the client keeps no palette; the pattern arrives as a name,
 	# because the client is what draws it. Both are empty on a container.
@@ -219,6 +226,8 @@ class Item extends Resource:
 		star = APITypes.squares(data.get("star", []))
 		diamond = APITypes.squares(data.get("diamond", []))
 		anchors = APITypes.squares(data.get("anchors", []))
+		kinds = APITypes.strings(data["kinds"])
+		aura = data["aura"]
 		color = data["color"]
 		pattern = data["pattern"]
 		min_damage = int(data["min_damage"])
@@ -249,6 +258,8 @@ class Item extends Resource:
 			"star": APITypes.offsets(star),
 			"diamond": APITypes.offsets(diamond),
 			"anchors": APITypes.offsets(anchors),
+			"kinds": kinds,
+			"aura": aura,
 			"effects": effects,
 			"color": color,
 			"pattern": pattern,

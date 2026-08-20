@@ -99,6 +99,18 @@ class RackRequest(BaseModel):
     items: List["RackItem"]
 
 
+class ShopRequest(BaseModel):
+    """What to put on the shelf. TEST MODE ONLY.
+
+    Every item that projects a working aura is `in_shop: false`, so no seed can
+    put one in front of a player. Looking at what an aura draws means saying
+    what is for sale.
+    """
+
+    player_id: str = Field(description="Whose shop to stock")
+    items: List[str] = Field(description="Catalogue slugs to offer, in order")
+
+
 class RackItem(BaseModel):
     item_type: str = Field(description="Catalogue slug of the item to stand")
     position: Position = Field(description="The square it stands on")

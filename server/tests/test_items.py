@@ -5,8 +5,9 @@ Tests for items.py
 import pytest
 from pydantic import ValidationError
 
+from config_loader import config_loader
 from item_looks import CATEGORY_COLOR, PALETTE, PATTERNS
-from items import SALE_CHANCE, Item, sale_price
+from items import ZoneWants, SALE_CHANCE, Item, sale_price
 
 
 class TestSalePrice:
@@ -184,3 +185,70 @@ class TestTheLookIsCheckedOnTheWayOut:
     def test_allows_every_pattern_there_is(self):
         for name in PATTERNS:
             assert self._rebuilt(pattern=name).pattern == name
+
+
+class TestWhatAnAuraActsOn:
+    """GDD 4.4: a zone reaches everything standing in it, or only the items
+    carrying a tag. The client is sent both, so it can show a player which
+    items an aura would really act on rather than which squares it covers.
+    """
+
+    @staticmethod
+    def _named(name: str) -> str:
+        return next(
+            slug for slug, spec in config_loader.items.items() if spec.name == name
+        )
+
+    def test_a_narrowed_zone_says_what_it_wants(self):
+        # Script Kitty: "Star Pets and Star Scripts trigger faster".
+        item = Item.of(self._named("Script Kitty"), "x")
+
+        assert item.aura["star"][0].any_of == ["pet", "script"]
+        assert item.aura["star"][0].all_of == []
+
+    def test_a_zone_that_reaches_everything_is_present_and_empty(self):
+        """Present and empty is not the same as absent: one lights up when
+        anything stands in it, the other never lights up at all."""
+        # Klaxon: "Triggers 10% faster for each Star item".
+        item = Item.of(self._named("Klaxon"), "x")
+
+        assert item.aura["star"] == [ZoneWants()]
+
+    def test_a_zone_nothing_acts_through_is_absent(self):
+        """102 of the 117 items that draw a zone have no aura clause built
+        yet. Their zone is real and does nothing, and the client has to be
+        able to tell that from a zone that acts on everything."""
+        item = Item.of(self._named("Thermal Throttle"), "x")
+
+        assert item.star, "it draws a zone"
+        assert item.aura == {}, "and nothing acts through it"
+
+    def test_both_zones_are_answered_separately(self):
+        # CI Cauldron counts Star Potions and Diamond Foods separately.
+        item = Item.of(self._named("CI Cauldron"), "x")
+
+        assert item.aura["star"][0].any_of == ["patch"]
+        assert item.aura["diamond"][0].any_of == ["script"]
+
+    def test_an_item_carries_its_kinds_lowered(self):
+        """A tag is a kind or a category, so the client needs the kinds to
+        match one. Lowered here, so the catalogue's casing never reaches it."""
+        item = Item.of(self._named("Thermal Throttle"), "x")
+
+        assert item.kinds == ["fire", "ranged", "treasure"]
+        assert item.category == "problem", "and the category it matches on too"
+
+    def test_every_zone_the_catalogue_acts_through_is_answered(self):
+        """A clause with a zone the client is never told about is an aura the
+        player cannot see the point of."""
+        acting = 0
+        for slug, spec in config_loader.items.items():
+            zones = set()
+            for trigger in spec.triggers or []:
+                for source in [trigger] + list(getattr(trigger, "effects", [])):
+                    if getattr(source, "zone", None) in ("star", "diamond"):
+                        zones.add(source.zone)
+            if zones:
+                acting += 1
+                assert set(Item.of(slug, "x").aura) == zones, slug
+        assert acting > 10, "setup: some items really do act through a zone"

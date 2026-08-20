@@ -40,10 +40,27 @@ func _process(_delta: float) -> bool:
 	if frames == 5:
 		if showing == "merge":
 			_set_a_merge_going()
+		elif showing == "aura":
+			_set_an_aura_out()
 		else:
 			_set_the_scene()
+	# A window with nothing much in it runs at whatever rate it likes, so a
+	# swell is caught by what it is doing rather than by counting frames.
+	if showing == "aura" and frames > 6 and OS.get_environment("SWELL") == "1":
+		var swelled: float = ui.aura_overlay.swelling()
+		var ghost: float = ui.aura_overlay.ghosting()
+		var wanted := OS.get_environment("CATCH")
+		var now := (
+			(wanted == "grow" and swelled > 1.4 and swelled < 1.9)
+			or (wanted == "fade" and ghost > 0.0 and ghost < 0.55)
+			or (wanted == "done" and ghost == 0.0)
+		)
+		if now:
+			print("caught %s: swelling %.2f ghosting %.2f" % [wanted, swelled, ghost])
+			shoot_at = frames
 	if frames > 5 and showing != "merge":
 		ui.refresh_combining(pointer)
+		ui.refresh_aura(pointer)
 	if frames == 30:
 		print("overlay: ", ui.combining_overlay)
 		print("source: ", ui.combining_source(pointer))
@@ -116,6 +133,56 @@ func _set_a_merge_going() -> void:
 	ui.call_deferred("play_combining")
 
 
+func _set_an_aura_out() -> void:
+	"""A Cube Garbo: stars left and right, diamonds above and below, both
+	acting on anything.
+
+	Something stands in one of the stars and in both diamonds, and the rest of
+	the squares are empty, so a filled star, a filled diamond and an outline
+	can all be read side by side.
+	"""
+	ui.inventory_grid.load_inventory_state(APITypes.InventoryState.new({
+		"items": [
+			_aura_item("garbo", "cubert", [4, 3], [[0, 0], [1, 0], [0, 1], [1, 1]],
+				[[-1, 0], [-1, 1], [2, 0], [2, 1]],
+				[[0, -1], [0, 2], [1, -1], [1, 2]],
+				{"star": [{"any_of": [], "all_of": []}],
+				 "diamond": [{"any_of": [], "all_of": []}]}),
+			_of_kind("in_star", "cache_optimizer", "script", [3, 3]),
+			_of_kind("in_diamond", "ping_flood", "problem", [4, 2]),
+			_of_kind("in_diamond_too", "cupcake", "script", [5, 5]),
+		],
+		"servers": [
+			_container("container_a", [2, 3]),
+			_container("container_b", [4, 3]),
+			_container("container_c", [6, 3]),
+		],
+	}))
+	pointer = ui.inventory_grid.item_visual("garbo").get_global_rect().get_center()
+	ui.set_process(false)
+	# SWELL=1 catches the moment after an item is put down, when the markers
+	# that caught something are still coming back to size.
+	if OS.get_environment("SWELL") == "1":
+		ui.refresh_aura(pointer)
+		ui.aura_overlay.swell()
+
+
+func _aura_item(id: String, slug: String, at: Array, shape: Array,
+		star: Array, diamond: Array, aura: Dictionary) -> Dictionary:
+	var data := _item(id, slug, slug, at)
+	data["shape"] = shape
+	data["star"] = star
+	data["diamond"] = diamond
+	data["aura"] = aura
+	return data
+
+
+func _of_kind(id: String, slug: String, category: String, at: Array) -> Dictionary:
+	var data := _item(id, slug, slug, at)
+	data["category"] = category
+	return data
+
+
 func _set_the_scene() -> void:
 	state.combining.catalogue = APITypes.CombiningCatalogue.new({
 		"partners": {
@@ -179,7 +246,8 @@ func _item(id: String, item_type: String, slug: String, at: Array) -> Dictionary
 		"slug": slug, "category": "problem", "rarity": "common",
 		"cost": 4, "price": 4, "sell_value": 2, "on_sale": false,
 		"is_container": false, "shape": [[0, 0]], "star": [], "diamond": [],
-		"anchors": [], "effects": [], "color": "#BE0032", "pattern": "solid",
+		"anchors": [], "kinds": [], "aura": {},
+		"effects": [], "color": "#BE0032", "pattern": "solid",
 		"min_damage": 0, "max_damage": 0, "min_heal": 0, "max_heal": 0,
 		"block_amount": 0, "cooldown": 0.0, "cpu_cost": 0.0,
 		"position": at, "rotation": 0,

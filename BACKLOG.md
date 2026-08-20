@@ -1009,6 +1009,54 @@ One place, and forgetting becomes impossible, because the state is written by
 the thing that owns it. That is a refactor of ten call sites in two files and
 it is not a combining change, so it wants its own commit.
 
+### Nothing remembers a recipe once it has been discovered
+
+**108 of the 222 items can only be crafted.** They carry a recipe and are
+`in_shop: false`, so a shelf never offers one: Build Step, Onion Router, Power
+Brick, Cipher Core, Lucky Bitflip and a hundred more. Until combining was built
+none of them was reachable at all.
+
+Showing a player what a pair would make before they make it is not wanted --
+finding out is the game. But nothing records what they *have* found out either,
+so a recipe discovered in round three is gone by the next run, and by the round
+after it. A discovered-recipes screen is the missing half of the loop: the arcs
+say two items go together, the merge says what they became, and nothing keeps
+that anywhere.
+
+Needs a place to keep it (per player, not per session, or it is worth nothing),
+and a screen to read it on. The catalogue already carries every recipe, so what
+is missing is only which of them this player has seen happen.
+
+### Auras are drawn in the shop but not in a battle
+
+Hovering an item shows the zone it reaches into and which items it is acting on
+(GDD 4.3). That is the shop only. During a battle the racks are drawn by
+`battle_screen.gd` out of its own `InventoryGrid` instances rather than through
+`unified_grid_ui.gd`, so none of the wiring is shared: it would want an aura
+overlay per rack and hover detection of its own.
+
+Worth having -- a battle is where a player asks why a build works, and nothing
+there can be changed anyway so there is no risk in showing it. It is not a
+small change, which is why it is here rather than done.
+
+### The grid frees every child it has whenever it redraws
+
+`InventoryGrid._setup_visual()` frees every child of the grid and rebuilds the
+background and the cells. Anything else parented to the grid is destroyed with
+them, on every move, purchase and merge. The aura overlay stands beside the
+grid rather than inside it for exactly this reason, which is the wrong shape
+for something that draws only grid squares.
+
+It should free what it owns rather than everything it can see.
+
+### A full-screen flash with no way to turn it off
+
+Items combining takes the whole screen to white for a third of a second, once
+per shop phase. That is well short of a strobe and nothing else in the game
+flashes, so it is not urgent -- but there is no setting for it, and there is no
+settings screen to put one on. When there is one, `WHITEOUT_PEAK` in
+`combining_overlay.gd` is the single number it would drive. Low priority.
+
 ## Also found, lower priority
 
 *(Found while building the bot trainer. Each is real and reproducible; none is

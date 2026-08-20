@@ -2087,3 +2087,63 @@ class TestWhichItemsGoTogether:
         for one, others in answered["partners"].items():
             for slug in [one, *others]:
                 assert slug in names, f"{slug} has no name to show"
+
+
+class TestStockingTheShopForATest:
+    """The other half of the rack hook. TEST MODE only.
+
+    Every item that projects an aura the engine acts on is `in_shop: false`,
+    so no seed will ever put one in front of a player. Looking at what an aura
+    draws by playing means saying what is for sale.
+    """
+
+    def test_it_offers_what_it_is_told_to(self, auth_client):
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+
+        answered = auth_client.post("/test/shop", json={
+            "player_id": str(auth_client.user_id),
+            "items": ["cubert", "data_crawler"],
+        })
+
+        assert answered.status_code == 200, answered.text
+        assert [i["item_type"] for i in answered.json()["current_shop"]] == [
+            "cubert", "data_crawler"
+        ]
+
+    def test_it_offers_items_no_shop_would(self, auth_client):
+        """Which is the whole point: Cube Garbo draws both zones and is not
+        for sale anywhere."""
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+
+        auth_client.post("/test/shop", json={
+            "player_id": str(auth_client.user_id), "items": ["cubert"]})
+
+        held = auth_client.get("/session").json()
+        assert held["current_shop"][0]["name"] == "Cube Garbo"
+        assert held["current_shop"][0]["aura"], "and it really does draw a zone"
+
+    def test_the_shelf_is_replaced_rather_than_added_to(self, auth_client):
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/test/shop", json={
+            "player_id": str(auth_client.user_id), "items": ["cubert"]})
+
+        answered = auth_client.post("/test/shop", json={
+            "player_id": str(auth_client.user_id), "items": ["ping_flood"]})
+
+        assert [i["item_type"] for i in answered.json()["current_shop"]] == [
+            "ping_flood"
+        ]
+
+    def test_an_item_that_does_not_exist_is_refused(self, auth_client):
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+
+        answered = auth_client.post("/test/shop", json={
+            "player_id": str(auth_client.user_id), "items": ["no_such_item"]})
+
+        assert answered.status_code == 400
+
+    def test_it_needs_a_session(self, auth_client):
+        answered = auth_client.post(
+            "/test/shop", json={"player_id": "nobody", "items": []})
+
+        assert answered.status_code == 404

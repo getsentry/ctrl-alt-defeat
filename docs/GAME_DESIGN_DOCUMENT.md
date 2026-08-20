@@ -741,6 +741,60 @@ any square regardless. Nothing depends on the answer yet.
 `server/grid_system.py` reads all of this from the map, and returns the covered
 squares and both zones.
 
+#### What the client draws
+
+The zone appears while the player is hovering an item, holding one or dragging
+one, and not otherwise: it answers a question, so it is not on screen when
+nobody has asked one. An item being moved draws its zone around the square
+under the pointer, because where to put it is the question being asked; an item
+standing still draws it around where it stands. An item on a shelf or lying in
+the chest draws nothing, being nowhere on the board.
+
+Every square of the zone carries a marker -- a **star** or a **diamond**, so
+the two zones are told apart by shape and not only by colour, and both are
+drawn through so the artwork underneath can still be read.
+
+- **An outline** is a square the zone covers and is doing nothing with: empty,
+  or holding an item this aura does not act on, or off the rack altogether. A
+  zone half over bare floor is aura being wasted, and seeing that is how a
+  player learns to place better.
+- **A filled marker** is the aura acting on the item standing there.
+
+**One filled marker per item, however many squares of the zone land on it**,
+because that is how the rule works (Section 4.4). It is what makes the display
+a measure rather than a decoration: count the filled markers and you are
+counting the items your placement is worth.
+
+Two things say the same answer a second way. The items an aura is acting on are
+**drawn brighter** while the zone is up, because the marker says which square
+and the player cares which item. And **a click swells the markers that caught
+something**: a copy grows out of the marker over about an eighth of a second,
+quickly but visibly, and then fades off over a fifth of a second while the
+ordinary marker underneath stays put. Nothing shrinks -- a marker easing back
+down reads as something deflating, where a big one going out over a small one
+reads as the marker having answered.
+
+**The aura nods too.** When a placement sets an aura going, the item projecting
+it swells slightly and settles -- a smaller movement than the marker's, since
+the marker is the answer and this only says whose aura it was. The item that
+moves is the projector, because that is the one something has happened to: an
+item dropped into a zone is not changed by landing there, while the item whose
+zone it is has just gained a Star something. It works from both ends of the
+same event -- a thing put into a zone, and a zone put over a thing -- because
+the player may have been watching either, and an item landing in two zones at
+once sets both going.
+On a click and not on a hover, because it answers a question the player asked
+by pressing something; an answer that came every time the pointer crossed an
+item would be noise. Asking again too soon is ignored, so a held button does
+not ask on every frame and a placement, which is also a click, swells once.
+
+For that to be true rather than nearly true, the client is told what each zone
+acts on and what tags each item carries -- a zone narrowed to pets lands on a
+weapon and does nothing, and a marker that filled anyway would be lying about
+the only thing it is for. A zone the item draws but nothing acts through is
+sent as absent rather than as empty: 102 of the 117 items that draw a zone have
+no aura clause built yet, and their markers never fill.
+
 ### 4.4 What an aura does
 
 An aura carries the effect of the item projecting it. "Star Weapons gain 3

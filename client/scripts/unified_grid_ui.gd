@@ -7,6 +7,8 @@ const StorageBin = preload("res://scripts/storage_bin.gd")
 const Presentation = preload("res://scripts/presentation.gd")
 const PriceTag = preload("res://scripts/price_tag.gd")
 const CombiningOverlay = preload("res://scripts/combining_overlay.gd")
+const AuraOverlay = preload("res://scripts/aura_overlay.gd")
+const Aura = preload("res://scripts/aura.gd")
 
 # Game state is pulled from GameStateManager - no local copies
 
@@ -41,6 +43,12 @@ func _on_item_placed(item_data, grid_pos: Vector2i):
 	"""Called when an item is placed in the inventory grid"""
 	# Save the inventory state
 	_save_current_state()
+	# An item has landed, so its aura says what it caught, and anything that
+	# has started being acted on says so too.
+	if aura_overlay != null:
+		aura_overlay.swell()
+	if item_data != null:
+		pop_what_took_effect(item_data.id)
 
 
 func _on_item_removed(item_data, grid_pos: Vector2i):
@@ -124,6 +132,9 @@ func put_on_grid(item: APITypes.Item, grid_pos: Vector2i) -> bool:
 	inventory_grid.place_shop_item(item, grid_pos, item.facing())
 	_on_inventory_returned(response)
 	_save_current_state()
+	# The zone answers the question the player just asked by letting go.
+	if aura_overlay != null:
+		aura_overlay.swell()
 	return true
 
 
@@ -346,6 +357,9 @@ func _on_item_moved(item_id: String, from_pos: Vector2i, to_pos: Vector2i):
 	print("Item %s successfully moved from %s to %s" % [item_id, from_pos, to_pos])
 	# Save the current state to GameStateManager
 	_save_current_state()
+	# Moved into a zone, or moved a zone over something: either way, whatever
+	# has started being acted on says so.
+	pop_what_took_effect(item_id)
 
 
 func _save_current_state():
@@ -362,6 +376,16 @@ func _input(event):
 	if quarters != 0 and turn(quarters):
 		get_viewport().set_input_as_handled()
 		return
+
+	# Letting go of the button asks the aura to answer again. Every click, not
+	# only the ones that place something: it is how a player asks "and what is
+	# this one worth?" without having to pick the item up and put it back.
+	# The overlay ignores a second ask too soon after the first, so a placement
+	# -- which is also a click -- swells once.
+	if event is InputEventMouseButton \
+			and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed \
+			and aura_overlay != null:
+		aura_overlay.swell()
 
 	# An item in hand follows the pointer and is put down with a press, which
 	# is the other way round from a drag. The press is marked handled so that
@@ -450,6 +474,9 @@ var sell_chest: Control
 # The arcs, the glow and the progress label (GDD 5.3). Drawn over the shelf,
 # the rack and the chest at once, because it joins one to another.
 var combining_overlay: Control
+# The zone an item reaches into (GDD 4.3). A child of the grid, because every
+# square it draws is a grid square.
+var aura_overlay: Control
 ## The box the five numbers are written in, one row each.
 var stats_panel: Control
 ## The value label of each row, by the caption beside it.
@@ -556,7 +583,7 @@ func _setup_ui():
 		$CharacterStats.visible = false
 
 	_dress_buttons()
-	_create_combining_overlay()
+	_build_the_hints()
 
 	print("UI setup complete")
 
@@ -1724,14 +1751,24 @@ func _show_error_message(message: String):
 # only be a second copy that goes stale.
 
 
-func _create_combining_overlay() -> void:
+func _build_the_hints() -> void:
+	"""Everything drawn over the board to help a player decide: the combining
+	arcs and glow, the aura a held item reaches with, and the merge cues."""
 	if read_only_mode:
 		# A rack being watched cannot be changed, so there is nothing to warn
-		# about and nothing to reach for.
+		# about, nothing to reach for and nowhere to put anything.
 		return
 	combining_overlay = CombiningOverlay.new()
 	combining_overlay.name = "CombiningOverlay"
 	add_child(combining_overlay)
+
+	aura_overlay = AuraOverlay.new()
+	aura_overlay.name = "AuraOverlay"
+	aura_overlay.grid = inventory_grid
+	# Beside the grid, not inside it: the grid frees every child it has each
+	# time the board is redrawn.
+	add_child(aura_overlay)
+
 	_build_merge_sounds()
 
 
@@ -1766,6 +1803,7 @@ func _merge_sound(beat: String) -> void:
 
 func _process(_delta: float) -> void:
 	refresh_combining()
+	refresh_aura()
 
 
 func refresh_combining(pointer := Vector2.INF) -> void:
@@ -2143,3 +2181,211 @@ func _flash_at(spot_on_screen: Vector2) -> void:
 	"""
 	if combining_overlay != null:
 		combining_overlay.flash_at(spot_on_screen)
+
+
+# ============= What an item reaches into (GDD 4.3) =============
+#
+# The same item the arcs come from: whatever is under the pointer or in hand.
+# Where the zone is drawn from differs, though. An item being moved draws its
+# zone around the square under the pointer, because the question is where to
+# put it; an item standing still draws it around where it stands.
+
+
+func refresh_aura(pointer := Vector2.INF) -> void:
+	"""Draw the zone of whatever the player is reaching for.
+
+	Takes where the pointer is, so what the screen would draw can be asked
+	about without a mouse. Told nothing, it reads the pointer itself.
+	"""
+	if aura_overlay == null:
+		return
+
+	var where := get_global_mouse_position() if pointer == Vector2.INF else pointer
+	var reaching := combining_source(where)
+	if reaching.is_empty():
+		aura_overlay.no_zones()
+		_light_up([])
+		return
+
+	var item: APITypes.Item = reaching["item"]
+	var at := _aura_square(item, where)
+	if at.x < 0 or at.y < 0:
+		# Not over the board, so there are no squares to draw on.
+		aura_overlay.no_zones()
+		_light_up([])
+		return
+
+	var standing := _standing_on()
+	var star := Aura.markers(_zone_at(item.turned_star(), at), standing,
+		item.aura.get("star", []))
+	var diamond := Aura.markers(_zone_at(item.turned_diamond(), at), standing,
+		item.aura.get("diamond", []))
+	aura_overlay.show_zones(star, diamond)
+	_light_up(Aura.lit_by(star) + Aura.lit_by(diamond))
+
+
+func _aura_square(item: APITypes.Item, pointer: Vector2) -> Vector2i:
+	"""Which square the zone is drawn around.
+
+	Under the pointer while the item is being moved: that is the whole question
+	being asked, and the answer has to follow the hand. Where it stands
+	otherwise.
+	"""
+	if _something_is_being_moved():
+		return _global_to_grid(pointer)
+
+	# Where the board says it is, not where the item says it is. An item put
+	# in the chest is still the object that was on the grid, remembering the
+	# square it used to stand on, and it would draw its zone back there.
+	var visual = inventory_grid.item_visual(item.id)
+	if is_instance_valid(visual):
+		return visual.get_meta("grid_pos")
+
+	# On a shelf or lying in the chest, so it is nowhere on the board.
+	return Vector2i(-1, -1)
+
+
+func _something_is_being_moved() -> bool:
+	return held_item != null \
+		or dragging_shop_data != null \
+		or (inventory_grid != null and inventory_grid.dragging_object != null) \
+		or (storage_bin != null and storage_bin.dragged() != null)
+
+
+func _zone_at(offsets: Array[Vector2i], at: Vector2i) -> Array[Vector2i]:
+	"""A zone's offsets, put down on the board.
+
+	The offsets are already turned and already have the item's own squares
+	taken out of them, because an aura never reaches the item projecting it.
+	"""
+	var squares: Array[Vector2i] = []
+	for offset in offsets:
+		squares.append(at + offset)
+	return squares
+
+
+func _standing_on() -> Callable:
+	"""What covers a square, or nothing.
+
+	An item being dragged is not on the board while it is in the air -- the
+	grid clears its squares when the drag starts -- so it never counts itself,
+	and the squares it came from read as empty while the player is deciding.
+	"""
+	return func(square: Vector2i):
+		if square.x < 0 or square.y < 0 \
+				or square.x >= inventory_grid.grid_width \
+				or square.y >= inventory_grid.grid_height:
+			return null
+		var visual = inventory_grid.item_grid[square.y][square.x]
+		if visual == null or not is_instance_valid(visual):
+			return null
+		return visual.get_meta("item_data")
+
+
+## How much brighter an item is drawn while an aura is acting on it. Slight:
+## it is a second way of saying what the filled marker over it already says,
+## and the item still has to look like itself.
+const LIT_BY_AN_AURA := Color(1.32, 1.32, 1.32)
+
+# The items lit this way, by id, so they can be put back as the pointer moves.
+var _lit: Dictionary = {}
+
+
+func _light_up(ids: Array) -> void:
+	"""Brighten the items an aura is acting on, and dim the rest back.
+
+	The marker says which square. This says which item, which is the thing the
+	player actually cares about when the zone covers half a board.
+	"""
+	var wanted := {}
+	for id in ids:
+		wanted[id] = true
+
+	for id in _lit.keys():
+		if not wanted.has(id):
+			var visual = inventory_grid.item_visual(id)
+			if is_instance_valid(visual):
+				visual.modulate = Color.WHITE
+	for id in wanted:
+		if not _lit.has(id):
+			var visual = inventory_grid.item_visual(id)
+			if is_instance_valid(visual):
+				visual.modulate = LIT_BY_AN_AURA
+	_lit = wanted
+
+
+func lit_by_an_aura() -> Array:
+	"""Which items are lit, for a test to read."""
+	return _lit.keys()
+
+
+## How much an item swells when an aura starts acting on it, and for how long.
+## Slighter than the marker's answer on purpose: the marker is the answer, and
+## this is the item nodding.
+const POP := 1.12
+const POP_OUT := 0.10
+const POP_BACK := 0.16
+
+
+func pop_what_took_effect(item_id: String) -> void:
+	"""An item has landed. Every aura it has just set going says so.
+
+	The item that pops is the one projecting the aura, because that is the one
+	something has just happened to: an item dropped into a zone is not changed
+	by landing there, and the item whose zone it is has just gained a Star
+	something. It works from both ends of the same event -- a thing put into a
+	zone, and a zone put over a thing -- because the player may have been
+	watching either.
+	"""
+	for id in _took_effect(item_id):
+		_pop(id)
+
+
+func _took_effect(item_id: String) -> Array[String]:
+	"""The items whose auras this placement has set going, by id."""
+	var set_going: Array[String] = []
+	var landed = inventory_grid.item_visual(item_id)
+	if not is_instance_valid(landed):
+		return set_going
+
+	# A zone put over something: the item that was moved is the projector.
+	if not _aura_reaches(landed).is_empty():
+		set_going.append(item_id)
+
+	# Something put into a zone: the projector is whoever owns that zone.
+	for visual in inventory_grid.items:
+		if visual != landed and _aura_reaches(visual).has(item_id):
+			set_going.append(visual.get_meta("item_data").id)
+	return set_going
+
+
+func _aura_reaches(visual: Control) -> Array[String]:
+	"""The items this one's zones are acting on, where it stands."""
+	var item: APITypes.Item = visual.get_meta("item_data")
+	var lit: Array[String] = []
+	if item.aura.is_empty():
+		return lit
+
+	var at: Vector2i = visual.get_meta("grid_pos")
+	var standing := _standing_on()
+	lit.append_array(Aura.lit_by(Aura.markers(
+		_zone_at(item.turned_star(), at), standing, item.aura.get("star", []))))
+	lit.append_array(Aura.lit_by(Aura.markers(
+		_zone_at(item.turned_diamond(), at), standing, item.aura.get("diamond", []))))
+	return lit
+
+
+func _pop(item_id: String) -> void:
+	"""One small swell and back, on the item itself."""
+	var visual = inventory_grid.item_visual(item_id)
+	if not is_instance_valid(visual):
+		return
+	if not Presentation.request("aura_took_effect", {"item": item_id}):
+		return
+
+	visual.pivot_offset = visual.size / 2.0
+	var tween := create_tween()
+	tween.tween_property(visual, "scale", Vector2(POP, POP), POP_OUT) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(visual, "scale", Vector2.ONE, POP_BACK) \
+		.set_trans(Tween.TRANS_QUAD)

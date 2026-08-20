@@ -120,6 +120,55 @@ def shape_of(spec: ItemSpec) -> Shape:
     return [(x, y) for x, y in spec.shape.squares]
 
 
+class ZoneWants(BaseModel):
+    """What one aura clause acts on, of the items standing in its zone.
+
+    Both lists empty means everything standing there. Otherwise `any_of`
+    matches an item carrying one of the tags and `all_of` one carrying all of
+    them, where a tag is a kind an item carries or the category it belongs to
+    (GDD 4.4).
+    """
+
+    any_of: List[str] = Field(
+        default_factory=list, description="Matches an item carrying one of these"
+    )
+    all_of: List[str] = Field(
+        default_factory=list, description="Matches an item carrying all of these"
+    )
+
+    @classmethod
+    def of(cls, counting: object) -> "ZoneWants":
+        if not isinstance(counting, dict):
+            return cls()
+        return cls(
+            any_of=[tag.lower() for tag in counting.get("any", [])],
+            all_of=[tag.lower() for tag in counting.get("all", [])],
+        )
+
+
+def aura_of(spec: ItemSpec) -> Dict[str, List[ZoneWants]]:
+    """What each of an item's zones acts on, by zone.
+
+    A zone can work three ways round (GDD 4.4) -- what it falls on, what it
+    counts, and when something happens -- and all three narrow the same way, so
+    all three are read the same way here.
+
+    A zone the item draws but nothing acts through is absent. That is not the
+    same as a zone that acts on everything, which is present and empty: one
+    lights up when something stands in it and the other never does, and a
+    client showing a player where their aura lands must not confuse them.
+    """
+    wants: Dict[str, List[ZoneWants]] = {}
+    for trigger in spec.triggers or []:
+        for source in [trigger] + list(getattr(trigger, "effects", [])):
+            zone = getattr(source, "zone", None)
+            if zone in ("star", "diamond"):
+                wants.setdefault(zone, []).append(
+                    ZoneWants.of(getattr(source, "counting", "any"))
+                )
+    return wants
+
+
 class Item(BaseModel):
     """An item in the shop or in the chest. It has no place on the grid yet."""
 
@@ -144,6 +193,18 @@ class Item(BaseModel):
     # them: it would turn the zone with the item and put it in the wrong place.
     anchors: Shape = Field(
         default_factory=list, description="Covered squares whose zone points up"
+    )
+    # What an item can be narrowed by, with its category: "Star Pets" and "Star
+    # nature-items" read the same way and both are matched from here. Lowered,
+    # so the catalogue's casing does not reach the client.
+    kinds: List[str] = Field(
+        default_factory=list, description="The kinds this item carries"
+    )
+    # What this item's zones act on, by zone. Sent so a client can show which
+    # items an aura would actually reach rather than which squares it covers:
+    # a zone narrowed to pets lands on a weapon and does nothing.
+    aura: Dict[str, List[ZoneWants]] = Field(
+        default_factory=dict, description="What each zone acts on, by zone"
     )
     color: str = Field(
         pattern=HEX_COLOR,
@@ -199,6 +260,8 @@ class Item(BaseModel):
             star=[(x, y) for x, y in spec.shape.star],
             diamond=[(x, y) for x, y in spec.shape.diamond],
             anchors=[(x, y) for x, y in spec.shape.anchors],
+            kinds=sorted(kind.lower() for kind in spec.kinds),
+            aura=aura_of(spec),
             effects=describe.lines(
                 spec, skipping=lambda trigger: already_shown(trigger, stats)),
             # The catalogue names a colour, the client is sent the value. That

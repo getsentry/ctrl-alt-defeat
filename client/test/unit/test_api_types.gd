@@ -23,6 +23,8 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 		"position": [2, 3],
 		"rotation": 0,
 		"shape": [[0, 0], [1, 0]],
+		"kinds": ["melee"],
+		"aura": {},
 		"rarity": "rare",
 		"cost": 8,
 		"price": 8,
@@ -602,7 +604,7 @@ func test_an_anchored_zone_stays_above_the_anchor():
 func test_a_zone_with_no_anchor_turns_with_the_item():
 	# One square to the right becomes one square above.
 	var reaching_right = _item({
-		"shape": [[0, 0]], "star": [[1, 0]], "diamond": [], "anchors": [],
+		"shape": [[0, 0]], "star": [[1, 0]], "diamond": [], "anchors": [], "kinds": [], "aura": {},
 	})
 	reaching_right["position"] = [0, 0]
 	reaching_right["rotation"] = 90

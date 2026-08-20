@@ -1610,3 +1610,276 @@ func test_two_merges_share_one_whiteout():
 		"Setup: both merges were played")
 	assert_gt(ui.combining_overlay.whitening(), 0.0,
 		"and the screen is white for them")
+
+
+func test_a_result_that_went_to_the_chest_is_still_played():
+	"""A result too big for the squares it was made on goes to the chest, so
+	there is nothing on the rack to stand up. The name and the rings still
+	happen where the items met, because that is where the player is looking."""
+	_knows_that({}, {"stone_golem": "Stone Golem"})
+	GameStateManager.save_inventory_state(
+		[], [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})])
+	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
+		{"items": [], "servers": []})
+	GameStateManager.combinations_to_play = [_a_combining({
+		"made": "stone_golem", "made_id": "too_big",
+		"freed": [[2, 3], [3, 3]], "position": null})]
+
+	await ui.play_combining()
+
+	assert_null(ui.inventory_grid.item_visual("too_big"),
+		"Setup: it is not on the rack")
+	assert_eq(ui.combining_overlay.announced(), ["Stone Golem"],
+		"and it is still named over the squares it was made on")
+
+
+# ============ The zone an item reaches into (GDD 4.3) ============
+
+func _an_aura_item(overrides := {}) -> Dictionary:
+	# A Thermal Throttle reaches the square above it and the square below.
+	var data := {
+		"id": "thrower", "item_type": "thermal_throttle", "slug": "thermal_throttle",
+		"position": [4, 3], "shape": [[0, 0]],
+		"star": [[0, -1], [0, 1]], "diamond": [], "anchors": [],
+		"aura": {"star": [{"any_of": [], "all_of": []}]},
+	}
+	data.merge(overrides, true)
+	return TestHelpers.placed_item_data(data)
+
+
+func test_hovering_an_item_draws_the_zone_it_reaches_into():
+	_rack_holding([_an_aura_item()])
+
+	ui.refresh_aura(_where(ui.inventory_grid.items[0]))
+
+	var drawn = ui.aura_overlay.showing()
+	assert_eq(drawn.size(), 2, "both squares of the zone")
+	assert_true(drawn.any(func(one): return one["square"] == Vector2i(4, 2)))
+	assert_true(drawn.any(func(one): return one["square"] == Vector2i(4, 4)))
+
+
+func test_pointing_at_nothing_draws_no_zone():
+	_rack_holding([_an_aura_item()])
+
+	ui.refresh_aura(Vector2(-500, -500))
+
+	assert_eq(ui.aura_overlay.showing(), [])
+
+
+func test_a_square_of_the_zone_with_something_in_it_is_doing_something():
+	_rack_holding([
+		_an_aura_item(),
+		TestHelpers.placed_item_data({"id": "under", "position": [4, 4]}),
+	])
+
+	ui.refresh_aura(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.aura_overlay.worth(), 1,
+		"the aura is worth the one item standing in it")
+
+
+func test_a_zone_nothing_acts_through_is_worth_nothing():
+	"""102 of the 117 items that draw a zone have no clause built yet. The
+	zone is real, and it is doing nothing."""
+	_rack_holding([
+		_an_aura_item({"aura": {}}),
+		TestHelpers.placed_item_data({"id": "under", "position": [4, 4]}),
+	])
+
+	ui.refresh_aura(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.aura_overlay.showing().size(), 2, "the zone is still drawn")
+	assert_eq(ui.aura_overlay.worth(), 0, "and none of it is worth anything")
+
+
+func test_a_zone_narrowed_to_a_tag_passes_over_what_it_does_not_want():
+	_rack_holding([
+		_an_aura_item({"aura": {"star": [{"any_of": ["pet"], "all_of": []}]}}),
+		TestHelpers.placed_item_data({
+			"id": "weapon", "category": "problem", "position": [4, 4]}),
+	])
+
+	ui.refresh_aura(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.aura_overlay.worth(), 0,
+		"a Pet aura lands on a weapon and does nothing")
+
+
+func test_an_item_in_hand_draws_its_zone_under_the_pointer():
+	"""The question being asked is where to put it, so the answer follows the
+	hand rather than staying where the item last stood."""
+	_rack_holding([])
+	ui.hold(APITypes.Item.new(TestHelpers.item_data({
+		"id": "in_hand", "star": [[0, -1], [0, 1]], "diamond": [], "anchors": [],
+		"aura": {"star": [{"any_of": [], "all_of": []}]}})))
+
+	var over: Vector2 = ui.inventory_grid.get_global_transform() \
+		* (ui.inventory_grid.grid_to_pixel(Vector2i(4, 3)) \
+		+ Vector2(ui.inventory_grid.cell_size / 2, ui.inventory_grid.cell_size / 2))
+	ui.refresh_aura(over)
+
+	var drawn = ui.aura_overlay.showing()
+	assert_eq(drawn.size(), 2)
+	assert_true(drawn.any(func(one): return one["square"] == Vector2i(4, 2)),
+		"the zone is drawn around the square under the pointer")
+
+
+func test_an_item_on_the_shelf_draws_no_zone():
+	"""It is not on the board, so there are no squares for it to reach."""
+	var shop: Array[APITypes.Item] = [APITypes.Item.new(TestHelpers.item_data({
+		"id": "on_the_shelf", "star": [[0, -1]], "diamond": [], "anchors": [],
+		"aura": {"star": [{"any_of": [], "all_of": []}]}}))]
+	ui._display_shop_items(shop)
+	await get_tree().process_frame
+
+	ui.refresh_aura(ui.shop_items[0].get_global_rect().get_center())
+
+	assert_eq(ui.aura_overlay.showing(), [])
+
+
+func test_an_item_an_aura_acts_on_is_lit_while_the_zone_is_shown():
+	"""The marker says which square; this says which item, which is what the
+	player cares about when a zone covers half a board."""
+	_rack_holding([
+		_an_aura_item(),
+		TestHelpers.placed_item_data({"id": "under", "position": [4, 4]}),
+	])
+
+	ui.refresh_aura(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.lit_by_an_aura(), ["under"])
+	assert_gt(ui.inventory_grid.item_visual("under").modulate.r, 1.0,
+		"and it is drawn brighter")
+
+
+func test_the_light_goes_out_when_the_pointer_leaves():
+	_rack_holding([
+		_an_aura_item(),
+		TestHelpers.placed_item_data({"id": "under", "position": [4, 4]}),
+	])
+	ui.refresh_aura(_where(ui.inventory_grid.items[0]))
+
+	ui.refresh_aura(Vector2(-500, -500))
+
+	assert_eq(ui.lit_by_an_aura(), [])
+	assert_eq(ui.inventory_grid.item_visual("under").modulate, Color.WHITE,
+		"and the item is put back as it was")
+
+
+func test_an_item_the_aura_passes_over_is_not_lit():
+	_rack_holding([
+		_an_aura_item({"aura": {"star": [{"any_of": ["pet"], "all_of": []}]}}),
+		TestHelpers.placed_item_data({
+			"id": "weapon", "category": "problem", "position": [4, 4]}),
+	])
+
+	ui.refresh_aura(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.lit_by_an_aura(), [])
+
+
+func test_putting_an_item_down_swells_its_markers():
+	"""On placing, not on hovering: it answers the question the player just
+	asked by letting go."""
+	_rack_holding([_an_aura_item()])
+	assert_eq(ui.aura_overlay.swelling(), 1.0, "Setup: nothing is swelling")
+
+	ui._on_item_placed(null, Vector2i(4, 3))
+	ui.aura_overlay._process(ui.aura_overlay.GROW)
+
+	assert_eq(ui.aura_overlay.swelling(), ui.aura_overlay.SWELL)
+
+
+func test_an_item_put_in_the_chest_draws_no_zone():
+	"""It is still the object that was on the grid, remembering the square it
+	used to stand on. Believing it would draw the zone back on the rack, over
+	squares the item has nothing to do with any more."""
+	_rack_holding([])
+	var moved = APITypes.PlacedItem.new(_an_aura_item({"id": "moved"}))
+	GameStateManager.inventory_storage = []
+	ui.storage_bin.catch(moved, Vector2(0, 0))
+	await get_tree().process_frame
+
+	var lying = ui.storage_bin.drawn("moved")
+	assert_not_null(lying, "Setup: it is lying in the chest")
+	ui.refresh_aura(lying.get_global_rect().get_center())
+
+	assert_eq(ui.aura_overlay.showing(), [],
+		"the chest is not the board, so there is nothing to draw on")
+
+
+# ============ An aura saying it has been set going ============
+
+func test_putting_an_item_into_a_zone_pops_the_item_whose_zone_it_is():
+	"""The projector is the one something has just happened to. An item
+	dropped into a zone is not changed by landing there; the item whose zone
+	it is has just gained a Star something."""
+	_rack_holding([
+		_an_aura_item(),
+		TestHelpers.placed_item_data({"id": "arriving", "position": [4, 4]}),
+	])
+	Presentation.clear_requests()
+
+	ui.pop_what_took_effect("arriving")
+
+	assert_eq(Presentation.request_count("aura_took_effect"), 1)
+	assert_eq(Presentation.requests("aura_took_effect")[0]["data"]["item"],
+		"thrower", "the aura, not the item that arrived")
+
+
+func test_putting_a_zone_over_an_item_pops_the_zone():
+	"""The same event from the other end: the player moved the aura rather
+	than the item, and it is still the aura that was set going."""
+	_rack_holding([
+		TestHelpers.placed_item_data({"id": "caught", "position": [4, 4]}),
+		_an_aura_item(),
+	])
+	Presentation.clear_requests()
+
+	ui.pop_what_took_effect("thrower")
+
+	assert_eq(Presentation.request_count("aura_took_effect"), 1)
+	assert_eq(Presentation.requests("aura_took_effect")[0]["data"]["item"],
+		"thrower")
+
+
+func test_an_item_put_where_no_aura_reaches_pops_nothing():
+	_rack_holding([
+		_an_aura_item(),
+		TestHelpers.placed_item_data({"id": "far_off", "position": [6, 3]}),
+	])
+	Presentation.clear_requests()
+
+	ui.pop_what_took_effect("far_off")
+
+	assert_eq(Presentation.request_count("aura_took_effect"), 0)
+
+
+func test_an_item_a_zone_passes_over_pops_nothing():
+	"""A Pet aura lands on a weapon and does nothing, so nothing was set
+	going and nothing has anything to say."""
+	_rack_holding([
+		_an_aura_item({"aura": {"star": [{"any_of": ["pet"], "all_of": []}]}}),
+		TestHelpers.placed_item_data({
+			"id": "weapon", "category": "problem", "position": [4, 4]}),
+	])
+	Presentation.clear_requests()
+
+	ui.pop_what_took_effect("weapon")
+
+	assert_eq(Presentation.request_count("aura_took_effect"), 0)
+
+
+func test_two_auras_reaching_the_same_square_both_pop():
+	"""An item can land in more than one zone at once, and each of them has
+	been set going."""
+	_rack_holding([
+		_an_aura_item({"id": "one", "position": [4, 3]}),
+		_an_aura_item({"id": "other", "position": [4, 5]}),
+		TestHelpers.placed_item_data({"id": "between", "position": [4, 4]}),
+	])
+	Presentation.clear_requests()
+
+	ui.pop_what_took_effect("between")
+
+	assert_eq(Presentation.request_count("aura_took_effect"), 2)

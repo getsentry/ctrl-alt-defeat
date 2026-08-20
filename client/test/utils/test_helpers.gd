@@ -17,6 +17,8 @@ static func item_data(overrides: Dictionary = {}) -> Dictionary:
 		"on_sale": false,
 		"is_container": false,
 		"shape": [[0, 0]],
+		"kinds": [],
+		"aura": {},
 		"effects": ["Every 1.5s: deal 2-5 damage."],
 		"color": "#BE0032",
 		"pattern": "solid",
