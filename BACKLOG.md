@@ -615,3 +615,10 @@ as severe as the one above.)*
   parses it into the engine; ranged/melee distinctions ("On attacked (Melee)",
   Spikes' return-damage limits) will need it typed when those effects are
   built.
+
+- **Sentaur idle animation**: a subtle breathing-bob loop for the character
+  sprites. Input image and motion prompt are staged in `art_draft/`
+  (`sentaur_idle_input.png`, `sentaur_idle_prompt.txt`); free options tried and
+  ranked in the session notes (Ludo.ai's idle preset looked most fit). Fallback:
+  gpt-image keyframes + Godot tweens. The CRT face is a screen, so expression
+  swaps (blink, damage, victory) are cheap stills whenever wanted.
