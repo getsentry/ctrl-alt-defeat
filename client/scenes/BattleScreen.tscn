@@ -67,7 +67,7 @@ offset_right = -130.0
 offset_bottom = 368.0
 grow_horizontal = 0
 scale = Vector2(2.97158, 2.97158)
-text = "0.0s / 20.0s"
+text = "0.0s"
 horizontal_alignment = 2
 
 [node name="Player1Container" type="Panel" parent="."]

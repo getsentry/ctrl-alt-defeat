@@ -15,7 +15,6 @@ var player_data: Dictionary = {}
 var enemy_data: Dictionary = {}
 var current_time: float = 0.0
 var battle_active: bool = false
-var max_battle_duration: float = 20.0  # 20 second battles max
 var battle_speed_multiplier: float = _starting_playback_speed()
 
 
@@ -518,8 +517,8 @@ func _start_battle_playback():
 func _process(delta):
 	if battle_active and event_processor.is_playing:
 		current_time = event_processor.get_current_time()
-		time_label.text = "%.1f / %.0fs" % [current_time, max_battle_duration]
-		hud.tick(current_time, max_battle_duration)
+		time_label.text = "%.1fs" % current_time
+		hud.tick(current_time)
 
 		_update_stats_display()
 

@@ -9,6 +9,9 @@ extends GutTest
 const APITypes = preload("res://scripts/api_types.gd")
 const BattleHud = preload("res://scripts/battle_hud.gd")
 
+## Where the server keeps the same number, read off disk rather than over HTTP.
+const BATTLE_ENGINE_PATH := "../server/battle_engine.py"
+
 var battle_scene = preload("res://scenes/BattleScreen.tscn")
 var battle_screen
 var hud
@@ -83,6 +86,50 @@ func test_the_speed_control_is_on_screen():
 func test_the_clock_is_on_screen():
 	assert_true(window().encloses(hud.clock_plate.get_global_rect()),
 		"The clock should be inside the window")
+
+
+func test_nightfall_is_when_the_server_says_it_is():
+	"""The bar counts towards a number the client does not decide.
+
+	Section 7.1 puts nightfall at seventeen seconds and the engine holds it as
+	NIGHTFALL. A clock counting towards a different one would be quietly
+	wrong: the bar would fill before the city darkened, or after.
+	"""
+	var path := ProjectSettings.globalize_path("res://").path_join(BATTLE_ENGINE_PATH)
+	var file := FileAccess.open(path, FileAccess.READ)
+	assert_not_null(file, "Should be able to read %s" % path)
+	if file == null:
+		return
+	var source := file.get_as_text()
+	file.close()
+
+	var written := RegEx.create_from_string("\\nNIGHTFALL = ([0-9.]+)").search(source)
+	assert_not_null(written, "%s should declare NIGHTFALL" % BATTLE_ENGINE_PATH)
+	if written == null:
+		return
+
+	assert_eq(BattleHud.NIGHTFALL, float(written.get_string(1)),
+		"The clock and the engine should agree about when night falls")
+
+
+func test_the_bar_under_the_clock_fills_towards_nightfall():
+	"""There is no round limit for the bar to count against, so it counts to
+	the thing that does end a battle: nightfall, at 17 seconds.
+	"""
+	hud.tick(0.0)
+	assert_eq(hud.timeline.progress, 0.0, "A battle starts with the night ahead of it")
+
+	hud.tick(BattleHud.NIGHTFALL / 2.0)
+	assert_almost_eq(hud.timeline.progress, 0.5, 0.001,
+		"Half way to nightfall is half a bar")
+
+
+func test_the_bar_stays_full_once_night_has_fallen():
+	"""Fatigue only climbs from here, so the bar has nowhere further to go."""
+	hud.tick(BattleHud.NIGHTFALL * 3.0)
+
+	assert_eq(hud.timeline.progress, 1.0,
+		"A battle running long should not overfill the bar")
 
 
 func test_the_speed_control_says_the_speed_the_battle_starts_at():

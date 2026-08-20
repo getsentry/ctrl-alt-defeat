@@ -172,10 +172,26 @@ func test_battle_loads_from_game_state():
 	assert_eq(GameStateManager.last_battle_result.winner, 1,
 		"Battle data should keep the winner from the fixture")
 
-func test_timer_display():
+func test_the_clock_counts_up_and_against_nothing():
+	"""A battle has no length to run out of, so the clock only counts up.
+
+	Section 7.1: nightfall is what ends a battle, not a time limit. A clock
+	reading "4.2 / 20s" told a player the battle stops at twenty seconds,
+	which is not true of any battle the engine plays.
+	"""
 	var timer_label = battle_screen.time_label
 	assert_not_null(timer_label, "Timer should be displayed")
 	assert_true(timer_label is Label, "Timer should be a Label")
+
+	# Hold the playhead still at a known moment and let the screen read it.
+	battle_screen.battle_active = true
+	battle_screen.event_processor.is_playing = true
+	battle_screen.event_processor.paused = true
+	battle_screen.event_processor.played = 4.2
+	battle_screen._process(0.0)
+
+	assert_eq(timer_label.text, "4.2s",
+		"The clock should say how far into the battle we are, and nothing else")
 
 func test_animation_speed_control():
 	# Speed control is $ControlButtons/SpeedButton.

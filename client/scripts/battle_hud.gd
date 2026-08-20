@@ -38,6 +38,13 @@ const ENEMY_AT := Vector2(0.915, 0.70)
 # width to each rack, about half of it to the stats in the middle, and the
 # fighters shrunk into the bottom corners. The racks and the numbers are what a
 # player reads; the characters are scenery.
+## When night falls, in seconds. A battle has no length to run out of, so the
+## bar under the clock counts towards this instead: the moment fatigue starts
+## and the battle begins to end itself. It stays full from then on, which is
+## the same thing the darkened city says. Section 7.1 of the design document
+## holds the number, and the server's own NIGHTFALL must agree with it.
+const NIGHTFALL := 17.0
+
 ## The clock carries the time and nothing else. Its buttons used to sit inside
 ## it, which made the plate wide enough to hold three things in a row -- and
 ## the racks either side could only be as wide as what that plate left them.
@@ -193,10 +200,10 @@ func show_paused(held: bool) -> void:
 		pause_button.text = PLAY_GLYPH if held else PAUSE_GLYPH
 
 
-## Move the clock hand and the elapsed time on.
-func tick(elapsed: float, total: float) -> void:
+## Move the clock hand on.
+func tick(elapsed: float) -> void:
 	if is_instance_valid(timeline):
-		timeline.progress = clampf(elapsed / maxf(total, 0.001), 0.0, 1.0)
+		timeline.progress = clampf(elapsed / NIGHTFALL, 0.0, 1.0)
 
 
 # ============ The log ============
@@ -723,7 +730,7 @@ func _reparent(node: Node, to: Node) -> void:
 	to.add_child(node)
 
 
-## The bar that fills as the battle runs out.
+## The bar that fills as nightfall comes on.
 class Timeline extends Control:
 	var accent: Color = Color.WHITE
 	var progress: float = 0.0:
