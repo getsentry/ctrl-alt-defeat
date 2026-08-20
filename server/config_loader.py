@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from grid_system import ItemShape, parse_map
 from item_effects import (
+    Recipe,
     DEBUFFS,
     AttackEffect,
     BattleStartTrigger,
@@ -168,6 +169,10 @@ class ConfigLoader:
             shape=shape,
             triggers=triggers,
             rarity=config["rarity"],
+            # A container is craftable like anything else: two of the ten are.
+            recipe=self._parse_recipes(config.get("recipe", []), container_id),
+            recipe_only=bool(config.get("recipe_only", False)),
+            shop_needs=config.get("shop_needs", ""),
         )
 
         return spec
@@ -196,13 +201,34 @@ class ConfigLoader:
             rarity=config["rarity"],
             color=config["color"],
             pattern=config["pattern"],
-            in_shop=config.get("in_shop", True),
+            # `recipe_only` is the stronger statement, so an item cannot say
+            # it is craft-only and be offered anyway.
+            in_shop=config.get("in_shop", True) and not config.get("recipe_only"),
             # One comma-separated string in the catalogue, a set here.
             kinds=frozenset(
                 tag.strip() for tag in config.get("icontype", "").split(",")
                 if tag.strip()
             ),
+            recipe=self._parse_recipes(config.get("recipe", []), item_id),
+            recipe_only=bool(config.get("recipe_only", False)),
+            shop_needs=config.get("shop_needs", ""),
         )
+
+    def _parse_recipes(self, configs: List[Dict[str, Any]], item_id: str) -> tuple:
+        """The ways an item can be made.
+
+        A recipe with no ingredients could never be completed and is more
+        likely a typo than an item you get for free, so it is refused.
+        """
+        recipes = []
+        for recipe in configs:
+            ingredients = tuple(recipe.get("ingredients", ()))
+            if not ingredients:
+                raise CatalogueError(f"{item_id}: a recipe with no ingredients")
+            recipes.append(
+                Recipe(ingredients, tuple(recipe.get("catalysts", ())))
+            )
+        return tuple(recipes)
 
     def _parse_shape(self, item_map: list, name: str) -> ItemShape:
         """The squares an item covers, from its map"""

@@ -811,3 +811,131 @@ class TestABuffIsNotAStat:
                         assert zones, (
                             f"{item_id} reaches a {effect.target_type} it never draws"
                         )
+
+
+class TestWhatTheShopMayOffer:
+    """Two fields decide whether an item can be bought at all.
+
+    `recipe_only` says crafting is the only way to get one. `shop_needs` says
+    the shop stocks it only while the player holds another item. Both were in
+    the catalogue before anything read them, and both were wrong in a way a
+    player would have seen: a craft-only item was on sale, and fourteen items
+    that wait on a Coin Miner were unreachable with or without one.
+    """
+
+    @staticmethod
+    def _catalogue():
+        import json
+        from pathlib import Path
+
+        items_dir = Path(__file__).parent.parent / "data" / "items"
+        for path in sorted(items_dir.glob("*.json")):
+            data = json.loads(path.read_text())
+            for item_id, config in (data.get("items") or data["containers"]).items():
+                yield item_id, config
+
+    def test_a_recipe_only_item_is_never_offered(self):
+        """Rolled at a round that reaches its rarity.
+
+        Round one offers common and rare only, and the one craft-only item is
+        epic, so asking round one proves nothing: it could not turn up whether
+        the rule worked or not.
+        """
+        from config_loader import config_loader
+        from main import generate_shop_items
+
+        craft_only = {
+            item_id for item_id, config in self._catalogue()
+            if config.get("recipe_only")
+        }
+        assert craft_only, "no item is recipe_only, so this checks nothing"
+
+        rarities = {
+            (config_loader.items.get(i) or config_loader.containers[i]).rarity
+            for i in craft_only
+        }
+        offered_rarities, everything = set(), set()
+        for seed in range(200):
+            for offer in generate_shop_items(8, seed, held=set(craft_only)):
+                if offer:
+                    everything.add(offer.item_type)
+                    offered_rarities.add(offer.rarity.lower())
+        assert rarities <= offered_rarities, (
+            f"round 8 never offered a {rarities - offered_rarities} item, so this "
+            f"says nothing about whether a craft-only one would be"
+        )
+        assert not (everything & craft_only), f"the shop offered {everything & craft_only}"
+
+    def test_recipe_only_beats_in_shop(self):
+        """The two could disagree in the JSON, and one of them has to win."""
+        from config_loader import config_loader
+
+        for item_id, config in self._catalogue():
+            if config.get("recipe_only"):
+                spec = config_loader.items.get(item_id) or config_loader.containers[item_id]
+                assert not spec.in_shop, f"{item_id} is craft-only and offered anyway"
+
+    def test_an_item_waiting_on_another_is_offered_only_once_it_is_held(self):
+        """The rule, not today's catalogue.
+
+        All fourteen items that wait on a Coin Miner are also `in_shop: false`,
+        because their effects are not built. So nothing in the catalogue passes
+        both gates yet, and asking the real shop would say nothing about the
+        rule. This offers one item and turns the gate on and off.
+        """
+        from unittest.mock import patch
+
+        from battle_engine import ITEM_CATALOG
+        from main import generate_shop_items
+
+        waits_on = "crypto_mining_rig"
+        original = ITEM_CATALOG["null_blade"]
+        gated = original.__class__(
+            **{**original.__dict__, "shop_needs": waits_on}
+        )
+
+        with patch.dict(ITEM_CATALOG, {"null_blade": gated}):
+            without = set()
+            with_it = set()
+            for seed in range(120):
+                without |= {
+                    o.item_type for o in generate_shop_items(1, seed, held=set()) if o
+                }
+                with_it |= {
+                    o.item_type
+                    for o in generate_shop_items(1, seed, held={waits_on})
+                    if o
+                }
+
+        assert "null_blade" not in without, "offered without what it waits on"
+        assert "null_blade" in with_it, "not offered even while holding it"
+
+    def test_holding_something_else_does_not_help(self):
+        from unittest.mock import patch
+
+        from battle_engine import ITEM_CATALOG
+        from main import generate_shop_items
+
+        original = ITEM_CATALOG["null_blade"]
+        gated = original.__class__(
+            **{**original.__dict__, "shop_needs": "crypto_mining_rig"}
+        )
+        with patch.dict(ITEM_CATALOG, {"null_blade": gated}):
+            offered = set()
+            for seed in range(120):
+                offered |= {
+                    o.item_type
+                    for o in generate_shop_items(1, seed, held={"stack_smasher"})
+                    if o
+                }
+        assert "null_blade" not in offered
+
+    def test_the_catalogue_waits_on_items_that_exist(self):
+        """A slug that names nothing would gate an item forever."""
+        from config_loader import config_loader
+
+        known = set(config_loader.items) | set(config_loader.containers)
+        for item_id, config in self._catalogue():
+            needed = config.get("shop_needs")
+            if needed:
+                assert needed in known, f"{item_id} waits on {needed}, which does not exist"

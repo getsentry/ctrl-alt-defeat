@@ -6,7 +6,7 @@ Effects determine WHAT happens
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, ClassVar, List, Optional
+from typing import TYPE_CHECKING, ClassVar, List, Optional, Tuple
 
 from grid_system import ItemShape
 
@@ -536,6 +536,23 @@ class KillTrigger(Trigger):
 # ============= ITEM SPECIFICATION =============
 
 
+@dataclass(frozen=True)
+class Recipe:
+    """One way to make an item.
+
+    The ingredients are consumed. A catalyst has to be there and has to be
+    touching, but it is still there afterwards -- the Mana Orb that makes a
+    Spectral Dagger out of a Dagger is not used up.
+    """
+
+    ingredients: Tuple[str, ...]
+    catalysts: Tuple[str, ...] = ()
+
+    def parts(self) -> Tuple[str, ...]:
+        """Every item the recipe needs on the grid, consumed or not."""
+        return self.ingredients + self.catalysts
+
+
 @dataclass
 class ItemSpec:
     """Complete specification for an item"""
@@ -577,4 +594,16 @@ class ItemSpec:
         source game, which rolls only against melee.
         """
         return "melee" in self.kinds
+
+    # The ways this item can be made, if any. Crafting any one of them makes it.
+    # Ingredients are consumed; a catalyst is needed but survives. A slug here
+    # that is not in the catalogue names an item we do not have, and that
+    # recipe can never be completed.
+    recipe: Tuple["Recipe", ...] = ()
+
+    # Never sold, however its rarity rolls. Crafting is the only way to get one.
+    recipe_only: bool = False
+
+    # Offered only while the player holds this item. Empty means always.
+    shop_needs: str = ""
 

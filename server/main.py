@@ -10,7 +10,7 @@ import os
 import random
 import uuid
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import sentry_sdk
 from fastapi import Depends, FastAPI, HTTPException
@@ -266,7 +266,9 @@ async def start_session(
         player_id, game_seed, request.player_name
     )
 
-    # Update session with shop and inventory
+    # Update session with shop and inventory. A new player holds nothing, so
+    # the shop is told nothing: the items that wait on another item cannot be
+    # offered in round one.
     session.current_shop = generate_shop_items(1, seed=game_seed)
     session.inventory_grid = inventory_state["grid"]
     session.inventory_storage = inventory_state["storage"]
@@ -326,7 +328,9 @@ async def refresh_shop(
     # Use game seed + round + refresh count for deterministic but varying shops
     shop_seed = session.game_seed + session.round * 1000 + session.shop_refresh_count
 
-    session.current_shop = generate_shop_items(session.round, seed=shop_seed)
+    session.current_shop = generate_shop_items(
+        session.round, seed=shop_seed, held=held_item_types(session)
+    )
 
     # Save updated session
     await session_manager.update_session(session)
@@ -386,10 +390,29 @@ def pick_rarity(weights: Dict[str, float], rng=random) -> str:
     return "common"  # Fallback
 
 
+def held_item_types(session: GameSession) -> Set[str]:
+    """Every item type the player owns, on the grid or in the chest.
+
+    The chest counts: an item works the shop the same whether it is standing on
+    a rack or put away.
+    """
+    return {item.item_type for item in session.inventory_grid} | {
+        item.item_type for item in session.inventory_storage
+    }
+
+
 def generate_shop_items(
-    round_number: int, seed: Optional[int] = None
+    round_number: int,
+    seed: Optional[int] = None,
+    held: Optional[Set[str]] = None,
 ) -> List[Optional[Item]]:
-    """Generate random shop items based on round and rarity"""
+    """Generate random shop items based on round and rarity
+
+    `held` is what the player already owns, by item type. A few items are only
+    offered while they hold a particular other one -- the gemstones need a Coin
+    Miner -- and told nothing, the shop offers none of them.
+    """
+    held = held or set()
     # Use deterministic RNG if seed provided
     if seed is not None:
         rng = random.Random(seed)
@@ -410,6 +433,8 @@ def generate_shop_items(
     }
     for item_type, item_spec in ITEM_CATALOG.items():
         if not item_spec.in_shop:
+            continue
+        if item_spec.shop_needs and item_spec.shop_needs not in held:
             continue
         rarity = item_spec.rarity.lower()
         # Map uncommon to rare for our table
@@ -719,7 +744,9 @@ async def simulate_battle(
     # Generate new shop for the round (first shop = refresh count 0)
     shop_seed = session.game_seed + session.round * 1000 + session.shop_refresh_count
 
-    session.current_shop = generate_shop_items(session.round, seed=shop_seed)
+    session.current_shop = generate_shop_items(
+        session.round, seed=shop_seed, held=held_item_types(session)
+    )
 
     # Save updated session
     await session_manager.update_session(session)
