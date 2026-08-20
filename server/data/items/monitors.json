@@ -65,40 +65,15 @@
               "description": "Inflict 4 Throttled"
             }
           ]
-        },
-        {
-          "type": "timer",
-          "cooldown": 4.7,
-          "cpu_cost": 0,
-          "effects": [
-            {
-              "type": "cost",
-              "costs": {
-                "optimized": 1
-              },
-              "effects": [
-                {
-                  "type": "debuff",
-                  "debuff_name": "throttled",
-                  "value": 2,
-                  "target": "enemy",
-                  "description": "Inflict 2 Cold"
-                },
-                {
-                  "type": "block",
-                  "value": 10,
-                  "description": "Gain 10 Block"
-                }
-              ],
-              "description": "Use 1 Heat"
-            }
-          ]
         }
       ],
       "slug": "cryogenic_shield",
       "sockets": 2,
       "icontype": "ice",
       "in_shop": false,
+      "unbuilt": [
+        "Every 4.7s: Use 1 Heat to inflict 2 Cold and gain 10 Block."
+      ],
       "recipe": [
         {
           "ingredients": [
@@ -132,24 +107,6 @@
               "type": "block",
               "value": 65,
               "description": "Start of battle: Gain 65 Block"
-            },
-            {
-              "type": "per_count",
-              "where": "star",
-              "counting": {
-                "any": [
-                  "holy"
-                ]
-              },
-              "effects": [
-                {
-                  "type": "buff",
-                  "buff_name": "regenerating",
-                  "value": 2,
-                  "target": "self",
-                  "description": "Gain 2 Regeneration"
-                }
-              ]
             }
           ]
         },
@@ -171,7 +128,10 @@
       "slug": "sanctified_firewall",
       "sockets": 3,
       "icontype": "holy",
-      "in_shop": false
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Gain 2 Regeneration for each Star Holy-item."
+      ]
     },
     "corrupted_kernel": {
       "name": "Corrupted Kernel",

@@ -25,7 +25,6 @@ from main import generate_shop_items
 from grid_system import parse_map
 from item_effects import (
     ModifyPerEffect,
-    BUFFS,
     DEBUFFS,
     AttackEffect,
     CleanseEffect,
@@ -694,9 +693,7 @@ class TestCleanseLoading:
         for effect in found:
             assert effect.count > 0
             if effect.named():
-                assert effect.removes in BUFFS | DEBUFFS, (
-                    "a name says which pool it draws from, so it has to be one"
-                )
+                assert effect.removes in DEBUFFS, "no buff is named yet"
 
     def test_health_potion_matches_its_source(self):
         """"Health drops below 50%: Consume this and heal for 12 and cleanse
@@ -777,7 +774,7 @@ class TestABuffIsNotAStat:
             with pytest.raises(ValueError, match="not somewhere a modifier"):
                 self.loader()._parse_effect(
                     {"type": "modify", "stat": "trigger_speed", "value": 0.1,
-                     "target": bad, "counting": "any", "cap": None},
+                     "target": bad},
                     "some_item",
                 )
 

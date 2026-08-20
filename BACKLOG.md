@@ -11,15 +11,6 @@ Three passes have now been sized this way and all three missed badly:
 | chance on an effect: 39 | 8 | the rest also want resist, nullify or a condition |
 | five mechanics at once: ~60 | 0 | every one needed a second gap closed too |
 | "already buildable": 172 | 22 | counted clauses that mention a built effect, not clauses that can be said |
-| seven mechanics at once: ~90 | 14 | the same, and Food has no local tag |
-
-A fourth way of counting missed as well, and it is worth naming because it
-looked more careful than the others. Sorting the clauses by *what blocks them*
-put 15 under "two sentences in one string", which sounded like a limit of the
-translation rather than of the engine. It was neither: every one of the 15 had
-a second sentence needing a mechanic, and what the regular expression measured
-was punctuation. A blocker you cannot name in words is not a blocker you have
-found.
 
 Almost every remaining clause is held up by two or three things at once. A
 count per mechanic is an upper bound on what it could ever unlock, never a
@@ -30,55 +21,8 @@ item needs until it is wholly expressible. The counts are still useful for
 choosing which item -- `Use N Mana` appears in 22 clauses and 8 of them are
 `On attack`, which is already built -- but the unit of work is the item.
 
-Worth knowing when planning: 377 clauses remain, 107 on modules waiting for
-sockets, 270 on everything else.
-
-### Backpack Battles "Food" has no tag of its own here
-
-10 clauses say "Star Food", "for each Star Pet or Food", "Trigger all Star
-Food". Nothing in the catalogue answers to it. The wiki's Food type landed on
-two different local categories when the items were imported -- Carrot became a
-`consumable` and Banana, Blueberries and Pumpkin became `script`s -- so there
-is no filter that means the same thing.
-
-Deciding what Food is here unblocks all 10 at once. It wants either a `food`
-kind on the items that are one, or a category the imports agree on.
-
-### `special` on an attack is a hack with no items behind it
-
-`AttackEffect.special` carries "stacking", "crash" and "bypass_block", which
-`_process_attack` reads with a chain of string comparisons. No item in the
-catalogue sets "stacking"; one test does. "crash" and "bypass_block" are set
-by items and do things no effect describes.
-
-Each is a mechanic wearing a string. "stacking" is now `gain_damage` said
-badly, and the other two want effects of their own.
-
-### AuraTrigger defaults its catalogue values and repeats a filter
-
-`AuraTrigger` gives `zone`, `counting` and `after` defaults, which is the thing
-no other trigger does: a default cannot be told from a transcription that lost
-a value. It also carries its own copy of `matches`, which is now the `Counting`
-mixin's job -- `ModifyEffect`, `ModifyPerEffect`, `PerCountEffect` and
-`GainDamageEffect` all take it from there.
-
-### `contained` still reaches nothing
-
-A container does not know what sits inside it, so `_reached_by("contained")`
-returns nothing and `per_count` with `where: "contained"` counts nothing.
-"Start of battle: Gain 8 Block for each Neutral item inside" waits on this.
-
-### A limit on a buff is not a limit on a modifier
-
-"Gain 1 Vampirism (up to 5 per battle)" and "Star items trigger 5% faster (up
-to 50%)" read alike and are not the same thing. The second is built: a
-modifier knows what it has given and stops. The first limits how much of a
-buff one item may grant over a battle, which nothing counts.
-
-### Healing has no modifier
-
-"Increase your healing by 4%", "heal 7% more". `MODIFIERS` has five stats and
-none of them is healing. Two clauses want it.
+Worth knowing when planning: 391 clauses remain, 107 on modules waiting for
+sockets, 284 on everything else.
 
 ### A module does nothing until it is socketed
 

@@ -178,33 +178,12 @@
       "source": "Jynx torquilla",
       "rarity": "legendary",
       "cost": 6,
-      "triggers": [
-        {
-          "type": "timer",
-          "cooldown": 3.0,
-          "cpu_cost": 0,
-          "effects": [
-            {
-              "type": "modify",
-              "stat": "trigger_speed",
-              "value": 0.05,
-              "target": "star",
-              "counting": "any",
-              "cap": 0.5,
-              "description": "Star items trigger 5% faster (up to 50%)"
-            },
-            {
-              "type": "cleanse",
-              "count": 1,
-              "target": "enemy",
-              "removes": "calibrated",
-              "description": "Remove 1 Luck from your opponent"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "jynx_torquilla",
       "in_shop": false,
+      "unbuilt": [
+        "Every 3s: Star items trigger 5% faster (up to 50%). Remove 1 Luck from your opponent."
+      ],
       "icontype": "nature, musical"
     },
     "king_goobert": {
@@ -512,87 +491,13 @@
       "source": "Sloth",
       "rarity": "unique",
       "cost": 5,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "modify",
-              "stat": "trigger_speed",
-              "value": -0.3,
-              "target": "star",
-              "counting": "any",
-              "cap": null,
-              "description": "Star items trigger 30% slower"
-            }
-          ]
-        },
-        {
-          "type": "after",
-          "delay": 25.0,
-          "effects": [
-            {
-              "type": "buff",
-              "buff_name": "calibrated",
-              "value": 10,
-              "target": "self",
-              "description": "Gain 10 calibrated"
-            },
-            {
-              "type": "buff",
-              "buff_name": "credits",
-              "value": 10,
-              "target": "self",
-              "description": "Gain 10 credits"
-            },
-            {
-              "type": "buff",
-              "buff_name": "draining",
-              "value": 10,
-              "target": "self",
-              "description": "Gain 10 draining"
-            },
-            {
-              "type": "buff",
-              "buff_name": "monitored",
-              "value": 10,
-              "target": "self",
-              "description": "Gain 10 monitored"
-            },
-            {
-              "type": "buff",
-              "buff_name": "optimized",
-              "value": 10,
-              "target": "self",
-              "description": "Gain 10 optimized"
-            },
-            {
-              "type": "buff",
-              "buff_name": "regenerating",
-              "value": 10,
-              "target": "self",
-              "description": "Gain 10 regenerating"
-            },
-            {
-              "type": "buff",
-              "buff_name": "spiked",
-              "value": 10,
-              "target": "self",
-              "description": "Gain 10 spiked"
-            },
-            {
-              "type": "stun",
-              "duration": 1.5,
-              "target": "enemy",
-              "description": "Stun the opponent for 1.5s"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "sloth",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 10% maximum health + 15% per Star item."
+        "Star items trigger 30% slower.",
+        "Start of battle: Gain 10% maximum health + 15% per Star item.",
+        "After 25s: Awaken hidden sloth powers! (Gain 10 of each buff and stun the opponent for 1.5s)."
       ],
       "icontype": "treasure,nature"
     },
@@ -611,52 +516,11 @@
       "source": "Snowmaster",
       "rarity": "legendary",
       "cost": 9,
-      "triggers": [
-        {
-          "type": "timer",
-          "cooldown": 1.3,
-          "cpu_cost": 0,
-          "effects": [
-            {
-              "type": "condition",
-              "subject": "status",
-              "status": "throttled",
-              "whose": "enemy",
-              "test": "at_least",
-              "amount": 10,
-              "effects": [
-                {
-                  "type": "buff",
-                  "buff_name": "monitored",
-                  "value": 1,
-                  "target": "self",
-                  "description": "Gain 1 Empower"
-                }
-              ],
-              "otherwise": [
-                {
-                  "type": "debuff",
-                  "debuff_name": "throttled",
-                  "value": 1,
-                  "target": "enemy",
-                  "description": "Inflict 1 Cold"
-                }
-              ],
-              "description": "Inflict 1 Cold, or 1 Empower instead at 10 Cold"
-            },
-            {
-              "type": "cleanse",
-              "count": 1,
-              "target": "self",
-              "removes": "debuff",
-              "description": "Cleanse 1 debuff"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "snowmaster",
       "in_shop": false,
       "unbuilt": [
+        "Every 1.3s: Inflict 1 Cold. If your opponent has at least 10 Cold, gain 1 Empower instead. Cleanse 1 debuff.",
         "Triggers 10% faster for each Ice item."
       ],
       "icontype": "ice",

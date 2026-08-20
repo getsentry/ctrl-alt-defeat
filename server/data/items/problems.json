@@ -859,10 +859,10 @@
           "chance": 0.25,
           "effects": [
             {
-              "type": "gain_damage",
-              "amount": 1,
-              "target": "self",
-              "counting": "any",
+              "type": "modify",
+              "stat": "damage",
+              "value": 1,
+              "target": "own",
               "description": "Gain 1 damage"
             }
           ]
@@ -1046,40 +1046,12 @@
               "accuracy": 0.9
             }
           ]
-        },
-        {
-          "type": "on_hit",
-          "chance": 1.0,
-          "effects": [
-            {
-              "type": "cost",
-              "costs": {
-                "regenerating": 1
-              },
-              "effects": [
-                {
-                  "type": "buff",
-                  "buff_name": "draining",
-                  "value": 1,
-                  "target": "self",
-                  "description": "Gain 1 Vampirism"
-                },
-                {
-                  "type": "buff",
-                  "buff_name": "spiked",
-                  "value": 1,
-                  "target": "self",
-                  "description": "Gain 1 Spikes"
-                }
-              ],
-              "description": "Use 1 Regeneration"
-            }
-          ]
         }
       ],
       "slug": "bloodthorne",
       "in_shop": false,
       "unbuilt": [
+        "On hit: Use 1 Regeneration to gain 1 Vampirism and 1 Spikes.",
         "Deals +1 damage per Spikes and Vampirism."
       ],
       "sockets": 2,

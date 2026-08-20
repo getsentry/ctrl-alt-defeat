@@ -140,9 +140,6 @@ class BattleActionName(str, Enum):
     CPU_FAIL = "cpu_fail"
     CPU_DRAIN = "cpu_drain"
     CLEANSE = "cleanse"
-    GAIN_DAMAGE = "gain_damage"
-    SPEND = "spend"
-    STUN = "stun"
     PLAYER_DEFEATED = "player_defeated"
 
 

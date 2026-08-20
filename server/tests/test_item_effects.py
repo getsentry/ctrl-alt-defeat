@@ -184,8 +184,7 @@ class TestTriggers:
         battle_state = MockBattleState()
 
         trigger = DamageDealtTrigger(
-            chance=0.5,
-            effects=[StunEffect(duration=1.0, target_type="enemy")],
+            chance=0.5, effects=[StunEffect(stun_duration=1.0)]  # 50% chance
         )
 
         # Test multiple activations to verify chance

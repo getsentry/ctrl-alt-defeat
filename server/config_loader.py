@@ -15,12 +15,7 @@ from item_effects import (
     AuraTrigger,
     AfterTrigger,
     ChanceEffect,
-    ConditionEffect,
-    CostEffect,
     EffectDamageEffect,
-    GainDamageEffect,
-    PerCountEffect,
-    StunEffect,
     MaxHealthEffect,
     ModifyPerStatusEffect,
     OnAttackTrigger,
@@ -377,50 +372,6 @@ class ConfigLoader:
             f"UNBUILT_TRIGGERS if it is real and simply not built yet."
         )
 
-    def _behind(self, config, item_id: str, what: str, key: str = "effects"):
-        """The effects a wrapper holds.
-
-        A wrapper with nothing behind it is a clause that lost its point in
-        transcription, not a clause that does nothing, so it stops the load.
-        """
-        behind = [
-            e for e in (
-                self._parse_effect(sub, item_id) for sub in config.get(key, [])
-            ) if e
-        ]
-        if not behind:
-            raise ValueError(f"{item_id}: {what} needs something behind it.")
-        return behind
-
-    @staticmethod
-    def _counting(config, item_id: str):
-        """The `counting` field, read the same way wherever it appears.
-
-        Required, like every other catalogue value: "any" for every item is a
-        thing the catalogue says, not a thing it leaves out.
-        """
-        if "counting" not in config:
-            raise ValueError(
-                f"{item_id}: this needs a `counting`. Write \"any\" if it "
-                f"means every item."
-            )
-        counting = config["counting"]
-        if counting == "any":
-            return counting
-        if not isinstance(counting, dict) or len(counting) != 1 or (
-            set(counting) - {"any", "all"}
-        ):
-            raise ValueError(
-                f"{item_id}: `counting` is \"any\" for every item, or "
-                f"one of {{\"any\": [...]}} and {{\"all\": [...]}}."
-            )
-        if not next(iter(counting.values())):
-            raise ValueError(
-                f"{item_id}: `counting` lists nothing. Write \"any\" if it "
-                f"means every item."
-            )
-        return counting
-
     def _parse_effect(self, config: Dict[str, Any], item_id: str) -> Optional[Any]:
         """Parse an effect configuration"""
         effect_type = config.get("type")
@@ -489,12 +440,9 @@ class ConfigLoader:
                     f"can change. There are {len(MODIFIERS)}: "
                     f"{', '.join(sorted(MODIFIERS))}."
                 )
-            for needed in ("value", "target", "cap"):
+            for needed in ("value", "target"):
                 if needed not in config:
-                    raise ValueError(
-                        f"{item_id}: a modify needs a `{needed}`. Write "
-                        f"`\"cap\": null` for a modifier with no limit."
-                    )
+                    raise ValueError(f"{item_id}: a modify needs a `{needed}`")
             if config["target"] not in MODIFIER_TARGETS:
                 raise ValueError(
                     f"{item_id}: `{config['target']}` is not somewhere a "
@@ -502,11 +450,7 @@ class ConfigLoader:
                     f"{', '.join(sorted(MODIFIER_TARGETS))}."
                 )
             return ModifyEffect(
-                stat=stat,
-                value=config["value"],
-                target_type=config["target"],
-                counting=self._counting(config, item_id),
-                cap=config["cap"],
+                stat=stat, value=config["value"], target_type=config["target"]
             )
         elif effect_type == "modify_per":
             stat = config.get("stat")
@@ -516,7 +460,7 @@ class ConfigLoader:
                     f"change. There are {len(MODIFIERS)}: "
                     f"{', '.join(sorted(MODIFIERS))}."
                 )
-            for needed in ("value", "zone"):
+            for needed in ("value", "zone", "counting"):
                 if needed not in config:
                     raise ValueError(f"{item_id}: a modify_per needs a `{needed}`")
             if config["zone"] not in ("star", "diamond"):
@@ -524,7 +468,20 @@ class ConfigLoader:
                     f"{item_id}: a modify_per counts a `star` or a `diamond`, "
                     f"not `{config['zone']}`."
                 )
-            counting = self._counting(config, item_id)
+            counting = config["counting"]
+            if counting != "any":
+                if not isinstance(counting, dict) or len(counting) != 1 or (
+                    set(counting) - {"any", "all"}
+                ):
+                    raise ValueError(
+                        f"{item_id}: `counting` is \"any\" for every item, or "
+                        f"one of {{\"any\": [...]}} and {{\"all\": [...]}}."
+                    )
+                if not next(iter(counting.values())):
+                    raise ValueError(
+                        f"{item_id}: `counting` lists nothing to count. Write "
+                        f"\"any\" if it counts every item."
+                    )
             return ModifyPerEffect(
                 stat=stat,
                 value=config["value"],
@@ -572,150 +529,35 @@ class ConfigLoader:
         elif effect_type == "chance":
             if "chance" not in config:
                 raise ValueError(f"{item_id}: a chance effect needs a `chance`")
-            return ChanceEffect(
-                chance=config["chance"],
-                effects=self._behind(config, item_id, "a chance effect"),
-            )
-        elif effect_type == "gain_damage":
-            for needed in ("amount", "target"):
-                if needed not in config:
-                    raise ValueError(
-                        f"{item_id}: a gain_damage needs an `{needed}`"
-                    )
-            if config["target"] not in MODIFIER_TARGETS | {"self", "enemy"}:
+            behind = [
+                e for e in (
+                    self._parse_effect(sub, item_id)
+                    for sub in config.get("effects", [])
+                ) if e
+            ]
+            if not behind:
                 raise ValueError(
-                    f"{item_id}: `{config['target']}` is not somewhere gained "
-                    f"damage can land."
+                    f"{item_id}: a chance effect needs something behind it."
                 )
-            return GainDamageEffect(
-                amount=config["amount"],
-                target_type=config["target"],
-                counting=self._counting(config, item_id),
-            )
-        elif effect_type == "per_count":
-            if "where" not in config:
-                raise ValueError(
-                    f"{item_id}: a per_count needs a `where` to count in. "
-                    f"There are {len(MODIFIER_TARGETS)}: "
-                    f"{', '.join(sorted(MODIFIER_TARGETS))}."
-                )
-            if config["where"] not in MODIFIER_TARGETS:
-                raise ValueError(
-                    f"{item_id}: `{config['where']}` is not somewhere a "
-                    f"per_count can count."
-                )
-            return PerCountEffect(
-                where=config["where"],
-                counting=self._counting(config, item_id),
-                effects=self._behind(config, item_id, "a per_count"),
-            )
-        elif effect_type == "cost":
-            costs = config.get("costs")
-            if not costs:
-                raise ValueError(
-                    f"{item_id}: a cost effect needs `costs`, as buff to "
-                    f"stacks."
-                )
-            unknown = set(costs) - BUFFS
-            if unknown:
-                raise ValueError(
-                    f"{item_id}: {sorted(unknown)} cannot be spent. Section "
-                    f"3.1 has seven buffs: {', '.join(sorted(BUFFS))}."
-                )
-            if any(n <= 0 for n in costs.values()):
-                raise ValueError(
-                    f"{item_id}: a cost of nothing is not a cost. Drop the "
-                    f"wrapper instead."
-                )
-            return CostEffect(
-                costs=dict(costs),
-                effects=self._behind(config, item_id, "a cost effect"),
-            )
-        elif effect_type == "condition":
-            for needed in ("subject", "whose", "test"):
-                if needed not in config:
-                    raise ValueError(
-                        f"{item_id}: a condition needs a `{needed}`"
-                    )
-            if config["subject"] not in ("status", "buffs", "debuffs", "health"):
-                raise ValueError(
-                    f"{item_id}: a condition reads a `status`, all your "
-                    f"`buffs` or all your `debuffs`, or your `health`. "
-                    f"`{config['subject']}` is none of them."
-                )
-            if config["whose"] not in ("self", "enemy"):
-                raise ValueError(
-                    f"{item_id}: a condition reads `self` or `enemy`, not "
-                    f"`{config['whose']}`."
-                )
-            if config["test"] not in ("at_least", "above", "below", "none"):
-                raise ValueError(
-                    f"{item_id}: `{config['test']}` is not a way of judging a "
-                    f"condition. There are four: at_least, above, below, none."
-                )
-            status = config.get("status", "")
-            if config["subject"] == "status":
-                if not status:
-                    raise ValueError(
-                        f"{item_id}: a condition on a status has to say which."
-                    )
-                if status not in BUFFS | DEBUFFS:
-                    raise ValueError(
-                        f"{item_id}: `{status}` is not a buff or a debuff."
-                    )
-            if config["test"] != "none" and "amount" not in config:
-                raise ValueError(
-                    f"{item_id}: a condition needs an `amount` to judge "
-                    f"against, unless it tests for `none`."
-                )
-            return ConditionEffect(
-                subject=config["subject"],
-                whose=config["whose"],
-                status=status,
-                test=config["test"],
-                amount=config.get("amount", 0),
-                effects=self._behind(config, item_id, "a condition"),
-                otherwise=[
-                    e for e in (
-                        self._parse_effect(sub, item_id)
-                        for sub in config.get("otherwise", [])
-                    ) if e
-                ],
-            )
-        elif effect_type == "stun":
-            for needed in ("duration", "target"):
-                if needed not in config:
-                    raise ValueError(f"{item_id}: a stun needs a `{needed}`")
-            if config["target"] not in ("self", "enemy"):
-                raise ValueError(
-                    f"{item_id}: a stun lands on `self` or `enemy`, not "
-                    f"`{config['target']}`."
-                )
-            return StunEffect(
-                duration=config["duration"], target_type=config["target"]
-            )
+            return ChanceEffect(chance=config["chance"], effects=behind)
         elif effect_type == "cleanse":
             if "count" not in config:
                 raise ValueError(
                     f"{item_id}: a cleanse has to state its `count`, the "
                     f"number of statuses it takes off."
                 )
-            named = ', '.join(sorted(BUFFS | DEBUFFS))
             if "removes" not in config:
                 raise ValueError(
                     f"{item_id}: a cleanse has to state what it `removes`. "
                     f"Write `debuff` or `buff` for any of that kind, or name "
-                    f"one of: {named}."
+                    f"one of: {', '.join(sorted(DEBUFFS))}."
                 )
             removes = config["removes"]
-            # A buff can be named as well as a debuff. "Remove 1 Luck from
-            # your opponent" is the same mechanic as cleansing a Poison, and
-            # a name says which pool it draws from by itself.
-            if removes not in ("debuff", "buff") and removes not in BUFFS | DEBUFFS:
+            if removes not in ("debuff", "buff") and removes not in DEBUFFS:
                 raise ValueError(
                     f"{item_id}: `{removes}` is not something to cleanse. "
                     f"Write `debuff` or `buff` for any of that kind, or name "
-                    f"one of: {named}."
+                    f"one of: {', '.join(sorted(DEBUFFS))}."
                 )
             if "target" not in config:
                 raise ValueError(

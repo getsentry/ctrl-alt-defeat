@@ -106,44 +106,14 @@
             }
           ],
           "chance": 0.3
-        },
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "gain_damage",
-              "amount": 2,
-              "target": "star",
-              "counting": {
-                "any": [
-                  "melee",
-                  "ranged",
-                  "magic"
-                ]
-              },
-              "description": "Star Weapons deal +2 damage"
-            },
-            {
-              "type": "modify",
-              "stat": "damage",
-              "value": 0.15,
-              "target": "star",
-              "counting": {
-                "any": [
-                  "melee",
-                  "ranged",
-                  "magic"
-                ]
-              },
-              "cap": null,
-              "description": "Star Weapons deal +15% damage"
-            }
-          ]
         }
       ],
       "slug": "rate_limiter",
       "sockets": 1,
-      "in_shop": false
+      "in_shop": false,
+      "unbuilt": [
+        "Start of battle: Star Weapons deal +2 + 15% damage."
+      ]
     },
     "encryption_layer": {
       "name": "Cipher Lock",
@@ -345,46 +315,11 @@
       "source": "Gloves of Power",
       "rarity": "legendary",
       "cost": 10,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "modify",
-              "stat": "damage",
-              "value": 0.2,
-              "target": "star",
-              "counting": {
-                "any": [
-                  "melee",
-                  "ranged",
-                  "magic"
-                ]
-              },
-              "cap": null,
-              "description": "Star Weapons deal +20% damage"
-            },
-            {
-              "type": "modify",
-              "stat": "trigger_speed",
-              "value": -0.1,
-              "target": "star",
-              "counting": {
-                "any": [
-                  "melee",
-                  "ranged",
-                  "magic"
-                ]
-              },
-              "cap": null,
-              "description": "Star Weapons attack 10% slower"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "gloves_of_power",
       "in_shop": false,
       "unbuilt": [
+        "Star Weapons deal +20% damage but attack 10% slower.",
         "Star Weapon hits: gain 7 Block."
       ],
       "recipe": [
@@ -454,68 +389,13 @@
       "source": "Gold Armor",
       "rarity": "godly",
       "cost": 22,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "block",
-              "value": 120,
-              "description": "Gain 120 Block"
-            },
-            {
-              "type": "per_count",
-              "where": "star",
-              "counting": {
-                "any": [
-                  "holy"
-                ]
-              },
-              "effects": [
-                {
-                  "type": "buff",
-                  "buff_name": "regenerating",
-                  "value": 3,
-                  "target": "self",
-                  "description": "Gain 3 Regeneration"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "timer",
-          "cooldown": 2.2,
-          "cpu_cost": 0,
-          "effects": [
-            {
-              "type": "cleanse",
-              "count": 5,
-              "target": "self",
-              "removes": "debuff",
-              "description": "Cleanse 5 debuffs"
-            },
-            {
-              "type": "condition",
-              "subject": "debuffs",
-              "whose": "self",
-              "test": "none",
-              "effects": [
-                {
-                  "type": "block",
-                  "value": 25,
-                  "description": "Gain 25 Block"
-                }
-              ],
-              "description": "If you have no debuffs, gain 25 Block"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "gold_armor",
       "in_shop": false,
       "unbuilt": [
         "Shop entered: Gain 3 Gold.",
+        "Start of battle: Gain 120 Block. Gain 3 Regeneration for each Star Holy-item.",
+        "Every 2.2s: Cleanse 5 debuffs. If you have no debuffs, gain 25 Block.",
         "Your Weapons attack 50% slower."
       ],
       "sockets": 3,
@@ -604,37 +484,11 @@
       "source": "Moon Armor",
       "rarity": "godly",
       "cost": 19,
-      "triggers": [
-        {
-          "type": "battle_start",
-          "effects": [
-            {
-              "type": "block",
-              "value": 50,
-              "description": "Gain 50 Block"
-            },
-            {
-              "type": "per_count",
-              "where": "star",
-              "counting": {
-                "any": [
-                  "magic"
-                ]
-              },
-              "effects": [
-                {
-                  "type": "block",
-                  "value": 20,
-                  "description": "Gain 20 Block"
-                }
-              ]
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "moon_armor",
       "in_shop": false,
       "unbuilt": [
+        "Start of battle: Gain 50 Block + 20 Block for each Star Magic-item.",
         "Every 2.6s: Gain 3 Mana and reflect 2 debuffs."
       ],
       "sockets": 3,
@@ -932,32 +786,12 @@
       "source": "Vampiric Gloves",
       "rarity": "godly",
       "cost": 12,
-      "triggers": [
-        {
-          "type": "after",
-          "delay": 4.0,
-          "effects": [
-            {
-              "type": "buff",
-              "buff_name": "draining",
-              "value": 5,
-              "target": "self",
-              "description": "Gain 5 Vampirism"
-            },
-            {
-              "type": "modify",
-              "stat": "trigger_speed",
-              "value": 0.35,
-              "target": "star",
-              "counting": "any",
-              "cap": null,
-              "description": "Star items trigger 35% faster"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "vampiric_gloves",
       "in_shop": false,
+      "unbuilt": [
+        "After 4s: Gain 5 Vampirism, Star items trigger 35% faster."
+      ],
       "icontype": "vampiric",
       "recipe": [
         {

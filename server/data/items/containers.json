@@ -28,9 +28,7 @@
           "stat": "trigger_speed",
           "value": 0.1,
           "target": "contained",
-          "description": "Modules inside execute 10% faster",
-          "counting": "any",
-          "cap": null
+          "description": "Modules inside execute 10% faster"
         }
       ],
       "slug": "edge_node"

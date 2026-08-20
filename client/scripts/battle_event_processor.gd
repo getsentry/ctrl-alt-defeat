@@ -195,20 +195,6 @@ func _process_event(event: APITypes.BattleAction):
 				taken.append("%d %s" % [event.details["removed"][status_name], status_name])
 			log_msg = "[%.1fs] Player %d's %s cleanses %s" % [event_time, player, item_name, ", ".join(taken)]
 			log_color = Color(0.6, 1.0, 0.8)  # Mint, the same as a buff
-		"gain_damage":
-			log_msg = "[%.1fs] Player %d's %s gains %d damage" % [event_time, player, item_name, event.damage]
-			log_color = Color(1.0, 0.8, 0.4)  # Amber, a weapon getting stronger
-		"spend":
-			# details.costs is {buff name: how many}, and more than one can be
-			# spent at once.
-			var paid: Array[String] = []
-			for buff_name in event.details["costs"]:
-				paid.append("%d %s" % [event.details["costs"][buff_name], buff_name])
-			log_msg = "[%.1fs] Player %d's %s spends %s" % [event_time, player, item_name, ", ".join(paid)]
-			log_color = Color(0.6, 1.0, 0.8)  # Mint, the same as a buff
-		"stun":
-			log_msg = "[%.1fs] Player %d is stunned by %s until %.1fs" % [event_time, player, item_name, event.details["until"]]
-			log_color = Color(1.0, 0.6, 0.2)  # Amber, the same as a throttle
 		_:
 			log_msg = "[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage]
 			log_color = Color.WHITE
@@ -261,18 +247,6 @@ func _process_event(event: APITypes.BattleAction):
 
 		"cleanse":
 			# Nothing to show yet: the debuff icons are not driven from the log
-			pass
-
-		"gain_damage":
-			# Nothing to show yet: an item's damage is not drawn during a battle
-			pass
-
-		"spend":
-			# Nothing to show yet: the buff icons are not driven from the log
-			pass
-
-		"stun":
-			# Nothing to show yet: cooldown rings are not driven from the log
 			pass
 
 		"player_defeated":
