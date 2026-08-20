@@ -68,10 +68,18 @@ func test_new_game_button_click():
 
 
 func test_new_game_asks_to_fade_the_music():
-	# _on_start_game() only fades when music_player.playing is true, and headless
-	# has no audio driver, so playback never starts and the branch is never
-	# reached. Testing this needs an audio-capable run.
-	pending("Headless has no audio driver, so the music fade cannot be reached.")
+	# Asked for and left to run. It used to be waited on -- a full second of a
+	# menu that had plainly already been left, the key pressed and nothing
+	# happening -- and the screen it was fading out of is gone the moment the
+	# server answers anyway.
+	Presentation.clear_requests()
+
+	main_menu._fade_the_music()
+
+	assert_eq(Presentation.request_count("music_fade_out"), 1,
+		"Starting a game should fade the menu music")
+	assert_lt(main_menu.MUSIC_FADE, 0.5,
+		"and it should be most of the way gone before the next screen arrives")
 
 
 func test_quit_button_functionality():

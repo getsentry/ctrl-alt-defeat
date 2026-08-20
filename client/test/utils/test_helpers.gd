@@ -87,10 +87,21 @@ static func create_test_battle_result(winner: int = 1, duration: float = 10.0) -
 		"player2_quota": 0 if winner == 1 else 100,
 		"seed": randi(),
 		"actions": [
-			{"timestamp": 0, "source": "system", "action": "battle_start", "player": 0, "target": null, "damage": null, "details": null},
-			{"timestamp": 2500, "source": "player_item", "action": "damage", "player": 1, "target": "enemy", "damage": 10, "details": null},
-			{"timestamp": 5000, "source": "enemy_item", "action": "damage", "player": 2, "target": "player", "damage": 5, "details": null},
-			{"timestamp": 10000, "source": "system", "action": "battle_end", "player": winner, "target": null, "damage": null, "details": null}
+			# The engine stamps both fighters' quotas on every action it
+			# records, so an action without them is not one the client is ever
+			# given -- and the screen reads its health off them.
+			{"timestamp": 0, "source": "system", "action": "battle_start",
+				"player": 0, "target": null, "damage": null,
+				"details": {"hp": [25, 25], "max_hp": [25, 25]}},
+			{"timestamp": 2500, "source": "player_item", "action": "damage",
+				"player": 1, "target": "enemy", "damage": 10,
+				"details": {"hp": [15, 25], "max_hp": [25, 25]}},
+			{"timestamp": 5000, "source": "enemy_item", "action": "damage",
+				"player": 2, "target": "player", "damage": 5,
+				"details": {"hp": [15, 20], "max_hp": [25, 25]}},
+			{"timestamp": 10000, "source": "system", "action": "battle_end",
+				"player": winner, "target": null, "damage": null,
+				"details": {"hp": [15, 20], "max_hp": [25, 25]}}
 		],
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",

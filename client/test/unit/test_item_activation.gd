@@ -52,7 +52,9 @@ func _battle(actions: Array) -> APITypes.BattleResult:
 func _action(overrides: Dictionary) -> Dictionary:
 	var data = {
 		"timestamp": 0, "source": "system", "action": "damage", "player": 2,
-		"target": null, "damage": 3, "details": null,
+		"target": null, "damage": 3,
+		# The engine stamps both fighters' quotas on every action it records.
+		"details": {"hp": [25, 22], "max_hp": [25, 25]},
 	}
 	data.merge(overrides, true)
 	return data

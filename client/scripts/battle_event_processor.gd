@@ -80,12 +80,17 @@ func load_battle_events(battle_data: APITypes.BattleResult):
 static func _stamped_quota(battle: APITypes.BattleResult, side: int) -> int:
 	"""What a fighter started the battle on, as the engine recorded it.
 
-	Nothing at all for a battle with no actions in it, which is a battle that
-	never happened rather than one worth guessing about.
+	The first action that carries it rather than the first action, because the
+	engine stamps an action only while it has two fighters to read -- a method
+	called on its own, outside a battle, records one carrying nothing.
+
+	Nothing at all for a battle that says nothing anywhere, which is a battle
+	that never happened rather than one worth guessing about.
 	"""
-	if battle.actions.is_empty():
-		return 0
-	return int(battle.actions[0].details["max_hp"][side])
+	for event in battle.actions:
+		if event.details != null and event.details.has("max_hp"):
+			return int(event.details["max_hp"][side])
+	return 0
 
 
 func start_playback(speed: float = 1.0):

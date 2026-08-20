@@ -322,7 +322,7 @@ func test_a_heal_cannot_take_health_past_full():
 func test_a_buff_is_announced_by_name():
 	processor.load_battle_events(_battle([
 		_action({"timestamp": 0, "action": "buff", "player": 1,
-			"details": {"buff_name": "speed", "actual_value": 0.2}})
+			"details": _standing([QUOTA, QUOTA], {"buff_name": "speed", "actual_value": 0.2})})
 	]))
 	watch_signals(processor)
 
@@ -335,7 +335,8 @@ func test_a_buff_is_announced_by_name():
 func test_a_debuff_is_announced_by_name():
 	processor.load_battle_events(_battle([
 		_action({"timestamp": 0, "action": "debuff", "player": 2,
-			"details": {"debuff_name": "memory_leaked", "actual_value": 1}})
+			"details": _standing([QUOTA, QUOTA],
+				{"debuff_name": "memory_leaked", "actual_value": 1})})
 	]))
 	watch_signals(processor)
 
@@ -367,7 +368,7 @@ func test_an_action_says_where_both_fighters_cpu_stood():
 		func(player, cpu, max_cpu): seen[player] = [cpu, max_cpu])
 
 	processor.load_battle_events(_battle([_action({
-		"details": {"cpu": [1.5, 2.75], "max_cpu": [3, 4]}})]))
+		"details": _standing([QUOTA, QUOTA], {"cpu": [1.5, 2.75], "max_cpu": [3, 4]})})]))
 	processor.skip_to_end()
 
 	assert_eq(seen[1], [1.5, 3.0], "The player's pool, as the battle had it")
@@ -394,8 +395,10 @@ func test_the_pool_can_grow_during_a_battle():
 		func(player, _cpu, max_cpu): if player == 1: pools.append(max_cpu))
 
 	processor.load_battle_events(_battle([
-		_action({"details": {"cpu": [3.0, 3.0], "max_cpu": [3, 3]}}),
-		_action({"timestamp": 100, "details": {"cpu": [4.0, 3.0], "max_cpu": [5, 3]}}),
+		_action({"details": _standing([QUOTA, QUOTA],
+			{"cpu": [3.0, 3.0], "max_cpu": [3, 3]})}),
+		_action({"timestamp": 100, "details": _standing([QUOTA, QUOTA],
+			{"cpu": [4.0, 3.0], "max_cpu": [5, 3]})}),
 	]))
 	processor.skip_to_end()
 
@@ -514,7 +517,9 @@ func test_the_client_handles_every_action_the_server_declares():
 
 		processor.load_battle_events(_battle([_action({
 			"action": action_name, "player": 1, "damage": 1,
-			"details": details_for.get(action_name, null)
+			# Where both fighters stand goes on every action the engine
+			# records, whatever else that action carries.
+			"details": _standing([QUOTA, QUOTA], details_for.get(action_name, {}))
 		})]))
 		processor.skip_to_end()
 		processor.log_message.disconnect(record)

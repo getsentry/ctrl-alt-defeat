@@ -130,13 +130,7 @@ func _keycap(art: Texture2D, tall: float, tint := Color.WHITE) -> StyleBoxTextur
 func _on_start_game():
 	print("Starting new game...")
 
-	# Fade out music before transitioning
-	if music_player and music_player.playing:
-		if Presentation.request("music_fade_out"):
-			var tween = get_tree().create_tween()
-			tween.tween_property(music_player, "volume_db", -80.0, 1.0)  # Fade to silence over 1 second
-			await tween.finished
-		music_player.stop()
+	_fade_the_music()
 
 	# Get player name from input (default to "Player" if empty)
 	var player_name = name_input.text.strip_edges()
@@ -162,6 +156,30 @@ func _on_start_game():
 	GameStateManager.update_from_session(session_response.session)
 	# Go to shop/inventory screen
 	get_tree().change_scene_to_file("res://scenes/UnifiedGridUI.tscn")
+
+## How long the music takes to go once the game has been started. Short: it is
+## covering the moment between the key going down and the next screen arriving,
+## and the menu is gone the instant the server answers.
+const MUSIC_FADE := 0.3
+
+
+func _fade_the_music() -> void:
+	"""Start the music fading, and carry straight on.
+
+	Waiting for it was a second of a menu that had plainly already been left --
+	the key pressed, nothing happening, then the screen finally changing. The
+	fade runs while the session is being asked for, and whatever is left of it
+	goes when this screen does.
+	"""
+	if not music_player:
+		return
+	if not Presentation.request("music_fade_out"):
+		music_player.stop()
+		return
+
+	var tween = create_tween()
+	tween.tween_property(music_player, "volume_db", -80.0, MUSIC_FADE)
+
 
 func _on_exit():
 	get_tree().quit()

@@ -122,9 +122,11 @@ func test_battle_result_stores_events_for_playback():
 			"seed": 12345,
 			"actions": [
 				{"timestamp": 0, "source": "system", "action": "battle_start",
-					"player": 0, "target": null, "damage": null, "details": null},
+					"player": 0, "target": null, "damage": null,
+					"details": {"hp": [25, 25], "max_hp": [25, 25]}},
 				{"timestamp": 1500, "source": "enemy", "action": "damage",
-					"player": 2, "target": "player", "damage": 20, "details": null}
+					"player": 2, "target": "player", "damage": 20,
+					"details": {"hp": [25, 5], "max_hp": [25, 25]}}
 			],
 			"opponent_name": "AI Opponent",
 			"opponent_type": "ai",

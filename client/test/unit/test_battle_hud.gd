@@ -22,8 +22,10 @@ func before_each():
 		"player2_quota": 0,
 		"seed": 1,
 		"actions": [
+			# Both fighters' quotas, as the engine stamps them on every action.
 			{"timestamp": 0, "source": "system", "action": "battle_start", "player": 0,
-				"target": null, "damage": null, "details": null}
+				"target": null, "damage": null,
+				"details": {"hp": [25, 25], "max_hp": [25, 25]}}
 		],
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
