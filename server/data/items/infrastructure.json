@@ -22,7 +22,9 @@
               "stat": "trigger_speed",
               "value": 0.2,
               "target": "star",
-              "description": "Star items trigger 20% faster"
+              "description": "Star items trigger 20% faster",
+              "counting": "any",
+              "cap": null
             }
           ]
         }

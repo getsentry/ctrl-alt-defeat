@@ -242,16 +242,37 @@
               "target": "self",
               "removes": "debuff",
               "description": "Cleanse 1 debuff"
+            },
+            {
+              "type": "condition",
+              "subject": "status",
+              "status": "calibrated",
+              "whose": "self",
+              "test": "at_least",
+              "amount": 4,
+              "effects": [
+                {
+                  "type": "chance",
+                  "chance": 0.55,
+                  "effects": [
+                    {
+                      "type": "buff",
+                      "buff_name": "monitored",
+                      "value": 1,
+                      "target": "self",
+                      "description": "Gain 1 Empower"
+                    }
+                  ]
+                }
+              ],
+              "description": "If you have at least 4 Luck: 55% chance to gain 1 Empower"
             }
           ]
         }
       ],
       "slug": "auto_rollback",
       "icontype": "nature",
-      "in_shop": false,
-      "unbuilt": [
-        "Every 2.7s: If you have at least 4 Luck: 55% chance to gain 1 Empower."
-      ]
+      "in_shop": false
     }
   }
 }

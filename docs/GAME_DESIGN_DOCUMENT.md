@@ -152,7 +152,32 @@ game's own wording:
 - **CONSUME**: Remove item from battle after use
 - **CLEANSE**: Remove statuses from somebody. Taking a debuff off yourself and
   taking a buff off your opponent are the same effect with a different target,
-  so STEAL is not separate.
+  so STEAL is not separate. It can take any of a kind or one named status,
+  and a name says which pool it draws from by itself, since no buff and debuff
+  share one
+- **GAIN_DAMAGE**: Flat damage an item picks up during a battle and keeps.
+  "Gain 1 damage", "The Star Weapon gains 10 damage". It joins the weapon's
+  roll rather than the total, so a modifier and a critical hit both carry it.
+  Kept apart from the item's own range because the source game reads it back:
+  "remove 1 damage gained in battle from all opponent Weapons"
+- **PER_COUNT**: Everything behind it, once for each item that counts. "Gain 3
+  Regeneration for each Star Holy-item". Doing the effects again is what "for
+  each" means, so it works with every effect. Counting nothing does nothing
+- **COST**: Everything behind it, if the owner can pay. "Use 3 Mana to deal +7
+  damage". All of it or none of it, so a clause cannot leave its owner poorer
+  for nothing. What the trigger already did stands either way: an attack that
+  cannot buy its bonus is still an attack
+- **CONDITION**: Everything behind it, if the player is in the state named,
+  and `otherwise` if not. "If your health is above 70%, gain 1 Empower.
+  Otherwise, heal for 8." One effect holds the whole sentence, so the two
+  halves cannot both happen. A condition reads a state and spends nothing,
+  which is what tells it from a cost
+- **STUN**: Hold every one of a player's cooldowns still for a while. Nothing
+  is lost and nothing is reset: an item mid-wait keeps the wait it had left.
+  Two stuns at once do not add -- Backpack Battles keeps them as separate
+  debuffs that expire separately, so what matters is the later of the two ends.
+  It is not one of the three debuffs in Section 3.2: nothing stacks and nothing
+  can cleanse it
 
 ### 2.3 Weapons (Problems/Bugs)
 Attack items that deal damage. All weapons:
@@ -612,8 +637,8 @@ An item does not care what it is next to. It cares whose aura reaches it.
 **Undecided:** whether an aura stops at the edge of a container, or reaches into
 any square regardless. Nothing depends on the answer yet.
 
-`server/grid_system.py` reads all of this from the map. It returns the covered
-squares today and throws the zones away, so nothing acts on an aura yet.
+`server/grid_system.py` reads all of this from the map, and returns the covered
+squares and both zones.
 
 ### 4.4 What an aura does
 
@@ -621,6 +646,41 @@ An aura carries the effect of the item projecting it. "Star Weapons gain 3
 damage" means every weapon the star zone reaches gains 3 damage; "Chance-based
 effects of the star items are 15% more likely" means the same shape of thing.
 The wording on each item says what it grants and to what kind of item.
+
+**A zone can be narrowed.** "Star items trigger 20% faster" reaches everything
+standing in the zone; "Star Weapons deal +2 damage" reaches only the weapons.
+What narrows it is a tag: a kind an item carries (melee, holy, nature, ice) or
+the category it belongs to, so "Star Food" and "Star Weapons" read the same
+way. A filter can want any of a list of tags or all of them, and an item
+matches once however many it matches.
+
+The source game writes the singular -- "The Star Weapon gains 10 damage" --
+when an item draws a one-square star, where the only weapon that can stand
+there is the one. It is the zone that is small, not the rule, so a zone
+reaching two weapons reaches both.
+
+**An aura is settled once, before the battle**, because nothing moves on the
+grid during one. That holds only for a modifier under a standing trigger: a
+passive, or a start-of-battle one, which is settled at the same moment. A
+modifier under a timer or an on-hit is not an aura at all but something an
+item hands out as it goes -- "On hit: 25% chance to gain 1 damage", "Every 3s:
+Star items trigger 5% faster" -- and it is applied where it happens.
+
+**Modifiers add, they never multiply.** Two auras of +20% come to +40%, not
++44%. This is the same rule Section 3.1 gives for speed, where everything that
+speeds an item up is added before anything is divided, and it is what makes a
+limit mean what it says: "5% faster (up to 50%)" is ten grants of 5%.
+
+**A modifier handed out again and again can carry a limit.** The limit is on
+what one item has given another, not on what the receiver has been given by
+everybody, so two items each granting 5% up to 50% reach 100% between them.
+A grant that would overshoot is trimmed rather than refused.
+
+**Counting works three ways round.** A zone can decide what it falls on
+(a modifier), what it counts (a modifier on the item projecting it, sized by
+what stands in the zone), or when something happens (a trigger that fires when
+an item in the zone activates). A fourth reads the player rather than the grid,
+sizing a modifier by a status its owner holds.
 
 There are no synergies that count how many of a category sit beside each other.
 An earlier version of this document described six, of which two were built

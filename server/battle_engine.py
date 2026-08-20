@@ -20,7 +20,12 @@ from item_effects import (
     AuraTrigger,
     AfterTrigger,
     ChanceEffect,
+    ConditionEffect,
+    CostEffect,
     EffectDamageEffect,
+    GainDamageEffect,
+    PerCountEffect,
+    StunEffect,
     MaxHealthEffect,
     ModifyPerStatusEffect,
     OnAttackTrigger,
@@ -176,6 +181,27 @@ class Regenerating(OverTimeEffect):
 OVER_TIME: List[OverTimeEffect] = [MemoryLeaked(), Regenerating()]
 
 
+class IdentitySet:
+    """A set of objects held by identity rather than by value.
+
+    An effect is a frozen dataclass, so two of them that read alike are equal
+    and hash alike. Telling one item's settled modifier from another item's
+    identical one needs the object itself, not its value.
+    """
+
+    def __init__(self):
+        self._by_id = {}
+
+    def add(self, obj) -> None:
+        self._by_id[id(obj)] = obj
+
+    def __contains__(self, obj) -> bool:
+        return id(obj) in self._by_id
+
+    def __len__(self) -> int:
+        return len(self._by_id)
+
+
 # BattleItem will reference the new ItemSpec from item_effects.py
 
 
@@ -208,6 +234,10 @@ class BattleItem:
     # Modifiers whose size depends on a status the player holds. Kept rather
     # than folded in, because the count changes as the battle goes on.
     per_status: List = field(default_factory=list)
+
+    # How much each other item has granted this one, keyed by that item and
+    # the stat, so a modifier with a limit knows when it has reached it.
+    granted: Dict[Tuple[str, str], float] = field(default_factory=dict)
 
     def aura_squares(self, zone: str) -> List[Tuple[int, int]]:
         """The grid squares this item's star or diamond zone falls on.
@@ -323,6 +353,22 @@ class BattleSimulator:
         self.event_manager = EventManager()
         self.consumed_items = set()  # Track consumed item UIDs
 
+        # What each player has on the grid, so an effect that reaches other
+        # items can find them. Keyed by player id, set for the length of a
+        # battle. A test that calls one method on its own has neither.
+        self.loadout: Dict[int, List[BattleItem]] = {}
+
+        # The modifiers _apply_auras has already settled. A modifier under a
+        # standing trigger is applied once before the battle, and its trigger
+        # then comes through _apply_effects as its handler goes on; without
+        # this it would be applied a second time. Identity, not equality: two
+        # items can carry equal modifiers and only one of them be settled.
+        self.settled: "IdentitySet" = IdentitySet()
+
+        # When each player's stun ends, if one is on. Absent means not
+        # stunned, which is not the same as stunned until now.
+        self.stunned_until: Dict[int, float] = {}
+
         # Initialize RNG with seed for deterministic battles
         self.seed = (
             seed if seed is not None else int(time.time() * 1000000) % 2147483647
@@ -389,6 +435,9 @@ class BattleSimulator:
         self.actions = []
         self.event_manager.clear()
         self.consumed_items = set()
+        self.loadout = {player1.id: p1_items, player2.id: p2_items}
+        self.settled = IdentitySet()
+        self.stunned_until = {}
         player1.reset_for_battle()
         player2.reset_for_battle()
 
@@ -550,20 +599,36 @@ class BattleSimulator:
                 return candidate
         return None
 
+    #: The triggers whose modifiers stand for the whole battle. A passive is
+    #: on throughout; a battle-start one is settled at the moment this pass
+    #: runs, so it comes to the same thing. Every other trigger hands its
+    #: modifiers out as it fires.
+    STANDING_TRIGGERS = (PassiveTrigger, BattleStartTrigger)
+
     def _apply_auras(self, items: List[BattleItem], owner=None, enemy=None):
         """Let every aura change the items it falls on.
 
         Worked out once, before the battle. Nothing moves on the grid during a
         battle, so an aura reaches the same items throughout.
+
+        Only a standing trigger feeds this. A modifier under a timer or an
+        on-hit is not an aura but something an item hands out as it goes --
+        "On hit: 25% chance to gain 1 damage" -- and settling it here gave it
+        away at the start of the battle, in full, whether or not the item ever
+        hit anything. It is applied where it happens instead.
         """
         for item in items:
             for trigger in item.spec.triggers:
+                if not isinstance(trigger, self.STANDING_TRIGGERS):
+                    continue
                 for effect in getattr(trigger, "effects", []) or []:
                     if isinstance(effect, ModifyEffect):
+                        self.settled.add(effect)
                         for reached in self._reached_by(
                             effect.target_type, item, items
                         ):
-                            self._modify(reached, effect)
+                            if effect.matches(self._tags(reached)):
+                                self._modify(reached, effect, source=item)
                     elif isinstance(effect, ModifyPerStatusEffect):
                         # The player is asked rather than the grid. Statuses
                         # from battle_start have not been granted yet, so this
@@ -585,6 +650,9 @@ class BattleSimulator:
         square it covers is in that zone. An item never reaches itself through
         its own aura: a zone is drawn beside the footprint, not on it.
         """
+        if target == "self":
+            # "Gain 1 damage" is the item saying it about itself.
+            return [source]
         if target == "own":
             return items
         if target in ("star", "diamond"):
@@ -599,6 +667,13 @@ class BattleSimulator:
         # Reaching nothing is the safer of the two ways to be wrong: it cannot
         # make an item quietly stronger than it should be.
         return []
+
+    @staticmethod
+    def _tags(item: BattleItem) -> set:
+        """What an item can be narrowed by: the kinds it carries and the
+        category it belongs to, lowered so the catalogue's casing does not
+        matter."""
+        return {k.lower() for k in item.spec.kinds} | {item.spec.category.lower()}
 
     def _counted_in(
         self, effect: ModifyPerEffect, source: BattleItem, items: List[BattleItem]
@@ -615,14 +690,7 @@ class BattleSimulator:
             for other in items
             if other.uid != source.uid and zone & set(other.get_occupied_squares())
         ]
-        return sum(
-            1
-            for other in standing
-            if effect.matches(
-                {k.lower() for k in other.spec.kinds}
-                | {other.spec.category.lower()}
-            )
-        )
+        return sum(1 for other in standing if effect.matches(self._tags(other)))
 
     def _enemy_of(self, player: Player) -> Player:
         """The other player, so a cooldown can count what they hold."""
@@ -644,16 +712,65 @@ class BattleSimulator:
             if effect.stat == stat
         )
 
-    def _modify(self, item: BattleItem, effect, times: int = 1):
-        """Put a modifier onto one item, `times` over."""
+    def _modify(self, item: BattleItem, effect, times: int = 1, source=None):
+        """Put a modifier onto one item, `times` over.
+
+        A modifier handed out again and again can carry a limit -- "Star items
+        trigger 5% faster (up to 50%)" -- and the limit is on what one item
+        has given another. Two items each granting 5% up to 50% reach 100%
+        between them, which is what two of them should do.
+        """
+        cap = getattr(effect, "cap", None)
+        if cap is not None and source is not None:
+            key = (source.uid, effect.stat)
+            given = item.granted.get(key, 0.0)
+            room = cap - given
+            wanted = effect.value * times
+            if room <= 0:
+                return
+            if wanted > room:
+                times = room / effect.value
+                wanted = room
+            item.granted[key] = given + wanted
+
+        # Added, never multiplied. Backpack Battles adds everything that
+        # speeds an item up before it divides once (Section 3.1), and the
+        # limits are written as sums: "5% faster (up to 50%)" is ten grants,
+        # not 1.05 ten times over. Two auras of +20% therefore come to +40%
+        # rather than +44%.
         if effect.stat == "trigger_speed":
-            item.speed_mult *= 1 + effect.value * times
+            item.speed_mult += effect.value * times
         elif effect.stat == "accuracy":
             item.accuracy_bonus += effect.value * times
         elif effect.stat == "damage":
-            item.damage_mult *= 1 + effect.value * times
+            item.damage_mult += effect.value * times
         elif effect.stat == "cpu_cost":
             item.cpu_discount += effect.value * times
+
+    def _stun(self, target: Player, duration: float, item: BattleItem) -> None:
+        """Hold every one of a player's cooldowns still for `duration`.
+
+        The waits are kept on a heap as the times they come due, so holding
+        them still means pushing each of them back. An item halfway through a
+        wait keeps the half it had left.
+
+        Two stuns at once do not add. Backpack Battles keeps them as separate
+        debuffs that expire separately, so what matters is the later of the
+        two ends: a stun landing inside a longer one pushes nothing.
+        """
+        now = self.current_time
+        already = self.stunned_until.get(target.id, now)
+        ends = max(already, now + duration)
+        held = ends - max(already, now)
+        if held <= 0:
+            return
+
+        self.stunned_until[target.id] = ends
+        self.event_manager.hold_timers(target.id, held)
+        self._record(BattleAction(
+            timestamp=self._time_ms(), source=item.uid, action="stun",
+            target=None, damage=None, player=target.id,
+            details={"until": round(ends, 2)}))
 
     def _setup_item_handlers(
         self, items: List[BattleItem], owner: Player, enemy: Player
@@ -733,7 +850,7 @@ class BattleSimulator:
                         self._apply_effects(trigger.effects, item, owner, enemy)
 
                     self.event_manager.schedule_timer(
-                        trigger.delay, f"{item.uid}_after", once
+                        trigger.delay, f"{item.uid}_after", once, owner.id
                     )
 
                 elif isinstance(trigger, OnAttackTrigger):
@@ -886,7 +1003,9 @@ class BattleSimulator:
             if item.uid not in self.consumed_items:
                 self._schedule_timer_trigger(trigger, item, owner, enemy, trigger_uid)
 
-        self.event_manager.schedule_timer(next_time, trigger_uid, activate)
+        self.event_manager.schedule_timer(
+            next_time, trigger_uid, activate, owner.id
+        )
 
     def _cooldown_for(
         self, trigger: TimerTrigger, owner: Player, item: BattleItem
@@ -1063,14 +1182,84 @@ class BattleSimulator:
                 # half-happen.
                 if effect.happens(self):
                     self._apply_effects(effect.effects, item, owner, enemy)
-            elif isinstance(effect, (ModifyEffect, ModifyPerEffect)):
-                # Already applied, by _apply_auras before the battle began.
-                # An aura settles once: nothing moves on the grid during a
-                # battle, so what it reaches cannot change. Passive triggers
-                # come through here as their handlers go on, so there is
-                # nothing left for a modifier to do per activation. Nothing
-                # will go here later.
+            elif isinstance(effect, ModifyPerEffect):
+                # Settled by _apply_auras before the battle began. It only
+                # ever sits under a standing trigger, and a standing trigger
+                # comes through here once as its handler goes on, so there is
+                # nothing left to do.
                 continue
+            elif isinstance(effect, ModifyEffect):
+                # A standing one is already settled; anything else is handed
+                # out here, as the trigger that carries it fires. Which of the
+                # two this is was decided at setup, so it is asked once rather
+                # than guessed at from the effect.
+                if effect in self.settled:
+                    continue
+                for reached in self._reached_by(
+                    effect.target_type, item, self.loadout[owner.id]
+                ):
+                    if effect.matches(self._tags(reached)):
+                        self._modify(reached, effect, source=item)
+            elif isinstance(effect, GainDamageEffect):
+                for reached in self._reached_by(
+                    effect.target_type,
+                    item,
+                    self.loadout[
+                        owner.id if result["target_type"] != "enemy" else enemy.id
+                    ],
+                ):
+                    if effect.matches(self._tags(reached)):
+                        reached.damage_gained += result["amount"]
+                self._record(BattleAction(
+                    timestamp=self._time_ms(), source=item.uid,
+                    action="gain_damage", target=None, damage=result["amount"],
+                    player=owner.id, details={"reaches": result["target_type"]}))
+            elif isinstance(effect, PerCountEffect):
+                # "for each" is the effects again, once per item that counts.
+                # Counting nothing does nothing, with no case of its own.
+                standing = [
+                    other
+                    for other in self._reached_by(
+                        effect.where, item, self.loadout[owner.id]
+                    )
+                    if effect.matches(self._tags(other))
+                ]
+                for _ in standing:
+                    self._apply_effects(effect.effects, item, owner, enemy)
+            elif isinstance(effect, CostEffect):
+                # All of it or none of it. Nothing is spent when the price
+                # cannot be met in full, so a clause cannot leave the owner
+                # poorer for nothing.
+                if effect.affordable(owner.buffs):
+                    for name, n in effect.costs.items():
+                        owner.buffs[name] -= n
+                        if owner.buffs[name] <= 0:
+                            del owner.buffs[name]
+                    self._record(BattleAction(
+                        timestamp=self._time_ms(), source=item.uid,
+                        action="spend", target=None, damage=None,
+                        player=owner.id, details={"costs": dict(effect.costs)}))
+                    self._apply_effects(effect.effects, item, owner, enemy)
+            elif isinstance(effect, ConditionEffect):
+                held = owner if effect.whose == "self" else enemy
+                if effect.subject == "health":
+                    reading = held.quota / held.max_quota
+                elif effect.subject == "buffs":
+                    reading = sum(held.buffs.values())
+                elif effect.subject == "debuffs":
+                    reading = sum(held.debuffs.values())
+                else:
+                    reading = held.buffs.get(
+                        effect.status, held.debuffs.get(effect.status, 0)
+                    )
+                taken = effect.effects if effect.holds(reading) else effect.otherwise
+                self._apply_effects(taken, item, owner, enemy)
+            elif isinstance(effect, StunEffect):
+                self._stun(
+                    owner if result["target_type"] == "self" else enemy,
+                    result["duration"],
+                    item,
+                )
             elif isinstance(effect, CleanseEffect):
                 cleansed = self._cleanse(
                     owner if result["target_type"] == "self" else enemy,
@@ -1170,8 +1359,17 @@ class BattleSimulator:
             )
             return
 
-        # Calculate damage
-        damage = self.rng.randint(attack_data["min_damage"], attack_data["max_damage"])
+        # An item that gets stronger with every swing counts this one.
+        if attack_data.get("special") == "stacking":
+            item.damage_gained += 1
+
+        # Damage picked up during the battle is part of what the weapon
+        # swings, so it joins the roll rather than the total: a modifier and a
+        # crit both carry it with them, which is what "gains 1 damage" means.
+        damage = (
+            self.rng.randint(attack_data["min_damage"], attack_data["max_damage"])
+            + item.damage_gained
+        )
 
         # Section 3.1: Monitored is +1 damage a stack. It needs no check for
         # whether this is a weapon, because an attack is what a weapon does
@@ -1202,12 +1400,7 @@ class BattleSimulator:
             )
 
         # Handle special attack types
-        if attack_data.get("special") == "stacking":
-            # The item gets stronger with every swing and keeps the gain for the
-            # rest of the battle.
-            item.damage_gained += 1
-            damage += item.damage_gained
-        elif attack_data.get("special") == "bypass_block":
+        if attack_data.get("special") == "bypass_block":
             enemy.block = int(enemy.block * 0.5)
 
         # Shields roll and Block is spent, both because this was an attack.
