@@ -211,7 +211,8 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 12,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }

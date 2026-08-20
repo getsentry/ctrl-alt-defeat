@@ -69,7 +69,7 @@ class TestShieldBlocking:
                         cooldown=1.0,
                         cpu_cost=2,
                         effects=[
-                            AttackEffect(min_damage=15, max_damage=15, accuracy=1.0)
+                            AttackEffect(min_damage=15, max_damage=15, accuracy=1.0, crit_chance=0.0)
                         ],
                     )
                 ],
@@ -149,7 +149,7 @@ class TestShieldBlocking:
                         cooldown=0.5,  # Fast attacks
                         cpu_cost=1,
                         effects=[
-                            AttackEffect(min_damage=3, max_damage=3, accuracy=1.0)
+                            AttackEffect(min_damage=3, max_damage=3, accuracy=1.0, crit_chance=0.0)
                         ],
                     )
                 ],
@@ -237,7 +237,7 @@ class TestShieldBlocking:
                         cooldown=1.0,
                         cpu_cost=6,  # High CPU cost
                         effects=[
-                            AttackEffect(min_damage=10, max_damage=10, accuracy=1.0)
+                            AttackEffect(min_damage=10, max_damage=10, accuracy=1.0, crit_chance=0.0)
                         ],
                     )
                 ],
@@ -333,7 +333,7 @@ class TestShieldBlocking:
                         cooldown=2.0,
                         cpu_cost=2,
                         effects=[
-                            AttackEffect(min_damage=20, max_damage=20, accuracy=1.0)
+                            AttackEffect(min_damage=20, max_damage=20, accuracy=1.0, crit_chance=0.0)
                         ],
                     )
                 ],

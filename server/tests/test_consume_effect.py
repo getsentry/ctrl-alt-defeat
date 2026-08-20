@@ -66,7 +66,7 @@ class TestConsumeEffect:
                         cooldown=1.0,
                         cpu_cost=2,
                         effects=[
-                            AttackEffect(min_damage=15, max_damage=15, accuracy=1.0)
+                            AttackEffect(min_damage=15, max_damage=15, accuracy=1.0, crit_chance=0.0)
                         ],
                     )
                 ],
@@ -212,7 +212,7 @@ class TestConsumeEffect:
                         cooldown=0.5,
                         cpu_cost=2,
                         effects=[
-                            AttackEffect(min_damage=12, max_damage=12, accuracy=1.0)
+                            AttackEffect(min_damage=12, max_damage=12, accuracy=1.0, crit_chance=0.0)
                         ],
                     )
                 ],

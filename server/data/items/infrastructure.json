@@ -103,18 +103,89 @@
               "description": "Gain 1 Credits"
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "magic"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "credits",
+                  "value": 2,
+                  "target": "self",
+                  "description": "Gain 2 Mana"
+                }
+              ]
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "vampiric"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "draining",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Vampirism"
+                }
+              ]
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "holy"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "player_modify",
+                  "stat": "healing",
+                  "value": 0.04,
+                  "target": "self",
+                  "duration": -1,
+                  "description": "Increase your healing by 4%"
+                }
+              ]
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "dark"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "random_status",
+                  "kind": "debuff",
+                  "count": 1,
+                  "target": "enemy",
+                  "description": "Inflict a random debuff"
+                }
+              ]
+            }
+          ]
         }
       ],
       "slug": "quantum_processor",
       "icontype": "magic, vampiric, holy, dark",
-      "in_shop": false,
-      "unbuilt": [
-        "Start of battle: For each...",
-        "Star Magic-item: Gain 2 Mana.",
-        "Star Vampiric-item: Gain 1 Vampirism.",
-        "Star Holy-item: Increase your healing by 4%.",
-        "Star Dark-item: Inflict a random debuff."
-      ]
+      "in_shop": false
     },
     "quantum_probability_core": {
       "name": "Schrodinger's Die",

@@ -993,3 +993,111 @@ class TestEveryRecipeCouldBeFollowed:
         for item_id, recipe in self._recipes():
             parts = recipe["ingredients"] + recipe.get("catalysts", [])
             assert item_id not in parts, f"{item_id} is made from itself"
+
+
+class TestTheCatalogueStillSaysWhatTheWikiSays:
+    """Every number in the catalogue came from a Backpack Battles page, and
+    `research/parse_wiki.py` can read those pages again.
+
+    So nothing has to be trusted. The corpus is committed, the parser is
+    committed, and this compares the two. It exists because the catalogue is
+    edited by hand on nearly every commit -- adding a trigger, closing a
+    clause -- and a stat changed by accident in that traffic would otherwise
+    be found by nobody.
+    """
+
+    @staticmethod
+    def _wiki():
+        import importlib.util
+        import sys
+        from pathlib import Path
+
+        here = Path(__file__).resolve().parents[2] / "research" / "parse_wiki.py"
+        spec = importlib.util.spec_from_file_location("parse_wiki", here)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["parse_wiki"] = module
+        spec.loader.exec_module(module)
+        return {page["name"]: page for page in module.parse().values()}
+
+    @staticmethod
+    def _number(value):
+        """A field as a number, or None where it is not one. The gemstone
+        pages give ranges like "1/2/4/8/16", one page covering five tiers."""
+        if value in (None, ""):
+            return None
+        try:
+            return float(str(value).strip().rstrip("%"))
+        except ValueError:
+            return None
+
+    def test_every_stat_matches_the_page_it_came_from(self):
+        import json
+        from pathlib import Path
+
+        wiki = self._wiki()
+        items = Path(__file__).resolve().parents[1] / "data" / "items"
+        wrong, checked = [], 0
+
+        for path in sorted(items.glob("*.json")):
+            data = json.loads(path.read_text())
+            for group in ("items", "containers"):
+                for item_id, item in data.get(group, {}).items():
+                    page = wiki.get(item.get("source"))
+                    if not page:
+                        continue
+                    checked += 1
+
+                    def same(field, ours, theirs, scale=1):
+                        a, b = self._number(ours), self._number(theirs)
+                        if a is None or b is None:
+                            return
+                        if a != round(b * scale, 4):
+                            wrong.append(f"{item_id}.{field}: {a} vs {b * scale}")
+
+                    same("cost", item.get("cost"), page.get("cost"))
+                    same("sockets", item.get("sockets"), page.get("sockets"))
+                    for trigger in item.get("triggers") or []:
+                        for effect in trigger.get("effects") or []:
+                            if effect.get("type") == "attack":
+                                same("min_damage", effect.get("min_damage"),
+                                     page.get("mindamage"))
+                                same("max_damage", effect.get("max_damage"),
+                                     page.get("maxdamage"))
+                                same("accuracy", effect.get("accuracy"),
+                                     page.get("accuracy"), 0.01)
+                        if trigger.get("type") == "timer":
+                            same("cooldown", trigger.get("cooldown"),
+                                 page.get("cooldown"))
+                            same("cpu_cost", trigger.get("cpu_cost"),
+                                 page.get("stamina"))
+
+        assert checked > 200, f"only {checked} items could be checked"
+        assert not wrong, "\n".join(wrong)
+
+    def test_rarity_matches_except_where_one_page_covers_five_tiers(self):
+        """A gemstone's page says "Varies": it is one page for the chipped,
+        flawed, regular, flawless and perfect cuts, and the catalogue names
+        which of them each item is."""
+        import json
+        from pathlib import Path
+
+        wiki = self._wiki()
+        items = Path(__file__).resolve().parents[1] / "data" / "items"
+        wrong = []
+        for path in sorted(items.glob("*.json")):
+            data = json.loads(path.read_text())
+            for group in ("items", "containers"):
+                for item_id, item in data.get(group, {}).items():
+                    page = wiki.get(item.get("source"))
+                    if not page or not page.get("rarity"):
+                        continue
+                    theirs = page["rarity"].lower()
+                    if theirs == "varies":
+                        assert item.get("category") == "module", (
+                            f"{item_id} is not a module, so its page should "
+                            f"name one rarity"
+                        )
+                        continue
+                    if item.get("rarity", "").lower() != theirs:
+                        wrong.append(f"{item_id}: {item.get('rarity')} vs {theirs}")
+        assert not wrong, "\n".join(wrong)

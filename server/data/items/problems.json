@@ -24,7 +24,8 @@
               "type": "attack",
               "min_damage": 1,
               "max_damage": 3,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -56,7 +57,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 5,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
             }
           ]
         }
@@ -93,7 +95,8 @@
               "type": "attack",
               "min_damage": 4,
               "max_damage": 9,
-              "accuracy": 0.8
+              "accuracy": 0.8,
+              "crit_chance": 0
             }
           ]
         },
@@ -109,14 +112,24 @@
               "description": "Gain 1 Spiked"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 1.0,
+              "status": "spiked",
+              "whose": "self",
+              "description": "Deals +1 damage per Spikes"
+            }
+          ]
         }
       ],
       "slug": "mobius_lash",
       "sockets": 2,
-      "icontype": "nature, melee",
-      "unbuilt": [
-        "Deals +1 damage per Spikes."
-      ]
+      "icontype": "nature, melee"
     },
     "sql_injector": {
       "name": "SQL Injector",
@@ -145,7 +158,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 4,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -181,7 +195,26 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 10,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
+            }
+          ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 5,
+              "target": "self",
+              "description": "Gain 5 Heat"
+            },
+            {
+              "type": "reflect",
+              "count": 3,
+              "target": "self",
+              "description": "Reflect 3 debuffs"
             }
           ]
         }
@@ -191,9 +224,6 @@
       "icontype": "fire, effect, ranged",
       "in_shop": false,
       "pet": true,
-      "unbuilt": [
-        "Start of battle: Gain 5 Heat. Reflect 3 debuffs."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -224,7 +254,8 @@
               "type": "attack",
               "min_damage": 7,
               "max_damage": 9,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -262,7 +293,8 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 9,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -300,7 +332,8 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 8,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -347,7 +380,8 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 10,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -365,6 +399,14 @@
                 ]
               },
               "description": "Triggers 10% faster for each Star nature-item"
+            },
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 0.8,
+              "status": "regenerating",
+              "whose": "self",
+              "description": "Deals +0.8 damage per Regeneration"
             }
           ]
         },
@@ -394,9 +436,6 @@
       "icontype": "nature,effect,ranged",
       "in_shop": false,
       "pet": true,
-      "unbuilt": [
-        "Deals +0.8 damage per Regeneration."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -429,7 +468,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -461,7 +501,8 @@
               "type": "attack",
               "min_damage": 4,
               "max_damage": 11,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         },
@@ -519,7 +560,8 @@
               "type": "attack",
               "min_damage": 11,
               "max_damage": 14,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -576,7 +618,8 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 9,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -621,7 +664,8 @@
               "type": "attack",
               "min_damage": 3,
               "max_damage": 4,
-              "accuracy": 1.0
+              "accuracy": 1.0,
+              "crit_chance": 0
             }
           ]
         },
@@ -678,7 +722,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         },
@@ -699,15 +744,26 @@
               "description": "Triggers 15% faster for each Star Pet or Food"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "cleanse",
+              "count": 1,
+              "target": "enemy",
+              "removes": "buff",
+              "keep": true,
+              "description": "Steal a random buff"
+            }
+          ]
         }
       ],
       "slug": "data_leech_swarm",
       "icontype": "nature, effect, ranged",
       "in_shop": false,
       "pet": true,
-      "unbuilt": [
-        "On hit: Steal a random buff."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -753,7 +809,8 @@
               "type": "attack",
               "min_damage": 9,
               "max_damage": 12,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -797,7 +854,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         },
@@ -850,7 +908,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -904,7 +963,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 4,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -954,7 +1014,8 @@
               "type": "attack",
               "min_damage": 4,
               "max_damage": 6,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -1005,7 +1066,8 @@
               "type": "attack",
               "min_damage": 10,
               "max_damage": 16,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -1043,7 +1105,8 @@
               "type": "attack",
               "min_damage": 4,
               "max_damage": 8,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -1118,7 +1181,8 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 7,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
             }
           ]
         }
@@ -1165,7 +1229,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 4,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
             }
           ]
         },
@@ -1221,7 +1286,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -1278,7 +1344,8 @@
               "type": "attack",
               "min_damage": 4,
               "max_damage": 5,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -1325,7 +1392,8 @@
               "type": "attack",
               "min_damage": 8,
               "max_damage": 11,
-              "accuracy": 1.0
+              "accuracy": 1.0,
+              "crit_chance": 0
             }
           ]
         }
@@ -1372,7 +1440,8 @@
               "type": "attack",
               "min_damage": 15,
               "max_damage": 20,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -1412,7 +1481,8 @@
               "type": "attack",
               "min_damage": 12,
               "max_damage": 17,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
             }
           ]
         }
@@ -1459,7 +1529,8 @@
               "type": "attack",
               "min_damage": 8,
               "max_damage": 9,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -1507,7 +1578,8 @@
               "type": "attack",
               "min_damage": 4,
               "max_damage": 5,
-              "accuracy": 1.0
+              "accuracy": 1.0,
+              "crit_chance": 0
             }
           ]
         }
@@ -1555,7 +1627,8 @@
               "type": "attack",
               "min_damage": 10,
               "max_damage": 16,
-              "accuracy": 0.6
+              "accuracy": 0.6,
+              "crit_chance": 0
             }
           ]
         }
@@ -1593,7 +1666,8 @@
               "type": "attack",
               "min_damage": 4,
               "max_damage": 7,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -1616,13 +1690,33 @@
               "description": "45% chance"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 1.0,
+              "status": "draining",
+              "whose": "self",
+              "description": "Deals +1 damage per Vampirism"
+            },
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 0.4,
+              "status": "throttled",
+              "whose": "enemy",
+              "description": "and +0.4 per Cold of your opponent"
+            }
+          ]
         }
       ],
       "slug": "frostbite",
       "in_shop": false,
       "unbuilt": [
-        "Opponent reaches 30 Cold: Gain 12 Vampirism (once).",
-        "Deals +1 damage per Vampirism and +0.4 per Cold of your opponent."
+        "Opponent reaches 30 Cold: Gain 12 Vampirism (once)."
       ],
       "sockets": 2,
       "icontype": "ice, vampiric, melee",
@@ -1659,7 +1753,8 @@
               "type": "attack",
               "min_damage": 10,
               "max_damage": 13,
-              "accuracy": 0.75
+              "accuracy": 0.75,
+              "crit_chance": 0
             }
           ]
         }
@@ -1698,7 +1793,8 @@
               "type": "attack",
               "min_damage": 8,
               "max_damage": 10,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -1745,7 +1841,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 4,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -1796,7 +1893,8 @@
               "type": "attack",
               "min_damage": 10,
               "max_damage": 15,
-              "accuracy": 2.0
+              "accuracy": 2.0,
+              "crit_chance": 0
             }
           ]
         }
@@ -1842,7 +1940,8 @@
               "type": "attack",
               "min_damage": 3,
               "max_damage": 6,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -1857,13 +1956,25 @@
               "description": "Gain 1 Draining"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "max_damage_flat",
+              "value": 1.0,
+              "status": "draining",
+              "whose": "self",
+              "description": "Deals +1 maximum damage per Vampirism"
+            }
+          ]
         }
       ],
       "slug": "hungry_blade",
       "in_shop": false,
       "unbuilt": [
-        "On hit: Use 1 Regeneration to gain 1 Vampirism.",
-        "Deals +1 maximum damage per Vampirism."
+        "On hit: Use 1 Regeneration to gain 1 Vampirism."
       ],
       "sockets": 1,
       "icontype": "vampiric, melee"
@@ -1893,7 +2004,8 @@
               "type": "attack",
               "min_damage": 40,
               "max_damage": 50,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -1931,7 +2043,8 @@
               "type": "attack",
               "min_damage": 8,
               "max_damage": 10,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -1977,7 +2090,21 @@
               "type": "attack",
               "min_damage": 8,
               "max_damage": 12,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
+            }
+          ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 1.0,
+              "status": "rate_limited",
+              "whose": "enemy",
+              "description": "Deals +1 damage for each Blind of your opponent"
             }
           ]
         }
@@ -1985,8 +2112,7 @@
       "slug": "lightsaber",
       "in_shop": false,
       "unbuilt": [
-        "Use 3 Regeneration: Inflict 8 Blind for 6s (unstackable).",
-        "Deals +1 damage for each Blind of your opponent."
+        "Use 3 Regeneration: Inflict 8 Blind for 6s (unstackable)."
       ],
       "sockets": 2,
       "icontype": "holy, melee"
@@ -2016,7 +2142,8 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 8,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -2060,7 +2187,8 @@
               "type": "attack",
               "min_damage": 3,
               "max_damage": 6,
-              "accuracy": 2.0
+              "accuracy": 2.0,
+              "crit_chance": 0
             }
           ]
         }
@@ -2111,7 +2239,8 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 7,
-              "accuracy": 2.0
+              "accuracy": 2.0,
+              "crit_chance": 0
             }
           ]
         },
@@ -2170,7 +2299,8 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 6,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -2207,7 +2337,8 @@
               "type": "attack",
               "min_damage": 9,
               "max_damage": 11,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -2270,7 +2401,8 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 7,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
             }
           ]
         },
@@ -2334,7 +2466,8 @@
               "type": "attack",
               "min_damage": 9,
               "max_damage": 14,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -2378,7 +2511,8 @@
               "type": "attack",
               "min_damage": 1,
               "max_damage": 2,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -2418,7 +2552,8 @@
               "type": "attack",
               "min_damage": 14,
               "max_damage": 20,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -2468,7 +2603,8 @@
               "type": "attack",
               "min_damage": 8,
               "max_damage": 10,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -2506,7 +2642,8 @@
               "type": "attack",
               "min_damage": 8,
               "max_damage": 10,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         }
@@ -2583,7 +2720,8 @@
               "type": "attack",
               "min_damage": 5,
               "max_damage": 8,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
             }
           ]
         },
@@ -2649,7 +2787,8 @@
               "type": "attack",
               "min_damage": 6,
               "max_damage": 9,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
             }
           ]
         }
@@ -2700,7 +2839,8 @@
               "type": "attack",
               "min_damage": 3,
               "max_damage": 8,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -2736,7 +2876,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 3,
-              "accuracy": 0.95
+              "accuracy": 0.95,
+              "crit_chance": 0
             }
           ]
         }
@@ -2787,7 +2928,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 4,
-              "accuracy": 0.9
+              "accuracy": 0.9,
+              "crit_chance": 0
             }
           ]
         },
@@ -2847,7 +2989,8 @@
               "type": "attack",
               "min_damage": 2,
               "max_damage": 4,
-              "accuracy": 0.7
+              "accuracy": 0.7,
+              "crit_chance": 0
             }
           ]
         }
@@ -2884,7 +3027,8 @@
               "type": "attack",
               "min_damage": 8,
               "max_damage": 13,
-              "accuracy": 0.85
+              "accuracy": 0.85,
+              "crit_chance": 0
             }
           ]
         }
@@ -2935,7 +3079,21 @@
               "type": "attack",
               "min_damage": 7,
               "max_damage": 12,
-              "accuracy": 0.8
+              "accuracy": 0.8,
+              "crit_chance": 0
+            }
+          ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 1.0,
+              "status": "spiked",
+              "whose": "self",
+              "description": "Deals +1 damage per Spikes"
             }
           ]
         }
@@ -2944,8 +3102,7 @@
       "in_shop": false,
       "unbuilt": [
         "On hit: Gain 1 Spikes. 60% chance to gain 1 Empower.",
-        "Empower gained: Gain 11 maximum health.",
-        "Deals +1 damage per Spikes."
+        "Empower gained: Gain 11 maximum health."
       ],
       "sockets": 2,
       "icontype": "nature, melee",

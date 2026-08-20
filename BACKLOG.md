@@ -33,6 +33,52 @@ choosing which item -- `Use N Mana` appears in 22 clauses and 8 of them are
 Worth knowing when planning: 377 clauses remain, 107 on modules waiting for
 sockets, 270 on everything else.
 
+### "(once)" on a health threshold changes nothing today
+
+Every threshold clause in the source game that says "(once)" is written here
+with a `limit` of 1 wrapped round it, and that wrapper is currently doing no
+work: `HealthThresholdTrigger` already fires on the crossing and never again,
+so removing the limit breaks no test. A mutation found it by changing the
+allowance to 99 and watching nothing fail.
+
+It is kept rather than dropped because it is what the item says, and because
+Section 2.1 records the open question it belongs to: whether a threshold
+should re-arm after the player heals back above the line. "(once)" appears on
+13 threshold clauses in the source game and on no other kind of trigger, which
+suggests the default re-arms. If it ever does, this wrapper is what makes
+those 13 behave.
+
+Until then it is a fact recorded, not a mechanic running. Deciding the
+re-arming question is what settles it either way.
+
+### A resist chance is rolled per stack, and the wiki does not say so
+
+Reflect is explicitly per stack: "only 1 stack will be reflected per reflect."
+Resist's charges are counted the same way, so they are spent per stack here.
+Its *chance* is the guess: "You have a 2% chance to resist debuffs for each
+Luck" could be one roll for the whole inflict or one per stack, and against a
+5-stack Blind those are very different.
+
+Per stack was chosen for consistency with the charges beside it. Nothing in
+the wiki settles it.
+
+### Resist cannot yet be a chance that grows with a status
+
+"You have a 2% chance to resist debuffs for each Luck" (Dancing Dragon) and
+"15% chance to resist critical hits" / "40% chance to resist stuns" (Cap of
+Resilience, Stone Helm) are all resist, and none of them fits what is built.
+The first wants a chance sized by a status; the other two want resisting
+something that is not a debuff at all.
+
+Six clauses across four items.
+
+### An item-level modifier on Block granted
+
+"Star items give +30% Block", "StarItems give 30% more Block". `block_gained`
+is a modifier on the *player*, so it changes every source of Block rather than
+only the items the star reaches. Three clauses want the narrower one, which
+needs Block to be granted through the item that granted it.
+
 ### Backpack Battles "Food" has no tag of its own here
 
 10 clauses say "Star Food", "for each Star Pet or Food", "Trigger all Star

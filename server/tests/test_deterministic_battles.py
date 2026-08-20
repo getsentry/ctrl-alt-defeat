@@ -224,7 +224,7 @@ class TestDeterministicBattles:
                         cooldown=0.3,
                         cpu_cost=1,
                         effects=[
-                            AttackEffect(min_damage=3, max_damage=3, accuracy=1.0)
+                            AttackEffect(min_damage=3, max_damage=3, accuracy=1.0, crit_chance=0.0)
                         ],
                     )
                 ],
@@ -428,7 +428,7 @@ class TestDeterministicBattles:
                         cooldown=1.0,
                         cpu_cost=1,
                         effects=[
-                            AttackEffect(min_damage=5, max_damage=5, accuracy=1.0)
+                            AttackEffect(min_damage=5, max_damage=5, accuracy=1.0, crit_chance=0.0)
                         ],
                     )
                 ],

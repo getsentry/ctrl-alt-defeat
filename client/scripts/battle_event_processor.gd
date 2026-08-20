@@ -214,6 +214,15 @@ func _process_event(event: APITypes.BattleAction):
 		"stun":
 			log_msg = "[%.1fs] Player %d is stunned by %s until %.1fs" % [event_time, player, item_name, event.details["until"]]
 			log_color = Color(1.0, 0.6, 0.2)  # Amber, the same as a throttle
+		"resist":
+			log_msg = "[%.1fs] Player %d resists %s" % [event_time, player, event.details["debuff_name"] if event.details.has("debuff_name") else "debuffs"]
+			log_color = Color(0.6, 1.0, 0.8)  # Mint, the same as a buff
+		"reflect":
+			log_msg = "[%.1fs] Player %d's %s reflects %d" % [event_time, player, item_name, event.damage]
+			log_color = Color(0.6, 1.0, 0.8)  # Mint, the same as a buff
+		"player_modify":
+			log_msg = "[%.1fs] Player %d: %s %+.0f%%" % [event_time, player, event.details["stat"], event.details["value"] * 100.0]
+			log_color = Color(0.6, 1.0, 0.8)  # Mint, the same as a buff
 		_:
 			log_msg = "[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage]
 			log_color = Color.WHITE
@@ -278,6 +287,18 @@ func _process_event(event: APITypes.BattleAction):
 
 		"stun":
 			# Nothing to show yet: cooldown rings are not driven from the log
+			pass
+
+		"resist":
+			# Nothing to show yet: the debuff icons are not driven from the log
+			pass
+
+		"reflect":
+			# Nothing to show yet: the debuff icons are not driven from the log
+			pass
+
+		"player_modify":
+			# Nothing to show yet: nothing draws what a player carries
 			pass
 
 		"player_defeated":

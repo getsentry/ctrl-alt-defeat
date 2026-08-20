@@ -21,6 +21,14 @@ from item_effects import (
     AfterTrigger,
     ChanceEffect,
     ConditionEffect,
+    LimitEffect,
+    PlayerModifyEffect,
+    RandomStatusEffect,
+    ReflectEffect,
+    ResistEffect,
+    BUFFS,
+    DEBUFFS,
+    PLAYER_MODIFIERS,
     CostEffect,
     EffectDamageEffect,
     GainDamageEffect,
@@ -157,22 +165,8 @@ class Regenerating(OverTimeEffect):
         if stacks <= 0:
             return
 
-        healed = min(stacks, player.max_quota - player.quota)
-        if healed <= 0:
-            return  # Already full, so there is nothing to log
-
-        player.quota += healed
-        battle._record(
-            BattleAction(
-                timestamp=battle._time_ms(),
-                source="system",  # No one item is behind it once stacked
-                action="heal",
-                target=None,
-                damage=healed,
-                player=player.id,
-                details={"buff_name": self.name},
-            )
-        )
+        battle._heal(player, stacks, source="system",
+                     details={"buff_name": self.name})
 
 
 #: Every over-time effect in the game, in the order they pay out.
@@ -203,6 +197,26 @@ class IdentitySet:
 
 
 # BattleItem will reference the new ItemSpec from item_effects.py
+
+
+@dataclass
+class Timed:
+    """Something a player carries that runs out.
+
+    Two things wear this shape and they are worth telling apart. A *status*
+    entry is stacks that were granted normally and are taken back when the
+    time comes -- "inflict 5 Blind for 2s". A *modifier* entry is a number
+    read while it is live and never written anywhere -- "take -25% damage for
+    7s", "invulnerable for 2s".
+
+    `until` is when it stops, measured from the start of the battle, so a
+    clock that drifts by a tick cannot leave one running forever.
+    """
+
+    kind: str  # "status" or "modifier"
+    name: str
+    amount: float
+    until: float
 
 
 @dataclass
@@ -238,6 +252,10 @@ class BattleItem:
     # How much each other item has granted this one, keyed by that item and
     # the stat, so a modifier with a limit knows when it has reached it.
     granted: Dict[Tuple[str, str], float] = field(default_factory=dict)
+
+    # Critical hit chance handed to this item from outside. Its own is on the
+    # attack, and is 0 for every weapon in the catalogue.
+    crit_bonus: float = 0.0
 
     def aura_squares(self, zone: str) -> List[Tuple[int, int]]:
         """The grid squares this item's star or diamond zone falls on.
@@ -292,6 +310,25 @@ class Player:
     # behind it.
     paid_at: Dict[str, float] = field(default_factory=dict)
 
+    # Modifiers on the player rather than on an item. `until` is None for one
+    # that stands for the whole battle.
+    mods: List[Timed] = field(default_factory=list)
+
+    # Debuffs this player turns back on the one who sent them. Backpack
+    # Battles' Reflect page: "Reflect 2 means that you will cleanse the next 2
+    # stacks of debuffs applied to you, and inflict them upon the opponent
+    # instead."
+    reflect: int = 0
+
+    # Debuffs this player simply refuses. The same page's order: "Reflect, if
+    # a check is successful, occurs before Resist."
+    resist: int = 0
+
+    # A share, added up from every source, checked before a stack is spent.
+    # "All percent chance methods are added together to give a combined total
+    # chance to resist."
+    resist_chance: float = 0.0
+
     def reset_for_battle(self) -> None:
         """Forget everything the last battle left here.
 
@@ -304,6 +341,39 @@ class Player:
         self.debuffs.clear()
         self.recorded_attacks.clear()
         self.paid_at.clear()
+        self.mods.clear()
+        self.reflect = 0
+        self.resist = 0
+        self.resist_chance = 0.0
+
+    def modifier(self, stat: str, now: float) -> float:
+        """What every live modifier on this player adds to one number.
+
+        Shares add rather than multiply, the same rule Section 3.1 gives for
+        speed and Section 4.4 for items. Two sources of -25% damage taken come
+        to -50%, and the caller decides what a total means.
+        """
+        return sum(
+            mod.amount for mod in self.mods
+            if mod.name == stat and (mod.until is None or mod.until > now)
+        )
+
+    def expire(self, now: float) -> List[Timed]:
+        """Hand back the stacks of every status entry that has run out.
+
+        Only status entries. Those were granted, so somebody has to take them
+        away again; a modifier entry was never written anywhere, only read,
+        and `modifier` above decides on the spot whether it still counts.
+
+        Two places deciding whether the same thing is live is one too many.
+        Sweeping modifiers here as well made that `until` check unreachable,
+        which a mutation found by removing it and breaking nothing.
+        """
+        gone = [m for m in self.mods
+                if m.kind == "status" and m.until is not None and m.until <= now]
+        if gone:
+            self.mods = [m for m in self.mods if m not in gone]
+        return gone
 
     def period_due(self, name: str, period: float, now: float) -> bool:
         """True once per period, on the period, timed from the battle start.
@@ -368,6 +438,10 @@ class BattleSimulator:
         # When each player's stun ends, if one is on. Absent means not
         # stunned, which is not the same as stunned until now.
         self.stunned_until: Dict[int, float] = {}
+
+        # How many times each limited clause has happened this battle, by the
+        # effect's identity. Two items carrying equal clauses are two entries.
+        self.allowance: Dict[int, int] = {}
 
         # Initialize RNG with seed for deterministic battles
         self.seed = (
@@ -438,6 +512,7 @@ class BattleSimulator:
         self.loadout = {player1.id: p1_items, player2.id: p2_items}
         self.settled = IdentitySet()
         self.stunned_until = {}
+        self.allowance = {}
         player1.reset_for_battle()
         player2.reset_for_battle()
 
@@ -479,6 +554,19 @@ class BattleSimulator:
             )
 
             # Process timer events efficiently with heap
+            # Anything with a clock on it runs out here, before the tick's
+            # work, so a modifier that ended at this instant does not reach it.
+            for player in (player1, player2):
+                for gone in player.expire(self.current_time):
+                    # Stacks were granted, so they have to be handed back.
+                    # Floored, because a cleanse may have taken them already.
+                    pool = player.buffs if gone.name in BUFFS else player.debuffs
+                    left = pool.get(gone.name, 0) - gone.amount
+                    if left > 0:
+                        pool[gone.name] = left
+                    else:
+                        pool.pop(gone.name, None)
+
             self.event_manager.current_time = self.current_time
             self.event_manager.process_timers(self.current_time)
 
@@ -696,12 +784,106 @@ class BattleSimulator:
         """The other player, so a cooldown can count what they hold."""
         return self.player2 if player is self.player1 else self.player1
 
+    def _inflict(self, target: Player, status: str, stacks: int,
+                 source: str, duration: float = 0.0) -> int:
+        """Put stacks of a debuff on somebody, and say how many landed.
+
+        Every stack is offered to Reflect and then to Resist, in that order,
+        because Backpack Battles' Reflect page fixes it: "Reflect, if a check
+        is successful, occurs before Resist." A reflected stack lands on the
+        other player; a resisted one lands nowhere.
+
+        One stack at a time, since both are counted in stacks: "Regardless of
+        how many stacks of a debuff is inflicted to the player who has
+        Reflect, only 1 stack will be reflected per reflect." A resist chance
+        is therefore rolled per stack as well, which the wiki does not say in
+        as many words -- see BACKLOG.md.
+        """
+        other = self._enemy_of(target)
+        landed = reflected = resisted = 0
+
+        for _ in range(stacks):
+            if target.reflect > 0:
+                target.reflect -= 1
+                other.debuffs[status] = other.debuffs.get(status, 0) + 1
+                reflected += 1
+                continue
+            chance = target.resist_chance
+            if chance > 0 and self.rng.random() < chance:
+                resisted += 1
+                continue
+            if target.resist > 0:
+                target.resist -= 1
+                resisted += 1
+                continue
+            target.debuffs[status] = target.debuffs.get(status, 0) + 1
+            landed += 1
+
+        if landed and duration > 0:
+            target.mods.append(Timed(
+                kind="status", name=status, amount=landed,
+                until=self.current_time + duration,
+            ))
+        if landed:
+            self._record(BattleAction(
+                timestamp=self._time_ms(), source=source, action="debuff",
+                target=None, damage=landed, player=target.id,
+                details={"debuff_name": status, "actual_value": landed}))
+        if reflected:
+            self._record(BattleAction(
+                timestamp=self._time_ms(), source=source, action="debuff",
+                target=None, damage=reflected, player=other.id,
+                details={"debuff_name": status, "actual_value": reflected,
+                         "reflected": True}))
+        if resisted:
+            self._record(BattleAction(
+                timestamp=self._time_ms(), source=source, action="resist",
+                target=None, damage=resisted, player=target.id,
+                details={"debuff_name": status}))
+        return landed
+
+    def _grant(self, target: Player, status: str, stacks: float,
+               source: str, duration: float = 0.0) -> None:
+        """Put stacks of a buff on somebody. Nothing refuses a buff."""
+        target.buffs[status] = target.buffs.get(status, 0) + stacks
+        if duration > 0:
+            target.mods.append(Timed(
+                kind="status", name=status, amount=stacks,
+                until=self.current_time + duration,
+            ))
+        self._record(BattleAction(
+            timestamp=self._time_ms(), source=source, action="buff",
+            target=None,
+            damage=int(stacks * 100) if isinstance(stacks, float) else stacks,
+            player=target.id,
+            details={"buff_name": status, "actual_value": stacks}))
+
+    @staticmethod
+    def _stacks(player: Player, status: str) -> int:
+        """How many of one status a player holds, whichever pool it lives in.
+        A name says which by itself, since no buff and debuff share one."""
+        return player.buffs.get(status, player.debuffs.get(status, 0))
+
     def _held(self, effect, owner: Player, enemy: Player) -> int:
         """How many of the status a modifier counts are held right now."""
         holder = owner if effect.whose == "self" else enemy
         return holder.buffs.get(
             effect.status, holder.debuffs.get(effect.status, 0)
         )
+
+    def _crit_chance(self, base: float, item: BattleItem, owner: Player,
+                     enemy: Player) -> float:
+        """How likely this swing is to be a critical hit.
+
+        Backpack Battles' Critical hits page: "All sources of damage start
+        with a 0% crit chance, and may only gain crit chance through outside
+        sources... Crit chance does not exceed 100%."
+        """
+        gained = item.crit_bonus + self._per_status(
+            item, "critical_chance", owner, enemy
+        )
+        gained += owner.modifier("critical_chance", self.current_time)
+        return min(1.0, base + gained)
 
     def _per_status(self, item: BattleItem, stat: str, owner: Player,
                     enemy: Player) -> float:
@@ -746,6 +928,8 @@ class BattleSimulator:
             item.damage_mult += effect.value * times
         elif effect.stat == "cpu_cost":
             item.cpu_discount += effect.value * times
+        elif effect.stat == "critical_chance":
+            item.crit_bonus += effect.value * times
 
     def _stun(self, target: Player, duration: float, item: BattleItem) -> None:
         """Hold every one of a player's cooldowns still for `duration`.
@@ -969,6 +1153,8 @@ class BattleSimulator:
             # An aura can make an item cheaper to run, never free: the floor
             # is zero rather than a refund.
             cpu_cost = max(0.0, trigger.get_cpu_cost() - item.cpu_discount)
+            cpu_cost *= max(0.0, 1.0 + owner.modifier(
+                "stamina_use", self.current_time))
 
             if owner.cpu >= cpu_cost:
                 # Have enough CPU - apply the effects
@@ -1052,80 +1238,39 @@ class BattleSimulator:
                 # Handle attack effect
                 self._process_attack(result, item, owner, enemy)
             elif isinstance(effect, HealEffect):
-                # Handle heal effect
-                heal = self.rng.randint(result["min_heal"], result["max_heal"])
-                owner.quota = min(owner.max_quota, owner.quota + heal)
-                self._record(
-                    BattleAction(
-                        timestamp=self._time_ms(),
-                        source=item.uid,
-                        action="heal",
-                        target=None,
-                        damage=heal,  # Use damage field for heal amount
-                        player=owner.id,
-                        details=None,
-                    )
+                self._heal(
+                    owner,
+                    self.rng.randint(result["min_heal"], result["max_heal"]),
+                    item.uid,
                 )
             elif isinstance(effect, BlockEffect):
-                # Handle block effect
-                owner.block += result["amount"]
+                # "Star items give +30% Block" is a share on whoever gains it.
+                gained = int(result["amount"] * max(0.0, 1.0 + owner.modifier(
+                    "block_gained", self.current_time)))
+                owner.block += gained
                 self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source=item.uid,
                         action="block",
                         target=None,
-                        damage=result["amount"],  # Block amount
+                        damage=gained,
                         player=owner.id,
                         details=None,
                     )
                 )
             elif isinstance(effect, BuffEffect):
-                # Handle buff effect
-                owner.buffs[result["buff_name"]] = (
-                    owner.buffs.get(result["buff_name"], 0) + result["value"]
-                )
-                self._record(
-                    BattleAction(
-                        timestamp=self._time_ms(),
-                        source=item.uid,
-                        action="buff",
-                        target=None,
-                        damage=(
-                            int(result["value"] * 100)
-                            if isinstance(result["value"], float)
-                            else result["value"]
-                        ),  # Convert float to int percentage
-                        player=owner.id,
-                        details={
-                            "buff_name": result["buff_name"],
-                            "actual_value": result["value"],
-                        },
-                    )
+                self._grant(
+                    owner if result["target_type"] != "enemy" else enemy,
+                    result["buff_name"], result["value"], item.uid,
+                    result["duration"],
                 )
             elif isinstance(effect, DebuffEffect):
-                # Handle debuff effect
                 if self.rng.random() < result["accuracy"]:
-                    enemy.debuffs[result["debuff_name"]] = (
-                        enemy.debuffs.get(result["debuff_name"], 0) + result["value"]
-                    )
-                    self._record(
-                        BattleAction(
-                            timestamp=self._time_ms(),
-                            source=item.uid,
-                            action="debuff",
-                            target=None,
-                            damage=(
-                                int(result["value"] * 100)
-                                if isinstance(result["value"], float)
-                                else result["value"]
-                            ),  # Convert float to int percentage
-                            player=enemy.id,
-                            details={
-                                "debuff_name": result["debuff_name"],
-                                "actual_value": result["value"],
-                            },
-                        )
+                    self._inflict(
+                        enemy if result["target_type"] != "self" else owner,
+                        result["debuff_name"], int(result["value"]), item.uid,
+                        result["duration"],
                     )
             elif isinstance(effect, StatModEffect):
                 # Handle stat modification
@@ -1152,20 +1297,32 @@ class BattleSimulator:
                     )
                 )
             elif isinstance(effect, EffectDamageEffect):
-                landed = int(result["amount"])
+                # "Deal 10 Effect-damage + 0.5 for each Spikes + 1 for each
+                # Empower." The stacks are read here rather than at setup, so
+                # a stack gained during the battle counts.
+                amount = result["amount"] + sum(
+                    rate * self._stacks(
+                        owner if result["whose"][status] == "self" else enemy,
+                        status,
+                    )
+                    for status, rate in result["per_status"].items()
+                )
+                # The Critical hits page says these very effects can crit,
+                # "also doubling the healing to match the damage dealt".
+                if self.rng.random() < self._crit_chance(0.0, item, owner, enemy):
+                    amount *= 2
+                    self._record(BattleAction(
+                        timestamp=self._time_ms(), source=item.uid,
+                        action="critical_hit", target=None, damage=int(amount),
+                        player=owner.id, details={"kind": "effect"}))
+                landed = int(amount)
                 if landed > 0:
                     self._take_damage(
                         enemy, landed, source=item.uid, action="damage",
                         attacker=owner, details={"kind": "effect"},
                     )
-                    drained = int(landed * result["lifesteal"])
-                    healed = min(drained, owner.max_quota - owner.quota)
-                    if healed > 0:
-                        owner.quota += healed
-                        self._record(BattleAction(
-                            timestamp=self._time_ms(), source=item.uid,
-                            action="heal", target=None, damage=healed,
-                            player=owner.id, details={"kind": "lifesteal"}))
+                    self._heal(owner, int(landed * result["lifesteal"]),
+                               item.uid, details={"kind": "lifesteal"})
             elif isinstance(effect, MaxHealthEffect):
                 owner.max_quota += result["amount"]
                 owner.quota += result["amount"]
@@ -1267,6 +1424,13 @@ class BattleSimulator:
                     result["count"],
                     result["removes"] if result["named"] else "",
                 )
+                if cleansed and result["keep"]:
+                    # "Steal a random buff": taken from them and kept.
+                    keeper = owner if result["target_type"] == "enemy" else enemy
+                    for status, how_many in cleansed.items():
+                        pool = (keeper.buffs if status in BUFFS
+                                else keeper.debuffs)
+                        pool[status] = pool.get(status, 0) + how_many
                 if cleansed:
                     self._record(
                         BattleAction(
@@ -1283,6 +1447,56 @@ class BattleSimulator:
                             details={"removed": cleansed},
                         )
                     )
+            elif isinstance(effect, PlayerModifyEffect):
+                reaches = (
+                    [owner, enemy] if result["target_type"] == "both"
+                    else [owner if result["target_type"] == "self" else enemy]
+                )
+                for player in reaches:
+                    player.mods.append(Timed(
+                        kind="modifier", name=result["stat"],
+                        amount=result["value"],
+                        until=(self.current_time + result["duration"]
+                               if result["duration"] > 0 else None),
+                    ))
+                    self._record(BattleAction(
+                        timestamp=self._time_ms(), source=item.uid,
+                        action="player_modify", target=None, damage=None,
+                        player=player.id,
+                        details={"stat": result["stat"],
+                                 "value": result["value"],
+                                 "seconds": result["duration"]}))
+            elif isinstance(effect, ReflectEffect):
+                gains = owner if result["target_type"] == "self" else enemy
+                gains.reflect += result["count"]
+                self._record(BattleAction(
+                    timestamp=self._time_ms(), source=item.uid,
+                    action="reflect", target=None, damage=result["count"],
+                    player=gains.id, details=None))
+            elif isinstance(effect, ResistEffect):
+                gains = owner if result["target_type"] == "self" else enemy
+                gains.resist += result["count"]
+                gains.resist_chance += result["chance"]
+                self._record(BattleAction(
+                    timestamp=self._time_ms(), source=item.uid,
+                    action="resist", target=None, damage=result["count"],
+                    player=gains.id, details={"chance": result["chance"]}))
+            elif isinstance(effect, RandomStatusEffect):
+                lands = owner if result["target_type"] == "self" else enemy
+                pool = sorted(BUFFS if result["kind"] == "buff" else DEBUFFS)
+                for _ in range(result["count"]):
+                    chosen = pool[self.rng.randrange(len(pool))]
+                    if result["kind"] == "buff":
+                        self._grant(lands, chosen, 1, item.uid)
+                    else:
+                        self._inflict(lands, chosen, 1, item.uid)
+            elif isinstance(effect, LimitEffect):
+                # Counted per effect and per battle, so two items carrying the
+                # same clause each get their own allowance.
+                spent = self.allowance.get(id(effect), 0)
+                if spent < effect.times:
+                    self.allowance[id(effect)] = spent + 1
+                    self._apply_effects(effect.effects, item, owner, enemy)
             elif isinstance(effect, ConsumeEffect):
                 # Mark item for removal and emit event
                 self._consume_item(item, owner)
@@ -1363,12 +1577,20 @@ class BattleSimulator:
         if attack_data.get("special") == "stacking":
             item.damage_gained += 1
 
+        # "Deals +1 maximum damage per Vampirism" raises the top of the range
+        # and leaves the bottom, so the roll widens rather than shifting.
+        top = attack_data["max_damage"] + int(
+            self._per_status(item, "max_damage_flat", owner, enemy)
+        )
+
         # Damage picked up during the battle is part of what the weapon
         # swings, so it joins the roll rather than the total: a modifier and a
         # crit both carry it with them, which is what "gains 1 damage" means.
+        # Flat per-status bonuses join it for the same reason.
         damage = (
-            self.rng.randint(attack_data["min_damage"], attack_data["max_damage"])
+            self.rng.randint(attack_data["min_damage"], max(attack_data["min_damage"], top))
             + item.damage_gained
+            + int(self._per_status(item, "damage_flat", owner, enemy))
         )
 
         # Section 3.1: Monitored is +1 damage a stack. It needs no check for
@@ -1378,8 +1600,12 @@ class BattleSimulator:
                                 + self._per_status(item, "damage", owner, enemy)))
         damage += owner.buffs.get(MONITORED, 0)
 
-        # Check crit
-        is_crit = self.rng.random() < attack_data["crit_chance"]
+        # Section 2.3: an attack starts at whatever it says, which is 0 for
+        # every weapon in the catalogue, and gains the rest from outside. The
+        # wiki caps it: "Crit chance does not exceed 100%."
+        is_crit = self.rng.random() < self._crit_chance(
+            attack_data["crit_chance"], item, owner, enemy
+        )
         if is_crit:
             damage *= 2
 
@@ -1515,6 +1741,39 @@ class BattleSimulator:
 
         return damage
 
+    def _heal(self, target: Player, amount: float, source: str,
+              healer: Optional[Player] = None, details=None) -> int:
+        """Heal somebody, and say how much landed.
+
+        Two shares pull on it and they are different clauses on different
+        items: "Increase your healing by 4%" belongs to whoever is doing the
+        healing, and "Your opponent's healing is reduced by 30%" is put on
+        them by somebody else. Both are read here so that neither can be
+        forgotten by a new source of healing.
+        """
+        healer = healer or target
+        now = self.current_time
+        share = 1.0 + healer.modifier("healing", now) \
+            + target.modifier("healing_taken", now)
+        wanted = int(amount * max(0.0, share))
+        healed = min(wanted, target.max_quota - target.quota)
+        if healed <= 0:
+            return 0
+        target.quota += healed
+        self._record(BattleAction(
+            timestamp=self._time_ms(), source=source, action="heal",
+            target=None, damage=healed, player=target.id, details=details))
+        return healed
+
+    def _damage_share(self, target: Player) -> float:
+        """What a share of the damage aimed at somebody actually lands.
+
+        "Reduce damage taken by 25% for 5s" is -0.25 here; invulnerability is
+        -1.0, which is the same sentence with the number turned up. Nothing
+        below zero, so no modifier heals by hitting.
+        """
+        return max(0.0, 1.0 + target.modifier("damage_taken", self.current_time))
+
     def _take_damage(
         self,
         target: Player,
@@ -1529,7 +1788,15 @@ class BattleSimulator:
         The one place a quota goes down. Whatever the damage was mitigated by
         on its way here, it lands the same and is seen the same, so an item
         that reacts to its owner being hurt reacts to all of it.
+
+        A share the target carries is taken off here rather than with the
+        shields, because it answers to every kind of damage. Poison and
+        fatigue reach this and no shield, and invulnerability stops those too:
+        the wiki says it "prevents receiving any damage", not every attack.
         """
+        share = self._damage_share(target)
+        if share < 1.0:
+            damage = int(damage * share)
         target.quota = max(0, target.quota - damage)
 
         self._record(

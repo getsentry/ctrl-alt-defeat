@@ -291,13 +291,38 @@
       "source": "Cap of Discomfort",
       "rarity": "legendary",
       "cost": 14,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "damage_taken",
+              "value": -0.25,
+              "target": "self",
+              "duration": 5.0,
+              "description": "Reduce damage taken by 25% for 5s"
+            }
+          ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "healing_taken",
+              "value": -0.3,
+              "target": "enemy",
+              "duration": -1,
+              "description": "Your opponent's healing is reduced by 30%"
+            }
+          ]
+        }
+      ],
       "slug": "cap_of_discomfort",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Reduce damage taken by 25% for 5s.",
-        "Opponent gains buff: 15% chance to nullify it.",
-        "Your opponent's healing is reduced by 30%."
+        "Opponent gains buff: 15% chance to nullify it."
       ],
       "sockets": 1,
       "icontype": "dark",
@@ -323,11 +348,24 @@
       "source": "Cap of Resilience",
       "rarity": "epic",
       "cost": 7,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "damage_taken",
+              "value": -0.25,
+              "target": "self",
+              "duration": 3.0,
+              "description": "Reduce damage taken by 25% for 3s"
+            }
+          ]
+        }
+      ],
       "slug": "cap_of_resilience",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Reduce damage taken by 25% for 3s.",
         "15% chance to resist critical hits.",
         "15% chance to resist stuns."
       ],
@@ -580,12 +618,42 @@
       "source": "Leather Boots",
       "rarity": "epic",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "health_threshold",
+          "threshold": 0.7,
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "calibrated",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Luck"
+                },
+                {
+                  "type": "buff",
+                  "buff_name": "monitored",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Empower"
+                },
+                {
+                  "type": "block",
+                  "value": 15,
+                  "description": "Gain 15 Block"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
+        }
+      ],
       "slug": "leather_boots",
       "in_shop": false,
-      "unbuilt": [
-        "Health drops below 70%: Gain 1 Luck, 1 Empower and 15 Block (once)."
-      ],
       "sockets": 1
     },
     "moon_armor": {
@@ -630,13 +698,30 @@
               ]
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 2.6,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "credits",
+              "value": 3,
+              "target": "self",
+              "description": "Gain 3 Mana"
+            },
+            {
+              "type": "reflect",
+              "count": 2,
+              "target": "self",
+              "description": "Reflect 2 debuffs"
+            }
+          ]
         }
       ],
       "slug": "moon_armor",
       "in_shop": false,
-      "unbuilt": [
-        "Every 2.6s: Gain 3 Mana and reflect 2 debuffs."
-      ],
       "sockets": 3,
       "icontype": "holy, magic",
       "recipe": [
@@ -809,12 +894,24 @@
               "description": "Gain 120 Block"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "stamina_use",
+              "value": 0.2,
+              "target": "self",
+              "duration": -1,
+              "description": "Items use +20% stamina"
+            }
+          ]
         }
       ],
       "slug": "stone_armor",
       "in_shop": false,
       "unbuilt": [
-        "Items use +20% stamina.",
         "Every 4s: Remove 1 Spikes and 2 Empower from opponent.",
         "Health drops below 50%: Gain Block equal to 40% of your missing health (once)."
       ],
@@ -841,11 +938,29 @@
       "source": "Stone Helm",
       "rarity": "legendary",
       "cost": 13,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "damage_taken",
+              "value": -0.25,
+              "target": "self",
+              "duration": 5.0,
+              "description": "Reduce damage taken by 25% for 5s"
+            },
+            {
+              "type": "block",
+              "value": 35,
+              "description": "Gain 35 Block"
+            }
+          ]
+        }
+      ],
       "slug": "stone_helm",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Reduce damage taken by 25% for 5s and gain 35 Block.",
         "30% chance to resist critical hits.",
         "40% chance to resist stuns."
       ],

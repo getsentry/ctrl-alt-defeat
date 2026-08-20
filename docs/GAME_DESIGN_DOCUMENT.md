@@ -143,7 +143,9 @@ game's own wording:
 - **CPU_DRAIN**: Take CPU off somebody, never below 0
 - **EFFECT_DAMAGE**: Damage that is not an attack. No accuracy roll, no shield
   answers it, and Block does not absorb it. May carry lifesteal, healing its
-  owner that share of what lands
+  owner that share of what lands. It can still crit, and the healing doubles
+  with the damage. Its amount can grow with what its owner holds: "Deal 10
+  Effect-damage + 0.5 for each Spikes + 1 for each Empower"
 - **MAX_HEALTH**: Raise the ceiling, and heal by the same amount, so gaining
   maximum health gives you the health with it
 - **BUFF/DEBUFF**: Apply status effects
@@ -172,6 +174,26 @@ game's own wording:
   Otherwise, heal for 8." One effect holds the whole sentence, so the two
   halves cannot both happen. A condition reads a state and spends nothing,
   which is what tells it from a cost
+- **PLAYER_MODIFY**: Change a number on a player rather than on an item.
+  "Your healing is amplified by 12%", "Items use +20% stamina", "Both players
+  take -25% damage for 7s". None sits on an item and none stacks as a buff
+  does, so it is neither MODIFY nor BUFF. Six of them: `damage_taken`,
+  `healing`, `healing_taken`, `stamina_use`, `block_gained`,
+  `critical_chance`. **Invulnerability is `damage_taken` at -1.0** -- the same
+  sentence as "-25% damage" with the number turned up, so it is the same
+  number and not a case of its own
+- **REFLECT**: Gain charges that turn the next debuffs back on whoever sent
+  them. One stack per charge, however many arrive at once. Checked before
+  RESIST
+- **RESIST**: Gain charges, or a standing chance, that refuse a debuff
+  outright. Every chance is added together and checked before a charge is
+  spent
+- **RANDOM_STATUS**: Grant or inflict a status nobody chose, picked uniformly
+  over the kinds there are, one stack at a time and looking again after each
+- **LIMIT**: Everything behind it, but only so many times in a battle.
+  "(once)", "up to 3 times", "up to 5 per battle". Counted per effect, so two
+  items carrying the same clause have an allowance each. Not a modifier's
+  `cap`, which limits how much one item has given another
 - **STUN**: Hold every one of a player's cooldowns still for a while. Nothing
   is lost and nothing is reset: an item mid-wait keeps the wait it had left.
   Two stuns at once do not add -- Backpack Battles keeps them as separate
@@ -184,6 +206,24 @@ Attack items that deal damage. All weapons:
 - Activate on timer when CPU is available
 - Can have "on hit" effects that trigger after successful attacks
 - Can gain damage/effects from buffs
+
+#### Critical hits
+
+Backpack Battles' Critical hits page, quoted because every part of it matters:
+
+- **"Deal double their usual damage."** Not a share that can be tuned per item.
+- **"All sources of damage start with a 0% crit chance, and may only gain crit
+  chance through outside sources."** Every attack in the catalogue writes 0.
+  A weapon that crits does so because something granted it.
+- **"Crit chance does not exceed 100%."**
+- It reaches more than weapons: "The damage effects of [certain items] are
+  capable of inflicting critical hits when they activate", and "The lifesteal
+  effects... are capable of inflicting critical hits, also doubling the healing
+  to match the damage dealt."
+
+`critical_chance` is therefore both an item modifier and a player one: "Star
+items gain 5% critical hit chance for each Luck" is the first, and "for the
+next 1.5s, all your attacks are Critical hits" is the second.
 
 #### Weapon Types:
 - **Melee**: Standard attacks, often with on-hit effects
@@ -586,6 +626,42 @@ so a stack applied at 3.5s pays out at 4s with all the others.
 
 The count is read at the moment it pays. Stacks added between two payments
 count in full at the next one, and no stack is spent by paying out.
+
+### 3.3 Something that runs out
+
+Nearly everything in the source game lasts the battle. The few that do not say
+a number: "Inflict 5 Blind for 2s", "Gain 2 Empower for 8s", "Reduce damage
+taken by 25% for 7s", "Become invulnerable for 2s".
+
+- **A duration of -1 means the rest of the battle**, which is what almost every
+  buff and debuff writes.
+- **Stacks are granted normally and handed back when the time comes.** Only
+  what that clause granted is taken away, and never below zero: a cleanse may
+  have taken them first.
+- **A modifier is read while it is live and written nowhere.** One place
+  decides whether it still counts, which is the moment it is read.
+
+### 3.4 Refusing a debuff
+
+Two things stand between a debuff and the player it was aimed at, and
+Backpack Battles' Reflect page fixes their order: **"Reflect, if a check is
+successful, occurs before Resist."**
+
+1. **Reflect** turns it back. "Reflect 2 means that you will cleanse the next
+   2 stacks of debuffs applied to you, and inflict them upon the opponent
+   instead." One stack per charge, however many arrive at once: "Regardless of
+   how many stacks of a debuff is inflicted to the player who has Reflect,
+   only 1 stack will be reflected per reflect."
+2. **Resist** refuses it. "Resist prevents a debuff to be inflicted." A chance
+   is checked before a charge is spent, and every chance is added together:
+   "All percent chance methods are added together to give a combined total
+   chance to resist."
+
+Both are counted in stacks and neither is a buff: nothing stacks them as one
+and nothing cleanses them, so they are not among the seven in Section 3.1.
+
+Every debuff travels this one road, so a new source of debuffs cannot forget
+to offer itself to either.
 
 ## 4. Item Placement & Auras
 

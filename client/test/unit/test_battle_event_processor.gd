@@ -507,7 +507,9 @@ func test_the_client_handles_every_action_the_server_declares():
 		"cpu_drain": {"amount": 1},
 		"cleanse": {"removed": {"memory_leaked": 2}},
 		"spend": {"costs": {"credits": 3}},
-		"stun": {"until": 2.5}
+		"stun": {"until": 2.5},
+		"resist": {"debuff_name": "memory_leaked"},
+		"player_modify": {"stat": "damage_taken", "value": -0.25, "seconds": 7.0}
 	}
 
 	for action_name in declared:

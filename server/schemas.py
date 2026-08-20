@@ -143,6 +143,9 @@ class BattleActionName(str, Enum):
     GAIN_DAMAGE = "gain_damage"
     SPEND = "spend"
     STUN = "stun"
+    RESIST = "resist"
+    REFLECT = "reflect"
+    PLAYER_MODIFY = "player_modify"
     PLAYER_DEFEATED = "player_defeated"
 
 

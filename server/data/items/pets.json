@@ -26,13 +26,27 @@
               "description": "Gain 5 Draining"
             }
           ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 6,
+          "effects": [
+            {
+              "type": "effect_damage",
+              "value": 10,
+              "lifesteal": 1.0,
+              "per_status": {
+                "draining": 1
+              },
+              "description": "10 Effect-damage, 100% lifesteal, +1 per Vampirism"
+            }
+          ]
         }
       ],
       "slug": "blood_goobert",
       "in_shop": false,
-      "unbuilt": [
-        "6 Star item activations: Deal 10 Effect-damage with 100% lifesteal. Deal +1 for each Vampirism."
-      ],
       "icontype": "vampiric",
       "recipe": [
         {
@@ -142,14 +156,59 @@
               "description": "Triggers 15% faster for each Star Pet or Food"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 5.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "effect_damage",
+              "value": 10,
+              "lifesteal": 0,
+              "per_status": {
+                "spiked": 0.5,
+                "monitored": 1
+              },
+              "description": "Deal 10 Effect-damage + 0.5 per Spikes + 1 per Empower"
+            }
+          ]
+        },
+        {
+          "type": "health_threshold",
+          "threshold": 0.7,
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "spiked",
+                  "value": 4,
+                  "target": "self",
+                  "description": "Gain 4 Spikes"
+                },
+                {
+                  "type": "buff",
+                  "buff_name": "monitored",
+                  "value": 3,
+                  "target": "self",
+                  "description": "Gain 3 Empower"
+                },
+                {
+                  "type": "block",
+                  "value": 35,
+                  "description": "Gain 35 Block"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
         }
       ],
       "slug": "hyper_hedgehog",
       "in_shop": false,
-      "unbuilt": [
-        "Every 5s: Deal 10 Effect-damage + 0.5 for each Spikes + 1 for each Empower.",
-        "Health drops below 70%: Gain 4 Spikes, 3 Empower and 35 Block (once)."
-      ],
       "icontype": "holy,nature",
       "recipe": [
         {
@@ -252,12 +311,32 @@
       "source": "Light Goobert",
       "rarity": "godly",
       "cost": 15,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 6,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 25,
+              "max_heal": 25,
+              "description": "Heal for 25"
+            },
+            {
+              "type": "debuff",
+              "debuff_name": "rate_limited",
+              "value": 7,
+              "target": "enemy",
+              "duration": 3.0,
+              "description": "Inflict 7 Blind for 3s"
+            }
+          ]
+        }
+      ],
       "slug": "light_goobert",
       "in_shop": false,
-      "unbuilt": [
-        "6 Star item activations: Heal for 25 and inflict 7 Blind for 3s."
-      ],
       "icontype": "holy",
       "recipe": [
         {
@@ -422,11 +501,29 @@
       "source": "Ruby Egg",
       "rarity": "legendary",
       "cost": 10,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 4,
+              "target": "self",
+              "description": "Gain 4 Heat"
+            },
+            {
+              "type": "reflect",
+              "count": 3,
+              "target": "self",
+              "description": "Reflect 3 debuffs"
+            }
+          ]
+        }
+      ],
       "slug": "ruby_egg",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 4 Heat. Reflect 3 debuffs.",
         "Hatches after 2 rounds in your backpack."
       ],
       "icontype": "fire"
@@ -816,13 +913,34 @@
       "source": "Carrot Goobert",
       "rarity": "epic",
       "cost": 12,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 6,
+          "effects": [
+            {
+              "type": "cleanse",
+              "count": 4,
+              "target": "self",
+              "removes": "debuff",
+              "description": "Cleanse 4 random debuffs"
+            },
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 2,
+              "target": "self",
+              "description": "Gain 2 Empower for 8s",
+              "duration": 8.0
+            }
+          ]
+        }
+      ],
       "slug": "ai_companion_core",
       "icontype": "nature",
       "in_shop": false,
-      "unbuilt": [
-        "6 Star item activations: Cleanse 4 random debuffs and gain 2 Empower for 8s."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -865,15 +983,52 @@
               "description": "Triggers 15% faster for each Star Pet or Food"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 5.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "effect_damage",
+              "value": 10,
+              "lifesteal": 0,
+              "per_status": {
+                "spiked": 0.5
+              },
+              "description": "Deal 10 Effect-damage + 0.5 for each Spikes"
+            }
+          ]
+        },
+        {
+          "type": "health_threshold",
+          "threshold": 0.7,
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "spiked",
+                  "value": 3,
+                  "target": "self",
+                  "description": "Gain 3 Spikes"
+                },
+                {
+                  "type": "block",
+                  "value": 25,
+                  "description": "Gain 25 Block"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
         }
       ],
       "slug": "surveillance_drone",
       "icontype": "nature",
-      "in_shop": false,
-      "unbuilt": [
-        "Every 5s: Deal 10 Effect-damage + 0.5 for each Spikes.",
-        "Health drops below 70%: Gain 3 Spikes and 25 Block (once)."
-      ]
+      "in_shop": false
     },
     "data_crawler": {
       "name": "Web Crawler",

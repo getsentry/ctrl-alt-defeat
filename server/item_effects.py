@@ -33,8 +33,14 @@ class AttackEffect(Effect):
 
     min_damage: int
     max_damage: int
-    accuracy: float = 0.85
-    crit_chance: float = 0.05
+    accuracy: float
+
+    #: What this attack starts at. Backpack Battles' Critical hits page: "All
+    #: sources of damage start with a 0% crit chance, and may only gain crit
+    #: chance through outside sources." Every attack in the catalogue writes
+    #: 0, and writing it is the point -- 0.05 sat here as a default and was
+    #: a number nobody had chosen.
+    crit_chance: float
     special: Optional[str] = None  # "bypass_block", "crash", etc
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
@@ -120,12 +126,17 @@ class BuffEffect(Effect):
     value: float
     target_type: str
 
+    #: Seconds, or -1 for the rest of the battle, which is the same word a
+    #: debuff uses. "Gain 2 Empower for 8s" is one that says a number.
+    duration: float = -1
+
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "buff",
             "buff_name": self.buff_name,
             "value": self.value,
             "target_type": self.target_type,
+            "duration": self.duration,
         }
 
 
@@ -441,6 +452,32 @@ UNBUILT_EFFECTS = frozenset({
 # nature, fire -- which say what it is made of rather than how it swings.
 WEAPON_KINDS = frozenset({"melee", "ranged", "magic"})
 
+#: What a modifier on a player can change, as against one on an item. Each is
+#: a share: 0.12 is twelve percent more, -0.3 is thirty percent less.
+PLAYER_MODIFIERS = frozenset({
+    # What lands on this player, so -1.0 is invulnerable. Backpack Battles'
+    # Invulnerability page: "Prevents receiving any damage during a certain
+    # amount of time." That is the same sentence as "take -25% damage for 7s"
+    # with the number turned up, so it is the same number.
+    "damage_taken",
+
+    # Healing this player does, and healing done to them. Two clauses, one
+    # each way: "Increase your healing by 4%" against "Your opponent's healing
+    # is reduced by 30%".
+    "healing",
+    "healing_taken",
+
+    # What this player's items cost to run: "Items use +20% stamina".
+    "stamina_use",
+
+    # Block this player gains: "Star items give +30% Block".
+    "block_gained",
+
+    # Every attack this player makes: "for the next 1.5s, all your attacks are
+    # Critical hits" is this at 1.0.
+    "critical_chance",
+})
+
 MODIFIER_TARGETS = frozenset({"self", "star", "diamond", "contained", "own"})
 
 MODIFIERS = frozenset({
@@ -449,6 +486,18 @@ MODIFIERS = frozenset({
     "damage",
     "cpu_cost",
     "damage_reduction",
+
+    # Flat, where `damage` multiplies. "Deals +1 damage per Spikes" adds to
+    # what the weapon rolls; "+15% damage" scales it. Both are written on the
+    # same items, so they cannot be the same number.
+    "damage_flat",
+
+    # The top of the range only. "Deals +1 maximum damage per Vampirism".
+    "max_damage_flat",
+
+    # Backpack Battles' Critical hits page: damage starts at 0% and only ever
+    # gains crit chance from outside. This is that outside.
+    "critical_chance",
 })
 
 
@@ -458,7 +507,9 @@ class DebuffEffect(Effect):
 
     debuff_name: str  # One of DEBUFFS
     value: float
-    duration: float = -1  # -1 is "to the end of the battle", which is all of them
+    #: Seconds, or -1 for the rest of the battle. "Inflict 5 Blind for 2s"
+    #: is one of the few that says a number; nearly every debuff is -1.
+    duration: float = -1
     accuracy: float = 1.0
     target_type: str = "enemy"
 
@@ -524,14 +575,32 @@ class EffectDamageEffect(Effect):
     absorb it -- there is no weapon involved. `lifesteal` heals the owner that
     share of what lands, which is how the source game writes it: "Deal 10
     Effect-damage with 100% lifesteal".
+
+    It can still crit. The Critical hits page says so of these very items:
+    "The damage effects of [certain items] are capable of inflicting critical
+    hits when they activate", and "The lifesteal effects... are capable of
+    inflicting critical hits, also doubling the healing to match the damage
+    dealt." A crit doubles what lands, and the healing follows the damage
+    because it is a share of it.
+
+    `per_status` is what makes the amount depend on what its owner holds:
+    "Deal 10 Effect-damage + 0.5 for each Spikes + 1 for each Empower". Each
+    entry is a status and what one stack of it is worth.
     """
 
     amount: float
     lifesteal: float
 
+    #: {status: what one stack adds}, read where the damage is worked out.
+    per_status: Dict[str, float]
+
+    #: Whose stacks are counted, per status: "self" or "enemy".
+    whose: Dict[str, str]
+
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {"type": "effect_damage", "amount": self.amount,
-                "lifesteal": self.lifesteal}
+                "lifesteal": self.lifesteal, "per_status": self.per_status,
+                "whose": self.whose}
 
 
 @dataclass
@@ -568,6 +637,11 @@ class CleanseEffect(Effect):
 
     target_type: str  # "self" or "enemy"
 
+    #: Whether what is taken is kept. "Steal a random buff" is this effect
+    #: pointed at the opponent with `keep` on; "Remove 1 Luck from your
+    #: opponent" is the same thing with it off. The source game writes both.
+    keep: bool = False
+
     def named(self) -> bool:
         """Whether it takes one particular status rather than any"""
         return self.removes not in ("debuff", "buff")
@@ -585,18 +659,125 @@ class CleanseEffect(Effect):
             "removes": self.removes,
             "named": self.named(),
             "kind": self.kind(),
+            "keep": self.keep,
             "target_type": self.target_type,
         }
 
 
 @dataclass
 class ReflectEffect(Effect):
-    """Reflect damage back to attacker"""
+    """Gain charges that turn the next debuffs back on whoever sent them.
 
-    reflect_percent: float  # 0.3 = 30% reflect
+    Backpack Battles' Reflect page: "Reflect 2 means that you will cleanse the
+    next 2 stacks of debuffs applied to you, and inflict them upon the
+    opponent instead." One stack per charge, however many are inflicted at
+    once: "Regardless of how many stacks of a debuff is inflicted to the
+    player who has Reflect, only 1 stack will be reflected per reflect."
+
+    Not damage. It was written here as a share of damage returned, which is
+    Spikes -- a different mechanic that already exists as a buff.
+    """
+
+    count: int
+    target_type: str
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "reflect", "percent": self.reflect_percent}
+        return {"type": "reflect", "count": self.count,
+                "target_type": self.target_type}
+
+
+@dataclass
+class ResistEffect(Effect):
+    """Gain charges, or a standing chance, that refuse a debuff outright.
+
+    Backpack Battles' Resist page: "Resist prevents a debuff to be inflicted."
+    Two forms, and an item may grant either. A chance is added to every other
+    chance -- "All percent chance methods are added together to give a
+    combined total chance to resist" -- and is checked before a charge is
+    spent.
+
+    Reflect goes first: "Reflect, if a check is successful, occurs before
+    Resist."
+    """
+
+    #: Charges, each refusing one stack.
+    count: int
+
+    #: A standing share, held for the battle rather than spent.
+    chance: float
+
+    target_type: str
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "resist", "count": self.count, "chance": self.chance,
+                "target_type": self.target_type}
+
+
+@dataclass
+class PlayerModifyEffect(Effect):
+    """Change a number on a player rather than on an item.
+
+    "Your healing is amplified by 12%", "Both players take -25% damage for
+    7s", "Become invulnerable for 2s". None of these sit on an item, and none
+    of them stack as a buff does, so they are neither ModifyEffect nor
+    BuffEffect.
+
+    `duration` is seconds, or -1 for the rest of the battle -- the same word
+    a buff and a debuff use.
+    """
+
+    stat: str
+    value: float
+    target_type: str  # "self", "enemy" or "both"
+    duration: float
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "player_modify", "stat": self.stat,
+                "value": self.value, "target_type": self.target_type,
+                "duration": self.duration}
+
+
+@dataclass
+class RandomStatusEffect(Effect):
+    """Grant or inflict a status nobody chose.
+
+    "Inflict a random debuff", "Gain 20 random other buffs". Picked uniformly
+    over the kinds there are, one stack at a time and looking again after
+    each, which is how cleansing picks and for the same reason: weighting by
+    anything would need a rule the source game never gives.
+    """
+
+    #: "buff" or "debuff", which decides the pool.
+    kind: str
+
+    #: How many stacks to hand out, one pick each.
+    count: int
+
+    target_type: str
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "random_status", "kind": self.kind,
+                "count": self.count, "target_type": self.target_type}
+
+
+@dataclass
+class LimitEffect(Effect):
+    """Everything behind it, but only so many times in a battle.
+
+    "(once)", "up to 3 times", "Gain 1 Vampirism (up to 5 per battle)". The
+    count is kept per effect and per battle, so two items carrying the same
+    clause each get their own allowance.
+
+    Not the same as a modifier's `cap`, which limits how much one item has
+    given another and can hand out part of a grant. This limits how often the
+    clause happens at all, and the last one is whole or does not happen.
+    """
+
+    times: int
+    effects: List[Effect] = field(default_factory=list)
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "limit", "times": self.times}
 
 
 @dataclass

@@ -119,7 +119,7 @@ class TestTriggers:
         trigger = TimerTrigger(
             cooldown=2.0,
             cpu_cost=3,
-            effects=[AttackEffect(min_damage=5, max_damage=10)],
+            effects=[AttackEffect(min_damage=5, max_damage=10, accuracy=0.85, crit_chance=0.0)],
         )
 
         # Should activate when cooldown is 0
@@ -238,7 +238,7 @@ class TestItemSpecs:
                     cooldown=2.0,
                     cpu_cost=3,
                     effects=[
-                        AttackEffect(min_damage=5, max_damage=10),
+                        AttackEffect(min_damage=5, max_damage=10, accuracy=0.85, crit_chance=0.0),
                         DebuffEffect(debuff_name="throttled", value=2),
                     ],
                 ),
