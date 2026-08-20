@@ -1605,3 +1605,138 @@ class TestOpenApiDeclaresThePositionShape:
         assert position["type"] == "array"
         assert position["minItems"] == 2
         assert position["maxItems"] == 2
+
+
+class TestItemsCombineAfterTheBattle:
+    """GDD 5.3, over the wire.
+
+    The unit tests cover which items combine. This covers that it happens at
+    all when a battle ends, and that the client is told.
+    """
+
+    @staticmethod
+    def _rack_holding(client, user_id, *placements):
+        """Put these items on the player's grid, as if they had bought them."""
+        import asyncio
+
+        from items import Item
+        from session_manager import session_manager
+
+        async def rig():
+            session = await session_manager.get_session(str(user_id))
+            session.inventory_grid = [
+                Item.of(item_type, f"item{n}").placed_at(position)
+                for n, (item_type, position) in enumerate(placements)
+            ]
+            await session_manager.update_session(session)
+
+        asyncio.run(rig())
+
+    def test_a_rack_that_can_craft_does_so_when_the_battle_ends(self, auth_client):
+        auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        self._rack_holding(
+            auth_client, auth_client.user_id,
+            ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
+        )
+
+        result = auth_client.post(
+            "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
+        )
+        assert result.status_code == 200, result.text
+        combinations = result.json()["session_update"]["combinations"]
+
+        assert [c["made"] for c in combinations] == ["blue_sage_collar"]
+        # Whole items, not names: the client has no catalogue to draw from, and
+        # with two of a kind on the rack a name would not say which was eaten.
+        eaten = combinations[0]["consumed"]
+        assert [i["item_type"] for i in eaten] == ["neural_link_collar", "cpu_booster"]
+        assert [i["position"] for i in eaten] == [[2, 3], [3, 3]]
+        assert all(i["shape"] and i["color"] for i in eaten), "enough to draw them"
+
+        after = auth_client.get("/session").json()
+        assert [i["item_type"] for i in after["inventory_grid"]] == ["blue_sage_collar"]
+
+    def test_the_client_is_told_where_to_play_the_animation(self, auth_client):
+        auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        self._rack_holding(
+            auth_client, auth_client.user_id,
+            ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
+        )
+        made = auth_client.post(
+            "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
+        ).json()["session_update"]["combinations"][0]
+
+        assert sorted(made["freed"]) == [[2, 3], [3, 3]], "the squares to play over"
+        assert made["position"] == [2, 3], "and where the result ends up"
+        assert made["made_id"], "the item it becomes"
+
+    def test_the_response_says_what_the_player_holds_now(self, auth_client):
+        """The client has no other way to find out.
+
+        Nothing on the client fetches the session, and it restores the rack from
+        its own cache, so without this the crafted item would never appear.
+        battle_result.player_inventory is no help: that is the rack that fought.
+        """
+        auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        self._rack_holding(
+            auth_client, auth_client.user_id,
+            ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
+        )
+        body = auth_client.post(
+            "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
+        ).json()
+
+        fought_with = [
+            i["item_type"] for i in body["battle_result"]["player_inventory"]["items"]
+        ]
+        holds_now = [i["item_type"] for i in body["inventory"]["inventory_grid"]]
+        assert fought_with == ["neural_link_collar", "cpu_booster"], "the rack before"
+        assert holds_now == ["blue_sage_collar"], "and the rack after"
+        assert body["inventory"]["server_containers"], "the racks come too"
+
+    def test_a_result_that_does_not_fit_is_in_the_chest(self, auth_client):
+        """The one case where the result is not on the grid at all.
+
+        Long Poll is three squares tall and its ingredients free a two by two,
+        so it has nowhere to stand. The client is told it went to the chest by
+        `position` being null, and finds it there under the id it was given.
+        """
+        auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        self._rack_holding(
+            auth_client, auth_client.user_id,
+            ("hero_sword", [2, 3]), ("whetstone", [3, 3]), ("whetstone", [3, 4]),
+        )
+        body = auth_client.post(
+            "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
+        ).json()
+
+        made = body["session_update"]["combinations"][0]
+        assert made["made"] == "hero_longsword"
+        assert made["position"] is None, "null means it went to the chest"
+
+        assert body["inventory"]["inventory_grid"] == [], "nothing left on the rack"
+        chest = body["inventory"]["inventory_storage"]
+        assert [i["id"] for i in chest] == [made["made_id"]], (
+            "and it is in the chest under the id the client was told"
+        )
+
+
+    def test_a_rack_that_cannot_craft_reports_nothing(self, auth_client):
+        auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        self._rack_holding(
+            auth_client, auth_client.user_id, ("null_blade", [2, 3])
+        )
+        result = auth_client.post(
+            "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
+        ).json()
+        assert result["session_update"]["combinations"] == []

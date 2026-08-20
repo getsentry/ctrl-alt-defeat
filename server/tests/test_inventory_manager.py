@@ -762,3 +762,231 @@ class TestMovingAContainer:
         manager.move_container("container_a", (0, 0))
 
         assert not hasattr(manager.storage.items[0], "position")
+
+
+class TestCombiningItems:
+    """GDD 5.3: items together in the rack combine when the shop phase begins.
+
+    Every fixture below places real catalogue items, because the rules that
+    matter -- what touches what, whether the result fits -- depend on the shapes
+    those items actually have. A made-up two-square item would pass tests the
+    real ones fail.
+    """
+
+    @staticmethod
+    def _rack(*placements):
+        """A manager holding these (item type, position) pairs, in this order.
+
+        Order is the point in several of these: the grid keeps items in the
+        order they were placed, and that is what decides which combination wins.
+        """
+        manager = InventoryManager()
+        for n, (item_type, position) in enumerate(placements):
+            manager.grid.place_item(Item.of(item_type, f"item{n}"), position)
+        return manager
+
+    def test_two_items_together_become_the_item_they_make(self):
+        rack = self._rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
+        made = rack.combine()
+
+        assert [c.made for c in made] == ["blue_sage_collar"]
+        assert [i.item_type for i in rack.grid.items] == ["blue_sage_collar"]
+
+    def test_items_that_are_not_touching_do_not_combine(self):
+        # The same two, one rack apart.
+        rack = self._rack(("neural_link_collar", (2, 3)), ("cpu_booster", (6, 3)))
+        assert rack.combine() == []
+        assert len(rack.grid.items) == 2
+
+    def test_touching_at_a_corner_is_not_touching(self):
+        rack = self._rack(("neural_link_collar", (3, 3)), ("cpu_booster", (4, 4)))
+        assert rack.combine() == []
+
+    @staticmethod
+    def _wide_rack(*placements):
+        """The same, on one 3x3 rack. The three the game starts with are two
+        rows deep, which is not enough room to stand four things around a
+        two-by-two item."""
+        manager = InventoryManager()
+        manager.grid.containers = [Container.of("mesh_network_hub", (0, 0), "hub")]
+        for n, (item_type, position) in enumerate(placements):
+            manager.grid.place_item(Item.of(item_type, f"item{n}"), position)
+        return manager
+
+    def test_one_item_touches_all_the_others_not_every_pair(self):
+        """A Stone Golem is a Heart Container and four Stones.
+
+        The heart is two by two, so the four stones sit around it and none of
+        them touches another. Requiring every pair to touch would make this
+        recipe impossible rather than merely hard.
+        """
+        rack = self._wide_rack(
+            ("heart_container", (0, 0)),   # covers (0,0) (1,0) (0,1) (1,1)
+            ("ping_flood", (2, 0)),
+            ("ping_flood", (2, 1)),
+            ("ping_flood", (0, 2)),
+            ("ping_flood", (1, 2)),
+        )
+        stones = [i for i in rack.grid.items if i.item_type == "ping_flood"]
+        assert len(stones) == 4
+        for stone in stones:
+            touching = {i.item_type for i in rack.grid.touching(stone)}
+            assert "heart_container" in touching, "every stone must reach the heart"
+        apart = [
+            a.id
+            for a in stones
+            for b in stones
+            if a.id != b.id and b.id not in {t.id for t in rack.grid.touching(a)}
+        ]
+        assert apart, "the fixture wants stones that do not all touch each other"
+
+        assert [c.made for c in rack.combine()] == ["stone_golem"]
+
+    def test_a_stone_that_only_reaches_another_stone_does_not_count(self):
+        rack = self._wide_rack(
+            ("heart_container", (0, 0)),
+            ("ping_flood", (2, 0)),
+            ("ping_flood", (2, 1)),
+            ("ping_flood", (0, 2)),
+            ("ping_flood", (2, 2)),   # touches (2,1), not the heart
+        )
+        assert rack.combine() == [], "three stones reach the heart, not four"
+
+    def test_a_catalyst_is_needed_and_is_not_used_up(self):
+        rack = self._rack(("crypto_mining_rig", (2, 3)), ("maneki_neko", (4, 3)))
+        made = rack.combine()
+
+        assert [c.made for c in made] == ["serverless_function"]
+        assert [i.item_type for i in made[0].consumed] == ["crypto_mining_rig"]
+        assert [i.item_type for i in made[0].kept] == ["maneki_neko"]
+        assert [i.item_type for i in rack.grid.items] == ["maneki_neko"], (
+            "the catalyst is still there"
+        )
+
+    def test_without_the_catalyst_nothing_happens(self):
+        rack = self._rack(("crypto_mining_rig", (2, 3)))
+        assert rack.combine() == []
+
+    def test_two_of_one_ingredient_means_two(self):
+        """Long Poll is a Main Branch and two Edge Caches, not one."""
+        one = self._rack(("hero_sword", (2, 3)), ("whetstone", (3, 3)))
+        assert one.combine() == [], "one Edge Cache is not enough"
+
+        two = self._rack(
+            ("hero_sword", (2, 3)), ("whetstone", (3, 3)), ("whetstone", (3, 4))
+        )
+        assert [c.made for c in two.combine()] == ["hero_longsword"]
+
+    def test_the_result_stands_where_its_ingredients_stood(self):
+        rack = self._rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
+        made = rack.combine()
+
+        assert made[0].position == (2, 3)
+        assert set(made[0].freed) == {(2, 3), (3, 3)}
+        assert rack.grid.items[0].position == (2, 3)
+        assert rack.storage.items == []
+
+    def test_a_result_too_big_for_the_gap_goes_in_the_chest(self):
+        """Long Poll is three squares tall and its ingredients free a 2x2, so
+        it has nowhere to stand. It is not lost."""
+        rack = self._rack(
+            ("hero_sword", (2, 3)), ("whetstone", (3, 3)), ("whetstone", (3, 4))
+        )
+        made = rack.combine()
+
+        assert made[0].position is None
+        assert rack.grid.items == []
+        assert [i.item_type for i in rack.storage.items] == ["hero_longsword"]
+        assert rack.storage.items[0].id == made[0].made_id, (
+            "the client is told an id, and that is the item it gets"
+        )
+
+    def test_the_result_does_not_spread_beyond_the_squares_it_freed(self):
+        """A combination should not take space the player was keeping."""
+        rack = self._rack(
+            ("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)),
+            ("null_blade", (4, 3)),
+        )
+        rack.combine()
+
+        untouched = [i for i in rack.grid.items if i.item_type == "null_blade"]
+        assert untouched and untouched[0].position == (4, 3)
+
+    def test_an_ingredient_is_not_used_by_two_combinations(self):
+        """One CPU Booster between two collars makes one thing, not two."""
+        rack = self._rack(
+            ("neural_link_collar", (2, 3)),
+            ("cpu_booster", (3, 3)),
+            ("white_lily_collar", (4, 3)),
+        )
+        made = rack.combine()
+        assert len(made) == 1, f"used the booster twice: {[c.made for c in made]}"
+
+    def test_the_newest_item_decides_which_combination_happens(self):
+        """The booster completes either collar. The one placed last wins."""
+        first = self._rack(
+            ("cpu_booster", (3, 3)),
+            ("white_lily_collar", (4, 3)),
+            ("neural_link_collar", (2, 3)),
+        )
+        second = self._rack(
+            ("cpu_booster", (3, 3)),
+            ("neural_link_collar", (2, 3)),
+            ("white_lily_collar", (4, 3)),
+        )
+        def eaten(rack):
+            return sorted(i.item_type for i in rack.combine()[0].consumed)
+
+        assert eaten(first) != eaten(second), (
+            "which collar was eaten should follow which was placed last"
+        )
+
+    def test_the_same_rack_always_combines_the_same_way(self):
+        def once():
+            rack = self._rack(
+                ("cpu_booster", (3, 3)),
+                ("white_lily_collar", (4, 3)),
+                ("neural_link_collar", (2, 3)),
+            )
+            return [
+                (c.made, tuple(i.item_type for i in c.consumed))
+                for c in rack.combine()
+            ]
+
+        assert once() == once() == once()
+
+    def test_separate_combinations_all_happen(self):
+        rack = self._rack(
+            ("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)),
+            ("crypto_mining_rig", (6, 3)), ("maneki_neko", (5, 3)),
+        )
+        made = {c.made for c in rack.combine()}
+        assert made == {"blue_sage_collar", "serverless_function"}
+
+    def test_a_result_does_not_go_on_to_combine_in_the_same_pass(self):
+        """20 items are both a result and another recipe's ingredient.
+
+        Here the rootkit could combine with the collar directly, but the booster
+        was placed last so the sage collar is made first. That collar and the
+        rootkit then make an orchid collar -- next round, not this one, so the
+        player sees the step and can break it up.
+        """
+        rack = self._wide_rack(
+            ("vampire_rootkit", (0, 0)),
+            ("neural_link_collar", (1, 0)),
+            ("cpu_booster", (2, 0)),
+        )
+
+        first = rack.combine()
+        assert [c.made for c in first] == ["blue_sage_collar"], "one step only"
+        assert {i.item_type for i in rack.grid.items} == {
+            "blue_sage_collar", "vampire_rootkit"
+        }
+
+        second = rack.combine()
+        assert [c.made for c in second] == ["red_orchid_collar"], (
+            "the next shop phase takes the next step"
+        )
+
+    def test_an_empty_rack_combines_nothing(self):
+        assert InventoryManager().combine() == []

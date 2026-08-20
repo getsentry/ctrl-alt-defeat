@@ -33,6 +33,8 @@ from items import SALE_CHANCE, Item, PlacedItem
 from matchmaking import MatchmakingService
 from schemas import (
     BattleHistoryEntry,
+    Combination,
+    InventoryAfterBattle,
     BattleHistoryResponse,
     BattleResponse,
     BattleResult,
@@ -670,6 +672,24 @@ async def simulate_battle(
 
     session.round += 1  # Advance to next round
     session.shop_refresh_count = 0
+
+    # The shop phase has begun, so anything the rack can craft now does (GDD
+    # 5.3). Before the shop is rolled, because a combination changes what the
+    # player holds and a few items are only stocked while they hold something.
+    combiner = InventoryManager()
+    combiner.restore_state(
+        {
+            "grid": session.inventory_grid,
+            "storage": session.inventory_storage,
+            "containers": session.server_containers,
+        }
+    )
+    combinations = combiner.combine()
+    if combinations:
+        combined_state = combiner.get_state()
+        session.inventory_grid = combined_state["grid"]
+        session.inventory_storage = combined_state["storage"]
+
     if battle_result["winner"] == 1:  # Player won
         session.wins += 1
     else:
@@ -835,12 +855,31 @@ async def simulate_battle(
         lives=session.lives,
         game_over=game_over,
         victory=victory,
+        combinations=[
+            Combination(
+                made=made.made,
+                made_id=made.made_id,
+                consumed=list(made.consumed),
+                kept=list(made.kept),
+                freed=list(made.freed),
+                position=made.position,
+            )
+            for made in combinations
+        ],
     )
 
     # Shop already contains ShopItem models
     return BattleResponse(
         battle_result=battle_result_model,
         session_update=session_update,
+        # What the player holds now. The client has no other way to learn it:
+        # battle_result.player_inventory is the rack that fought, so it is the
+        # rack before anything combined.
+        inventory=InventoryAfterBattle(
+            inventory_grid=session.inventory_grid,
+            inventory_storage=session.inventory_storage,
+            server_containers=session.server_containers,
+        ),
         new_shop=session.current_shop,
         battle_id=battle_id,
     )

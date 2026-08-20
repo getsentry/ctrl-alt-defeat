@@ -3,12 +3,51 @@ Inventory management system for the autobattler game
 Manages both the 9x7 grid with server containers and unlimited storage
 """
 
-from typing import Dict, List, Optional, Sequence, Set, Union
+import uuid
+from collections import Counter
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
+from config_loader import config_loader
 from containers import Container, starting_containers
 from grid_system import Rotation
+from item_effects import Recipe
 from items import Item, PlacedItem
 from utils import Position
+
+
+# ============= COMBINING (GDD 5.3) =============
+
+
+@dataclass(frozen=True)
+class Combination:
+    """One crafting that happened, for the client to show.
+
+    The consumed items are gone from the grid by the time this is read, so they
+    are carried whole rather than named. A name would not be enough to draw one,
+    and with two of a kind on the rack it would not say which two were eaten.
+    """
+
+    made: str  # item type of the result
+    made_id: str  # the new item's own id
+    consumed: Tuple[PlacedItem, ...]  # used up, as they stood
+    kept: Tuple[PlacedItem, ...]  # catalysts, still on the grid
+    freed: Tuple[Position, ...]  # squares the ingredients were standing on
+    position: Optional[Position]  # where the result landed, None if in the chest
+
+
+def _craftable() -> List[tuple]:
+    """(item type, spec) for everything with a recipe, containers included.
+
+    Read fresh rather than cached: a test that patches the catalogue expects
+    the change to be seen.
+    """
+    return [
+        (item_type, spec)
+        for source in (config_loader.items, config_loader.containers)
+        for item_type, spec in source.items()
+        if spec.recipe
+    ]
 
 
 class InvalidPlacementError(Exception):
@@ -111,6 +150,152 @@ class InventoryGrid:
 
         self.items.remove(item)
         return item
+
+    def touching(self, item: PlacedItem) -> List[PlacedItem]:
+        """The items whose squares touch this one's, edge to edge.
+
+        Corners do not count, and an item never touches itself. GDD 4.3 used to
+        make adjacency a battle mechanic; it is not one, and this is only about
+        which items are together in the rack.
+        """
+        mine = set(item.covered_squares())
+        around = {
+            (x + dx, y + dy)
+            for x, y in mine
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+        } - mine
+        return [
+            other
+            for other in self.items
+            if other.id != item.id and around & set(other.covered_squares())
+        ]
+
+    def _match(
+        self, recipe: Recipe, hub: PlacedItem, available: Sequence[PlacedItem]
+    ) -> Optional[List[PlacedItem]]:
+        """The items around `hub` that satisfy `recipe`, or None.
+
+        One item has to touch all the others, and `hub` is the one being tried
+        as it. Every other part has to be touching `hub` -- but not each other,
+        or a Stone Golem could never be made: four stones cannot all touch one
+        another, though all four can touch the heart between them.
+        """
+        wanted = Counter(recipe.parts())
+        if hub.item_type not in wanted:
+            return None
+
+        here = {item.id for item in available}
+        pool = [hub] + [
+            item for item in self.touching(hub) if item.id in here
+        ]
+        if not wanted <= Counter(item.item_type for item in pool):
+            return None
+
+        # The hub is taken first, so a recipe wanting two of its type does not
+        # fill both from its neighbours and leave the hub out of its own match.
+        chosen, still_wanted = [hub], Counter(wanted)
+        still_wanted[hub.item_type] -= 1
+        for item in pool[1:]:
+            if still_wanted.get(item.item_type, 0) > 0:
+                chosen.append(item)
+                still_wanted[item.item_type] -= 1
+        return chosen if sum(still_wanted.values()) == 0 else None
+
+    def _candidates(self, available: Sequence[PlacedItem]) -> List[tuple]:
+        """Every combination the rack could make right now.
+
+        Each is (newest, made, recipe, items). `newest` is how far down
+        self.items the newest of its items sits, and that list is in the order
+        things were placed, so a bigger number means placed later.
+        """
+        order = {item.id: n for n, item in enumerate(self.items)}
+        found = []
+        for made, spec in _craftable():
+            for recipe in spec.recipe:
+                for hub in available:
+                    items = self._match(recipe, hub, available)
+                    if items is None:
+                        continue
+                    newest = max(order[item.id] for item in items)
+                    found.append((newest, made, recipe, items))
+        return found
+
+    def combine(self) -> List[Combination]:
+        """Combine everything the rack can, once. GDD 5.3.
+
+        Ingredients are used up and catalysts are not, so a catalyst can serve
+        more than one combination in the same pass. The result of a combination
+        never goes on to make something else here: 20 items are both a recipe's
+        result and another's ingredient, and a chain takes a round for each of
+        its steps so the player sees them and can break it up.
+        """
+        available = list(self.items)
+        done: List[Combination] = []
+
+        while True:
+            candidates = self._candidates(available)
+            if not candidates:
+                return done
+
+            # The newest item decides, because it is the one the player just
+            # put there. Ties go to the earlier result name, so the same rack
+            # always combines the same way.
+            newest, made, recipe, items = max(
+                candidates, key=lambda c: (c[0], [-ord(ch) for ch in c[1]])
+            )
+            done.append(self._apply(made, recipe, items))
+
+            eaten = {item.id for item in self._consumed(recipe, items)}
+            available = [item for item in available if item.id not in eaten]
+
+    @staticmethod
+    def _consumed(recipe: Recipe, items: Sequence[PlacedItem]) -> List[PlacedItem]:
+        """The chosen items an ingredient claims. A catalyst is not one."""
+        wanted = Counter(recipe.ingredients)
+        eaten = []
+        for item in items:
+            if wanted.get(item.item_type, 0) > 0:
+                eaten.append(item)
+                wanted[item.item_type] -= 1
+        return eaten
+
+    def _apply(
+        self, made: str, recipe: Recipe, items: Sequence[PlacedItem]
+    ) -> Combination:
+        """Take the ingredients off the grid and put the result down."""
+        eaten = self._consumed(recipe, items)
+        freed = sorted({square for item in eaten for square in item.covered_squares()})
+        eaten_ids = {item.id for item in eaten}
+        kept = tuple(item for item in items if item.id not in eaten_ids)
+        for item in eaten:
+            self.items.remove(item)
+
+        result = Item.of(made, str(uuid.uuid4())[:8])
+        position = self._room_for(result, freed)
+        if position is not None:
+            self.place_item(result, position)
+        return Combination(
+            made=made,
+            made_id=result.id,
+            consumed=tuple(eaten),
+            kept=kept,
+            freed=tuple(freed),
+            position=position,
+        )
+
+    def _room_for(self, item: Item, freed: Sequence[Position]) -> Optional[Position]:
+        """Where the result can stand among the squares its ingredients left.
+
+        Only those squares: a combination should not push into space the player
+        was keeping for something else. Nowhere to stand means the chest, which
+        the caller does.
+        """
+        room = set(freed)
+        for position in sorted(room, key=lambda square: (square[1], square[0])):
+            squares = item.placed_at(position).covered_squares()
+            if set(squares) <= room and self.can_hold(squares):
+                return position
+        return None
 
     def get_battle_items(self) -> List[PlacedItem]:
         """Get all items formatted for battle"""
@@ -378,6 +563,21 @@ class InventoryManager:
             return None
         except ItemNotFoundError:
             return None
+
+    def combine(self) -> List[Combination]:
+        """Combine what the rack can, and catch anything with nowhere to stand.
+
+        The grid does the combining, because it owns the squares and the order
+        things were placed in. It cannot own where a result goes when it does
+        not fit, though: that is the chest, which is here.
+        """
+        done = self.grid.combine()
+        for combination in done:
+            if combination.position is None:
+                # Rebuilt with the id already reported, so the client can match
+                # the item it is told about to the one that turns up.
+                self.storage.add_item(Item.of(combination.made, combination.made_id))
+        return done
 
     def get_state(self) -> Dict:
         """The full inventory state, as typed items and containers"""

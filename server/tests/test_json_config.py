@@ -946,3 +946,49 @@ class TestWhatTheShopMayOffer:
             needed = config.get("shop_needs")
             if needed:
                 assert needed in known, f"{item_id} waits on {needed}, which does not exist"
+
+
+class TestEveryRecipeCouldBeFollowed:
+    """A recipe naming an item we do not have can never be completed.
+
+    Not a failure on its own -- Burning Coal needs a Pyromancer's flame and
+    there is no Pyromancer -- but it should be a short, known list rather than
+    something that quietly grows.
+    """
+
+    @staticmethod
+    def _recipes():
+        for item_id, config in TestWhatTheShopMayOffer._catalogue():
+            for recipe in config.get("recipe", []):
+                yield item_id, recipe
+
+    def test_there_are_recipes_to_check(self):
+        assert len(list(self._recipes())) > 50
+
+    def test_every_ingredient_is_a_real_item_or_a_known_gap(self):
+        from config_loader import config_loader
+
+        known = set(config_loader.items) | set(config_loader.containers)
+        gaps = {}
+        for item_id, recipe in self._recipes():
+            missing = [
+                part
+                for part in recipe["ingredients"] + recipe.get("catalysts", [])
+                if part not in known
+            ]
+            if missing:
+                gaps[item_id] = missing
+
+        # Every one of these needs an item from a class this game does not have,
+        # so it can never be completed. Named rather than counted, so adding a
+        # tenth is a decision rather than a drift.
+        # Both want `class:fire`, which is a Pyromancer's flame and not a slug.
+        # Named rather than counted, so a third is a decision, not a drift.
+        assert set(gaps) == {"burning_coal", "burning_torch"}, (
+            f"the recipes that cannot be completed have changed: {gaps}"
+        )
+
+    def test_nothing_is_its_own_ingredient(self):
+        for item_id, recipe in self._recipes():
+            parts = recipe["ingredients"] + recipe.get("catalysts", [])
+            assert item_id not in parts, f"{item_id} is made from itself"

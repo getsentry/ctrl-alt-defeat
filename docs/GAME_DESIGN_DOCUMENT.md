@@ -644,14 +644,59 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
   and a Rare 16.
 
 ### 5.3 Recipe System (Item Combining)
-- **How it Works**: Place recipe items adjacent to each other in your server rack
-- **Combination Timing**: Items combine automatically during the next shop phase
-- **Orange Glow**: Adjacent combinable items show an orange glowing connection
-- **Lock Items**: Right-click items to prevent them from combining
+- **How it Works**: put a recipe's items together in your rack. One of them has
+  to touch all the others; they do not all have to touch each other, or a Stone
+  Golem could never be made -- four Stones cannot all touch one another, but all
+  four can touch the Heart Container between them.
+- **Combination Timing**: items combine as the next shop phase begins, straight
+  after the battle. Nothing needs locking, because the rack is fixed from the
+  moment the player starts the battle.
+- **One step per shop phase**: a result does not go on to combine again in the
+  same phase. 20 items are both a recipe's result and another's ingredient, so a
+  chain takes a round for each step and the player sees each one.
+- **Which one, when several could happen**: the item placed most recently
+  decides, and an ingredient is only used once. A catalyst can serve more than
+  one combination in the same phase.
+- **Where the result goes**: onto the squares its ingredients freed, if it fits
+  there. It never spreads into space the player was keeping for something else,
+  so when it does not fit it goes to the chest.
 - **Two Ways to Get Combined Items**:
   - Combine the required items (cheaper but requires finding components)
   - Buy directly from shop if lucky (more expensive but immediate)
-- **Catalyst Items**: Some recipes use a catalyst that remains after combination
+- **Catalyst Items**: some recipes use a catalyst. It has to be there and has to
+  be touching, and it is still there afterwards.
+- **Craft-only items**: an item marked `recipe_only` is never sold, whatever its
+  rarity would allow. Combining is the only way to get one.
+- **Items that wait on another**: an item with `shop_needs` is stocked only while
+  the player holds the item it names. The gemstones wait on a Coin Miner.
+
+#### What the client has to show (not built)
+- An **orange glow** joining items that are about to combine, so the player can
+  see it coming and break it up before starting the battle.
+- A **merge animation** over the squares the ingredients were standing on, after
+  which the result appears on some of those squares, or flies to the chest.
+
+Combining happens the moment the battle ends, but the player does not see the
+rack again until they have watched the battle and closed the result screen. So
+the shop screen plays it forwards from the two states the response already
+carries, and never shows the result before the merge:
+
+1. Draw **`battle_result.player_inventory`** -- the rack that fought, which is
+   the rack before anything combined. This is the first thing painted.
+2. Play every combination in `session_update.combinations`. They can run at once:
+   an ingredient is never used twice and a result never feeds another
+   combination in the same phase, so none of them waits on another.
+3. Draw **`inventory`** -- what the player holds now.
+
+Step 3 is what makes the animation safe. It ends on the server's answer, so a
+bug in the animation, an interruption, or a player skipping it cannot leave the
+wrong rack on screen. **A client that ignores `combinations` entirely is still
+correct**: it draws `inventory` and cuts straight to the result.
+
+Each combination says what was made and its id, the items consumed and the
+catalysts kept -- whole items, with their positions, because the client has no
+catalogue to look a name up in and two of a kind would be ambiguous -- the
+squares that were freed, and where the result landed, `null` meaning the chest.
 
 ### 5.4 Recipes Come From the Data, Not This Document
 

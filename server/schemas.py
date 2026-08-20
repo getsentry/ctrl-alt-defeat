@@ -163,6 +163,50 @@ class BattleResult(BaseModel):
     opponent_type: str = Field(default="ai", description="Type: ai or player_ghost")
 
 
+class Combination(BaseModel):
+    """One crafting that happened when the shop phase began (GDD 5.3).
+
+    A record of something already done. The inventory in this response is what
+    the rack holds now; this says how it got that way, so the client can show
+    it happening. A client that ignores every one of these still draws the right
+    rack -- it simply cuts to the result.
+
+    The consumed items no longer exist by the time this is read, so they travel
+    whole. Naming their types would not be enough: the client has no catalogue
+    to look a name up in, and with two of a kind on the rack it could not tell
+    which two were eaten.
+    """
+
+    made: str = Field(description="Item type the combination produced")
+    made_id: str = Field(description="Id of the item that was made")
+    consumed: List[PlacedItem] = Field(
+        description="The items used up, as they stood before combining"
+    )
+    kept: List[PlacedItem] = Field(
+        description="Catalysts, needed but not used up. Still on the grid."
+    )
+    freed: List[Position] = Field(
+        description="Squares the ingredients stood on, to play the merge over"
+    )
+    position: Optional[Position] = Field(
+        default=None,
+        description="Where the result landed, null if it went to the chest",
+    )
+
+
+class InventoryAfterBattle(BaseModel):
+    """What the player holds once the battle is over and things have combined.
+
+    The same three names the session uses, so whatever reads a session can read
+    this. It is here because combining changes the rack and nothing else in the
+    response says so: `battle_result.player_inventory` is the rack that fought.
+    """
+
+    inventory_grid: List[PlacedItem] = Field(description="Items on the grid")
+    inventory_storage: List[Item] = Field(description="Items in the chest")
+    server_containers: List[Container] = Field(description="Containers on the grid")
+
+
 class SessionUpdate(BaseModel):
     """Session changes after battle"""
 
@@ -174,6 +218,10 @@ class SessionUpdate(BaseModel):
     lives: int = Field(description="Remaining lives")
     game_over: bool = Field(description="Whether game has ended")
     victory: bool = Field(description="Whether player achieved victory")
+    combinations: List[Combination] = Field(
+        default_factory=list,
+        description="Items that combined as the next shop phase began",
+    )
 
 
 class BattleResponse(BaseModel):
@@ -181,6 +229,13 @@ class BattleResponse(BaseModel):
 
     battle_result: BattleResult = Field(description="Complete battle details")
     session_update: SessionUpdate = Field(description="Session state changes")
+    inventory: InventoryAfterBattle = Field(
+        description=(
+            "What the player holds now, after any combining. Not the same as "
+            "battle_result.player_inventory, which is the rack that fought, and "
+            "so is the rack as it was before combining."
+        )
+    )
     new_shop: List[Optional[Item]] = Field(description="New shop items for next round")
     battle_id: str = Field(description="Unique battle identifier")
 
