@@ -3,6 +3,7 @@ extends Control
 const APITypes = preload("res://scripts/api_types.gd")
 const ItemVisual = preload("res://scripts/item_visual.gd")
 const InventoryGrid = preload("res://scripts/inventory_grid.gd")
+const StorageBin = preload("res://scripts/storage_bin.gd")
 const Presentation = preload("res://scripts/presentation.gd")
 const PriceTag = preload("res://scripts/price_tag.gd")
 
@@ -16,12 +17,9 @@ const CELL_SPACING = 1
 
 # Storage settings
 #
-# Twenty-four squares either way, but eight by three fills the width of the
-# tray, where twelve by two left it a band across the middle with empty tray
-# either side of it.
-const STORAGE_WIDTH = 8
-const STORAGE_HEIGHT = 3
-const STORAGE_PADDING = 4
+# The tray holds no squares, and what is in it is drawn at the size it is drawn
+# on the grid. An item that changed size on the way into the chest and back
+# read as a different item.
 ## The opening of the tray, measured from the corner of the storage panel.
 ## Everything outside it is the tray's own walls -- the two posts either side
 ## and the lit lip along the front -- and squares drawn there sit on the
@@ -66,7 +64,7 @@ func _on_item_sold(item_data: APITypes.PlacedItem):
 	_save_current_state()
 	print("Sold %s for %d gold" % [item_data.name, response.gold_gained])
 
-func _on_drag_started(item_data: APITypes.PlacedItem):
+func _on_drag_started(item_data: APITypes.Item):
 	"""Name the price while the item is in hand, as the shop does.
 
 	The chest only offers to buy while there is something to sell it. Standing
@@ -89,12 +87,20 @@ func _on_drag_ended():
 
 func _on_item_stored(item_data: APITypes.PlacedItem):
 	"""Called when an item is dropped on the chest"""
+	# It falls in from where it was let go of, before the server has answered.
+	# Waiting would have it appear out of nowhere a moment later, and the drop
+	# is the one moment the player is watching the tray.
+	if storage_bin:
+		storage_bin.catch(item_data, get_global_mouse_position())
+
 	# The grid has already taken the item off, so put it back if the server
 	# refuses. Otherwise the item is gone from the grid and not in the chest.
 	var response = await BattleServerAPI.move_item(item_data.id, "storage")
 	if response == null:
 		print("The server refused to store it, putting the item back")
 		inventory_grid._add_item(item_data)
+		# It never reached the chest, so it must not be left lying in the tray.
+		load_storage()
 		_save_current_state()
 		return
 
@@ -203,11 +209,14 @@ func _in_chest(item_id: String) -> APITypes.Item:
 	return null
 
 
-func hold(item: APITypes.Item) -> void:
+func hold(item: APITypes.Item, at := Vector2.INF) -> void:
 	"""Take an item into the hand, to be put down with a click.
 
 	It is in the chest already, so this is a shortcut and not a place of its
 	own: whatever happens next, the item has somewhere safe to be.
+
+	Takes where the pointer is, so that what it does with it can be asked about
+	without a mouse. Told nothing, it reads the pointer itself.
 	"""
 	if is_instance_valid(held_visual):
 		held_visual.queue_free()
@@ -220,7 +229,7 @@ func hold(item: APITypes.Item) -> void:
 
 	# Put where the pointer already is. Waiting for the pointer to move would
 	# leave it sitting in the corner of the screen until the player twitched.
-	follow_pointer(get_global_mouse_position())
+	follow_pointer(get_global_mouse_position() if at == Vector2.INF else at)
 
 	# Drawn last, so the chest knows what is in hand and leaves its square empty.
 	load_storage()
@@ -238,7 +247,13 @@ func follow_pointer(pointer: Vector2) -> void:
 	if not held_item:
 		return
 	if is_instance_valid(held_visual):
-		held_visual.global_position = pointer - held_visual.size / 2
+		# On the screen, whatever the pointer says. The pointer can leave the
+		# window while an item is in hand, and an item that goes with it is
+		# being carried where the player cannot see it.
+		var half := held_visual.size / 2
+		var view := get_viewport_rect()
+		held_visual.global_position = \
+			pointer.clamp(view.position + half, view.end - half) - half
 
 	var grid_pos := _global_to_grid(pointer)
 	inventory_grid.mark_square(
@@ -269,7 +284,7 @@ func turn(quarters: int) -> bool:
 		return true
 
 	return inventory_grid.turn_dragged(quarters) \
-		or storage_grid.turn_dragged(quarters)
+		or (storage_bin != null and storage_bin.turn_dragged(quarters))
 
 
 func release_hand() -> void:
@@ -291,9 +306,11 @@ func place_held_at(pointer: Vector2) -> void:
 	if not held_item:
 		return
 
-	# The chest is where it already is, so this is simply letting go.
-	if storage_grid and storage_grid.get_parent().get_global_rect().has_point(pointer):
+	# The chest is where it already is, so this is simply letting go. It falls
+	# in from the pointer, because that is where the player let go of it.
+	if storage_bin and storage_bin.catches(pointer):
 		print("Left %s in the chest" % held_item.name)
+		storage_bin.catch(held_item, pointer)
 		release_hand()
 		return
 
@@ -406,7 +423,7 @@ func _global_to_grid(global_pos: Vector2) -> Vector2i:
 
 # Grid managers
 var inventory_grid: InventoryGrid  # Main inventory grid
-var storage_grid: InventoryGrid    # Storage grid
+var storage_bin: StorageBin        # The chest, which is a box and not a grid
 
 # Game state tracking
 
@@ -770,121 +787,65 @@ func _create_server_room():
 func _create_storage_area():
 	if hide_storage:
 		return
+	if not has_node("StoragePanel"):
+		return
 
-	# Use existing nodes from scene if available
-	if has_node("StoragePanel"):
-		# The tray is its own picture, hung behind the squares by the scene.
-		# The panel is only the box it and the squares are measured from, so it
-		# draws nothing itself.
-		var storage_bg = $StoragePanel
-		storage_bg.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	# The tray is its own picture, hung behind the chest by the scene. The
+	# panel is only the box it and the chest are measured from, so it draws
+	# nothing itself.
+	var storage_bg = $StoragePanel
+	storage_bg.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
-		# modulate multiplies down into children, so anything less than white
-		# here fades the tray and everything standing in it together.
-		storage_bg.modulate = Color.WHITE
+	# modulate multiplies down into children, so anything less than white here
+	# fades the tray and everything lying in it together.
+	storage_bg.modulate = Color.WHITE
 
-		# Create storage grid
-		storage_grid = InventoryGrid.new()
-		# The tray draws its own walls, so a border here is a second box drawn
-		# inside the first. The squares still show, to say where things land.
-		storage_grid.border_color = Color.TRANSPARENT
-		# The tray is drawn in the scene, so the squares are sized to the
-		# opening in it rather than to the grid's own cell size.
-		storage_grid.configure(
-			STORAGE_WIDTH, STORAGE_HEIGHT,
-			_storage_cell_size(STORAGE_SHELF.size), CELL_SPACING
-		)
-		# The tray carries no caption, and one over the squares would be a
-		# word floating in the middle of the picture.
-		storage_grid.title = ""
-		storage_grid.read_only = read_only_mode
-		storage_bg.add_child(storage_grid)
+	# The chest is a box things are thrown into. It covers the whole panel,
+	# because it answers the pointer for everything lying in the tray and a
+	# thrown item can come to rest anywhere in it.
+	storage_bin = StorageBin.new()
+	storage_bin.name = "StorageBin"
+	storage_bin.read_only = read_only_mode
+	storage_bg.add_child(storage_bin)
+	storage_bin.position = Vector2.ZERO
+	storage_bin.size = storage_bg.size
+	storage_bin.configure(
+		STORAGE_SHELF, inventory_grid.cell_size, inventory_grid.cell_spacing)
 
-		# Across the middle of the opening, but resting on the bottom of it
-		# rather than floating in the middle. The tray is open at the top and
-		# deeper than the squares need, so what is in it settles at the bottom
-		# the way things in a tray do.
-		storage_grid.position = Vector2(
-			STORAGE_SHELF.position.x
-				+ floor((STORAGE_SHELF.size.x - storage_grid.size.x) / 2.0),
-			STORAGE_SHELF.end.y - STORAGE_PADDING - storage_grid.size.y
-		)
+	# Everything between the walls takes a drop, all the way up the screen, and
+	# not only the tray itself. The walls reach that high as well, so a thing
+	# let go of up there has nowhere to fall but into the chest.
+	if inventory_grid:
+		inventory_grid.storage_zone = storage_bin.catch_zone()
 
-		# The whole panel takes a drop, not only the squares, so a drop that
-		# lands on the frame still goes in the chest.
-		if inventory_grid:
-			inventory_grid.storage_zone = storage_bg
+	storage_bin.sell_zone = sell_chest
+	storage_bin.grid_zone = inventory_grid
+	storage_bin.item_sold.connect(_on_chest_item_sold)
+	storage_bin.item_unstored.connect(_on_item_unstored)
+	# An item out of the chest can be sold just as one off the grid can, so the
+	# sell chest names its price while it is in hand either way.
+	storage_bin.drag_started.connect(_on_drag_started)
+	storage_bin.drag_ended.connect(_on_drag_ended)
 
-		# The chest lays itself out, so its squares are not places the server
-		# knows about and a move inside it is never sent.
-		storage_grid.saves_positions = false
-		storage_grid.sell_zone = sell_chest
-		storage_grid.grid_zone = inventory_grid
-		storage_grid.item_sold.connect(_on_chest_item_sold)
-		storage_grid.item_unstored.connect(_on_item_unstored)
-		# An item out of the chest can be sold just as one off the grid can, so
-		# the sell chest names its price while it is in hand either way.
-		storage_grid.drag_started.connect(_on_drag_started)
-		storage_grid.drag_ended.connect(_on_drag_ended)
-
-		# Set legacy reference
-
-		# Storage is always active (no servers needed)
-		for y in range(STORAGE_HEIGHT):
-			for x in range(STORAGE_WIDTH):
-				storage_grid.active_grid[y][x] = true
-
-		load_storage()
-
-
-static func _storage_cell_size(shelf: Vector2) -> float:
-	"""How big a tray square can be and still fit through the tray's opening.
-
-	Eight across and three down, with a gap between each pair and a little
-	padding all round. Whichever way runs out first decides, so the squares
-	stay square. Never larger than a grid square, so the tray cannot end up
-	drawing items bigger than the inventory does.
-	"""
-	var across = shelf.x - 2 * STORAGE_PADDING - (STORAGE_WIDTH - 1) * CELL_SPACING
-	var down = shelf.y - 2 * STORAGE_PADDING - (STORAGE_HEIGHT - 1) * CELL_SPACING
-	return min(CELL_SIZE, floor(across / STORAGE_WIDTH), floor(down / STORAGE_HEIGHT))
+	load_storage()
 
 
 func load_storage():
-	"""Lay the chest out from what the server says is in it.
+	"""Draw what the server says is in the chest.
 
-	An item in the chest is off the grid, so it has no position of its own and
-	the chest decides where to draw it: the first square it fits in, reading
-	left to right and then down. Nothing is remembered between calls, so the
-	same contents always draw the same way.
+	An item in the chest is off the grid, so it has no place of its own and
+	nothing here gives it one: it lies where it landed. This only adds what has
+	arrived and takes away what has gone, because the server answers every move
+	with the whole chest and tidying the tray up behind the player on each of
+	those answers would undo every throw.
 	"""
-	if hide_storage or not storage_grid:
+	if hide_storage or not storage_bin:
 		return
 
-	storage_grid.clear_all()
-	for y in range(STORAGE_HEIGHT):
-		for x in range(STORAGE_WIDTH):
-			storage_grid.active_grid[y][x] = true
+	storage_bin.show_items(
+		GameStateManager.inventory_storage,
+		held_item.id if held_item else "")
 
-	for item in GameStateManager.inventory_storage:
-		# What is in hand is in the chest as well, because the hand is a
-		# shortcut and not a place. Drawing it in both would look like two of
-		# it, so the chest leaves its square empty until it is let go of.
-		if held_item and item.id == held_item.id:
-			continue
-		if not _put_in_chest(item):
-			# The chest holds 24 squares and the server holds no such limit, so
-			# a full chest is a thing the player has to be able to see happen.
-			push_warning("No room in the chest to draw %s" % item.name)
-
-
-func _put_in_chest(item: APITypes.Item) -> bool:
-	"""Put an item in the first square of the chest it fits in"""
-	for y in range(STORAGE_HEIGHT):
-		for x in range(STORAGE_WIDTH):
-			if storage_grid.place_shop_item(item, Vector2i(x, y)):
-				return true
-	return false
 
 func _create_controls():
 	if not read_only_mode:
@@ -1340,6 +1301,17 @@ func _end_shop_drag(drop_position: Vector2):
 	if not dragging_shop_item or not drag_preview:
 		return
 
+	# Let go anywhere over the chest, so it is bought and falls in. A container
+	# is the one thing that cannot go there: it is the ground other items stand
+	# on, and the server keeps none in the chest.
+	if storage_bin and storage_bin.catches(drop_position):
+		if dragging_shop_data.is_container:
+			print("A container cannot go in the chest")
+		else:
+			await _buy_into_the_chest(drop_position)
+		_finish_shop_drag()
+		return
+
 	# Check if we're over the inventory grid
 	var grid_pos = _global_to_grid(drop_position)
 
@@ -1387,20 +1359,47 @@ func _end_shop_drag(drop_position: Vector2):
 		else:
 			print("Cannot place item at this position")
 
-	# Hide the hover preview
+	_finish_shop_drag()
+
+
+func _buy_into_the_chest(pointer: Vector2) -> void:
+	"""Buy what is being carried out of the shop and let it fall in the chest.
+
+	The chest is a place the server knows about, so this is a purchase like any
+	other -- it simply names the chest rather than a square. Nothing is drawn
+	until the server has answered, because there is no square being covered and
+	so nothing for a refusal to have to undo.
+	"""
+	var data = dragging_shop_data
+	var slot = dragging_shop_item
+
+	var response = await BattleServerAPI.purchase_item(data.id, "storage")
+	if response == null:
+		print("The server would not sell %s into the chest" % data.name)
+		return
+
+	GameStateManager.gold = response.gold
+	GameStateManager.inventory_storage.append(response.purchased_item)
+	storage_bin.catch(response.purchased_item, pointer)
+	_mark_shop_item_sold(slot)
+	_update_stats()
+	print("Bought %s into the chest" % data.name)
+
+
+func _finish_shop_drag() -> void:
+	"""Put down whatever the shop drag was drawing, however it ended"""
 	inventory_grid.hide_hover_preview()
 
-	# Clean up container preview if it exists
 	if container_preview:
 		container_preview.queue_free()
 		container_preview = null
 
-	# Clean up drag state
 	if drag_preview:
 		drag_preview.queue_free()
 		drag_preview = null
 	dragging_shop_item = null
 	dragging_shop_data = null
+
 
 func _mark_shop_item_sold(shop_item: Panel):
 	"""Mark a shop item as sold"""

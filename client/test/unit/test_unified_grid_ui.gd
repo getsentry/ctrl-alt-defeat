@@ -67,7 +67,7 @@ func test_shop_panel_exists():
 		assert_true(shop_panel.visible, "Shop should be visible by default")
 
 func test_storage_area_exists():
-	var storage = ui.storage_grid
+	var storage = ui.storage_bin
 	assert_not_null(storage, "Storage area should exist")
 
 	if ui.hide_storage:
@@ -454,10 +454,11 @@ func test_the_grid_knows_where_the_chest_is():
 
 # ============ The chest ============
 #
-# An item in the chest is off the grid, so it has no position. The chest is
-# what decides where to draw it, and it has to draw everything the server says
-# is in there -- a container move can put an item in the chest without the
-# player asking, and an item nobody can see looks like an item that was lost.
+# An item in the chest is off the grid, so it has no place and no facing. The
+# chest is a box rather than a set of squares: an item lies where it lands and
+# is left there, and it has to hold everything the server says is in there --
+# a container move can put an item in the chest without the player asking, and
+# an item nobody can see looks like an item that was lost.
 
 func _chest_item(overrides: Dictionary = {}) -> Resource:
 	return TestHelpers.item(overrides)
@@ -470,7 +471,7 @@ func test_the_chest_shows_what_the_server_says_is_in_it():
 
 	ui.load_storage()
 
-	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
+	var drawn = ui.storage_bin.ids()
 	assert_eq(drawn.size(), 2, "Both items should be drawn")
 	assert_true("first" in drawn and "second" in drawn, "Both by id")
 
@@ -480,21 +481,33 @@ func test_an_empty_chest_draws_nothing():
 
 	ui.load_storage()
 
-	assert_eq(ui.storage_grid.items.size(), 0, "Nothing in the chest, nothing drawn")
+	assert_eq(ui.storage_bin.count(), 0, "Nothing in the chest, nothing drawn")
 
 
-func test_chest_items_do_not_land_on_each_other():
-	GameStateManager.inventory_storage = [
-		_chest_item({"id": "a"}), _chest_item({"id": "b"}), _chest_item({"id": "c"})
-	]
+func test_the_chest_holds_more_than_the_tray_can_show():
+	# It used to be twenty-four squares, and the server holds no such limit, so
+	# a full chest lost items out of view. A box has no squares to run out of.
+	var lots: Array[APITypes.Item] = []
+	for i in range(30):
+		lots.append(_chest_item({"id": "item_%d" % i}))
+	GameStateManager.inventory_storage = lots
 
 	ui.load_storage()
 
-	var squares = []
-	for visual in ui.storage_grid.items:
-		for square in visual.get_meta("item_data").covered_squares():
-			assert_false(square in squares, "%s is drawn on top of something" % square)
-			squares.append(square)
+	assert_eq(ui.storage_bin.count(), 30, "Everything in the chest should be in the tray")
+
+
+func test_the_chest_leaves_what_is_already_lying_in_it_alone():
+	# The server answers every move with the whole chest, so the chest is
+	# redrawn constantly. Laying it out again each time would tidy away every
+	# throw the player made.
+	GameStateManager.inventory_storage = [_chest_item({"id": "settled"})]
+	ui.load_storage()
+	var was = ui.storage_bin.where_is("settled")
+
+	ui.load_storage()
+
+	assert_eq(ui.storage_bin.where_is("settled"), was, "It should not have been moved")
 
 
 func test_a_multi_square_item_fits_in_the_chest():
@@ -502,17 +515,18 @@ func test_a_multi_square_item_fits_in_the_chest():
 
 	ui.load_storage()
 
-	assert_eq(ui.storage_grid.items.size(), 1, "A wide item should still be drawn")
+	assert_eq(ui.storage_bin.count(), 1, "A wide item should still be drawn")
 
 
 func test_loading_the_chest_twice_does_not_double_it():
-	# It is redrawn on every inventory load, so it has to replace rather than add.
+	# It is redrawn on every inventory load, so what is already there has to be
+	# recognised rather than added again.
 	GameStateManager.inventory_storage = [_chest_item({"id": "only"})]
 
 	ui.load_storage()
 	ui.load_storage()
 
-	assert_eq(ui.storage_grid.items.size(), 1, "The chest should be redrawn, not added to")
+	assert_eq(ui.storage_bin.count(), 1, "The chest should be redrawn, not added to")
 
 
 func test_an_item_taken_out_of_the_chest_stops_being_drawn():
@@ -522,7 +536,7 @@ func test_an_item_taken_out_of_the_chest_stops_being_drawn():
 	GameStateManager.inventory_storage = []
 	ui.load_storage()
 
-	assert_eq(ui.storage_grid.items.size(), 0, "It is gone from the chest, so gone from view")
+	assert_eq(ui.storage_bin.count(), 0, "It is gone from the chest, so gone from view")
 
 
 func test_a_move_answer_refreshes_the_chest():
@@ -536,8 +550,8 @@ func test_a_move_answer_refreshes_the_chest():
 
 	ui._on_inventory_returned(response)
 
-	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
-	assert_eq(drawn, ["set_down"], "The chest should show what the move put there")
+	assert_eq(ui.storage_bin.ids(), ["set_down"],
+		"The chest should show what the move put there")
 
 
 func test_the_sell_chest_names_its_price_for_an_item_from_the_chest():
@@ -546,14 +560,14 @@ func test_the_sell_chest_names_its_price_for_an_item_from_the_chest():
 	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held", "cost": 8})]
 	ui.load_storage()
 
-	ui.storage_grid._start_drag(ui.storage_grid.items[0])
+	ui.storage_bin.pick_up(GameStateManager.inventory_storage[0], Vector2(700, 900))
 	await get_tree().process_frame
 
 	var prompt = ui.sell_chest.get_node("Prompt").text
 	assert_true("sell for" in prompt,
 		"The prompt should name a price, not stay at its resting text. Got: %s" % prompt)
 
-	ui.storage_grid._end_drag()
+	ui.storage_bin.release_at(Vector2(700, 900))
 	await get_tree().process_frame
 	assert_eq(ui.sell_chest.get_node("Prompt").text, "Drop here to sell",
 		"and go back to its resting text when the drag ends")
@@ -581,28 +595,19 @@ func _effective_alpha(node: CanvasItem) -> float:
 	return alpha
 
 
-func test_the_chest_fits_inside_its_panel():
-	var panel = ui.storage_grid.get_parent()
-	assert_lte(ui.storage_grid.size.x, panel.size.x,
-		"A chest wider than its panel is drawn off the edge of its own box")
-	assert_lte(ui.storage_grid.size.y, panel.size.y,
-		"and the same downwards")
-
-
-func test_the_chest_stays_within_its_panel():
-	var panel = ui.storage_grid.get_parent()
-	var grid = ui.storage_grid
-	assert_gte(grid.position.x, 0.0, "It should not start left of its panel")
-	assert_gte(grid.position.y, 0.0, "nor above it")
-	assert_lte(grid.position.x + grid.size.x, panel.size.x, "nor run off the right")
-	assert_lte(grid.position.y + grid.size.y, panel.size.y, "nor off the bottom")
+func test_the_chest_covers_its_panel():
+	# The chest answers the pointer for everything lying in the tray, so it has
+	# to be the whole panel and not only the opening.
+	var panel = ui.storage_bin.get_parent()
+	assert_eq(ui.storage_bin.position, Vector2.ZERO, "It should start at the panel")
+	assert_eq(ui.storage_bin.size, panel.size, "and be as big as it")
 
 
 func test_what_is_in_the_chest_is_drawn_solid():
 	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
 	ui.load_storage()
 
-	var drawn = ui.storage_grid.items[0]
+	var drawn = ui.storage_bin.drawn("held")
 	assert_almost_eq(_effective_alpha(drawn), 1.0, 0.01,
 		"An item in the chest should be as solid as one on the grid. " +
 		"Check the panel's modulate: it multiplies down into every child.")
@@ -634,7 +639,7 @@ func test_letting_go_leaves_it_in_the_chest():
 	await get_tree().process_frame
 
 	assert_null(ui.held_item, "Nothing in hand")
-	assert_eq(ui.storage_grid.items.size(), 1, "and it is still in the chest")
+	assert_eq(ui.storage_bin.count(), 1, "and it is still in the chest")
 
 
 func test_clicking_the_chest_puts_it_back():
@@ -642,12 +647,12 @@ func test_clicking_the_chest_puts_it_back():
 	ui.load_storage()
 	ui.hold(GameStateManager.inventory_storage[0])
 
-	var chest = ui.storage_grid.get_parent()
+	var chest = ui.storage_bin
 	ui.place_held_at(chest.global_position + chest.size / 2)
 	await get_tree().process_frame
 
 	assert_null(ui.held_item, "The chest is where it already was, so this is letting go")
-	assert_eq(ui.storage_grid.items.size(), 1, "and it is drawn there")
+	assert_eq(ui.storage_bin.count(), 1, "and it is drawn there")
 
 
 func test_clicking_nowhere_keeps_hold_of_it():
@@ -735,8 +740,8 @@ func test_the_held_item_is_not_also_drawn_in_the_chest():
 	ui.hold(GameStateManager.inventory_storage[0])
 	await get_tree().process_frame
 
-	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
-	assert_eq(drawn, ["left_behind"], "Only what is not in hand is drawn in the chest")
+	assert_eq(ui.storage_bin.ids(), ["left_behind"],
+		"Only what is not in hand is drawn in the chest")
 
 
 func test_letting_go_draws_it_in_the_chest_again():
@@ -746,8 +751,8 @@ func test_letting_go_draws_it_in_the_chest_again():
 	ui.release_hand()
 	await get_tree().process_frame
 
-	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
-	assert_eq(drawn, ["in_hand"], "It comes back into view where it has been all along")
+	assert_eq(ui.storage_bin.ids(), ["in_hand"],
+		"It comes back into view where it has been all along")
 
 
 func test_a_second_stranded_item_waits_in_the_chest():
@@ -763,8 +768,7 @@ func test_a_second_stranded_item_waits_in_the_chest():
 	await get_tree().process_frame
 
 	assert_eq(ui.held_item.id, "first", "The first comes into the hand")
-	var drawn = ui.storage_grid.items.map(func(v): return v.get_meta("item_data").id)
-	assert_eq(drawn, ["second"], "and the second is waiting in the chest")
+	assert_eq(ui.storage_bin.ids(), ["second"], "and the second is waiting in the chest")
 
 
 func test_a_held_item_sits_under_the_pointer():
@@ -779,10 +783,10 @@ func test_a_held_item_sits_under_the_pointer():
 func test_a_held_item_is_placed_the_moment_it_is_picked_up():
 	# Waiting for the first mouse movement left it sitting in the corner of the
 	# screen until the player twitched.
-	ui.hold(TestHelpers.item({"id": "held"}))
+	ui.hold(TestHelpers.item({"id": "held"}), Vector2(400, 300))
 	await get_tree().process_frame
 
-	assert_ne(ui.held_visual.global_position, Vector2.ZERO,
+	assert_eq(ui.held_visual.global_position + ui.held_visual.size / 2, Vector2(400, 300),
 		"It should already be under the pointer, not parked at the origin")
 
 
@@ -1049,35 +1053,83 @@ func test_a_price_tag_stays_beside_its_own_item():
 # Both are their own layer on purpose: the tray is to gain falling items and
 # the bay a de-rez animation, and neither can be a Panel's stylebox.
 
-func test_the_tray_is_a_picture_behind_the_squares():
+func test_what_is_in_the_chest_is_drawn_the_size_it_is_on_the_grid():
+	# It used to shrink on the way in. An item that changes size on the way
+	# into the chest and back reads as a different item.
+	assert_eq(ui.storage_bin.cell_size, ui.inventory_grid.cell_size,
+		"A square of an item is a square of an item wherever it is drawn")
+
+
+func test_a_drop_anywhere_above_the_chest_goes_in_the_chest():
+	# The chest is walled to the top of the screen, so a thing let go of over
+	# it has nowhere to fall but into it. Aiming at the tray itself is a small
+	# target and the physics does not ask for it.
+	var zone = ui.inventory_grid.storage_zone
+	assert_eq(zone, ui.storage_bin.catch_zone(),
+		"The grid should store what is dropped anywhere in the chest's room")
+
+	var over_the_chest = ui.storage_bin.global_position \
+		+ Vector2(ui.STORAGE_SHELF.get_center().x, 0)
+	assert_true(zone.get_global_rect().has_point(over_the_chest + Vector2(0, 100)),
+		"The tray itself takes a drop")
+	assert_true(zone.get_global_rect().has_point(over_the_chest - Vector2(0, 400)),
+		"and so does the room above it")
+	assert_false(zone.get_global_rect().has_point(over_the_chest + Vector2(-400, -400)),
+		"but not the room beside it, which is where the grid is")
+
+
+func test_the_chest_takes_a_drop_from_above_without_covering_the_grid():
+	# The room over the chest is a drop zone the whole height of the screen, so
+	# it must not reach across anything the player drops items on.
+	var zone: Control = ui.inventory_grid.storage_zone
+	assert_false(zone.get_global_rect().intersects(
+		ui.inventory_grid.get_global_rect()),
+		"A drop on the grid must not be read as a drop in the chest")
+
+
+func test_a_shop_item_let_go_of_over_the_chest_is_not_put_on_the_grid():
+	# Buying into the chest names no square, so nothing is placed on the board
+	# on the way. There is no session here, so the purchase itself comes to
+	# nothing and only the routing is on trial.
+	ui.dragging_shop_item = autofree(Panel.new())
+	ui.drag_preview = autofree(Control.new())
+	ui.dragging_shop_data = TestHelpers.item({"id": "buying"})
+
+	await ui._end_shop_drag(ui.storage_bin.global_position
+		+ Vector2(ui.STORAGE_SHELF.get_center().x, -300))
+
+	assert_eq(ui.inventory_grid.items.size(), 0, "Nothing lands on the grid")
+	assert_null(ui.dragging_shop_data, "and the drag is over either way")
+
+
+func test_the_tray_is_a_picture_behind_what_is_in_it():
 	var tray = ui.get_node_or_null("StoragePanel/Tray")
 	assert_not_null(tray, "The storage panel should hold the tray picture")
 	assert_true(tray is TextureRect,
 		"The tray has to be its own node to gain layers later, not a stylebox")
-	assert_lt(tray.get_index(), ui.storage_grid.get_index(),
-		"The tray is drawn before the squares, or it covers what is in it")
+	assert_lt(tray.get_index(), ui.storage_bin.get_index(),
+		"The tray is drawn before what is in it, or it covers it")
 
 
-func test_what_is_in_the_tray_sits_inside_the_opening():
-	# The tray's walls are part of its picture. Squares drawn over them sit on
-	# the wall rather than inside the tray.
+func test_the_chest_is_walled_by_the_opening_in_the_tray():
+	# The tray's walls are part of its picture. An item that comes to rest over
+	# one is lying on the wall rather than inside the tray.
+	assert_eq(ui.storage_bin.tray, ui.STORAGE_SHELF,
+		"The chest should be walled by the opening the tray picture leaves")
+
+
+func test_an_item_falls_in_over_the_opening():
+	# It falls from above the tray when nobody threw it, and it has to fall
+	# between the walls rather than onto one of them.
+	GameStateManager.inventory_storage = [TestHelpers.item({"id": "falling"})]
+
+	ui.load_storage()
+
 	var shelf = ui.STORAGE_SHELF
-	var grid = ui.storage_grid
-	assert_gte(grid.position.x, shelf.position.x, "It should clear the left wall")
-	assert_gte(grid.position.y, shelf.position.y, "and the top of the back")
-	assert_lte(grid.position.x + grid.size.x, shelf.end.x, "and the right wall")
-	assert_lte(grid.position.y + grid.size.y, shelf.end.y, "and the front lip")
-
-
-func test_what_is_in_the_tray_rests_on_the_bottom_of_it():
-	# The tray is deeper than three rows need, so that items can fall into it
-	# later. What is in it settles at the bottom rather than floating.
-	var shelf = ui.STORAGE_SHELF
-	var grid = ui.storage_grid
-	var below = shelf.end.y - (grid.position.y + grid.size.y)
-	assert_lte(below, ui.STORAGE_PADDING,
-		"The squares should rest on the bottom of the tray, not %d above it"
-		% below)
+	var at = ui.storage_bin.where_is("falling")
+	assert_between(at.x, shelf.position.x, shelf.end.x,
+		"It should fall between the walls of the tray")
+	assert_lte(at.y, shelf.end.y, "and from above the bottom of it")
 
 
 func test_the_bay_is_a_picture_larger_than_the_drop_zone():
@@ -1098,10 +1150,10 @@ func test_an_item_carried_to_the_bay_is_drawn_in_front_of_it():
 	# behind the cabinet.
 	GameStateManager.inventory_storage = [TestHelpers.item({"id": "held"})]
 	ui.load_storage()
-	var held = ui.storage_grid.items[0]
-	ui.storage_grid._start_drag(held)
+	ui.storage_bin.pick_up(GameStateManager.inventory_storage[0], Vector2(700, 900))
 	await get_tree().process_frame
 
+	var held = ui.storage_bin.dragged_visual()
 	assert_gt(held.z_index, ui.sell_chest.z_index,
 		"What is in hand should draw over the bay, not under it")
-	ui.storage_grid._end_drag()
+	ui.storage_bin.release_at(Vector2(700, 900))

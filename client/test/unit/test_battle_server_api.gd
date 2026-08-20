@@ -125,3 +125,20 @@ func test_the_signals_carry_typed_objects():
 	for signal_name in signals:
 		assert_true(declared.has(signal_name),
 			"BattleServerAPI should announce %s" % signal_name)
+
+
+func test_a_purchase_names_the_square_it_is_going_to():
+	var body = BattleServerAPI.purchase_body("item_1", [2, 3], 90)
+
+	assert_eq(body["target_position"], [2, 3], "The square it was put down on")
+	assert_eq(body["rotation"], 90, "and the way it was facing when it landed")
+	assert_false(body.has("to_storage"), "It is not going in the chest")
+
+
+func test_a_purchase_into_the_chest_names_the_chest():
+	# The chest is a place the server knows about, so buying into it is a
+	# purchase like any other -- it simply names no square.
+	var body = BattleServerAPI.purchase_body("item_1", "storage")
+
+	assert_true(body["to_storage"], "It should ask for the chest")
+	assert_false(body.has("target_position"), "and name no square")

@@ -219,6 +219,29 @@ func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 	push_error("Shop refresh failed with code: " + str(last_response_code))
 	return null
 
+static func purchase_body(
+	item_id: String, placement: Variant, facing: int = 0
+) -> Dictionary:
+	"""What a purchase asks the server for.
+
+	A square is named as a position and the chest is named as itself, which is
+	the same pair of choices a move offers. Its own function so that what is
+	asked for can be read without a session to ask it of.
+	"""
+	var body := {
+		"item_id": item_id,
+		# An item can be turned while it is carried out of the shop, and the
+		# purchase is when that is settled. Sent every time, so what the server
+		# stores is what the player saw themselves put down.
+		"rotation": facing
+	}
+	if placement is Array and placement.size() == 2:
+		body["target_position"] = placement
+	elif placement == "storage":
+		body["to_storage"] = true
+	return body
+
+
 func purchase_item(
 	item_id: String, placement: Variant, facing: int = 0
 ) -> APITypes.PurchaseResponse:
@@ -233,19 +256,7 @@ func purchase_item(
 		"Authorization: Bearer " + _auth_token
 	]
 
-	var body_dict = {
-		"item_id": item_id,
-		# An item can be turned while it is carried out of the shop, and the
-		# purchase is when that is settled. Sent every time, so what the server
-		# stores is what the player saw themselves put down.
-		"rotation": facing
-	}
-
-	# Server expects target_position field for grid placement
-	if placement is Array and placement.size() == 2:
-		body_dict["target_position"] = placement
-
-	var body = JSON.stringify(body_dict)
+	var body = JSON.stringify(purchase_body(item_id, placement, facing))
 	print("DEBUG: Purchasing item %s at %s facing %d" % [item_id, placement, facing])
 	http_request.request(url, headers, HTTPClient.METHOD_POST, body)
 	var result = await http_request.request_completed
