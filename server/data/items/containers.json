@@ -105,6 +105,20 @@
       "slug": "container_orchestrator",
       "unbuilt": [
         "Start of battle: Gain 8 Block for each Neutral item inside."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "basic_firewall",
+            "backup_system"
+          ]
+        },
+        {
+          "ingredients": [
+            "basic_firewall",
+            "hammer"
+          ]
+        }
       ]
     },
     "serverless_function": {
@@ -121,6 +135,24 @@
       "slug": "serverless_function",
       "unbuilt": [
         "Shop entered: If this has at least 2 Godly or Unique items inside, generate a chipped Gemstone."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "crypto_mining_rig"
+          ],
+          "catalysts": [
+            "maneki_neko"
+          ]
+        },
+        {
+          "ingredients": [
+            "crypto_mining_rig"
+          ],
+          "catalysts": [
+            "hammer"
+          ]
+        }
       ]
     },
     "network_cache": {
@@ -134,7 +166,7 @@
       "source": "Ranger Bag",
       "rarity": "unique",
       "cost": 16,
-"effects": [],
+      "effects": [],
       "slug": "network_cache",
       "unbuilt": [
         "Items inside gain 10% critical hit chance +3% for each Luck."

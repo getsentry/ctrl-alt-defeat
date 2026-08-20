@@ -1,0 +1,74 @@
+{{Item infobox
+|name=Cauldron
+|subclassname=Alchemist
+|image=Cauldron.png
+|rarity=Unique
+|icontype=magic
+|type=Accessory
+|cost=10
+|class=Reaper
+|effect=
+* '''Shop entered:''' Upgrade an adjacent [[Potion]].
+* '''Every 2.6s:''' [[Heal]] for 20 or gain 6 {{icon/mana}} or gain 5 {{icon/heat}}.
+* Triggers 15% faster for each {{icon/star}} [[Food]] or [[Potion]].
+|grid=
+-22-
+2112
+2112
+}}
+
+==Description==
+''Everything can be soup with the right mindset.''
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.5]]
+|Cooldown 2.7s -> 2.6s
+|-
+|[[Patch 1.0.9]]
+|Cooldown 2.9s -> 2.7s
+|-
+|[[Patch 1.0.8]]
+|Cooldown 3.0s -> 2.9s
+|-
+|[[Patch 0.9.38]]
+|Cooldown 3.5s -> 3.3s
+|-
+|[[Patch 0.9.10]]
+|{{icon/mana}} 5 -> 6
+|-
+|[[Patch 0.9.9]]
+|[[Heal]] 17 -> 20
+|-
+|[[Patch 0.9.7]]
+|[[Heal]] 15 -> 17
+|-
+|[[Patch 0.9.6]]
+|{{icon/mana}} 4 -> 5, {{icon/heat}} 4 -> 5
+|-
+|[[Patch 0.9.5]]
+|[[Heal]] 12 -> 15, {{icon/heat}} 3 -> 4
+|-
+|[[Patch 0.9.4]]
+|Now [[heal]]s 12, gains 4 {{icon/mana}} or 3 {{icon/heat}}, has “[[Magic]]” type
+|-
+|[[Patch 0.9.3]]
+|Cooldown 4s -> 3s
+|-
+|[[Patch 0.9.2]]
+|Cooldown 5s -> 4s
+|-
+|[[Patch 0.9.1]]
+|Also gains speed bonus from adjacent [[Potion]]s now
+|-
+|[[Patch 0.9.0]]
+|Added into game.
+|}
+
+{{Items}}
+
+[[Category:Subclass]]

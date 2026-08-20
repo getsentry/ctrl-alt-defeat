@@ -1,0 +1,229 @@
+'''Gemstones''' refer to [[items]] that can be placed into the sockets of other items. 
+One group of Gemstones is a series of 1x1 items that emerge from owning a [[Box of Riches]]. There are five different kinds of these Gemstones: [[Amethyst]], [[Emerald]], [[Ruby]], [[Sapphire]], and [[Topaz]]. Each type of Gemstone's rarity fully ranges from Common (Chipped) to Godly (Perfect). Each Gemstone has three effects, with only a single one being active at a time depending on how they are placed within the player's inventory.
+There are currently three other Gemstones, [[Lump of Coal]], [[Corrupted Crystal]] and [[Tim]], which can be found in the shop regardless if you have a [[Box of Riches]] or not.
+
+== Acquisition Methods ==
+
+=== Generated from a Box of Riches ===
+Each [[Box of Riches]] within the player's inventory will generate a random Chipped Gemstone upon entering the shop from battle. The Gemstone will be placed in a vacant adjacent cell, or thrown into Storage if no such cell is found.
+
+=== Rolling with a Box of Riches ===
+When the shop is rolled, there is a certain chance for a Gemstone to be rolled if there is at least one [[Box of Riches]] placed within the player's inventory. The Gemstone will always appear in the highest priority unreserved slot. The slot priority is as follows: middle left, top, bottom left, bottom right, and lastly middle right.
+
+Having multiple Boxes of Riches does not increase the chance of a Gemstone appearing nor does it allow you to find more than one Gemstone in a single roll. [[Customer Card]] does not always affect the rarity of a rolled Gemstone, resulting in Chipped Gemstones appearing despite the particles indicating that the Customer Card has affected that shop slot.
+
+=== Crafting Gems of Higher Rarities ===
+[[File:BPB Gem Crafting Methods.png|thumb|The four different Gemstone combination methods.]]
+[[File:BPB Gem distance does not matter.png|thumb|Socketed gemstones ignoring distance but respecting item adjacency.]]
+Gems of the same type and rarity may be combined to form a Gem of the same type and one rarity higher. For example: two Chipped Amethysts may combine to form one Flawed Amethyst. Gems may be crafted while socketed within items, resulting in the following crafting methods.
+
+* Combining adjacent Gems, both placed within the inventory.
+* Combining a Gemstone adjacent to an item with one socketed.
+* Combining multiple Gemstones socketed into the same item.
+* Combining Gemstones socketed onto separate adjacent items.
+
+Note that when a socketed Gemstone is to be crafted, its distance to the other Gemstone is irrelevant: all that matters is that the items the Gemstone(s) are socketed into are adjacent.
+
+A Gemstone's adjective indicates its rarity level, following the below convention.
+{| class="styled"
+|+Gemstone Naming Convention
+!Rarity
+!Adjective
+!Price
+|-
+|Common
+|Chipped
+|1
+|-
+|Rare
+|Flawed
+|2
+|-
+|Epic
+|Regular
+|4
+|-
+|Legendary
+|Flawless
+|8
+|-
+|Godly
+|Perfect
+|16
+|}
+{{Clear|right}}
+
+== Sockets and Placement Effects ==
+Certain items have gem sockets that are capable of holding Gemstones. Gems have different effects depending on whether they are placed within the inventory, socketed on a [[Weapon]], or socketed onto [[Armor]] and other items.
+
+If an item has multiple of the same kind of Gemstone socketed, each effect is handled individually. For example, multiple Emeralds will each have their own chance to inflict Poison, rather than adding their chances together.
+
+Socketing a Gemstone is not permanent and may be removed at any time.
+
+Socketed Gemstones are unaffected by {{icon/star}} effects.
+
+===List of items with gem sockets===
+{{#cargo_query:
+tables=Items=I, Items__itemtype
+|join on=I._ID = Items__itemtype._rowID
+|fields=
+    I.sockets                    = Sockets
+    , Items__itemtype._value     = Type
+    , CONCAT('[[', I.name, ']]') = Name
+|where=
+    I.sockets IS NOT NULL
+    AND Items__itemtype._value IN ('Melee Weapon', 'Ranged Weapon','Helmet','Armor','Shield','Shoes')
+|order by=
+    I.sockets
+    , Items__itemtype._value
+    , I.name
+|merge similar cells=yes
+}}
+
+==List of Gemstones==
+{| class="styled items nostyle-list sortable"
+! class="unsortable" |
+!'''Name'''
+! class="unsortable" | '''Effect'''
+!'''Class'''
+!'''Rarity'''
+!'''Cost'''
+{{#cargo_query:
+tables=Items
+|fields
+=image
+,name
+,effect
+,class
+,rarity
+,cost
+|where=itemtype HOLDS 'Gemstone' AND name IN ('Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Topaz')
+|format=template
+|template=item table/row
+|named args=yes
+}}
+|}
+
+==List of Other Socketed Items==
+{| class="styled items nostyle-list sortable"
+! class="unsortable" |
+!'''Name'''
+! class="unsortable" | '''Effect'''
+!'''Class'''
+!'''Rarity'''
+!'''Cost'''
+{{#cargo_query:
+tables=Items
+|fields
+=image
+,name
+,effect
+,class
+,rarity
+,cost
+|where=itemtype HOLDS 'Gemstone' AND name NOT IN ('Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Topaz')
+|format=template
+|template=item table/row
+|named args=yes
+}}
+|}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+! Version
+!Change
+|-
+|0.9.24
+|
+* [[Emerald]] (Weapon): Increased {{icon/poison}} amount of high rarities
+* [[Amethyst]] (Inventory): Drastically reduced cooldown
+|-
+|0.9.12
+|
+* [[Emerald]] (Inventory): More & faster {{icon/regeneration}}
+* [[Sapphire]] (Inventory): More & faster {{icon/cold}}
+|-
+|0.9.3
+|[[Sapphire]] (Weapon): Chances reduced
+|-
+|0.9.1
+|
+* [[Emerald]] (Weapon): {{icon/poison}} Chances increased
+* [[Ruby]] (Weapon): Lifesteal reduced
+|-
+|0.9.2
+|
+* [[Sapphire]] (Weapon): Reduced chance for Regular, Flawless, and Perfect
+* [[Sapphire]] (Inventory): Reduced delay by 1s
+* [[Topaz]] (Inventory): Reduced stamina for Common, Flawed, and Perfect
+|-
+|0.8.2
+|
+*Ruby (inventory): Now triggers once after a delay, life steal increased
+*Sapphire (inventory): Now triggers once after a delay, adjusted {{icon/cold}} amount
+*Emerald (inventory): Now triggers once after a delay and gives {{icon/regeneration}} directly
+*Topaz (armor): Now also gives some crit resistance, but less stun resistance
+*Topaz (inventory): Now gives base stamina regeneration instead
+|-
+|0.7.1
+|
+*Reworked Topaz (Armor): Now gives Stun resistance instead
+*Reworked Emerald (Armor): Now gives Poison resistance instead
+|-
+|0.7.0
+|Amethyst (Weapon): Now triggers “On hit” instead of “On attack” (this is for consistency)
+|-
+|0.6.0
+|Sapphire (Weapon): Now works “On hit” instead of “On attack”
+|-
+|0.5.6
+|Sapphire (Weapon): Mana gain 2 -> 1, Chances are increased
+|-
+|0.5.5
+|
+*Emerald (Weapon & Armor): Increased chances
+*Sapphire (Weapon): Decreased chances
+|-
+|0.5.2
+|Emerald (Weapon): Chances increased
+|-
+|0.5.1
+| 
+*Topaz (inventory): Stamina gain 1 -> 1.5
+*Fix: Regular Emerald (Armor) chance 35% -> 25%
+|-
+|0.4.2 
+|
+*Topaz (Inventory): Stamina gain 0.5 -> 1
+*Sapphire (Weapon): Chances increased, Mana 3 -> 2
+|-
+|0.4.0b
+| 
+*Sapphire/Emerald/Topaz/Ruby (inventory): cooldown increased
+*Gems (Weapon/other): overall slightly improved
+|-
+|0.4.0
+|Emerald/Amethyst (inventory): now always activate on cooldown even if there is nothing to cleanse/buff
+|-
+|0.3.9
+|
+* Sapphire/Emerald/Topaz/Amethyst (Backpack): Cooldown increased
+*Topaz/Emerald (Other): Chances increased
+*Sapphire (Weapon): Higher proc chance, Perfect Sapphire now only applies 1 Cold like the other levels
+|-
+|0.3.8
+|
+*Topaz and Amethyst added to the game.
+*Sapphire (Weapon): Higher chances, Mana gain increased to 3, now also applies Cold
+*Sapphire (Other): Should now trigger much more often due to the bugfix
+*Sapphire (Backpack): Does not use Mana anymore, cooldown is increased to account for it (should be much stronger now).
+*Emerald (Backpack): Cooldown increased, now gives +2 Regeneration on all qualities
+|-
+|0.3.7
+|Emerald, Ruby and Sapphire added to the game via [[Box of Riches]]
+|}
+
+{{Items}}
+
+[[Category:Items]]

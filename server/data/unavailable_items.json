@@ -131,6 +131,26 @@
         "During Battle Rage: Star items trigger 35% faster. You take 25% reduced damage."
       ],
       "icontype": "treasure"
+    },
+    "health_check": {
+      "name": "Heartbeat Node",
+      "category": "pet",
+      "color": "sand",
+      "pattern": "zigzag_v",
+      "class": "neutral",
+      "map": [
+        "*#*"
+      ],
+      "source": "Goobling",
+      "rarity": "common",
+      "cost": 2,
+      "triggers": [],
+      "slug": "health_check",
+      "in_shop": false,
+      "unbuilt": [
+        "3 Star item activations: Heal for 4."
+      ],
+      "why": "Set aside 2026-08-19: Goobling is gated behind the It's Slime Time! skill, which this game does not have, has no recipe and no subclass, so it had no way to be obtained. Bring it back by giving it a path."
     }
   }
 }

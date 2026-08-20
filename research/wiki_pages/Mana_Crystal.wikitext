@@ -1,0 +1,33 @@
+{{Item infobox
+|name=Mana Crystal
+|subclassname=Artificer
+|image=Mana_Crystal.png
+|rarity=Unique
+|icontype=magic
+|type=Accessory
+|cost=10
+|class=Engineer
+|effect=
+*'''Every 5.5s:''' Emit 4 charges, traveling 1 {{icon/lightning}} every 2s.
+*When they reach an item, gain 1 {{icon/mana}}. If it is {{icon/magic}}, gain 2 {{icon/mana}} instead.
+|grid=
+0005000
+0005000
+5551555
+0005000
+0005000
+}}
+
+==History==
+{| class="styled"
+|+[[Version History]]
+!Version
+!Change
+|-
+|[[Patch 1.1.0]]
+|Added into game.
+|}
+
+
+{{Items}}
+[[zh:法力水晶]]

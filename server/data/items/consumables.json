@@ -109,7 +109,15 @@
           ]
         }
       ],
-      "slug": "emergency_patch"
+      "slug": "emergency_patch",
+      "recipe": [
+        {
+          "ingredients": [
+            "emergency_hotfix",
+            "api_token"
+          ]
+        }
+      ]
     },
     "data_packets": {
       "name": "Packet Burst",

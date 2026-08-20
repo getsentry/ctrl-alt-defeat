@@ -59,7 +59,7 @@ def test_json_config():
     null_blade = loader.get_item("null_blade")
     stack_smasher = loader.get_item("stack_smasher")
     loader.get_item("firewall")  # Verify it exists
-    health_check = loader.get_item("health_check")
+    repair_swarm = loader.get_item("healing_nanobots")
 
     # Room for the shapes these items actually have. A Stack Smasher is a three
     # square L inside a 2x2, so it leaves one corner of that 2x2 free.
@@ -73,7 +73,7 @@ def test_json_config():
     p2_items = [
         BattleItem(spec=stack_smasher, position=(4, 0), uid="p2_null2"),
         # (5, 1) is under the Stack Smasher, so this sits clear of it.
-        BattleItem(spec=health_check, position=(6, 0), uid="p2_health"),
+        BattleItem(spec=repair_swarm, position=(6, 0), uid="p2_health"),
     ]
 
     # Run battle

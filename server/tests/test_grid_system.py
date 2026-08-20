@@ -444,8 +444,8 @@ class TestTheCatalogueAgreesWithTheDesign:
 
     def test_the_number_of_items_projecting_an_aura(self):
         projecting = [s for s in self._shapes().values() if s.star or s.diamond]
-        assert len(projecting) == 118, (
-            f"{len(projecting)} items project an aura; GDD 4.3 says 118"
+        assert len(projecting) == 117, (
+            f"{len(projecting)} items project an aura; GDD 4.3 says 117"
         )
 
     def test_the_number_reaching_past_their_own_neighbours(self):

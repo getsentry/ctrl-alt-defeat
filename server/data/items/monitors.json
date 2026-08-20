@@ -73,6 +73,14 @@
       "in_shop": false,
       "unbuilt": [
         "Every 4.7s: Use 1 Heat to inflict 2 Cold and gain 10 Block."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "basic_firewall",
+            "snowball"
+          ]
+        }
       ]
     },
     "sanctified_firewall": {
@@ -162,6 +170,14 @@
         "Star Holy-items gain Dark.",
         "10% chance for each Star Dark-item to protect debuffs on your opponent from being cleansed.",
         "Every 2.4s: Cleanse 2 debuffs and inflict them on your opponent."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "sanctified_firewall",
+            "corrupted_crystal"
+          ]
+        }
       ]
     }
   }

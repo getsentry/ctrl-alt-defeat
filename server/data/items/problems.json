@@ -181,6 +181,13 @@
       "pet": true,
       "unbuilt": [
         "Start of battle: Gain 5 Heat. Reflect 3 debuffs."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "ruby_egg"
+          ]
+        }
       ]
     },
     "day_zero": {
@@ -292,6 +299,14 @@
       "in_shop": false,
       "unbuilt": [
         "On attack: Use 3 Mana to deal +7 damage and for the next 1.5s, all your attacks are critical."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "magic_staff",
+            "neural_link_collar"
+          ]
+        }
       ]
     },
     "querystorm": {
@@ -334,6 +349,14 @@
         "On hit: Gain 1 Regeneration and 1 Luck.",
         "Deals +0.8 damage per Regeneration.",
         "Triggers 10% faster for each Star Nature-item."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "denier_of_service",
+            "wisp"
+          ]
+        }
       ]
     },
     "quantum_sniper": {
@@ -416,6 +439,14 @@
       "in_shop": false,
       "unbuilt": [
         "On hit: The same 70% roll also inflicts a random debuff."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "quantum_sniper",
+            "virus_payload"
+          ]
+        }
       ]
     },
     "malware_propagator": {
@@ -453,6 +484,14 @@
       "in_shop": false,
       "unbuilt": [
         "For every 5 damage Star Weapon deals: Inflict +1 Poison on the next attack. Deals +0.5 damage per Poison of your opponent."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "nullshot",
+            "virus_payload"
+          ]
+        }
       ]
     },
     "probability_manipulator": {
@@ -502,6 +541,15 @@
       "in_shop": false,
       "unbuilt": [
         "Star Weapon crits: Attack twice on the next attack."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "nullshot",
+            "quantum_probability_core",
+            "quantum_probability_core"
+          ]
+        }
       ]
     },
     "quantum_flux_rifle": {
@@ -548,7 +596,17 @@
       ],
       "slug": "quantum_flux_rifle",
       "sockets": 1,
-      "icontype": "nature, ranged"
+      "icontype": "nature, ranged",
+      "recipe_only": true,
+      "recipe": [
+        {
+          "ingredients": [
+            "quantum_sniper",
+            "quantum_probability_core",
+            "quantum_probability_core"
+          ]
+        }
+      ]
     },
     "data_leech_swarm": {
       "name": "Data Leech Swarm",
@@ -587,6 +645,14 @@
       "unbuilt": [
         "On hit: Steal a random buff.",
         "Triggers 15% faster for each Star Pet or Food."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "cache_spider",
+            "quantum_sniper"
+          ]
+        }
       ]
     },
     "spike_launcher": {
@@ -636,6 +702,14 @@
       "in_shop": false,
       "unbuilt": [
         "Star Weapon hits: Use 1 Spikes to deal +9 damage on the next attack."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "nullshot",
+            "walrus_tusk"
+          ]
+        }
       ]
     },
     "spike_generator": {
@@ -682,7 +756,15 @@
       ],
       "slug": "spike_generator",
       "sockets": 1,
-      "icontype": "nature, ranged"
+      "icontype": "nature, ranged",
+      "recipe": [
+        {
+          "ingredients": [
+            "quantum_sniper",
+            "walrus_tusk"
+          ]
+        }
+      ]
     },
     "plasma_edge": {
       "name": "Plasma Edge",
@@ -728,7 +810,15 @@
       ],
       "slug": "plasma_edge",
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "null_blade",
+            "lump_of_coal"
+          ]
+        }
+      ]
     },
     "rage_click": {
       "name": "Rage Click",
@@ -881,7 +971,15 @@
         "Deals +1 damage per Spikes and Vampirism."
       ],
       "sockets": 2,
-      "icontype": "vampiric, nature, melee"
+      "icontype": "vampiric, nature, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "hungry_blade",
+            "mobius_lash"
+          ]
+        }
+      ]
     },
     "bloody_dagger": {
       "name": "Blood Ledger",
@@ -920,7 +1018,15 @@
         "On stun: Triggers extra attack."
       ],
       "sockets": 1,
-      "icontype": "vampiric, melee"
+      "icontype": "vampiric, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "deadlock_twins",
+            "vampire_rootkit"
+          ]
+        }
+      ]
     },
     "broom": {
       "name": "Dust Blaster",
@@ -996,7 +1102,17 @@
         "On hit: 30% chance to gain 1 damage."
       ],
       "sockets": 1,
-      "icontype": "fire, melee"
+      "icontype": "fire, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "plasma_edge"
+          ],
+          "catalysts": [
+            "class:fire"
+          ]
+        }
+      ]
     },
     "claws_of_attack": {
       "name": "Grep Claws",
@@ -1032,7 +1148,15 @@
         "Attacks 5% faster for every Spikes."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "load_balancer_module",
+            "walrus_tusk"
+          ]
+        }
+      ]
     },
     "crossblades": {
       "name": "Cross-Site Blades",
@@ -1071,7 +1195,15 @@
         "On hit: Gain 1 damage and attack 4% faster."
       ],
       "sockets": 3,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "falcon_blade",
+            "hero_longsword"
+          ]
+        }
+      ]
     },
     "dancing_dragon": {
       "name": "Race Condition",
@@ -1150,7 +1282,15 @@
         "Deals +0.5 damage for each debuff of your opponent."
       ],
       "sockets": 2,
-      "icontype": "dark, melee"
+      "icontype": "dark, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "lightsaber",
+            "corrupted_crystal"
+          ]
+        }
+      ]
     },
     "eggscalibur": {
       "name": "Eggsploit",
@@ -1189,7 +1329,15 @@
         "Deals +1 damage for each Star Food."
       ],
       "sockets": 2,
-      "icontype": "holy, magic, melee"
+      "icontype": "holy, magic, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "stack_smasher",
+            "performance_boost"
+          ]
+        }
+      ]
     },
     "falcon_blade": {
       "name": "Double Tap",
@@ -1229,7 +1377,16 @@
         "Attacks twice."
       ],
       "sockets": 2,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "hero_sword",
+            "load_balancer_module",
+            "load_balancer_module"
+          ]
+        }
+      ]
     },
     "fancy_fencing_rapier": {
       "name": "Fencepost Error",
@@ -1307,7 +1464,15 @@
         "Deals +1 damage per Vampirism and +0.4 per Cold of your opponent."
       ],
       "sockets": 2,
-      "icontype": "ice, vampiric, melee"
+      "icontype": "ice, vampiric, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "hungry_blade",
+            "snowball"
+          ]
+        }
+      ]
     },
     "hammer": {
       "name": "Percussive Maintenance",
@@ -1383,7 +1548,16 @@
         "Start of battle: Star Weapons gain 3 damage."
       ],
       "sockets": 2,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "hero_sword",
+            "whetstone",
+            "whetstone"
+          ]
+        }
+      ]
     },
     "hero_sword": {
       "name": "Main Branch",
@@ -1421,7 +1595,15 @@
         "Start of battle: Star Weapons gain 1 damage."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "null_blade",
+            "whetstone"
+          ]
+        }
+      ]
     },
     "holy_spear": {
       "name": "Cert Lance",
@@ -1465,7 +1647,15 @@
         "Use 10 Mana: Become invulnerable and attack 100% faster for 3s (once)."
       ],
       "sockets": 2,
-      "icontype": "holy, magic, melee"
+      "icontype": "holy, magic, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "buffer_overflow",
+            "glowing_crown"
+          ]
+        }
+      ]
     },
     "hungry_blade": {
       "name": "Memory Eater",
@@ -1580,7 +1770,15 @@
         "On hit: Remove 1 damage gained in battle from all opponent Weapons and gain 1 damage. If your opponent has at least 20 buffs, remove 2 of the type they have the most of."
       ],
       "sockets": 3,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "ripsaw_blade",
+            "whetstone"
+          ]
+        }
+      ]
     },
     "lightsaber": {
       "name": "Laser Pointer",
@@ -1657,7 +1855,15 @@
         "On attack: Use 3 Mana to deal +6 damage and gain 2 damage."
       ],
       "sockets": 1,
-      "icontype": "magic, ranged"
+      "icontype": "magic, ranged",
+      "recipe": [
+        {
+          "ingredients": [
+            "broom",
+            "cpu_booster"
+          ]
+        }
+      ]
     },
     "magic_torch": {
       "name": "Arc Torch",
@@ -1693,7 +1899,21 @@
         "On hit: Use 1 Mana: This and Star Weapons gain 1 damage."
       ],
       "sockets": 1,
-      "icontype": "magic, fire, melee"
+      "icontype": "magic, fire, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "plasma_edge",
+            "memory_injection"
+          ]
+        },
+        {
+          "ingredients": [
+            "burning_torch",
+            "memory_injection"
+          ]
+        }
+      ]
     },
     "manathirst": {
       "name": "Memory Leak",
@@ -1731,7 +1951,15 @@
         "30 Mana gained: Deal 10 Effect-damage with 100% lifesteal. Deal +1 for each Vampirism."
       ],
       "sockets": 1,
-      "icontype": "magic, vampiric, melee"
+      "icontype": "magic, vampiric, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "hungry_blade",
+            "cpu_booster"
+          ]
+        }
+      ]
     },
     "stack_smasher": {
       "name": "Stack Smasher",
@@ -1807,7 +2035,15 @@
         "Poison on your opponent has 4% critical hit chance per Star Food."
       ],
       "sockets": 2,
-      "icontype": "dark, melee"
+      "icontype": "dark, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "stack_smasher",
+            "corrupted_crystal"
+          ]
+        }
+      ]
     },
     "poison_dagger": {
       "name": "Tainted Shiv",
@@ -1844,7 +2080,15 @@
         "On stun: Triggers extra attack."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "deadlock_twins",
+            "virus_payload"
+          ]
+        }
+      ]
     },
     "poison_spear": {
       "name": "Venom Lance",
@@ -1887,7 +2131,15 @@
         "On hit: Inflict 3 Poison and 2 Poison to yourself. Destroy 6 Block for each Star free slot or Nature-item."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "buffer_overflow",
+            "virus_payload"
+          ]
+        }
+      ]
     },
     "pop": {
       "name": "Stack Pop",
@@ -1967,7 +2219,15 @@
         "Star Dark-item: +10% chance to inflict 4 random debuffs on hit."
       ],
       "sockets": 2,
-      "icontype": "magic, vampiric, holy, dark, melee"
+      "icontype": "magic, vampiric, holy, dark, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "null_blade",
+            "quantum_processor"
+          ]
+        }
+      ]
     },
     "ripsaw_blade": {
       "name": "Ripsaw",
@@ -2044,7 +2304,15 @@
         "You have 40% chance to duplicate Poison you inflict."
       ],
       "sockets": 1,
-      "icontype": "magic, ranged"
+      "icontype": "magic, ranged",
+      "recipe": [
+        {
+          "ingredients": [
+            "magic_staff",
+            "virus_payload"
+          ]
+        }
+      ]
     },
     "shell_totem": {
       "name": "Watchdog Totem",
@@ -2066,7 +2334,15 @@
         "Every 3.4s: If your health is above 70%, gain 1 Empower. Otherwise, heal for 8.",
         "Uses -15% stamina for each Star Holy-item."
       ],
-      "icontype": "holy"
+      "icontype": "holy",
+      "recipe": [
+        {
+          "ingredients": [
+            "null_blade",
+            "shiny_shell"
+          ]
+        }
+      ]
     },
     "data_miner": {
       "name": "Data Miner",
@@ -2105,7 +2381,15 @@
         "On hit: 40% chance to inflict 1 Blind."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "broom",
+            "stack_smasher"
+          ]
+        }
+      ]
     },
     "snow_stick": {
       "name": "Coolant Rod",
@@ -2143,7 +2427,15 @@
         "On hit: Inflict 3 Cold and 2 Cold to yourself."
       ],
       "sockets": 1,
-      "icontype": "ice, melee"
+      "icontype": "ice, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "broom",
+            "snowball"
+          ]
+        }
+      ]
     },
     "buffer_overflow": {
       "name": "Buffer Overflow",
@@ -2223,7 +2515,17 @@
         "On stun: Triggers extra attack."
       ],
       "sockets": 1,
-      "icontype": "magic, melee"
+      "icontype": "magic, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "deadlock_twins"
+          ],
+          "catalysts": [
+            "cpu_booster"
+          ]
+        }
+      ]
     },
     "stankus_toothpick": {
       "name": "Off By One",
@@ -2264,7 +2566,15 @@
         "Attacks 12% faster for each Star Food."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "hero_sword",
+            "firewall_script"
+          ]
+        }
+      ]
     },
     "ping_flood": {
       "name": "Ping of Death",
@@ -2339,7 +2649,18 @@
       ],
       "sockets": 1,
       "icontype": "effect, ranged",
-      "pet": true
+      "pet": true,
+      "recipe": [
+        {
+          "ingredients": [
+            "heart_container",
+            "ping_flood",
+            "ping_flood",
+            "ping_flood",
+            "ping_flood"
+          ]
+        }
+      ]
     },
     "thornbloom": {
       "name": "Razorvine",
@@ -2378,7 +2699,15 @@
         "Deals +1 damage per Spikes."
       ],
       "sockets": 2,
-      "icontype": "nature, melee"
+      "icontype": "nature, melee",
+      "recipe": [
+        {
+          "ingredients": [
+            "mobius_lash",
+            "performance_boost"
+          ]
+        }
+      ]
     }
   }
 }

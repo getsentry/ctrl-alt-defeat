@@ -555,7 +555,7 @@ An item does not care what it is next to. It cares whose aura reaches it.
   separate zones, and an item may have either, both or neither.
 - **An aura reaches an item** when any square of the aura lands on any square
   that item covers. Touching is not required and distance is not a rule: the map
-  says exactly which squares are reached. 118 items in the catalogue project an
+  says exactly which squares are reached. 117 items in the catalogue project an
   aura and 41 of those reach past the four squares around them, so "next to" is
   not a useful approximation of it.
 - **An aura never reaches the item projecting it.** A square of the zone landing
@@ -617,42 +617,41 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
   - Buy directly from shop if lucky (more expensive but immediate)
 - **Catalyst Items**: Some recipes use a catalyst that remains after combination
 
-### 5.4 Example Sentry-Themed Recipes
+### 5.4 Recipes Come From the Data, Not This Document
 
-#### Weapon Recipes
-- **Stack Overflow** (Epic): Stack Smasher + Buffer Overflow
-- **Kernel Panic** (Legendary): Null Pointer + Race Condition + Segfault
-- **DDoS Attack** (Epic): Flood Attack + Bot Swarm
-- **Zero Day Exploit** (Godly): SQL Injection + XSS Attack + Buffer Overflow
+Every recipe is imported from the Backpack Battles item it is based on and
+lives on the item itself in `server/data/items/*.json`:
 
-#### Shield Recipes
-- **Full Stack Monitoring** (Rare): Error Monitoring + Performance Monitoring
-- **Enterprise Firewall** (Epic): Firewall + Load Balancer
-- **Chaos Engineering Shield** (Legendary): Error Shield + Crash Report + Debug Mode
+- `recipe`: a list of recipes — an item can have several, any one of which
+  makes it. Each recipe is `{"ingredients": [...], "catalysts": [...]}` of
+  item slugs; `catalysts` is present only when the recipe uses one (a
+  catalyst joins the combination and survives it, Section 5.3). Ingredient
+  order does not matter; duplicates are real (some recipes need two of the
+  same item). A `class:` prefix is a wildcard for any item of that class:
+  `class:fire` means any item whose `icontype` holds `fire` (Hot Cell and
+  Thermal Torch craft this way, and eight items qualify). Every name is a
+  catalogue slug or a wildcard: a source recipe needing an item we have not
+  imported (Twine, Cauldron, Thor's Hammer, Goobling) is pruned at import,
+  because a player could never complete it. The wiki corpus in
+  `research/wiki_pages/` keeps the originals; re-run `research/parse_wiki.py`
+  after importing a missing ingredient and the recipe comes back.
+- `recipe_only: true`: never appears in the shop; crafting is the only way.
+- `shop_needs: "<slug>"`: appears in the shop only while the player holds the
+  named item. The fourteen gem modules all need the Crypto Mining Rig.
+- Unique rarity is the treasure path: found through treasure chance effects,
+  not sold. This is the `rarity` field, not a separate flag.
 
-#### Infrastructure Recipes
-- **Kubernetes Cluster** (Epic): Docker Container + Load Balancer + Auto-Scaler
-- **CDN Network** (Rare): Cache Server + Edge Node
-- **Observability Platform** (Legendary): Logging + Metrics + Tracing
-- **CI/CD Pipeline** (Epic): Test Suite + Deploy Script + Version Control
+98 of the catalogue's items are craftable. Real examples, with our names:
 
-#### Pet Recipes (Sentry Mascots)
-- **Debug Duck Pro** (Rare): Debug Duck + Stack Trace
-- **Error Hound Elite** (Epic): Sentry Dog + Alert System
-- **Chaos Monkey** (Legendary): Test Monkey + Random Failure Generator
-- **AI Assistant Plus** (Godly): AI Assistant + Machine Learning Model
+- **Querystorm** (Godly): Denier of Service + Stray Voltage
+- **Rubber Duck** (Epic): Cold Storage + Ctrl+Z + Ctrl+Z
+- **Duct Tape Fix** (Epic): Hotfix Ampoule + API Token
+- **Root Certificate** (Godly): Self-Signed Cert + Crypto Mining Rig
+- **Rainbow Garbo Megaheap Alphadump** (Godly): Leech Garbo + Flare Garbo +
+  Rubber Duck + Hardened Garbo
 
-#### Potion/Consumable Recipes
-- **Hotfix Ampoule** (Rare): Quick Fix + Deploy Script
-- **Full Recovery** (Epic): Heartbeat Node + Cold Storage
-- **CPU Overclock** (Rare): Turbo Button + Energy Drink
-- **Memory Cleaner** (Epic): Garbage Collector + Memory Optimizer
-
-#### Special Combinations
-- **Sentry Suite** (Godly): Error Monitoring + Performance Monitoring + Session Replay + Profiling
-- **DevOps Toolkit** (Legendary): CI/CD Pipeline + Kubernetes Cluster + Monitoring
-- **Bug Apocalypse** (Godly): 4 different bug types combined
-- **Perfect Infrastructure** (Godly): Load Balancer + CDN + Kubernetes + Firewall
+An earlier version of this section listed invented recipes over invented
+items. The catalogue is the record; regenerate any listing from it.
 
 ## 6. Battle Phases
 

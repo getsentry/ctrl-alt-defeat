@@ -145,7 +145,15 @@
       ],
       "slug": "encryption_layer",
       "sockets": 1,
-      "icontype": "ice"
+      "icontype": "ice",
+      "recipe": [
+        {
+          "ingredients": [
+            "firewall",
+            "snowball"
+          ]
+        }
+      ]
     },
     "quantum_firewall": {
       "name": "Barbed Firewall",
@@ -182,6 +190,14 @@
       "in_shop": false,
       "unbuilt": [
         "On attacked (Melee): The same 30% roll also gains 1 Spiked (up to 5)."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "firewall",
+            "walrus_tusk"
+          ]
+        }
       ]
     },
     "adaptive_mesh_armor": {
@@ -239,7 +255,15 @@
         "Your opponent's healing is reduced by 30%."
       ],
       "sockets": 1,
-      "icontype": "dark"
+      "icontype": "dark",
+      "recipe": [
+        {
+          "ingredients": [
+            "cap_of_resilience",
+            "corrupted_crystal"
+          ]
+        }
+      ]
     },
     "cap_of_resilience": {
       "name": "Failover Helm",
@@ -282,6 +306,14 @@
       "unbuilt": [
         "Star Weapons deal +20% damage but attack 10% slower.",
         "Star Weapon hits: gain 7 Block."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "load_balancer_module",
+            "security_hardening"
+          ]
+        }
       ]
     },
     "glowing_crown": {
@@ -332,7 +364,21 @@
         "Your Weapons attack 50% slower."
       ],
       "sockets": 3,
-      "icontype": "holy"
+      "icontype": "holy",
+      "recipe": [
+        {
+          "ingredients": [
+            "sanctified_firewall",
+            "transaction_log"
+          ]
+        },
+        {
+          "ingredients": [
+            "sanctified_firewall",
+            "maneki_neko"
+          ]
+        }
+      ]
     },
     "king_crown": {
       "name": "Root Certificate",
@@ -356,7 +402,15 @@
         "Effects of Gemstones socketed in this are increased by 50%."
       ],
       "sockets": 2,
-      "icontype": "holy, magic"
+      "icontype": "holy, magic",
+      "recipe": [
+        {
+          "ingredients": [
+            "glowing_crown",
+            "crypto_mining_rig"
+          ]
+        }
+      ]
     },
     "leather_boots": {
       "name": "Bootloader",
@@ -403,7 +457,15 @@
         "Every 2.6s: Gain 3 Mana and reflect 2 debuffs."
       ],
       "sockets": 3,
-      "icontype": "holy, magic"
+      "icontype": "holy, magic",
+      "recipe": [
+        {
+          "ingredients": [
+            "sanctified_firewall",
+            "cpu_booster"
+          ]
+        }
+      ]
     },
     "moon_shield": {
       "name": "Moonsteel Shield",
@@ -430,7 +492,15 @@
         "On attacked (Melee/Ranged): 30% chance to prevent 12 damage and remove 0.7 stamina from your opponent."
       ],
       "sockets": 2,
-      "icontype": "holy, magic"
+      "icontype": "holy, magic",
+      "recipe": [
+        {
+          "ingredients": [
+            "shield_of_valor",
+            "cpu_booster"
+          ]
+        }
+      ]
     },
     "pine_protector": {
       "name": "Splinter Guard",
@@ -457,7 +527,15 @@
         "Star Food activates: Prevent +1 damage (up to +10) and heal for 8."
       ],
       "sockets": 1,
-      "icontype": "nature"
+      "icontype": "nature",
+      "recipe": [
+        {
+          "ingredients": [
+            "quantum_firewall",
+            "load_balancer_script"
+          ]
+        }
+      ]
     },
     "shield_of_valor": {
       "name": "Uptime Aegis",
@@ -508,7 +586,15 @@
         "Every 4s: Remove 1 Spikes and 2 Empower from opponent.",
         "Health drops below 50%: Gain Block equal to 40% of your missing health (once)."
       ],
-      "sockets": 2
+      "sockets": 2,
+      "recipe": [
+        {
+          "ingredients": [
+            "basic_firewall",
+            "security_hardening"
+          ]
+        }
+      ]
     },
     "stone_helm": {
       "name": "Bare Metal Helm",
@@ -531,7 +617,15 @@
         "30% chance to resist critical hits.",
         "40% chance to resist stuns."
       ],
-      "sockets": 1
+      "sockets": 1,
+      "recipe": [
+        {
+          "ingredients": [
+            "cap_of_resilience",
+            "security_hardening"
+          ]
+        }
+      ]
     },
     "stone_shoes": {
       "name": "Bare Metal Boots",
@@ -552,7 +646,15 @@
       "unbuilt": [
         "Health drops below 70%: Gain 1 Luck, 1 Empower, and 45 Block. Reduce Ranged/Effect-damage taken by 35% for 7s (once)."
       ],
-      "sockets": 1
+      "sockets": 1,
+      "recipe": [
+        {
+          "ingredients": [
+            "leather_boots",
+            "security_hardening"
+          ]
+        }
+      ]
     },
     "vampiric_armor": {
       "name": "Leech Plate",
@@ -576,7 +678,15 @@
         "Every 2.8s: Convert 10 health into 20 Block."
       ],
       "sockets": 2,
-      "icontype": "vampiric"
+      "icontype": "vampiric",
+      "recipe": [
+        {
+          "ingredients": [
+            "basic_firewall",
+            "vampire_rootkit"
+          ]
+        }
+      ]
     },
     "vampiric_gloves": {
       "name": "Keylogger Gloves",
@@ -596,7 +706,15 @@
       "unbuilt": [
         "After 4s: Gain 5 Vampirism, Star items trigger 35% faster."
       ],
-      "icontype": "vampiric"
+      "icontype": "vampiric",
+      "recipe": [
+        {
+          "ingredients": [
+            "load_balancer_module",
+            "vampire_rootkit"
+          ]
+        }
+      ]
     },
     "winged_boots": {
       "name": "Hot Swap Boots",
@@ -617,7 +735,17 @@
       "unbuilt": [
         "Health drops below 70%: Gain 1 Empower, cleanse 15 debuffs and dodge the next 3 Melee/Ranged-attacks (once)."
       ],
-      "sockets": 1
+      "sockets": 1,
+      "recipe": [
+        {
+          "ingredients": [
+            "leather_boots"
+          ],
+          "catalysts": [
+            "system_restore"
+          ]
+        }
+      ]
     }
   }
 }

@@ -832,13 +832,13 @@ def get_ghost_player_items(round_number: int) -> List[BattleItem]:
         1: ["null_blade"],
         2: ["null_blade", "firewall"],
         3: ["null_blade", "stack_smasher", "firewall"],
-        4: ["null_blade", "stack_smasher", "firewall", "health_check"],
+        4: ["null_blade", "stack_smasher", "firewall", "healing_nanobots"],
         5: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
             "error_monitoring"],
         6: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
             "error_monitoring", "auto_scaler"],
         7: ["null_blade", "stack_smasher", "firewall", "error_monitoring",
-            "auto_scaler", "health_check"],
+            "auto_scaler", "healing_nanobots"],
         8: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
             "error_monitoring", "auto_scaler", "quantum_processor"],
         9: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
@@ -846,7 +846,7 @@ def get_ghost_player_items(round_number: int) -> List[BattleItem]:
             "load_balancer_module"],
         10: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
              "error_monitoring", "auto_scaler", "quantum_processor",
-             "load_balancer_module", "health_check"],
+             "load_balancer_module", "healing_nanobots"],
     }
 
     wanted = ghost_inventories.get(min(round_number, 10), ghost_inventories[1])

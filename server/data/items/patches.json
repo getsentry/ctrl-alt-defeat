@@ -61,6 +61,14 @@
       "in_shop": false,
       "unbuilt": [
         "Mana used or health drops below 50%: Consume this and gain 4 Mana and 18 maximum health."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "emergency_hotfix",
+            "cache_optimizer"
+          ]
+        }
       ]
     },
     "security_hardening": {
@@ -193,6 +201,14 @@
       "in_shop": false,
       "unbuilt": [
         "Out of stamina: Consume this and regenerate 4 stamina and gain 1 Empower."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "performance_boost",
+            "health_check_script"
+          ]
+        }
       ]
     },
     "strong_stone_skin_potion": {
@@ -214,6 +230,15 @@
       "in_shop": false,
       "unbuilt": [
         "45 Block reached: Consume this and convert 15 health to 35 Block and gain 2 Spikes for 4s."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "security_hardening",
+            "ping_flood",
+            "ping_flood"
+          ]
+        }
       ]
     },
     "vampiric_potion": {
@@ -236,7 +261,17 @@
       "unbuilt": [
         "Both characters drop below 80% health: Consume this and gain 3 Vampirism and deal 15 Effect-damage with 100% lifesteal."
       ],
-      "icontype": "vampiric"
+      "icontype": "vampiric",
+      "recipe": [
+        {
+          "ingredients": [
+            "emergency_patch"
+          ],
+          "catalysts": [
+            "vampire_rootkit"
+          ]
+        }
+      ]
     }
   }
 }

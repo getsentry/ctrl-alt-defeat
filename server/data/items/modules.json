@@ -20,7 +20,8 @@
         "Weapon sockets: On hit: Gain 7% lifesteal.",
         "Armor & other sockets: Your healing is increased by 10%.",
         "Backpack: After 5s: Deal 4 Effect-damage with 150% lifesteal."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "performance_module_flawed": {
       "name": "Refurb Performance Module",
@@ -41,7 +42,8 @@
         "Weapon sockets: On hit: Gain 10% lifesteal.",
         "Armor & other sockets: Your healing is increased by 15%.",
         "Backpack: After 5s: Deal 6 Effect-damage with 150% lifesteal."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "performance_module_regular": {
       "name": "Stock Performance Module",
@@ -62,7 +64,8 @@
         "Weapon sockets: On hit: Gain 15% lifesteal.",
         "Armor & other sockets: Your healing is increased by 20%.",
         "Backpack: After 5s: Deal 10 Effect-damage with 150% lifesteal."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "performance_module_flawless": {
       "name": "Overclocked Performance Module",
@@ -83,7 +86,8 @@
         "Weapon sockets: On hit: Gain 20% lifesteal.",
         "Armor & other sockets: Your healing is increased by 25%.",
         "Backpack: After 5s: Deal 15 Effect-damage with 150% lifesteal."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "performance_module_perfect": {
       "name": "Golden Sample Performance Module",
@@ -104,7 +108,8 @@
         "Weapon sockets: On hit: Gain 35% lifesteal.",
         "Armor & other sockets: Your healing is increased by 40%.",
         "Backpack: After 5s: Deal 35 Effect-damage with 150% lifesteal."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "memory_module_chipped": {
       "name": "Salvaged Memory Module",
@@ -125,7 +130,8 @@
         "On hit: 15% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
         "5 Mana gained: Gain 2 Block.",
         "After 4.5s: Inflict 2 Cold."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "memory_module_flawed": {
       "name": "Refurb Memory Module",
@@ -146,7 +152,8 @@
         "On hit: 25% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
         "5 Mana gained: Gain 3 Block.",
         "After 4.5s: Inflict 3 Cold."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "memory_module_regular": {
       "name": "Stock Memory Module",
@@ -167,7 +174,8 @@
         "On hit: 40% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
         "5 Mana gained: Gain 4 Block.",
         "After 4s: Inflict 4 Cold."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "processing_module_chipped": {
       "name": "Salvaged Processing Module",
@@ -188,7 +196,8 @@
         "Weapon sockets: Attacks 10% faster.",
         "Armor & other sockets: 10% chance to resist stuns. 5% chance to resist critical hits.",
         "Backpack: Base stamina regeneration +8%."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "processing_module_regular": {
       "name": "Stock Processing Module",
@@ -209,7 +218,8 @@
         "Weapon sockets: Attacks 20% faster.",
         "Armor & other sockets: 20% chance to resist stuns. 10% chance to resist critical hits.",
         "Backpack: Base stamina regeneration +20%."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "efficiency_module_chipped": {
       "name": "Salvaged Efficiency Module",
@@ -230,7 +240,8 @@
         "On hit: 35% chance to inflict 1 Poison.",
         "10% chance to resist Poison.",
         "After 3s: Gain 1 Regeneration."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "efficiency_module_regular": {
       "name": "Stock Efficiency Module",
@@ -251,7 +262,8 @@
         "On hit: 80% chance to inflict 1 Poison.",
         "20% chance to resist Poison.",
         "After 4s: Gain 3 Regeneration."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "security_module_chipped": {
       "name": "Salvaged Security Module",
@@ -272,7 +284,8 @@
         "On hit: 25% chance to remove 1 random buff from your opponent.",
         "Reduce opponent's healing by 12%.",
         "Every 3.2s: Cleanse 1 debuff."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "security_module_regular": {
       "name": "Stock Security Module",
@@ -293,7 +306,8 @@
         "On hit: 50% chance to remove 1 random buff from your opponent.",
         "Reduce opponent's healing by 25%.",
         "Every 2s: Cleanse 1 debuff."
-      ]
+      ],
+      "shop_needs": "crypto_mining_rig"
     },
     "burning_coal": {
       "name": "Hot Cell",
@@ -319,7 +333,17 @@
         "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
         "After 5s: Gain 2 Heat, cleanse 3 debuffs."
       ],
-      "icontype": "fire"
+      "icontype": "fire",
+      "recipe": [
+        {
+          "ingredients": [
+            "lump_of_coal"
+          ],
+          "catalysts": [
+            "class:fire"
+          ]
+        }
+      ]
     },
     "corrupted_crystal": {
       "name": "Rotten Die",

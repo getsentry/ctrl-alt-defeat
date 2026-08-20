@@ -21,7 +21,15 @@
         "Start of battle: Gain 5 Vampirism.",
         "6 Star item activations: Deal 10 Effect-damage with 100% lifesteal. Deal +1 for each Vampirism."
       ],
-      "icontype": "vampiric"
+      "icontype": "vampiric",
+      "recipe": [
+        {
+          "ingredients": [
+            "backup_system",
+            "vampire_rootkit"
+          ]
+        }
+      ]
     },
     "cthulhu": {
       "name": "Legacy Code",
@@ -95,7 +103,15 @@
         "Health drops below 70%: Gain 4 Spikes, 3 Empower and 35 Block (once).",
         "Triggers 15% faster for each Star Pet or Food."
       ],
-      "icontype": "holy,nature"
+      "icontype": "holy,nature",
+      "recipe": [
+        {
+          "ingredients": [
+            "surveillance_drone",
+            "performance_boost"
+          ]
+        }
+      ]
     },
     "jynx_torquilla": {
       "name": "Backtrace",
@@ -145,7 +161,15 @@
         "Effects of Gemstones socketed in this are increased by 50%."
       ],
       "sockets": 2,
-      "icontype": "holy, magic"
+      "icontype": "holy, magic",
+      "recipe": [
+        {
+          "ingredients": [
+            "backup_system",
+            "king_crown"
+          ]
+        }
+      ]
     },
     "light_goobert": {
       "name": "Flare Garbo",
@@ -166,7 +190,15 @@
       "unbuilt": [
         "6 Star item activations: Heal for 25 and inflict 7 Blind for 3s."
       ],
-      "icontype": "holy"
+      "icontype": "holy",
+      "recipe": [
+        {
+          "ingredients": [
+            "backup_system",
+            "lightsaber"
+          ]
+        }
+      ]
     },
     "lil_chestnut": {
       "name": "Lil Broker",
@@ -215,7 +247,15 @@
       "unbuilt": [
         "Every 2.7s: Star items gain 7% chance to duplicate buffs they gain, heal 7% more and trigger 7% faster (up to 10 times)."
       ],
-      "icontype": "magic,vampiric,holy,dark,musical,nature"
+      "icontype": "magic,vampiric,holy,dark,musical,nature",
+      "recipe": [
+        {
+          "ingredients": [
+            "jynx_torquilla",
+            "quantum_processor"
+          ]
+        }
+      ]
     },
     "rainbow_goobert_megasludge_alphapuddle": {
       "name": "Rainbow Garbo Megaheap Alphadump",
@@ -238,7 +278,17 @@
       "unbuilt": [
         "9 Star item activations: Heal for 40, gain 20 Block, 2 Vampirism and 2 Empower, inflict 3 Blind, and Star Weapons gain 4 damage."
       ],
-      "icontype": "vampiric, holy, nature"
+      "icontype": "vampiric, holy, nature",
+      "recipe": [
+        {
+          "ingredients": [
+            "blood_goobert",
+            "light_goobert",
+            "ai_companion_core",
+            "steel_goobert"
+          ]
+        }
+      ]
     },
     "rat_chef": {
       "name": "Script Kitty",
@@ -263,7 +313,15 @@
         "Every 7s: Regenerate 2 stamina and gain 1 Empower.",
         "Triggers 15% faster for each Star Pet or Food."
       ],
-      "icontype": "nature"
+      "icontype": "nature",
+      "recipe": [
+        {
+          "ingredients": [
+            "data_crawler",
+            "api_token"
+          ]
+        }
+      ]
     },
     "ruby_egg": {
       "name": "Random Seed",
@@ -308,7 +366,15 @@
         "Every 13s: Cleanse 6 debuffs and heal for 40.",
         "Triggers 20% faster for each Star Potion."
       ],
-      "icontype": "holy, nature"
+      "icontype": "holy, nature",
+      "recipe": [
+        {
+          "ingredients": [
+            "shiny_shell",
+            "emergency_hotfix"
+          ]
+        }
+      ]
     },
     "sloth": {
       "name": "Lazy Loader",
@@ -356,7 +422,16 @@
         "Every 1.3s: Inflict 1 Cold. If your opponent has at least 10 Cold, gain 1 Empower instead. Cleanse 1 debuff.",
         "Triggers 10% faster for each Ice item."
       ],
-      "icontype": "ice"
+      "icontype": "ice",
+      "recipe": [
+        {
+          "ingredients": [
+            "auto_rollback",
+            "snowball",
+            "lump_of_coal"
+          ]
+        }
+      ]
     },
     "steel_goobert": {
       "name": "Hardened Garbo",
@@ -378,6 +453,14 @@
       "in_shop": false,
       "unbuilt": [
         "6 Star item activations: Diamond Weapons gain +2 damage. Gain 16 Block."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "backup_system",
+            "hero_sword"
+          ]
+        }
       ]
     },
     "thorn_elemental": {
@@ -471,6 +554,15 @@
       "in_shop": false,
       "unbuilt": [
         "6 Star item activations: Cleanse 4 random debuffs and gain 2 Empower for 8s."
+      ],
+      "recipe": [
+        {
+          "ingredients": [
+            "backup_system",
+            "auto_rollback",
+            "auto_rollback"
+          ]
+        }
       ]
     },
     "surveillance_drone": {
@@ -541,25 +633,6 @@
       "in_shop": false,
       "unbuilt": [
         "Every 4s: Steal a random buff. Triggers 15% faster for each Star Pet or Food."
-      ]
-    },
-    "health_check": {
-      "name": "Heartbeat Node",
-      "category": "pet",
-      "color": "sand",
-      "pattern": "zigzag_v",
-      "class": "neutral",
-      "map": [
-        "*#*"
-      ],
-      "source": "Goobling",
-      "rarity": "common",
-      "cost": 2,
-      "triggers": [],
-      "slug": "health_check",
-      "in_shop": false,
-      "unbuilt": [
-        "3 Star item activations: Heal for 4."
       ]
     },
     "backup_system": {

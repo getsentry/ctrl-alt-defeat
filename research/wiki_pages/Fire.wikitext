@@ -1,0 +1,28 @@
+{{icon/fire}} '''Fire''' items mostly give or use {{icon/heat}} and can transform flammable items by placing next to them. One '''Fire''' item can set on fire one item at a time.
+
+{| class="styled items nostyle-list sortable"
+! class="unsortable" |
+!'''Name'''
+! class="unsortable" | '''Effect'''
+!'''Class'''
+!'''Rarity'''
+!'''Cost'''
+{{#cargo_query:
+tables=Items
+|fields
+=image
+,name
+,effect
+,class
+,rarity
+,cost
+|where=icontype HOLDS 'fire'
+|format=template
+|template=item table/row
+|named args=yes
+}}
+|}
+
+{{Items}}
+
+[[Category:Items]]
