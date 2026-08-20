@@ -96,13 +96,25 @@
               "accuracy": 0.8
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Spiked"
+            }
+          ]
         }
       ],
       "slug": "mobius_lash",
       "sockets": 2,
       "icontype": "nature, melee",
       "unbuilt": [
-        "On hit: Gain 1 Spikes.",
         "Deals +1 damage per Spikes."
       ]
     },
@@ -355,6 +367,26 @@
               "description": "Triggers 10% faster for each Star nature-item"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Regenerating"
+            },
+            {
+              "type": "buff",
+              "buff_name": "calibrated",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Calibrated"
+            }
+          ]
         }
       ],
       "slug": "querystorm",
@@ -363,7 +395,6 @@
       "in_shop": false,
       "pet": true,
       "unbuilt": [
-        "On hit: Gain 1 Regeneration and 1 Luck.",
         "Deals +0.8 damage per Regeneration."
       ],
       "recipe": [
@@ -876,13 +907,25 @@
               "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "debuff",
+              "debuff_name": "throttled",
+              "value": 3,
+              "target": "enemy",
+              "description": "Inflict 3 Throttled"
+            }
+          ]
         }
       ],
       "slug": "rage_click",
       "in_shop": false,
       "unbuilt": [
         "Can only be thrown once per battle.",
-        "On hit: Inflict 3 Cold.",
         "Star Weapon hits: Inflict 1 Cold."
       ],
       "icontype": "treasure, ice, ranged"
@@ -914,13 +957,25 @@
               "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 3,
+              "target": "self",
+              "description": "Gain 3 Optimized"
+            }
+          ]
         }
       ],
       "slug": "thermal_throttle",
       "in_shop": false,
       "unbuilt": [
         "Can only be thrown once per battle.",
-        "On hit: Gain 3 Heat.",
         "10 Heat reached: Star Weapons gain 8 damage."
       ],
       "icontype": "treasure, fire, ranged"
@@ -1122,12 +1177,23 @@
               "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 2,
+              "target": "self",
+              "description": "Gain 2 Optimized"
+            }
+          ]
         }
       ],
       "slug": "burning_torch",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 2 Heat.",
         "On hit: 30% chance to gain 1 damage."
       ],
       "sockets": 1,
@@ -1713,12 +1779,23 @@
               "accuracy": 0.9
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "draining",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Draining"
+            }
+          ]
         }
       ],
       "slug": "hungry_blade",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 1 Vampirism.",
         "On hit: Use 1 Regeneration to gain 1 Vampirism.",
         "Deals +1 maximum damage per Vampirism."
       ],
@@ -1971,12 +2048,24 @@
               "accuracy": 2.0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "credits",
+              "value": 2,
+              "target": "self",
+              "description": "Gain 2 Credits"
+            }
+          ]
         }
       ],
       "slug": "manathirst",
       "in_shop": false,
       "unbuilt": [
-        "On hit: Gain 2 Mana.",
         "30 Mana gained: Deal 10 Effect-damage with 100% lifesteal. Deal +1 for each Vampirism."
       ],
       "sockets": 1,
@@ -2118,12 +2207,24 @@
               "accuracy": 0.95
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "debuff",
+              "debuff_name": "memory_leaked",
+              "value": 2,
+              "target": "enemy",
+              "description": "Inflict 2 Memory Leaked"
+            }
+          ]
         }
       ],
       "slug": "poison_dagger",
       "in_shop": false,
       "unbuilt": [
-        "On hit: Inflict 2 Poison.",
         "On stun: Triggers extra attack."
       ],
       "sockets": 1,

@@ -14,11 +14,23 @@
       "source": "Blood Goobert",
       "rarity": "legendary",
       "cost": 14,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "draining",
+              "value": 5,
+              "target": "self",
+              "description": "Gain 5 Draining"
+            }
+          ]
+        }
+      ],
       "slug": "blood_goobert",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 5 Vampirism.",
         "6 Star item activations: Deal 10 Effect-damage with 100% lifesteal. Deal +1 for each Vampirism."
       ],
       "icontype": "vampiric",
@@ -428,13 +440,32 @@
               "description": "Triggers 20% faster for each Star Potion"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 13.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "cleanse",
+              "count": 6,
+              "removes": "debuff",
+              "target": "self",
+              "description": "Cleanse 6 debuff"
+            },
+            {
+              "type": "heal",
+              "min_heal": 40,
+              "max_heal": 40,
+              "description": "Heal for 40"
+            }
+          ]
         }
       ],
       "slug": "shelly",
       "in_shop": false,
       "unbuilt": [
-        "Cleanse effects have a 25% chance to cleanse an additional debuff.",
-        "Every 13s: Cleanse 6 debuffs and heal for 40."
+        "Cleanse effects have a 25% chance to cleanse an additional debuff."
       ],
       "icontype": "holy, nature",
       "recipe": [
@@ -547,13 +578,27 @@
       "source": "Thorn Elemental",
       "rarity": "unique",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 3,
+              "target": "self",
+              "description": "Gain 3 Spiked"
+            }
+          ]
+        }
+      ],
       "slug": "thorn_elemental",
       "in_shop": false,
       "unbuilt": [
         "Return damage limit of Spikes against Ranged- and Effect-attacks +50%.",
-        "Spikes have 10% critical hit chance per Star Nature-item.",
-        "Every 3s: Gain 3 Spikes."
+        "Spikes have 10% critical hit chance per Star Nature-item."
       ],
       "sockets": 2,
       "icontype": "treasure,nature"

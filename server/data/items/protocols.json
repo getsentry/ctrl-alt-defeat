@@ -774,11 +774,25 @@
       "source": "Heart Container",
       "rarity": "godly",
       "cost": 11,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Regenerating"
+            }
+          ]
+        }
+      ],
       "slug": "heart_container",
       "in_shop": false,
       "unbuilt": [
-        "Every 3s: Gain 1 Regeneration.",
         "Use 7 Regeneration: Gain 100 maximum health, 2 Empower and your healing is increased by 15% (once)."
       ],
       "sockets": 1,
@@ -849,13 +863,27 @@
       "source": "Leaf Badge",
       "rarity": "unique",
       "cost": 5,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.2,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "calibrated",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Calibrated"
+            }
+          ]
+        }
+      ],
       "slug": "leaf_badge",
       "in_shop": false,
       "unbuilt": [
         "Ranger items are offered in the shop.",
-        "Star items gain 2% critical hit chance for each Luck.",
-        "Every 2.2s: Gain 1 Luck."
+        "Star items gain 2% critical hit chance for each Luck."
       ],
       "icontype": "treasure"
     },
@@ -872,12 +900,24 @@
       "source": "Lucky Piggy",
       "rarity": "epic",
       "cost": 7,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "calibrated",
+              "value": 2,
+              "target": "self",
+              "description": "Gain 2 Calibrated"
+            }
+          ]
+        }
+      ],
       "slug": "lucky_piggy",
       "in_shop": false,
       "unbuilt": [
         "Shop entered: Gain 1 Gold.",
-        "Start of battle: Gain 2 Luck.",
         "Chance-based effects of the Star items are 12% more likely to trigger."
       ],
       "recipe": [
@@ -930,11 +970,23 @@
       "source": "Oil Lamp",
       "rarity": "epic",
       "cost": 7,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 2,
+              "target": "self",
+              "description": "Gain 2 Optimized"
+            }
+          ]
+        }
+      ],
       "slug": "oil_lamp",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 2 Heat.",
         "Every 3.4s: The Star Weapon gains 1 damage and 5% accuracy."
       ],
       "icontype": "fire"
@@ -1216,11 +1268,23 @@
       "source": "Snowball",
       "rarity": "epic",
       "cost": 4,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "debuff",
+              "debuff_name": "throttled",
+              "value": 2,
+              "target": "enemy",
+              "description": "Inflict 2 Throttled"
+            }
+          ]
+        }
+      ],
       "slug": "snowball",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Inflict 2 Cold.",
         "Your opponent gains 15% less maximum health from items."
       ],
       "icontype": "ice",
@@ -1290,13 +1354,25 @@
       "source": "Stone Badge",
       "rarity": "unique",
       "cost": 5,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "block",
+              "value": 4,
+              "description": "Gain 4 Block"
+            }
+          ]
+        }
+      ],
       "slug": "stone_badge",
       "in_shop": false,
       "unbuilt": [
         "Your starting class items are no longer offered in the shop (even when this item is in storage).",
-        "Shop entered: Generate items worth 1 Gold.",
-        "Every 3s: Gain 4 Block."
+        "Shop entered: Generate items worth 1 Gold."
       ],
       "icontype": "treasure"
     },
@@ -1378,12 +1454,22 @@
       "source": "Walrus Tusk",
       "rarity": "common",
       "cost": 4,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Spiked"
+            }
+          ]
+        }
+      ],
       "slug": "walrus_tusk",
       "in_shop": false,
-      "unbuilt": [
-        "Start of battle: Gain 1 Spikes."
-      ],
       "icontype": "nature"
     },
     "whetstone": {

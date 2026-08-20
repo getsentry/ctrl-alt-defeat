@@ -2,6 +2,24 @@
 
 ## Bugs
 
+### A module does nothing until it is socketed
+
+A module -- Backpack Battles calls them gemstones -- has no effect on its own.
+What it does depends on where it is slotted, and the catalogue says so
+directly: 75 clauses are headed "Weapon sockets:", "Armor & other sockets:" or
+"Backpack:", one item behaving three ways.
+
+So a module's clause must not be translated as an unconditional trigger.
+"Start of battle: Gain 12 Block" on Burning Coal would fire wherever the item
+sat, including in storage, which is more wrong than not firing at all. Two
+were translated that way and put back.
+
+**Leave every `module` clause unbuilt until sockets exist.** 30 items are in
+that category and none of them can be right before then.
+
+It is also why Wisp has no aura zone of its own: it lends its effect to an
+item that already projects one.
+
 ### Names on the unbuilt list that are not mechanics
 
 Four entries are real mechanics under a wrong name, and one is not real at

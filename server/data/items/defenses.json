@@ -343,11 +343,31 @@
       "source": "Glowing Crown",
       "rarity": "godly",
       "cost": 12,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.4,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "cleanse",
+              "count": 1,
+              "removes": "rate_limited",
+              "target": "self",
+              "description": "Cleanse 1 rate limited"
+            },
+            {
+              "type": "heal",
+              "min_heal": 5,
+              "max_heal": 5,
+              "description": "Heal for 5"
+            }
+          ]
+        }
+      ],
       "slug": "glowing_crown",
       "in_shop": false,
       "unbuilt": [
-        "Every 2.4s: Cleanse 1 Blind and heal for 5.",
         "Use 10 Mana: Become invulnerable for 2s (once)."
       ],
       "sockets": 1,
@@ -592,12 +612,22 @@
       "source": "Stone Armor",
       "rarity": "legendary",
       "cost": 13,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "block",
+              "value": 120,
+              "description": "Gain 120 Block"
+            }
+          ]
+        }
+      ],
       "slug": "stone_armor",
       "in_shop": false,
       "unbuilt": [
         "Items use +20% stamina.",
-        "Start of battle: Gain 120 Block.",
         "Every 4s: Remove 1 Spikes and 2 Empower from opponent.",
         "Health drops below 50%: Gain Block equal to 40% of your missing health (once)."
       ],

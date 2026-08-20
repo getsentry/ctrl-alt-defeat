@@ -393,14 +393,13 @@
       "source": "Burning Coal",
       "rarity": "rare",
       "cost": 2,
-      "triggers": [],
       "slug": "burning_coal",
       "in_shop": false,
       "unbuilt": [
+        "Start of battle: Gain 12 Block.",
         "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
         "On hit: 12% chance to deal +6 damage and gain 1 Heat.",
         "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
-        "Start of battle: Gain 12 Block.",
         "Resist 7 Cold.",
         "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
         "After 5s: Gain 2 Heat, cleanse 3 debuffs."
@@ -454,14 +453,13 @@
       "source": "Lump of Coal",
       "rarity": "common",
       "cost": 2,
-      "triggers": [],
       "slug": "lump_of_coal",
       "in_shop": false,
       "unbuilt": [
+        "Start of battle: Gain 8 Block.",
         "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
         "On attack: 70% chance to deal +1 damage.",
         "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
-        "Start of battle: Gain 8 Block.",
         "Resist 1 debuff.",
         "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
         "After 3s: Gain a random buff, inflict a random debuff."
