@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from battle_engine import (
     ITEM_CATALOG,
+    Timed,
     MEMORY_LEAKED,
     OVER_TIME,
     POISON_PERIOD,
@@ -314,25 +315,14 @@ class TestGameDesignCompliance:
         # Give player 10 block
         player.block = 10
 
-        # Block is spent stopping an attack, so it belongs to mitigation.
-        sword = BattleItem(
-            spec=ItemSpec(
-                id="w", name="Sword", category="problem", cost=1,
-                player_class="neutral", kinds=frozenset({"melee"}),
-                shape=parse_map(["#"], "w"), slug="w", triggers=[],
-            ),
-            position=(0, 0), uid="test_item",
-        )
-        got_through = sim._mitigate_attack(player, 15, attacker, sword)
-        assert got_through == 5, "10 of the 15 absorbed"
-        assert player.block == 0, "all of it consumed"
-
-        # What is left lands.
+        # Block is spent inside _take_damage, because it absorbs the damage
+        # that is actually arriving.
         sim._take_damage(
-            player, got_through, source="test_item", action="damage",
-            attacker=attacker,
+            player, 15, source="test_item", action="damage",
+            attacker=attacker, blockable=True,
         )
-        assert player.quota == 95
+        assert player.block == 0, "all ten of it consumed"
+        assert player.quota == 95, "the other five landed"
 
     def test_an_action_name_the_client_does_not_know_cannot_be_built(self):
         fields = dict(
@@ -1459,9 +1449,11 @@ class TestBuffsAreNotStats:
             ),
             position=(0, 0), uid="sword",
         )
-        got_through = sim._mitigate_attack(target, 15, attacker, sword)
+        sim.player1, sim.player2 = target, attacker
+        sim._take_damage(target, 15, source="sword", action="damage",
+                         attacker=attacker, blockable=True)
 
-        assert got_through == 5
+        assert target.quota == 95, "10 of the 15 absorbed"
         assert target.block == 0
 
     def test_a_cleanse_cannot_strip_block(self):
@@ -4094,3 +4086,204 @@ class TestWhatTheseTenLetTheCatalogueDo(_WithOneItem):
         assert sim.player1.buffs["credits"] == 2, "one Magic-item"
         assert sim.player1.buffs["draining"] == 1, "one Vampiric-item"
         assert not sim.player2.debuffs, "no Dark-item, so no random debuff"
+
+
+class TestHealingHasOneRoad(_WithOneItem):
+    """Every source of healing goes through the same place.
+
+    Two shares pull on healing and they are written on different items, so a
+    source that writes to the quota itself would quietly ignore both. Damage
+    already had one road for the same reason; this checks healing does too,
+    source by source, because a leak here is silent.
+    """
+
+    def _healed(self, effects, share, hurt=100, seconds=3.0, buffs=None,
+                extra=()):
+        given = dict(buffs or {})
+        sim, result = self._run(
+            [self._item([BattleStartTrigger(effects=(
+                [PlayerModifyEffect("healing", share, "self", -1)] if share
+                else []) + list(effects))])] + list(extra),
+            seconds=seconds, hurt=hurt, buffs=given,
+        )
+        return result["player1_quota"] - hurt
+
+    def test_a_plain_heal_takes_the_share(self):
+        assert self._healed([HealEffect(min_heal=10, max_heal=10)], 0) == 10
+        assert self._healed([HealEffect(min_heal=10, max_heal=10)], 1.0) == 20
+
+    def test_regeneration_takes_the_share(self):
+        plain = self._healed([BuffEffect("regenerating", 5, "self")], 0,
+                             seconds=2.5)
+        more = self._healed([BuffEffect("regenerating", 5, "self")], 1.0,
+                            seconds=2.5)
+        assert plain == 5
+        assert more == 10
+
+    def test_lifesteal_on_effect_damage_takes_the_share(self):
+        from item_effects import EffectDamageEffect
+
+        hit = [EffectDamageEffect(amount=10, lifesteal=1.0, per_status={},
+                                  whose={})]
+        assert self._healed(hit, 0, seconds=0.3) == 10
+        assert self._healed(hit, 1.0, seconds=0.3) == 20
+
+    def test_vampirism_takes_the_share(self):
+        """Section 3.1: Vampirism heals a melee swing's damage back. It wrote
+        to the quota itself and so ignored both shares, which nothing noticed
+        until the roads were counted."""
+        swing = [AttackEffect(min_damage=10, max_damage=10, accuracy=1.0,
+                              crit_chance=0.0)]
+        weapon = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0,
+                                          effects=swing)],
+                            uid="w", position=(1, 0))
+        plain = self._healed([], 0, seconds=1.5, buffs={"draining": 6},
+                             extra=[weapon])
+        more = self._healed([], 1.0, seconds=1.5, buffs={"draining": 6},
+                            extra=[weapon])
+        assert plain == 6, "six of the ten drained"
+        assert more == 12
+
+
+class TestWhatReflectAndResistAnswerTo(_WithOneItem):
+    """Both are for what the other player sends.
+
+    "The next debuff inflicts your opponent instead of you" is about a debuff
+    arriving from across the table. A clause that puts one on its own owner --
+    "Inflict 3 Poison and 2 Poison to yourself" -- is not that, and turning it
+    back would send your own poison to them.
+    """
+
+    def _self_inflict(self, *also):
+        sim, _ = self._run(
+            [self._item([BattleStartTrigger(effects=list(also) + [
+                DebuffEffect("memory_leaked", 3, target_type="self")])])],
+            seconds=0.3,
+        )
+        return sim
+
+    def test_your_own_debuff_is_not_turned_back(self):
+        sim = self._self_inflict(ReflectEffect(count=5, target_type="self"))
+        assert sim.player1.debuffs["memory_leaked"] == 3
+        assert "memory_leaked" not in sim.player2.debuffs
+        assert sim.player1.reflect == 5, "and no charge was spent"
+
+    def test_your_own_debuff_is_not_refused(self):
+        sim = self._self_inflict(
+            ResistEffect(count=0, chance=1.0, target_type="self"))
+        assert sim.player1.debuffs["memory_leaked"] == 3
+
+
+class TestWhatStandsInFrontOfTheQuota(_WithOneItem):
+    """The order damage is worked through, and why it is that order.
+
+    A share the target carries comes off first, and Block absorbs what is
+    actually arriving. Block absorbs damage, so it has to absorb the damage
+    that arrives rather than the number before the reduction.
+    """
+
+    @staticmethod
+    def _players(block=0, share=0.0):
+        sim = BattleSimulator(seed=TEST_SEED)
+        target = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        attacker = Player(id=2, quota=100, max_quota=100, cpu=3.0)
+        sim.player1, sim.player2 = target, attacker
+        target.block = block
+        if share:
+            target.mods.append(Timed("modifier", "damage_taken", share, None))
+        return sim, target, attacker
+
+    def _land(self, damage, block=0, share=0.0):
+        sim, target, attacker = self._players(block, share)
+        sim._take_damage(target, damage, source="w", action="damage",
+                         attacker=attacker, blockable=True)
+        return 100 - target.quota, target.block
+
+    def test_block_absorbs_the_reduced_damage(self):
+        """Twenty against a quarter off spends fifteen Block, not twenty."""
+        took, left = self._land(20, block=35, share=-0.25)
+        assert took == 0
+        assert left == 20, "35 less the 15 that actually arrived"
+
+    def test_without_a_share_block_absorbs_the_whole_blow(self):
+        took, left = self._land(20, block=35)
+        assert (took, left) == (0, 15)
+
+    def test_what_block_cannot_hold_lands_reduced(self):
+        took, left = self._land(20, block=5, share=-0.5)
+        assert took == 5, "20 halved is 10, of which Block held 5"
+        assert left == 0
+
+    def test_invulnerability_spends_no_block_at_all(self):
+        """Nothing arrives, so there is nothing for Block to absorb."""
+        took, left = self._land(20, block=35, share=-1.0)
+        assert (took, left) == (0, 35)
+
+    def test_block_does_not_answer_damage_that_is_not_an_attack(self):
+        """Effect-damage and poison are not absorbed, and the flag is off
+        unless a caller says otherwise."""
+        sim, target, attacker = self._players(block=35)
+        sim._take_damage(target, 20, source="w", action="damage",
+                         attacker=attacker)
+        assert 100 - target.quota == 20
+        assert target.block == 35
+
+
+class TestAModifierThatNothingAppliesIsRefused(_WithOneItem):
+    """A stat that loads and then does nothing is worse than one that will
+    not load.
+
+    `damage_flat` and `max_damage_flat` sat in MODIFIERS for a commit doing
+    exactly that: an aura granting either parsed, settled, and changed no
+    number at all. `_apply_effects` has had this guard since it caught three
+    bugs; `_modify` did not.
+    """
+
+    def test_an_unknown_stat_stops_rather_than_doing_nothing(self):
+        sim = BattleSimulator(seed=TEST_SEED)
+        item = self._item([])
+        with pytest.raises(TypeError, match="nothing here applies"):
+            sim._modify(item, ModifyEffect(
+                stat="wingspan", value=1.0, target_type="own",
+                counting="any", cap=None))
+
+    def test_flat_damage_from_a_modifier_reaches_the_swing(self):
+        """An aura granting +2 flat, which is not the same as +200%."""
+        aura = BattleItem(
+            spec=ItemSpec(
+                id="aura", name="Aura", category="infrastructure", cost=1,
+                player_class="neutral", slug="aura",
+                shape=parse_map(["#*"], "aura"),
+                triggers=[PassiveTrigger(effects=[ModifyEffect(
+                    stat="damage_flat", value=2.0, target_type="star",
+                    counting="any", cap=None)])],
+            ),
+            position=(0, 0), uid="aura",
+        )
+        swinger = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            AttackEffect(min_damage=10, max_damage=10, accuracy=1.0,
+                         crit_chance=0.0)])], uid="w", position=(1, 0))
+        _, alone = self._run([swinger], seconds=1.5)
+        _, helped = self._run([aura, swinger], seconds=1.5)
+        assert 350 - alone["player2_quota"] == 10
+        assert 350 - helped["player2_quota"] == 12
+
+    def test_maximum_damage_from_a_modifier_widens_the_roll(self):
+        aura = BattleItem(
+            spec=ItemSpec(
+                id="aura", name="Aura", category="infrastructure", cost=1,
+                player_class="neutral", slug="aura",
+                shape=parse_map(["#*"], "aura"),
+                triggers=[PassiveTrigger(effects=[ModifyEffect(
+                    stat="max_damage_flat", value=8.0, target_type="star",
+                    counting="any", cap=None)])],
+            ),
+            position=(0, 0), uid="aura",
+        )
+        swinger = self._item([TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
+            AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                         crit_chance=0.0)])], uid="w", position=(1, 0))
+        sim, _ = self._run([aura, swinger], seconds=9.0)
+        rolled = {a.damage for a in sim.actions if a.action == "damage"}
+        assert min(rolled) == 1, "the bottom of the range did not move"
+        assert max(rolled) > 1, "and the top did"

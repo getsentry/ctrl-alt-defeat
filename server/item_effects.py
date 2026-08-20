@@ -485,7 +485,6 @@ MODIFIERS = frozenset({
     "accuracy",
     "damage",
     "cpu_cost",
-    "damage_reduction",
 
     # Flat, where `damage` multiplies. "Deals +1 damage per Spikes" adds to
     # what the weapon rolls; "+15% damage" scales it. Both are written on the

@@ -723,7 +723,7 @@ class TestABuffIsNotAStat:
     def test_a_stat_written_as_a_buff_is_refused(self):
         """`speed`, `accuracy`, `cpu_cost` and the rest were all filed as
         buffs, and the player carried them where nothing read them."""
-        for stat in ["trigger_speed", "accuracy", "cpu_cost", "damage_reduction"]:
+        for stat in ["trigger_speed", "accuracy", "cpu_cost", "damage_flat"]:
             with pytest.raises(ValueError, match="modify"):
                 self.loader()._parse_effect(
                     {"type": "buff", "stat": stat, "value": 0.1, "target": "self"},

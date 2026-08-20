@@ -33,6 +33,43 @@ choosing which item -- `Use N Mana` appears in 22 clauses and 8 of them are
 Worth knowing when planning: 377 clauses remain, 107 on modules waiting for
 sockets, 270 on everything else.
 
+### `_modify` had no catch-all, and two stats did nothing because of it
+
+`damage_flat` and `max_damage_flat` were added to MODIFIERS so a status could
+scale them, and `_per_status` reads whatever stat it is asked for. `_modify`
+does not: it is a chain of comparisons and fell off the end silently, so an
+aura granting either parsed, settled, and changed no number.
+
+`_apply_effects` has raised on an unhandled effect since that guard caught
+three bugs. `_modify` now raises on an unhandled stat for the same reason.
+Anywhere else a name is matched against a list of branches wants the same
+treatment -- `_cleanse`, and the trigger dispatch in `_setup_item_handlers`.
+
+`damage_reduction` came off MODIFIERS at the same time. A reduction belongs to
+whoever takes the damage, which is `damage_taken` in PLAYER_MODIFIERS, and no
+item ever declared it.
+
+### A shield rolls before the target's share comes off
+
+The order damage is worked through is now: a shield's prevention, then the
+share the target carries, then Block. The share moved in front of Block
+because Block absorbs damage and so should absorb the damage that is actually
+arriving -- twenty against a quarter off spends fifteen Block, not twenty.
+
+The shield is the part still open. "30% chance to prevent 15 damage" is a flat
+subtraction, so it matters a great deal whether it comes before or after a
+quarter is taken off: against 20 damage, preventing first leaves 5 and then 3;
+sharing first leaves 15 and then nothing. The wiki's Block page says only
+"Absorbs 1 damage per stack" and gives no order at all, so this is a choice
+and not a reading. Worth settling by testing the game, since several items
+carry a shield and a share together -- Stone Helm is one.
+
+### `spawn_companion` is an effect nothing in the source game has
+
+Still in `UNBUILT_EFFECTS`, still invented. Nothing declares it and nothing
+ever will. It should go the way the invented debuffs went, along with the
+other names on that list that no item uses.
+
 ### "(once)" on a health threshold changes nothing today
 
 Every threshold clause in the source game that says "(once)" is written here

@@ -257,6 +257,12 @@ class BattleItem:
     # attack, and is 0 for every weapon in the catalogue.
     crit_bonus: float = 0.0
 
+    # Flat damage handed to this item by a modifier, as against `damage_gained`
+    # which it picked up itself. Kept apart because the source game reads the
+    # one back -- "remove 1 damage gained in battle" -- and not the other.
+    damage_flat: float = 0.0
+    max_damage_flat: float = 0.0
+
     def aura_squares(self, zone: str) -> List[Tuple[int, int]]:
         """The grid squares this item's star or diamond zone falls on.
 
@@ -441,7 +447,11 @@ class BattleSimulator:
 
         # How many times each limited clause has happened this battle, by the
         # effect's identity. Two items carrying equal clauses are two entries.
-        self.allowance: Dict[int, int] = {}
+        # The effect is held alongside the count, because an id is only unique
+        # while the object it belongs to is alive: a collected effect frees its
+        # id for the next one, which would hand a fresh clause somebody else's
+        # spent allowance.
+        self.allowance: Dict[int, Tuple[object, int]] = {}
 
         # Initialize RNG with seed for deterministic battles
         self.seed = (
@@ -785,8 +795,15 @@ class BattleSimulator:
         return self.player2 if player is self.player1 else self.player1
 
     def _inflict(self, target: Player, status: str, stacks: int,
-                 source: str, duration: float = 0.0) -> int:
+                 source: str, duration: float = 0.0,
+                 from_enemy: bool = True) -> int:
         """Put stacks of a debuff on somebody, and say how many landed.
+
+        `from_enemy` is what Reflect and Resist answer to. Both are for what
+        the other player sends: "the next debuff inflicts your opponent
+        instead of you". A clause that puts a debuff on its own owner --
+        "Inflict 3 Poison and 2 Poison to yourself" -- is not that, and
+        turning it back would send your own poison across the table.
 
         Every stack is offered to Reflect and then to Resist, in that order,
         because Backpack Battles' Reflect page fixes it: "Reflect, if a check
@@ -803,6 +820,10 @@ class BattleSimulator:
         landed = reflected = resisted = 0
 
         for _ in range(stacks):
+            if not from_enemy:
+                target.debuffs[status] = target.debuffs.get(status, 0) + 1
+                landed += 1
+                continue
             if target.reflect > 0:
                 target.reflect -= 1
                 other.debuffs[status] = other.debuffs.get(status, 0) + 1
@@ -930,6 +951,20 @@ class BattleSimulator:
             item.cpu_discount += effect.value * times
         elif effect.stat == "critical_chance":
             item.crit_bonus += effect.value * times
+        elif effect.stat == "damage_flat":
+            item.damage_flat += effect.value * times
+        elif effect.stat == "max_damage_flat":
+            item.max_damage_flat += effect.value * times
+        else:
+            # The same guard _apply_effects has, for the same reason: a stat
+            # that loads and then quietly does nothing is worse than one that
+            # will not load. `damage_flat` and `max_damage_flat` sat in
+            # MODIFIERS for a commit doing exactly that, and only counting the
+            # two lists against each other found it.
+            raise TypeError(
+                f"{item.spec.id}: `{effect.stat}` is a modifier nothing here "
+                f"applies"
+            )
 
     def _stun(self, target: Player, duration: float, item: BattleItem) -> None:
         """Hold every one of a player's cooldowns still for `duration`.
@@ -1271,6 +1306,7 @@ class BattleSimulator:
                         enemy if result["target_type"] != "self" else owner,
                         result["debuff_name"], int(result["value"]), item.uid,
                         result["duration"],
+                        from_enemy=result["target_type"] != "self",
                     )
             elif isinstance(effect, StatModEffect):
                 # Handle stat modification
@@ -1493,9 +1529,9 @@ class BattleSimulator:
             elif isinstance(effect, LimitEffect):
                 # Counted per effect and per battle, so two items carrying the
                 # same clause each get their own allowance.
-                spent = self.allowance.get(id(effect), 0)
+                _, spent = self.allowance.get(id(effect), (effect, 0))
                 if spent < effect.times:
-                    self.allowance[id(effect)] = spent + 1
+                    self.allowance[id(effect)] = (effect, spent + 1)
                     self._apply_effects(effect.effects, item, owner, enemy)
             elif isinstance(effect, ConsumeEffect):
                 # Mark item for removal and emit event
@@ -1580,7 +1616,8 @@ class BattleSimulator:
         # "Deals +1 maximum damage per Vampirism" raises the top of the range
         # and leaves the bottom, so the roll widens rather than shifting.
         top = attack_data["max_damage"] + int(
-            self._per_status(item, "max_damage_flat", owner, enemy)
+            item.max_damage_flat
+            + self._per_status(item, "max_damage_flat", owner, enemy)
         )
 
         # Damage picked up during the battle is part of what the weapon
@@ -1590,7 +1627,8 @@ class BattleSimulator:
         damage = (
             self.rng.randint(attack_data["min_damage"], max(attack_data["min_damage"], top))
             + item.damage_gained
-            + int(self._per_status(item, "damage_flat", owner, enemy))
+            + int(item.damage_flat
+                  + self._per_status(item, "damage_flat", owner, enemy))
         )
 
         # Section 3.1: Monitored is +1 damage a stack. It needs no check for
@@ -1629,10 +1667,12 @@ class BattleSimulator:
         if attack_data.get("special") == "bypass_block":
             enemy.block = int(enemy.block * 0.5)
 
-        # Shields roll and Block is spent, both because this was an attack.
-        damage = self._mitigate_attack(enemy, damage, owner, item)
+        # Shields roll because this was an attack. Block is spent inside
+        # _take_damage, once the target's share has come off.
+        damage = self._shields_answer(enemy, damage, owner, item)
         self._take_damage(
-            enemy, damage, source=item.uid, action="damage", attacker=owner
+            enemy, damage, source=item.uid, action="damage", attacker=owner,
+            blockable=True,
         )
 
         # Section 3.1: Spiked and Draining answer to a melee weapon and to
@@ -1675,30 +1715,25 @@ class BattleSimulator:
 
         drain = min(owner.buffs.get(DRAINING, 0), landed)
         if drain > 0:
-            healed = min(drain, owner.max_quota - owner.quota)
-            if healed > 0:
-                owner.quota += healed
-                self._record(
-                    BattleAction(
-                        timestamp=self._time_ms(),
-                        source=item.uid,
-                        action="heal",
-                        target=None,
-                        damage=healed,
-                        player=owner.id,
-                        details={"buff_name": DRAINING},
-                    )
-                )
+            # Through _heal, so the shares reach it. Vampirism is healing, and
+            # a clause that changes healing does not get to miss one source of
+            # it because that source wrote to the quota itself.
+            self._heal(owner, drain, item.uid,
+                       details={"buff_name": DRAINING})
 
-    def _mitigate_attack(
+    def _shields_answer(
         self, target: Player, damage: int, attacker: Player, item: BattleItem
     ) -> int:
-        """Everything standing between an attack and the quota (Section 7.3).
+        """What a shield takes off an attack before it lands (Section 7.3).
 
-        Belongs to the attack, not to the damage. A shield rolls because it
-        was attacked, and Block is spent stopping a blow. Neither has anything
-        to say about damage that comes from inside, which is why poison does
-        not come through here.
+        Belongs to the attack, not to the damage: a shield rolls because it
+        was attacked, and has nothing to say about damage that comes from
+        inside, which is why poison does not come through here.
+
+        Block used to be spent here too and is not any more. Block absorbs
+        damage, so it has to absorb the damage that is actually arriving --
+        after any share the target takes off it -- and that share is worked
+        out in _take_damage, where every kind of damage passes.
         """
         # Shields roll first, and only against an attack that hit -- this is
         # reached after the accuracy check, so a miss never gets here.
@@ -1719,27 +1754,7 @@ class BattleSimulator:
             for result in block_results
             if result and result.get("blocked")
         )
-        damage = max(0, damage - prevented)
-
-        # Then Block, the resource, which is spent a point at a time.
-        if target.block > 0 and damage > 0:
-            absorbed = min(damage, target.block)
-            damage -= absorbed
-            target.block -= absorbed
-
-            self._record(
-                BattleAction(
-                    timestamp=self._time_ms(),
-                    source="system",  # Block is the player's, not an item's
-                    action="block",
-                    target=None,
-                    damage=absorbed,
-                    player=target.id,
-                    details={"type": "buff_block"},
-                )
-            )
-
-        return damage
+        return max(0, damage - prevented)
 
     def _heal(self, target: Player, amount: float, source: str,
               healer: Optional[Player] = None, details=None) -> int:
@@ -1782,21 +1797,41 @@ class BattleSimulator:
         action: str,
         attacker: Optional[Player] = None,
         details: Optional[Dict] = None,
+        blockable: bool = False,
     ):
         """Put damage on a player and tell everyone watching.
 
-        The one place a quota goes down. Whatever the damage was mitigated by
-        on its way here, it lands the same and is seen the same, so an item
-        that reacts to its owner being hurt reacts to all of it.
+        The one place a quota goes down, and the one place the two things that
+        stand in front of it are worked out, in this order:
 
-        A share the target carries is taken off here rather than with the
-        shields, because it answers to every kind of damage. Poison and
-        fatigue reach this and no shield, and invulnerability stops those too:
-        the wiki says it "prevents receiving any damage", not every attack.
+        1. **The share the target carries.** "Reduce damage taken by 25%",
+           and invulnerability at -1.0. It answers to every kind of damage:
+           poison and fatigue reach this and no shield, and the wiki says
+           invulnerability "prevents receiving any damage", not every attack.
+        2. **Block, if this is damage Block answers.** Block absorbs damage,
+           so it absorbs what is actually arriving -- the reduced number, not
+           the one before the share came off. Twenty damage against a quarter
+           off spends fifteen Block, not twenty.
+
+        `blockable` is off unless a caller says otherwise, which is the safe
+        way round: effect-damage and poison are not absorbed by Block, and a
+        new source of damage that forgets to think about it gets the answer
+        that is true of most of them.
         """
         share = self._damage_share(target)
         if share < 1.0:
             damage = int(damage * share)
+
+        if blockable and target.block > 0 and damage > 0:
+            absorbed = min(damage, target.block)
+            damage -= absorbed
+            target.block -= absorbed
+            self._record(BattleAction(
+                timestamp=self._time_ms(),
+                source="system",  # Block is the player's, not an item's
+                action="block", target=None, damage=absorbed,
+                player=target.id, details={"type": "buff_block"}))
+
         target.quota = max(0, target.quota - damage)
 
         self._record(

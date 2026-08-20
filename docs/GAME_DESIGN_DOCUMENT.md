@@ -975,10 +975,29 @@ out. The player clicks to move on to the post-battle screen.
 - Deals 2x damage
 - Can trigger special effects
 
-### 7.3 Shield Blocking
-See Section 2.4. One 30% roll per attack, and every consequence behind that
-roll lands together or not at all. Nothing blocks damage that comes from a
-player's own stacks — poison has no attack to block.
+### 7.3 What stands in front of the quota
+
+Three things, in this order:
+
+1. **A shield's prevention**, if this was an attack. See Section 2.4: one 30%
+   roll, and every consequence behind it lands together or not at all.
+2. **The share the target carries** — "Reduce damage taken by 25%", and
+   invulnerability at -1.0. It answers to every kind of damage, including the
+   kinds no shield sees.
+3. **Block**, if this is damage Block answers, spent a point at a time.
+
+**Block absorbs what is actually arriving**, which is why it comes after the
+share rather than before it. Twenty damage against a quarter off spends
+fifteen Block, not twenty — the two orders land the same damage and leave
+different amounts of Block, so they differ in how long a shield lasts.
+
+Nothing blocks damage that comes from a player's own stacks: poison has no
+attack to block, and effect-damage has no weapon behind it.
+
+**Undecided:** whether a shield's flat prevention comes before or after the
+share. It matters — against 20 damage with a 15-point prevention and a quarter
+off, preventing first leaves 3 and sharing first leaves nothing. The wiki
+gives no order. See BACKLOG.md.
 
 ### 7.4 Item Consumption
 - Some items are consumed after use
