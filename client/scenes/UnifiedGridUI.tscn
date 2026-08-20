@@ -558,12 +558,20 @@ theme_override_font_sizes/font_size = 18
 text = "0g"
 horizontal_alignment = 1
 
+[node name="StatsPlate" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 666.0
+offset_right = 292.0
+offset_bottom = 1002.0
+mouse_filter = 2
+
 [node name="CharacterStats" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 48.0
-offset_top = 688.0
-offset_right = 296.0
-offset_bottom = 984.0
+offset_left = 32.0
+offset_top = 686.0
+offset_right = 276.0
+offset_bottom = 982.0
 theme_override_constants/separation = 4
 
 [node name="RefreshButton" type="Button" parent="."]

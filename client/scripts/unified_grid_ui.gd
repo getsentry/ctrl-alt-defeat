@@ -534,8 +534,30 @@ func _create_header():
 	if read_only_mode:
 		return
 	stats_panel = $CharacterStats
+	_dress_stats_plate()
 	_build_stat_rows()
 	_update_stats()
+
+
+func _dress_stats_plate() -> void:
+	"""Give the numbers something to stand on.
+
+	The wall behind them used to have a panel painted on it with CHARACTER
+	STATS across the top. The wall that replaced it is bare above and lockers
+	below, so the numbers ran off the wall and onto the drawers halfway down
+	the list and the last of them could barely be read at all.
+	"""
+	var plate := get_node_or_null("StatsPlate") as Panel
+	if plate == null:
+		return
+	var style := StyleBoxFlat.new()
+	# Nearly solid. The drawers behind the lower half of the list are busy
+	# enough to read through, which was the trouble in the first place.
+	style.bg_color = Color(0.05, 0.05, 0.07, 0.93)
+	style.border_color = Color(PRICE_TAG_COLOR, 0.35)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
+	plate.add_theme_stylebox_override("panel", style)
 
 
 # ============ Character stats ============
@@ -680,11 +702,13 @@ func _rank_plate() -> Label:
 	rank_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rank_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	rank_label.add_theme_font_size_override("font_size", STAT_FONT_SIZE - 2)
-	rank_label.add_theme_color_override("font_color", Color(0.72, 0.78, 0.95))
+	rank_label.add_theme_color_override("font_color", Color(PRICE_TAG_COLOR, 0.85))
 
+	# The same plate the rest of the screen's controls carry. In blue it was
+	# the one thing on the wall that had come from somewhere else.
 	var plate := StyleBoxFlat.new()
-	plate.bg_color = Color(0.16, 0.2, 0.42, 0.75)
-	plate.border_color = Color(0.4, 0.5, 0.85, 0.7)
+	plate.bg_color = Color(0.09, 0.09, 0.12, 0.85)
+	plate.border_color = Color(PRICE_TAG_COLOR, 0.4)
 	plate.set_border_width_all(2)
 	plate.set_corner_radius_all(6)
 	rank_label.add_theme_stylebox_override("normal", plate)
@@ -719,6 +743,10 @@ func _create_server_room():
 	var cell_height = (panel_size.y - (ROOM_HEIGHT - 1) * CELL_SPACING) / ROOM_HEIGHT
 	var cell_size = min(cell_width, cell_height)  # Use the smaller to maintain square cells
 
+	# The wall behind the grid is bare, so this outline is the only thing
+	# saying where things may be put. It stays, but in the light the room is
+	# lit by rather than the blue it arrived in.
+	inventory_grid.border_color = Color(0.72, 0.82, 0.25, 0.4)
 	inventory_grid.configure(ROOM_WIDTH, ROOM_HEIGHT, cell_size, CELL_SPACING)
 	inventory_grid.title = ""  # Title is already in the UI
 	inventory_grid.read_only = read_only_mode
