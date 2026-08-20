@@ -576,12 +576,9 @@ as severe as the one above.)*
   it yet. Effects like "Triggers 15% faster for each Star Pet or Food" must
   count them as pets when those effects are built.
 
-- **11 gem-module tiers are missing.** The wiki gems have five tiers each; the
-  catalogue has Performance 5/5 but Memory 3/5 (no flawless, perfect),
-  Processing 2/5, Efficiency 2/5, Security 2/5 (each missing flawed, flawless,
-  perfect). Adding them needs names, maps, looks and art, so they were left out
-  of the audit fix. Tier costs are 1/2/4/8/16; tier effect values are on the
-  gem wiki pages.
+- ~~11 gem-module tiers are missing~~ *(added, with combining recipes: two of
+  a tier make the next, per the wiki's Gemstone page)*. The 11 new modules
+  still need drawing briefs and artwork; their placeholder looks are set.
 
 - **Recipes are not imported.** The item JSON holds no recipe data, and the
   Game Design Document's example recipes (5.4) name ingredients that do not

@@ -43,7 +43,15 @@
         "Armor & other sockets: Your healing is increased by 15%.",
         "Backpack: After 5s: Deal 6 Effect-damage with 150% lifesteal."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "performance_module_chipped",
+            "performance_module_chipped"
+          ]
+        }
+      ]
     },
     "performance_module_regular": {
       "name": "Stock Performance Module",
@@ -65,7 +73,15 @@
         "Armor & other sockets: Your healing is increased by 20%.",
         "Backpack: After 5s: Deal 10 Effect-damage with 150% lifesteal."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "performance_module_flawed",
+            "performance_module_flawed"
+          ]
+        }
+      ]
     },
     "performance_module_flawless": {
       "name": "Overclocked Performance Module",
@@ -87,7 +103,15 @@
         "Armor & other sockets: Your healing is increased by 25%.",
         "Backpack: After 5s: Deal 15 Effect-damage with 150% lifesteal."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "performance_module_regular",
+            "performance_module_regular"
+          ]
+        }
+      ]
     },
     "performance_module_perfect": {
       "name": "Golden Sample Performance Module",
@@ -109,7 +133,15 @@
         "Armor & other sockets: Your healing is increased by 40%.",
         "Backpack: After 5s: Deal 35 Effect-damage with 150% lifesteal."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "performance_module_flawless",
+            "performance_module_flawless"
+          ]
+        }
+      ]
     },
     "memory_module_chipped": {
       "name": "Salvaged Memory Module",
@@ -127,9 +159,9 @@
       "slug": "memory_module_chipped",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 15% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
-        "5 Mana gained: Gain 2 Block.",
-        "After 4.5s: Inflict 2 Cold."
+        "Weapon sockets: On hit: 15% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
+        "Armor & other sockets: 5 Mana gained: Gain 2 Block.",
+        "Backpack: After 4.5s: Inflict 2 Cold."
       ],
       "shop_needs": "crypto_mining_rig"
     },
@@ -149,11 +181,19 @@
       "slug": "memory_module_flawed",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 25% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
-        "5 Mana gained: Gain 3 Block.",
-        "After 4.5s: Inflict 3 Cold."
+        "Weapon sockets: On hit: 25% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
+        "Armor & other sockets: 5 Mana gained: Gain 3 Block.",
+        "Backpack: After 4.5s: Inflict 3 Cold."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "memory_module_chipped",
+            "memory_module_chipped"
+          ]
+        }
+      ]
     },
     "memory_module_regular": {
       "name": "Stock Memory Module",
@@ -171,11 +211,19 @@
       "slug": "memory_module_regular",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 40% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
-        "5 Mana gained: Gain 4 Block.",
-        "After 4s: Inflict 4 Cold."
+        "Weapon sockets: On hit: 40% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
+        "Armor & other sockets: 5 Mana gained: Gain 4 Block.",
+        "Backpack: After 4s: Inflict 4 Cold."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "memory_module_flawed",
+            "memory_module_flawed"
+          ]
+        }
+      ]
     },
     "processing_module_chipped": {
       "name": "Salvaged Processing Module",
@@ -219,7 +267,15 @@
         "Armor & other sockets: 20% chance to resist stuns. 10% chance to resist critical hits.",
         "Backpack: Base stamina regeneration +20%."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "processing_module_flawed",
+            "processing_module_flawed"
+          ]
+        }
+      ]
     },
     "efficiency_module_chipped": {
       "name": "Salvaged Efficiency Module",
@@ -237,9 +293,9 @@
       "slug": "efficiency_module_chipped",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 35% chance to inflict 1 Poison.",
-        "10% chance to resist Poison.",
-        "After 3s: Gain 1 Regeneration."
+        "Weapon sockets: On hit: 35% chance to inflict 1 Poison.",
+        "Armor & other sockets: 10% chance to resist Poison.",
+        "Backpack: After 3s: Gain 1 Regeneration."
       ],
       "shop_needs": "crypto_mining_rig"
     },
@@ -259,11 +315,19 @@
       "slug": "efficiency_module_regular",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 80% chance to inflict 1 Poison.",
-        "20% chance to resist Poison.",
-        "After 4s: Gain 3 Regeneration."
+        "Weapon sockets: On hit: 80% chance to inflict 1 Poison.",
+        "Armor & other sockets: 20% chance to resist Poison.",
+        "Backpack: After 4s: Gain 3 Regeneration."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "efficiency_module_flawed",
+            "efficiency_module_flawed"
+          ]
+        }
+      ]
     },
     "security_module_chipped": {
       "name": "Salvaged Security Module",
@@ -281,9 +345,9 @@
       "slug": "security_module_chipped",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 25% chance to remove 1 random buff from your opponent.",
-        "Reduce opponent's healing by 12%.",
-        "Every 3.2s: Cleanse 1 debuff."
+        "Weapon sockets: On hit: 25% chance to remove 1 random buff from your opponent.",
+        "Armor & other sockets: Reduce opponent's healing by 12%.",
+        "Backpack: Every 3.2s: Cleanse 1 debuff."
       ],
       "shop_needs": "crypto_mining_rig"
     },
@@ -303,11 +367,19 @@
       "slug": "security_module_regular",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 50% chance to remove 1 random buff from your opponent.",
-        "Reduce opponent's healing by 25%.",
-        "Every 2s: Cleanse 1 debuff."
+        "Weapon sockets: On hit: 50% chance to remove 1 random buff from your opponent.",
+        "Armor & other sockets: Reduce opponent's healing by 25%.",
+        "Backpack: Every 2s: Cleanse 1 debuff."
       ],
-      "shop_needs": "crypto_mining_rig"
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "security_module_flawed",
+            "security_module_flawed"
+          ]
+        }
+      ]
     },
     "burning_coal": {
       "name": "Hot Cell",
@@ -444,6 +516,336 @@
         "After 12s: Gain 10 Luck and 10 Regeneration. Triggers 10% faster for each Star Nature-item."
       ],
       "icontype": "nature"
+    },
+    "memory_module_flawless": {
+      "name": "Overclocked Memory Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "stripe_a_fine",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Sapphire",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [],
+      "slug": "memory_module_flawless",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: 60% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
+        "Armor & other sockets: 5 Mana gained: Gain 5 Block.",
+        "Backpack: After 3.5s: Inflict 5 Cold."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "memory_module_regular",
+            "memory_module_regular"
+          ]
+        }
+      ]
+    },
+    "memory_module_perfect": {
+      "name": "Golden Sample Memory Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "grid_bold",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Sapphire",
+      "rarity": "godly",
+      "cost": 16,
+      "triggers": [],
+      "slug": "memory_module_perfect",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: 100% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
+        "Armor & other sockets: 5 Mana gained: Gain 8 Block.",
+        "Backpack: After 3s: Inflict 8 Cold."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "memory_module_flawless",
+            "memory_module_flawless"
+          ]
+        }
+      ]
+    },
+    "processing_module_flawed": {
+      "name": "Refurb Processing Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "grid_fine",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Topaz",
+      "rarity": "rare",
+      "cost": 2,
+      "triggers": [],
+      "slug": "processing_module_flawed",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: Attacks 15% faster.",
+        "Armor & other sockets: 15% chance to resist stuns. 7% chance to resist critical hits.",
+        "Backpack: Base stamina regeneration +12%."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "processing_module_chipped",
+            "processing_module_chipped"
+          ]
+        }
+      ]
+    },
+    "processing_module_flawless": {
+      "name": "Overclocked Processing Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "zigzag_h",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Topaz",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [],
+      "slug": "processing_module_flawless",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: Attacks 25% faster.",
+        "Armor & other sockets: 30% chance to resist stuns. 15% chance to resist critical hits.",
+        "Backpack: Base stamina regeneration +30%."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "processing_module_regular",
+            "processing_module_regular"
+          ]
+        }
+      ]
+    },
+    "processing_module_perfect": {
+      "name": "Golden Sample Processing Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "zigzag_v",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Topaz",
+      "rarity": "godly",
+      "cost": 16,
+      "triggers": [],
+      "slug": "processing_module_perfect",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: Attacks 40% faster.",
+        "Armor & other sockets: 50% chance to resist stuns. 30% chance to resist critical hits.",
+        "Backpack: Base stamina regeneration +50%."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "processing_module_flawless",
+            "processing_module_flawless"
+          ]
+        }
+      ]
+    },
+    "efficiency_module_flawed": {
+      "name": "Refurb Efficiency Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "wave_h",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Emerald",
+      "rarity": "rare",
+      "cost": 2,
+      "triggers": [],
+      "slug": "efficiency_module_flawed",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: 50% chance to inflict 1 Poison.",
+        "Armor & other sockets: 15% chance to resist Poison.",
+        "Backpack: After 4s: Gain 2 Regeneration."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "efficiency_module_chipped",
+            "efficiency_module_chipped"
+          ]
+        }
+      ]
+    },
+    "efficiency_module_flawless": {
+      "name": "Overclocked Efficiency Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "wave_v",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Emerald",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [],
+      "slug": "efficiency_module_flawless",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: 80% chance to inflict 2 Poison.",
+        "Armor & other sockets: 25% chance to resist Poison.",
+        "Backpack: After 3.5s: Gain 4 Regeneration."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "efficiency_module_regular",
+            "efficiency_module_regular"
+          ]
+        }
+      ]
+    },
+    "efficiency_module_perfect": {
+      "name": "Golden Sample Efficiency Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "brick_h",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Emerald",
+      "rarity": "godly",
+      "cost": 16,
+      "triggers": [],
+      "slug": "efficiency_module_perfect",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: 80% chance to inflict 4 Poison.",
+        "Armor & other sockets: 40% chance to resist Poison.",
+        "Backpack: After 3s: Gain 7 Regeneration."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "efficiency_module_flawless",
+            "efficiency_module_flawless"
+          ]
+        }
+      ]
+    },
+    "security_module_flawed": {
+      "name": "Refurb Security Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "brick_v",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Amethyst",
+      "rarity": "rare",
+      "cost": 2,
+      "triggers": [],
+      "slug": "security_module_flawed",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: 35% chance to remove 1 random buff from your opponent.",
+        "Armor & other sockets: Reduce opponent's healing by 18%.",
+        "Backpack: Every 2.5s: Cleanse 1 debuff."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "security_module_chipped",
+            "security_module_chipped"
+          ]
+        }
+      ]
+    },
+    "security_module_flawless": {
+      "name": "Overclocked Security Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "scale",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Amethyst",
+      "rarity": "legendary",
+      "cost": 8,
+      "triggers": [],
+      "slug": "security_module_flawless",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: 75% chance to remove 1 random buff from your opponent.",
+        "Armor & other sockets: Reduce opponent's healing by 30%.",
+        "Backpack: Every 1.6s: Cleanse 1 debuff."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "security_module_regular",
+            "security_module_regular"
+          ]
+        }
+      ]
+    },
+    "security_module_perfect": {
+      "name": "Golden Sample Security Module",
+      "category": "module",
+      "color": "orange",
+      "pattern": "triangle_up",
+      "class": "neutral",
+      "map": [
+        "#"
+      ],
+      "source": "Amethyst",
+      "rarity": "godly",
+      "cost": 16,
+      "triggers": [],
+      "slug": "security_module_perfect",
+      "in_shop": false,
+      "unbuilt": [
+        "Weapon sockets: On hit: 70% chance to remove 2 random buffs from your opponent.",
+        "Armor & other sockets: Reduce opponent's healing by 45%.",
+        "Backpack: Every 1s: Cleanse 1 debuff."
+      ],
+      "shop_needs": "crypto_mining_rig",
+      "recipe": [
+        {
+          "ingredients": [
+            "security_module_flawless",
+            "security_module_flawless"
+          ]
+        }
+      ]
     }
   }
 }
