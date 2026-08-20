@@ -36,6 +36,7 @@ class TestDeterministicBattles:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -64,6 +65,7 @@ class TestDeterministicBattles:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=1.5,
@@ -131,6 +133,7 @@ class TestDeterministicBattles:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=0.5,
@@ -192,6 +195,7 @@ class TestDeterministicBattles:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=0.5,
                             effects=[
                                 PreventDamageEffect(5),
@@ -214,6 +218,7 @@ class TestDeterministicBattles:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=0.3,
@@ -269,6 +274,7 @@ class TestDeterministicBattles:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.0,
@@ -298,6 +304,7 @@ class TestDeterministicBattles:
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=0.3,
                             effects=[
                                 PreventDamageEffect(4),
@@ -321,6 +328,7 @@ class TestDeterministicBattles:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=0.8,
@@ -348,6 +356,7 @@ class TestDeterministicBattles:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.2,
@@ -413,6 +422,7 @@ class TestDeterministicBattles:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,

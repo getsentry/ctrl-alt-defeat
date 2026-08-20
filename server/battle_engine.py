@@ -585,6 +585,12 @@ class BattleSimulator:
                             return
                         if item.uid in self.consumed_items:
                             return
+                        # A shield answers to some ways of attacking and not
+                        # others. Every one in the source game is written "On
+                        # attacked (Melee)", so a bow goes straight past most
+                        # of them.
+                        if not (trigger.answers_to & event.data.attacker_kinds):
+                            return
                         if not trigger.should_activate(
                             "on_attacked", item, owner, self
                         ):
@@ -931,7 +937,7 @@ class BattleSimulator:
             enemy.block = int(enemy.block * 0.5)
 
         # Shields roll and Block is spent, both because this was an attack.
-        damage = self._mitigate_attack(enemy, damage, owner, item.uid)
+        damage = self._mitigate_attack(enemy, damage, owner, item)
         self._take_damage(
             enemy, damage, source=item.uid, action="damage", attacker=owner
         )
@@ -992,7 +998,7 @@ class BattleSimulator:
                 )
 
     def _mitigate_attack(
-        self, target: Player, damage: int, attacker: Player, item_id: str
+        self, target: Player, damage: int, attacker: Player, item: BattleItem
     ) -> int:
         """Everything standing between an attack and the quota (Section 7.3).
 
@@ -1008,7 +1014,11 @@ class BattleSimulator:
                 EventType.ON_ATTACKED,
                 attacker,
                 target,
-                EventData(pending_damage=damage, attacker_item_id=item_id),
+                EventData(
+                    pending_damage=damage,
+                    attacker_item_id=item.uid,
+                    attacker_kinds=item.spec.kinds,
+                ),
             )
         )
         prevented = sum(

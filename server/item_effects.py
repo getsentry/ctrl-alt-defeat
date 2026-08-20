@@ -490,9 +490,17 @@ class OnHitTrigger(ChanceTrigger):
 
 @dataclass
 class OnAttackedTrigger(ChanceTrigger):
-    """Activates when the owner is attacked, and the attack hit."""
+    """Activates when the owner is attacked, and the attack hit.
+
+    It says which kinds of attack reach it. Every shield in the source game is
+    written "On attacked (Melee)", and three are "(Melee/Ranged)", so it is a
+    property of the shield rather than a rule about shields.
+    """
 
     event_name: ClassVar[str] = "on_attacked"
+
+    #: The weapon kinds this answers to. Anything else passes it by.
+    answers_to: frozenset = frozenset()
 
 
 @dataclass

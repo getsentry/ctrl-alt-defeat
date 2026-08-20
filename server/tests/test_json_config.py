@@ -401,7 +401,7 @@ class TestPreventDamageStaysWhereItWorks:
     def test_it_is_allowed_in_on_attacked(self):
 
         trigger = ConfigLoader()._parse_trigger(
-            {"type": "on_attacked", "chance": 0.3,
+            {"type": "on_attacked", "chance": 0.3, "answers_to": ["melee"],
              "effects": [{"type": "prevent_damage", "value": 7}]},
             "some_shield",
         )

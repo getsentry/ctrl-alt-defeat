@@ -16,6 +16,7 @@ from item_effects import (
     BUFFS,
     MODIFIERS,
     MODIFIER_TARGETS,
+    WEAPON_KINDS,
     UNBUILT_EFFECTS,
     UNBUILT_TRIGGERS,
     BuffEffect,
@@ -262,7 +263,23 @@ class ConfigLoader:
                     f"{item_id}: an on_attacked trigger has to state its "
                     f"`chance`. Every shield in the source game rolls 0.3."
                 )
-            return OnAttackedTrigger(chance=config["chance"], effects=effects)
+            if "answers_to" not in config:
+                raise ValueError(
+                    f"{item_id}: an on_attacked trigger has to say what it "
+                    f"`answers_to`. Every shield in the source game is written "
+                    f"\"On attacked (Melee)\"."
+                )
+            answers_to = frozenset(config["answers_to"])
+            unknown = answers_to - WEAPON_KINDS
+            if unknown:
+                raise ValueError(
+                    f"{item_id}: {sorted(unknown)} is not a way of attacking. "
+                    f"There are {len(WEAPON_KINDS)}: "
+                    f"{', '.join(sorted(WEAPON_KINDS))}."
+                )
+            return OnAttackedTrigger(
+                chance=config["chance"], effects=effects, answers_to=answers_to
+            )
         elif trigger_type == "passive":
             return PassiveTrigger(effects=effects)
 

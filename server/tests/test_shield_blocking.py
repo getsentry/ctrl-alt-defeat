@@ -40,6 +40,7 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(10),
@@ -62,6 +63,7 @@ class TestShieldBlocking:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -117,6 +119,7 @@ class TestShieldBlocking:
                         player_class="neutral",
                         triggers=[
                             OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=0.3,
                             effects=[
                                 PreventDamageEffect(8),
@@ -140,6 +143,7 @@ class TestShieldBlocking:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=0.5,  # Fast attacks
@@ -204,6 +208,7 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(5),
@@ -226,6 +231,7 @@ class TestShieldBlocking:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=1.0,
@@ -274,6 +280,7 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(5),
@@ -297,6 +304,7 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(7),
@@ -319,6 +327,7 @@ class TestShieldBlocking:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 triggers=[
                     TimerTrigger(
                         cooldown=2.0,
@@ -371,6 +380,7 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=1.0,
                             effects=[
                                 PreventDamageEffect(10),

@@ -39,6 +39,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=2.5,
@@ -66,6 +67,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=3.0,
@@ -93,6 +95,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.5,
@@ -126,6 +129,7 @@ class TestFullBattleScenarios:
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=0.3,
                             effects=[
                                 PreventDamageEffect(8),
@@ -148,6 +152,7 @@ class TestFullBattleScenarios:
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=0.3,
                             effects=[
                                 PreventDamageEffect(10),
@@ -188,6 +193,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=3.0,
@@ -252,6 +258,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=2.0,
@@ -274,6 +281,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=2.0,
@@ -296,6 +304,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=2.0,
@@ -322,6 +331,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.8,
@@ -346,6 +356,7 @@ class TestFullBattleScenarios:
                     player_class="neutral",
                     triggers=[
                         OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=0.4,
                             effects=[
                                 PreventDamageEffect(6),
@@ -404,6 +415,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=2.0,
@@ -495,6 +507,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.5,
@@ -517,6 +530,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.0,
@@ -564,6 +578,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     rarity="rare",
                     triggers=[
                         TimerTrigger(
@@ -590,6 +605,7 @@ class TestFullBattleScenarios:
                     rarity="rare",
                     triggers=[
                         OnAttackedTrigger(
+                            answers_to=frozenset({"melee"}),
                             chance=0.4,
                             effects=[
                                 PreventDamageEffect(12),
@@ -614,6 +630,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     rarity="legendary",
                     triggers=[
                         TimerTrigger(
@@ -685,6 +702,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=3.0,
@@ -730,6 +748,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=3.0,
@@ -803,6 +822,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.0,
@@ -825,6 +845,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.2,
@@ -872,6 +893,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.5,
@@ -894,6 +916,7 @@ class TestFullBattleScenarios:
                     category="problem",
                     cost=1,
                     player_class="neutral",
+                    kinds=frozenset({"melee"}),
                     triggers=[
                         TimerTrigger(
                             cooldown=1.5,

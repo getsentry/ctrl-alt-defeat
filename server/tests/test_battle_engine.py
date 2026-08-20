@@ -250,7 +250,15 @@ class TestGameDesignCompliance:
         player.block = 10
 
         # Block is spent stopping an attack, so it belongs to mitigation.
-        got_through = sim._mitigate_attack(player, 15, attacker, "test_item")
+        sword = BattleItem(
+            spec=ItemSpec(
+                id="w", name="Sword", category="problem", cost=1,
+                player_class="neutral", kinds=frozenset({"melee"}),
+                shape=parse_map(["#"], "w"), slug="w", triggers=[],
+            ),
+            position=(0, 0), uid="test_item",
+        )
+        got_through = sim._mitigate_attack(player, 15, attacker, sword)
         assert got_through == 5, "10 of the 15 absorbed"
         assert player.block == 0, "all of it consumed"
 
@@ -337,6 +345,7 @@ class TestGameDesignCompliance:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 shape=parse_map(["#"], "test item"),
                 slug="test_slug",
                 triggers=[
@@ -470,6 +479,7 @@ class TestBattleSimulation:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 shape=parse_map(["#"], "test item"),
                 slug="test_slug",
                 triggers=[
@@ -541,6 +551,7 @@ class TestOnHitResolution:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 shape=parse_map(["#"], "poisoner"),
                 slug=uid,
                 triggers=[
@@ -874,6 +885,7 @@ class TestOneRollCoversTheList:
                 slug="shield",
                 triggers=[
                     OnAttackedTrigger(
+                        answers_to=frozenset({"melee"}),
                         chance=chance,
                         effects=[
                             PreventDamageEffect(prevent),
@@ -896,6 +908,7 @@ class TestOneRollCoversTheList:
                 category="problem",
                 cost=1,
                 player_class="neutral",
+                kinds=frozenset({"melee"}),
                 shape=parse_map(["#"], "sword"),
                 slug=uid,
                 triggers=[
@@ -1109,7 +1122,8 @@ class TestCpuDrainIsAnOrdinaryEffect:
             spec=ItemSpec(
                 id="s", name="Shield", category="defense", cost=1,
                 player_class="neutral", shape=parse_map(["#"], "s"), slug="s",
-                triggers=[OnAttackedTrigger(chance=1.0, effects=[
+                kinds=frozenset({"melee"}),
+                triggers=[OnAttackedTrigger(answers_to=frozenset({"melee"}), chance=1.0, effects=[
                     PreventDamageEffect(10), CpuDrainEffect(0.5, target_type="attacker")])],
             ),
             position=(0, 0), uid="shield",
@@ -1119,6 +1133,7 @@ class TestCpuDrainIsAnOrdinaryEffect:
             spec=ItemSpec(
                 id="w", name="Sword", category="problem", cost=1,
                 player_class="neutral", shape=parse_map(["#"], "w"), slug="w",
+                kinds=frozenset({"melee"}),
                 triggers=[TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
                     AttackEffect(min_damage=5, max_damage=5, accuracy=1.0,
                                  crit_chance=0.0)])],
@@ -1147,6 +1162,7 @@ class TestHealthThresholds:
             spec=ItemSpec(
                 id=uid, name="Watcher", category="infrastructure", cost=1,
                 player_class="neutral", shape=parse_map(["#"], "w"), slug=uid,
+                kinds=frozenset({"melee"}),
                 triggers=[HealthThresholdTrigger(
                     threshold=threshold, effects=[HealEffect(1, 1)])],
             ),
@@ -1160,6 +1176,7 @@ class TestHealthThresholds:
             spec=ItemSpec(
                 id=uid, name="Sword", category="problem", cost=1,
                 player_class="neutral", shape=parse_map(["#"], "s"), slug=uid,
+                kinds=frozenset({"melee"}),
                 triggers=[TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
                     AttackEffect(min_damage=damage, max_damage=damage,
                                  accuracy=1.0, crit_chance=0.0)])],
@@ -1369,7 +1386,15 @@ class TestBuffsAreNotStats:
         attacker = Player(id=2, quota=100, max_quota=100, cpu=3.0)
         target.block = 10
 
-        got_through = sim._mitigate_attack(target, 15, attacker, "sword")
+        sword = BattleItem(
+            spec=ItemSpec(
+                id="w", name="Sword", category="problem", cost=1,
+                player_class="neutral", kinds=frozenset({"melee"}),
+                shape=parse_map(["#"], "w"), slug="w", triggers=[],
+            ),
+            position=(0, 0), uid="sword",
+        )
+        got_through = sim._mitigate_attack(target, 15, attacker, sword)
 
         assert got_through == 5
         assert target.block == 0
@@ -1484,6 +1509,7 @@ class TestHowFastAnItemTriggers:
                 spec=ItemSpec(
                     id="s", name="Sword", category="problem", cost=1,
                     player_class="neutral", shape=parse_map(["#"], "s"), slug="s",
+                    kinds=frozenset({"melee"}),
                     triggers=[TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
                         AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
                                      crit_chance=0.0)])],
@@ -1525,6 +1551,7 @@ class TestCalibratedAndRateLimited:
             spec=ItemSpec(
                 id="s", name="Sword", category="problem", cost=1,
                 player_class="neutral", shape=parse_map(["#"], "s"), slug="s",
+                kinds=frozenset({"melee"}),
                 triggers=[TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
                     AttackEffect(min_damage=1, max_damage=1, accuracy=accuracy,
                                  crit_chance=0.0)])],
@@ -1757,3 +1784,85 @@ class TestTheBuffsThatNeedAWeapon:
         assert [a for a in sim.actions if a.action == "dot"], "poison should tick"
         assert not [a for a in sim.actions
                     if (a.details or {}).get("buff_name") in (SPIKED, DRAINING)]
+
+
+class TestAShieldAnswersOnlyWhatItSays:
+    """Every shield in the source game is "On attacked (Melee)", and ours
+    used to roll against everything, which made them all stronger than they
+    should be against a ranged build."""
+
+    @staticmethod
+    def _weapon(melee: bool):
+        from item_effects import AttackEffect
+
+        return BattleItem(
+            spec=ItemSpec(
+                id="w", name="Weapon", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "w"), slug="w",
+                kinds=frozenset({"melee"} if melee else {"ranged"}),
+                triggers=[TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=6, max_damage=6, accuracy=1.0,
+                                 crit_chance=0.0)])],
+            ),
+            position=(4, 0), uid="weapon",
+        )
+
+    @staticmethod
+    def _shield(answers_to):
+        from item_effects import CpuDrainEffect, OnAttackedTrigger, PreventDamageEffect
+
+        return BattleItem(
+            spec=ItemSpec(
+                id="s", name="Shield", category="defense", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "s"), slug="s",
+                triggers=[OnAttackedTrigger(
+                    answers_to=frozenset(answers_to), chance=1.0,
+                    effects=[PreventDamageEffect(10),
+                             CpuDrainEffect(0.5, target_type="attacker")])],
+            ),
+            position=(0, 0), uid="shield",
+        )
+
+    def _run(self, shield, weapon):
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 2.5
+        sim.simulate_battle([shield], [weapon], 18, p1, p2)
+        return sim
+
+    def test_a_melee_shield_answers_a_melee_weapon(self):
+        sim = self._run(self._shield({"melee"}), self._weapon(melee=True))
+        assert [a for a in sim.actions if a.action == "block"]
+
+    def test_a_melee_shield_ignores_a_bow(self):
+        """The bug. Every shield we have is melee-only, and 8 weapons in the
+        catalogue are ranged."""
+        sim = self._run(self._shield({"melee"}), self._weapon(melee=False))
+        assert not [a for a in sim.actions if a.action == "block"]
+        assert [a for a in sim.actions if a.action == "damage" and a.damage == 6]
+
+    def test_it_takes_no_cpu_from_an_attack_it_ignores(self):
+        """The whole roll is skipped, not just the prevention."""
+        sim = self._run(self._shield({"melee"}), self._weapon(melee=False))
+        assert not [a for a in sim.actions if a.action == "cpu_drain"]
+
+    def test_a_shield_that_says_both_answers_both(self):
+        """Moon Shield, Sun Shield and Spiked Wall are "(Melee/Ranged)". None
+        is imported, but the shield says which it answers rather than the
+        engine assuming."""
+        both = {"melee", "ranged"}
+        assert [a for a in self._run(self._shield(both), self._weapon(True)).actions
+                if a.action == "block"]
+        assert [a for a in self._run(self._shield(both), self._weapon(False)).actions
+                if a.action == "block"]
+
+    def test_every_shield_in_the_catalogue_says_what_it_answers(self):
+        from item_effects import OnAttackedTrigger
+
+        found = 0
+        for item_id, spec in ITEM_CATALOG.items():
+            for trigger in spec.triggers or []:
+                if isinstance(trigger, OnAttackedTrigger):
+                    found += 1
+                    assert trigger.answers_to, f"{item_id} answers to nothing"
+        assert found, "the catalogue should still have shields in it"

@@ -17,6 +17,9 @@
       "triggers": [
         {
           "type": "on_attacked",
+          "answers_to": [
+            "melee"
+          ],
           "effects": [
             {
               "type": "prevent_damage",
@@ -50,6 +53,9 @@
       "triggers": [
         {
           "type": "on_attacked",
+          "answers_to": [
+            "melee"
+          ],
           "effects": [
             {
               "type": "prevent_damage",
@@ -85,6 +91,9 @@
       "triggers": [
         {
           "type": "on_attacked",
+          "answers_to": [
+            "melee"
+          ],
           "effects": [
             {
               "type": "prevent_damage",
@@ -122,6 +131,9 @@
       "triggers": [
         {
           "type": "on_attacked",
+          "answers_to": [
+            "melee"
+          ],
           "chance": 0.3,
           "effects": [
             {
@@ -171,6 +183,9 @@
       "triggers": [
         {
           "type": "on_attacked",
+          "answers_to": [
+            "melee"
+          ],
           "chance": 0.3,
           "effects": [
             {

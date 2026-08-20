@@ -43,7 +43,9 @@ class EventData:
     buff_value: Optional[int] = None
     previous_health: Optional[int] = None
     current_health: Optional[int] = None
-    attacker_item_id: Optional[str] = None  # For ON_ATTACKED and ON_HIT events
+    attacker_item_id: Optional[str] = None
+    # How the attacking item swings, so a shield can tell whether it answers
+    attacker_kinds: frozenset = frozenset()  # For ON_ATTACKED and ON_HIT events
     pending_damage: Optional[int] = None  # Damage before blocks/mitigation
 
 
