@@ -335,9 +335,90 @@ def hit():
     write("hit.wav", buffer, normalise=False)
 
 
+# ============ The three beats of a merge ============
+#
+# Items combining is the one moment in the shop phase where the game does
+# something to the rack by itself, so it gets a sound with a shape: a pull, a
+# strike, and an arrival. Three files rather than one long cue, because the
+# middle of it has to land on the frame the items go out on, and a cue that
+# has to stay in step with an animation is a cue that drifts.
+
+
+def merge_charge():
+    """The pull. Two items being dragged towards each other, and knowing it.
+
+    A rattle that speeds up over a note bending upwards. The rattle is the
+    shake on screen; the bend is what says the shake is going somewhere.
+    """
+    buffer = [0.0] * int(1.15 * RATE)
+
+    # Knocks, closer together and harder as the pull tightens. This is the
+    # shake, and it has to be heard as one thing gathering rather than as a
+    # row of ticks, so each is louder than the last.
+    at = 0.02
+    gap = 0.085
+    while at < 0.6:
+        noise(buffer, at, 0.05, 0.12 + 0.85 * (at / 0.6) ** 2, 0.018, 2800)
+        at += gap
+        gap *= 0.86
+
+    # The note underneath, bending up as the items commit and fly. A long
+    # attack rather than a long decay: this has to swell into the flight, and
+    # a note that starts loud and fades is a note that has already happened.
+    voice(buffer, 0.0, 62, 0.75, attack=0.85, decay=3.2, harmonics=7,
+          voices=3, detune=0.013, rolloff=1.5, glide=3.2)
+    # A second, higher, arriving as they leave the ground.
+    voice(buffer, 0.5, 210, 0.3, attack=0.35, decay=1.4, harmonics=5,
+          voices=2, detune=0.01, rolloff=1.8, glide=2.0)
+    sweep_filter(buffer, 320, 4200, resonance=2.2, over=1.0, curve=1.4)
+    write("merge_charge.wav", buffer)
+
+
+def merge_flash():
+    """The strike. The moment two items stop being two items.
+
+    A crack, a thump under it and a short metallic ring over it. Brief on
+    purpose: it has to land on one frame and be gone before the chord.
+    """
+    buffer = [0.0] * int(0.65 * RATE)
+
+    noise(buffer, 0.0, 0.16, 1.1, 0.026, 11000)
+    voice(buffer, 0.0, 58, 0.8, attack=0.002, decay=0.17, harmonics=3,
+          rolloff=2.2)
+    voice(buffer, 0.004, 1180, 0.32, attack=0.001, decay=0.24, harmonics=4,
+          voices=2, detune=0.012, rolloff=2.0)
+    tail(buffer)
+    write("merge_flash.wav", buffer)
+
+
+def merge_done():
+    """The arrival. What they became, standing up.
+
+    A major chord struck from the bottom up and left ringing, with the filter
+    opening across it -- the same trick the won sting uses, over in a fifth of
+    the time, because this one plays every time a rack crafts anything.
+    """
+    buffer = [0.0] * int(1.7 * RATE)
+
+    # Struck, so it is loudest at the front. The notes are barely staggered:
+    # far enough apart to hear the chord being rolled, near enough that the
+    # whole of it still lands as one hit.
+    for step, freq in enumerate((523.25, 659.25, 783.99, 1046.50)):
+        voice(buffer, 0.008 * step, freq, 0.55 - 0.06 * step,
+              attack=0.003, decay=0.8, harmonics=6, voices=2, detune=0.006,
+              rolloff=1.9)
+    noise(buffer, 0.0, 0.05, 0.30, 0.012, 7000)
+    sweep_filter(buffer, 2200, 7200, resonance=1.4, over=0.07, curve=0.7)
+    tail(buffer)
+    write("merge_done.wav", buffer)
+
+
 if __name__ == "__main__":
     won()
     lost()
     won_chime()
     lost_chime()
     hit()
+    merge_charge()
+    merge_flash()
+    merge_done()

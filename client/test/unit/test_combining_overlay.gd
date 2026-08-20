@@ -188,3 +188,81 @@ func test_two_merges_in_one_round_are_two_blooms():
 	overlay.flash_at(Vector2(300, 90))
 
 	assert_eq(overlay.flashes(), 2)
+
+
+# ============ Naming what was just made ============
+
+func test_it_says_what_was_made():
+	"""Two items become a third the player has never held. Making them guess
+	at that moment is the one thing the merge must not do."""
+	overlay.announce("Duct Tape Fix", Vector2(120, 90))
+
+	assert_eq(overlay.announced(), ["Duct Tape Fix"])
+
+
+func test_the_name_goes_by_itself():
+	overlay.announce("Duct Tape Fix", Vector2(120, 90), 0.2)
+
+	overlay._process(0.1)
+	overlay._process(0.15)
+
+	assert_eq(overlay.announced(), [], "nothing is left to take away by hand")
+
+
+func test_a_nameless_thing_is_not_announced():
+	overlay.announce("", Vector2(120, 90))
+
+	assert_eq(overlay.announced(), [])
+
+
+func test_two_names_at_once_do_not_land_on_each_other():
+	"""Two racks can combine in the same round, and two names written over the
+	same squares are one unreadable name."""
+	overlay.announce("Duct Tape Fix", Vector2(200, 300))
+
+	overlay.announce("Amethyst Collar", Vector2(210, 305))
+
+	var said = overlay._said
+	assert_lt(said[1]["at"].y, said[0]["at"].y - 20.0,
+		"the second is stacked above the first")
+
+
+# ============ The whiteout ============
+
+func test_the_screen_goes_white_and_comes_back():
+	overlay.whiteout(0.4)
+
+	overlay._process(0.03)
+	assert_gt(overlay.whitening(), 0.0, "it comes up")
+	overlay._process(0.4)
+	assert_eq(overlay.whitening(), 0.0, "and it is over by itself")
+
+
+func test_the_whiteout_is_brightest_early():
+	"""Up fast and down slow: the eye reads the arrival, not the departure."""
+	overlay.whiteout(1.0)
+	overlay._process(0.18)
+	var at_peak: float = overlay.whitening()
+
+	overlay._process(0.5)
+
+	assert_gt(at_peak, 0.9, "it reaches full brightness quickly")
+	assert_lt(overlay.whitening(), at_peak, "and takes longer to leave")
+
+
+func test_it_never_quite_reaches_white():
+	"""A screen that goes fully white and back is a blink nobody asked for."""
+	assert_lt(overlay.WHITEOUT_PEAK, 1.0)
+
+
+func test_asking_for_a_second_whiteout_does_not_stack_it():
+	"""Two racks combining at once share one. Two over each other would only
+	be a longer, brighter one, which is not what either of them asked for."""
+	overlay.whiteout(0.4)
+	overlay._process(0.03)
+
+	overlay.whiteout(0.4)
+	overlay._process(0.03)
+
+	assert_almost_eq(overlay.whitening(), 0.03 / (0.4 * 0.18), 0.05,
+		"the second one restarted it rather than adding to it")

@@ -1733,6 +1733,36 @@ func _create_combining_overlay() -> void:
 	combining_overlay = CombiningOverlay.new()
 	combining_overlay.name = "CombiningOverlay"
 	add_child(combining_overlay)
+	_build_merge_sounds()
+
+
+func _build_merge_sounds() -> void:
+	"""One player per cue, made once. They never overlap each other."""
+	for beat in MERGE_SOUNDS:
+		var path: String = MERGE_SOUNDS[beat]
+		if not ResourceLoader.exists(path):
+			continue
+		var voice := AudioStreamPlayer.new()
+		voice.name = "Merge" + beat.capitalize()
+		voice.stream = load(path)
+		voice.volume_db = MERGE_VOLUME[beat]
+		add_child(voice)
+		_merge_voices[beat] = voice
+
+
+func _merge_sound(beat: String) -> void:
+	"""Sound one beat of a merge. Silent where animations are off, which is
+	where there is no audio driver to sound it on either.
+
+	Once for the round, not once for each merge: two racks combining at the
+	same moment is one event to look at, and two copies of the same cue over
+	each other is a flam.
+	"""
+	if not Presentation.animations_enabled():
+		return
+	var voice = _merge_voices.get(beat)
+	if voice != null:
+		voice.play()
 
 
 func _process(_delta: float) -> void:
@@ -1881,6 +1911,28 @@ func items_on_screen() -> Array:
 # shop screen plays it forwards, and never shows the result before the merge.
 
 
+## How long each beat of a merge takes. The rules say nothing about this; what
+## it has to do is read as one event -- the rack notices, the items commit, and
+## the result arrives -- rather than as items disappearing.
+const MERGE_SHAKE := 0.55
+const MERGE_FLY := 0.42
+const MERGE_FLASH := 0.16
+const MERGE_ARRIVE := 0.65
+
+## One cue per beat rather than one long one. The middle of it has to land on
+## the frame the items go out on, and a cue that has to stay in step with an
+## animation is a cue that drifts. Made by tools/create_sounds.py.
+const MERGE_SOUNDS := {
+	"charge": "res://assets/audio/merge_charge.wav",
+	"flash": "res://assets/audio/merge_flash.wav",
+	"done": "res://assets/audio/merge_done.wav",
+}
+## The pull sits under the strike, and both sit under the music.
+const MERGE_VOLUME := {"charge": -13.0, "flash": -7.0, "done": -9.0}
+
+var _merge_voices: Dictionary = {}
+
+
 func play_combining() -> void:
 	"""Show what the rack did while the player was watching the battle.
 
@@ -1911,51 +1963,159 @@ func play_combining() -> void:
 	if not is_inside_tree():
 		return
 
+	_merge_sound("charge")
 	for made in combinations:
+		# Written down as well as drawn. When a player says "that ate the wrong
+		# thing", what was actually eaten is the first question, and the items
+		# are gone from the rack by the time it is asked.
+		print("Combining %s from %s" % [made.made,
+			", ".join(made.consumed.map(func(item): return item.name))])
 		_play_one_combining(made)
-	await get_tree().create_timer(Presentation.delay(0.75) + 0.01).timeout
+
+	await _pause(MERGE_SHAKE + MERGE_FLY)
+	if not is_inside_tree():
+		return
+	_merge_sound("flash")
+	# One for the round, whatever combined. The board is drawn again while it
+	# is at its brightest, so the swap happens where it cannot be seen.
+	if combining_overlay != null:
+		combining_overlay.whiteout()
+
+	await _pause(MERGE_FLASH)
 	if not is_inside_tree():
 		return
 
+	# The board is drawn again inside the flash, which is what hides the swap.
 	_reload_board()
+	_merge_sound("done")
+	for made in combinations:
+		_welcome_the_result(made)
+	await _pause(MERGE_ARRIVE)
+
+
+func _pause(seconds: float) -> void:
+	"""Wait out a beat of the merge. A frame of it where animations are off."""
+	await get_tree().create_timer(Presentation.delay(seconds) + 0.01).timeout
 
 
 func _play_one_combining(made: APITypes.Combination) -> void:
-	"""The ingredients slide together, flash, and are gone.
+	"""One merge, in four beats.
 
-	The catalysts are not touched: they are still there afterwards, and an
-	animation that swept them up as well would say they had been eaten.
+	The items rattle where they stand, fly into the middle, go out in a white
+	flash, and what they became stands up on the squares they left. The rattle
+	is what makes it read as something happening to the items rather than to
+	the screen: they are pulled at before they move.
+
+	Catalysts rattle with the rest and then stay where they are. They are not
+	eaten, and an animation that swept them up as well would say they were.
 	"""
 	if not Presentation.request("item_combined",
 			{"made": made.made, "ate": made.consumed.size()}):
 		return
 
 	var lands_on := _where_the_result_lands(made)
+	var which := 0
 	for eaten in made.consumed:
 		var visual = inventory_grid.item_visual(eaten.id)
-		if not is_instance_valid(visual):
-			continue
-		var tween := create_tween().set_parallel(true)
-		tween.tween_property(visual, "position",
-			lands_on - visual.size / 2.0, 0.35) \
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tween.tween_property(visual, "modulate:a", 0.0, 0.35) \
-			.set_delay(0.2)
+		if is_instance_valid(visual):
+			_rattle(visual, which)
+			_fly_in(visual, lands_on)
+		which += 1
 
 	for kept in made.kept:
 		var visual = inventory_grid.item_visual(kept.id)
 		if is_instance_valid(visual):
-			# One pulse, so the player can see which item stayed behind.
-			var tween := create_tween()
-			tween.tween_property(visual, "modulate", Color(1.6, 1.4, 1.0), 0.2)
-			tween.tween_property(visual, "modulate", Color.WHITE, 0.25)
+			_rattle(visual, which)
+			_flare(visual)
+		which += 1
 
-	# When they arrive, not when they set off: the flash is the moment the two
-	# items become one.
+	# The flash belongs to the moment they arrive, not the moment they set off.
 	var flash := create_tween()
-	flash.tween_interval(0.3)
+	flash.tween_interval(MERGE_SHAKE + MERGE_FLY)
 	flash.tween_callback(_flash_at.bind(
 		inventory_grid.get_global_transform() * lands_on))
+
+
+func _rattle(visual: Control, which: int) -> void:
+	"""Shake an item where it stands, harder as it goes.
+
+	Each one on its own path. Four items shaken the same way read as one block
+	sliding about; shaken differently they read as four things being pulled at.
+	"""
+	var home := visual.position
+	visual.pivot_offset = visual.size / 2.0
+
+	var tween := create_tween()
+	var steps := 12
+	for step in range(steps):
+		var how_far := 1.0 + 5.5 * float(step) / steps
+		# Turning by a fraction of a full circle each step, so the item never
+		# repeats a direction and never falls into a straight wobble.
+		var away := Vector2(how_far, 0).rotated(which * 1.7 + step * 2.39996)
+		tween.tween_property(visual, "position", home + away,
+			MERGE_SHAKE / steps).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(visual, "position", home, 0.02)
+
+
+func _fly_in(visual: Control, lands_on: Vector2) -> void:
+	"""Off to the middle, once the shaking has done its work."""
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(visual, "position", lands_on - visual.size / 2.0,
+		MERGE_FLY).set_delay(MERGE_SHAKE) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(visual, "scale", Vector2(0.35, 0.35), MERGE_FLY) \
+		.set_delay(MERGE_SHAKE).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(visual, "modulate", Color(2.2, 2.0, 1.6, 1.0),
+		MERGE_FLY * 0.7).set_delay(MERGE_SHAKE)
+	# Gone as the flash covers them, rather than left underneath it.
+	tween.tween_property(visual, "modulate:a", 0.0, 0.08) \
+		.set_delay(MERGE_SHAKE + MERGE_FLY - 0.04)
+
+
+func _flare(visual: Control) -> void:
+	"""One bright pulse on a catalyst, at the moment the others go."""
+	var tween := create_tween()
+	tween.tween_interval(MERGE_SHAKE + MERGE_FLY - 0.1)
+	tween.tween_property(visual, "modulate", Color(1.9, 1.6, 1.1), 0.14)
+	tween.tween_property(visual, "modulate", Color.WHITE, 0.35)
+
+
+func _welcome_the_result(made: APITypes.Combination) -> void:
+	"""What they became stands up, named, and the rack is struck around it.
+
+	A result too big for the squares it was made on goes to the chest, so there
+	may be nothing on the rack to stand up. The name and the rings still happen
+	where the items met: that is where the player is looking.
+	"""
+	var lands_on := inventory_grid.get_global_transform() * _where_the_result_lands(made)
+	var visual = inventory_grid.item_visual(made.made_id)
+	if is_instance_valid(visual):
+		lands_on = visual.get_global_rect().get_center()
+
+	# Said whether or not there is an animation to say it over. The name is
+	# not decoration: two items have become a third the player has never held,
+	# and the thing they were watching a moment ago was the other two.
+	if combining_overlay != null:
+		combining_overlay.announce(
+			GameStateManager.combining.name_of(made.made), lands_on)
+
+	if not Presentation.request("item_arrived", {"made": made.made}):
+		return
+
+	if is_instance_valid(visual):
+		visual.pivot_offset = visual.size / 2.0
+		visual.scale = Vector2(0.25, 0.25)
+		visual.modulate = Color(2.4, 2.2, 1.8, 0.0)
+		var tween := create_tween().set_parallel(true)
+		# Overshooting, so it lands rather than fades up.
+		tween.tween_property(visual, "scale", Vector2.ONE, MERGE_ARRIVE) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(visual, "modulate:a", 1.0, MERGE_ARRIVE * 0.25)
+		tween.tween_property(visual, "modulate", Color.WHITE, MERGE_ARRIVE) \
+			.set_delay(MERGE_ARRIVE * 0.25)
+
+	if combining_overlay != null:
+		combining_overlay.burst_at(lands_on)
 
 
 func _where_the_result_lands(made: APITypes.Combination) -> Vector2:

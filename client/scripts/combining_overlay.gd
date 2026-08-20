@@ -34,6 +34,17 @@ const LAYER := 50
 ## middle rather than edge to edge. Two squares, about.
 const TOUCHING := 26.0
 
+## How big to write the name of something just made.
+const SAID_SIZE := 26
+## How near two names have to be before one is moved off the other.
+const CROWDED := Vector2(220.0, 34.0)
+
+## How white the screen gets when items merge, and how much of that moment is
+## spent getting there. Short of solid on purpose: this fires once a round, and
+## a screen that goes fully white and back is a blink nobody asked for.
+const WHITEOUT_PEAK := 0.82
+const WHITEOUT_RISE := 0.18
+
 # Where the arcs come from, and what they point at. Nodes rather than places,
 # so a line follows an item being dragged without being told it moved.
 var _from: Control = null
@@ -41,8 +52,14 @@ var _to: Array[Control] = []
 # Each entry is the items of one combination that is about to happen.
 var _groups: Array = []
 
-# Blooms where ingredients met, each with the moment it was struck.
+# Blooms where ingredients met, and rings struck round what they became. Each
+# carries the moment it was made, and goes out by itself.
 var _flashes: Array = []
+var _bursts: Array = []
+# Names called out over something that has just been made.
+var _said: Array = []
+# The one moment the whole screen goes white. Empty when it is not happening.
+var _whiteout: Dictionary = {}
 
 var _label: Label = null
 var _label_over: Control = null
@@ -64,13 +81,24 @@ func _process(delta: float) -> void:
 	# several times a second, a glow breathes, a bloom fades; nothing else
 	# here moves.
 	_time += delta
-	var alive := []
-	for flash in _flashes:
-		if _time - flash["struck"] < flash["life"]:
-			alive.append(flash)
-	_flashes = alive
-	if _from != null or not _groups.is_empty() or not _flashes.is_empty():
+	_flashes = _still_alight(_flashes)
+	_bursts = _still_alight(_bursts)
+	_said = _still_alight(_said)
+	if not _whiteout.is_empty() \
+			and _time - _whiteout["struck"] >= _whiteout["life"]:
+		_whiteout = {}
+	if _from != null or not _groups.is_empty() or not _flashes.is_empty() \
+			or not _bursts.is_empty() or not _said.is_empty() \
+			or not _whiteout.is_empty():
 		queue_redraw()
+
+
+func _still_alight(lit: Array) -> Array:
+	var alive := []
+	for one in lit:
+		if _time - one["struck"] < one["life"]:
+			alive.append(one)
+	return alive
 
 
 # ============= What to draw =============
@@ -129,8 +157,83 @@ func flash_at(spot_on_screen: Vector2, life: float = 0.5) -> void:
 	queue_redraw()
 
 
+func burst_at(spot_on_screen: Vector2, life: float = 0.65) -> void:
+	"""Rings struck outwards from something that has just arrived.
+
+	The flash says two items stopped being themselves. This says what they
+	became is here, so it is drawn on top of the item rather than instead of
+	it: rings widening off it, not a blaze covering it up.
+	"""
+	_bursts.append({
+		"at": get_global_transform().affine_inverse() * spot_on_screen,
+		"struck": _time,
+		"life": life,
+	})
+	queue_redraw()
+
+
+func whiteout(life: float = 0.34) -> void:
+	"""Take the whole screen to white for an instant.
+
+	One for the round, however many racks combined: several at once is one
+	event to look at, and two whiteouts over each other would only be a longer,
+	brighter one. It also covers the swap outright -- the board is drawn again
+	from the server's answer underneath it.
+
+	Up fast and down slow, and never quite to white. A screen that goes fully
+	white and back is a blink the player did not ask for.
+	"""
+	_whiteout = {"struck": _time, "life": life}
+	queue_redraw()
+
+
+func whitening() -> float:
+	"""How white the screen is, from 0 to 1."""
+	if _whiteout.is_empty():
+		return 0.0
+	var age: float = (_time - _whiteout["struck"]) / _whiteout["life"]
+	if age < WHITEOUT_RISE:
+		return clampf(age / WHITEOUT_RISE, 0.0, 1.0)
+	return clampf(1.0 - (age - WHITEOUT_RISE) / (1.0 - WHITEOUT_RISE), 0.0, 1.0)
+
+
+func announce(text: String, spot_on_screen: Vector2, life: float = 1.4) -> void:
+	"""Name what has just been made, over the item that was made.
+
+	Combining is the one thing in the shop phase that happens without the
+	player asking, and two items becoming a third they have never held is a
+	poor moment to make them guess. The name comes from the catalogue, because
+	the thing it names did not exist a second ago.
+	"""
+	if text == "":
+		return
+
+	# Two racks can combine in the same round, and two names written over the
+	# same squares are one unreadable name. Anything landing on top of one
+	# already up is stacked above it instead.
+	var at := get_global_transform().affine_inverse() * spot_on_screen
+	for other in _said:
+		var theirs: Vector2 = other["at"]
+		while absf(at.x - theirs.x) < CROWDED.x and absf(at.y - theirs.y) < CROWDED.y:
+			at.y -= CROWDED.y
+
+	_said.append({"text": text, "at": at, "struck": _time, "life": life})
+	queue_redraw()
+
+
+func announced() -> Array:
+	var names := []
+	for saying in _said:
+		names.append(saying["text"])
+	return names
+
+
 func flashes() -> int:
 	return _flashes.size()
+
+
+func bursts() -> int:
+	return _bursts.size()
 
 
 func progress(text: String, over: Control) -> void:
@@ -209,6 +312,12 @@ func _draw() -> void:
 		_draw_glow(group)
 	for flash in _flashes:
 		_draw_flash(flash)
+	for burst in _bursts:
+		_draw_burst(burst)
+	for saying in _said:
+		_draw_saying(saying)
+	# Last, because it is the one thing that covers the rest.
+	_draw_whiteout()
 	var line := 0
 	for ends in arcs():
 		_draw_arc_between(ends[0], ends[1], line)
@@ -251,13 +360,60 @@ func _draw_arc_between(from: Vector2, to: Vector2, line: int) -> void:
 func _draw_flash(flash: Dictionary) -> void:
 	var age: float = (_time - flash["struck"]) / flash["life"]
 	var fading := 1.0 - clampf(age, 0.0, 1.0)
-	# Growing as it goes out, which is what a flash of light does and what
-	# tells the player it has happened rather than that it is happening.
-	var reach := 16.0 + 44.0 * age
+	# White at the middle and hot at the edge, growing as it goes out. It has
+	# to be bright enough to cover the swap: the board is drawn again inside
+	# it, and what the flash hides is the ingredients being replaced.
+	var reach := 20.0 + 70.0 * age
 	var at: Vector2 = flash["at"]
-	draw_circle(at, reach, Color(READY, 0.28 * fading))
-	draw_circle(at, reach * 0.6, Color(1.0, 0.92, 0.7, 0.45 * fading))
-	draw_circle(at, reach * 0.28, Color(1.0, 1.0, 0.96, 0.8 * fading))
+	draw_circle(at, reach, Color(READY, 0.30 * fading))
+	draw_circle(at, reach * 0.66, Color(1.0, 0.94, 0.76, 0.55 * fading))
+	draw_circle(at, reach * 0.4, Color(1.0, 0.99, 0.93, 0.85 * fading))
+	draw_circle(at, reach * 0.2, Color(1.0, 1.0, 1.0, fading))
+
+
+func _draw_burst(burst: Dictionary) -> void:
+	"""Two rings widening off the new item, the second a beat behind."""
+	var age: float = (_time - burst["struck"]) / burst["life"]
+	var at: Vector2 = burst["at"]
+
+	for ring in range(2):
+		var since := age - ring * 0.22
+		if since <= 0.0 or since >= 1.0:
+			continue
+		var fading := (1.0 - since) * (1.0 - since)
+		var reach := 8.0 + 78.0 * sqrt(since)
+		draw_arc(at, reach, 0.0, TAU, 48,
+			Color(CORE, 0.55 * fading), 3.0 - ring, true)
+		draw_arc(at, reach, 0.0, TAU, 48,
+			Color(READY, 0.35 * fading), 9.0 - ring * 3.0, true)
+
+
+func _draw_whiteout() -> void:
+	var lit := whitening()
+	if lit <= 0.0:
+		return
+	var here := get_global_transform().affine_inverse()
+	var view := get_viewport_rect()
+	draw_rect(Rect2(here * view.position, here.basis_xform(view.size)),
+		Color(1.0, 0.99, 0.96, lit * WHITEOUT_PEAK))
+
+
+func _draw_saying(saying: Dictionary) -> void:
+	"""The name, rising off the item and fading as it goes."""
+	var age: float = (_time - saying["struck"]) / saying["life"]
+	# Holding still at first and only then fading, so it is read rather than
+	# glimpsed.
+	var fading := clampf(1.0 - (age - 0.45) / 0.55, 0.0, 1.0)
+	var font := ThemeDB.fallback_font
+	var text: String = saying["text"]
+	var wide := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, SAID_SIZE).x
+	var at: Vector2 = saying["at"] + Vector2(
+		-wide / 2.0, -34.0 - 30.0 * sqrt(age))
+
+	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, SAID_SIZE,
+		7, Color(0.04, 0.02, 0.0, fading))
+	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, SAID_SIZE,
+		Color(1.0, 0.93, 0.72, fading))
 
 
 func _draw_glow(group: Array) -> void:

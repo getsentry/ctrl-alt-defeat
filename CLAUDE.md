@@ -39,7 +39,7 @@ notice a scene that no longer loads.
 
 | Suite | Tests | Needs a server | Time |
 |-------|-------|----------------|------|
-| `test/unit/` | 625 | no | 17s |
+| `test/unit/` | 646 | no | 18s |
 | `test/ui/` | 14 | yes | 100s |
 | `test/smoke/` | 8 | yes | <1s |
 | `test/integration/` | 0 | - | - |

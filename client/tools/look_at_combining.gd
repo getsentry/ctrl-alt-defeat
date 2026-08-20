@@ -64,10 +64,18 @@ func _process(_delta: float) -> bool:
 
 func _set_a_merge_going() -> void:
 	"""The rack as it fought, and the merge that happened when it stopped."""
-	# AT says which frame of the merge to catch. 22 is where the ingredients
-	# have arrived and the bloom is at its brightest.
+	# AT says which frame of the merge to catch. At sixty frames a second:
+	# 0-33 the items rattle, 34-58 they fly in, 60 the flash, then the result
+	# stands up with rings struck round it.
 	var frame := OS.get_environment("AT")
-	shoot_at = 5 + (int(frame) if frame != "" else 22)
+	shoot_at = 5 + (int(frame) if frame != "" else 60)
+	state.combining.catalogue = APITypes.CombiningCatalogue.new({
+		"partners": {},
+		"names": {
+			"blue_sage_collar": "Amethyst Collar",
+			"serverless_function": "Serverless Function",
+		},
+	})
 	ui.set_process(false)
 
 	var fought_with := {
@@ -116,7 +124,11 @@ func _set_the_scene() -> void:
 			"neural_link_collar": ["cpu_booster"],
 			"cpu_booster": ["neural_link_collar"],
 		},
-		"names": {"hero_longsword": "Long Poll"},
+		"names": {
+			"hero_longsword": "Long Poll",
+			"blue_sage_collar": "Amethyst Collar",
+			"serverless_function": "Serverless Function",
+		},
 	})
 
 	ui.inventory_grid.load_inventory_state(APITypes.InventoryState.new({
