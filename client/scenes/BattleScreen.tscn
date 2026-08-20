@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://b7t4s8m6l2n3x"]
+[gd_scene load_steps=9 format=3 uid="uid://b7t4s8m6l2n3x"]
 
 [ext_resource type="Script" uid="uid://xk1kc0lapshy" path="res://scripts/battle_screen.gd" id="1_wqk2m"]
 [ext_resource type="Texture2D" uid="uid://bo6n7cokt03x" path="res://assets/characters/sentaur_battle.png" id="2_e26j6"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://b2tjp151rify1" path="res://assets/ui/backgrounds/player_status_area.png" id="4_tji62"]
 [ext_resource type="Texture2D" uid="uid://bivolioys1fh2" path="res://assets/ui/backgrounds/opponent_status_area.png" id="6_3n4vy"]
 [ext_resource type="Texture2D" uid="uid://bdgn6pibt0748" path="res://assets/ui/rooftop_parapet.png" id="7_parapet"]
+[ext_resource type="AudioStream" uid="uid://bqg2f7mom32sb" path="res://assets/audio/battle_music.ogg" id="12_music"]
 
 [node name="BattleScreen" type="Control"]
 layout_mode = 3
@@ -387,3 +388,8 @@ alignment = 1
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 text = "Speed: 10x"
+
+[node name="BattleMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("12_music")
+volume_db = -18.0
+autoplay = true
