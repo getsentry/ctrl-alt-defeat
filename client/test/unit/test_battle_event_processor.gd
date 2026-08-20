@@ -616,7 +616,8 @@ func test_the_client_handles_every_action_the_server_declares():
 		"spend": {"costs": {"credits": 3}},
 		"stun": {"until": 2.5},
 		"resist": {"debuff_name": "memory_leaked"},
-		"player_modify": {"stat": "damage_taken", "value": -0.25, "seconds": 7.0}
+		"player_modify": {"stat": "damage_taken", "value": -0.25, "seconds": 7.0},
+		"trigger_item": {"triggered": "health_potion"}
 	}
 
 	for action_name in declared:

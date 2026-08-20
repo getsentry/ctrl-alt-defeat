@@ -232,6 +232,9 @@ func _process_event(event: APITypes.BattleAction):
 		"player_modify":
 			log_msg = "[%.1fs] Player %d: %s %+.0f%%" % [event_time, player, event.details["stat"], event.details["value"] * 100.0]
 			log_color = Color(0.6, 1.0, 0.8)  # Mint, the same as a buff
+		"trigger_item":
+			log_msg = "[%.1fs] Player %d's %s sets off %s" % [event_time, player, item_name, event.details["triggered"]]
+			log_color = Color(0.6, 1.0, 0.8)  # Mint, the same as a buff
 		_:
 			log_msg = "[%.1fs] Player %d: Action=%s, Source=%s, Damage=%d" % [event_time, player, action, item_name, event.damage]
 			log_color = Color.WHITE
@@ -310,6 +313,10 @@ func _process_event(event: APITypes.BattleAction):
 
 		"player_modify":
 			# Nothing to show yet: nothing draws what a player carries
+			pass
+
+		"trigger_item":
+			# Nothing to show yet: an item going off out of turn is not drawn
 			pass
 
 		"player_defeated":

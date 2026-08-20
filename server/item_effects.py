@@ -439,30 +439,24 @@ class StunEffect(Effect):
 # lets an unknown name be a typo rather than a shrug: one of these loads as a
 # gap the loader counts, anything else stops the load. Take a name off this
 # list when you build it. See BACKLOG.md.
-UNBUILT_TRIGGERS = frozenset({
-    "on_crit",
-    "on_damage",
-    "on_damage_dealt",
-    "on_big_damage",
-    "round_start",
-})
+#: Names the catalogue may use for something nothing implements yet. A name
+#: here loads as a gap the loader counts; anything else stops the load, which
+#: is what turns a typo into an error rather than a shrug.
+#:
+#: Both are empty, and that is the point. Every name they held was either
+#: built under a better one -- `lifesteal` is part of effect_damage,
+#: `gold_gain` is `gold`, `damage_immunity` is a share of damage taken,
+#: `multicast` is an extra attack -- or was never a mechanic at all:
+#: `spawn_companion`, `adaptive_buff`, `free_refresh`, `shop_discount`. No
+#: item declared any of them.
+#:
+#: Leaving them listed was not free. A name here is a name the loader accepts,
+#: so `"type": "lifesteal"` would have loaded as a declared gap and done
+#: nothing, where now it stops the load and says so. Add a name only when an
+#: item really does declare it, and take it off when it is built.
+UNBUILT_TRIGGERS: frozenset = frozenset()
 
-UNBUILT_EFFECTS = frozenset({
-    "adaptive_buff",
-    "battle_start",
-    "damage_bonus",
-    "damage_immunity",
-    "damage_reduction",
-    "deploy_phase",
-    "enemy_debuff",
-    "free_refresh",
-    "gold_gain",
-    "lifesteal",
-    "multicast",
-    "shop_discount",
-    "spawn_companion",
-    "special",
-})
+UNBUILT_EFFECTS: frozenset = frozenset()
 
 # How an item deals its damage. An item can carry other tags too -- holy,
 # nature, fire -- which say what it is made of rather than how it swings.
@@ -652,6 +646,77 @@ class ExtraAttackEffect(Effect):
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {"type": "extra_attack"}
+
+
+@dataclass
+class TriggerItemEffect(Counting, Effect):
+    """Make other items do what they do, and leave them where they are.
+
+    "Trigger the Star Pet", "Trigger all Star Food", "Use 11 Mana: Trigger all
+    Star Food", and the one every Potion has and none of them said: **a Potion
+    that is consumed also applies the effect of the Potion above it, without
+    consuming that one.** The wiki calls it potion spillover and writes it on
+    every Potion page in the same words.
+
+    "The Potion above it" and "its star" are the same square. A Potion's map is
+    `['*', '^', '#']`: it covers two squares and its star is the one directly
+    above, marked `^` so the projection goes straight up however the item is
+    turned. So this needs no idea of "above" at all.
+
+    **What triggering runs.** Everything the item's own triggers would do, less
+    two things:
+
+    - A standing trigger is skipped. A passive is on already, and running it
+      again would hand out its modifier a second time.
+    - `ConsumeEffect` is skipped, which is what "without consuming it" means.
+      A Potion's effects sit behind the condition that drinks it, and the
+      point of spillover is getting them without paying that.
+
+    It does not chain. The wiki says "the Potion above it" every time, in the
+    singular, and a stack of four is four spillovers rather than one of depth
+    four. Worth settling by playing, because the advice on the Potion Belt
+    page -- "the entire setup should be vertical to make the most of the
+    Potion spillover" -- reads either way.
+    """
+
+    where: str
+    counting: object
+
+    #: How many to trigger, or 0 for every one that counts.
+    how_many: int
+
+    #: `all` in the order they stand, or `random` for "trigger a random Star
+    #: Food". A random pick reads the same seeded rng as everything else.
+    pick: str
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "trigger_item", "where": self.where,
+                "how_many": self.how_many, "pick": self.pick}
+
+
+@dataclass
+class GoldEffect(Effect):
+    """Gain gold, which happens between battles and never in one."""
+
+    amount: int
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "gold", "amount": self.amount}
+
+
+@dataclass
+class SaleChanceEffect(Effect):
+    """Change how likely the shop is to mark an item down.
+
+    "Sale chance +3%", "Sales chance +10%". A share added to the shop's own
+    chance, and it stands for as long as the item is held rather than being
+    spent.
+    """
+
+    amount: float
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "sale_chance", "amount": self.amount}
 
 
 @dataclass
@@ -1020,6 +1085,26 @@ class OnAttackedTrigger(ChanceTrigger):
 
     #: The weapon kinds this answers to. Anything else passes it by.
     answers_to: frozenset = frozenset()
+
+
+@dataclass
+class ShopEnteredTrigger(Trigger):
+    """Fires when the shop phase begins, once per round.
+
+    "Shop entered: Gain 3 Gold". Nothing here happens in a battle, so nothing
+    here is asked for by the battle simulator: the shop is its own phase and
+    reads these where it starts.
+    """
+
+    effects: List[Effect] = field(default_factory=list)
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return False  # The shop reads these; no battle event carries them
+
+    def get_cpu_cost(self) -> float:
+        return 0
 
 
 @dataclass

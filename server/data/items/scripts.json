@@ -45,7 +45,7 @@
         }
       ],
       "slug": "health_check_script",
-      "icontype": "nature",
+      "icontype": "nature, food",
       "in_shop": true
     },
     "firewall_script": {
@@ -99,7 +99,7 @@
         }
       ],
       "slug": "firewall_script",
-      "icontype": "nature",
+      "icontype": "nature, food",
       "in_shop": true
     },
     "cache_optimizer": {
@@ -153,7 +153,7 @@
         }
       ],
       "slug": "cache_optimizer",
-      "icontype": "nature, magic",
+      "icontype": "nature, magic, food",
       "in_shop": true
     },
     "load_balancer_script": {
@@ -195,7 +195,7 @@
         }
       ],
       "slug": "load_balancer_script",
-      "icontype": "nature",
+      "icontype": "nature, food",
       "in_shop": true
     },
     "ai_assistant_bot": {
@@ -226,7 +226,7 @@
         }
       ],
       "slug": "ai_assistant_bot",
-      "icontype": "treasure, magic",
+      "icontype": "treasure, magic, food",
       "in_shop": true,
       "unbuilt": [
         "Every 3s: Use 1 Luck, 1 Heat and 1 Mana: Gain 1 Empower, 3 Regeneration and 20 maximum health."
@@ -288,7 +288,7 @@
       ],
       "slug": "ddos_protection_module",
       "sockets": 2,
-      "icontype": "treasure, nature, ranged",
+      "icontype": "treasure, nature, ranged, weapon, food",
       "in_shop": true
     },
     "cryogenic_cooling_system": {
@@ -321,7 +321,7 @@
         }
       ],
       "slug": "cryogenic_cooling_system",
-      "icontype": "treasure, ice",
+      "icontype": "treasure, ice, food",
       "in_shop": true,
       "unbuilt": [
         "Every 3s: If your opponent has at least 10 Cold, increase Effect-damage by 10% and deal 10 Effect-damage."
@@ -347,7 +347,7 @@
       "unbuilt": [
         "Every 6s: Heal for 10 and gain 2 buffs of the type of which you have the most."
       ],
-      "icontype": "magic"
+      "icontype": "magic, food"
     }
   }
 }

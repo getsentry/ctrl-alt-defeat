@@ -1114,6 +1114,36 @@ class TestTheCatalogueStillSaysWhatTheWikiSays:
         assert not wrong, "\n".join(wrong)
 
 
+class TestANameNothingBuildsStopsTheLoad:
+    """A name the loader accepts is a name a typo can hide behind.
+
+    The two lists of declared gaps are empty. Every name they held was either
+    built under a better one -- `lifesteal` is part of effect_damage,
+    `gold_gain` is `gold` -- or was never a mechanic: `spawn_companion`,
+    `free_refresh`. No item declared any of them, so listing them bought
+    nothing and cost the loader its ability to tell a gap from a mistake.
+    """
+
+    def loader(self):
+        return ConfigLoader()
+
+    def test_an_effect_nobody_built_is_refused(self):
+        for name in ("lifesteal", "free_refresh", "spawn_companion", "wibble"):
+            with pytest.raises(ValueError):
+                self.loader()._parse_effect({"type": name}, "some_item")
+
+    def test_a_trigger_nobody_built_is_refused(self):
+        for name in ("round_start", "on_crit", "wibble"):
+            with pytest.raises(ValueError):
+                self.loader()._parse_trigger({"type": name}, "some_item")
+
+    def test_the_catalogue_declares_no_gaps(self):
+        """If one is ever needed, it goes back on the list deliberately."""
+        loader = ConfigLoader()
+        loader.load_all()
+        assert loader.unbuilt == {}
+
+
 class TestTheShopOffersWhatTheSourceGameSells:
     """Whether an item can be bought is data like any other, and it was the
     one kind nothing checked.

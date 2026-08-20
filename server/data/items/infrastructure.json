@@ -30,7 +30,8 @@
         }
       ],
       "slug": "load_balancer_module",
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "gloves"
     },
     "quantum_processor": {
       "name": "Qubit Core",
@@ -185,7 +186,7 @@
         }
       ],
       "slug": "quantum_processor",
-      "icontype": "magic, vampiric, holy, dark",
+      "icontype": "magic, vampiric, holy, dark, accessory",
       "in_shop": true
     },
     "quantum_probability_core": {
@@ -215,7 +216,7 @@
         }
       ],
       "slug": "quantum_probability_core",
-      "icontype": "nature",
+      "icontype": "nature, accessory",
       "in_shop": true
     },
     "neural_link_collar": {
@@ -234,7 +235,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "neural_link_collar",
-      "icontype": "nature",
+      "icontype": "nature, accessory",
       "in_shop": true,
       "unbuilt": [
         "Star items gain 5% critical hit chance for each Luck."

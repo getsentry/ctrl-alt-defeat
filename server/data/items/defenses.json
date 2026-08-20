@@ -36,7 +36,8 @@
       ],
       "slug": "error_monitoring",
       "sockets": 1,
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "shield"
     },
     "firewall": {
       "name": "Firewall",
@@ -73,7 +74,8 @@
       ],
       "slug": "firewall",
       "sockets": 1,
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "shield"
     },
     "rate_limiter": {
       "name": "Throttle Gate",
@@ -145,7 +147,8 @@
       ],
       "slug": "rate_limiter",
       "sockets": 1,
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "shield"
     },
     "encryption_layer": {
       "name": "Cipher Lock",
@@ -189,7 +192,7 @@
       ],
       "slug": "encryption_layer",
       "sockets": 1,
-      "icontype": "ice",
+      "icontype": "ice, shield",
       "recipe": [
         {
           "ingredients": [
@@ -257,7 +260,8 @@
             "walrus_tusk"
           ]
         }
-      ]
+      ],
+      "icontype": "shield"
     },
     "adaptive_mesh_armor": {
       "name": "Mesh Vest",
@@ -299,7 +303,8 @@
       ],
       "slug": "adaptive_mesh_armor",
       "sockets": 2,
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "armor"
     },
     "cap_of_discomfort": {
       "name": "Itchy Firmware",
@@ -348,7 +353,7 @@
         "Opponent gains buff: 15% chance to nullify it."
       ],
       "sockets": 1,
-      "icontype": "dark",
+      "icontype": "dark, helmet",
       "recipe": [
         {
           "ingredients": [
@@ -392,7 +397,8 @@
         "15% chance to resist critical hits.",
         "15% chance to resist stuns."
       ],
-      "sockets": 1
+      "sockets": 1,
+      "icontype": "helmet"
     },
     "gloves_of_power": {
       "name": "Sudo Gauntlets",
@@ -472,7 +478,8 @@
             "security_hardening"
           ]
         }
-      ]
+      ],
+      "icontype": "gloves"
     },
     "glowing_crown": {
       "name": "Self-Signed Cert",
@@ -534,7 +541,7 @@
       "slug": "glowing_crown",
       "in_shop": true,
       "sockets": 1,
-      "icontype": "holy, magic"
+      "icontype": "holy, magic, helmet"
     },
     "gold_armor": {
       "name": "Gilded Chassis",
@@ -628,15 +635,22 @@
               "description": "Your Weapons attack 50% slower"
             }
           ]
+        },
+        {
+          "type": "shop_entered",
+          "effects": [
+            {
+              "type": "gold",
+              "amount": 3,
+              "description": "Gain 3 Gold"
+            }
+          ]
         }
       ],
       "slug": "gold_armor",
       "in_shop": false,
-      "unbuilt": [
-        "Shop entered: Gain 3 Gold."
-      ],
       "sockets": 3,
-      "icontype": "holy",
+      "icontype": "holy, armor",
       "recipe": [
         {
           "ingredients": [
@@ -697,7 +711,7 @@
         "Effects of Gemstones socketed in this are increased by 50%."
       ],
       "sockets": 2,
-      "icontype": "holy, magic",
+      "icontype": "holy, magic, helmet",
       "recipe": [
         {
           "ingredients": [
@@ -756,7 +770,8 @@
       ],
       "slug": "leather_boots",
       "in_shop": true,
-      "sockets": 1
+      "sockets": 1,
+      "icontype": "shoes"
     },
     "moon_armor": {
       "name": "Moonsteel Chassis",
@@ -825,7 +840,7 @@
       "slug": "moon_armor",
       "in_shop": false,
       "sockets": 3,
-      "icontype": "holy, magic",
+      "icontype": "holy, magic, armor",
       "recipe": [
         {
           "ingredients": [
@@ -881,7 +896,7 @@
         "Star items gained 12 Block: Gain 1 Mana."
       ],
       "sockets": 2,
-      "icontype": "holy, magic",
+      "icontype": "holy, magic, shield",
       "recipe": [
         {
           "ingredients": [
@@ -916,7 +931,7 @@
         "Star Food activates: Prevent +1 damage (up to +10) and heal for 8."
       ],
       "sockets": 1,
-      "icontype": "nature",
+      "icontype": "nature, shield",
       "recipe": [
         {
           "ingredients": [
@@ -970,7 +985,7 @@
         "StarItems give 30% more Block."
       ],
       "sockets": 2,
-      "icontype": "holy"
+      "icontype": "holy, shield"
     },
     "stone_armor": {
       "name": "Bare Metal Plate",
@@ -1045,7 +1060,8 @@
             "security_hardening"
           ]
         }
-      ]
+      ],
+      "icontype": "armor"
     },
     "stone_helm": {
       "name": "Bare Metal Helm",
@@ -1094,7 +1110,8 @@
             "security_hardening"
           ]
         }
-      ]
+      ],
+      "icontype": "helmet"
     },
     "stone_shoes": {
       "name": "Bare Metal Boots",
@@ -1123,7 +1140,8 @@
             "security_hardening"
           ]
         }
-      ]
+      ],
+      "icontype": "shoes"
     },
     "vampiric_armor": {
       "name": "Leech Plate",
@@ -1147,7 +1165,7 @@
         "Every 2.8s: Convert 10 health into 20 Block."
       ],
       "sockets": 2,
-      "icontype": "vampiric",
+      "icontype": "vampiric, armor",
       "recipe": [
         {
           "ingredients": [
@@ -1195,7 +1213,7 @@
       ],
       "slug": "vampiric_gloves",
       "in_shop": false,
-      "icontype": "vampiric",
+      "icontype": "vampiric, gloves",
       "recipe": [
         {
           "ingredients": [
@@ -1234,7 +1252,8 @@
             "system_restore"
           ]
         }
-      ]
+      ],
+      "icontype": "shoes"
     }
   }
 }

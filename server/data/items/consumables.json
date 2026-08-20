@@ -35,12 +35,25 @@
             },
             {
               "type": "consume"
+            },
+            {
+              "type": "trigger_item",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "potion"
+                ]
+              },
+              "how_many": 0,
+              "pick": "all",
+              "description": "and apply the effect of the Potion above it"
             }
           ]
         }
       ],
       "slug": "health_potion",
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "potion"
     },
     "cpu_booster": {
       "name": "Turbo Button",
@@ -82,7 +95,7 @@
         }
       ],
       "slug": "cpu_booster",
-      "icontype": "magic",
+      "icontype": "magic, accessory",
       "in_shop": true,
       "unbuilt": [
         "Use 35 Mana: Gain 20 random other buffs (once)."
@@ -129,6 +142,18 @@
             },
             {
               "type": "consume"
+            },
+            {
+              "type": "trigger_item",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "potion"
+                ]
+              },
+              "how_many": 0,
+              "pick": "all",
+              "description": "and apply the effect of the Potion above it"
             }
           ]
         }
@@ -142,7 +167,8 @@
           ]
         }
       ],
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "potion"
     },
     "data_packets": {
       "name": "Packet Burst",
@@ -189,7 +215,8 @@
       "subclass": "Hunter",
       "unbuilt": [
         "Star Weapons deal +50% critical damage. They remove 15 Block on crit."
-      ]
+      ],
+      "icontype": "accessory"
     },
     "healing_nanobots": {
       "name": "Repair Swarm",
@@ -218,7 +245,7 @@
         }
       ],
       "slug": "healing_nanobots",
-      "icontype": "nature",
+      "icontype": "nature, accessory",
       "in_shop": true
     },
     "auto_rollback": {
@@ -276,7 +303,7 @@
         }
       ],
       "slug": "auto_rollback",
-      "icontype": "nature",
+      "icontype": "nature, food",
       "in_shop": true
     }
   }

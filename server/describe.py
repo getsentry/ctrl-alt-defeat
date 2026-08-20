@@ -55,9 +55,12 @@ from item_effects import (
     OnAttackTrigger,
     OnAttackedTrigger,
     OnHitTrigger,
+    GoldEffect,
     OnMissTrigger,
     OnStunTrigger,
     OutOfStaminaTrigger,
+    SaleChanceEffect,
+    ShopEnteredTrigger,
     PassiveTrigger,
     PerCountEffect,
     PlayerModifyEffect,
@@ -530,6 +533,16 @@ def _(effect: ExtraAttackEffect) -> str:
 
 
 @of_effect.register
+def _(effect: GoldEffect) -> str:
+    return f"gain {number(effect.amount)} gold"
+
+
+@of_effect.register
+def _(effect: SaleChanceEffect) -> str:
+    return f"make a sale {number(effect.amount * 100)}% more likely"
+
+
+@of_effect.register
 def _(effect: StaminaEffect) -> str:
     if theirs(effect.target_type):
         return f"give your opponent {number(effect.amount)} CPU"
@@ -716,6 +729,12 @@ def _(trigger: OutOfStaminaTrigger) -> str:
 
 
 @of_trigger.register
+def _(trigger: ShopEnteredTrigger) -> str:
+    return "when the shop opens"
+
+
+
+@of_trigger.register
 def _(trigger: FatigueStartTrigger) -> str:
     return "at nightfall"
 
@@ -812,6 +831,7 @@ BULLET = "\u2022"
 #: typed the triggers in -- so two items built the same way read differently
 #: and a player cannot learn where to look.
 ORDER = (
+    ShopEnteredTrigger,
     BattleStartTrigger,
     TimerTrigger,
     AfterTrigger,

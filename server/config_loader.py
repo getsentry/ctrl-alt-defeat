@@ -17,7 +17,11 @@ from item_effects import (
     ChanceEffect,
     ConditionEffect,
     ExtraAttackEffect,
+    GoldEffect,
+    SaleChanceEffect,
+    ShopEnteredTrigger,
     StaminaEffect,
+    TriggerItemEffect,
     CounterTrigger,
     OnMissTrigger,
     OnStunTrigger,
@@ -411,6 +415,8 @@ class ConfigLoader:
                     f"misses attack\" is `enemy`."
                 )
             return OnMissTrigger(whose=config["whose"], effects=effects)
+        elif trigger_type == "shop_entered":
+            return ShopEnteredTrigger(effects=effects)
         elif trigger_type == "aura":
             for needed in ("zone", "counting", "after", "on"):
                 if needed not in config:
@@ -916,6 +922,36 @@ class ConfigLoader:
             )
         elif effect_type == "extra_attack":
             return ExtraAttackEffect()
+        elif effect_type == "trigger_item":
+            for needed in ("where", "how_many", "pick"):
+                if needed not in config:
+                    raise ValueError(
+                        f"{item_id}: a trigger_item needs a `{needed}`. Write "
+                        f"0 for `how_many` to trigger every one that counts."
+                    )
+            if config["where"] not in MODIFIER_TARGETS:
+                raise ValueError(
+                    f"{item_id}: `{config['where']}` is not somewhere a "
+                    f"trigger_item can reach."
+                )
+            if config["pick"] not in ("all", "random"):
+                raise ValueError(
+                    f"{item_id}: a trigger_item takes them `all` or picks one "
+                    f"at `random`, not `{config['pick']}`."
+                )
+            return TriggerItemEffect(
+                where=config["where"],
+                counting=self._counting(config, item_id),
+                how_many=config["how_many"], pick=config["pick"],
+            )
+        elif effect_type == "gold":
+            if "amount" not in config:
+                raise ValueError(f"{item_id}: a gold effect needs an `amount`")
+            return GoldEffect(amount=config["amount"])
+        elif effect_type == "sale_chance":
+            if "amount" not in config:
+                raise ValueError(f"{item_id}: a sale_chance needs an `amount`")
+            return SaleChanceEffect(amount=config["amount"])
         elif effect_type == "cleanse":
             if "count" not in config:
                 raise ValueError(

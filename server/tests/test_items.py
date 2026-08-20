@@ -267,7 +267,10 @@ class TestWhatAnAuraActsOn:
         match one. Lowered here, so the catalogue's casing never reaches it."""
         item = Item.of(self._named("Thermal Throttle"), "x")
 
-        assert item.kinds == ["fire", "ranged", "treasure"]
+        # `weapon` among them because the wiki's own `type` field is imported
+        # as a kind now, which is what gives "Star Weapons", "Star Food" and
+        # "Star Potion" something to match on.
+        assert item.kinds == ["fire", "ranged", "treasure", "weapon"]
         assert item.category == "problem", "and the category it matches on too"
 
     def test_the_client_is_told_about_every_zone_the_engine_reaches_through(self):

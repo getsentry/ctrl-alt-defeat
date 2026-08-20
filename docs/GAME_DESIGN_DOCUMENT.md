@@ -123,6 +123,9 @@ Items can have multiple effects with different triggers. Each effect specifies w
   pay does not pay, so the pool never actually reaches nothing
 - **ON_MISS**: Fires when an attack goes wide. `whose` says which — this
   item's own swing, or the other player's
+- **SHOP_ENTERED**: Fires when the shop phase begins, once a round. Nothing
+  here happens in a battle, so the shop reads these rather than the simulator
+- **ON_BUY**: Fires once, as the item changes hands
 - **PASSIVE**: Always active (e.g., stat modifiers)
 
 ON_ATTACK, ON_HIT and ON_MISS belong to the item that attacked. One item's
@@ -212,6 +215,13 @@ game's own wording:
   "(once)", "up to 3 times", "up to 5 per battle". Counted per effect, so two
   items carrying the same clause have an allowance each. Not a modifier's
   `cap`, which limits how much one item has given another
+- **GOLD**: Gain gold, which happens between battles and never in one
+- **SALE_CHANCE**: Change how likely the shop is to mark an item down. A share
+  added to the shop's own chance, standing for as long as the item is held
+- **TRIGGER_ITEM**: Make other items do what they do, and leave them standing.
+  It runs everything their own triggers would, less the standing ones (a
+  passive is on already) and less any CONSUME, which is what "without
+  consuming it" means
 - **STAMINA**: Put CPU straight into a player's pool. Not MODIFY_STAT, which
   changes how big the pool is or how fast it fills; this is the pool going up
   now
@@ -847,6 +857,23 @@ An earlier version of this document described six, of which two were built
 against orthogonal adjacency. Neither the six nor adjacency exist in the game
 this one is based on, so both are gone.
 
+### 4.5 What a Potion does for the Potion above it
+
+Every Potion, when it is drunk, also applies the effect of the Potion above
+it, **without consuming that one**. The source game calls it potion spillover
+and writes it on every Potion page.
+
+**"The Potion above it" and "its star" are the same square.** A Potion's map is
+`['*', '^', '#']`: it covers two squares, and its star is the one directly
+above, marked `^` so the projection goes straight up however the item is
+turned. So this is the star zone and needs no separate idea of "above" — which
+is why a vertical stack is what the source game's own advice recommends.
+
+**It does not chain.** The wiki says "the Potion above it" in the singular
+every time, so a stack of four is four spillovers rather than one four deep.
+Worth settling by playing: the Potion Belt's advice, "the entire setup should
+be vertical to make the most of the Potion spillover", reads either way.
+
 ## 5. Economy & Progression
 
 ### 5.1 Gold System
@@ -866,11 +893,60 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
 - **Slots**: 5 items per refresh
 - **Reroll Cost**: 1 gold for the first four rolls of a round, 2 gold after
 - **Sales**: each item offered has a 10% chance of being half price, rounded
-  up. The roll comes from the shop's seed, so the same seed always offers the
-  same items at the same prices. An item bought on sale sells for what it cost.
+  up, **plus whatever the player's own items add** — Maneki Neko says "Sale
+  chance +3%". The roll comes from the shop's seed, so the same seed and the
+  same held items always give the same five items at the same prices. An item
+  bought on sale sells for what it cost.
 - **Item Costs**: each item's own cost, taken from the Backpack Battles item
   it is based on. There is no price band per rarity: a Unique can cost 5 gold
   and a Rare 16.
+
+#### Items that do something in the shop
+
+Some items act between battles rather than during one. Gold Armor gives 3 gold
+when the shop opens; Maneki Neko makes sales likelier for as long as it is
+held.
+
+The battle simulator cannot run these. It knows about time passing, attacks
+landing and health falling, and "the shop opened" is none of those. So
+`server/shop_phase.py` handles them instead — a small thing of its own rather
+than a branch inside the battle code.
+
+- **Shop entered** is the source game's name for it, and **the battle ending
+  is the moment**. Those are the same instant: a round ends, gold is paid, a
+  shop appears. It fires there, once, where the round turns.
+
+  Naming it for the shop and firing it at the battle's end is deliberate. The
+  name is the player's word for when it happens; the battle's end is the only
+  moment that happens once. "When the shop is opened" is not a moment at all —
+  the shop is session state, it has no open, and a client may read it on every
+  screen it draws.
+
+  So a player who leaves the shop and comes back is not paid again, and
+  rerolling does not pay either. That holds because of *where* it fires, not
+  because anything guards it. Moving the call from where the round turns to
+  where the shop is rebuilt — two places forty lines apart that look
+  interchangeable — would quietly pay out on every reroll. There is a test
+  that fails if anyone does.
+
+  **A shop effect that grants something lasting** — a free reroll, a discount —
+  should be session state set at that same moment and cleared when the next
+  battle starts, so it cannot be hoarded across rounds or farmed by re-entering.
+  Nothing in the catalogue asks for one yet.
+
+  **Round one does not fire it, and does not need to.** The first shop is built
+  when the session starts, before the player holds anything, so there is
+  nothing that could pay out.
+- **On buy** fires once, as the item changes hands.
+- **Sale chance** is not a trigger. It is read off everything the player holds
+  each time a shop is built.
+
+**Most shop clauses are not effects, and cannot be written as one.** "Dig up a
+random item", "Generate a low-quality Gemstone", "Create different items based
+on the combined value" all need the shop to *make* an item and put it in the
+player's bag, and nothing in the game does that except a purchase. Trade
+offers do not exist. Neither does changing which items the shop draws from.
+Those are features to build. BACKLOG.md lists which clause needs which.
 
 ### 5.3 Recipe System (Item Combining)
 - **How it Works**: put a recipe's items together in your rack. One of them has

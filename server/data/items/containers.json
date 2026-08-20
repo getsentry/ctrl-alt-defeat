@@ -12,7 +12,8 @@
       "cost": 4,
       "effects": [],
       "slug": "standard_vm",
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "bag"
     },
     "edge_node": {
       "name": "Hot Pocket",
@@ -35,7 +36,8 @@
         }
       ],
       "slug": "edge_node",
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "bag"
     },
     "memory_cache": {
       "name": "Memory Cache",
@@ -57,7 +59,8 @@
         }
       ],
       "slug": "memory_cache",
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "bag"
     },
     "load_balancer": {
       "name": "Pocket Dimension",
@@ -76,7 +79,8 @@
         }
       ],
       "slug": "load_balancer",
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "bag"
     },
     "patch_registry": {
       "name": "Bandolier",
@@ -96,7 +100,8 @@
         "First Potion inside consumed: Gain a random buff.",
         "4 Potions inside consumed: Cleanse 10 debuffs."
       ],
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "bag"
     },
     "container_orchestrator": {
       "name": "Container Orchestrator",
@@ -127,7 +132,8 @@
           ]
         }
       ],
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "bag"
     },
     "serverless_function": {
       "name": "The Cloud",
@@ -162,7 +168,8 @@
           ]
         }
       ],
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "bag"
     },
     "network_cache": {
       "name": "Dead Drop",
@@ -180,7 +187,8 @@
       "unbuilt": [
         "Items inside gain 10% critical hit chance +3% for each Luck."
       ],
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "bag"
     },
     "mesh_network_hub": {
       "name": "Motherboard",
@@ -199,7 +207,8 @@
         "Your healing is amplified by 12% + 5% per Nature-item inside.",
         "In rounds 1 and 10, sale chance is increased by 20%."
       ],
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "bag"
     },
     "chaos_experiment": {
       "name": "Loot Box",
@@ -216,7 +225,8 @@
       "unbuilt": [
         "Game started: Replace this with random starting bags and items."
       ],
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "bag"
     }
   }
 }

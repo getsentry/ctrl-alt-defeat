@@ -36,6 +36,7 @@ from inventory_manager import (
     combining_partners,
 )
 from items import SALE_CHANCE, Item, PlacedItem
+from shop_phase import entering_the_shop, sale_chance_from
 from matchmaking import MatchmakingService
 from schemas import (
     BattleHistoryEntry,
@@ -479,6 +480,11 @@ def generate_shop_items(
     Miner -- and told nothing, the shop offers none of them.
     """
     held = held or set()
+    # An item that changes the odds of a sale does so for as long as it is
+    # held, so it is read here rather than banked anywhere.
+    sale_chance = SALE_CHANCE + sale_chance_from(
+        [ITEM_CATALOG[t] for t in held if t in ITEM_CATALOG]
+    )
     # Use deterministic RNG if seed provided
     if seed is not None:
         rng = random.Random(seed)
@@ -558,7 +564,7 @@ def generate_shop_items(
                 Item.of(
                     item_type,
                     str(uuid.uuid4()),
-                    on_sale=rng.random() < SALE_CHANCE,
+                    on_sale=rng.random() < sale_chance,
                 )
             )
 
@@ -762,6 +768,16 @@ async def simulate_battle(
 
     gold_reward = get_round_gold(session.round)
     session.gold += gold_reward
+
+    # What the player's items do as the shop opens. Held on the grid or in the
+    # chest alike: an item works the shop the same either way.
+    opening = entering_the_shop([
+        ITEM_CATALOG[t] for t in held_item_types(session) if t in ITEM_CATALOG
+    ])
+    if opening.gold:
+        session.gold += opening.gold
+        gold_reward += opening.gold
+        logger.info("shop opened: %s", "; ".join(opening.said))
 
     # Store clean battle result for database (before adding non-serializable objects)
     # Convert BattleAction objects to dicts for JSON serialization

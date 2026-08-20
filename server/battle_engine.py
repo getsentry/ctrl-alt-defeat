@@ -25,6 +25,7 @@ from item_effects import (
     ConditionEffect,
     ExtraAttackEffect,
     StaminaEffect,
+    TriggerItemEffect,
     CounterTrigger,
     OnMissTrigger,
     OnStunTrigger,
@@ -1078,6 +1079,27 @@ class BattleSimulator:
                 f"applies"
             )
 
+    def _trigger(self, item: BattleItem, owner: Player, enemy: Player,
+                 by: BattleItem) -> None:
+        """Make one item do what it does, and leave it standing.
+
+        Everything its own triggers would do, less the standing ones -- a
+        passive is on already and handing out its modifier twice would be
+        wrong -- and less any ConsumeEffect, which is what "without consuming
+        it" means.
+        """
+        for trigger in item.spec.triggers:
+            if isinstance(trigger, self.STANDING_TRIGGERS):
+                continue
+            wanted = [e for e in getattr(trigger, "effects", []) or []
+                      if not isinstance(e, ConsumeEffect)]
+            if wanted:
+                self._apply_effects(wanted, item, owner, enemy)
+        self._record(BattleAction(
+            timestamp=self._time_ms(), source=by.uid, action="trigger_item",
+            target=None, damage=None, player=owner.id,
+            details={"triggered": item.uid}))
+
     def _pay(self, owner: Player, costs: Dict[str, int], source: str) -> None:
         """Spend a price in buffs, and say so.
 
@@ -1728,6 +1750,20 @@ class BattleSimulator:
                             self._process_attack(
                                 swing.apply(item, enemy, self), item, owner,
                                 enemy)
+            elif isinstance(effect, TriggerItemEffect):
+                standing = [
+                    other
+                    for other in self._reached_by(
+                        effect.where, item, self.loadout[owner.id])
+                    if effect.matches(self._tags(other))
+                    and other.uid not in self.consumed_items
+                ]
+                if effect.pick == "random" and standing:
+                    standing = [standing[self.rng.randrange(len(standing))]]
+                elif effect.how_many:
+                    standing = standing[:effect.how_many]
+                for other in standing:
+                    self._trigger(other, owner, enemy, by=item)
             elif isinstance(effect, MaxHealthEffect):
                 # Not through _heal, and deliberately. Raising the ceiling and
                 # filling the new room is not healing: a clause that changes

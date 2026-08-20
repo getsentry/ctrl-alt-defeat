@@ -48,7 +48,7 @@
       ],
       "slug": "blood_goobert",
       "in_shop": false,
-      "icontype": "vampiric",
+      "icontype": "vampiric, pet",
       "recipe": [
         {
           "ingredients": [
@@ -90,15 +90,40 @@
               "description": "Triggers 15% faster for each Star dark-item"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 3.3,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "effect_damage",
+              "value": 10,
+              "lifesteal": 1.0,
+              "per_status": {},
+              "description": "Deal 10 Effect-damage with 100% lifesteal"
+            },
+            {
+              "type": "trigger_item",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "food"
+                ]
+              },
+              "how_many": 0,
+              "pick": "random",
+              "description": "and trigger a random Star Food"
+            }
+          ]
         }
       ],
       "slug": "cthulhu",
       "in_shop": true,
       "unbuilt": [
-        "Every 3.3s: Deal 10 Effect-damage with 100% lifesteal and trigger a random Star Food.",
         "Star Food gains Dark."
       ],
-      "icontype": "treasure, dark"
+      "icontype": "treasure, dark, pet"
     },
     "cubert": {
       "name": "Cube Garbo",
@@ -174,7 +199,7 @@
       ],
       "slug": "cubert",
       "in_shop": true,
-      "icontype": "treasure"
+      "icontype": "treasure, pet"
     },
     "hyper_hedgehog": {
       "name": "Portspike",
@@ -262,7 +287,7 @@
       ],
       "slug": "hyper_hedgehog",
       "in_shop": false,
-      "icontype": "holy,nature",
+      "icontype": "holy, nature, pet",
       "recipe": [
         {
           "ingredients": [
@@ -317,7 +342,7 @@
       ],
       "slug": "jynx_torquilla",
       "in_shop": true,
-      "icontype": "nature, musical"
+      "icontype": "nature, musical, pet"
     },
     "king_goobert": {
       "name": "Root Garbo",
@@ -341,7 +366,7 @@
         "Effects of Gemstones socketed in this are increased by 50%."
       ],
       "sockets": 2,
-      "icontype": "holy, magic",
+      "icontype": "holy, magic, pet",
       "recipe": [
         {
           "ingredients": [
@@ -391,7 +416,7 @@
       ],
       "slug": "light_goobert",
       "in_shop": false,
-      "icontype": "holy",
+      "icontype": "holy, pet",
       "recipe": [
         {
           "ingredients": [
@@ -422,7 +447,7 @@
         "Every 6s: Gain 3 buffs of the type you have most of.",
         "Triggers 1% faster for each Gold the Star items are worth."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, pet"
     },
     "paradise_birb": {
       "name": "Bird of Paradigm",
@@ -448,7 +473,7 @@
       "unbuilt": [
         "Every 2.7s: Star items gain 7% chance to duplicate buffs they gain, heal 7% more and trigger 7% faster (up to 10 times)."
       ],
-      "icontype": "magic,vampiric,holy,dark,musical,nature",
+      "icontype": "magic, vampiric, holy, dark, musical, nature, pet",
       "recipe": [
         {
           "ingredients": [
@@ -479,7 +504,7 @@
       "unbuilt": [
         "9 Star item activations: Heal for 40, gain 20 Block, 2 Vampirism and 2 Empower, inflict 3 Blind, and Star Weapons gain 4 damage."
       ],
-      "icontype": "vampiric, holy, nature",
+      "icontype": "vampiric, holy, nature, pet",
       "recipe": [
         {
           "ingredients": [
@@ -544,14 +569,34 @@
               "description": "gain 1 Empower"
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "food"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "regenerating",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Regeneration"
+                }
+              ]
+            }
+          ]
         }
       ],
       "slug": "rat_chef",
       "in_shop": false,
-      "unbuilt": [
-        "Start of battle: Gain 1 Regeneration for each Star Food."
-      ],
-      "icontype": "nature",
+      "icontype": "nature, pet",
       "recipe": [
         {
           "ingredients": [
@@ -599,7 +644,7 @@
       "unbuilt": [
         "Hatches after 2 rounds in your backpack."
       ],
-      "icontype": "fire"
+      "icontype": "fire, pet"
     },
     "shelly": {
       "name": "Shell Script",
@@ -658,7 +703,7 @@
       "unbuilt": [
         "Cleanse effects have a 25% chance to cleanse an additional debuff."
       ],
-      "icontype": "holy, nature",
+      "icontype": "holy, nature, pet",
       "recipe": [
         {
           "ingredients": [
@@ -764,7 +809,7 @@
       "unbuilt": [
         "Start of battle: Gain 10% maximum health + 15% per Star item."
       ],
-      "icontype": "treasure,nature"
+      "icontype": "treasure, nature, pet"
     },
     "snowmaster": {
       "name": "Frost Daemon",
@@ -829,7 +874,7 @@
       "unbuilt": [
         "Triggers 10% faster for each Ice item."
       ],
-      "icontype": "ice",
+      "icontype": "ice, pet",
       "recipe": [
         {
           "ingredients": [
@@ -868,7 +913,8 @@
             "hero_sword"
           ]
         }
-      ]
+      ],
+      "icontype": "pet"
     },
     "thorn_elemental": {
       "name": "Barb Daemon",
@@ -907,7 +953,7 @@
         "Spikes have 10% critical hit chance per Star Nature-item."
       ],
       "sockets": 2,
-      "icontype": "treasure,nature"
+      "icontype": "treasure, nature, pet"
     },
     "unsettling_presence": {
       "name": "Zombie Process",
@@ -929,7 +975,7 @@
         "Deal +30% of your healing as Effect-damage.",
         "Every 3s: Use a random buff to heal for 12."
       ],
-      "icontype": "treasure, dark"
+      "icontype": "treasure, dark, pet"
     },
     "wolpertinger": {
       "name": "The Kludge",
@@ -971,7 +1017,7 @@
         "Increase base stamina regeneration by 0.7% for each buff you have.",
         "Every 5s: Gain 3 of the buff you have least of."
       ],
-      "icontype": "nature"
+      "icontype": "nature, pet"
     },
     "ai_companion_core": {
       "name": "Rubber Duck",
@@ -1013,7 +1059,7 @@
         }
       ],
       "slug": "ai_companion_core",
-      "icontype": "nature",
+      "icontype": "nature, pet",
       "in_shop": false,
       "recipe": [
         {
@@ -1101,7 +1147,7 @@
         }
       ],
       "slug": "surveillance_drone",
-      "icontype": "nature",
+      "icontype": "nature, pet",
       "in_shop": false
     },
     "data_crawler": {
@@ -1181,7 +1227,7 @@
         }
       ],
       "slug": "data_crawler",
-      "icontype": "nature",
+      "icontype": "nature, pet",
       "in_shop": false
     },
     "cache_spider": {
@@ -1220,7 +1266,7 @@
         }
       ],
       "slug": "cache_spider",
-      "icontype": "nature",
+      "icontype": "nature, pet",
       "in_shop": false,
       "unbuilt": [
         "Every 4s: Steal a random buff. Triggers 15% faster for each Star Pet or Food."
@@ -1257,7 +1303,8 @@
         }
       ],
       "slug": "backup_system",
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "pet"
     }
   }
 }

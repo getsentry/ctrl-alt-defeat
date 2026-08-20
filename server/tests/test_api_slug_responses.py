@@ -133,7 +133,7 @@ class TestAPISlugResponses:
         assert response.status_code == 200
         data = response.json()
 
-        item_to_buy = data["session"]["current_shop"][0]
+        item_to_buy = _one_that_fits(data["session"]["current_shop"])
 
         # [2, 3] is the corner of the first starting container. [0, 0] is bare
         # floor and cannot hold an item.
@@ -216,7 +216,7 @@ class TestAPISlugResponses:
         assert response.status_code == 200
         data = response.json()
 
-        item_to_buy = data["session"]["current_shop"][0]
+        item_to_buy = _one_that_fits(data["session"]["current_shop"])
 
         # [2, 3] is the corner of the first starting container.
         response = auth_client.post(

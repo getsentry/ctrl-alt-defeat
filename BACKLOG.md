@@ -1,3 +1,101 @@
+### A shop effect that lasts wants session state, not a payout
+
+Gold is paid and gone. A free reroll, a discount, "For the next shop: ..." are
+not: they sit there until something spends them, and a benefit that sits there
+is a benefit that can be hoarded or farmed.
+
+The shape for those: set it where the shop-entered effects run -- the battle
+ending, once a round -- as a field on the session, spend it where it is used,
+and clear it when the next battle starts so an unspent one does not carry.
+
+**Nothing needs it yet.** `free_refresh` and `shop_discount` were names in the
+unbuilt list and no item ever declared either; they have been removed with the
+rest. The two real "Shop refreshes:" clauses want trade offers and a rarity
+bump, and a third trigger for a refresh as against an entry, none of which
+exists.
+
+### Two clauses stand in `patch` and `script` for Potion and Food
+
+CI Cauldron counts "Star Potions and Diamond Foods", and the catalogue says
+`patch` and `script`. Those were the nearest categories at the time, because
+the import had scattered Potions across `consumable` and `patch` and Foods
+across `consumable` and `script`, and neither had a tag of its own.
+
+They do now: the wiki's `type` field is imported as a kind, so `potion` and
+`food` mean what they say. The two clauses can be corrected, and anything else
+reaching for a category because a kind was missing is worth the same look --
+"Star Weapons" is currently written as the three ways of attacking, where
+`weapon` would say it directly.
+
+### On buy needs more than a trigger, so there is no trigger
+
+Two items say it: "On buy: Gain a random effect" and "On Buy: Split into 2
+Snowballs". One needs an effect chosen at random and attached to an item; the
+other needs an item to become two different items. Neither is a trigger's job.
+
+A trigger for it was written and taken out again. Nothing could call it, and a
+trigger nothing fires still appears in the item's description -- it would have
+told the player "when you buy this" about something that never happened.
+
+### The shop needs features, not effects
+
+A shop trigger and a gold effect are built, and three items pay out with them.
+Most of the rest are not effects at all. Sorted by what they need:
+
+**The shop must be able to make items** (8 clauses). "Dig up a random item",
+"Generate a low-quality Gemstone", "Generate items worth 1 Gold", "Consume
+Star items. Create different items based on the combined value", "Replace this
+with random starting bags and items". Nothing anywhere can put an item into a
+player's bag except a purchase.
+
+**The pool must be changeable** (5). "Gemstones are offered in the shop",
+"Crafted items are offered", "Ranger items are offered", "Items of all classes
+are offered", "Your starting class items are no longer offered". `shop_needs`
+gates one item at a time; these open or close whole groups. The gemstone one is
+already handled the other way round, by `addshop`, which suggests a shape.
+
+**Trades do not exist** (3). "40% chance for a Trade offer".
+
+**Throwing does not exist** (5). "Can only be thrown once per battle", "Star
+Stones above can be thrown repeatedly".
+
+**Rounds are not a thing an item can read** (2). "In rounds 1 and 10, sale
+chance is increased by 20%", "Hatches after 2 rounds in your backpack".
+
+**Small and buildable** (4). Treasure-find chance, the rarity of one offer,
+gold fees, "Instead of gold, you receive items with a higher value".
+
+Two clauses are not mechanics at all and should come off the lists: "(Rewarded
+for starting as a random character.)" and "Value of Star items > 20 Gold",
+which is a heading the parser kept.
+
+### Potion spillover is built, and six Potions still owe it
+
+Six of the twelve have it. The other six have no clause that drinks them yet --
+their conditions are unbuilt -- so there is nowhere to hang it, and they carry
+it on their `unbuilt` lists instead. It was on no list at all before, which is
+worse than unbuilt: nothing was owed and nothing was there.
+
+**Whether it chains is still open.** The wiki says "the Potion above it" in the
+singular every time, and that is what is built. Its advice on the Potion Belt
+page -- "the entire setup should be vertical to make the most of the Potion
+spillover" -- reads either way, and a vertical stack of four is exactly the
+case the advice is about. Worth settling by playing.
+
+### The wiki's `type` is the tag the catalogue was missing
+
+Food and Potion both looked like they had no equivalent here: the import
+scattered Food across `consumable` and `script`, and Potion across `consumable`
+and `patch`. Both were solved by the same thing -- the wiki's `type` field,
+which was never read.
+
+It is now imported as a kind, so `food`, `potion`, `weapon`, `pet`, `bag`,
+`armor`, `shield`, `helmet`, `gloves`, `shoes`, `accessory` and `gemstone` are
+all tags an aura can narrow by. No collisions with the kinds already there.
+
+Worth checking what else that field settles. "Star Weapons" is currently
+written as the three ways of attacking; `weapon` would say it directly.
+
 # Backlog
 
 ## Bugs

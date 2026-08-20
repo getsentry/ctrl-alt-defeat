@@ -32,7 +32,7 @@
       ],
       "slug": "null_blade",
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "in_shop": true
     },
     "deadlock_twins": {
@@ -75,7 +75,7 @@
       ],
       "slug": "deadlock_twins",
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "in_shop": true
     },
     "mobius_lash": {
@@ -136,7 +136,7 @@
       ],
       "slug": "mobius_lash",
       "sockets": 2,
-      "icontype": "nature, melee",
+      "icontype": "nature, melee, weapon",
       "in_shop": true
     },
     "sql_injector": {
@@ -174,7 +174,7 @@
       ],
       "slug": "sql_injector",
       "sockets": 1,
-      "icontype": "treasure, dark, melee",
+      "icontype": "treasure, dark, melee, weapon",
       "in_shop": true,
       "unbuilt": [
         "Star Melee-Weapons deal -2 damage. Deals +4 damage per Star Melee-Weapon."
@@ -229,7 +229,7 @@
       ],
       "slug": "denier_of_service",
       "sockets": 1,
-      "icontype": "fire, effect, ranged",
+      "icontype": "fire, effect, ranged, weapon, pet",
       "in_shop": false,
       "pet": true,
       "recipe": [
@@ -279,7 +279,7 @@
         }
       ],
       "slug": "day_zero",
-      "icontype": "treasure, dark, ranged",
+      "icontype": "treasure, dark, ranged, weapon",
       "in_shop": true,
       "unbuilt": [
         "Can only be thrown once per battle.",
@@ -347,7 +347,7 @@
       ],
       "slug": "nullshot",
       "sockets": 1,
-      "icontype": "ranged",
+      "icontype": "ranged, weapon",
       "in_shop": true
     },
     "neural_interface_blade": {
@@ -383,7 +383,7 @@
       ],
       "slug": "neural_interface_blade",
       "sockets": 1,
-      "icontype": "magic, nature, ranged",
+      "icontype": "magic, nature, ranged, weapon",
       "in_shop": false,
       "unbuilt": [
         "On attack: Use 3 Mana to deal +7 damage and for the next 1.5s, all your attacks are critical."
@@ -476,7 +476,7 @@
       ],
       "slug": "querystorm",
       "sockets": 2,
-      "icontype": "nature,effect,ranged",
+      "icontype": "nature, effect, ranged, weapon, pet",
       "in_shop": false,
       "pet": true,
       "recipe": [
@@ -519,7 +519,7 @@
       ],
       "slug": "quantum_sniper",
       "sockets": 1,
-      "icontype": "ranged",
+      "icontype": "ranged, weapon",
       "in_shop": true
     },
     "virus_injector": {
@@ -573,7 +573,7 @@
       ],
       "slug": "virus_injector",
       "sockets": 1,
-      "icontype": "nature, ranged",
+      "icontype": "nature, ranged, weapon",
       "in_shop": false,
       "recipe": [
         {
@@ -616,7 +616,7 @@
       ],
       "slug": "malware_propagator",
       "sockets": 1,
-      "icontype": "nature, ranged",
+      "icontype": "nature, ranged, weapon",
       "in_shop": false,
       "unbuilt": [
         "For every 5 damage Star Weapon deals: Inflict +1 Poison on the next attack. Deals +0.5 damage per Poison of your opponent."
@@ -674,7 +674,7 @@
       ],
       "slug": "probability_manipulator",
       "sockets": 1,
-      "icontype": "nature, ranged",
+      "icontype": "nature, ranged, weapon",
       "in_shop": false,
       "unbuilt": [
         "Star Weapon crits: Attack twice on the next attack."
@@ -733,7 +733,7 @@
       ],
       "slug": "quantum_flux_rifle",
       "sockets": 1,
-      "icontype": "nature, ranged",
+      "icontype": "nature, ranged, weapon",
       "recipe_only": true,
       "recipe": [
         {
@@ -810,7 +810,7 @@
         }
       ],
       "slug": "data_leech_swarm",
-      "icontype": "nature, effect, ranged",
+      "icontype": "nature, effect, ranged, weapon, pet",
       "in_shop": false,
       "pet": true,
       "recipe": [
@@ -866,7 +866,7 @@
       ],
       "slug": "spike_launcher",
       "sockets": 1,
-      "icontype": "nature, ranged",
+      "icontype": "nature, ranged, weapon",
       "in_shop": false,
       "unbuilt": [
         "Star Weapon hits: Use 1 Spikes to deal +9 damage on the next attack."
@@ -924,7 +924,7 @@
       ],
       "slug": "spike_generator",
       "sockets": 1,
-      "icontype": "nature, ranged",
+      "icontype": "nature, ranged, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -979,7 +979,7 @@
       ],
       "slug": "plasma_edge",
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1060,7 +1060,7 @@
       "unbuilt": [
         "Can only be thrown once per battle."
       ],
-      "icontype": "treasure, ice, ranged"
+      "icontype": "treasure, ice, ranged, weapon"
     },
     "thermal_throttle": {
       "name": "Thermal Throttle",
@@ -1132,7 +1132,7 @@
       "unbuilt": [
         "Can only be thrown once per battle."
       ],
-      "icontype": "treasure, fire, ranged"
+      "icontype": "treasure, fire, ranged, weapon"
     },
     "credential_harvester": {
       "name": "Credential Harvester",
@@ -1184,7 +1184,7 @@
         "Star Items give +100% Vampirism."
       ],
       "sockets": 3,
-      "icontype": "treasure, vampiric, melee"
+      "icontype": "treasure, vampiric, melee, weapon"
     },
     "bloodthorne": {
       "name": "Thornstack",
@@ -1269,7 +1269,7 @@
       "slug": "bloodthorne",
       "in_shop": false,
       "sockets": 2,
-      "icontype": "vampiric, nature, melee",
+      "icontype": "vampiric, nature, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1325,7 +1325,7 @@
         "On hit: Gain 1 Vampirism (up to 5 per battle). Heal 4 per Star Vampiric-item."
       ],
       "sockets": 1,
-      "icontype": "vampiric, melee",
+      "icontype": "vampiric, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1392,7 +1392,7 @@
         "Opponent misses attack: Gain +2 damage for the next attack."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee, weapon"
     },
     "burning_torch": {
       "name": "Thermal Torch",
@@ -1451,7 +1451,7 @@
       "slug": "burning_torch",
       "in_shop": false,
       "sockets": 1,
-      "icontype": "fire, melee",
+      "icontype": "fire, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1510,7 +1510,7 @@
         "After 4 hits, gain 1 Empower."
       ],
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1584,7 +1584,7 @@
         "On hit: Gain 1 damage and attack 4% faster."
       ],
       "sockets": 3,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1674,7 +1674,7 @@
         "You have a 2% chance to resist debuffs for each Luck."
       ],
       "sockets": 2,
-      "icontype": "treasure, fire, ranged"
+      "icontype": "treasure, fire, ranged, weapon"
     },
     "darksaber": {
       "name": "Dark Mode",
@@ -1735,7 +1735,7 @@
         "Deals +0.5 damage for each debuff of your opponent."
       ],
       "sockets": 2,
-      "icontype": "dark, melee",
+      "icontype": "dark, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1774,16 +1774,42 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_attack",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "cost",
+              "costs": {
+                "credits": 11
+              },
+              "effects": [
+                {
+                  "type": "trigger_item",
+                  "where": "star",
+                  "counting": {
+                    "any": [
+                      "food"
+                    ]
+                  },
+                  "how_many": 0,
+                  "pick": "all",
+                  "description": "Trigger all Star Food"
+                }
+              ],
+              "description": "Use 11 Mana"
+            }
+          ]
         }
       ],
       "slug": "eggscalibur",
       "in_shop": false,
       "unbuilt": [
-        "On attack: Use 11 Mana: Trigger all Star Food.",
         "Deals +1 damage for each Star Food."
       ],
       "sockets": 2,
-      "icontype": "holy, magic, melee",
+      "icontype": "holy, magic, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1859,7 +1885,7 @@
       "slug": "falcon_blade",
       "in_shop": false,
       "sockets": 2,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -1939,7 +1965,7 @@
       "slug": "fancy_fencing_rapier",
       "in_shop": true,
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee, weapon"
     },
     "frostbite": {
       "name": "Cold Snap",
@@ -2038,7 +2064,7 @@
       "slug": "frostbite",
       "in_shop": false,
       "sockets": 2,
-      "icontype": "ice, vampiric, melee",
+      "icontype": "ice, vampiric, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2093,7 +2119,7 @@
       "slug": "hammer",
       "in_shop": true,
       "sockets": 2,
-      "icontype": "melee"
+      "icontype": "melee, weapon"
     },
     "hero_longsword": {
       "name": "Long Poll",
@@ -2148,7 +2174,7 @@
       "slug": "hero_longsword",
       "in_shop": false,
       "sockets": 2,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2211,7 +2237,7 @@
       "slug": "hero_sword",
       "in_shop": false,
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2264,7 +2290,7 @@
         "Use 10 Mana: Become invulnerable and attack 100% faster for 3s (once)."
       ],
       "sockets": 2,
-      "icontype": "holy, magic, melee",
+      "icontype": "holy, magic, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2354,7 +2380,7 @@
       "slug": "hungry_blade",
       "in_shop": true,
       "sockets": 1,
-      "icontype": "vampiric, melee"
+      "icontype": "vampiric, melee, weapon"
     },
     "impractically_large_greatsword": {
       "name": "Blade Server",
@@ -2393,7 +2419,7 @@
         "While you have at least 5 Empower, decrease stamina usage to 2 and cooldown to 2s."
       ],
       "sockets": 4,
-      "icontype": "melee"
+      "icontype": "melee, weapon"
     },
     "katana": {
       "name": "Vim Katana",
@@ -2432,7 +2458,7 @@
         "On hit: Remove 1 damage gained in battle from all opponent Weapons and gain 1 damage. If your opponent has at least 20 buffs, remove 2 of the type they have the most of."
       ],
       "sockets": 3,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2492,7 +2518,7 @@
         "Use 3 Regeneration: Inflict 8 Blind for 6s (unstackable)."
       ],
       "sockets": 2,
-      "icontype": "holy, melee"
+      "icontype": "holy, melee, weapon"
     },
     "magic_staff": {
       "name": "Query Staff",
@@ -2531,7 +2557,7 @@
         "On attack: Use 3 Mana to deal +6 damage and gain 2 damage."
       ],
       "sockets": 1,
-      "icontype": "magic, ranged",
+      "icontype": "magic, ranged, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2608,7 +2634,7 @@
       "slug": "magic_torch",
       "in_shop": false,
       "sockets": 1,
-      "icontype": "magic, fire, melee",
+      "icontype": "magic, fire, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2688,7 +2714,7 @@
       "slug": "manathirst",
       "in_shop": false,
       "sockets": 1,
-      "icontype": "magic, vampiric, melee",
+      "icontype": "magic, vampiric, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2727,14 +2753,28 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "damage_flat",
+              "value": 1.0,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "food"
+                ]
+              },
+              "description": "Deals +1 damage for each Star Food"
+            }
+          ]
         }
       ],
       "slug": "stack_smasher",
-      "unbuilt": [
-        "Deals +1 damage for each Star Food."
-      ],
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "in_shop": true
     },
     "pandamonium": {
@@ -2794,7 +2834,7 @@
         "Poison on your opponent has 4% critical hit chance per Star Food."
       ],
       "sockets": 2,
-      "icontype": "dark, melee",
+      "icontype": "dark, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2858,7 +2898,7 @@
       "slug": "poison_dagger",
       "in_shop": false,
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2910,7 +2950,7 @@
         "On hit: Inflict 3 Poison and 2 Poison to yourself. Destroy 6 Block for each Star free slot or Nature-item."
       ],
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -2955,7 +2995,7 @@
         "Attacks 3% faster for each Mana (up to 60%)."
       ],
       "sockets": 4,
-      "icontype": "treasure, magic, effect, ranged",
+      "icontype": "treasure, magic, effect, ranged, weapon, pet",
       "pet": true
     },
     "prismatic_sword": {
@@ -3000,7 +3040,7 @@
         "Star Dark-item: +10% chance to inflict 4 random debuffs on hit."
       ],
       "sockets": 2,
-      "icontype": "magic, vampiric, holy, dark, melee",
+      "icontype": "magic, vampiric, holy, dark, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -3047,7 +3087,7 @@
         "On hit: Remove 1 damage gained in battle from all opponent Weapons and gain 0.5 damage."
       ],
       "sockets": 3,
-      "icontype": "melee"
+      "icontype": "melee, weapon"
     },
     "serpent_staff": {
       "name": "Snake Case",
@@ -3087,7 +3127,7 @@
         "You have 40% chance to duplicate Poison you inflict."
       ],
       "sockets": 1,
-      "icontype": "magic, ranged",
+      "icontype": "magic, ranged, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -3149,7 +3189,7 @@
       "unbuilt": [
         "Uses -15% stamina for each Star Holy-item."
       ],
-      "icontype": "holy",
+      "icontype": "holy, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -3216,7 +3256,7 @@
         "Shop entered: Dig up a random item."
       ],
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -3280,7 +3320,7 @@
       "slug": "snow_stick",
       "in_shop": false,
       "sockets": 1,
-      "icontype": "ice, melee",
+      "icontype": "ice, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -3332,7 +3372,7 @@
         "On hit: Destroy 4 Block for each free Star slot."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee, weapon"
     },
     "spectral_dagger": {
       "name": "Phantom Read",
@@ -3378,7 +3418,7 @@
         "On attack: Use 1 Mana to ignore Block and deal +6 damage."
       ],
       "sockets": 1,
-      "icontype": "magic, melee",
+      "icontype": "magic, melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -3457,7 +3497,7 @@
       "slug": "stankus_toothpick",
       "in_shop": false,
       "sockets": 1,
-      "icontype": "melee",
+      "icontype": "melee, weapon",
       "recipe": [
         {
           "ingredients": [
@@ -3501,7 +3541,7 @@
         "Can only be thrown once per battle.",
         "On hit: Destroy 4 Block."
       ],
-      "icontype": "nature, ranged"
+      "icontype": "nature, ranged, weapon"
     },
     "stone_golem": {
       "name": "Build Golem",
@@ -3566,7 +3606,7 @@
         "Deals +10 damage for each Star Bag of Stones."
       ],
       "sockets": 1,
-      "icontype": "effect, ranged",
+      "icontype": "effect, ranged, weapon, pet",
       "pet": true,
       "recipe": [
         {
@@ -3665,7 +3705,7 @@
       "slug": "thornbloom",
       "in_shop": false,
       "sockets": 2,
-      "icontype": "nature, melee",
+      "icontype": "nature, melee, weapon",
       "recipe": [
         {
           "ingredients": [

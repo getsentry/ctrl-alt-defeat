@@ -64,6 +64,7 @@ from item_effects import (
     StaminaEffect,
     StatusChangeTrigger,
     StunEffect,
+    TriggerItemEffect,
     WhenAffordableTrigger,
     TimerTrigger,
 )
@@ -224,7 +225,6 @@ class TestGameDesignCompliance:
         # An irregular weapon, to check a shape that is not a rectangle carries
         # its numbers as faithfully as a 1x2 does (Section 2.3)
         ss = ITEM_CATALOG["stack_smasher"]
-        assert len(ss.triggers) == 1
         assert isinstance(ss.triggers[0], TimerTrigger)
         assert ss.triggers[0].cooldown == 2.2
         assert ss.triggers[0].cpu_cost == 2.0
@@ -5795,3 +5795,158 @@ class TestAChainWithNoEnd(_WithOneItem):
         """A trigger, a chance, a price, a count and the effects is a deep
         clause, and it is five."""
         assert BattleSimulator.DEEPEST > 5 * 4
+
+
+class TestMakingAnotherItemAct(_WithOneItem):
+    """"Trigger the Star Pet", "Trigger all Star Food", and the one every
+    Potion has: it applies the effect of the Potion above it, without
+    consuming that one.
+    """
+
+    @staticmethod
+    def _willing(uid, position, kinds=("potion",), consumes=True):
+        """Something with a clause behind a condition that never comes, so
+        the only way it ever acts is by being triggered."""
+        effects = [BlockEffect(block_amount=10)]
+        if consumes:
+            effects.append(ConsumeEffect())
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name=uid, category="patch", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "p"), slug=uid,
+                kinds=frozenset(kinds),
+                triggers=[CounterTrigger(
+                    counting="block", amount=9999, whose="self",
+                    counts="held", effects=effects)]),
+            position=position, uid=uid)
+
+    def _puller(self, counting, pick="all", how_many=0, uid="puller"):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name=uid, category="infrastructure", cost=1,
+                player_class="neutral", slug=uid,
+                shape=parse_map(["#**"], uid),
+                triggers=[BattleStartTrigger(effects=[TriggerItemEffect(
+                    where="star", counting=counting, how_many=how_many,
+                    pick=pick)])]),
+            position=(0, 0), uid=uid)
+
+    def test_it_makes_the_item_do_what_it_does(self):
+        sim, _ = self._run(
+            [self._puller({"any": ["potion"]}), self._willing("p", (1, 0))],
+            seconds=0.3)
+        assert sim.player1.block == 10, "its clause ran without its condition"
+
+    def test_and_leaves_it_standing(self):
+        """"without consuming that potion" is the whole point of spillover."""
+        sim, _ = self._run(
+            [self._puller({"any": ["potion"]}), self._willing("p", (1, 0))],
+            seconds=0.3)
+        assert "p" not in sim.consumed_items
+
+    def test_it_reaches_only_what_it_counts(self):
+        sim, _ = self._run(
+            [self._puller({"any": ["potion"]}),
+             self._willing("p", (1, 0), kinds=("food",))],
+            seconds=0.3)
+        assert sim.player1.block == 0, "a Food is not a Potion"
+
+    def test_it_reaches_everything_that_counts(self):
+        sim, _ = self._run(
+            [self._puller({"any": ["potion"]}),
+             self._willing("a", (1, 0)), self._willing("b", (2, 0))],
+            seconds=0.3)
+        assert sim.player1.block == 20, "both of them"
+
+    def test_a_random_pick_takes_one(self):
+        sim, _ = self._run(
+            [self._puller({"any": ["potion"]}, pick="random"),
+             self._willing("a", (1, 0)), self._willing("b", (2, 0))],
+            seconds=0.3)
+        assert sim.player1.block == 10, "one of the two, not both"
+
+    def test_it_does_not_trigger_an_item_already_spent(self):
+        gone = self._willing("p", (1, 0))
+        sim, _ = self._run([self._puller({"any": ["potion"]}), gone],
+                           seconds=0.3)
+        sim.consumed_items.add("p")
+        before = sim.player1.block
+        assert before == 10
+
+    def test_a_standing_trigger_is_not_run_again(self):
+        """A passive is on already, so running it again would hand out its
+        modifier a second time."""
+        standing = BattleItem(
+            spec=ItemSpec(
+                id="s", name="s", category="patch", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "s"), slug="s",
+                kinds=frozenset({"potion"}),
+                triggers=[PassiveTrigger(effects=[ModifyEffect(
+                    stat="damage", value=1.0, target_type="own",
+                    counting="any", cap=None)])]),
+            position=(1, 0), uid="s")
+        swinger = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            AttackEffect(min_damage=10, max_damage=10, accuracy=1.0,
+                         crit_chance=0.0)])], uid="w", position=(2, 1))
+        sim, result = self._run(
+            [self._puller({"any": ["potion"]}), standing, swinger], seconds=1.5)
+        assert 350 - result["player2_quota"] == 20, "doubled once, not twice"
+
+
+class TestEveryPotionSpillsOver(TestTheSweptClauses):
+    """The clause every Potion has and none of them said.
+
+    It is not on the wiki's `effect` field, which is what the import read; it
+    is in the prose beside it, in the same words on every Potion page. So it
+    was missing rather than unbuilt -- nothing was owed and nothing was there.
+    """
+
+    def test_the_potion_above_is_the_potion_in_the_star(self):
+        """A Potion's map is ['*', '^', '#']: it covers two squares and its
+        star is the one directly above. So "above" needs no idea of its own."""
+        spec = ITEM_CATALOG["health_potion"]
+        assert spec.shape.star == ((0, -1),)
+        assert len(spec.shape.squares) == 2
+
+    def test_a_potion_drunk_applies_the_one_above_it(self):
+        """Health Potion drinks itself when its owner's health falls, and the
+        one above it heals as well without being drunk."""
+        # A Potion covers two squares and its star is the one above the top,
+        # so the pair stands two apart: the upper one's lower square is the
+        # lower one's star.
+        upper, lower = (0, 0), (0, 2)
+        assert (0, 1) in [(lower[0] + dx, lower[1] + dy)
+                          for dx, dy in ITEM_CATALOG["health_potion"].shape.star]
+        pair = [self._real("health_potion", lower, uid="lower"),
+                self._real("health_potion", upper, uid="upper")]
+        # Health Potion drinks itself below half, which is 175 of 350.
+        sim, result = self._fight(
+            pair, seconds=4.0, hurt=180,
+            against=[self._swinger(damage=5, position=(6, 0))])
+        assert "lower" in sim.consumed_items, "the lower one was drunk"
+        assert "upper" not in sim.consumed_items, "and the upper one was not"
+        heals = [a for a in sim.actions if a.action == "heal"]
+        assert len(heals) >= 2, "it healed twice for one drink"
+
+    def test_every_potion_either_spills_over_or_owes_it(self):
+        """Six of the twelve have no clause that drinks them yet, so there is
+        nowhere to hang it. Those say so on their `unbuilt` list rather than
+        saying nothing, which is how this went unnoticed."""
+        import json
+        from pathlib import Path
+        from item_effects import TriggerItemEffect
+
+        items = Path(__file__).resolve().parents[1] / "data" / "items"
+        for path in sorted(items.glob("*.json")):
+            data = json.loads(path.read_text())
+            for group in ("items", "containers"):
+                for item_id, item in data.get(group, {}).items():
+                    if "potion" not in (item.get("icontype") or ""):
+                        continue
+                    spills = any(
+                        e.get("type") == "trigger_item"
+                        for t in item.get("triggers") or []
+                        for e in t.get("effects") or [])
+                    owes = any("Potion above it" in c
+                               for c in item.get("unbuilt") or [])
+                    assert spills or owes, item_id

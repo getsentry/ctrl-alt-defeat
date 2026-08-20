@@ -28,7 +28,7 @@
         }
       ],
       "slug": "api_token",
-      "icontype": "nature",
+      "icontype": "nature, accessory",
       "in_shop": true
     },
     "bitcoin_wallet": {
@@ -45,13 +45,24 @@
       "source": "Piggybank",
       "rarity": "common",
       "cost": 3,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "shop_entered",
+          "effects": [
+            {
+              "type": "gold",
+              "amount": 1,
+              "description": "Gain 1 Gold"
+            }
+          ]
+        }
+      ],
       "slug": "bitcoin_wallet",
       "in_shop": true,
       "unbuilt": [
-        "Shop entered: Gain 1 Gold.",
         "Start of battle: Gain 2 maximum health for each Star Start of battle-item."
-      ]
+      ],
+      "icontype": "accessory"
     },
     "captcha_module": {
       "name": "CAPTCHA Module",
@@ -80,7 +91,7 @@
         }
       ],
       "slug": "captcha_module",
-      "icontype": "nature",
+      "icontype": "nature, accessory",
       "in_shop": true
     },
     "script_compiler": {
@@ -128,7 +139,8 @@
             "unidentified_amulet"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "dark_web_access": {
       "name": "Onion Router",
@@ -186,7 +198,7 @@
         }
       ],
       "slug": "dark_web_access",
-      "icontype": "dark",
+      "icontype": "dark, accessory",
       "in_shop": false,
       "recipe": [
         {
@@ -222,7 +234,8 @@
             "unidentified_amulet"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "auto_scaler": {
       "name": "Elastic Waistband",
@@ -244,11 +257,29 @@
       "source": "Amulet of Feasting",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "trigger_speed",
+              "value": 0.4,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "food"
+                ]
+              },
+              "cap": null,
+              "description": "Star Food triggers 40% faster"
+            }
+          ]
+        }
+      ],
       "slug": "auto_scaler",
       "in_shop": false,
       "unbuilt": [
-        "Star Food triggers 40% faster.",
         "Food bought: Restock with a random Food."
       ],
       "recipe": [
@@ -257,7 +288,8 @@
             "unidentified_amulet"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "redundancy_protocol": {
       "name": "Buddy System",
@@ -304,7 +336,8 @@
             "unidentified_amulet"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "encryption_module": {
       "name": "Cipher Core",
@@ -343,7 +376,8 @@
             "unidentified_amulet"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "machine_learning_core": {
       "name": "Echo Chamber",
@@ -360,7 +394,7 @@
       "cost": 6,
       "triggers": [],
       "slug": "machine_learning_core",
-      "icontype": "nature",
+      "icontype": "nature, accessory",
       "in_shop": false,
       "unbuilt": [
         "After 5s: Trigger the Star Pet and gain 4 Spikes. Return damage limit of Spikes against Melee and Ranged attacks +50%."
@@ -390,7 +424,8 @@
       "in_shop": true,
       "unbuilt": [
         "Shop entered: Generate a low-quality Gemstone. Gemstones are offered in the shop."
-      ]
+      ],
+      "icontype": "accessory"
     },
     "transaction_log": {
       "name": "Write-Ahead Log",
@@ -416,7 +451,8 @@
           ]
         }
       ],
-      "in_shop": false
+      "in_shop": false,
+      "icontype": "accessory"
     },
     "premium_subscription": {
       "name": "Free Trial",
@@ -435,7 +471,8 @@
       "in_shop": true,
       "unbuilt": [
         "Shop refreshes: Increase the rarity of 1 item. 10% chance for a Trade offer."
-      ]
+      ],
+      "icontype": "accessory"
     },
     "vampire_rootkit": {
       "name": "Vampire Rootkit",
@@ -469,7 +506,7 @@
         }
       ],
       "slug": "vampire_rootkit",
-      "icontype": "vampiric",
+      "icontype": "vampiric, accessory",
       "in_shop": true
     },
     "amulet_of_fortune": {
@@ -499,7 +536,8 @@
             "unidentified_amulet"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "amulet_of_light": {
       "name": "Green Light",
@@ -538,7 +576,7 @@
       "unbuilt": [
         "Star item activates: 10% chance to gain 1 Regeneration, 30% if the item is Holy."
       ],
-      "icontype": "holy",
+      "icontype": "holy, accessory",
       "recipe": [
         {
           "ingredients": [
@@ -639,7 +677,7 @@
       ],
       "slug": "angel_crystal",
       "in_shop": true,
-      "icontype": "treasure,holy"
+      "icontype": "treasure, holy, accessory"
     },
     "bag_of_stones": {
       "name": "Packet Bag",
@@ -660,7 +698,8 @@
       "in_shop": true,
       "unbuilt": [
         "Star Stones above can be thrown repeatedly."
-      ]
+      ],
+      "icontype": "accessory"
     },
     "blue_sage_collar": {
       "name": "Amethyst Collar",
@@ -682,7 +721,7 @@
       "unbuilt": [
         "Star Weapon hits: 7% chance for each Luck to gain 3 Mana."
       ],
-      "icontype": "magic, nature",
+      "icontype": "magic, nature, accessory",
       "recipe": [
         {
           "ingredients": [
@@ -783,7 +822,8 @@
             "firewall"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "djinn_lamp": {
       "name": "Daemon Lamp",
@@ -804,7 +844,7 @@
         "Every 1.6s: Gain 1 Luck or 1 Spikes or 1 Mana, depending on what you have the least of.",
         "Use 7 Block, 7 Luck, 7 Spikes, 7 Mana and 27 health: Give the Star Weapon +27 damage (once)."
       ],
-      "icontype": "magic"
+      "icontype": "magic, accessory"
     },
     "fanfare": {
       "name": "Klaxon",
@@ -842,7 +882,7 @@
       "unbuilt": [
         "Every 3s: Randomly gain 1 Empower or gain 3 Mana and remove 2 Mana from opponent or remove 1 stamina from opponent."
       ],
-      "icontype": "magic,musical"
+      "icontype": "magic, musical, accessory"
     },
     "flute": {
       "name": "Screaming Modem",
@@ -880,7 +920,7 @@
       "unbuilt": [
         "Every 4.7s: Randomly gain 14 Block or 2 stamina or 2 Luck."
       ],
-      "icontype": "magic, musical"
+      "icontype": "magic, musical, accessory"
     },
     "furcifer_prime_subscription": {
       "name": "Prime Subscription",
@@ -900,7 +940,8 @@
       "unbuilt": [
         "Shop entered: Pay 2 Gold fees. For the next shop:",
         "Sales chance +10%. Crafted items are offered in the shop."
-      ]
+      ],
+      "icontype": "accessory"
     },
     "happy_bomb": {
       "name": "Logic Bomb",
@@ -921,7 +962,7 @@
       "unbuilt": [
         "After 12s: Use all your buffs, your opponent takes +4% damage for each buff used. Deal 30 Effect-damage."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, accessory"
     },
     "heart_container": {
       "name": "Health Pool",
@@ -990,7 +1031,7 @@
       "slug": "heart_container",
       "in_shop": true,
       "sockets": 1,
-      "icontype": "holy"
+      "icontype": "holy, accessory"
     },
     "heart_of_darkness": {
       "name": "Null Heart",
@@ -1067,7 +1108,7 @@
         "Every 4s: Steal 2 buffs, prioritizing Regeneration."
       ],
       "sockets": 1,
-      "icontype": "dark",
+      "icontype": "dark, accessory",
       "recipe": [
         {
           "ingredients": [
@@ -1113,7 +1154,7 @@
         "Ranger items are offered in the shop.",
         "Star items gain 2% critical hit chance for each Luck."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, accessory"
     },
     "lucky_piggy": {
       "name": "Entropy Piggy",
@@ -1140,12 +1181,21 @@
               "description": "Gain 2 Calibrated"
             }
           ]
+        },
+        {
+          "type": "shop_entered",
+          "effects": [
+            {
+              "type": "gold",
+              "amount": 1,
+              "description": "Gain 1 Gold"
+            }
+          ]
         }
       ],
       "slug": "lucky_piggy",
       "in_shop": false,
       "unbuilt": [
-        "Shop entered: Gain 1 Gold.",
         "Chance-based effects of the Star items are 12% more likely to trigger."
       ],
       "recipe": [
@@ -1156,7 +1206,8 @@
             "quantum_probability_core"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "maneki_neko": {
       "name": "Fortune Bot",
@@ -1173,17 +1224,27 @@
       "source": "Maneki-neko",
       "rarity": "legendary",
       "cost": 10,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "sale_chance",
+              "amount": 0.03,
+              "description": "Sale chance +3%"
+            }
+          ]
+        }
+      ],
       "slug": "maneki_neko",
       "in_shop": true,
       "unbuilt": [
-        "Sale chance +3%.",
         "Value of Star items > 20 Gold",
         "15% chance to resist critical hits.",
         "Value of Star items > 40 Gold",
         "Godly and Unique items trigger 15% faster."
       ],
-      "icontype": "holy"
+      "icontype": "holy, accessory"
     },
     "oil_lamp": {
       "name": "Soldering Iron",
@@ -1249,7 +1310,7 @@
       ],
       "slug": "oil_lamp",
       "in_shop": true,
-      "icontype": "fire"
+      "icontype": "fire, accessory"
     },
     "platinum_customer_card": {
       "name": "Platinum Tier",
@@ -1281,7 +1342,8 @@
             "premium_subscription"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "present": {
       "name": "Unmarked Package",
@@ -1315,7 +1377,7 @@
       "unbuilt": [
         "Shop entered: Instead of gold, you receive items with a higher value."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, accessory"
     },
     "puzzle_badge": {
       "name": "Puzzle Badge",
@@ -1340,7 +1402,7 @@
         "After 5s: They trigger 50% faster instead.",
         "Bag bought: 35% chance to restock with a Puzzlebag."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, accessory"
     },
     "rainbow_badge": {
       "name": "Rainbow Badge",
@@ -1416,7 +1478,7 @@
       "unbuilt": [
         "Items of all classes are offered in the shop."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, accessory"
     },
     "red_orchid_collar": {
       "name": "Crimson Collar",
@@ -1438,7 +1500,7 @@
       "unbuilt": [
         "Star items steal 3% life for each Luck (up to 50%) and gain 4% critical chance for each Vampirism."
       ],
-      "icontype": "vampiric, nature",
+      "icontype": "vampiric, nature, accessory",
       "recipe": [
         {
           "ingredients": [
@@ -1480,7 +1542,7 @@
       "unbuilt": [
         "After 12s: Repeat the Start of battle effects of the Star items."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, accessory"
     },
     "rope": {
       "name": "Patch Cable",
@@ -1500,7 +1562,8 @@
       "in_shop": false,
       "unbuilt": [
         "Star item activates: The Diamond item triggers 10% faster for 6s (up to 50% shared by all ropes)"
-      ]
+      ],
+      "icontype": "accessory"
     },
     "shepherds_crook": {
       "name": "Cluster Wrangler",
@@ -1551,7 +1614,8 @@
             "whetstone"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "shiny_shell": {
       "name": "Secure Shell",
@@ -1598,7 +1662,7 @@
       ],
       "slug": "shiny_shell",
       "in_shop": true,
-      "icontype": "holy, nature"
+      "icontype": "holy, nature, accessory"
     },
     "sir_sand": {
       "name": "Obfuscator",
@@ -1626,7 +1690,8 @@
             "captcha_module"
           ]
         }
-      ]
+      ],
+      "icontype": "accessory"
     },
     "snowball": {
       "name": "Cold Boot",
@@ -1659,7 +1724,7 @@
       "unbuilt": [
         "Your opponent gains 15% less maximum health from items."
       ],
-      "icontype": "ice",
+      "icontype": "ice, accessory",
       "recipe": [
         {
           "ingredients": [
@@ -1712,7 +1777,7 @@
       "unbuilt": [
         "Shop entered: Consume Star items. Create different items based on the combined value."
       ],
-      "icontype": "treasure, dark, magic"
+      "icontype": "treasure, dark, magic, accessory"
     },
     "star_of_courage": {
       "name": "Founder's Star",
@@ -1733,7 +1798,8 @@
         "Chance to find Treasure-items +5%.",
         "Your Weapons use -5% stamina.",
         "(Rewarded for starting as a random character.)"
-      ]
+      ],
+      "icontype": "accessory"
     },
     "stone_badge": {
       "name": "Stone Badge",
@@ -1767,7 +1833,7 @@
         "Your starting class items are no longer offered in the shop (even when this item is in storage).",
         "Shop entered: Generate items worth 1 Gold."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, accessory"
     },
     "time_dilator": {
       "name": "Time Dilator",
@@ -1788,7 +1854,7 @@
         "Your and your opponent's Weapons attack 30% slower.",
         "Every 1s: Your item with the highest cooldown triggers 6% faster."
       ],
-      "icontype": "treasure"
+      "icontype": "treasure, accessory"
     },
     "unidentified_amulet": {
       "name": "Undocumented Feature",
@@ -1807,7 +1873,8 @@
       "in_shop": true,
       "unbuilt": [
         "On buy: Gain a random effect."
-      ]
+      ],
+      "icontype": "accessory"
     },
     "unstable_recombobulator": {
       "name": "Unstable Refactor",
@@ -1853,7 +1920,7 @@
       "unbuilt": [
         "Shop entered: Consume this and Star items. Create different items based on the combined value."
       ],
-      "icontype": "dark, magic"
+      "icontype": "dark, magic, accessory"
     },
     "walrus_tusk": {
       "name": "Walrus Operator",
@@ -1884,7 +1951,7 @@
       ],
       "slug": "walrus_tusk",
       "in_shop": true,
-      "icontype": "nature"
+      "icontype": "nature, accessory"
     },
     "whetstone": {
       "name": "Edge Cache",
@@ -1921,7 +1988,8 @@
         }
       ],
       "slug": "whetstone",
-      "in_shop": true
+      "in_shop": true,
+      "icontype": "accessory"
     },
     "white_lily_collar": {
       "name": "Ivory Collar",
@@ -1974,7 +2042,7 @@
       "unbuilt": [
         "Star item gains 1% critical hit chance for each Luck and Regeneration."
       ],
-      "icontype": "holy, nature",
+      "icontype": "holy, nature, accessory",
       "recipe": [
         {
           "ingredients": [
@@ -2015,7 +2083,7 @@
       "unbuilt": [
         "On Buy: Split into 2 Snowballs."
       ],
-      "icontype": "ice"
+      "icontype": "ice, accessory"
     }
   }
 }
