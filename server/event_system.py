@@ -30,6 +30,7 @@ class EventType(Enum):
     BUFF_APPLIED = "buff_applied"
     DEBUFF_APPLIED = "debuff_applied"
     CPU_EXHAUSTED = "cpu_exhausted"
+    FATIGUE_STARTED = "fatigue_started"  # Night fell, and fatigue begins
     CPU_REGENERATED = "cpu_regenerated"
 
 

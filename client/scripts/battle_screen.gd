@@ -445,6 +445,7 @@ func _connect_event_signals():
 	event_processor.debuff_applied.connect(_on_debuff_applied)
 	event_processor.item_activated.connect(_on_item_activated)
 	event_processor.player_died.connect(_on_player_died)
+	event_processor.nightfall_began.connect(_on_nightfall)
 	event_processor.battle_ended.connect(_on_battle_ended)
 	event_processor.log_message.connect(_on_log_message)
 
@@ -726,6 +727,11 @@ const HURT := Color(1.0, 0.36, 0.42)
 ## some time ago, and a player who cannot tell the two apart cannot tell why
 ## their health is still falling.
 const POISON := Color(0.78, 0.45, 1.0)
+## Fatigue is nobody's blow. It lands on both fighters at once, every second,
+## from no item at all, and the same argument poison makes applies harder: a
+## player who reads it as a hit goes looking for what hit them. The twilight
+## blue the battle log writes nightfall in, so the two read as one thing.
+const TIRED := Color(0.55, 0.5, 0.95)
 const MENDED := Color(0.45, 1.0, 0.6)
 const SHIELDED := Color(0.5, 0.85, 1.0)
 
@@ -736,7 +742,11 @@ static func hurt_colour(kind: String) -> Color:
 	Its own function because the number itself is only drawn where animations
 	run, and what a colour means is worth being sure of either way.
 	"""
-	return POISON if kind == "dot" else HURT
+	if kind == "dot":
+		return POISON
+	if kind == "fatigue":
+		return TIRED
+	return HURT
 
 
 func _show_damage_number(player: int, amount: int, kind: String = "damage"):
@@ -779,6 +789,69 @@ func _throw_number(player: int, text: String, tint: Color, size: int):
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.chain().tween_property(label, "modulate:a", 0.0, NUMBER_OUT)
 	tween.chain().tween_callback(label.queue_free)
+
+## What the city dims to when night falls, and how long it takes to get there.
+## Dark and blue rather than simply dark: the roof is lit from the windows
+## below it, and taking the light out without cooling it reads as a dead
+## monitor rather than as evening.
+const NIGHT_TINT := Color(0.44, 0.47, 0.74)
+const NIGHT_FALLS_OVER := 1.4
+
+
+func _on_nightfall():
+	"""Say that fatigue has started, in the two ways it needs saying.
+
+	The city dimming is the state -- it holds for the rest of the battle, so
+	a player who looks up late still knows where they are. The line across the
+	middle is the moment, and it goes away again.
+
+	Neither is load-bearing: every payout is in the log either way. So both go
+	through Presentation and are simply skipped when animations are off.
+	"""
+	if not Presentation.request("nightfall"):
+		return
+
+	var dimming = _effect_tween()
+	dimming.set_parallel(true)
+	for scenery in [$Background, $Parapet]:
+		dimming.tween_property(scenery, "modulate", NIGHT_TINT,
+			Presentation.delay(NIGHT_FALLS_OVER))
+
+	_announce("Fatigue sets in...", Color(0.74, 0.75, 1.0))
+
+
+func _announce(text: String, tint: Color):
+	"""Put a line across the middle of the screen, and take it away again.
+
+	For something that happened to the battle rather than to a fighter, which
+	is why it is centred rather than thrown off one of them.
+	"""
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 52)
+	label.add_theme_color_override("font_color", tint)
+	label.add_theme_color_override("font_outline_color", Color(0.02, 0.01, 0.06, 0.9))
+	label.add_theme_constant_override("outline_size", 10)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.z_index = 70
+
+	var window := get_viewport_rect().size
+	label.size = Vector2(window.x, 70)
+	label.pivot_offset = label.size / 2.0
+	label.position = Vector2(0.0, window.y * 0.42 - 35.0)
+	label.modulate.a = 0.0
+	label.scale = Vector2(0.8, 0.8)
+	add_child(label)
+
+	var tween = _effect_tween()
+	tween.tween_property(label, "modulate:a", 1.0, 0.3)
+	tween.parallel().tween_property(label, "scale", Vector2.ONE, 0.45) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(1.3)
+	tween.tween_property(label, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(label.queue_free)
+
 
 func _show_block_effect(player: int):
 	if not Presentation.request("block_effect", {"player": player}):

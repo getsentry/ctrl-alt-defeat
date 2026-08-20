@@ -164,6 +164,8 @@ class BattleActionName(str, Enum):
     RESIST = "resist"
     REFLECT = "reflect"
     PLAYER_MODIFY = "player_modify"
+    NIGHTFALL = "nightfall"
+    FATIGUE = "fatigue"
     PLAYER_DEFEATED = "player_defeated"
 
 

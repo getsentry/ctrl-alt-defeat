@@ -9,14 +9,17 @@ from pydantic import ValidationError
 
 from battle_engine import (
     ITEM_CATALOG,
-    Timed,
+    LATE_BATTLE,
     MEMORY_LEAKED,
+    NIGHTFALL,
     OVER_TIME,
     POISON_PERIOD,
     BattleItem,
     BattleSimulator,
+    Fatigued,
     MemoryLeaked,
     Player,
+    Timed,
 )
 from containers import Container
 from grid_system import parse_map
@@ -33,9 +36,11 @@ from item_effects import (
     CostEffect,
     CpuDrainEffect,
     DebuffEffect,
+    FatigueStartTrigger,
     GainDamageEffect,
     HealEffect,
     HealthThresholdTrigger,
+    InflictFatigueEffect,
     ItemSpec,
     LimitEffect,
     ModifyEffect,
@@ -255,11 +260,12 @@ class TestGameDesignCompliance:
         }
 
     def test_battle_duration(self):
-        """Test Section 6.2: Battle max duration 60s"""
+        """Section 6.2: no time limit, only a backstop fatigue never reaches"""
         sim = BattleSimulator(seed=TEST_SEED)
-        assert sim.max_duration == 60.0
+        assert sim.max_duration > 60.0, "60s is not a rule of the game"
 
-        # Test timeout with no items (should end at 60s)
+        # Two empty racks cannot hurt each other, so fatigue is the only thing
+        # that can finish this, and it has to, well short of the backstop.
         p1_containers, p2_containers = get_test_containers()
         result = sim.simulate_battle(
             [],
@@ -268,30 +274,12 @@ class TestGameDesignCompliance:
             p1_containers=p1_containers,
             p2_containers=p2_containers,
         )
-        assert result["duration"] <= 60.0
+        assert result["duration"] < sim.max_duration
 
-    def test_fatigue_mechanic(self):
-        """Test Section 7.1: Fatigue after 30s"""
-        sim = BattleSimulator(seed=TEST_SEED)
-
-        # Create a weak item that won't end battle quickly
-        item = BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
-        item.spec.min_damage = 1
-        item.spec.max_damage = 1
-
-        # Run partial simulation
-        sim.current_time = 29.9
-        original_damage = item.spec.min_damage
-
-        # Before 30s - no fatigue
-        assert item.spec.min_damage == original_damage
-
-        # After 30s - damage increases by 1 per 5 seconds
-        sim.current_time = 30.0
-        # Would apply fatigue here in real simulation
-        # Fatigue at 30s = 0
-        # Fatigue at 35s = 1
-        # Fatigue at 40s = 2
+    def test_nightfall_is_seventeen_seconds_in(self):
+        """Section 7.1: the one number the whole mechanic hangs off"""
+        assert NIGHTFALL == 17.0
+        assert BattleSimulator(seed=TEST_SEED).nightfall == NIGHTFALL
 
     def test_critical_hits(self):
         """Test Section 7.2: Base 5% crit chance, 2x damage.
@@ -563,11 +551,15 @@ class TestBattleSimulation:
         assert result["player2_quota"] == 0
         assert result["duration"] < 60.0  # Should end early
 
-    def test_timeout_battle(self):
-        """Test battle times out at 60s"""
+    def test_a_battle_nobody_can_win_is_ended_by_fatigue(self):
+        """Section 7.1: fatigue is what stops a battle, not the clock.
+
+        Two empty racks. Nothing either player owns can move the other's
+        quota, so every point taken off is fatigue's, and the round-1 quota of
+        25 goes to nothing seven payouts in: 1+2+3+4+5+6+7 is 28.
+        """
         sim = BattleSimulator(seed=TEST_SEED)
 
-        # No items = no damage = timeout
         p1_containers, p2_containers = get_test_containers()
         result = sim.simulate_battle(
             [],
@@ -577,9 +569,10 @@ class TestBattleSimulation:
             p2_containers=p2_containers,
         )
 
-        assert result["duration"] == 60.0
-        assert result["player1_quota"] == 25  # No damage taken
-        assert result["player2_quota"] == 25
+        assert result["duration"] == 23.0  # Nightfall at 17s, seven payouts
+        assert result["player1_quota"] == 0
+        assert result["player2_quota"] == 0
+        assert [a for a in result["actions"] if a.action == "nightfall"]
 
 
 if __name__ == "__main__":
@@ -719,6 +712,9 @@ class TestMemoryLeakedDamage:
         p1_containers, p2_containers = get_test_containers()
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = seconds
+        # Night never falls, so the only thing that can move the quota is the
+        # poison. Otherwise fatigue is in every reading past 17 seconds.
+        sim.nightfall = seconds + 1
 
         # No items, so the only thing that can move the quota is the poison.
         original = sim._setup_item_handlers
@@ -1408,6 +1404,7 @@ class TestCleansing:
         p1, p2 = get_test_containers()
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = 30.0
+        sim.nightfall = 31.0  # This is about the cleanse, not about fatigue
         original = sim._setup_item_handlers
 
         def poison(items, owner, enemy):
@@ -2521,6 +2518,10 @@ class _WithOneItem:
         p1, p2 = get_test_containers()
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = seconds
+        # Night never falls. Every test here is about the one item it built,
+        # and a battle that runs past 17 seconds otherwise has fatigue in
+        # every quota it reads. TestFatigue brings its own battles.
+        sim.nightfall = seconds + 1
         original = sim._setup_item_handlers
 
         def setup(its, owner, enemy):
@@ -4344,6 +4345,9 @@ class TestTheSweptClauses(_WithOneItem):
         mine, theirs = self._room()
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = seconds
+        # Night never falls: these read quotas, and a battle past 17 seconds
+        # otherwise has fatigue in every one of them.
+        sim.nightfall = seconds + 1
         original = sim._setup_item_handlers
 
         def setup(its, owner, enemy):
@@ -4660,3 +4664,295 @@ class TestTheSweptClauses(_WithOneItem):
                              seconds=20.0)
         assert alone["player2_quota"] == 350, "nothing in its star"
         assert fed["player2_quota"] < 350
+
+
+class TestFatigue:
+    """Section 7.1: what ends a battle"""
+
+    @staticmethod
+    def _quiet(seconds: float, round_number: int = 18, **on_sim):
+        """Run a battle where nobody owns anything, so fatigue is the only
+        thing that can move either quota. Round 18 for the 350 it starts them
+        on, which fatigue takes a good while to get through.
+        """
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        for name, value in on_sim.items():
+            setattr(sim, name, value)
+        result = sim.simulate_battle([], [], round_number, p1, p2)
+        return sim, result
+
+    @staticmethod
+    def _payouts(sim, player: int):
+        return [
+            (a.timestamp, a.damage)
+            for a in sim.actions
+            if a.action == "fatigue" and a.player == player
+        ]
+
+    def test_nothing_happens_before_nightfall(self):
+        sim, result = self._quiet(NIGHTFALL - 0.5)
+        assert not [a for a in sim.actions if a.action == "fatigue"]
+        assert result["player1_quota"] == result["player2_quota"] == 350
+
+    def test_the_first_payout_lands_on_nightfall_and_deals_one(self):
+        sim, _ = self._quiet(NIGHTFALL + 0.1)
+        assert self._payouts(sim, 1) == [(17000, 1)]
+        assert self._payouts(sim, 2) == [(17000, 1)]
+
+    def test_it_pays_every_second_to_both_players(self):
+        """1, 2, 3 ... to each of them, on the second."""
+        sim, result = self._quiet(NIGHTFALL + 5)
+        expected = [(17000, 1), (18000, 2), (19000, 3), (20000, 4), (21000, 5)]
+        assert self._payouts(sim, 1) == expected
+        assert self._payouts(sim, 2) == expected
+        assert result["player1_quota"] == 350 - 15
+
+    def test_the_level_climbs_by_a_tenth_of_itself_plus_one(self):
+        """Ten payouts get it to 10, and the eleventh adds 2 rather than 1."""
+        sim, _ = self._quiet(NIGHTFALL + 12)
+        dealt = [damage for _, damage in self._payouts(sim, 1)]
+        assert dealt == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14]
+
+    def test_past_a_minute_it_climbs_by_a_fifth(self):
+        """No battle lasts a minute -- fatigue sees to that long before -- so
+        the late rule is checked on the effect rather than through a battle.
+        """
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.night = True  # The loop settles this; here it is stated outright
+        player = Player(id=1, quota=10_000, max_quota=10_000, cpu=3.0)
+        player.fatigue = 100
+        sim.player1 = player
+
+        sim.current_time = LATE_BATTLE - 1
+        Fatigued().pay(player, sim)
+        assert player.fatigue == 111, "a tenth of itself, plus one"
+
+        sim.current_time = LATE_BATTLE
+        Fatigued().pay(player, sim)
+        assert player.fatigue == 134, "a fifth of itself, plus one"
+
+    def test_a_battle_cannot_outlast_it(self):
+        """Round 18 is the most health the game ever hands out, and neither
+        player can be touched by anything but fatigue. It still ends, and well
+        inside the backstop.
+        """
+        sim, result = self._quiet(600.0)
+        assert result["duration"] < 40.0
+        assert min(result["player1_quota"], result["player2_quota"]) == 0
+
+    def test_night_falls_once_and_before_the_first_payout(self):
+        sim, _ = self._quiet(NIGHTFALL + 5)
+        nights = [a for a in sim.actions if a.action == "nightfall"]
+        assert len(nights) == 1
+        assert nights[0].timestamp == 17000
+        assert sim.actions.index(nights[0]) < sim.actions.index(
+            next(a for a in sim.actions if a.action == "fatigue")
+        )
+
+    def test_block_does_not_absorb_it(self):
+        """It is not an attack, so there is nothing there for Block to answer.
+        The same rule poison plays by.
+        """
+        sim = BattleSimulator(seed=TEST_SEED)
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        player.block = 50
+        sim.player1 = player
+
+        sim.inflict_fatigue(player)
+
+        assert player.quota == 99
+        assert player.block == 50, "none of it was spent"
+
+    def test_the_share_a_player_carries_does_reach_it(self):
+        """The one thing that stands in front of fatigue.
+
+        Block and shields both answer an attack, and fatigue is not one. A
+        damage share is written about damage rather than about attacks --
+        "reduce damage taken by 25%", invulnerability -- so it reaches every
+        kind, this one included. `_take_damage` says so in as many words.
+        """
+        sim = BattleSimulator(seed=TEST_SEED)
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        sim.player1 = player
+        player.mods.append(Timed("modifier", "damage_taken", -0.5, None))
+
+        player.fatigue = 9
+        sim.inflict_fatigue(player)
+
+        assert player.fatigue == 10, "the level climbs by the whole step"
+        assert player.quota == 95, "and half of it lands"
+
+    def test_each_player_carries_their_own_level(self):
+        sim = BattleSimulator(seed=TEST_SEED)
+        one = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        two = Player(id=2, quota=100, max_quota=100, cpu=3.0)
+        sim.player1, sim.player2 = one, two
+
+        sim.inflict_fatigue(one)
+        sim.inflict_fatigue(one)
+        sim.inflict_fatigue(two)
+
+        assert (one.fatigue, two.fatigue) == (2, 1)
+        assert (one.quota, two.quota) == (100 - 1 - 2, 100 - 1)
+
+    def test_both_fighters_going_down_together_is_reported_as_both(self):
+        """Fatigue lands on both players in the same tick, so both can fall in
+        it. The log used to name only the first one checked, which left the
+        client to guess at the other -- and it guessed by re-deriving the
+        winner from health it had been subtracting itself.
+        """
+        sim, result = self._quiet(600.0, round_number=1)
+
+        assert result["player1_quota"] == result["player2_quota"] == 0
+        assert sorted(
+            a.player for a in sim.actions if a.action == "player_defeated"
+        ) == [1, 2]
+
+    def test_a_battle_leaves_no_fatigue_behind_it(self):
+        """Section 7.1 is battle state. A player who ended one round tired
+        starts the next one fresh.
+        """
+        player = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+        player.fatigue = 40
+        player.reset_for_battle()
+        assert player.fatigue == 0
+
+
+class TestFatigueFromAnItem:
+    """"Inflict Fatigue damage": one step on the same level nightfall climbs"""
+
+    @staticmethod
+    def _tiring(target: str = "enemy", at: float = 0.5):
+        """An item that inflicts fatigue once, `at` seconds in."""
+        return BattleItem(
+            spec=ItemSpec(
+                id="tiring",
+                name="Tiring",
+                category="problem",
+                cost=1,
+                player_class="neutral",
+                kinds=frozenset({"melee"}),
+                shape=parse_map(["#"], "tiring"),
+                slug="tiring",
+                triggers=[
+                    TimerTrigger(
+                        cooldown=at,
+                        cpu_cost=0,
+                        effects=[InflictFatigueEffect(target_type=target)],
+                    )
+                ],
+            ),
+            position=(0, 0),
+            uid="tiring",
+        )
+
+    def test_it_takes_one_step_and_deals_the_whole_level(self):
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 3.5
+        sim.nightfall = 99.0  # This is about the item, not about nightfall
+        result = sim.simulate_battle([self._tiring(at=1.0)], [], 18, p1, p2)
+
+        # Three activations, and the level is one higher at each of them.
+        assert [
+            a.damage for a in sim.actions if a.action == "fatigue"
+        ] == [1, 2, 3]
+        assert result["player2_quota"] == 350 - 6
+
+    def test_tiring_someone_early_makes_every_nightfall_payout_worse(self):
+        """The level an item pushes up is the level nightfall carries on
+        from, which is the whole reason to do it early.
+        """
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = NIGHTFALL + 0.1
+        # Fires at 5s, 10s and 15s, so the level stands at 3 by nightfall.
+        result = sim.simulate_battle([self._tiring(at=5.0)], [], 18, p1, p2)
+
+        nightfall_payout = [
+            a for a in sim.actions if a.action == "fatigue" and a.timestamp == 17000
+        ]
+        by_player = {a.player: a.damage for a in nightfall_payout}
+        assert by_player[2] == 4, "carried on from the 3 the item left"
+        assert by_player[1] == 1, "the other side was never touched"
+        assert result["player2_quota"] == 350 - (1 + 2 + 3 + 4)
+
+    def test_it_can_be_pointed_at_its_own_owner(self):
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 1.5
+        sim.nightfall = 99.0
+        result = sim.simulate_battle([self._tiring("self", at=1.0)], [], 18, p1, p2)
+
+        assert result["player1_quota"] == 350 - 1
+        assert result["player2_quota"] == 350
+
+
+class TestItemsWrittenAgainstFatigue:
+    """The catalogue clauses that were waiting on the mechanic"""
+
+    @staticmethod
+    def _shelved(category: str, slug: str) -> str:
+        """What the catalogue still lists as unbuilt for an item.
+
+        Read off the file rather than the loaded spec: `unbuilt` is prose for
+        a reader, so nothing carries it into `ItemSpec`. A clause that is
+        built and still sitting there is the mistake this catches.
+        """
+        import json
+        from pathlib import Path
+
+        path = Path(__file__).parent.parent / "data" / "items" / f"{category}.json"
+        items = json.loads(path.read_text())["items"]
+        entry = next(i for i in items.values() if i.get("slug") == slug)
+        return " ".join(entry.get("unbuilt", []))
+
+    def test_traffic_cop_gains_heat_when_night_falls(self):
+        """From the catalogue: "Fatigue starts: gain 10 Heat". Heat is ours as
+        Optimized.
+        """
+        spec = ITEM_CATALOG["ddos_protection_module"]
+        nightfall = [t for t in spec.triggers if isinstance(t, FatigueStartTrigger)]
+        assert nightfall, "the clause is built, not shelved"
+        assert "Fatigue starts" not in self._shelved(
+            "scripts", "ddos_protection_module"
+        )
+
+        cop = BattleItem(spec=deepcopy(spec), position=(0, 0), uid="cop")
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = NIGHTFALL + 0.1
+        sim.simulate_battle([cop], [], 18, p1, p2)
+
+        assert sim.player1.buffs.get("optimized") == 10
+        assert not sim.player2.buffs.get("optimized")
+
+    def test_the_heat_arrives_before_the_first_fatigue_lands(self):
+        """An item written against the moment has to be changed by the time
+        the moment's own consequences arrive.
+        """
+        cop = BattleItem(
+            spec=deepcopy(ITEM_CATALOG["ddos_protection_module"]),
+            position=(0, 0),
+            uid="cop",
+        )
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = NIGHTFALL + 0.1
+        sim.simulate_battle([cop], [], 18, p1, p2)
+
+        buff = next(a for a in sim.actions if a.action == "buff")
+        fatigue = next(a for a in sim.actions if a.action == "fatigue")
+        assert sim.actions.index(buff) < sim.actions.index(fatigue)
+
+    def test_day_zero_tires_whoever_it_lands_on(self):
+        """From the catalogue: "On hit: Inflict Fatigue damage"."""
+        spec = ITEM_CATALOG["day_zero"]
+        assert "Inflict Fatigue" not in self._shelved("problems", "day_zero")
+
+        on_hit = [t for t in spec.triggers if isinstance(t, OnHitTrigger)]
+        assert on_hit and any(
+            isinstance(e, InflictFatigueEffect) for e in on_hit[0].effects
+        )

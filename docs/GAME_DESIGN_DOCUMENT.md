@@ -946,11 +946,16 @@ items. The catalogue is the record; regenerate any listing from it.
 3. Arrange inventory
 4. View opponent's last build
 
-### 6.2 Battle Phase (60 seconds max)
+### 6.2 Battle Phase
 1. Items activate based on triggers
 2. CPU management occurs automatically
 3. Battle ends when a player reaches 0 HP
-4. If time expires, player with more HP wins
+
+There is no time limit. **Fatigue** (Section 7.1) is what ends a battle, and
+it grows fast enough that no build survives much past forty seconds. The
+engine keeps a backstop far beyond that so a bug in fatigue cannot hang the
+simulation, and if a battle ever did reach it the player with more HP wins --
+but that is a failure to notice, not a rule of the game.
 
 ### 6.3 Round Result
 
@@ -979,8 +984,46 @@ out. The player clicks to move on to the post-battle screen.
 ## 7. Special Mechanics
 
 ### 7.1 Fatigue
-- After 30 seconds, all damage increases by 1 per 5 seconds
-- Prevents stalemates
+
+Fatigue is what ends a battle. Nothing else in the game grows, so two builds
+that cannot finish each other would stand there swinging forever.
+
+**Nightfall is 17 seconds in.** The screen darkens and says so. From then on,
+once a second, **both** players take fatigue damage.
+
+**The level is the damage.** Each player carries their own fatigue level,
+starting at 0. A payout raises the level and then deals all of it:
+
+| When | The level goes up by |
+|------|----------------------|
+| Every second from nightfall | `level // 10 + 1` |
+| Every second past 60 seconds | `level // 5 + 1` |
+| Any other source (an item) | `1` |
+
+So the nightfall sequence is 1, 2, 3 ... 11, 12, 13, 15, 16 ... — it is a tenth
+of itself, rounded down, plus one. That doubles the level about every eight
+seconds, and past a minute, when the divisor becomes a fifth, about every four.
+Nothing heals through the tail of it.
+
+**An item that inflicts fatigue raises the same level.** It takes one step
+rather than a growing one, and deals what the level then stands at. This is why
+it is worth doing early: a level pushed to 3 before nightfall makes the first
+nightfall payout deal 4, and every payout after it more.
+
+**Almost nothing answers fatigue.** It is not an attack, so accuracy never
+comes into it, no shield rolls against it, and Block does not absorb it — the
+same rules poison plays by, and for the same reason: there is no attack there
+to answer.
+
+The one thing that does reach it is the share the target carries. "Reduce
+damage taken by 25%" and invulnerability answer every kind of damage, fatigue
+included, because they are written about damage rather than about attacks.
+`_take_damage` takes the share first and Block second, and fatigue asks for
+neither `blockable` nor an attacker.
+
+**Nightfall is a moment items can be written against.** "Fatigue starts: gain
+10 Heat" fires once, on the way past, and it fires before the first payout
+lands.
 
 ### 7.2 Critical Hits
 - Base 5% chance

@@ -38,6 +38,8 @@ from item_effects import (
     WEAPON_KINDS,
     UNBUILT_EFFECTS,
     UNBUILT_TRIGGERS,
+    FatigueStartTrigger,
+    InflictFatigueEffect,
     BuffEffect,
     CleanseEffect,
     ConsumeEffect,
@@ -374,6 +376,8 @@ class ConfigLoader:
             return OnAttackTrigger(chance=config["chance"], effects=effects)
         elif trigger_type == "passive":
             return PassiveTrigger(effects=effects)
+        elif trigger_type == "fatigue_start":
+            return FatigueStartTrigger(effects=effects)
 
         if trigger_type in UNBUILT_TRIGGERS:
             self.unbuilt.setdefault(trigger_type, []).append(item_id)
@@ -859,6 +863,10 @@ class ConfigLoader:
                 target_type=config.get("target", "enemy"),
                 duration=config.get("duration", -1),
             )
+        elif effect_type == "inflict_fatigue":
+            if "target" not in config:
+                raise ValueError(f"{item_id}: inflict_fatigue needs a `target`")
+            return InflictFatigueEffect(target_type=config["target"])
         elif effect_type == "block":
             if "value" not in config:
                 raise ValueError(f"{item_id}: a block needs a `value`")

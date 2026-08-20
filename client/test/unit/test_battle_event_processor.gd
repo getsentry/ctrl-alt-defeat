@@ -357,6 +357,113 @@ func test_damage_over_time_wears_health_down():
 	assert_eq(processor.player2_hp, 22, "Damage over time should still hurt")
 
 
+# ============ Fatigue ============
+
+func test_nightfall_is_announced():
+	watch_signals(processor)
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 17000, "action": "nightfall", "player": 0})
+	]))
+
+	processor.skip_to_end()
+
+	assert_signal_emitted(processor, "nightfall_began",
+		"The screen has to know when fatigue starts")
+
+
+func test_fatigue_wears_health_down():
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 17000, "action": "fatigue", "damage": 1, "player": 1,
+			"details": _standing([QUOTA - 1, QUOTA])}),
+		_action({"timestamp": 18000, "action": "fatigue", "damage": 2, "player": 1,
+			"details": _standing([QUOTA - 3, QUOTA])})
+	]))
+
+	processor.skip_to_end()
+
+	assert_eq(processor.player1_hp, QUOTA - 3, "Both payouts should land")
+	assert_eq(processor.player2_hp, QUOTA, "Each player carries their own")
+
+
+func test_fatigue_is_announced_as_damage():
+	# It moves the same number an attack does, so anything watching health --
+	# the bars, the damage numbers -- has to hear about it the same way.
+	watch_signals(processor)
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 17000, "action": "fatigue", "damage": 4, "player": 2,
+			"source": "system", "details": _standing([QUOTA, QUOTA - 4])})
+	]))
+
+	processor.skip_to_end()
+
+	assert_signal_emitted(processor, "damage_dealt", "Fatigue should be announced")
+	var args = get_signal_parameters(processor, "damage_dealt", 0)
+	assert_eq(args[0], 2, "Should say who is tired")
+	assert_eq(args[1], 4, "Should say how much it cost them")
+	assert_eq(args[3], "system", "Nightfall's own fatigue has no item behind it")
+
+
+func test_fatigue_from_an_item_keeps_the_item_as_its_source():
+	# Day Zero tires whoever it lands on. The server says which item did it,
+	# and the client has no business renaming it.
+	watch_signals(processor)
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 3000, "action": "fatigue", "damage": 1, "player": 2,
+			"source": "day_zero_uid", "details": _standing([QUOTA, QUOTA - 1])})
+	]))
+
+	processor.skip_to_end()
+
+	var args = get_signal_parameters(processor, "damage_dealt", 0)
+	assert_eq(args[3], "day_zero_uid", "The item that tired them should carry through")
+
+
+func test_fatigue_says_so_in_the_log():
+	var messages: Array = []
+	processor.log_message.connect(func(message: String, _colour: Color):
+		messages.append(message))
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 17000, "action": "nightfall", "player": 0}),
+		_action({"timestamp": 17000, "action": "fatigue", "damage": 1, "player": 1,
+			"details": _standing([QUOTA - 1, QUOTA])})
+	]))
+
+	processor.skip_to_end()
+
+	assert_true("Fatigue sets in" in messages[0], "The moment should be named")
+	assert_true("fatigue damage" in messages[1], "And so should the payout")
+
+
+func test_the_winner_is_the_servers_and_not_worked_out_again():
+	"""Fatigue can put both fighters on the floor in the same tick.
+
+	The client used to name the winner itself, from health it had been
+	subtracting as it went. Both fighters at zero made that "player 2", while
+	the server -- which compares what they were actually reduced to, overkill
+	and all -- had already banked a win for player 1. The run scoreboard came
+	from the server and the banner came from the client, so the player was
+	shown a loss over a win.
+	"""
+	watch_signals(processor)
+	var battle := _battle([
+		_action({"timestamp": 17000, "action": "fatigue", "damage": 999, "player": 1,
+			"details": _standing([0, QUOTA])}),
+		_action({"timestamp": 17000, "action": "fatigue", "damage": 999, "player": 2,
+			"details": _standing([0, 0])}),
+		_action({"timestamp": 17000, "action": "player_defeated", "player": 1,
+			"details": _standing([0, 0])})
+	])
+	battle.winner = 1
+	processor.load_battle_events(battle)
+
+	processor.skip_to_end()
+
+	assert_eq(processor.player1_hp, 0, "Both fighters should be down")
+	assert_eq(processor.player2_hp, 0, "Both fighters should be down")
+	var args = get_signal_parameters(processor, "battle_ended", 0)
+	assert_eq(args[0], 1, "The server said player 1, so the screen says player 1")
+
+
 # ============ Where the CPU stands ============
 
 func test_an_action_says_where_both_fighters_cpu_stood():

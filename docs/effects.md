@@ -227,9 +227,9 @@ fourth:
 | Regeneration | 2s | 1 health per stack | a stack count |
 | Fatigue | 1s, from nightfall (17s) | escalating | its own last value |
 
-Only Poison is built. `OverTimeEffect` in `battle_engine.py` is the base
-class, each subclass works out its own payout, and `OVER_TIME` is the registry
-the battle loop walks.
+All three are built. `OverTimeEffect` in `battle_engine.py` is the base class,
+each subclass works out its own payout, and `OVER_TIME` is the registry the
+battle loop walks.
 
 **Fatigue is why it is a class and not a record.** Its amount is
 `previous + previous // 10 + 1`, computed from what it dealt last tick — after
@@ -237,11 +237,24 @@ the battle loop walks.
 "heal per stack" fields can hold that, so the first version of this, which had
 exactly those two fields, was already wrong for a third of the set.
 
+**Fatigue is not a debuff, however much it looks like one.** Nothing applies
+it, nothing cleanses it, and it is not in `DEBUFFS` — the level lives in a
+field of its own on `Player`, and `Fatigued` is the only thing that reads it.
+An item that "inflicts Fatigue damage" goes through
+`BattleSimulator.inflict_fatigue`, which is also what nightfall calls; the only
+difference is the size of the step. It asks `_take_damage` for no `blockable`
+and no attacker, so Block and shields both pass it by and only the target's
+damage share reaches it. Section 7.1 of the design document has the numbers.
+
+That field is also why `modify_per_status` cannot yet count fatigue, which is
+what Day Zero's crit clause needs. See BACKLOG.md.
+
 **Do not put stat buffs here, and be careful about why.** Heat, Cold, Blind,
 Luck and Empower never tick. They are read at the moment they matter — when an
 activation is scheduled, when accuracy is rolled, when damage is totted up.
 Spikes and Vampirism are reactive rather than periodic. Of the ten buffs and
-debuffs in the game, exactly two tick: Poison and Regeneration.
+debuffs in the game, exactly two tick: Poison and Regeneration. Fatigue is the
+third over-time effect and is not one of the ten.
 
 This is easy to get wrong, because **plenty of items do grant a stat buff on a
 timer** — 74 clauses of them. "Burning Coal: After 5s: Gain 2 Heat."

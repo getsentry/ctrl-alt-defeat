@@ -45,8 +45,10 @@ from item_effects import (
     CpuDrainEffect,
     DebuffEffect,
     Effect,
+    FatigueStartTrigger,
     HealEffect,
     HealthThresholdTrigger,
+    InflictFatigueEffect,
     ItemSpec,
     ModifyEffect,
     ModifyPerEffect,
@@ -60,6 +62,25 @@ from item_effects import (
 from schemas import BattleAction
 
 MEMORY_LEAKED = "memory_leaked"
+
+# Section 7.1: fatigue. Not a buff or a debuff -- nothing applies it, nothing
+# cleanses it, and a player's level is only ever read by fatigue itself.
+FATIGUE = "fatigue"
+
+# When night falls and fatigue starts paying, and how often it pays after that.
+NIGHTFALL = 17.0
+FATIGUE_PERIOD = 1.0
+
+# A fatigue payout raises the level by a tenth of itself, rounded down, plus
+# one. Past a minute it is a fifth, which is what actually ends a long battle:
+# a tenth doubles the level every eight payouts or so, a fifth every four.
+LATE_BATTLE = 60.0
+FATIGUE_GROWTH = 10
+LATE_FATIGUE_GROWTH = 5
+
+# What every other source of fatigue raises the level by. An item does not
+# escalate -- it takes one step and deals what the level then stands at.
+FATIGUE_STEP = 1
 
 # Section 3.1: the two statuses that pull on how fast an item triggers, and
 # what one stack of either is worth.
@@ -169,10 +190,49 @@ class Regenerating(OverTimeEffect):
                      details={"buff_name": self.name})
 
 
+class Fatigued(OverTimeEffect):
+    """Fatigue. Section 7.1: from nightfall, once a second, to both players.
+
+    It is what ends a battle. Nothing else in the game grows, so a pair of
+    builds that cannot finish each other would otherwise stand there swinging
+    until the loop gave up and handed the win to whoever was ahead.
+
+    The level is the damage: a payout raises it and then deals all of it, so
+    the sequence is 1, 2, 3 ... and by a minute in it is adding fifths of
+    itself and climbing past anything a build can heal through.
+
+    Almost nothing answers it. It is not an attack, so no shield rolls against
+    it and accuracy never comes into it, and it asks `_take_damage` for no
+    `blockable`, the same as poison. The one thing it does meet is the share
+    the target carries -- "reduce damage taken by 25%" is written about damage
+    rather than about attacks, so it reaches every kind.
+    """
+
+    name = FATIGUE
+    period = FATIGUE_PERIOD
+
+    def pay(self, player: "Player", battle: "BattleSimulator") -> None:
+        # Due every second from the start of the battle, and owed nothing
+        # until night falls. Paying nothing still moves the clock on, which is
+        # what keeps the payouts on the second once they begin.
+        #
+        # It asks the battle whether night has fallen rather than working it
+        # out from the clock a second time. The loop settles that one tick
+        # earlier, and two copies of the same comparison are two things to
+        # keep in step.
+        if not battle.night:
+            return
+
+        divisor = (
+            LATE_FATIGUE_GROWTH
+            if battle.current_time + 1e-9 >= LATE_BATTLE
+            else FATIGUE_GROWTH
+        )
+        battle.inflict_fatigue(player, player.fatigue // divisor + 1, source="system")
+
+
 #: Every over-time effect in the game, in the order they pay out.
-#: Regeneration and Fatigue are not built yet -- see the table on
-#: OverTimeEffect for how each one fits.
-OVER_TIME: List[OverTimeEffect] = [MemoryLeaked(), Regenerating()]
+OVER_TIME: List[OverTimeEffect] = [MemoryLeaked(), Regenerating(), Fatigued()]
 
 
 class IdentitySet:
@@ -335,6 +395,10 @@ class Player:
     # chance to resist."
     resist_chance: float = 0.0
 
+    # Section 7.1: how much the next fatigue payout will deal. Each player
+    # carries their own, and every source of fatigue raises the same one.
+    fatigue: int = 0
+
     def reset_for_battle(self) -> None:
         """Forget everything the last battle left here.
 
@@ -351,6 +415,7 @@ class Player:
         self.reflect = 0
         self.resist = 0
         self.resist_chance = 0.0
+        self.fatigue = 0
 
     def modifier(self, stat: str, now: float) -> float:
         """What every live modifier on this player adds to one number.
@@ -417,9 +482,17 @@ class BattleSimulator:
     """Simulates battles per Game Design Document specifications"""
 
     def __init__(self, seed: Optional[int] = None):
-        self.max_duration = 60.0  # Section 6.2
+        # Not a time limit. Fatigue is what ends a battle (Section 7.1), and
+        # it grows fast enough that nothing survives much past forty seconds,
+        # so this is only here to stop a bug in it hanging the simulation --
+        # and the lever a test pulls to cut a battle short deliberately.
+        self.max_duration = 600.0
         self.tick_rate = 0.1  # Section 10.1: 10 ticks/second
         self.current_time = 0.0
+        # When fatigue starts. Held on the simulator rather than read from the
+        # constant, because items in the source game move it earlier.
+        self.nightfall = NIGHTFALL
+        self.night = False  # Whether it has, in the battle running now
         self.actions: List[BattleAction] = []
         # Set for the length of a battle, so _record can say where the CPU
         # stood. A test that calls one method on its own has no players, and an
@@ -514,6 +587,7 @@ class BattleSimulator:
         # hand, so that _record can say where their CPU stood without every
         # caller having to pass them.
         self.current_time = 0.0
+        self.night = False
         self.player1 = player1
         self.player2 = player2
         self.actions = []
@@ -580,12 +654,22 @@ class BattleSimulator:
             self.event_manager.current_time = self.current_time
             self.event_manager.process_timers(self.current_time)
 
-            # Pay out over-time effects (Sections 3.1 and 3.2)
+            # Night falls (Section 7.1). Announced before the payout it
+            # starts, so an item that answers to it has already done whatever
+            # it does by the time the first fatigue lands.
+            if not self.night and self.current_time + 1e-9 >= self.nightfall:
+                self._fall_night()
+
+            # Pay out over-time effects (Sections 3.1, 3.2 and 7.1)
             self._apply_over_time(player1)
             self._apply_over_time(player2)
 
-            # Check for defeat
-            if player1.quota <= 0:
+            # Check for defeat. Both are checked before the loop stops:
+            # fatigue lands on both players in the same tick, so both can go
+            # down at once, and a client told about only one of them has to
+            # guess at the other.
+            defeated = [p.id for p in (player1, player2) if p.quota <= 0]
+            for loser in defeated:
                 self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
@@ -593,48 +677,12 @@ class BattleSimulator:
                         action="player_defeated",
                         target=None,
                         damage=None,
-                        player=1,
+                        player=loser,
                         details=None,
                     )
                 )
+            if defeated:
                 break
-            if player2.quota <= 0:
-                self._record(
-                    BattleAction(
-                        timestamp=self._time_ms(),
-                        source="system",
-                        action="player_defeated",
-                        target=None,
-                        damage=None,
-                        player=2,
-                        details=None,
-                    )
-                )
-                break
-
-            # Apply fatigue (Section 7.1)
-            if self.current_time >= 30:
-                # Damage increases by 1 per 5 seconds after 30s
-                fatigue_bonus = int((self.current_time - 30) / 5)
-                # Apply to all items
-                for item in p1_items + p2_items:
-                    if item.spec.category == "problem":
-                        # Apply fatigue to all attack effects in all triggers
-                        for trigger in item.spec.triggers:
-                            for effect in trigger.effects:
-                                if hasattr(
-                                    effect, "min_damage"
-                                ):  # Check if it's an attack effect
-                                    # Store original values if not yet stored
-                                    if not hasattr(effect, "_original_min_damage"):
-                                        effect._original_min_damage = effect.min_damage
-                                        effect._original_max_damage = effect.max_damage
-                                    effect.min_damage = (
-                                        effect._original_min_damage + fatigue_bonus
-                                    )
-                                    effect.max_damage = (
-                                        effect._original_max_damage + fatigue_bonus
-                                    )
 
             self.current_time += self.tick_rate
 
@@ -1011,6 +1059,20 @@ class BattleSimulator:
                         EventType.BATTLE_START, handle_battle_start
                     )
 
+                elif isinstance(trigger, FatigueStartTrigger):
+                    # Nightfall happens to the battle rather than to a player,
+                    # so both sides' items hear the same one.
+                    def handle_nightfall(
+                        event, trigger=trigger, item=item, owner=owner
+                    ):
+                        if item.uid in self.consumed_items:
+                            return
+                        self._apply_effects(trigger.effects, item, owner, enemy)
+
+                    self.event_manager.subscribe(
+                        EventType.FATIGUE_STARTED, handle_nightfall
+                    )
+
                 elif isinstance(trigger, TimerTrigger):
                     # Create unique ID for this trigger-timer combination
                     trigger_index = item.spec.triggers.index(trigger)
@@ -1293,6 +1355,11 @@ class BattleSimulator:
                         player=owner.id,
                         details=None,
                     )
+                )
+            elif isinstance(effect, InflictFatigueEffect):
+                self.inflict_fatigue(
+                    owner if result["target_type"] == "self" else enemy,
+                    source=item.uid,
                 )
             elif isinstance(effect, BuffEffect):
                 self._grant(
@@ -1850,6 +1917,50 @@ class BattleSimulator:
         self.event_manager.emit(
             Event(EventType.HEALTH_FELL, attacker, target, EventData(damage=damage))
         )
+
+    def _fall_night(self) -> None:
+        """Start fatigue, once, and tell everyone watching.
+
+        The action is recorded as well as the event raised: the event is for
+        items, which are gone by the time anyone reads a battle back, and the
+        client needs the moment to darken the screen on.
+        """
+        self.night = True
+        self._record(
+            BattleAction(
+                timestamp=self._time_ms(),
+                source="system",
+                action="nightfall",
+                target=None,
+                damage=None,
+                player=0,  # 0 for system events, as battle_start is
+                details=None,
+            )
+        )
+        self.event_manager.emit(Event(EventType.FATIGUE_STARTED, None, None))
+
+    def inflict_fatigue(
+        self, player: Player, step: int = FATIGUE_STEP, source: str = "system"
+    ) -> int:
+        """Raise a player's fatigue level and deal all of it to them.
+
+        The one place the level moves. Nightfall takes a growing step and an
+        item takes one of `FATIGUE_STEP`, but both raise the same level and
+        both deal what it then stands at, so an item that inflicts fatigue
+        early makes every payout after it hurt more.
+
+        Returns the damage dealt, which is the new level.
+        """
+        player.fatigue += step
+        self._take_damage(
+            player,
+            player.fatigue,
+            source=source,
+            action="fatigue",
+            attacker=None,  # A player's own tiredness, whoever prompted it
+            details=None,  # The level is the damage, and damage already says it
+        )
+        return player.fatigue
 
     def _apply_over_time(self, player: Player):
         """Pay out whatever a player's own state owes right now."""

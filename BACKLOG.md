@@ -465,9 +465,9 @@ game only rolls against melee.
 audit)*. Throttled comes from `encryption_layer`'s proc, `cryogenic_shield`'s
 battle start and `cryogenic_cooling_system`'s timer; Optimized only from
 `quantum_processor`'s every-8s timer, which is out of the shop until its
-start-of-battle effect is built. `ddos_protection_module` now carries
-Pumpkin's real weapon swing, with "Fatigue starts: gain 10 Heat" in `unbuilt`
-waiting on a fatigue-start trigger.
+start-of-battle effect is built. `ddos_protection_module` carries Pumpkin's
+real weapon swing and its "Fatigue starts: gain 10 Heat", now that a
+`fatigue_start` trigger exists.
 
 **Spiked and Draining have items now** (`spike_launcher`, `spike_generator`,
 `load_balancer_script`; `vampire_rootkit`), though the buffs themselves are
@@ -475,6 +475,38 @@ still unread. Monitored is granted only by `quantum_processor`'s timer.
 
 `cache_optimizer` is Credits from Blueberries' "Every 3.5s: Gain 1 Mana",
 with the "at least 10 Mana" branch recorded in its `unbuilt`.
+
+### Rotten Die inflicts fatigue only from the backpack
+
+`inflict_fatigue` is built and two items use it: `day_zero` on hit, and
+nightfall itself. Rotten Die's "Every 3.9s: Inflict Fatigue damage" is still
+in its `unbuilt`, and not for want of the effect — the clause is a *backpack*
+effect, one of three the item has depending on where it sits, and the engine
+has no idea where an item sits. Its socket clauses are shelved for the same
+reason.
+
+That is the blocker worth naming: a socketable item's text is three items'
+worth of behaviour under one name, and nothing reads which of the three
+applies. Rotten Die is out of the shop until it does.
+
+### A modifier that counts a status cannot be handed to a zone
+
+`modify_per_status` is worth so much per stack of a status and reads the count
+when it matters, which is exactly the shape Day Zero's "Star items have +8%
+critical hit chance per Fatigue level of your opponent" wants — the level
+climbs all battle, so the bonus cannot be settled with the rest of the aura.
+
+It does not fit yet for two reasons. It lands on the item carrying it
+(`item.per_status.append`) rather than on the items a zone reaches, so there
+is no way to say *Star items*; and `_held` counts stacks out of `buffs` and
+`debuffs`, where fatigue does not live — it is a level of its own on `Player`,
+because nothing applies or cleanses it.
+
+Both are small. A `target_type` on `ModifyPerStatusEffect`, run through
+`_reached_by` the way `ModifyEffect` already is, and one place that answers
+"how many of this does the player hold" for statuses and fatigue alike —
+`_held` and `_stacks` both want that answer and each work it out themselves
+today. The clause stays in Day Zero's `unbuilt` until then.
 
 ### Fifteen more items want a cleanse they do not have
 

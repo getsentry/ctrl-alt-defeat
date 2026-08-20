@@ -220,6 +220,23 @@ class ModifyEffect(Counting, Effect):
 
 
 @dataclass
+class InflictFatigueEffect(Effect):
+    """Tire somebody out: raise their fatigue level by one and deal all of it.
+
+    The level is the one nightfall climbs, so this both hurts now and makes
+    every payout after it hurt more. It works before nightfall as well as
+    after -- an item that inflicts fatigue at ten seconds has the level at 3
+    by the time night falls, and the first nightfall payout deals 4.
+    """
+
+    #: `enemy` or `self`, the same word every other effect uses.
+    target_type: str = "enemy"
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "inflict_fatigue", "target_type": self.target_type}
+
+
+@dataclass
 class ModifyPerEffect(Counting, Effect):
     """Change a number on the item projecting the aura, once for each item
     the aura falls on.
@@ -269,7 +286,6 @@ BUFFS = frozenset({
     "draining",
     "credits",
 })
-
 @dataclass
 class GainDamageEffect(Counting, Effect):
     """Flat damage an item picks up during a battle and keeps.
@@ -1045,6 +1061,26 @@ class PassiveTrigger(Trigger):
 
     def get_cpu_cost(self) -> float:
         return 0  # Passives don't cost CPU
+
+
+@dataclass
+class FatigueStartTrigger(Trigger):
+    """Activates once, at nightfall, when fatigue begins.
+
+    A moment rather than a state, so it fires on the way past and not on
+    every tick spent after it. There is only ever one nightfall in a battle,
+    which is why it needs no `fired` flag the way a health threshold does.
+    """
+
+    effects: List[Effect] = field(default_factory=list)
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return event_type == "fatigue_started"
+
+    def get_cpu_cost(self) -> float:
+        return 0  # Nothing is spent noticing the sun go down
 
 
 @dataclass

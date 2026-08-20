@@ -17,6 +17,8 @@ signal buff_applied(player: int, buff_name: String)
 signal debuff_applied(player: int, debuff_name: String)
 signal cpu_changed(player: int, cpu: float, max_cpu: float)
 signal player_died(player: int)
+## Night fell and fatigue began. Once a battle, before the first payout.
+signal nightfall_began()
 signal battle_ended(winner: int)
 signal log_message(message: String, color: Color)
 
@@ -183,6 +185,13 @@ func _process_event(event: APITypes.BattleAction):
 		"dot":
 			log_msg = "[%.1fs] Player %d takes %d damage from %s" % [event_time, player, event.damage, event.details["debuff_name"]]
 			log_color = Color(0.8, 0.4, 0.6)  # Sickly pink for damage over time
+		"nightfall":
+			log_msg = "[%.1fs] Night falls. Fatigue sets in..." % [event_time]
+			log_color = Color(0.55, 0.5, 0.95)  # Twilight blue, and it only says it once
+		"fatigue":
+			# The level and the damage are the same number, so saying it once says both.
+			log_msg = "[%.1fs] Player %d takes %d fatigue damage" % [event_time, player, event.damage]
+			log_color = Color(0.55, 0.5, 0.95)  # Twilight blue, as nightfall is
 		"consume":
 			log_msg = "[%.1fs] Player %d's %s is used up" % [event_time, player, item_name]
 			log_color = Color(0.7, 0.7, 0.7)  # Gray, the item is spent
@@ -324,6 +333,23 @@ func _process_event(event: APITypes.BattleAction):
 			else:
 				player2_hp = left
 			damage_dealt.emit(player, damage, left, dot_source, "dot")
+
+		"nightfall":
+			nightfall_began.emit()
+
+		"fatigue":
+			# The same road poison takes: health a player took off themselves,
+			# and nothing that could have answered it. The source is the
+			# server's -- "system" for nightfall, and the item's own uid when
+			# an item did the tiring -- so it is passed on rather than named
+			# here, and what they have left is read off the action rather than
+			# subtracted.
+			var after_fatigue = _quota_left(player, event)
+			if player == 1:
+				player1_hp = after_fatigue
+			else:
+				player2_hp = after_fatigue
+			damage_dealt.emit(player, event.damage, after_fatigue, source, "fatigue")
 
 	if event.details != null and event.details.has("max_hp"):
 		var pools = event.details["max_hp"]

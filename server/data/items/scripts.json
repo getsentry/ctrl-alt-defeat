@@ -262,15 +262,23 @@
               "description": "Stun for 0.5s"
             }
           ]
+        },
+        {
+          "type": "fatigue_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 10,
+              "target": "self"
+            }
+          ]
         }
       ],
       "slug": "ddos_protection_module",
       "sockets": 2,
       "icontype": "treasure, nature, ranged",
-      "in_shop": false,
-      "unbuilt": [
-        "Fatigue starts: gain 10 Heat."
-      ]
+      "in_shop": false
     },
     "cryogenic_cooling_system": {
       "name": "Chill Loop",

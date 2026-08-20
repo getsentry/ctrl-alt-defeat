@@ -258,6 +258,16 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "inflict_fatigue",
+              "target": "enemy"
+            }
+          ]
         }
       ],
       "slug": "day_zero",
@@ -265,7 +275,6 @@
       "in_shop": false,
       "unbuilt": [
         "Can only be thrown once per battle.",
-        "On hit: Inflict Fatigue damage.",
         "Star items have +8% critical hit chance per Fatigue level of your opponent."
       ]
     },

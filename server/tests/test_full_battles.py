@@ -793,20 +793,17 @@ class TestFullBattleScenarios:
             p2_containers=p2_containers,
         )
 
-        # Battle should end despite healing (fatigue or timeout)
+        # Two defensive builds that heal as fast as they hurt each other.
+        # Fatigue is the only thing that can finish this, and it does.
         assert result["winner"] in [1, 2]
-        assert result["duration"] <= 60.0
+        assert min(result["player1_quota"], result["player2_quota"]) == 0
 
-        # After 30 seconds, fatigue should increase damage
-        late_damage = [
-            a for a in result["actions"] if a.action == "damage" and a.timestamp > 30000
-        ]
-        if late_damage:
-            # Damage should be higher than base (2-3) due to fatigue
-            late_damage_values = [a.damage for a in late_damage if a.damage]
-            if late_damage_values:
-                max_late_damage = max(late_damage_values)
-                assert max_late_damage > 3, "Fatigue should increase damage after 30s"
+        fatigue = [a for a in result["actions"] if a.action == "fatigue"]
+        assert fatigue, "Nothing else could have ended it"
+        assert min(a.timestamp for a in fatigue) == 17000, "Nightfall is 17s in"
+
+        # The last payout is the biggest, because the level only ever climbs.
+        assert fatigue[-1].damage == max(a.damage for a in fatigue)
 
     def test_cpu_management_battle(self):
         """Test battle where CPU management is critical"""

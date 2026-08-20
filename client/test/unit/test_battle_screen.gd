@@ -316,6 +316,16 @@ func test_poison_is_written_in_another_colour_than_a_blow():
 		"and anything else that hurts is a blow until it says otherwise")
 
 
+func test_fatigue_is_written_in_another_colour_again():
+	# It comes from no item and lands on both fighters at once, so reading it
+	# as a blow sends the player looking for a blow that is not there.
+	var tired = battle_screen.hurt_colour("fatigue")
+	assert_ne(tired, battle_screen.hurt_colour("damage"),
+		"Fatigue and a blow should not be written in the same colour")
+	assert_ne(tired, battle_screen.hurt_colour("dot"),
+		"nor fatigue and poison, which arrive for different reasons")
+
+
 func _with_an_item_to_throw() -> void:
 	"""The fixture's racks are empty, and a blow throws the item that made it"""
 	battle_screen.player_inventory.load_inventory_state(APITypes.InventoryState.new({
@@ -371,6 +381,16 @@ func test_healing_asks_for_a_heal_effect():
 		"Healing should ask for a heal effect")
 	assert_eq(Presentation.requests("heal_effect")[0]["data"]["amount"], 5,
 		"Should carry the amount healed")
+
+
+func test_nightfall_asks_to_darken_the_city():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	Presentation.clear_requests()
+
+	battle_screen._on_nightfall()
+
+	assert_eq(Presentation.request_count("nightfall"), 1,
+		"Night falling should ask for the screen to say so")
 
 
 func test_block_asks_for_a_block_effect():
