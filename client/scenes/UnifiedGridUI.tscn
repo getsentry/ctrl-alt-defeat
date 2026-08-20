@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://dt8utxaf3hedf" path="res://assets/characters/player_character_animation.png" id="3_nenkm"]
 [ext_resource type="Texture2D" uid="uid://bxostxe5sotec" path="res://assets/ui/sell_derez_bay.png" id="6_chest"]
 [ext_resource type="Texture2D" uid="uid://csqdv2agcpdol" path="res://assets/ui/storage_tray.png" id="7_tray"]
-[ext_resource type="AudioStream" uid="uid://deijgy6u7g0l6" path="res://assets/audio/shop_music.wav" id="11_music"]
+[ext_resource type="AudioStream" uid="uid://cxj7dtxg7ssuo" path="res://assets/audio/shop_music.ogg" id="11_music"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_b08fh"]
 atlas = ExtResource("3_nenkm")
