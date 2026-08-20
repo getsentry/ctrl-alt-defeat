@@ -74,6 +74,58 @@ class TestGameDesignCompliance:
         # the source covers. It clamps rather than raising.
         assert sim._get_round_quota(19) == 350
 
+    def test_a_quota_never_goes_below_nothing(self):
+        """Defeat is checked once a tick, so the last tick can overkill.
+
+        Every blow due in that tenth of a second lands, and each one used to
+        take the quota further into the negatives -- where it then decided the
+        winner, so two fighters who both ran out in the same tick were settled
+        by whose overkill was larger.
+        """
+        sim = BattleSimulator(seed=TEST_SEED)
+        p1_containers, p2_containers = get_test_containers()
+        blade = BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
+        blade.spec.min_damage = 200
+        blade.spec.max_damage = 200
+
+        result = sim.simulate_battle(
+            [blade],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
+
+        assert result["player2_quota"] == 0
+        for action in result["actions"]:
+            assert action.details["hp"][0] >= 0
+            assert action.details["hp"][1] >= 0
+
+    def test_every_action_says_where_both_fighters_stand(self):
+        """The client draws a health bar and cannot be left to work it out.
+
+        It used to start both fighters on a quota from a table of its own and
+        subtract its way down. That table disagreed with this one from round
+        two on -- 35 against 70 at round five -- so a battle went on for
+        seconds after the screen had counted somebody to nothing.
+        """
+        sim = BattleSimulator(seed=TEST_SEED)
+        p1_containers, p2_containers = get_test_containers()
+        blade = BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(0, 0))
+
+        result = sim.simulate_battle(
+            [blade],
+            [],
+            round_number=5,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
+
+        for action in result["actions"]:
+            assert action.details["max_hp"] == [70, 70]
+        assert result["actions"][0].details["hp"] == [70, 70]
+        assert result["actions"][-1].details["hp"][1] < 70
+
     def test_cpu_cycles_system(self):
         """Test Section 1.2: CPU Cycles (Stamina) system"""
         player = Player(id=1, quota=25, max_quota=25, cpu=10.0)

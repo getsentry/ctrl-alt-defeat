@@ -33,6 +33,19 @@ func after_each():
 	await get_tree().process_frame
 
 
+## What the fixtures here are fought for. The engine stamps both fighters'
+## quotas on every action it records, so an action without them is not one the
+## client will ever be given.
+const QUOTA := 25
+
+
+func _standing(hp: Array, extra: Dictionary = {}) -> Dictionary:
+	"""An action's details: where both fighters stand once it has landed"""
+	var details := {"hp": hp, "max_hp": [QUOTA, QUOTA]}
+	details.merge(extra, true)
+	return details
+
+
 func _action(overrides: Dictionary = {}) -> Dictionary:
 	var data = {
 		"timestamp": 0,
@@ -41,7 +54,7 @@ func _action(overrides: Dictionary = {}) -> Dictionary:
 		"target": null,
 		"damage": null,
 		"player": 0,
-		"details": null
+		"details": _standing([QUOTA, QUOTA])
 	}
 	data.merge(overrides, true)
 	return data
@@ -66,6 +79,28 @@ func _battle(actions: Array, player_items: Array = [], enemy_items: Array = []) 
 	})
 
 
+# ============ When it is over ============
+
+func test_health_is_read_off_the_battle_rather_than_worked_out():
+	# The engine stamps both fighters' quotas on every action it records. The
+	# client used to start them on a quota from a table of its own and subtract
+	# its way down, and that table disagreed with the engine's from round two
+	# on -- so a battle ran for seconds after the screen had counted somebody
+	# to nothing.
+	watch_signals(processor)
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 10, "source": "a", "action": "damage",
+			"player": 2, "damage": 3,
+			"details": {"hp": [70, 41], "max_hp": [70, 70]}}),
+	]))
+	processor.skip_to_end()
+
+	assert_eq(processor.player2_max_hp, 70, "The battle says what it was fought for")
+	var hurt = get_signal_parameters(processor, "damage_dealt", 0)
+	assert_eq(hurt[2], 41,
+		"and what is left, which is not the same as the last figure less the blow")
+
+
 # ============ Loading ============
 
 func test_loading_a_battle_makes_it_ready_to_play():
@@ -75,13 +110,12 @@ func test_loading_a_battle_makes_it_ready_to_play():
 		_action({"timestamp": 500, "action": "damage", "damage": 3, "player": 2})
 	]))
 
-	var quota = GameStateManager.get_round_quota()
 	assert_eq(processor.events.size(), 2, "Every event should be loaded")
 	assert_eq(processor.current_event_index, 0, "Playback should start from the first event")
 	assert_false(processor.is_playing, "Loading a battle should not start it")
 	assert_eq(processor.battle_duration, 10.0, "The duration should come from the battle")
-	assert_eq(processor.player1_hp, quota, "Player 1 should start on the round quota")
-	assert_eq(processor.player2_hp, quota, "Player 2 should start on the round quota")
+	assert_eq(processor.player1_hp, QUOTA, "Player 1 starts on what the battle says")
+	assert_eq(processor.player2_hp, QUOTA, "and so does Player 2")
 
 
 func test_loading_a_second_battle_replaces_the_first():
@@ -149,16 +183,16 @@ func test_skipping_processes_every_event():
 
 func test_skipping_applies_the_damage_along_the_way():
 	# Skipping must land on the same state as watching it play.
-	GameStateManager.current_round = 1
-	var quota = GameStateManager.get_round_quota()
 	processor.load_battle_events(_battle([
-		_action({"timestamp": 100, "action": "damage", "damage": 5, "player": 2}),
-		_action({"timestamp": 200, "action": "damage", "damage": 3, "player": 2})
+		_action({"timestamp": 100, "action": "damage", "damage": 5, "player": 2,
+			"details": _standing([QUOTA, 20])}),
+		_action({"timestamp": 200, "action": "damage", "damage": 3, "player": 2,
+			"details": _standing([QUOTA, 17])})
 	]))
 
 	processor.skip_to_end()
 
-	assert_eq(processor.player2_hp, quota - 8, "Both hits should have landed")
+	assert_eq(processor.player2_hp, 17, "It should end where the last action left it")
 
 
 func test_skipping_an_empty_battle_is_safe():
@@ -235,21 +269,21 @@ func test_an_unknown_action_still_reaches_the_log():
 # ============ Damage arithmetic ============
 
 func test_damage_reduces_the_right_player():
-	GameStateManager.current_round = 1
-	var quota = GameStateManager.get_round_quota()
 	processor.load_battle_events(_battle([
-		_action({"timestamp": 0, "action": "damage", "damage": 4, "player": 1})
+		_action({"timestamp": 0, "action": "damage", "damage": 4, "player": 1,
+			"details": _standing([21, QUOTA])})
 	]))
 
 	processor.skip_to_end()
 
-	assert_eq(processor.player1_hp, quota - 4, "Player 1 took the hit")
-	assert_eq(processor.player2_hp, quota, "Player 2 was not touched")
+	assert_eq(processor.player1_hp, 21, "Player 1 took the hit")
+	assert_eq(processor.player2_hp, QUOTA, "Player 2 was not touched")
 
 
 func test_a_defeat_puts_health_at_zero():
 	processor.load_battle_events(_battle([
-		_action({"timestamp": 0, "action": "player_defeated", "player": 2})
+		_action({"timestamp": 0, "action": "player_defeated", "player": 2,
+			"details": _standing([QUOTA, 0])})
 	]))
 
 	processor.skip_to_end()
@@ -258,30 +292,31 @@ func test_a_defeat_puts_health_at_zero():
 
 
 func test_healing_reaches_the_health_bar():
-	GameStateManager.current_round = 1
-	var quota = GameStateManager.get_round_quota()
 	processor.load_battle_events(_battle([
-		_action({"timestamp": 0, "action": "damage", "damage": 6, "player": 1}),
-		_action({"timestamp": 100, "action": "heal", "damage": 4, "player": 1})
+		_action({"timestamp": 0, "action": "damage", "damage": 6, "player": 1,
+			"details": _standing([19, QUOTA])}),
+		_action({"timestamp": 100, "action": "heal", "damage": 4, "player": 1,
+			"details": _standing([23, QUOTA])})
 	]))
 	watch_signals(processor)
 
 	processor.skip_to_end()
 
-	assert_eq(processor.player1_hp, quota - 2, "A heal should put health back")
+	assert_eq(processor.player1_hp, 23, "A heal should put health back")
 	assert_signal_emitted(processor, "healing_done", "A heal should be announced")
 
 
 func test_a_heal_cannot_take_health_past_full():
-	GameStateManager.current_round = 1
-	var quota = GameStateManager.get_round_quota()
+	# The engine caps it and says so. The screen shows what it is told, which
+	# is the whole of the client's job here.
 	processor.load_battle_events(_battle([
-		_action({"timestamp": 0, "action": "heal", "damage": 99, "player": 1})
+		_action({"timestamp": 0, "action": "heal", "damage": 99, "player": 1,
+			"details": _standing([QUOTA, QUOTA])})
 	]))
 
 	processor.skip_to_end()
 
-	assert_eq(processor.player1_hp, quota, "Health should stop at full")
+	assert_eq(processor.player1_hp, QUOTA, "Health should stop at full")
 
 
 func test_a_buff_is_announced_by_name():
@@ -311,16 +346,14 @@ func test_a_debuff_is_announced_by_name():
 
 
 func test_damage_over_time_wears_health_down():
-	GameStateManager.current_round = 1
-	var quota = GameStateManager.get_round_quota()
 	processor.load_battle_events(_battle([
 		_action({"timestamp": 0, "action": "dot", "damage": 3, "player": 2,
-			"details": {"debuff_name": "memory_leaked"}})
+			"details": _standing([QUOTA, 22], {"debuff_name": "memory_leaked"})})
 	]))
 
 	processor.skip_to_end()
 
-	assert_eq(processor.player2_hp, quota - 3, "Damage over time should still hurt")
+	assert_eq(processor.player2_hp, 22, "Damage over time should still hurt")
 
 
 # ============ Where the CPU stands ============

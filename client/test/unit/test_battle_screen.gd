@@ -15,11 +15,22 @@ func before_each():
 		"player1_quota": 80,
 		"player2_quota": 0,
 		"seed": 12345,
+		# Every action the engine records is stamped with where both fighters
+		# stand, so a fixture without that is not a battle the client is ever
+		# given -- and the screen reads its bars off it.
 		"actions": [
-			{"timestamp": 0, "source": "system", "action": "battle_start", "player": 0, "target": null, "damage": null, "details": null},
-			{"timestamp": 1000, "source": "test_item", "action": "activate", "player": 1, "target": null, "damage": null, "details": null},
-			{"timestamp": 1500, "source": "enemy", "action": "damage", "player": 2, "target": "player", "damage": 20, "details": {"hp": 80}},
-			{"timestamp": 5000, "source": "player", "action": "death", "player": 2, "target": null, "damage": null, "details": null}
+			{"timestamp": 0, "source": "system", "action": "battle_start",
+				"player": 0, "target": null, "damage": null,
+				"details": {"hp": [80, 80], "max_hp": [80, 80]}},
+			{"timestamp": 1000, "source": "test_item", "action": "activate",
+				"player": 1, "target": null, "damage": null,
+				"details": {"hp": [80, 80], "max_hp": [80, 80]}},
+			{"timestamp": 1500, "source": "enemy", "action": "damage",
+				"player": 2, "target": "player", "damage": 20,
+				"details": {"hp": [80, 60], "max_hp": [80, 80]}},
+			{"timestamp": 5000, "source": "player", "action": "death",
+				"player": 2, "target": null, "damage": null,
+				"details": {"hp": [80, 60], "max_hp": [80, 80]}}
 		],
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
@@ -271,6 +282,18 @@ func test_damage_asks_for_a_damage_number():
 	assert_eq(data["amount"], 7, "Should carry the amount of damage")
 
 
+func test_the_bars_are_up_before_the_battle_starts():
+	# Playback waits half a second, and the scene's bars are Godot's own, which
+	# read a hundred out of a hundred until something says otherwise. That was
+	# long enough to see a full hundred flash up on a battle fought for eighty.
+	assert_eq(battle_screen.player_health_bar.max_value, 80.0,
+		"The bar should be scaled before anything is played")
+	assert_eq(battle_screen.player_health_bar.value, 80.0,
+		"and full, because nothing has happened yet")
+	assert_eq(battle_screen.player_health_label.text, "80/80",
+		"and the number should say the same")
+
+
 func test_poison_says_it_is_poison():
 	# It arrives on its own clock, off an item that struck some time ago, so a
 	# player watching their health fall with nobody hitting them has to be able
@@ -424,9 +447,10 @@ func test_stat_readouts_show_numbers_once_the_battle_starts():
 func test_health_bar_tracks_the_health_number():
 	assert_true(await _wait_for_playback_start(), "Playback should start")
 
-	var quota = GameStateManager.get_round_quota()
+	# What the battle was fought for, off the battle itself.
+	var quota = battle_screen.event_processor.player1_max_hp
 	assert_eq(battle_screen.player_health_bar.max_value, float(quota),
-		"The bar should be scaled to the round quota")
+		"The bar should be scaled to the quota the battle was fought for")
 	assert_eq(battle_screen.player_health_bar.value, float(battle_screen.player_data["health"]),
 		"The bar should agree with the underlying health")
 

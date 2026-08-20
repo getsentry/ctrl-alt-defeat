@@ -515,15 +515,15 @@ class BattleSimulator:
     )
 
     def _record(self, action: BattleAction) -> None:
-        """Add an action to the timeline, stamped with where the CPU stood.
+        """Add an action to the timeline, stamped with where both fighters stand.
 
         The client draws a CPU bar for each fighter and nothing in the timeline
         ever said what to put in it, so it invented a full pool of ten and
         never moved it - three times the real pool, and static all battle.
 
-        Both players' levels go on every action, not just the one acting. Time
+        Both players' figures go on every action, not just the one acting. Time
         passes for both, so an action by one is also a moment at which the
-        other's bar has a different value than it did.
+        other's bars have different values than they did.
         """
         if self.player1 is not None and self.player2 is not None:
             details = dict(action.details or {})
@@ -532,6 +532,8 @@ class BattleSimulator:
                 round(self.player2.cpu, 2),
             ]
             details["max_cpu"] = [self.player1.max_cpu, self.player2.max_cpu]
+            details["hp"] = [self.player1.quota, self.player2.quota]
+            details["max_hp"] = [self.player1.max_quota, self.player2.max_quota]
             action.details = details
         self.actions.append(action)
 
@@ -1335,7 +1337,7 @@ class BattleSimulator:
         on its way here, it lands the same and is seen the same, so an item
         that reacts to its owner being hurt reacts to all of it.
         """
-        target.quota -= damage
+        target.quota = max(0, target.quota - damage)
 
         self._record(
             BattleAction(

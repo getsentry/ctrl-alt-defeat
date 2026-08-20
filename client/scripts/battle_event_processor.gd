@@ -51,9 +51,16 @@ var item_lookup: Dictionary = {}  # UUID -> item name
 func _ready():
 	set_process(false)
 
+## Who won, as the server settled it.
+var _winner: int = 0
+var _finished: bool = false
+
+
 func load_battle_events(battle_data: APITypes.BattleResult):
 	# Load events directly from typed battle result
 	events = battle_data.actions
+	_winner = battle_data.winner
+	_finished = false
 	print("Loaded %d battle events" % events.size())
 
 	# Build item lookup from both inventories
@@ -62,14 +69,24 @@ func load_battle_events(battle_data: APITypes.BattleResult):
 	# Set battle duration from typed result
 	battle_duration = battle_data.duration if battle_data.duration > 0 else 20.0
 
-	# Set initial HP from round quota
-	player1_max_hp = GameStateManager.get_round_quota()
-	player2_max_hp = GameStateManager.get_round_quota()
+	player1_max_hp = _stamped_quota(battle_data, 0)
+	player2_max_hp = _stamped_quota(battle_data, 1)
 	player1_hp = player1_max_hp
 	player2_hp = player2_max_hp
 
 	current_event_index = 0
 	is_playing = false
+
+static func _stamped_quota(battle: APITypes.BattleResult, side: int) -> int:
+	"""What a fighter started the battle on, as the engine recorded it.
+
+	Nothing at all for a battle with no actions in it, which is a battle that
+	never happened rather than one worth guessing about.
+	"""
+	if battle.actions.is_empty():
+		return 0
+	return int(battle.actions[0].details["max_hp"][side])
+
 
 func start_playback(speed: float = 1.0):
 	if events.is_empty():
@@ -106,6 +123,8 @@ func _process(_delta):
 		if event_time <= current_time:
 			_process_event(event)
 			current_event_index += 1
+			if not is_playing:
+				break  # Somebody fell, and that is the end of it
 		else:
 			break  # Wait for next frame
 
@@ -191,8 +210,7 @@ func _process_event(event: APITypes.BattleAction):
 		"damage":
 			var damage = event.damage
 			var damage_source = event.source if event.source else "Unknown"
-			# Calculate remaining HP based on current HP
-			var remaining = (player1_hp if player == 1 else player2_hp) - damage
+			var remaining = _quota_left(player, event)
 			if player == 1:
 				player1_hp = remaining
 			else:
@@ -202,11 +220,11 @@ func _process_event(event: APITypes.BattleAction):
 		"heal":
 			# Get heal amount from damage field
 			var amount = event.damage
-			var remaining = (player1_hp if player == 1 else player2_hp) + amount
+			var remaining = _quota_left(player, event)
 			if player == 1:
-				player1_hp = min(remaining, player1_max_hp)
+				player1_hp = remaining
 			else:
-				player2_hp = min(remaining, player2_max_hp)
+				player2_hp = remaining
 			healing_done.emit(player, amount, remaining)
 
 		"block":
@@ -233,10 +251,9 @@ func _process_event(event: APITypes.BattleAction):
 
 		"player_defeated":
 			player_died.emit(player)
-			if player == 1:
-				player1_hp = 0
-			else:
-				player2_hp = 0
+			# The battle is over the moment somebody falls. Anything the log
+			# still holds happened in the same tick as the blow that did it.
+			_finish_battle()
 
 		"miss":
 			# Show miss animation
@@ -249,12 +266,21 @@ func _process_event(event: APITypes.BattleAction):
 		"dot":
 			var damage = event.damage
 			var dot_source = event.source if event.source else "DoT"
+			var left = _quota_left(player, event)
 			if player == 1:
-				player1_hp = max(0, player1_hp - damage)
+				player1_hp = left
 			else:
-				player2_hp = max(0, player2_hp - damage)
-			damage_dealt.emit(player, damage,
-				player1_hp if player == 1 else player2_hp, dot_source, "dot")
+				player2_hp = left
+			damage_dealt.emit(player, damage, left, dot_source, "dot")
+
+	if event.details != null and event.details.has("max_hp"):
+		var pools = event.details["max_hp"]
+		player1_max_hp = int(pools[0])
+		player2_max_hp = int(pools[1])
+	if event.details != null and event.details.has("hp"):
+		var left = event.details["hp"]
+		player1_hp = int(left[0])
+		player2_hp = int(left[1])
 
 	# Where both fighters' CPU stood at this moment. Every action carries it,
 	# because time passes for both of them, so an action by one is also a
@@ -274,13 +300,18 @@ func _process_event(event: APITypes.BattleAction):
 
 	event_processed.emit(event)
 
+func _quota_left(player: int, event: APITypes.BattleAction) -> int:
+	"""How much quota a fighter has left once this action has landed."""
+	return int(event.details["hp"][player - 1])
+
+
 func _finish_battle():
+	if _finished:
+		return
+	_finished = true
 	is_playing = false
 	set_process(false)
-
-	# Determine winner
-	var winner = 1 if player1_hp > player2_hp else 2
-	battle_ended.emit(winner)
+	battle_ended.emit(_winner)
 
 func get_current_time() -> float:
 	"""How far into the battle the playhead is, in battle seconds."""
@@ -332,8 +363,8 @@ func skip_to_end():
 	if events.is_empty():
 		return
 
-	# Process all remaining events instantly
-	while current_event_index < events.size():
+	# Process all remaining events instantly, up to whoever falls first.
+	while current_event_index < events.size() and not _finished:
 		_process_event(events[current_event_index])
 		current_event_index += 1
 

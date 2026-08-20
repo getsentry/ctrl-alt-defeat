@@ -99,6 +99,12 @@ func _ready():
 		push_error("No battle events to play - this is a bug!")
 		assert(false, "Battle started with no events - server did not return battle actions")
 
+	# What the fighters stand on before anything has happened to them. Put up
+	# now rather than when playback starts: the scene's bars are Godot's own,
+	# which read a hundred out of a hundred, and the wait below is long enough
+	# to see it.
+	_stand_them_up()
+
 	# Start battle playback automatically
 	await get_tree().create_timer(Presentation.delay(0.5)).timeout
 	# Leaving the screen during that wait frees this node while the coroutine is
@@ -471,6 +477,32 @@ func _load_battle_from_state():
 	else:
 		opponent_name_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))  # Red for AI
 
+func _stand_them_up() -> void:
+	"""Put both fighters on screen as they were before the battle began.
+
+	The quota is the one the battle was actually fought for, which the
+	processor has read off the battle itself. Everything else waits: the first
+	action carries where the CPU really stood, and it arrives at the battle's
+	own timestamp zero. Naming a number here is what put a static ten out of
+	ten on screen for a whole battle.
+	"""
+	player_data = {
+		"health": event_processor.player1_max_hp,
+		"max_health": event_processor.player1_max_hp,
+		"stamina": 0.0,
+		"max_stamina": 0.0,
+		"buffs": []
+	}
+	enemy_data = {
+		"health": event_processor.player2_max_hp,
+		"max_health": event_processor.player2_max_hp,
+		"stamina": 0.0,
+		"max_stamina": 0.0,
+		"buffs": []
+	}
+	_update_stats_display()
+
+
 func _start_battle_playback():
 	print("Starting battle playback...")
 	battle_active = true
@@ -478,32 +510,6 @@ func _start_battle_playback():
 
 	# Clear battle log
 	battle_log_container.clear()
-
-	# Initialize player stats
-	var quota = GameStateManager.get_round_quota()
-	player_data = {
-		"health": quota,
-		"max_health": quota,
-		# Nothing yet. The first action carries where the CPU really stood, and
-		# it arrives at the battle's own timestamp zero. Naming a number here
-		# is what put a static 10 out of 10 on screen for the whole battle.
-		"stamina": 0.0,
-		"max_stamina": 0.0,
-		"buffs": []
-	}
-
-	enemy_data = {
-		"health": quota,
-		"max_health": quota,
-		# Nothing yet. The first action carries where the CPU really stood, and
-		# it arrives at the battle's own timestamp zero. Naming a number here
-		# is what put a static 10 out of 10 on screen for the whole battle.
-		"stamina": 0.0,
-		"max_stamina": 0.0,
-		"buffs": []
-	}
-
-	_update_stats_display()
 
 	# Start event playback with configurable speed
 	event_processor.start_playback(battle_speed_multiplier)

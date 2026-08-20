@@ -110,8 +110,6 @@ func test_battle_result_updates_state():
 	assert_eq(GameStateManager.current_shop[0]["item_type"], "null_blade", "Shop should hold the new item")
 	assert_not_null(GameStateManager.last_battle_result, "Battle result should be kept for the post-battle screen")
 	assert_eq(GameStateManager.last_battle_result.winner, 1, "Battle result should keep the winner")
-	assert_eq(GameStateManager.battle_health, GameStateManager.get_round_quota(),
-		"Battle health should be re-quoted for the new round")
 
 
 func test_battle_result_stores_events_for_playback():
@@ -214,14 +212,3 @@ func test_game_over_conditions():
 	GameStateManager.player_lives = 5
 	GameStateManager.game_over = true
 	assert_true(GameStateManager.is_game_over(), "Should respect game_over flag")
-
-func test_round_quota_calculations():
-	# Test quota for different rounds
-	GameStateManager.current_round = 1
-	assert_eq(GameStateManager.get_round_quota(), 25, "Round 1 quota should be 25")
-
-	GameStateManager.current_round = 5
-	assert_eq(GameStateManager.get_round_quota(), 35, "Round 5 quota should be 35")
-
-	GameStateManager.current_round = 10
-	assert_eq(GameStateManager.get_round_quota(), 75, "Round 10 quota should be 75")

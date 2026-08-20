@@ -15,7 +15,6 @@ var player_name: String = "Player"
 # Game progression
 var current_round: int = 1
 var player_lives: int = STARTING_LIVES  # Tries left in the run
-var battle_health: int = 25  # Health for the current battle (quota)
 var gold: int = 12  # Start with 12 gold
 var wins: int = 0
 var losses: int = 0
@@ -59,7 +58,6 @@ func start_new_game():
 	is_connected = false
 	current_round = 1
 	player_lives = STARTING_LIVES
-	battle_health = get_round_quota()  # Set based on round
 	gold = 12  # Starting gold
 	wins = 0
 	losses = 0
@@ -132,30 +130,11 @@ func update_after_battle(response: APITypes.BattleResponse):
 	# Store battle actions directly as typed objects from battle_result
 	last_battle_events = response.battle_result.actions
 
-	# Update battle health for next round
-	battle_health = get_round_quota()
-
 func is_game_over() -> bool:
 	return game_over or player_lives <= 0
 
 func is_victory() -> bool:
 	return victory
-
-func get_round_quota() -> int:
-	# Get quota (enemy health) based on round number
-	# From Game Design Document section 1.1
-	if current_round <= 3:
-		return 25
-	elif current_round <= 6:
-		return 35
-	elif current_round <= 9:
-		return 50
-	elif current_round <= 12:
-		return 75
-	elif current_round <= 15:
-		return 100
-	else:
-		return 150
 
 func update_gold(amount: int) -> bool:
 	# Safely update gold with validation
