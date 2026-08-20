@@ -1616,3 +1616,144 @@ class TestRegenerating:
     def test_no_stacks_heals_nothing(self):
         sim, quota = self._run(0, seconds=7.0, start_at=100)
         assert quota == 100
+
+
+class TestTheBuffsThatNeedAWeapon:
+    """Section 3.1: Monitored, Spiked and Draining"""
+
+    @staticmethod
+    def _weapon(damage=5, melee=True, uid="sword", position=(0, 0)):
+        from item_effects import AttackEffect
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Weapon", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "w"), slug=uid,
+                kinds=frozenset({"melee"} if melee else {"ranged"}),
+                triggers=[TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=damage, max_damage=damage,
+                                 accuracy=1.0, crit_chance=0.0)])],
+            ),
+            position=position, uid=uid,
+        )
+
+    def _run(self, mine, theirs, mine_buffs=None, their_buffs=None, seconds=2.5,
+             mine_quota=None):
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        original = sim._setup_item_handlers
+        players = {}
+
+        def setup(items, owner, enemy):
+            result = original(items, owner, enemy)
+            players[owner.id] = owner
+            if owner.id == 1:
+                if mine_buffs:
+                    owner.buffs.update(mine_buffs)
+                if mine_quota is not None:
+                    owner.quota = mine_quota
+            if owner.id == 2 and their_buffs:
+                owner.buffs.update(their_buffs)
+            return result
+
+        sim._setup_item_handlers = setup
+        sim.simulate_battle(mine, theirs, 18, p1, p2)
+        return sim, players
+
+    def test_monitored_adds_a_point_of_damage_a_stack(self):
+        from battle_engine import MONITORED
+
+        plain, _ = self._run([self._weapon(damage=5)], [])
+        buffed, _ = self._run([self._weapon(damage=5)], [], {MONITORED: 3})
+
+        def first_hit(sim):
+            return next(a.damage for a in sim.actions if a.action == "damage")
+
+        assert first_hit(plain) == 5
+        assert first_hit(buffed) == 8
+
+    def test_monitored_needs_no_melee(self):
+        """It is "+1 weapon damage", not melee. A bow gains it too."""
+        from battle_engine import MONITORED
+
+        sim, _ = self._run([self._weapon(damage=5, melee=False)], [], {MONITORED: 2})
+        assert next(a.damage for a in sim.actions if a.action == "damage") == 7
+
+    def test_spiked_answers_a_melee_hit(self):
+        from battle_engine import SPIKED
+
+        sim, players = self._run(
+            [self._weapon(damage=5)], [], their_buffs={SPIKED: 2}
+        )
+        back = [a for a in sim.actions
+                if a.action == "damage" and (a.details or {}).get("buff_name") == SPIKED]
+        assert back, "the attacker should take the spikes"
+        assert all(a.player == 1 for a in back), "back at whoever swung"
+
+    def test_spiked_ignores_a_ranged_hit(self):
+        from battle_engine import SPIKED
+
+        sim, _ = self._run(
+            [self._weapon(damage=5, melee=False)], [], their_buffs={SPIKED: 2}
+        )
+        assert not [a for a in sim.actions
+                    if (a.details or {}).get("buff_name") == SPIKED]
+
+    def test_spiked_never_returns_more_than_the_hit(self):
+        """"up to 100% of the damage" -- five stacks against a 2 damage hit
+        gives back 2, not 5."""
+        from battle_engine import SPIKED
+
+        sim, _ = self._run(
+            [self._weapon(damage=2)], [], their_buffs={SPIKED: 5}
+        )
+        back = [a for a in sim.actions
+                if (a.details or {}).get("buff_name") == SPIKED]
+        assert back and all(a.damage == 2 for a in back)
+
+    def test_draining_heals_the_one_who_swung(self):
+        from battle_engine import DRAINING
+
+        # Draining cannot heal what is not missing, so start them hurt.
+        sim, _ = self._run(
+            [self._weapon(damage=5)], [], mine_buffs={DRAINING: 3}, mine_quota=100
+        )
+        healed = [a for a in sim.actions
+                  if a.action == "heal" and (a.details or {}).get("buff_name") == DRAINING]
+        assert healed and all(a.damage == 3 for a in healed)
+
+    def test_draining_ignores_a_ranged_hit(self):
+        from battle_engine import DRAINING
+
+        sim, _ = self._run(
+            [self._weapon(damage=5, melee=False)], [], mine_buffs={DRAINING: 3},
+            mine_quota=100,
+        )
+        assert not [a for a in sim.actions
+                    if (a.details or {}).get("buff_name") == DRAINING]
+
+    def test_poison_sets_off_neither(self):
+        """The reason both live in the attack rather than the damage: poison
+        moves the same number and must not count as a melee hit."""
+        from battle_engine import DRAINING, MEMORY_LEAKED, SPIKED
+
+        p1, p2 = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 7.0
+        original = sim._setup_item_handlers
+
+        def setup(items, owner, enemy):
+            result = original(items, owner, enemy)
+            if owner.id == 1:
+                owner.debuffs[MEMORY_LEAKED] = 3
+                owner.buffs[SPIKED] = 5
+                owner.buffs[DRAINING] = 5
+            return result
+
+        sim._setup_item_handlers = setup
+        sim.simulate_battle([], [], 18, p1, p2)
+
+        assert [a for a in sim.actions if a.action == "dot"], "poison should tick"
+        assert not [a for a in sim.actions
+                    if (a.details or {}).get("buff_name") in (SPIKED, DRAINING)]

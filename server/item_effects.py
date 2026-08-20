@@ -208,6 +208,10 @@ UNBUILT_EFFECTS = frozenset({
     "special",
 })
 
+# How an item deals its damage. An item can carry other tags too -- holy,
+# nature, fire -- which say what it is made of rather than how it swings.
+WEAPON_KINDS = frozenset({"melee", "ranged", "magic"})
+
 MODIFIER_TARGETS = frozenset({"star", "diamond", "contained", "own"})
 
 MODIFIERS = frozenset({
@@ -552,4 +556,17 @@ class ItemSpec:
 
     # Whether to make the item available in the shop
     in_shop: bool = True
+
+    # What the item is, as tags: how it swings and what it is made of. Read
+    # from the catalogue, where they arrive as one comma-separated string.
+    kinds: frozenset = field(default_factory=frozenset)
+
+    @property
+    def is_melee(self) -> bool:
+        """Whether it swings rather than shooting or casting.
+
+        Spiked and Draining both turn on this, and so does every shield in the
+        source game, which rolls only against melee.
+        """
+        return "melee" in self.kinds
 

@@ -53,6 +53,13 @@ ACCURACY_PER_STACK = 0.05
 
 # Section 3.1: healing, on the same clock as poison.
 REGENERATING = "regenerating"
+
+# Section 3.1: the three that turn on what an attack is made of. Spiked and
+# Draining answer only to a melee weapon; Monitored to any attack, since an
+# attack is what a weapon does.
+MONITORED = "monitored"
+SPIKED = "spiked"
+DRAINING = "draining"
 SPEED_PER_STACK = 0.02
 
 # Ten times faster or ten times slower, and no further.
@@ -888,6 +895,11 @@ class BattleSimulator:
         # Calculate damage
         damage = self.rng.randint(attack_data["min_damage"], attack_data["max_damage"])
 
+        # Section 3.1: Monitored is +1 damage a stack. It needs no check for
+        # whether this is a weapon, because an attack is what a weapon does
+        # and nothing else reaches here.
+        damage += owner.buffs.get(MONITORED, 0)
+
         # Check crit
         is_crit = self.rng.random() < attack_data["crit_chance"]
         if is_crit:
@@ -924,6 +936,13 @@ class BattleSimulator:
             enemy, damage, source=item.uid, action="damage", attacker=owner
         )
 
+        # Section 3.1: Spiked and Draining answer to a melee weapon and to
+        # nothing else. Poison and fatigue never reach here, so they cannot
+        # set either off -- which is the reason this sits in the attack rather
+        # than in the damage.
+        if item.spec.is_melee and damage > 0:
+            self._melee_aftermath(damage, owner, enemy, item)
+
         # The attack landed, so this item's on-hit triggers may now run.
         # Emitted after the damage, so the log reads in the
         # order it happened and an on-hit effect can see the result.
@@ -935,6 +954,42 @@ class BattleSimulator:
                 EventData(damage=damage, attacker_item_id=item.uid),
             )
         )
+
+    def _melee_aftermath(
+        self, landed: int, owner: Player, enemy: Player, item: BattleItem
+    ):
+        """What a melee hit sets off once it has landed (Section 3.1).
+
+        Both are capped at the damage: "up to 100% of the damage" in the
+        source game, so five Spiked against a three damage hit returns three.
+        """
+        spikes = min(enemy.buffs.get(SPIKED, 0), landed)
+        if spikes > 0:
+            self._take_damage(
+                owner,
+                spikes,
+                source="system",
+                action="damage",
+                attacker=enemy,
+                details={"buff_name": SPIKED},
+            )
+
+        drain = min(owner.buffs.get(DRAINING, 0), landed)
+        if drain > 0:
+            healed = min(drain, owner.max_quota - owner.quota)
+            if healed > 0:
+                owner.quota += healed
+                self._record(
+                    BattleAction(
+                        timestamp=self._time_ms(),
+                        source=item.uid,
+                        action="heal",
+                        target=None,
+                        damage=healed,
+                        player=owner.id,
+                        details={"buff_name": DRAINING},
+                    )
+                )
 
     def _mitigate_attack(
         self, target: Player, damage: int, attacker: Player, item_id: str

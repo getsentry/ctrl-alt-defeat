@@ -162,7 +162,14 @@ now hold their source's wording in `unbuilt` instead of an invented modifier:
 effect lines unbuilt. The triggers they wait on -- a Block threshold, running
 out of stamina, counting activations -- are still to build.
 
-**Three of the seven are still not read.** Optimized and Throttled decide how
+**One of the seven is still not read.** Credits is spent by items that need
+it, and no imported item spends Mana. Nothing structural blocks it.
+
+**`api_token` attacks and declares no weapon kind**, so it counts as neither
+melee nor ranged. Spiked and Draining ignore it, and the shields will too once
+they answer only to melee. Its `icontype` needs one.
+
+**Superseded:** Optimized and Throttled decide how
 fast an item triggers, Calibrated decides accuracy, and Regenerating heals on
 poison's clock. What is left:
 

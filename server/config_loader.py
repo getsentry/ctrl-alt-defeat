@@ -196,6 +196,11 @@ class ConfigLoader:
             color=config["color"],
             pattern=config["pattern"],
             in_shop=config.get("in_shop", True),
+            # One comma-separated string in the catalogue, a set here.
+            kinds=frozenset(
+                tag.strip() for tag in config.get("icontype", "").split(",")
+                if tag.strip()
+            ),
         )
 
     def _parse_shape(self, item_map: list, name: str) -> ItemShape:
