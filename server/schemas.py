@@ -28,6 +28,10 @@ class GameSession(BaseModel):
     game_seed: int  # Master seed for all RNG in this game session (always set)
     shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
     # Inventory fields
+    # What the rack is part or all of the way towards combining. Worked out
+    # from the grid rather than stored: it is a view of the items, not a fact
+    # about the session, and it is left empty by anything that does not need it.
+    pending: List["Pending"] = []
     inventory_grid: List[PlacedItem] = []  # Items on the grid, each with a position
     inventory_storage: List[Item] = []  # Items in the chest, not used in battle
     server_containers: List[Container] = []  # Containers the player owns
@@ -99,6 +103,9 @@ class PurchaseResponse(BaseModel):
 
     purchased_item: Item = Field(description="The item that was purchased")
     gold: int = Field(description="Remaining gold after purchase")
+    pending: List["Pending"] = Field(
+        default_factory=list, description="What the rack is on the way to combining"
+    )
     server_containers: List[Container] = Field(
         description="The containers the player owns after the purchase"
     )
@@ -194,6 +201,50 @@ class Combination(BaseModel):
     )
 
 
+class CombiningPartners(BaseModel):
+    """Which item types go together in a recipe, for the whole catalogue.
+
+    Sent once. It says nothing about any particular rack: whether a combination
+    will actually happen depends on rules that stay on the server, and is
+    answered by `pending`.
+    """
+
+    partners: Dict[str, List[str]] = Field(
+        description="Item type to the types it appears in a recipe with"
+    )
+    names: Dict[str, str] = Field(
+        description=(
+            "Item type to the name to show for it. The client holds no "
+            "catalogue, so a slug it has never been sent an item of -- what a "
+            "recipe makes, or a part it is still missing -- has no name "
+            "without this."
+        )
+    )
+
+
+class Pending(BaseModel):
+    """A recipe the rack is part or all of the way towards (GDD 5.3).
+
+    `have` of `need` parts are there and touching each other. Equal means it
+    will combine when the battle starts, which is the glow to draw. Fewer means
+    it is the progress to label a part with -- "Long Poll 2/3" -- so the player
+    can see what they are collecting towards.
+
+    Ids, because the client is looking at those items. The complete ones are
+    read from the same plan the combining uses, so the warning and the event
+    cannot say different things.
+    """
+
+    makes: str = Field(description="Item type it would produce")
+    have: int = Field(description="Parts present and touching")
+    need: int = Field(description="Parts the recipe wants")
+    ingredients: List[str] = Field(description="Ids present that would be used up")
+    catalysts: List[str] = Field(description="Ids present that are needed and kept")
+    missing: List[str] = Field(
+        default_factory=list, description="Item types still wanted"
+    )
+
+
 class InventoryAfterBattle(BaseModel):
     """What the player holds once the battle is over and things have combined.
 
@@ -221,6 +272,14 @@ class SessionUpdate(BaseModel):
     combinations: List[Combination] = Field(
         default_factory=list,
         description="Items that combined as the next shop phase began",
+    )
+    pending: List[Pending] = Field(
+        default_factory=list,
+        description=(
+            "What the rack is on the way to combining now, after this round's "
+            "combining. A chain takes a round for each step, so a rack that "
+            "just combined is often already about to combine again."
+        ),
     )
 
 
@@ -262,6 +321,9 @@ class SellResponse(BaseModel):
 
     gold_gained: int = Field(description="Gold gained from sale")
     gold: int = Field(description="Total gold after sale")
+    pending: List["Pending"] = Field(
+        default_factory=list, description="What the rack is on the way to combining"
+    )
     sold_item: Item = Field(description="The item that was sold")
 
 
@@ -270,6 +332,9 @@ class MoveItemResponse(BaseModel):
 
     inventory_grid: List[PlacedItem] = Field(description="Updated grid inventory")
     inventory_storage: List[Item] = Field(description="Updated chest contents")
+    pending: List[Pending] = Field(
+        default_factory=list, description="What the rack is on the way to combining"
+    )
     server_containers: List[Container] = Field(
         default_factory=list, description="Updated containers"
     )

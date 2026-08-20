@@ -1607,6 +1607,28 @@ class TestOpenApiDeclaresThePositionShape:
         assert position["maxItems"] == 2
 
 
+def rack_holding(user_id, *placements):
+    """Put these items on the player's grid, as if they had bought them.
+
+    A module function rather than a method, so every class that needs a rig
+    calls the same one.
+    """
+    import asyncio
+
+    from items import Item
+    from session_manager import session_manager
+
+    async def rig():
+        session = await session_manager.get_session(str(user_id))
+        session.inventory_grid = [
+            Item.of(item_type, f"item{n}").placed_at(position)
+            for n, (item_type, position) in enumerate(placements)
+        ]
+        await session_manager.update_session(session)
+
+    asyncio.run(rig())
+
+
 class TestItemsCombineAfterTheBattle:
     """GDD 5.3, over the wire.
 
@@ -1614,30 +1636,12 @@ class TestItemsCombineAfterTheBattle:
     all when a battle ends, and that the client is told.
     """
 
-    @staticmethod
-    def _rack_holding(client, user_id, *placements):
-        """Put these items on the player's grid, as if they had bought them."""
-        import asyncio
-
-        from items import Item
-        from session_manager import session_manager
-
-        async def rig():
-            session = await session_manager.get_session(str(user_id))
-            session.inventory_grid = [
-                Item.of(item_type, f"item{n}").placed_at(position)
-                for n, (item_type, position) in enumerate(placements)
-            ]
-            await session_manager.update_session(session)
-
-        asyncio.run(rig())
-
     def test_a_rack_that_can_craft_does_so_when_the_battle_ends(self, auth_client):
         auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
-        self._rack_holding(
-            auth_client, auth_client.user_id,
+        rack_holding(
+            auth_client.user_id,
             ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
         )
 
@@ -1662,8 +1666,8 @@ class TestItemsCombineAfterTheBattle:
         auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
-        self._rack_holding(
-            auth_client, auth_client.user_id,
+        rack_holding(
+            auth_client.user_id,
             ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
         )
         made = auth_client.post(
@@ -1684,8 +1688,8 @@ class TestItemsCombineAfterTheBattle:
         auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
-        self._rack_holding(
-            auth_client, auth_client.user_id,
+        rack_holding(
+            auth_client.user_id,
             ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
         )
         body = auth_client.post(
@@ -1710,8 +1714,8 @@ class TestItemsCombineAfterTheBattle:
         auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
-        self._rack_holding(
-            auth_client, auth_client.user_id,
+        rack_holding(
+            auth_client.user_id,
             ("hero_sword", [2, 3]), ("whetstone", [3, 3]), ("whetstone", [3, 4]),
         )
         body = auth_client.post(
@@ -1733,10 +1737,266 @@ class TestItemsCombineAfterTheBattle:
         auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
-        self._rack_holding(
-            auth_client, auth_client.user_id, ("null_blade", [2, 3])
+        rack_holding(
+            auth_client.user_id,
+            ("null_blade", [2, 3])
         )
         result = auth_client.post(
             "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
         ).json()
         assert result["session_update"]["combinations"] == []
+
+
+class TestTheClientIsWarnedBeforeItemsCombine:
+    """GDD 5.3, the warning half.
+
+    Combining happens when the battle starts, and by then it is too late to
+    change your mind. So every response that can change the rack says what the
+    rack is now on the way to, and the client draws the glow and the progress
+    from it. The unit tests cover which recipes are reported; this covers that
+    the field reaches the wire on each of them.
+    """
+
+    def _started(self, auth_client):
+        auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        return auth_client
+
+    def test_a_rack_that_will_combine_says_so_before_the_battle(self, auth_client):
+        self._started(auth_client)
+        rack_holding(
+            auth_client.user_id,
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
+        )
+
+        pending = auth_client.get("/session").json()["pending"]
+
+        assert len(pending) == 1, pending
+        [warned] = pending
+        assert warned["makes"] == "blue_sage_collar"
+        assert (warned["have"], warned["need"]) == (2, 2), "all there: this will happen"
+        assert sorted(warned["ingredients"]) == ["item0", "item1"], "which items glow"
+        assert warned["missing"] == []
+
+    def test_a_part_way_rack_reports_its_progress(self, auth_client):
+        """Two of the three parts of a Hero Longsword.
+
+        This is what a "Hero Longsword 2/3" label is drawn from, and `missing`
+        is what the player still has to find.
+        """
+        self._started(auth_client)
+        rack_holding(
+            auth_client.user_id,
+            ("hero_sword", [2, 3]),
+            ("whetstone", [3, 3]),
+        )
+
+        [warned] = auth_client.get("/session").json()["pending"]
+
+        assert warned["makes"] == "hero_longsword"
+        assert (warned["have"], warned["need"]) == (2, 3)
+        assert warned["missing"] == ["whetstone"]
+
+    def test_parts_that_do_not_touch_are_not_reported(self, auth_client):
+        """Owning the parts is not enough. They have to be together."""
+        self._started(auth_client)
+        rack_holding(
+            auth_client.user_id,
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [6, 6]),
+        )
+
+        assert auth_client.get("/session").json()["pending"] == []
+
+    def test_moving_a_part_next_to_another_reports_it_at_once(self, auth_client):
+        """The move that makes the pair is the move that must say so.
+
+        The client has no catalogue of recipes and no rules for what combines,
+        so if this response were silent nothing would light up until the round
+        after.
+        """
+        self._started(auth_client)
+        rack_holding(
+            auth_client.user_id,
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [6, 6]),
+        )
+
+        moved = auth_client.post(
+            "/move/item", json={"item_id": "item1", "to_location": [3, 3]}
+        )
+
+        assert moved.status_code == 200, moved.text
+        assert [p["makes"] for p in moved.json()["pending"]] == ["blue_sage_collar"]
+
+    def test_moving_a_part_away_takes_the_warning_back(self, auth_client):
+        self._started(auth_client)
+        rack_holding(
+            auth_client.user_id,
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
+        )
+
+        moved = auth_client.post(
+            "/move/item", json={"item_id": "item1", "to_location": "storage"}
+        )
+
+        assert moved.status_code == 200, moved.text
+        assert moved.json()["pending"] == [], "the chest is not the rack"
+
+    def test_selling_a_part_takes_the_warning_back(self, auth_client):
+        self._started(auth_client)
+        rack_holding(
+            auth_client.user_id,
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
+        )
+
+        sold = auth_client.post("/sell/item", json={"item_id": "item1"})
+
+        assert sold.status_code == 200, sold.text
+        assert sold.json()["pending"] == []
+
+    def test_buying_anything_reports_the_rack_as_it_now_stands(self, auth_client):
+        """A purchase can complete a recipe, so its response carries it too.
+
+        What is bought here does not matter -- the shop is rolled, not chosen.
+        The pair is already on the rack, and the point is that the purchase
+        response knows about it.
+        """
+        self._started(auth_client)
+        rack_holding(
+            auth_client.user_id,
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
+        )
+        offered = auth_client.get("/session").json()["current_shop"][0]
+
+        bought = auth_client.post(
+            "/purchase/item", json={"item_id": offered["id"], "to_storage": True}
+        )
+
+        assert bought.status_code == 200, bought.text
+        assert [p["makes"] for p in bought.json()["pending"]] == ["blue_sage_collar"]
+
+    def test_what_was_promised_is_what_happens(self, auth_client):
+        """The warning and the combining read one plan, so they cannot differ."""
+        self._started(auth_client)
+        rack_holding(
+            auth_client.user_id,
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
+            ("hero_sword", [5, 3]),
+            ("whetstone", [6, 3]),
+        )
+        promised = [
+            p["makes"] for p in auth_client.get("/session").json()["pending"]
+            if p["have"] == p["need"]
+        ]
+
+        happened = auth_client.post(
+            "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
+        ).json()["session_update"]["combinations"]
+
+        assert promised == ["blue_sage_collar"]
+        assert [c["made"] for c in happened] == promised
+
+    def test_the_battle_answer_says_what_the_rack_is_on_the_way_to_now(
+        self, auth_client
+    ):
+        """The rack changes under the player while they watch the battle.
+
+        Combining runs as the shop phase begins, so the first sight of the new
+        rack is the shop screen. Without this it would show no glow and no
+        progress until the player moved something.
+        """
+        auth_client.post(
+            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+        )
+        rack_holding(
+            auth_client.user_id,
+            # These two combine.
+            ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
+            # These two do not: a Long Poll wants a second Edge Cache.
+            ("hero_sword", [6, 3]), ("whetstone", [7, 3]),
+        )
+
+        after = auth_client.post(
+            "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
+        ).json()["session_update"]
+
+        assert [c["made"] for c in after["combinations"]] == ["blue_sage_collar"]
+        assert [(p["makes"], p["have"], p["need"]) for p in after["pending"]] == [
+            ("hero_longsword", 2, 3)
+        ]
+
+
+class TestWhichItemsGoTogether:
+    """GDD 5.3, the line the client draws on hover and while dragging.
+
+    A fact about the catalogue, not about a rack, so it is answered once and
+    kept. A line means these two appear in a recipe together, nothing more.
+    """
+
+    def test_the_catalogue_answers_without_a_session(self):
+        """It is wanted in the shop, before a rack exists."""
+        from fastapi.testclient import TestClient
+
+        from main import app
+
+        answered = TestClient(app).get("/catalogue/combining")
+
+        assert answered.status_code == 200, answered.text
+        assert answered.json()["partners"], "and it is not empty"
+
+    def test_a_pair_is_named_from_both_ends(self, auth_client):
+        """The player may pick up either one, so either one must draw the line."""
+        partners = auth_client.get("/catalogue/combining").json()["partners"]
+
+        assert "cpu_booster" in partners["neural_link_collar"]
+        assert "neural_link_collar" in partners["cpu_booster"]
+
+    def test_an_item_that_wants_two_of_itself_pairs_with_itself(self, auth_client):
+        """A Hero Longsword eats two whetstones, so one whetstone points at another."""
+        partners = auth_client.get("/catalogue/combining").json()["partners"]
+
+        assert "whetstone" in partners["whetstone"]
+
+    def test_an_item_in_no_recipe_is_absent(self, auth_client):
+        partners = auth_client.get("/catalogue/combining").json()["partners"]
+
+        assert "null_blade" in partners, "setup: this one is in a recipe"
+        assert "bloodthorne" not in partners, "a result, and in no recipe itself"
+
+    def test_every_partner_is_a_real_item(self, auth_client):
+        """A line to an item that does not exist would be drawn to nowhere."""
+        from config_loader import config_loader
+
+        partners = auth_client.get("/catalogue/combining").json()["partners"]
+        known = set(config_loader.items) | set(config_loader.containers)
+
+        unknown = {
+            slug
+            for one, others in partners.items()
+            for slug in [one, *others]
+            if slug not in known
+        }
+        assert unknown == set(), f"partners nothing can be: {sorted(unknown)}"
+
+    def test_it_carries_a_name_for_everything_it_could_have_to_name(self, auth_client):
+        """The client holds no catalogue.
+
+        It can name an item the server has sent it and nothing else, so a
+        recipe's result -- which does not exist yet -- and a part still missing
+        would both be a slug on screen without this.
+        """
+        answered = auth_client.get("/catalogue/combining").json()
+        names = answered["names"]
+
+        assert names["hero_longsword"] == "Long Poll", "what a recipe makes"
+        assert names["whetstone"] == "Edge Cache", "a part still wanted"
+        for one, others in answered["partners"].items():
+            for slug in [one, *others]:
+                assert slug in names, f"{slug} has no name to show"

@@ -679,9 +679,55 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
 - **Items that wait on another**: an item with `shop_needs` is stocked only while
   the player holds the item it names. The gemstones wait on a Coin Miner.
 
+#### Telling the player before it happens
+
+Combining is settled the moment the battle starts, so everything the player
+needs to decide with has to be on screen before then. Two things answer that,
+and they are different in kind:
+
+- **`pending`**, on every response that can change the rack -- `/session`,
+  purchase, sell, move, and the battle, whose `session_update` carries the rack
+  as combining has just left it. It is worked out from the rack each time
+  rather than stored, so no move can leave it behind. Each entry says what
+  would be made, `have` of `need` parts, the ids of the ingredients and of the
+  catalysts, and the parts still `missing`.
+  - `have == need` is a combination that **will** happen. The complete entries
+    are read from the same plan the combining itself uses, so what the player
+    is shown and what happens cannot disagree.
+  - `have < need` is progress towards one, and only counts parts that are
+    already touching. Owning them is not enough.
+- **`GET /catalogue/combining`**, a map of item type to the types it appears in
+  a recipe with, and a name for every item type. The same for every player and
+  every rack, so the client fetches it once and answers from it. It needs no
+  session and no token. The names are there because the client holds no
+  catalogue: it can name an item the server has sent it and nothing else, and
+  "Long Poll 2/3" names a thing that does not exist yet.
+
+The split is deliberate. `pending` needs the rules -- touching, counting,
+deciding between two recipes that want the same item -- and those stay on the
+server, because a second set of them on the client would drift and start
+promising combinations that do not happen. The partner map needs none of them:
+it only says these two go together, which is why the client may hold it. It has
+to, since it is wanted on hover and while dragging, and a line every frame
+cannot be a request every frame.
+
+An item in no recipe is absent from the map, and a type that pairs with itself
+appears in its own list -- a Hero Longsword eats two whetstones, so one
+whetstone points at another. A `class:` part (Section 5.4) is every item that
+answers it, so a Dead Cell points at all eight items that are on fire; none of
+those eight points at another, because they answer the same one part and one
+part takes one item.
+
 #### What the client has to show (not built)
+- A **line** from the item under the cursor, or being dragged, to every item it
+  could combine with, wherever it is: the shop, the chest or the rack. Drawn
+  from the partner map, so there can be several at once, and it says only that
+  the two go together -- the parts may take several rounds to collect.
 - An **orange glow** joining items that are about to combine, so the player can
-  see it coming and break it up before starting the battle.
+  see it coming and break it up before starting the battle. Drawn from the
+  `pending` entries where `have == need`.
+- A **progress label** beside a part just put down -- "Hero Longsword 2/3" --
+  from a `pending` entry where `have < need`, with `makes` giving the name.
 - A **merge animation** over the squares the ingredients were standing on, after
   which the result appears on some of those squares, or flies to the chest.
 
@@ -719,8 +765,9 @@ lives on the item itself in `server/data/items/*.json`:
   order does not matter; duplicates are real (some recipes need two of the
   same item). A `class:` prefix is a wildcard for any item of that class:
   `class:fire` means any item whose `icontype` holds `fire` (Hot Cell and
-  Thermal Torch craft this way, and eight items qualify). Every name is a
-  catalogue slug or a wildcard: a source recipe needing an item we have not
+  Thermal Torch craft this way, and eight items qualify). One part takes one
+  item, so a second fire is no help. Every name is a catalogue slug or a
+  wildcard: a source recipe needing an item we have not
   imported (Twine, Cauldron, Thor's Hammer, Goobling) is pruned at import,
   because a player could never complete it. The wiki corpus in
   `research/wiki_pages/` keeps the originals; re-run `research/parse_wiki.py`

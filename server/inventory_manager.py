@@ -4,7 +4,6 @@ Manages both the 9x7 grid with server containers and unlimited storage
 """
 
 import uuid
-from collections import Counter
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
@@ -17,6 +16,34 @@ from utils import Position
 
 
 # ============= COMBINING (GDD 5.3) =============
+
+# What a recipe part says in front of a kind, to mean any item of it.
+CLASS = "class:"
+
+
+@dataclass(frozen=True)
+class Pending:
+    """A recipe the items in the rack are some or all of the way towards.
+
+    `have` of `need` parts are there and touching. When they are equal this is
+    a combination that will happen when the battle starts, and it comes from
+    the same plan the combining itself uses, so what the player is shown and
+    what happens cannot disagree. When they are not, it is the progress to show
+    beside a part the player has just put down -- "Long Poll 2/3".
+
+    Item ids, because the client is looking at those items.
+    """
+
+    makes: str
+    have: int
+    need: int
+    ingredients: Tuple[str, ...]  # ids present that would be used up
+    catalysts: Tuple[str, ...]  # ids present that are needed and kept
+    missing: Tuple[str, ...]  # parts still wanted, a type or a class wildcard
+
+    @property
+    def complete(self) -> bool:
+        return self.have == self.need
 
 
 @dataclass(frozen=True)
@@ -48,6 +75,88 @@ def _craftable() -> List[tuple]:
         for item_type, spec in source.items()
         if spec.recipe
     ]
+
+
+def any_of(part: str) -> List[str]:
+    """Every item type that can be this part of a recipe.
+
+    A named part is the one item. A `class:` part is a wildcard over the kinds
+    an item's icon declares (GDD 5.4): `class:fire` is any item that is on
+    fire, which is how Hot Cell asks to be lit by whatever fire the player
+    happens to have rather than by one named lighter. Nothing at all for a part
+    the catalogue cannot answer, which is a recipe nobody could complete.
+    """
+    if part.startswith(CLASS):
+        kind = part[len(CLASS):]
+        return sorted(
+            slug for slug, spec in config_loader.items.items() if kind in spec.kinds
+        )
+    return [part] if part in config_loader.items else []
+
+
+def _answers(part: str, item_type: str) -> bool:
+    """Whether an item of this type can stand for that part of a recipe."""
+    if part.startswith(CLASS):
+        spec = config_loader.items.get(item_type)
+        return spec is not None and part[len(CLASS):] in spec.kinds
+    return part == item_type
+
+
+def combining_partners() -> Dict[str, List[str]]:
+    """For each item type, the types it appears in a recipe with.
+
+    A fact about the catalogue, the same for every player and every rack, so it
+    is sent once and answered on the client. That matters: it is wanted on hover
+    and while dragging, and asking the server per mouse move would be absurd.
+
+    It needs none of the rules about what actually combines -- no touching, no
+    counting, no deciding between two recipes that want the same item. It only
+    says these two go together, which is why the client may safely answer it.
+    A type pairs with itself where a recipe wants two of it.
+
+    A wildcard part is every item that answers it, so a Lump of Coal draws a
+    line to all eight items that are on fire. Two of those eight draw no line
+    to each other: they answer the same one part, and one part takes one item.
+    A part nothing answers pairs with nobody, rather than promise a combination
+    that can never happen.
+    """
+    partners: Dict[str, Set[str]] = {}
+    for spec in list(config_loader.items.values()) + list(
+        config_loader.containers.values()
+    ):
+        for recipe in spec.recipe:
+            options = [any_of(part) for part in recipe.parts()]
+            for n, mine in enumerate(options):
+                for m, theirs in enumerate(options):
+                    if n != m and theirs:
+                        for one in mine:
+                            partners.setdefault(one, set()).update(theirs)
+    return {slug: sorted(others) for slug, others in sorted(partners.items())}
+
+
+def _pair_up(parts: Sequence[str], pool: Sequence[PlacedItem]) -> Dict[int, PlacedItem]:
+    """One item for each part, as many parts as the items can answer.
+
+    Handing each part the first item that fits it would go wrong, because one
+    item can answer two parts: a Hot Cell is a Hot Cell and it is also on fire.
+    So a part that finds every item it could use already taken asks those parts
+    to move over, and they move if anything else fits them.
+    """
+    taken: Dict[int, int] = {}  # index in pool -> index in parts
+
+    def seat(part: int, tried: Set[int]) -> bool:
+        for n, item in enumerate(pool):
+            if n in tried or not _answers(parts[part], item.item_type):
+                continue
+            tried.add(n)
+            if n not in taken or seat(taken[n], tried):
+                taken[n] = part
+                return True
+        return False
+
+    for part in range(len(parts)):
+        seat(part, set())
+    return {part: pool[n] for n, part in taken.items()}
 
 
 class InvalidPlacementError(Exception):
@@ -170,94 +279,164 @@ class InventoryGrid:
             if other.id != item.id and around & set(other.covered_squares())
         ]
 
-    def _match(
+    def _fill(
         self, recipe: Recipe, hub: PlacedItem, available: Sequence[PlacedItem]
-    ) -> Optional[List[PlacedItem]]:
-        """The items around `hub` that satisfy `recipe`, or None.
+    ) -> Dict[int, PlacedItem]:
+        """Which part of `recipe` each item around `hub` answers.
 
-        One item has to touch all the others, and `hub` is the one being tried
-        as it. Every other part has to be touching `hub` -- but not each other,
+        Keyed by where the part sits in `recipe.parts()`, so an item's place
+        says whether it is an ingredient or a catalyst. Every part is answered
+        by an item touching `hub` -- but the items need not touch each other,
         or a Stone Golem could never be made: four stones cannot all touch one
         another, though all four can touch the heart between them.
+
+        As many parts as the items can answer: all of them when the rack is
+        about to combine, fewer while the player is still collecting. Nothing
+        at all when the hub answers no part of the recipe.
         """
-        wanted = Counter(recipe.parts())
-        if hub.item_type not in wanted:
-            return None
-
         here = {item.id for item in available}
-        pool = [hub] + [
-            item for item in self.touching(hub) if item.id in here
-        ]
-        if not wanted <= Counter(item.item_type for item in pool):
-            return None
+        around = [item for item in self.touching(hub) if item.id in here]
+        parts = recipe.parts()
 
-        # The hub is taken first, so a recipe wanting two of its type does not
-        # fill both from its neighbours and leave the hub out of its own match.
-        chosen, still_wanted = [hub], Counter(wanted)
-        still_wanted[hub.item_type] -= 1
-        for item in pool[1:]:
-            if still_wanted.get(item.item_type, 0) > 0:
-                chosen.append(item)
-                still_wanted[item.item_type] -= 1
-        return chosen if sum(still_wanted.values()) == 0 else None
+        best: Dict[int, PlacedItem] = {}
+        for n, part in enumerate(parts):
+            if not _answers(part, hub.item_type):
+                continue
+            # The hub is put on this part first, so a recipe wanting two of its
+            # type does not fill both from the neighbours and leave the hub out
+            # of its own match.
+            rest = _pair_up([p for m, p in enumerate(parts) if m != n], around)
+            got = {n: hub}
+            got.update({m if m < n else m + 1: item for m, item in rest.items()})
+            if len(got) > len(best):
+                best = got
+        return best
 
     def _candidates(self, available: Sequence[PlacedItem]) -> List[tuple]:
         """Every combination the rack could make right now.
 
         Each is (newest, made, recipe, items). `newest` is how far down
         self.items the newest of its items sits, and that list is in the order
-        things were placed, so a bigger number means placed later.
+        things were placed, so a bigger number means placed later. The items
+        come in the order of the recipe's parts, which is what says which of
+        them are eaten.
         """
         order = {item.id: n for n, item in enumerate(self.items)}
         found = []
         for made, spec in _craftable():
             for recipe in spec.recipe:
                 for hub in available:
-                    items = self._match(recipe, hub, available)
-                    if items is None:
+                    got = self._fill(recipe, hub, available)
+                    if len(got) < len(recipe.parts()):
                         continue
+                    items = [got[n] for n in sorted(got)]
                     newest = max(order[item.id] for item in items)
                     found.append((newest, made, recipe, items))
         return found
 
-    def combine(self) -> List[Combination]:
-        """Combine everything the rack can, once. GDD 5.3.
+    def plan(self) -> List[tuple]:
+        """What the rack would combine, as (made, recipe, items). Changes nothing.
 
         Ingredients are used up and catalysts are not, so a catalyst can serve
         more than one combination in the same pass. The result of a combination
         never goes on to make something else here: 20 items are both a recipe's
         result and another's ingredient, and a chain takes a round for each of
         its steps so the player sees them and can break it up.
+
+        Telling the player what is about to happen and doing it read the same
+        plan, so the two cannot promise different things.
         """
         available = list(self.items)
-        done: List[Combination] = []
+        planned = []
 
         while True:
             candidates = self._candidates(available)
             if not candidates:
-                return done
+                return planned
 
             # The newest item decides, because it is the one the player just
             # put there. Ties go to the earlier result name, so the same rack
             # always combines the same way.
-            newest, made, recipe, items = max(
+            _, made, recipe, items = max(
                 candidates, key=lambda c: (c[0], [-ord(ch) for ch in c[1]])
             )
-            done.append(self._apply(made, recipe, items))
+            planned.append((made, recipe, items))
 
             eaten = {item.id for item in self._consumed(recipe, items)}
             available = [item for item in available if item.id not in eaten]
 
+    def pending(self) -> List[Pending]:
+        """Every recipe the rack is part or all of the way towards.
+
+        The complete ones come from the plan, so they are exactly what will
+        happen. The partial ones are what to label an item with when the player
+        puts it down next to something it goes with.
+        """
+        complete = []
+        spoken_for = set()
+        for made, recipe, items in self.plan():
+            eaten = {item.id for item in self._consumed(recipe, items)}
+            spoken_for |= {item.id for item in items}
+            complete.append(Pending(
+                makes=made,
+                have=len(items),
+                need=len(recipe.parts()),
+                ingredients=tuple(i.id for i in items if i.id in eaten),
+                catalysts=tuple(i.id for i in items if i.id not in eaten),
+                missing=(),
+            ))
+        return complete + self._partly_there(spoken_for)
+
+    def _partly_there(self, spoken_for: Set[str]) -> List[Pending]:
+        """Recipes some of the way there, for the progress an item is labelled
+        with. Two or more parts have to be together: one item on its own is not
+        progress towards anything, it is just an item.
+
+        An item already in a complete combination is left out. It is going to
+        combine, and offering the player a second thing it could have been
+        instead would only be confusing.
+        """
+        best: Dict[tuple, Pending] = {}
+        loose = [item for item in self.items if item.id not in spoken_for]
+        for made, spec in _craftable():
+            for recipe in spec.recipe:
+                for hub in loose:
+                    got = self._fill(recipe, hub, loose)
+                    if len(got) < 2:
+                        continue
+                    parts = recipe.parts()
+                    eaten = len(recipe.ingredients)
+                    here = Pending(
+                        makes=made,
+                        have=len(got),
+                        need=len(parts),
+                        ingredients=tuple(
+                            item.id for n, item in sorted(got.items()) if n < eaten
+                        ),
+                        catalysts=tuple(
+                            item.id for n, item in sorted(got.items()) if n >= eaten
+                        ),
+                        missing=tuple(
+                            sorted(part for n, part in enumerate(parts) if n not in got)
+                        ),
+                    )
+                    key = (made, frozenset(item.id for item in got.values()))
+                    if key not in best or best[key].have < here.have:
+                        best[key] = here
+        return sorted(best.values(), key=lambda p: (-p.have, p.makes))
+
+    def combine(self) -> List[Combination]:
+        """Carry out the plan. GDD 5.3."""
+        return [self._apply(made, recipe, items) for made, recipe, items in self.plan()]
+
     @staticmethod
     def _consumed(recipe: Recipe, items: Sequence[PlacedItem]) -> List[PlacedItem]:
-        """The chosen items an ingredient claims. A catalyst is not one."""
-        wanted = Counter(recipe.ingredients)
-        eaten = []
-        for item in items:
-            if wanted.get(item.item_type, 0) > 0:
-                eaten.append(item)
-                wanted[item.item_type] -= 1
-        return eaten
+        """The items an ingredient claims. A catalyst is not one.
+
+        `recipe.parts()` is the ingredients and then the catalysts, and a match
+        comes back in that order, so where an item stands says which it is.
+        """
+        return list(items[: len(recipe.ingredients)])
 
     def _apply(
         self, made: str, recipe: Recipe, items: Sequence[PlacedItem]
@@ -563,6 +742,10 @@ class InventoryManager:
             return None
         except ItemNotFoundError:
             return None
+
+    def pending(self) -> List[Pending]:
+        """What the rack would combine if the battle started now."""
+        return self.grid.pending()
 
     def combine(self) -> List[Combination]:
         """Combine what the rack can, and catch anything with nowhere to stand.

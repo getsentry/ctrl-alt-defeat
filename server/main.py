@@ -23,18 +23,26 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 import auth_endpoints
 from auth import TokenData, get_current_user
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
+from config_loader import config_loader
 from containers import Container, starting_containers
 
 # Import session management and schemas
 from database import db_manager
 from grid_system import Rotation
-from inventory_manager import InvalidPlacementError, InventoryManager, ItemNotFoundError
+from inventory_manager import (
+    InvalidPlacementError,
+    InventoryManager,
+    ItemNotFoundError,
+    combining_partners,
+)
 from items import SALE_CHANCE, Item, PlacedItem
 from matchmaking import MatchmakingService
 from schemas import (
     BattleHistoryEntry,
     Combination,
+    CombiningPartners,
     InventoryAfterBattle,
+    Pending,
     BattleHistoryResponse,
     BattleResponse,
     BattleResult,
@@ -286,6 +294,29 @@ async def start_session(
     )
 
 
+@app.get("/catalogue/combining")
+async def combining_endpoint() -> CombiningPartners:
+    """Which item types go together in a recipe.
+
+    The same for every player and it never changes, so it is fetched once and
+    answered on the client from then on. The client draws a line from an item
+    the player is holding or hovering to everything it could combine with,
+    wherever that is -- the shop, the chest or the rack -- and a line every
+    frame cannot be a request every frame.
+
+    A line means these two go together. It does not mean a combination will
+    happen: that is `pending`, which needs the rules and stays on this side.
+
+    The names come with it because the client holds no catalogue. It can name
+    an item it has been sent, and nothing else, so "Hero Longsword 2/3" needs
+    the name of a thing that does not exist yet.
+    """
+    return CombiningPartners(
+        partners=combining_partners(),
+        names={slug: spec.name for slug, spec in config_loader.items.items()},
+    )
+
+
 @app.get("/session")
 async def get_session_endpoint(
     current_user: TokenData = Depends(get_current_user),
@@ -297,6 +328,7 @@ async def get_session_endpoint(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
         )
+    session.pending = pending_for(session)
     return session
 
 
@@ -390,6 +422,36 @@ def pick_rarity(weights: Dict[str, float], rng=random) -> str:
             return rarity
 
     return "common"  # Fallback
+
+
+def pending_for(session: GameSession) -> List[Pending]:
+    """What the player's rack is part or all of the way towards combining.
+
+    Worked out here rather than stored, so it cannot be left behind by a move.
+    Every response that changes the rack carries it, because the client cannot
+    work it out: the rules for what combines live on this side, and a second
+    set of them over there would drift and start promising combinations that
+    do not happen.
+    """
+    manager = InventoryManager()
+    manager.restore_state(
+        {
+            "grid": session.inventory_grid,
+            "storage": session.inventory_storage,
+            "containers": session.server_containers,
+        }
+    )
+    return [
+        Pending(
+            makes=p.makes,
+            have=p.have,
+            need=p.need,
+            ingredients=list(p.ingredients),
+            catalysts=list(p.catalysts),
+            missing=list(p.missing),
+        )
+        for p in manager.pending()
+    ]
 
 
 def held_item_types(session: GameSession) -> Set[str]:
@@ -866,6 +928,7 @@ async def simulate_battle(
             )
             for made in combinations
         ],
+        pending=pending_for(session),
     )
 
     # Shop already contains ShopItem models
@@ -1145,6 +1208,7 @@ async def purchase_item(
         return PurchaseResponse(
             purchased_item=item,
             gold=session.gold,
+            pending=pending_for(session),
             server_containers=session.server_containers,
         )
 
@@ -1190,6 +1254,7 @@ async def purchase_item(
     return PurchaseResponse(
         purchased_item=item,
         gold=session.gold,
+        pending=pending_for(session),
         server_containers=session.server_containers,
     )
 
@@ -1269,6 +1334,7 @@ async def sell_item(
     await session_manager.update_session(session)
 
     return SellResponse(
+        pending=pending_for(session),
         gold_gained=gold_gained,
         gold=session.gold,
         sold_item=item_found,
@@ -1330,6 +1396,7 @@ async def move_item(
     # Check for same position move (no-op)
     if current_location == to_loc:
         return MoveItemResponse(
+            pending=pending_for(session),
             inventory_grid=session.inventory_grid,
             inventory_storage=session.inventory_storage,
         )
@@ -1364,6 +1431,7 @@ async def move_item(
     await session_manager.update_session(session)
 
     return MoveItemResponse(
+        pending=pending_for(session),
         inventory_grid=session.inventory_grid,
         inventory_storage=session.inventory_storage,
         server_containers=session.server_containers,
@@ -1398,6 +1466,7 @@ async def _move_container(
     await session_manager.update_session(session)
 
     return MoveItemResponse(
+        pending=pending_for(session),
         inventory_grid=session.inventory_grid,
         inventory_storage=session.inventory_storage,
         server_containers=session.server_containers,

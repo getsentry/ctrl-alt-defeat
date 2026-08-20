@@ -764,6 +764,28 @@ class TestMovingAContainer:
         assert not hasattr(manager.storage.items[0], "position")
 
 
+def a_rack(*placements):
+    """A manager holding these (item type, position) pairs, in this order.
+
+    Order is the point in several tests: the grid keeps items in the order they
+    were placed, and that is what decides which combination wins.
+    """
+    manager = InventoryManager()
+    for n, (item_type, position) in enumerate(placements):
+        manager.grid.place_item(Item.of(item_type, f"item{n}"), position)
+    return manager
+
+
+def a_wide_rack(*placements):
+    """The same on one 3x3 rack. The three the game starts with are two rows
+    deep, which is not enough room to stand four things around a 2x2 item."""
+    manager = InventoryManager()
+    manager.grid.containers = [Container.of("mesh_network_hub", (0, 0), "hub")]
+    for n, (item_type, position) in enumerate(placements):
+        manager.grid.place_item(Item.of(item_type, f"item{n}"), position)
+    return manager
+
+
 class TestCombiningItems:
     """GDD 5.3: items together in the rack combine when the shop phase begins.
 
@@ -773,20 +795,9 @@ class TestCombiningItems:
     real ones fail.
     """
 
-    @staticmethod
-    def _rack(*placements):
-        """A manager holding these (item type, position) pairs, in this order.
-
-        Order is the point in several of these: the grid keeps items in the
-        order they were placed, and that is what decides which combination wins.
-        """
-        manager = InventoryManager()
-        for n, (item_type, position) in enumerate(placements):
-            manager.grid.place_item(Item.of(item_type, f"item{n}"), position)
-        return manager
 
     def test_two_items_together_become_the_item_they_make(self):
-        rack = self._rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
+        rack = a_rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
         made = rack.combine()
 
         assert [c.made for c in made] == ["blue_sage_collar"]
@@ -794,24 +805,14 @@ class TestCombiningItems:
 
     def test_items_that_are_not_touching_do_not_combine(self):
         # The same two, one rack apart.
-        rack = self._rack(("neural_link_collar", (2, 3)), ("cpu_booster", (6, 3)))
+        rack = a_rack(("neural_link_collar", (2, 3)), ("cpu_booster", (6, 3)))
         assert rack.combine() == []
         assert len(rack.grid.items) == 2
 
     def test_touching_at_a_corner_is_not_touching(self):
-        rack = self._rack(("neural_link_collar", (3, 3)), ("cpu_booster", (4, 4)))
+        rack = a_rack(("neural_link_collar", (3, 3)), ("cpu_booster", (4, 4)))
         assert rack.combine() == []
 
-    @staticmethod
-    def _wide_rack(*placements):
-        """The same, on one 3x3 rack. The three the game starts with are two
-        rows deep, which is not enough room to stand four things around a
-        two-by-two item."""
-        manager = InventoryManager()
-        manager.grid.containers = [Container.of("mesh_network_hub", (0, 0), "hub")]
-        for n, (item_type, position) in enumerate(placements):
-            manager.grid.place_item(Item.of(item_type, f"item{n}"), position)
-        return manager
 
     def test_one_item_touches_all_the_others_not_every_pair(self):
         """A Stone Golem is a Heart Container and four Stones.
@@ -820,7 +821,7 @@ class TestCombiningItems:
         them touches another. Requiring every pair to touch would make this
         recipe impossible rather than merely hard.
         """
-        rack = self._wide_rack(
+        rack = a_wide_rack(
             ("heart_container", (0, 0)),   # covers (0,0) (1,0) (0,1) (1,1)
             ("ping_flood", (2, 0)),
             ("ping_flood", (2, 1)),
@@ -843,7 +844,7 @@ class TestCombiningItems:
         assert [c.made for c in rack.combine()] == ["stone_golem"]
 
     def test_a_stone_that_only_reaches_another_stone_does_not_count(self):
-        rack = self._wide_rack(
+        rack = a_wide_rack(
             ("heart_container", (0, 0)),
             ("ping_flood", (2, 0)),
             ("ping_flood", (2, 1)),
@@ -853,7 +854,7 @@ class TestCombiningItems:
         assert rack.combine() == [], "three stones reach the heart, not four"
 
     def test_a_catalyst_is_needed_and_is_not_used_up(self):
-        rack = self._rack(("crypto_mining_rig", (2, 3)), ("maneki_neko", (4, 3)))
+        rack = a_rack(("crypto_mining_rig", (2, 3)), ("maneki_neko", (4, 3)))
         made = rack.combine()
 
         assert [c.made for c in made] == ["serverless_function"]
@@ -864,21 +865,21 @@ class TestCombiningItems:
         )
 
     def test_without_the_catalyst_nothing_happens(self):
-        rack = self._rack(("crypto_mining_rig", (2, 3)))
+        rack = a_rack(("crypto_mining_rig", (2, 3)))
         assert rack.combine() == []
 
     def test_two_of_one_ingredient_means_two(self):
         """Long Poll is a Main Branch and two Edge Caches, not one."""
-        one = self._rack(("hero_sword", (2, 3)), ("whetstone", (3, 3)))
+        one = a_rack(("hero_sword", (2, 3)), ("whetstone", (3, 3)))
         assert one.combine() == [], "one Edge Cache is not enough"
 
-        two = self._rack(
+        two = a_rack(
             ("hero_sword", (2, 3)), ("whetstone", (3, 3)), ("whetstone", (3, 4))
         )
         assert [c.made for c in two.combine()] == ["hero_longsword"]
 
     def test_the_result_stands_where_its_ingredients_stood(self):
-        rack = self._rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
+        rack = a_rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
         made = rack.combine()
 
         assert made[0].position == (2, 3)
@@ -889,7 +890,7 @@ class TestCombiningItems:
     def test_a_result_too_big_for_the_gap_goes_in_the_chest(self):
         """Long Poll is three squares tall and its ingredients free a 2x2, so
         it has nowhere to stand. It is not lost."""
-        rack = self._rack(
+        rack = a_rack(
             ("hero_sword", (2, 3)), ("whetstone", (3, 3)), ("whetstone", (3, 4))
         )
         made = rack.combine()
@@ -903,7 +904,7 @@ class TestCombiningItems:
 
     def test_the_result_does_not_spread_beyond_the_squares_it_freed(self):
         """A combination should not take space the player was keeping."""
-        rack = self._rack(
+        rack = a_rack(
             ("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)),
             ("null_blade", (4, 3)),
         )
@@ -914,7 +915,7 @@ class TestCombiningItems:
 
     def test_an_ingredient_is_not_used_by_two_combinations(self):
         """One CPU Booster between two collars makes one thing, not two."""
-        rack = self._rack(
+        rack = a_rack(
             ("neural_link_collar", (2, 3)),
             ("cpu_booster", (3, 3)),
             ("white_lily_collar", (4, 3)),
@@ -924,12 +925,12 @@ class TestCombiningItems:
 
     def test_the_newest_item_decides_which_combination_happens(self):
         """The booster completes either collar. The one placed last wins."""
-        first = self._rack(
+        first = a_rack(
             ("cpu_booster", (3, 3)),
             ("white_lily_collar", (4, 3)),
             ("neural_link_collar", (2, 3)),
         )
-        second = self._rack(
+        second = a_rack(
             ("cpu_booster", (3, 3)),
             ("neural_link_collar", (2, 3)),
             ("white_lily_collar", (4, 3)),
@@ -943,7 +944,7 @@ class TestCombiningItems:
 
     def test_the_same_rack_always_combines_the_same_way(self):
         def once():
-            rack = self._rack(
+            rack = a_rack(
                 ("cpu_booster", (3, 3)),
                 ("white_lily_collar", (4, 3)),
                 ("neural_link_collar", (2, 3)),
@@ -956,7 +957,7 @@ class TestCombiningItems:
         assert once() == once() == once()
 
     def test_separate_combinations_all_happen(self):
-        rack = self._rack(
+        rack = a_rack(
             ("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)),
             ("crypto_mining_rig", (6, 3)), ("maneki_neko", (5, 3)),
         )
@@ -971,7 +972,7 @@ class TestCombiningItems:
         rootkit then make an orchid collar -- next round, not this one, so the
         player sees the step and can break it up.
         """
-        rack = self._wide_rack(
+        rack = a_wide_rack(
             ("vampire_rootkit", (0, 0)),
             ("neural_link_collar", (1, 0)),
             ("cpu_booster", (2, 0)),
@@ -990,3 +991,218 @@ class TestCombiningItems:
 
     def test_an_empty_rack_combines_nothing(self):
         assert InventoryManager().combine() == []
+
+
+class TestAPartThatIsAKindNotAnItem:
+    """GDD 5.4: `class:fire` is any item whose icon says it is on fire.
+
+    Hot Cell and Thermal Torch are lit by one, and eight items qualify. The
+    player uses whichever they happen to hold, so the recipe names none of
+    them.
+    """
+
+    def test_any_item_of_the_kind_answers_the_part(self):
+        for lighter in ("thermal_throttle", "oil_lamp", "magic_torch"):
+            rack = a_rack(("lump_of_coal", (2, 3)), (lighter, (3, 3)))
+            made = rack.combine()
+
+            assert [c.made for c in made] == ["burning_coal"], f"{lighter} lights it"
+            assert [i.item_type for i in made[0].consumed] == ["lump_of_coal"]
+            assert [i.item_type for i in made[0].kept] == [lighter], (
+                "the fire is a catalyst, so it is still there"
+            )
+
+    def test_an_item_of_another_kind_does_not(self):
+        # An Edge Cache is of no kind at all, and a Null Blade is melee. Both
+        # touch a Dead Cell happily and neither lights it.
+        rack = a_rack(("lump_of_coal", (2, 3)), ("whetstone", (3, 3)))
+        assert rack.combine() == []
+
+    def test_the_item_the_recipe_makes_can_be_the_fire_it_needs(self):
+        """A Hot Cell is on fire, so it lights the next one."""
+        rack = a_rack(("lump_of_coal", (2, 3)), ("burning_coal", (3, 3)))
+        made = rack.combine()
+
+        assert [c.made for c in made] == ["burning_coal"]
+        assert [i.id for i in made[0].consumed] == ["item0"], "the coal, not the cell"
+        assert sorted(i.item_type for i in rack.grid.items) == [
+            "burning_coal", "burning_coal"
+        ]
+
+    def test_the_fire_has_to_be_touching_like_any_part(self):
+        rack = a_rack(("lump_of_coal", (2, 3)), ("thermal_throttle", (6, 3)))
+        assert rack.combine() == []
+
+    def test_it_is_promised_before_it_happens(self):
+        rack = a_rack(("lump_of_coal", (2, 3)), ("thermal_throttle", (3, 3)))
+        pending = rack.pending()
+
+        assert len(pending) == 1
+        assert pending[0].makes == "burning_coal"
+        assert pending[0].complete
+        assert pending[0].ingredients == ("item0",)
+        assert pending[0].catalysts == ("item1",), "the fire is kept"
+
+
+class TestWhatTheRackIsOnTheWayTo:
+    """`pending` warns the player before they commit to a combination.
+
+    It has to agree with what combining actually does, so it reads the same
+    plan. A warning that promised something else would be worse than none.
+    """
+
+    def test_a_complete_set_says_it_will_combine(self):
+        rack = a_rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
+        pending = rack.pending()
+
+        assert len(pending) == 1
+        assert pending[0].makes == "blue_sage_collar"
+        assert pending[0].complete
+        assert pending[0].have == pending[0].need == 2
+
+    def test_asking_changes_nothing(self):
+        rack = a_rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
+        rack.pending()
+        rack.pending()
+        assert [i.item_type for i in rack.grid.items] == [
+            "neural_link_collar", "cpu_booster"
+        ], "the rack is untouched by being asked about"
+
+    def test_it_promises_exactly_what_combining_does(self):
+        """The two read one plan, so they cannot disagree."""
+        def rack():
+            return a_rack(
+                ("cpu_booster", (3, 3)),
+                ("white_lily_collar", (4, 3)),
+                ("neural_link_collar", (2, 3)),
+            )
+
+        promised = [(p.makes, sorted(p.ingredients)) for p in rack().pending()]
+        happened = [
+            (c.made, sorted(i.id for i in c.consumed)) for c in rack().combine()
+        ]
+        assert promised == happened
+
+    def test_a_part_finished_set_counts_up(self):
+        """What an item is labelled with when it is put down: 2 of 3."""
+        rack = a_rack(("hero_sword", (2, 3)), ("whetstone", (3, 3)))
+        pending = rack.pending()
+
+        assert len(pending) == 1
+        assert pending[0].makes == "hero_longsword"
+        assert (pending[0].have, pending[0].need) == (2, 3)
+        assert pending[0].missing == ("whetstone",), "and what is still wanted"
+        assert not pending[0].complete
+
+    def test_one_item_on_its_own_is_not_progress(self):
+        rack = a_rack(("hero_sword", (2, 3)))
+        assert rack.pending() == []
+
+    def test_parts_that_are_not_touching_are_not_progress(self):
+        rack = a_rack(("hero_sword", (2, 3)), ("whetstone", (6, 3)))
+        assert rack.pending() == []
+
+    def test_an_item_already_combining_is_not_offered_elsewhere(self):
+        """It is going to combine. Telling the player what else it might have
+        been would only muddle the label."""
+        rack = a_wide_rack(
+            ("vampire_rootkit", (0, 0)),
+            ("neural_link_collar", (1, 0)),
+            ("cpu_booster", (2, 0)),
+        )
+        pending = rack.pending()
+        combining = {i for p in pending if p.complete for i in p.ingredients}
+        for entry in pending:
+            if entry.complete:
+                continue
+            assert not (set(entry.ingredients) & combining), (
+                f"{entry.makes} offers an item that is already spoken for"
+            )
+
+
+class TestWhichItemsGoTogether:
+    """The static relation the client answers hover lines from."""
+
+    def test_it_names_both_sides(self):
+        from inventory_manager import combining_partners
+
+        partners = combining_partners()
+        assert "whetstone" in partners["hero_sword"]
+        assert "hero_sword" in partners["whetstone"], "the relation goes both ways"
+
+    def test_an_item_that_needs_two_of_itself_pairs_with_itself(self):
+        from inventory_manager import combining_partners
+
+        # Platinum Customer Card is two Premium Subscriptions.
+        assert "premium_subscription" in combining_partners()["premium_subscription"]
+
+    def test_an_item_in_no_recipe_is_absent(self):
+        from config_loader import config_loader
+        from inventory_manager import combining_partners
+
+        partners = combining_partners()
+        loose = [
+            slug
+            for slug, spec in config_loader.items.items()
+            if not spec.recipe and slug not in partners
+        ]
+        assert loose, "some item should be in no recipe at all"
+
+    def test_it_covers_every_part_of_every_recipe_that_has_two(self):
+        """A recipe with one part has nobody to draw a line to.
+
+        Nine of them turn an Unidentified Amulet into a particular amulet, which
+        happens when it is bought rather than by putting it next to anything, so
+        no line is the right answer.
+        """
+        from config_loader import config_loader
+        from inventory_manager import any_of, combining_partners
+
+        partners = combining_partners()
+        alone = set()
+        for spec in list(config_loader.items.values()) + list(
+            config_loader.containers.values()
+        ):
+            for recipe in spec.recipe:
+                parts = recipe.parts()
+                for part in parts:
+                    for slug in any_of(part):
+                        if len(parts) < 2:
+                            alone.add(slug)
+                        else:
+                            assert slug in partners, (
+                                f"{slug} can be part of a recipe and has no partners"
+                            )
+        assert alone, "no single-part recipes at all makes the exception dead"
+
+    def test_a_wildcard_part_is_every_item_that_answers_it(self):
+        """`class:fire` draws a line to each of the eight items on fire.
+
+        The wildcard itself is not an item, so it is never a name in the map:
+        the client would have nothing to draw a line to.
+        """
+        from inventory_manager import any_of, combining_partners
+
+        partners = combining_partners()
+        fire = any_of("class:fire")
+
+        assert len(fire) == 8, "setup: eight items are on fire"
+        # Hot Cell is a Dead Cell lit by any of them.
+        assert set(fire) <= set(partners["lump_of_coal"])
+        for slug in fire:
+            assert "lump_of_coal" in partners[slug], "the relation goes both ways"
+
+        assert "class:fire" not in partners
+        assert not any("class:fire" in others for others in partners.values())
+
+    def test_two_items_answering_the_same_part_are_not_partners(self):
+        """One part takes one item, so a second fire adds nothing.
+
+        Thermal Throttle goes with the Dead Cell and the Plasma Edge it lights,
+        and with no other fire.
+        """
+        from inventory_manager import combining_partners
+
+        assert combining_partners()["thermal_throttle"] == [
+            "lump_of_coal", "plasma_edge"
+        ]

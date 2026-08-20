@@ -965,28 +965,26 @@ class TestEveryRecipeCouldBeFollowed:
     def test_there_are_recipes_to_check(self):
         assert len(list(self._recipes())) > 50
 
-    def test_every_ingredient_is_a_real_item_or_a_known_gap(self):
-        from config_loader import config_loader
+    def test_every_part_of_every_recipe_is_something_a_player_can_hold(self):
+        """A part is a catalogue slug, or a kind some item is.
 
-        known = set(config_loader.items) | set(config_loader.containers)
+        `class:fire` is the only kind asked for, and eight items are on fire
+        (GDD 5.4). A recipe wanting an item this game never imported is pruned
+        at import rather than left here, because nobody could complete it.
+        """
+        from inventory_manager import any_of
+
         gaps = {}
         for item_id, recipe in self._recipes():
-            missing = [
+            unanswered = [
                 part
                 for part in recipe["ingredients"] + recipe.get("catalysts", [])
-                if part not in known
+                if not any_of(part)
             ]
-            if missing:
-                gaps[item_id] = missing
+            if unanswered:
+                gaps[item_id] = unanswered
 
-        # Every one of these needs an item from a class this game does not have,
-        # so it can never be completed. Named rather than counted, so adding a
-        # tenth is a decision rather than a drift.
-        # Both want `class:fire`, which is a Pyromancer's flame and not a slug.
-        # Named rather than counted, so a third is a decision, not a drift.
-        assert set(gaps) == {"burning_coal", "burning_torch"}, (
-            f"the recipes that cannot be completed have changed: {gaps}"
-        )
+        assert gaps == {}, f"recipes nobody could ever complete: {gaps}"
 
     def test_nothing_is_its_own_ingredient(self):
         for item_id, recipe in self._recipes():
