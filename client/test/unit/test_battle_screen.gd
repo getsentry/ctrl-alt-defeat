@@ -459,3 +459,43 @@ func test_log_message_appends_to_the_log():
 
 	assert_true("A thing happened" in battle_screen.battle_log_container.get_parsed_text(),
 		"A logged message should appear in the log")
+
+
+# ============ The music gets out of the way ============
+#
+# The round result arrives with a win or a loss sting. A sting over a battle
+# track still in full flow is two things saying different at once, so the
+# music goes down as soon as the fighting stops.
+
+func test_the_battle_has_music():
+	var music = battle_screen.get_node_or_null("BattleMusic")
+	assert_not_null(music, "The battle screen should carry a music player")
+	assert_not_null(music.stream, "and that player should have something to play")
+	assert_true(music.stream.loop,
+		"which loops, because a battle can run longer than the track")
+
+
+func test_the_music_stops_when_the_battle_ends():
+	var music = battle_screen.get_node_or_null("BattleMusic")
+	if music == null:
+		return
+	music.play()
+	assert_true(music.playing, "the music should be going before the battle ends")
+
+	battle_screen._fade_out_music()
+	await get_tree().process_frame
+
+	assert_false(music.playing,
+		"and stopped once it has, so the round result sting is heard alone")
+
+
+func test_fading_music_that_is_not_playing_is_harmless():
+	# The battle can end with the music already stopped -- a second call, or a
+	# run where it never started -- and that must not error.
+	var music = battle_screen.get_node_or_null("BattleMusic")
+	if music == null:
+		return
+	music.stop()
+	battle_screen._fade_out_music()
+	await get_tree().process_frame
+	assert_false(music.playing, "nothing to fade, and nothing broken by asking")

@@ -659,9 +659,36 @@ func _on_player_died(player: int):
 	# Log is handled by BattleEventProcessor
 	pass
 
+## How long the music takes to go. Shorter than the wait before the result, so
+## it is gone by the time the overlay speaks rather than still going under it.
+const MUSIC_FADE := 0.9
+
+
+func _fade_out_music() -> void:
+	"""Take the music down now the fighting has stopped.
+
+	The round result arrives with a win or a loss sting, and a sting over a
+	battle track in full flow is two things saying different at once. Down
+	first, and the sting has the room to itself.
+	"""
+	var music := get_node_or_null("BattleMusic") as AudioStreamPlayer
+	if music == null or not music.playing:
+		return
+	# With animations off there is nothing watching, and a tween that has to
+	# run its length would hold a test up for no reason.
+	if not Presentation.request("music_fade_out"):
+		music.stop()
+		return
+	var fade := create_tween()
+	fade.tween_property(music, "volume_db", -80.0, MUSIC_FADE)
+	fade.tween_callback(music.stop)
+
+
 func _on_battle_ended(winner: int):
 	battle_active = false
 	# Log is handled by BattleEventProcessor
+
+	_fade_out_music()
 
 	# Let the last blow land before the result covers it.
 	await get_tree().create_timer(Presentation.delay(1.0)).timeout
