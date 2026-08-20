@@ -668,7 +668,10 @@ func _show_round_result(won: bool):
 func _show_damage_number(player: int, amount: int):
 	if not Presentation.request("damage_number", {"player": player, "amount": amount}):
 		return
-	_throw_number(player, "-%d" % amount, Color(1.0, 0.86, 0.86), 44)
+	# Red, and plainly so. At a breath off white it read as a label rather
+	# than as a blow, which left the healing green the only number on screen
+	# that said what it was by its colour.
+	_throw_number(player, "-%d" % amount, Color(1.0, 0.36, 0.42), 44)
 
 func _show_heal_effect(player: int, amount: int):
 	if not Presentation.request("heal_effect", {"player": player, "amount": amount}):

@@ -28,8 +28,12 @@ const TRACK := Color(0.09, 0.07, 0.18, 0.9)
 # fly off a hit start here, so they have to follow the characters rather than
 # sit at the fixed screen positions the old code used - which put them behind
 # the log panel, where nobody ever saw them.
-const PLAYER_AT := Vector2(0.085, 0.62)
-const ENEMY_AT := Vector2(0.915, 0.62)
+## Numbers thrown off a hit drift up as they fade, so where they start has to
+## leave room for that drift. At 0.62 a number rose out of the fighter and
+## across the bottom edge of the rack above, so it was read half over the
+## battle and half over the furniture.
+const PLAYER_AT := Vector2(0.085, 0.70)
+const ENEMY_AT := Vector2(0.915, 0.70)
 
 # Proportions taken from the game this is modelled on: about a quarter of the
 # width to each rack, about half of it to the stats in the middle, and the
