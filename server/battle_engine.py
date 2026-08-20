@@ -3,10 +3,12 @@ Every mechanic verified against the spec
 Event-driven system with priority queue for timers
 """
 
+import logging
 import random
 import time
 import uuid
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, TypedDict
@@ -21,6 +23,14 @@ from item_effects import (
     AfterTrigger,
     ChanceEffect,
     ConditionEffect,
+    ExtraAttackEffect,
+    StaminaEffect,
+    CounterTrigger,
+    OnMissTrigger,
+    OnStunTrigger,
+    OutOfStaminaTrigger,
+    StatusChangeTrigger,
+    WhenAffordableTrigger,
     LimitEffect,
     PlayerModifyEffect,
     RandomStatusEffect,
@@ -60,6 +70,8 @@ from item_effects import (
     TimerTrigger,
 )
 from schemas import BattleAction
+
+logger = logging.getLogger(__name__)
 
 MEMORY_LEAKED = "memory_leaked"
 
@@ -249,6 +261,9 @@ class IdentitySet:
     def add(self, obj) -> None:
         self._by_id[id(obj)] = obj
 
+    def discard(self, obj) -> None:
+        self._by_id.pop(id(obj), None)
+
     def __contains__(self, obj) -> bool:
         return id(obj) in self._by_id
 
@@ -376,6 +391,14 @@ class Player:
     # behind it.
     paid_at: Dict[str, float] = field(default_factory=dict)
 
+    # Every stack this player has ever been given, spent or not. "30 Mana
+    # gained" watches this rather than what is held: an item that waited for
+    # 30 to be held would never fire beside one that spends them.
+    ever_gained: Dict[str, float] = field(default_factory=dict)
+
+    # Effect-damage this player has dealt, for the same reason.
+    effect_damage_dealt: float = 0.0
+
     # Modifiers on the player rather than on an item. `until` is None for one
     # that stands for the whole battle.
     mods: List[Timed] = field(default_factory=list)
@@ -411,6 +434,8 @@ class Player:
         self.debuffs.clear()
         self.recorded_attacks.clear()
         self.paid_at.clear()
+        self.ever_gained.clear()
+        self.effect_damage_dealt = 0.0
         self.mods.clear()
         self.reflect = 0
         self.resist = 0
@@ -507,6 +532,16 @@ class BattleSimulator:
         # battle. A test that calls one method on its own has neither.
         self.loadout: Dict[int, List[BattleItem]] = {}
 
+        # How deep the effects being applied right now are nested.
+        self.depth = 0
+
+        # The triggers running right now, so none of them can answer itself.
+        self.firing: "IdentitySet" = IdentitySet()
+
+        # Triggers that watch a total rather than an event, as
+        # (trigger, item, owner, enemy). Looked at once a tick.
+        self.watched: List = []
+
         # The modifiers _apply_auras has already settled. A modifier under a
         # standing trigger is applied once before the battle, and its trigger
         # then comes through _apply_effects as its handler goes on; without
@@ -596,6 +631,9 @@ class BattleSimulator:
         self.loadout = {player1.id: p1_items, player2.id: p2_items}
         self.settled = IdentitySet()
         self.stunned_until = {}
+        self.watched = []
+        self.firing = IdentitySet()
+        self.depth = 0
         self.allowance = {}
         player1.reset_for_battle()
         player2.reset_for_battle()
@@ -650,6 +688,8 @@ class BattleSimulator:
                         pool[gone.name] = left
                     else:
                         pool.pop(gone.name, None)
+
+            self._look_at_the_watched()
 
             self.event_manager.current_time = self.current_time
             self.event_manager.process_timers(self.current_time)
@@ -739,9 +779,15 @@ class BattleSimulator:
 
     @staticmethod
     def _who_activated(event, items: List[BattleItem]):
-        """The item behind an activation, or None if it is not one of these."""
+        """The item behind a moment, or None if it is not one of these.
+
+        An activation names the item in `item_id`; a hit and a crit name it in
+        `attacker_item_id`, because those events were made for the attacking
+        item's own on-hit effects. Either way it is one item.
+        """
+        uid = event.data.item_id or event.data.attacker_item_id
         for candidate in items:
-            if candidate.uid == event.data.item_id:
+            if candidate.uid == uid:
                 return candidate
         return None
 
@@ -894,10 +940,15 @@ class BattleSimulator:
                 until=self.current_time + duration,
             ))
         if landed:
+            target.ever_gained[status] = target.ever_gained.get(status, 0) + landed
             self._record(BattleAction(
                 timestamp=self._time_ms(), source=source, action="debuff",
                 target=None, damage=landed, player=target.id,
                 details={"debuff_name": status, "actual_value": landed}))
+            self.event_manager.emit(Event(
+                EventType.STATUS_GAINED, None, target,
+                EventData(status=status, kind="debuff", player_id=target.id,
+                          buff_value=landed)))
         if reflected:
             self._record(BattleAction(
                 timestamp=self._time_ms(), source=source, action="debuff",
@@ -915,6 +966,7 @@ class BattleSimulator:
                source: str, duration: float = 0.0) -> None:
         """Put stacks of a buff on somebody. Nothing refuses a buff."""
         target.buffs[status] = target.buffs.get(status, 0) + stacks
+        target.ever_gained[status] = target.ever_gained.get(status, 0) + stacks
         if duration > 0:
             target.mods.append(Timed(
                 kind="status", name=status, amount=stacks,
@@ -926,6 +978,11 @@ class BattleSimulator:
             damage=int(stacks * 100) if isinstance(stacks, float) else stacks,
             player=target.id,
             details={"buff_name": status, "actual_value": stacks}))
+        if stacks > 0:
+            self.event_manager.emit(Event(
+                EventType.STATUS_GAINED, None, target,
+                EventData(status=status, kind="buff", player_id=target.id,
+                          buff_value=stacks)))
 
     @staticmethod
     def _stacks(player: Player, status: str) -> int:
@@ -1014,6 +1071,100 @@ class BattleSimulator:
                 f"applies"
             )
 
+    def _pay(self, owner: Player, costs: Dict[str, int], source: str) -> None:
+        """Spend a price in buffs, and say so.
+
+        The one place a price is paid. It was two -- a `cost` effect and a
+        `use` trigger, each with its own copy of the same four lines -- which
+        is how a healing share came to be ignored by Vampirism one commit
+        earlier. Two places doing one thing is the shape that goes wrong.
+
+        The caller has already checked the price can be met. Paying half of
+        one is not something any item does.
+        """
+        for name, n in costs.items():
+            owner.buffs[name] -= n
+            if owner.buffs[name] <= 0:
+                del owner.buffs[name]
+        self._record(BattleAction(
+            timestamp=self._time_ms(), source=source, action="spend",
+            target=None, damage=None, player=owner.id,
+            details={"costs": dict(costs)}))
+
+    @contextmanager
+    def _firing(self, trigger):
+        """Let a trigger run, unless it is already running.
+
+        A trigger that answers a status and grants that status answers itself,
+        and there is nothing to stop it: "Empower gained: gain 1 Empower" runs
+        until the stack gives out. No item in the catalogue is written that way
+        today, and one will be -- "Buff used: Refund 25% of the used buffs" is
+        the same shape once buff-spending announces itself.
+
+        A trigger does not fire itself. That is the smallest rule that ends it,
+        and it leaves the honest case alone: two items answering each other's
+        gains still work, and each answers once.
+        """
+        if trigger in self.firing:
+            yield False
+            return
+        self.firing.add(trigger)
+        try:
+            yield True
+        finally:
+            self.firing.discard(trigger)
+
+    def _look_at_the_watched(self) -> None:
+        """Fire the triggers that watch a total rather than an event.
+
+        Three of them, and all three want the same thing: a number nobody
+        announces. A price that can now be met, a running total that has
+        crossed a line, a pool that has reached nothing. Announcing every
+        change to every number would be a great many events for something a
+        tick can simply look at.
+        """
+        for trigger, item, owner, enemy in self.watched:
+            if item.uid in self.consumed_items:
+                continue
+
+            if isinstance(trigger, WhenAffordableTrigger):
+                if not trigger.affordable(owner.buffs):
+                    continue
+                self._pay(owner, trigger.costs, item.uid)
+                self._apply_effects(trigger.effects, item, owner, enemy)
+
+            elif isinstance(trigger, CounterTrigger):
+                # Crossing is the trigger, not being over, so it goes off on
+                # the way past and not on every tick after.
+                if trigger.crossed:
+                    continue
+                if self._total(trigger, owner, enemy) < trigger.amount:
+                    continue
+                trigger.crossed = True
+                self._apply_effects(trigger.effects, item, owner, enemy)
+
+    def _total(self, trigger: CounterTrigger, owner: Player,
+               enemy: Player) -> float:
+        """The running total a CounterTrigger is watching."""
+        who = owner if trigger.whose == "self" else enemy
+        pool = who.ever_gained if trigger.counts == "gained" else None
+
+        if trigger.counting == "block":
+            return who.block
+        if trigger.counting == "effect_damage":
+            return who.effect_damage_dealt
+        if trigger.counting == "health":
+            return who.quota / who.max_quota
+        if trigger.counting == "debuffs":
+            return sum((pool or who.debuffs).values()) if pool else sum(
+                who.debuffs.values())
+        if trigger.counting == "buffs":
+            return sum((pool or who.buffs).values()) if pool else sum(
+                who.buffs.values())
+        if pool is not None:
+            return pool.get(trigger.counting, 0)
+        return self._stacks(who, trigger.counting)
+
     def _stun(self, target: Player, duration: float, item: BattleItem) -> None:
         """Hold every one of a player's cooldowns still for `duration`.
 
@@ -1024,6 +1175,10 @@ class BattleSimulator:
         Two stuns at once do not add. Backpack Battles keeps them as separate
         debuffs that expire separately, so what matters is the later of the
         two ends: a stun landing inside a longer one pushes nothing.
+
+        The event says who was stunned, and that is what an on-stun clause
+        answers -- see OnStunTrigger. It does not say who did it, because
+        nothing asks.
         """
         now = self.current_time
         already = self.stunned_until.get(target.id, now)
@@ -1034,6 +1189,8 @@ class BattleSimulator:
 
         self.stunned_until[target.id] = ends
         self.event_manager.hold_timers(target.id, held)
+        self.event_manager.emit(Event(
+            EventType.STUN_LANDED, None, target, EventData()))
         self._record(BattleAction(
             timestamp=self._time_ms(), source=item.uid, action="stun",
             target=None, damage=None, player=target.id,
@@ -1176,8 +1333,88 @@ class BattleSimulator:
                         self._apply_effects(trigger.effects, item, owner, enemy)
 
                     self.event_manager.subscribe(
-                        EventType.ITEM_ACTIVATED, handle_activation
+                        EventType(trigger.WATCHES[trigger.on]), handle_activation
                     )
+
+                elif isinstance(trigger, StatusChangeTrigger):
+                    def handle_status(
+                        event, trigger=trigger, item=item, owner=owner
+                    ):
+                        if item.uid in self.consumed_items:
+                            return
+                        watched = owner if trigger.whose == "self" else enemy
+                        if event.data.player_id != watched.id:
+                            return
+                        if not trigger.watches(event.data.status,
+                                               event.data.kind):
+                            return
+                        with self._firing(trigger) as allowed:
+                            if allowed:
+                                self._apply_effects(
+                                    trigger.effects, item, owner, enemy)
+
+                    self.event_manager.subscribe(
+                        EventType.STATUS_GAINED, handle_status
+                    )
+
+                elif isinstance(trigger, OnStunTrigger):
+                    def handle_stun(
+                        event, trigger=trigger, item=item, owner=owner
+                    ):
+                        if item.uid in self.consumed_items:
+                            return
+                        # What it answers is the other player being stunned.
+                        # Not who did it: a stun is a stun, and the item is
+                        # taking its chance while they cannot move.
+                        if event.target is owner:
+                            return
+                        with self._firing(trigger) as allowed:
+                            if allowed:
+                                self._apply_effects(
+                                    trigger.effects, item, owner, enemy)
+
+                    self.event_manager.subscribe(
+                        EventType.STUN_LANDED, handle_stun
+                    )
+
+                elif isinstance(trigger, OnMissTrigger):
+                    def handle_miss(
+                        event, trigger=trigger, item=item, owner=owner
+                    ):
+                        if item.uid in self.consumed_items:
+                            return
+                        if trigger.whose == "self":
+                            # This item's own swing, not another of its
+                            # owner's: "On miss" belongs to the weapon.
+                            if event.data.attacker_item_id != item.uid:
+                                return
+                        elif event.data.player_id == owner.id:
+                            return  # "Opponent misses attack" is theirs
+                        self._apply_effects(trigger.effects, item, owner, enemy)
+
+                    self.event_manager.subscribe(EventType.ON_MISS, handle_miss)
+
+                elif isinstance(trigger, OutOfStaminaTrigger):
+                    def handle_exhausted(
+                        event, trigger=trigger, item=item, owner=owner
+                    ):
+                        if item.uid in self.consumed_items:
+                            return
+                        if event.data.player_id != owner.id:
+                            return
+                        self._apply_effects(trigger.effects, item, owner, enemy)
+
+                    self.event_manager.subscribe(
+                        EventType.CPU_EXHAUSTED, handle_exhausted
+                    )
+
+                elif isinstance(trigger, (WhenAffordableTrigger,
+                                          CounterTrigger)):
+                    # Watched on the clock rather than on an event. Nothing
+                    # announces "the pool reached 45" or "the price can be
+                    # met", and giving every one of those its own event would
+                    # be a lot of announcements for something a tick can see.
+                    self.watched.append((trigger, item, owner, enemy))
 
                 elif isinstance(trigger, PassiveTrigger):
                     # Apply passive effects immediately
@@ -1280,6 +1517,11 @@ class BattleSimulator:
                         details={"reason": "Insufficient CPU"},
                     )
                 )
+                # This is what "out of stamina" means: something wanted to run
+                # and the pool could not pay for it.
+                self.event_manager.emit(Event(
+                    EventType.CPU_EXHAUSTED, owner, None,
+                    EventData(item_id=item.uid, player_id=owner.id)))
 
             # Always schedule next activation at regular cooldown (unless consumed)
             # This keeps the item on its normal schedule regardless of CPU
@@ -1323,10 +1565,38 @@ class BattleSimulator:
             return trigger.cooldown / (1 + difference)
         return trigger.cooldown * (1 + difference)
 
+    #: How deep one activation may go before the engine calls it a loop.
+    #: Honest nesting is shallow -- a trigger, a chance, a price, a count, the
+    #: effects -- and five is a deep clause. A chain of triggers answering
+    #: each other is what goes past this: two weapons, each with an aura that
+    #: answers the other's hit with an extra attack, run until the stack gives
+    #: out. `_firing` stops a trigger answering itself and cannot stop a pair
+    #: taking turns, which is what this is for.
+    DEEPEST = 32
+
     def _apply_effects(
         self, effects: List[Effect], item: BattleItem, owner: Player, enemy: Player
     ):
         """Apply a list of effects from a trigger"""
+        if self.depth >= self.DEEPEST:
+            # Stopping is not the right answer, it is only better than a
+            # crash. A catalogue that reaches here describes something with no
+            # end, and the log is where that has to be visible. See BACKLOG.md.
+            logger.warning(
+                "%s: effects nested past %d, so something is answering "
+                "something else without end. Stopping this chain.",
+                item.spec.id, self.DEEPEST,
+            )
+            return
+        self.depth += 1
+        try:
+            self._apply_each(effects, item, owner, enemy)
+        finally:
+            self.depth -= 1
+
+    def _apply_each(
+        self, effects: List[Effect], item: BattleItem, owner: Player, enemy: Player
+    ):
         for effect in effects:
             # Pass item as source for ConsumeEffect to work
             result = effect.apply(item, enemy, self)
@@ -1420,13 +1690,43 @@ class BattleSimulator:
                         player=owner.id, details={"kind": "effect"}))
                 landed = int(amount)
                 if landed > 0:
-                    self._take_damage(
+                    # What arrives, not what was aimed. A target who is
+                    # invulnerable takes none of it, and an item counting
+                    # "22 Effect-damage dealt" should not be paid for damage
+                    # that never landed.
+                    landed = self._take_damage(
                         enemy, landed, source=item.uid, action="damage",
                         attacker=owner, details={"kind": "effect"},
                     )
+                    owner.effect_damage_dealt += landed
                     self._heal(owner, int(landed * result["lifesteal"]),
                                item.uid, details={"kind": "lifesteal"})
+            elif isinstance(effect, StaminaEffect):
+                gains = owner if result["target_type"] == "self" else enemy
+                before = gains.cpu
+                gains.cpu = min(gains.max_cpu, gains.cpu + result["amount"])
+                self._record(BattleAction(
+                    timestamp=self._time_ms(), source=item.uid,
+                    action="cpu_drain", target=None, damage=None,
+                    player=gains.id,
+                    details={"amount": -(gains.cpu - before)}))
+            elif isinstance(effect, ExtraAttackEffect):
+                # The item's own attack, run once more and for nothing. An
+                # item with no attack has nothing to do again.
+                for again in item.spec.triggers:
+                    if not isinstance(again, TimerTrigger):
+                        continue
+                    for swing in again.effects:
+                        if isinstance(swing, AttackEffect):
+                            self._process_attack(
+                                swing.apply(item, enemy, self), item, owner,
+                                enemy)
             elif isinstance(effect, MaxHealthEffect):
+                # Not through _heal, and deliberately. Raising the ceiling and
+                # filling the new room is not healing: a clause that changes
+                # healing -- "your healing is increased by 15%" -- has nothing
+                # to say about how much bigger somebody just got. Every other
+                # source of health does go through _heal.
                 owner.max_quota += result["amount"]
                 owner.quota += result["amount"]
                 self._record(BattleAction(
@@ -1491,14 +1791,7 @@ class BattleSimulator:
                 # cannot be met in full, so a clause cannot leave the owner
                 # poorer for nothing.
                 if effect.affordable(owner.buffs):
-                    for name, n in effect.costs.items():
-                        owner.buffs[name] -= n
-                        if owner.buffs[name] <= 0:
-                            del owner.buffs[name]
-                    self._record(BattleAction(
-                        timestamp=self._time_ms(), source=item.uid,
-                        action="spend", target=None, damage=None,
-                        player=owner.id, details={"costs": dict(effect.costs)}))
+                    self._pay(owner, effect.costs, item.uid)
                     self._apply_effects(effect.effects, item, owner, enemy)
             elif isinstance(effect, ConditionEffect):
                 held = owner if effect.whose == "self" else enemy
@@ -1592,7 +1885,9 @@ class BattleSimulator:
                     if result["kind"] == "buff":
                         self._grant(lands, chosen, 1, item.uid)
                     else:
-                        self._inflict(lands, chosen, 1, item.uid)
+                        self._inflict(
+                            lands, chosen, 1, item.uid,
+                            from_enemy=result["target_type"] != "self")
             elif isinstance(effect, LimitEffect):
                 # Counted per effect and per battle, so two items carrying the
                 # same clause each get their own allowance.
@@ -1674,6 +1969,9 @@ class BattleSimulator:
                     details=None,
                 )
             )
+            self.event_manager.emit(Event(
+                EventType.ON_MISS, owner, enemy,
+                EventData(attacker_item_id=item.uid, player_id=owner.id)))
             return
 
         # An item that gets stronger with every swing counts this one.
@@ -1729,6 +2027,10 @@ class BattleSimulator:
                     details=None,
                 )
             )
+            self.event_manager.emit(Event(
+                EventType.ON_CRIT, owner, enemy,
+                EventData(attacker_item_id=item.uid,
+                          attacker_kinds=item.spec.kinds)))
 
         # Handle special attack types
         if attack_data.get("special") == "bypass_block":
@@ -1900,6 +2202,7 @@ class BattleSimulator:
                 player=target.id, details={"type": "buff_block"}))
 
         target.quota = max(0, target.quota - damage)
+        landed = damage
 
         self._record(
             BattleAction(
@@ -1917,6 +2220,7 @@ class BattleSimulator:
         self.event_manager.emit(
             Event(EventType.HEALTH_FELL, attacker, target, EventData(damage=damage))
         )
+        return landed
 
     def _fall_night(self) -> None:
         """Start fatigue, once, and tell everyone watching.

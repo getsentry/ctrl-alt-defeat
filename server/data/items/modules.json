@@ -397,11 +397,11 @@
       "in_shop": false,
       "unbuilt": [
         "Start of battle: Gain 12 Block.",
-        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "Weapon sockets:",
         "On hit: 12% chance to deal +6 damage and gain 1 Heat.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "Armor & other sockets:",
         "Resist 7 Cold.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "Backpack:",
         "After 5s: Gain 2 Heat, cleanse 3 debuffs."
       ],
       "icontype": "fire",
@@ -432,11 +432,11 @@
       "slug": "corrupted_crystal",
       "in_shop": false,
       "unbuilt": [
-        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "Weapon sockets:",
         "Opponent below 30% health: Deal +50% damage.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "Armor & other sockets:",
         "7 debuffs inflicted: Gain 6 Block.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "Backpack:",
         "Every 3.9s: Inflict Fatigue damage."
       ],
       "icontype": "dark"
@@ -457,11 +457,11 @@
       "in_shop": false,
       "unbuilt": [
         "Start of battle: Gain 8 Block.",
-        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "Weapon sockets:",
         "On attack: 70% chance to deal +1 damage.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "Armor & other sockets:",
         "Resist 1 debuff.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "Backpack:",
         "After 3s: Gain a random buff, inflict a random debuff."
       ]
     },
@@ -481,11 +481,11 @@
       "slug": "tim",
       "in_shop": false,
       "unbuilt": [
-        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "Weapon sockets:",
         "On hit: 50% chance to steal a random buff.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "Armor & other sockets:",
         "25% chance to resist debuffs or critical hits.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "Backpack:",
         "Opponent drops below 30%: Heal for 50 and gain 5 Empower."
       ],
       "icontype": "treasure, dark"
@@ -506,11 +506,11 @@
       "slug": "wisp",
       "in_shop": false,
       "unbuilt": [
-        "<div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Weapon sockets:</font></div>",
+        "Weapon sockets:",
         "30 damage dealt: Gain 1 Spikes.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Armor & other sockets:</font></div>",
+        "Armor & other sockets:",
         "After 5s: Gain 35% of your current health as maximum health.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Backpack:</font></div>",
+        "Backpack:",
         "After 12s: Gain 10 Luck and 10 Regeneration. Triggers 10% faster for each Star Nature-item."
       ],
       "icontype": "nature"

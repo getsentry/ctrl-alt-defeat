@@ -61,15 +61,21 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_stun",
+          "effects": [
+            {
+              "type": "extra_attack",
+              "description": "Triggers extra attack"
+            }
+          ]
         }
       ],
       "slug": "deadlock_twins",
       "sockets": 1,
       "icontype": "melee",
-      "in_shop": false,
-      "unbuilt": [
-        "On stun: Triggers extra attack."
-      ]
+      "in_shop": false
     },
     "mobius_lash": {
       "name": "Mobius Lash",
@@ -306,15 +312,41 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "any": [
+              "melee",
+              "ranged",
+              "magic"
+            ]
+          },
+          "after": 1,
+          "on": "hits",
+          "effects": [
+            {
+              "type": "limit",
+              "times": 7,
+              "effects": [
+                {
+                  "type": "gain_damage",
+                  "amount": 1,
+                  "target": "self",
+                  "counting": "any",
+                  "description": "Gain +1 damage"
+                }
+              ],
+              "description": "up to 7"
+            }
+          ]
         }
       ],
       "slug": "nullshot",
       "sockets": 1,
       "icontype": "ranged",
-      "in_shop": false,
-      "unbuilt": [
-        "Star Weapon hits: Gain +1 damage (up to 7)."
-      ]
+      "in_shop": false
     },
     "neural_interface_blade": {
       "name": "Migraine",
@@ -993,13 +1025,34 @@
               "description": "Inflict 3 Throttled"
             }
           ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "any": [
+              "melee",
+              "ranged",
+              "magic"
+            ]
+          },
+          "after": 1,
+          "on": "hits",
+          "effects": [
+            {
+              "type": "debuff",
+              "debuff_name": "throttled",
+              "value": 1,
+              "target": "enemy",
+              "description": "Inflict 1 Cold"
+            }
+          ]
         }
       ],
       "slug": "rage_click",
       "in_shop": false,
       "unbuilt": [
-        "Can only be thrown once per battle.",
-        "Star Weapon hits: Inflict 1 Cold."
+        "Can only be thrown once per battle."
       ],
       "icontype": "treasure, ice, ranged"
     },
@@ -1044,13 +1097,34 @@
               "description": "Gain 3 Optimized"
             }
           ]
+        },
+        {
+          "type": "counter",
+          "counting": "optimized",
+          "amount": 10,
+          "whose": "self",
+          "counts": "held",
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 8,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "description": "Star Weapons gain 8 damage"
+            }
+          ]
         }
       ],
       "slug": "thermal_throttle",
       "in_shop": false,
       "unbuilt": [
-        "Can only be thrown once per battle.",
-        "10 Heat reached: Star Weapons gain 8 damage."
+        "Can only be thrown once per battle."
       ],
       "icontype": "treasure, fire, ranged"
     },
@@ -1228,13 +1302,21 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_stun",
+          "effects": [
+            {
+              "type": "extra_attack",
+              "description": "Triggers extra attack"
+            }
+          ]
         }
       ],
       "slug": "bloody_dagger",
       "in_shop": false,
       "unbuilt": [
-        "On hit: Gain 1 Vampirism (up to 5 per battle). Heal 4 per Star Vampiric-item.",
-        "On stun: Triggers extra attack."
+        "On hit: Gain 1 Vampirism (up to 5 per battle). Heal 4 per Star Vampiric-item."
       ],
       "sockets": 1,
       "icontype": "vampiric, melee",
@@ -1749,13 +1831,27 @@
               "description": "Star items trigger 40% faster"
             }
           ]
+        },
+        {
+          "type": "on_attack",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "extra_attack",
+                  "description": "Triggers extra attack"
+                }
+              ],
+              "description": "the second of the two, and not a third"
+            }
+          ]
         }
       ],
       "slug": "falcon_blade",
       "in_shop": false,
-      "unbuilt": [
-        "Attacks twice."
-      ],
       "sockets": 2,
       "icontype": "melee",
       "recipe": [
@@ -1819,13 +1915,23 @@
               "description": "Use 3 Luck"
             }
           ]
+        },
+        {
+          "type": "on_miss",
+          "whose": "self",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "calibrated",
+              "value": 3,
+              "target": "self",
+              "description": "Gain 3 Luck"
+            }
+          ]
         }
       ],
       "slug": "fancy_fencing_rapier",
       "in_shop": false,
-      "unbuilt": [
-        "On miss: Gain 3 Luck."
-      ],
       "sockets": 1,
       "icontype": "melee"
     },
@@ -1898,13 +2004,33 @@
               "description": "and +0.4 per Cold of your opponent"
             }
           ]
+        },
+        {
+          "type": "counter",
+          "counting": "throttled",
+          "amount": 30,
+          "whose": "enemy",
+          "counts": "held",
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "draining",
+                  "value": 12,
+                  "target": "self",
+                  "description": "Gain 12 Vampirism"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
         }
       ],
       "slug": "frostbite",
       "in_shop": false,
-      "unbuilt": [
-        "Opponent reaches 30 Cold: Gain 12 Vampirism (once)."
-      ],
       "sockets": 2,
       "icontype": "ice, vampiric, melee",
       "recipe": [
@@ -2533,13 +2659,28 @@
               "description": "Gain 2 Credits"
             }
           ]
+        },
+        {
+          "type": "counter",
+          "counting": "credits",
+          "amount": 30,
+          "whose": "self",
+          "counts": "gained",
+          "effects": [
+            {
+              "type": "effect_damage",
+              "value": 10,
+              "lifesteal": 1.0,
+              "per_status": {
+                "draining": 1
+              },
+              "description": "10 Effect-damage, 100% lifesteal, +1 per Vampirism"
+            }
+          ]
         }
       ],
       "slug": "manathirst",
       "in_shop": false,
-      "unbuilt": [
-        "30 Mana gained: Deal 10 Effect-damage with 100% lifesteal. Deal +1 for each Vampirism."
-      ],
       "sockets": 1,
       "icontype": "magic, vampiric, melee",
       "recipe": [
@@ -2636,7 +2777,8 @@
               "target": "enemy",
               "description": "Inflict 1 Memory Leaked"
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "pandamonium",
@@ -2695,13 +2837,19 @@
               "description": "Inflict 2 Memory Leaked"
             }
           ]
+        },
+        {
+          "type": "on_stun",
+          "effects": [
+            {
+              "type": "extra_attack",
+              "description": "Triggers extra attack"
+            }
+          ]
         }
       ],
       "slug": "poison_dagger",
       "in_shop": false,
-      "unbuilt": [
-        "On stun: Triggers extra attack."
-      ],
       "sockets": 1,
       "icontype": "melee",
       "recipe": [
@@ -3206,13 +3354,21 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_stun",
+          "effects": [
+            {
+              "type": "extra_attack",
+              "description": "Triggers extra attack"
+            }
+          ]
         }
       ],
       "slug": "spectral_dagger",
       "in_shop": false,
       "unbuilt": [
-        "On attack: Use 1 Mana to ignore Block and deal +6 damage.",
-        "On stun: Triggers extra attack."
+        "On attack: Use 1 Mana to ignore Block and deal +6 damage."
       ],
       "sockets": 1,
       "icontype": "magic, melee",
@@ -3485,13 +3641,22 @@
               "description": "60% chance"
             }
           ]
+        },
+        {
+          "type": "status_gained",
+          "status": "monitored",
+          "whose": "self",
+          "effects": [
+            {
+              "type": "max_health",
+              "value": 11,
+              "description": "Gain 11 maximum health"
+            }
+          ]
         }
       ],
       "slug": "thornbloom",
       "in_shop": false,
-      "unbuilt": [
-        "Empower gained: Gain 11 maximum health."
-      ],
       "sockets": 2,
       "icontype": "nature, melee",
       "recipe": [

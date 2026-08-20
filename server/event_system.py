@@ -31,6 +31,10 @@ class EventType(Enum):
     DEBUFF_APPLIED = "debuff_applied"
     CPU_EXHAUSTED = "cpu_exhausted"
     FATIGUE_STARTED = "fatigue_started"  # Night fell, and fatigue begins
+    ON_CRIT = "on_crit"  # An attack landed as a critical hit
+    ON_MISS = "on_miss"  # An attack went wide
+    STATUS_GAINED = "status_gained"  # Somebody gained stacks of a buff or debuff
+    STUN_LANDED = "stun_landed"  # A player stunned the other one
     CPU_REGENERATED = "cpu_regenerated"
 
 
@@ -49,6 +53,11 @@ class EventData:
     # How the attacking item swings, so a shield can tell whether it answers
     attacker_kinds: frozenset = frozenset()  # For ON_ATTACKED and ON_HIT events
     pending_damage: Optional[int] = None  # Damage before blocks/mitigation
+    # For STATUS_GAINED: which status, and whether it is a buff or a debuff
+    status: Optional[str] = None
+    kind: Optional[str] = None
+    # Whose it is, for the events that name a player rather than an item
+    player_id: Optional[int] = None
 
 
 @dataclass

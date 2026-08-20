@@ -33,6 +33,113 @@ choosing which item -- `Use N Mana` appears in 22 clauses and 8 of them are
 Worth knowing when planning: 377 clauses remain, 107 on modules waiting for
 sockets, 270 on everything else.
 
+### The shop offers 30 items of 232, and most of that is wrong
+
+No item in the catalogue has `in_shop: true`. 201 say `false` and 31 say
+nothing, and the loader defaults a missing one to true -- so the 30 the shop
+can offer are the ones nobody wrote a flag for. That is not a decision anyone
+made; it is what is left when a flag is written everywhere except by accident.
+
+Three separate faults, and they want different fixes.
+
+**109 items are switched off that the wiki says are sold.** 34 weapons, 31
+protocols, 12 defenses, 12 pets and the rest. 42 of them already do everything
+they say and could be switched on today. The other 67 still have unbuilt
+clauses, and switching those on would offer the player an item that does less
+than it claims -- which is the argument for doing this as a pass tied to the
+`unbuilt` lists rather than one flag flip.
+
+**4 items are offered that should not be.** Three are Unique, which the source
+game gives out as treasure rather than selling, and one is recipe-only.
+
+**`research/parse_wiki.py` mis-files 10 items**, so this cannot be fixed by
+copying the parser's answer. Its rule is `rarity == "godly" -> recipe_only`, a
+blanket assumption that Godly items are never sold, and ten Godly pages say
+the opposite in as many words -- Divine Potion's begins "is a godly Potion
+available in the shop for all classes". The parser has to read the prose
+before the catalogue can be corrected from it. The ten: Divine Potion, Djinn
+Lamp, Fancy Fencing Rapier, Fanfare, Glowing Crown, Heart Container,
+Impractically Large Greatsword, Lightsaber, Prismatic Orb, Wolpertinger.
+
+**Why no test caught it.** `TestTheCatalogueStillSaysWhatTheWikiSays` compares
+damage, accuracy, cooldown, stamina, cost and sockets. Shop availability was
+never in the list, so this whole class of data has been unchecked. Extending
+that test is part of the fix and not an extra: without it the flags drift
+again the next time somebody edits an item by hand.
+
+### Every Potion has a clause the import missed: spillover
+
+A Potion that is consumed also applies the effect of the Potion above it,
+*without consuming that one*. The wiki says it on every Potion page, in the
+same words each time -- "as well as applying the effect of the Potion above
+it" -- and names it: "potion spillover".
+
+None of the 10 Potions in the catalogue has it, and it is on none of their
+`unbuilt` lists either, so it is missing rather than owed. The import took the
+clause out of the `effect` field and this sentence is in the prose beside it.
+
+**"The Potion above it" and "its star" are the same square.** Every Potion's
+map is `['*', '^', '#']`: it covers two squares, and its star is the one
+square directly above, marked `^` so the projection goes straight up in world
+space however the item is turned. So this needs no new idea of "above" -- it
+is `on: "consumed"` on the star, which the aura triggers already have.
+
+What it needs is a way to say "do what that item does" without consuming it,
+which is the same missing piece as "Trigger the Star Pet", "Trigger all Star
+Food" and "Repeat the Start of battle effects of the Star items" -- 4 more
+clauses. One mechanic, 14 clauses.
+
+**Open:** whether spillover chains. The wiki always says "the Potion above it",
+singular, but also advises that "the entire setup should be vertical to make
+the most of the Potion spillover", which reads either way. Worth settling
+before building, because a vertical stack of four is the case the advice is
+about.
+
+The 10: emergency_hotfix, emergency_patch, health_potion, memory_injection,
+performance_boost, security_hardening, strong_heroic_potion,
+strong_stone_skin_potion, system_restore, vampiric_potion. Potion Belt is a
+container and holds them.
+
+### A chain with no end stops quietly, and should not
+
+Two guards keep a battle from running until the stack gives out: a trigger
+cannot answer itself, and effects cannot nest past 32. The second one is the
+backstop for a pair taking turns, which the first cannot see.
+
+Reaching it means the catalogue describes something with no end, which is a
+mistake worth shouting about. It writes a line to the server log and carries
+on, because stopping the battle would be worse. But a log line is not where
+anyone looks: the right signal is a battle action the client can show, and
+that needs a name added to the action enum and the client's processor, which
+is a contract change to make deliberately rather than in passing.
+
+Until then, `logger.warning` in `_apply_effects` is the only evidence.
+
+### `_pay` exists because two places spent buffs
+
+A `cost` effect and a `use` trigger each carried their own copy of the four
+lines that spend a price. That is the shape that let Vampirism ignore a
+healing share -- one road out of two, and the second one forgotten.
+
+Worth looking for the rest of them. `_grant`, `_inflict`, `_heal`,
+`_take_damage` and `_pay` are the roads that exist; anything writing to
+`buffs`, `debuffs`, `quota`, `block` or `cpu` outside them is a road nobody
+declared.
+
+### `should_activate` is unread on half the triggers
+
+The engine asks it for the four triggers where it does real work -- a chance
+roll, a health threshold -- and subscribes the rest by event type, where the
+event has already been decided before anything runs. So AuraTrigger,
+StatusChangeTrigger, OnStunTrigger, OutOfStaminaTrigger and OnMissTrigger each
+carried a method that read like the rule and was never asked.
+
+A mutation found it: rewriting AuraTrigger's to watch the wrong event broke
+nothing at all. They return False with a comment now, which is honest but
+leaves the abstract method on the base doing two different jobs. Worth
+splitting the base in two -- triggers the engine polls, and triggers that
+subscribe -- so the shape says which is which.
+
 ### A mutation run that is killed leaves the catalogue mutated
 
 Mutation testing works by breaking a file, running the suite, and putting the
@@ -180,6 +287,18 @@ buff one item may grant over a battle, which nothing counts.
 
 "Increase your healing by 4%", "heal 7% more". `MODIFIERS` has five stats and
 none of them is healing. Two clauses want it.
+
+### Sockets go last, not first
+
+107 clauses sit on 30 modules and none of them can be built until a module can
+be slotted. It is the biggest single number in the backlog and it is the wrong
+thing to work on next, because of what those 107 buy: 30 items, none of which
+is a core item, and no clause anywhere else is waiting on them. Every other
+mechanic gets weapons, armour and pets going.
+
+Do not drop it -- a module with no effect is an item that lies about itself --
+but it goes to the bottom of the list, under the effects that finish items
+people actually fight with.
 
 ### A module does nothing until it is socketed
 

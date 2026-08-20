@@ -76,7 +76,8 @@
               ],
               "description": "50% chance"
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "cpu_booster",
@@ -176,7 +177,8 @@
               ],
               "description": "40% chance"
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "data_packets",

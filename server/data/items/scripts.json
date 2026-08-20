@@ -29,14 +29,24 @@
               "description": "Heal for 4"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 5.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "stamina",
+              "amount": 1,
+              "target": "self",
+              "description": "Regenerate 1 stamina"
+            }
+          ]
         }
       ],
       "slug": "health_check_script",
       "icontype": "nature",
-      "in_shop": false,
-      "unbuilt": [
-        "Every 5s: Regenerate 1 stamina."
-      ]
+      "in_shop": false
     },
     "firewall_script": {
       "name": "Nope Stamp",

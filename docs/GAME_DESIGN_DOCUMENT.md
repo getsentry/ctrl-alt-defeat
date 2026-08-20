@@ -105,6 +105,24 @@ Items can have multiple effects with different triggers. Each effect specifies w
 - **ON_MISS**: Activates when the item's own attack fails
 - **ON_DEAL_DAMAGE**: Activates when this item deals damage
 - **ON_KILL**: Activates when getting a kill
+- **USE**: Fires as soon as its owner can pay a price in buffs, and pays it.
+  "Use 10 Mana: Become invulnerable for 2s". Not on a clock and not asked for
+  — it watches, and goes off the moment the price is met. Nearly every one
+  ends "(once)", which is a LIMIT behind it rather than part of the trigger
+- **COUNTER**: Fires when a running total first crosses a line. "45 Block
+  reached", "30 Mana gained", "Opponent reaches 30 Cold". Two kinds of total:
+  `held` is what a player has now, so spending puts them back under the line;
+  `gained` is everything that ever arrived and only goes up. Crossing is the
+  trigger, not being over
+- **STATUS_GAINED**: Fires when somebody gains stacks of a buff or debuff.
+  Once per arrival, not once per stack: five at a time is one gain
+- **ON_STUN**: Fires when its owner stuns the other player — any stun they
+  land, not only one this item caused
+- **OUT_OF_STAMINA**: Fires when something wanted to run and the pool could not
+  pay for it. Demand is the point, not a reading of zero: an item that cannot
+  pay does not pay, so the pool never actually reaches nothing
+- **ON_MISS**: Fires when an attack goes wide. `whose` says which — this
+  item's own swing, or the other player's
 - **PASSIVE**: Always active (e.g., stat modifiers)
 
 ON_ATTACK, ON_HIT and ON_MISS belong to the item that attacked. One item's
@@ -194,6 +212,13 @@ game's own wording:
   "(once)", "up to 3 times", "up to 5 per battle". Counted per effect, so two
   items carrying the same clause have an allowance each. Not a modifier's
   `cap`, which limits how much one item has given another
+- **STAMINA**: Put CPU straight into a player's pool. Not MODIFY_STAT, which
+  changes how big the pool is or how fast it fills; this is the pool going up
+  now
+- **EXTRA_ATTACK**: Make an item swing again, immediately and for nothing.
+  "On stun: Triggers extra attack", "Attacks twice". It is the item's own
+  attack run once more, so accuracy, crits, on-hit effects and Spikes all
+  happen with it
 - **STUN**: Hold every one of a player's cooldowns still for a while. Nothing
   is lost and nothing is reset: an item mid-wait keeps the wait it had left.
   Two stuns at once do not add -- Backpack Battles keeps them as separate
@@ -751,6 +776,11 @@ limit mean what it says: "5% faster (up to 50%)" is ten grants of 5%.
 what one item has given another, not on what the receiver has been given by
 everybody, so two items each granting 5% up to 50% reach 100% between them.
 A grant that would overshoot is trimmed rather than refused.
+
+**An aura can watch what an item in its zone *does*.** An activation is the
+common one, but the source game also writes "Star Weapon hits", "Star Weapon
+crits" and "Star Potion consumed", and those are different moments: a weapon
+that missed activated and did not hit.
 
 **Counting works three ways round.** A zone can decide what it falls on
 (a modifier), what it counts (a modifier on the item projecting it, sized by

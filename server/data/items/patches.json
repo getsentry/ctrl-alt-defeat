@@ -127,12 +127,32 @@
       "source": "Heroic Potion",
       "rarity": "legendary",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "out_of_stamina",
+          "effects": [
+            {
+              "type": "consume",
+              "description": "Consume this"
+            },
+            {
+              "type": "stamina",
+              "amount": 2,
+              "target": "self",
+              "description": "regenerate 2 stamina"
+            },
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 1,
+              "target": "self",
+              "description": "gain 1 Empower"
+            }
+          ]
+        }
+      ],
       "slug": "performance_boost",
-      "in_shop": false,
-      "unbuilt": [
-        "Out of stamina: Consume this and regenerate 2 stamina and gain 1 Empower."
-      ]
+      "in_shop": false
     },
     "system_restore": {
       "name": "Restore Point",
@@ -148,13 +168,31 @@
       "source": "Divine Potion",
       "rarity": "godly",
       "cost": 7,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "counter",
+          "counting": "debuffs",
+          "amount": 10,
+          "whose": "self",
+          "counts": "held",
+          "effects": [
+            {
+              "type": "consume",
+              "description": "Consume this"
+            },
+            {
+              "type": "cleanse",
+              "count": 10,
+              "removes": "debuff",
+              "target": "self",
+              "description": "cleanse 10 debuffs"
+            }
+          ]
+        }
+      ],
       "slug": "system_restore",
       "icontype": "holy",
-      "in_shop": false,
-      "unbuilt": [
-        "You reached 10 debuffs: Consume this and cleanse 10 debuffs."
-      ]
+      "in_shop": false
     },
     "lightning_in_a_bottle": {
       "name": "Capacitor Flask",
@@ -196,12 +234,32 @@
       "source": "Strong Heroic Potion",
       "rarity": "legendary",
       "cost": 9,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "out_of_stamina",
+          "effects": [
+            {
+              "type": "consume",
+              "description": "Consume this"
+            },
+            {
+              "type": "stamina",
+              "amount": 4,
+              "target": "self",
+              "description": "regenerate 4 stamina"
+            },
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 1,
+              "target": "self",
+              "description": "gain 1 Empower"
+            }
+          ]
+        }
+      ],
       "slug": "strong_heroic_potion",
       "in_shop": false,
-      "unbuilt": [
-        "Out of stamina: Consume this and regenerate 4 stamina and gain 1 Empower."
-      ],
       "recipe": [
         {
           "ingredients": [

@@ -42,7 +42,8 @@
               },
               "description": "10 Effect-damage, 100% lifesteal, +1 per Vampirism"
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "blood_goobert",
@@ -135,7 +136,8 @@
               ],
               "description": "35% chance"
             }
-          ]
+          ],
+          "on": "activates"
         },
         {
           "type": "aura",
@@ -166,7 +168,8 @@
               ],
               "description": "30% chance"
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "cubert",
@@ -382,7 +385,8 @@
               "duration": 3.0,
               "description": "Inflict 7 Blind for 3s"
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "light_goobert",
@@ -520,13 +524,32 @@
               "description": "Triggers 15% faster for each Star Pet or Food"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 7.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "stamina",
+              "amount": 2,
+              "target": "self",
+              "description": "Regenerate 2 stamina"
+            },
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 1,
+              "target": "self",
+              "description": "gain 1 Empower"
+            }
+          ]
         }
       ],
       "slug": "rat_chef",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 1 Regeneration for each Star Food.",
-        "Every 7s: Regenerate 2 stamina and gain 1 Empower."
+        "Start of battle: Gain 1 Regeneration for each Star Food."
       ],
       "icontype": "nature",
       "recipe": [
@@ -985,7 +1008,8 @@
               "description": "Gain 2 Empower for 8s",
               "duration": 8.0
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "ai_companion_core",
@@ -1228,7 +1252,8 @@
               "max_heal": 9,
               "description": "Heal for 9"
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "backup_system",

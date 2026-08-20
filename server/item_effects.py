@@ -619,6 +619,42 @@ class EffectDamageEffect(Effect):
 
 
 @dataclass
+class StaminaEffect(Effect):
+    """Put CPU straight into a player's pool.
+
+    "Regenerate 2 stamina", "Regenerate 1 stamina". Not `stat_mod`, which
+    changes how big the pool is or how fast it fills; this is the pool itself
+    going up now. It cannot go past the maximum, the same as regeneration.
+    """
+
+    amount: float
+    target_type: str
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "stamina", "amount": self.amount,
+                "target_type": self.target_type}
+
+
+@dataclass
+class ExtraAttackEffect(Effect):
+    """Make an item swing again, now.
+
+    "On stun: Triggers extra attack", "Attacks twice." The wiki, of the
+    Dagger: "On stun, the Dagger attacks an extra time." It is the item's own
+    attack run once more, so everything that hangs off an attack -- accuracy,
+    crits, on-hit effects, Spikes -- happens again with it.
+
+    It costs nothing. "The Dagger attacks an extra time for free on stun."
+
+    An item with no attack has nothing to do again, which is not an error: an
+    aura might hand this to whatever stands in it.
+    """
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "extra_attack"}
+
+
+@dataclass
 class MaxHealthEffect(Effect):
     """Raise the ceiling, and heal by the same amount.
 
@@ -994,26 +1030,226 @@ class AuraTrigger(Counting, Trigger):
     to reach -- what it falls on, and what it counts. Here the zone is the
     cause: "Star item activates:", "6 Star item activations:".
 
-    `after` is how many activations it waits for, so 1 fires on every one and
-    6 fires on every sixth. `counting` narrows what it waits on, the same way
-    every other effect that reads a zone narrows it. See Counting.
+    `after` is how many it waits for, so 1 fires on every one and 6 fires on
+    every sixth. `counting` narrows what it waits on, the same way every other
+    effect that reads a zone narrows it. See Counting.
+
+    `on` is what the item in the zone has to do. An activation is the common
+    one, but the source game also writes "Star Weapon hits", "Star Weapon
+    crits" and "Star Potion consumed", and those are different moments: a
+    weapon that misses activated and did not hit.
     """
 
     zone: str = "star"
     counting: object = "any"
     after: int = 1
+    on: str = "activates"
     effects: List[Effect] = field(default_factory=list)
 
     # Runtime state: how many have happened since it last fired.
     seen: int = 0
 
+    #: What each `on` listens to.
+    WATCHES: ClassVar[dict] = {
+        "activates": "item_activated",
+        "hits": "on_hit",
+        "crits": "on_crit",
+        "consumed": "item_consumed",
+    }
+
     def should_activate(
         self, event_type: str, source, target, battle_state: "BattleSimulator"
     ) -> bool:
-        return event_type == "item_activated"
+        # Never asked. The engine subscribes this to WATCHES[on] directly, so
+        # the event has already been decided by the time anything runs. A
+        # mutation found it by rewriting this to watch the wrong thing and
+        # breaking nothing at all.
+        return False
 
     def get_cpu_cost(self) -> int:
         return 0  # The item that activated has already paid
+
+
+@dataclass
+class WhenAffordableTrigger(Trigger):
+    """Fires as soon as its owner can pay for it, and pays.
+
+    "Use 10 Mana: Become invulnerable for 2s (once)". The wiki says what the
+    waiting looks like: "Once the player has 10 Mana, the Glowing Crown will
+    spend it to grant invulnerability for 2s." It is not on a clock and it is
+    not asked for -- it simply watches, and goes off the moment the price is
+    met.
+
+    Nearly every one of these ends "(once)", which is a `limit` behind it
+    rather than anything this knows about. Without one it would fire again the
+    next time its owner could pay, which is what an item without the word
+    should do.
+    """
+
+    #: What it costs, as buff name to stacks.
+    costs: Dict[str, int] = field(default_factory=dict)
+    effects: List[Effect] = field(default_factory=list)
+
+    def affordable(self, buffs: Dict[str, int]) -> bool:
+        return all(buffs.get(name, 0) >= n for name, n in self.costs.items())
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return False  # Checked on the clock, not on an event
+
+    def get_cpu_cost(self) -> float:
+        return 0  # The price is the buffs, and it is paid in full
+
+
+@dataclass
+class StatusChangeTrigger(Trigger):
+    """Fires when somebody gains a status.
+
+    "Regeneration gained: Gain 4 maximum health", "Empower gained: Gain 11
+    maximum health", "Opponent gains buff: 15% chance to nullify it."
+
+    `status` names one, or is empty for any of `kind`. `whose` says which
+    player is watched, so an item can answer its own gains or the other
+    player's.
+    """
+
+    status: str = ""
+    kind: str = "buff"  # "buff" or "debuff", when `status` is empty
+    whose: str = "self"
+    effects: List[Effect] = field(default_factory=list)
+
+    def watches(self, status: str, kind: str) -> bool:
+        return status == self.status if self.status else kind == self.kind
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return False  # Subscribed by event type; this is never asked
+
+    def get_cpu_cost(self) -> float:
+        return 0
+
+
+@dataclass
+class CounterTrigger(Trigger):
+    """Fires when a running total first crosses a line.
+
+    "45 Block reached", "10 Heat reached", "You reached 10 debuffs",
+    "Opponent reaches 30 Cold", "30 Mana gained", "22 Effect-damage dealt".
+
+    Two kinds of total, and the difference matters. `held` is what a player has
+    right now, so spending it puts them back under the line; `gained` is
+    everything that has ever arrived, so it only ever goes up. "30 Mana
+    gained" is the second -- an item that waited for 30 Mana to be held would
+    never fire beside one that spends it.
+
+    Crossing is the trigger, not being over: like a health threshold, it fires
+    on the way past and not on every tick after.
+    """
+
+    #: What is counted: a buff or debuff name, "debuffs", "buffs", "block",
+    #: "effect_damage", or "health" for a share of maximum.
+    counting: str = ""
+
+    amount: float = 0.0
+    whose: str = "self"
+    counts: str = "held"  # "held" or "gained"
+    effects: List[Effect] = field(default_factory=list)
+
+    # Runtime state: whether it has already gone off.
+    crossed: bool = False
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return False  # Checked on the clock, where every total is visible
+
+    def get_cpu_cost(self) -> float:
+        return 0
+
+
+@dataclass
+class OnStunTrigger(Trigger):
+    """Fires when the other player is stunned.
+
+    "On stun: Triggers extra attack." The wiki, of the Dagger: "On stun, the
+    Dagger attacks an extra time, making it stronger with stunning items like
+    the Hammer."
+
+    Three things follow from that sentence, and they are the whole rule:
+
+    - **What it answers is the other player being stunned**, whatever did it.
+      A Hammer stunning makes every Dagger in the bag swing, and so would
+      anything else that stunned them.
+    - **Every item with this answers the same stun.** Three Daggers and one
+      stun is three extra attacks, one each.
+    - **A stun on its own owner does nothing here.** Their cooldowns are the
+      ones on hold, so there is no opening to take -- and an item swinging
+      during its owner's own stun would be swinging while frozen.
+
+    Nothing asks who landed it. That was tried and it is the wrong question:
+    an item that stunned its own owner handed the opening to the other side,
+    because "whoever is not the target" is not the same as "whoever did it".
+    Asking who is stunned needs neither.
+    """
+
+    effects: List[Effect] = field(default_factory=list)
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return False  # Subscribed by event type; this is never asked
+
+    def get_cpu_cost(self) -> float:
+        return 0
+
+
+@dataclass
+class OutOfStaminaTrigger(Trigger):
+    """Fires when its owner runs out of CPU.
+
+    "Out of stamina: Consume this and regenerate 2 stamina and gain 1 Empower."
+    The wiki: "When the player runs out of stamina the Heroic Potion is
+    consumed", and of the same item: "having higher stamina demands will make
+    it more likely to trigger".
+
+    Demand is the point, so the moment is an item wanting to run and not being
+    able to afford it -- not the pool reading zero. It never does read zero: an
+    item that cannot pay does not pay, so what it could not afford stays in the
+    pool. Watching for nothing would have waited forever.
+    """
+
+    effects: List[Effect] = field(default_factory=list)
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return False  # Subscribed by event type; this is never asked
+
+    def get_cpu_cost(self) -> float:
+        return 0
+
+
+@dataclass
+class OnMissTrigger(Trigger):
+    """Fires when an attack misses.
+
+    `whose` says which: "On miss: Gain 3 Luck" is this item's own swing going
+    wide, and "Opponent misses attack: Gain +2 damage for the next attack" is
+    the other player's.
+    """
+
+    whose: str = "self"
+    effects: List[Effect] = field(default_factory=list)
+
+    def should_activate(
+        self, event_type: str, source, target, battle_state: "BattleSimulator"
+    ) -> bool:
+        return False  # Subscribed by event type; this is never asked
+
+    def get_cpu_cost(self) -> float:
+        return 0
 
 
 @dataclass

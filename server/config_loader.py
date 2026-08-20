@@ -16,6 +16,14 @@ from item_effects import (
     AfterTrigger,
     ChanceEffect,
     ConditionEffect,
+    ExtraAttackEffect,
+    StaminaEffect,
+    CounterTrigger,
+    OnMissTrigger,
+    OnStunTrigger,
+    OutOfStaminaTrigger,
+    StatusChangeTrigger,
+    WhenAffordableTrigger,
     LimitEffect,
     PLAYER_MODIFIERS,
     PlayerModifyEffect,
@@ -327,8 +335,78 @@ class ConfigLoader:
             return OnAttackedTrigger(
                 chance=config["chance"], effects=effects, answers_to=answers_to
             )
+        elif trigger_type == "use":
+            costs = config.get("costs")
+            if not costs:
+                raise ValueError(
+                    f"{item_id}: a `use` trigger needs `costs`, as buff to "
+                    f"stacks. It is what it waits for."
+                )
+            unknown = set(costs) - BUFFS
+            if unknown:
+                raise ValueError(
+                    f"{item_id}: {sorted(unknown)} cannot be spent. Section "
+                    f"3.1 has seven buffs: {', '.join(sorted(BUFFS))}."
+                )
+            return WhenAffordableTrigger(costs=dict(costs), effects=effects)
+        elif trigger_type == "status_gained":
+            if "whose" not in config:
+                raise ValueError(
+                    f"{item_id}: a status_gained trigger has to say `whose` "
+                    f"gains it watches, `self` or `enemy`."
+                )
+            status = config.get("status", "")
+            if status and status not in BUFFS | DEBUFFS:
+                raise ValueError(
+                    f"{item_id}: `{status}` is not a buff or a debuff."
+                )
+            if not status and "kind" not in config:
+                raise ValueError(
+                    f"{item_id}: a status_gained trigger with no `status` has "
+                    f"to say its `kind`, `buff` or `debuff`."
+                )
+            return StatusChangeTrigger(
+                status=status, kind=config.get("kind", "buff"),
+                whose=config["whose"], effects=effects,
+            )
+        elif trigger_type == "counter":
+            for needed in ("counting", "amount", "whose", "counts"):
+                if needed not in config:
+                    raise ValueError(
+                        f"{item_id}: a counter trigger needs a `{needed}`. "
+                        f"`counts` is \"held\" for what a player has now or "
+                        f"\"gained\" for everything that ever arrived."
+                    )
+            counting = config["counting"]
+            if counting not in BUFFS | DEBUFFS | {
+                "block", "effect_damage", "health", "buffs", "debuffs"
+            }:
+                raise ValueError(
+                    f"{item_id}: `{counting}` is not a total anything counts."
+                )
+            if config["counts"] not in ("held", "gained"):
+                raise ValueError(
+                    f"{item_id}: a counter counts what is `held` or what was "
+                    f"`gained`, not `{config['counts']}`."
+                )
+            return CounterTrigger(
+                counting=counting, amount=config["amount"],
+                whose=config["whose"], counts=config["counts"], effects=effects,
+            )
+        elif trigger_type == "on_stun":
+            return OnStunTrigger(effects=effects)
+        elif trigger_type == "out_of_stamina":
+            return OutOfStaminaTrigger(effects=effects)
+        elif trigger_type == "on_miss":
+            if "whose" not in config:
+                raise ValueError(
+                    f"{item_id}: an on_miss trigger has to say `whose` miss "
+                    f"it answers. \"On miss\" is `self` and \"Opponent "
+                    f"misses attack\" is `enemy`."
+                )
+            return OnMissTrigger(whose=config["whose"], effects=effects)
         elif trigger_type == "aura":
-            for needed in ("zone", "counting", "after"):
+            for needed in ("zone", "counting", "after", "on"):
                 if needed not in config:
                     raise ValueError(
                         f"{item_id}: an aura trigger has to state its "
@@ -354,10 +432,17 @@ class ConfigLoader:
                 raise ValueError(
                     f"{item_id}: an aura fires after at least one activation."
                 )
+            if config["on"] not in AuraTrigger.WATCHES:
+                raise ValueError(
+                    f"{item_id}: an aura watches an item that "
+                    f"{', '.join(sorted(AuraTrigger.WATCHES))}, not "
+                    f"`{config['on']}`."
+                )
             return AuraTrigger(
                 zone=config["zone"],
                 counting=counting,
                 after=config["after"],
+                on=config["on"],
                 effects=effects,
             )
         elif trigger_type == "after":
@@ -816,6 +901,15 @@ class ConfigLoader:
                 times=config["times"],
                 effects=self._behind(config, item_id, "a limit"),
             )
+        elif effect_type == "stamina":
+            for needed in ("amount", "target"):
+                if needed not in config:
+                    raise ValueError(f"{item_id}: a stamina needs an `{needed}`")
+            return StaminaEffect(
+                amount=config["amount"], target_type=config["target"]
+            )
+        elif effect_type == "extra_attack":
+            return ExtraAttackEffect()
         elif effect_type == "cleanse":
             if "count" not in config:
                 raise ValueError(

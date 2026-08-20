@@ -438,13 +438,30 @@
               "description": "Star Weapons attack 10% slower"
             }
           ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "any": [
+              "melee",
+              "ranged",
+              "magic"
+            ]
+          },
+          "after": 1,
+          "on": "hits",
+          "effects": [
+            {
+              "type": "block",
+              "value": 7,
+              "description": "gain 7 Block"
+            }
+          ]
         }
       ],
       "slug": "gloves_of_power",
       "in_shop": false,
-      "unbuilt": [
-        "Star Weapon hits: gain 7 Block."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -486,13 +503,33 @@
               "description": "Heal for 5"
             }
           ]
+        },
+        {
+          "type": "use",
+          "costs": {
+            "credits": 10
+          },
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "player_modify",
+                  "stat": "damage_taken",
+                  "value": -1.0,
+                  "target": "self",
+                  "duration": 2.0,
+                  "description": "Become invulnerable for 2s"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
         }
       ],
       "slug": "glowing_crown",
       "in_shop": false,
-      "unbuilt": [
-        "Use 10 Mana: Become invulnerable for 2s (once)."
-      ],
       "sockets": 1,
       "icontype": "holy, magic"
     },
@@ -625,12 +662,35 @@
       "source": "King Crown",
       "rarity": "godly",
       "cost": 17,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "use",
+          "costs": {
+            "credits": 10
+          },
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "player_modify",
+                  "stat": "damage_taken",
+                  "value": -1.0,
+                  "target": "self",
+                  "duration": 2.5,
+                  "description": "Become invulnerable for 2.5s"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
+        }
+      ],
       "slug": "king_crown",
       "in_shop": false,
       "unbuilt": [
         "Every 2.4s: Heal for 8 and protect 1 buff from removal.",
-        "Use 10 Mana: Become invulnerable for 2.5s (once).",
         "Effects of Gemstones socketed in this are increased by 50%."
       ],
       "sockets": 2,

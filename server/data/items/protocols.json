@@ -163,15 +163,29 @@
               ],
               "description": "30% chance"
             }
+          ],
+          "on": "activates"
+        },
+        {
+          "type": "counter",
+          "counting": "effect_damage",
+          "amount": 22,
+          "whose": "self",
+          "counts": "gained",
+          "effects": [
+            {
+              "type": "random_status",
+              "kind": "debuff",
+              "count": 1,
+              "target": "enemy",
+              "description": "Inflict 1 random debuff"
+            }
           ]
         }
       ],
       "slug": "dark_web_access",
       "icontype": "dark",
       "in_shop": false,
-      "unbuilt": [
-        "22 Effect-damage dealt: Inflict 1 random debuff."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -501,11 +515,23 @@
       "source": "Amulet of Light",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "status_gained",
+          "status": "regenerating",
+          "whose": "self",
+          "effects": [
+            {
+              "type": "max_health",
+              "value": 3,
+              "description": "Gain 3 maximum health"
+            }
+          ]
+        }
+      ],
       "slug": "amulet_of_light",
       "in_shop": false,
       "unbuilt": [
-        "Regeneration gained: Gain 3 maximum health.",
         "Star item activates: 10% chance to gain 1 Regeneration, 30% if the item is Holy."
       ],
       "icontype": "holy",
@@ -593,13 +619,22 @@
               ]
             }
           ]
+        },
+        {
+          "type": "status_gained",
+          "status": "regenerating",
+          "whose": "self",
+          "effects": [
+            {
+              "type": "max_health",
+              "value": 4,
+              "description": "Gain 4 maximum health"
+            }
+          ]
         }
       ],
       "slug": "angel_crystal",
       "in_shop": false,
-      "unbuilt": [
-        "Regeneration gained: Gain 4 maximum health."
-      ],
       "icontype": "treasure,holy"
     },
     "bag_of_stones": {
@@ -911,13 +946,45 @@
               "description": "Gain 1 Regenerating"
             }
           ]
+        },
+        {
+          "type": "use",
+          "costs": {
+            "regenerating": 7
+          },
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "max_health",
+                  "value": 100,
+                  "description": "Gain 100 maximum health"
+                },
+                {
+                  "type": "buff",
+                  "buff_name": "monitored",
+                  "value": 2,
+                  "target": "self",
+                  "description": "2 Empower"
+                },
+                {
+                  "type": "player_modify",
+                  "stat": "healing",
+                  "value": 0.15,
+                  "target": "self",
+                  "duration": -1,
+                  "description": "your healing is increased by 15%"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
         }
       ],
       "slug": "heart_container",
       "in_shop": false,
-      "unbuilt": [
-        "Use 7 Regeneration: Gain 100 maximum health, 2 Empower and your healing is increased by 15% (once)."
-      ],
       "sockets": 1,
       "icontype": "holy"
     },
@@ -953,13 +1020,47 @@
               "description": "Triggers 20% faster for each Star dark-item"
             }
           ]
+        },
+        {
+          "type": "use",
+          "costs": {
+            "regenerating": 7
+          },
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "max_health",
+                  "value": 100,
+                  "description": "Gain 100 maximum health"
+                },
+                {
+                  "type": "buff",
+                  "buff_name": "monitored",
+                  "value": 4,
+                  "target": "self",
+                  "description": "4 Empower"
+                },
+                {
+                  "type": "player_modify",
+                  "stat": "healing_taken",
+                  "value": -0.4,
+                  "target": "enemy",
+                  "duration": -1,
+                  "description": "your opponent's healing is reduced by 40%"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
         }
       ],
       "slug": "heart_of_darkness",
       "in_shop": false,
       "unbuilt": [
-        "Every 4s: Steal 2 buffs, prioritizing Regeneration.",
-        "Use 7 Regeneration: Gain 100 maximum health, 4 Empower and your opponent's healing is reduced by 40% (once)."
+        "Every 4s: Steal 2 buffs, prioritizing Regeneration."
       ],
       "sockets": 1,
       "icontype": "dark",
@@ -1073,9 +1174,9 @@
       "in_shop": false,
       "unbuilt": [
         "Sale chance +3%.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Value of Star items > 20 Gold</font></div>",
+        "Value of Star items > 20 Gold",
         "15% chance to resist critical hits.",
-        "<br><div style=\"font-size:100%; text-align:center;\"><font color=\"gray\">Value of Star items > 40 Gold</font></div>",
+        "Value of Star items > 40 Gold",
         "Godly and Unique items trigger 15% faster."
       ],
       "icontype": "holy"
@@ -1860,7 +1961,8 @@
               ],
               "description": "22% chance"
             }
-          ]
+          ],
+          "on": "activates"
         }
       ],
       "slug": "white_lily_collar",

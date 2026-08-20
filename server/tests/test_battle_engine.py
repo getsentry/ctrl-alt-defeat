@@ -33,6 +33,8 @@ from item_effects import (
     BuffEffect,
     CleanseEffect,
     ConditionEffect,
+    ConsumeEffect,
+    CostEffect,
     CostEffect,
     CpuDrainEffect,
     DebuffEffect,
@@ -42,8 +44,14 @@ from item_effects import (
     HealthThresholdTrigger,
     InflictFatigueEffect,
     ItemSpec,
+    CounterTrigger,
+    EffectDamageEffect,
+    ExtraAttackEffect,
     LimitEffect,
     ModifyEffect,
+    OnMissTrigger,
+    OnStunTrigger,
+    OutOfStaminaTrigger,
     OnAttackedTrigger,
     OnHitTrigger,
     PassiveTrigger,
@@ -53,7 +61,10 @@ from item_effects import (
     RandomStatusEffect,
     ReflectEffect,
     ResistEffect,
+    StaminaEffect,
+    StatusChangeTrigger,
     StunEffect,
+    WhenAffordableTrigger,
     TimerTrigger,
 )
 from schemas import BattleAction
@@ -4956,3 +4967,831 @@ class TestItemsWrittenAgainstFatigue:
         assert on_hit and any(
             isinstance(e, InflictFatigueEffect) for e in on_hit[0].effects
         )
+class TestAPriceThatWaits(_WithOneItem):
+    """"Use 10 Mana: Become invulnerable for 2s (once)."
+
+    The wiki says what the waiting looks like: "Once the player has 10 Mana,
+    the Glowing Crown will spend it to grant invulnerability for 2s." Not on a
+    clock and not asked for -- it watches, and goes off the moment the price
+    is met.
+    """
+
+    def _waiter(self, costs, effects, uid="waiter", position=(0, 0)):
+        return self._item([WhenAffordableTrigger(costs=costs, effects=effects)],
+                          uid=uid, position=position)
+
+    def test_it_waits_until_it_can_pay(self):
+        giver = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            BuffEffect("credits", 1, "self")])], uid="g", position=(1, 0))
+        item = self._waiter({"credits": 3}, [BlockEffect(block_amount=20)])
+        early, _ = self._run([item, giver], seconds=2.5)
+        late, _ = self._run([item, giver], seconds=3.5)
+        assert early.player1.block == 0, "only two Mana so far"
+        assert late.player1.block == 20
+
+    def test_it_pays_when_it_fires(self):
+        sim, _ = self._run(
+            [self._waiter({"credits": 3}, [BlockEffect(block_amount=20)])],
+            seconds=0.5, buffs={"credits": 5},
+        )
+        assert sim.player1.buffs == {"credits": 2}
+
+    def test_without_a_limit_it_fires_again_next_time_it_can(self):
+        """Nearly every one of these ends "(once)", which is a limit behind
+        it rather than anything the trigger knows."""
+        giver = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            BuffEffect("credits", 3, "self")])], uid="g", position=(1, 0))
+        sim, _ = self._run(
+            [self._waiter({"credits": 3}, [BlockEffect(block_amount=20)]),
+             giver],
+            seconds=3.5,
+        )
+        assert sim.player1.block == 60, "three times over"
+
+    def test_a_limit_behind_it_is_what_once_means(self):
+        giver = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            BuffEffect("credits", 3, "self")])], uid="g", position=(1, 0))
+        sim, _ = self._run(
+            [self._waiter({"credits": 3}, [
+                LimitEffect(times=1, effects=[BlockEffect(block_amount=20)])]),
+             giver],
+            seconds=3.5,
+        )
+        assert sim.player1.block == 20
+
+    def test_it_costs_no_cpu(self):
+        """"The Dagger attacks an extra time for free": a price in buffs is
+        the whole price."""
+        assert WhenAffordableTrigger(costs={"credits": 1}).get_cpu_cost() == 0
+
+
+class TestATotalCrossingALine(_WithOneItem):
+    """"45 Block reached", "30 Mana gained", "Opponent reaches 30 Cold".
+
+    Crossing is the trigger, not being over -- like a health threshold, it
+    fires on the way past and not on every tick after.
+    """
+
+    def _watcher(self, **kwargs):
+        settings = dict(counting="block", amount=45, whose="self",
+                        counts="held", effects=[BuffEffect("spiked", 1, "self")])
+        settings.update(kwargs)
+        return self._item([CounterTrigger(**settings)])
+
+    def test_it_fires_when_the_total_gets_there(self):
+        giver = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            BlockEffect(block_amount=20)])], uid="g", position=(1, 0))
+        early, _ = self._run([self._watcher(), giver], seconds=2.5)
+        late, _ = self._run([self._watcher(), giver], seconds=3.5)
+        assert "spiked" not in early.player1.buffs, "40 Block, not 45"
+        assert late.player1.buffs["spiked"] == 1
+
+    def test_it_fires_once_however_long_it_stays_over(self):
+        giver = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            BlockEffect(block_amount=20)])], uid="g", position=(1, 0))
+        sim, _ = self._run([self._watcher(), giver], seconds=9.0)
+        assert sim.player1.buffs["spiked"] == 1
+
+    def test_held_is_what_a_player_has_now(self):
+        """Spending it puts them back under the line, so an item that waits
+        for stacks to be held may never see them."""
+        spender = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            BuffEffect("credits", 3, "self")])], uid="g", position=(1, 0))
+        drain = self._item([WhenAffordableTrigger(
+            costs={"credits": 3}, effects=[])], uid="d", position=(2, 0))
+        sim, _ = self._run(
+            [self._watcher(counting="credits", amount=9, counts="held"),
+             spender, drain],
+            seconds=9.0,
+        )
+        assert "spiked" not in sim.player1.buffs, "never nine at once"
+
+    def test_gained_is_everything_that_ever_arrived(self):
+        """The same fight, and the total that only goes up does see them."""
+        spender = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            BuffEffect("credits", 3, "self")])], uid="g", position=(1, 0))
+        drain = self._item([WhenAffordableTrigger(
+            costs={"credits": 3}, effects=[])], uid="d", position=(2, 0))
+        sim, _ = self._run(
+            [self._watcher(counting="credits", amount=9, counts="gained"),
+             spender, drain],
+            seconds=9.0,
+        )
+        assert sim.player1.buffs["spiked"] == 1
+
+    def test_it_can_watch_the_other_player(self):
+        chiller = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            DebuffEffect("throttled", 4, target_type="enemy")])],
+            uid="c", position=(1, 0))
+        sim, _ = self._run(
+            [self._watcher(counting="throttled", amount=8, whose="enemy"),
+             chiller],
+            seconds=3.5,
+        )
+        assert sim.player1.buffs["spiked"] == 1
+
+
+class TestAStatusArriving(_WithOneItem):
+    """"Empower gained: Gain 11 maximum health", "Regeneration gained: Gain 3
+    maximum health", "Opponent gains buff: 15% chance to nullify it."
+    """
+
+    def _watcher(self, status="monitored", whose="self"):
+        return self._item([StatusChangeTrigger(
+            status=status, whose=whose,
+            effects=[BlockEffect(block_amount=10)])])
+
+    def test_it_answers_the_status_it_names(self):
+        giver = self._item([BattleStartTrigger(effects=[
+            BuffEffect("monitored", 1, "self")])], uid="g", position=(1, 0))
+        sim, _ = self._run([self._watcher(), giver], seconds=0.3)
+        assert sim.player1.block == 10
+
+    def test_it_ignores_the_ones_it_does_not(self):
+        giver = self._item([BattleStartTrigger(effects=[
+            BuffEffect("calibrated", 5, "self")])], uid="g", position=(1, 0))
+        sim, _ = self._run([self._watcher(), giver], seconds=0.3)
+        assert sim.player1.block == 0
+
+    def test_it_answers_every_arrival_rather_than_every_stack(self):
+        """Five at once is one gain, not five."""
+        giver = self._item([BattleStartTrigger(effects=[
+            BuffEffect("monitored", 5, "self")])], uid="g", position=(1, 0))
+        sim, _ = self._run([self._watcher(), giver], seconds=0.3)
+        assert sim.player1.block == 10
+
+    def test_it_can_watch_the_other_player(self):
+        sim, _ = self._run(
+            [self._watcher(whose="enemy")], seconds=0.3,
+            against=[self._item([BattleStartTrigger(effects=[
+                BuffEffect("monitored", 1, "self")])], uid="them",
+                position=(4, 0))],
+        )
+        assert sim.player1.block == 10
+
+    def test_watching_one_player_means_ignoring_the_other(self):
+        """A watcher of its own gains stays quiet when the other side gains,
+        and the other way round. Without both halves, a trigger that answered
+        everybody would look right."""
+        mine = self._item([BattleStartTrigger(effects=[
+            BuffEffect("monitored", 1, "self")])], uid="g", position=(1, 0))
+        theirs = self._item([BattleStartTrigger(effects=[
+            BuffEffect("monitored", 1, "self")])], uid="them", position=(4, 0))
+        watching_them, _ = self._run([self._watcher(whose="enemy"), mine],
+                                     seconds=0.3)
+        watching_me, _ = self._run([self._watcher(whose="self")], seconds=0.3,
+                                   against=[theirs])
+        assert watching_them.player1.block == 0, "my gain is not theirs"
+        assert watching_me.player1.block == 0, "and theirs is not mine"
+
+    def test_a_debuff_arriving_counts_too(self):
+        giver = self._item([BattleStartTrigger(effects=[
+            DebuffEffect("throttled", 1, target_type="self")])],
+            uid="g", position=(1, 0))
+        sim, _ = self._run([self._watcher(status="throttled"), giver],
+                           seconds=0.3)
+        assert sim.player1.block == 10
+
+
+class TestRunningOutOfStamina(_WithOneItem):
+    """"Out of stamina: Consume this and regenerate 2 stamina and gain 1
+    Empower." The wiki: "When the player runs out of stamina the Heroic Potion
+    is consumed."
+    """
+
+    def test_it_fires_when_the_pool_is_empty(self):
+        hungry = self._item([TimerTrigger(cooldown=0.5, cpu_cost=3.0, effects=[
+            AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                         crit_chance=0.0)])], uid="h", position=(1, 0))
+        potion = self._item([OutOfStaminaTrigger(effects=[
+            ConsumeEffect(), StaminaEffect(amount=2, target_type="self")])])
+        sim, _ = self._run([potion, hungry], seconds=5.0)
+        assert potion.uid in sim.consumed_items
+
+    def test_it_does_not_fire_while_there_is_stamina_left(self):
+        potion = self._item([OutOfStaminaTrigger(effects=[ConsumeEffect()])])
+        sim, _ = self._run([potion], seconds=3.0)
+        assert potion.uid not in sim.consumed_items
+
+    def test_stamina_goes_into_the_pool(self):
+        """Asked of the effect rather than through a battle: the loop tops the
+        pool up every tick and clamps it, which hides both what this adds and
+        what it refuses to add."""
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.player1 = player = Player(id=1, quota=100, max_quota=100, cpu=0.0)
+        sim.player2 = Player(id=2, quota=100, max_quota=100, cpu=0.0)
+        sim._apply_effects(
+            [StaminaEffect(amount=2, target_type="self")],
+            self._item([]), player, sim.player2)
+        assert player.cpu == 2.0
+
+    def test_stamina_does_not_go_past_the_pool(self):
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.player1 = player = Player(id=1, quota=100, max_quota=100, cpu=1.0)
+        sim.player2 = Player(id=2, quota=100, max_quota=100, cpu=0.0)
+        sim._apply_effects(
+            [StaminaEffect(amount=99, target_type="self")],
+            self._item([]), player, sim.player2)
+        assert player.cpu == player.max_cpu
+
+
+class TestSwingingAgain(_WithOneItem):
+    """"On stun: Triggers extra attack", "Attacks twice."
+
+    The wiki, of the Dagger: "On stun, the Dagger attacks an extra time,
+    making it stronger with stunning items like the Hammer." It is the item's
+    own attack run once more, so everything hanging off an attack happens with
+    it.
+    """
+
+    @staticmethod
+    def _dagger(uid="dagger", position=(0, 0), extra=True):
+        triggers = [TimerTrigger(cooldown=2.0, cpu_cost=0, effects=[
+            AttackEffect(min_damage=5, max_damage=5, accuracy=1.0,
+                         crit_chance=0.0)])]
+        if extra:
+            triggers.append(OnStunTrigger(effects=[ExtraAttackEffect()]))
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Dagger", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "d"), slug=uid,
+                kinds=frozenset({"melee"}), triggers=triggers),
+            position=position, uid=uid)
+
+    def _stunner(self, at=1.0, uid="stunner", position=(1, 0)):
+        from item_effects import AfterTrigger
+
+        return self._item([AfterTrigger(delay=at, effects=[
+            StunEffect(duration=0.5, target_type="enemy")])],
+            uid=uid, position=position)
+
+    def test_a_stun_its_owner_lands_makes_it_swing_again(self):
+        _, plain = self._run([self._dagger(extra=False), self._stunner()],
+                             seconds=5.0)
+        _, extra = self._run([self._dagger(), self._stunner()], seconds=5.0)
+        assert 350 - extra["player2_quota"] == (350 - plain["player2_quota"]) + 5
+
+    def test_the_stun_need_not_come_from_the_same_item(self):
+        """"stronger with stunning items like the Hammer": any stun its owner
+        lands, not only one this item caused."""
+        sim, _ = self._run([self._dagger(), self._stunner()], seconds=5.0)
+        swings = [a for a in sim.actions
+                  if a.action == "damage" and a.source == "dagger"]
+        assert len(swings) == 3, "two on the clock and one on the stun"
+
+    def test_a_stun_landed_on_its_owner_does_not(self):
+        """The trigger belongs to whoever did the stunning."""
+        theirs = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                         crit_chance=0.0)])], uid="them", position=(4, 0))
+        stunning_me = self._item([BattleStartTrigger(effects=[
+            StunEffect(duration=0.5, target_type="self")])],
+            uid="s", position=(1, 0))
+        sim, _ = self._run([self._dagger(), stunning_me], seconds=3.0,
+                           against=[theirs])
+        swings = [a for a in sim.actions
+                  if a.action == "damage" and a.source == "dagger"]
+        assert len(swings) == 1, "the stun was ours to take, not to land"
+
+    def test_every_item_with_it_answers_the_same_stun(self):
+        """One stun, three Daggers, three extra attacks. Their own cooldown is
+        longer than the fight, so every swing here is an extra one."""
+        slow = [BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Dagger", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "d"), slug=uid,
+                kinds=frozenset({"melee"}),
+                triggers=[
+                    TimerTrigger(cooldown=9.0, cpu_cost=0, effects=[
+                        AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                                     crit_chance=0.0)]),
+                    OnStunTrigger(effects=[ExtraAttackEffect()])]),
+            position=at, uid=uid)
+            for uid, at in (("d1", (0, 0)), ("d2", (1, 0)), ("d3", (2, 0)))]
+        sim, _ = self._run(slow + [self._stunner(position=(0, 1))],
+                           seconds=3.0)
+        swung = {a.source for a in sim.actions if a.action == "damage"}
+        assert swung == {"d1", "d2", "d3"}
+
+    def test_the_item_that_stunned_need_not_be_one_of_them(self):
+        """"making it stronger with stunning items like the Hammer": the
+        Hammer has no on-stun clause of its own, and every Dagger still
+        swings."""
+        sim, _ = self._run([self._dagger(), self._stunner()], seconds=5.0)
+        assert [a for a in sim.actions
+                if a.action == "damage" and a.source == "stunner"] == []
+        assert len([a for a in sim.actions
+                    if a.action == "damage" and a.source == "dagger"]) == 3
+
+    def test_a_stun_on_its_own_owner_opens_nothing(self):
+        """Whoever landed it. Their cooldowns are the ones on hold, so there
+        is no opening to take -- and this used to hand the opening across the
+        table, because "whoever is not the target" is not "whoever did it"."""
+        theirs = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                         crit_chance=0.0)])], uid="them", position=(4, 0))
+        their_own_fault = self._item([BattleStartTrigger(effects=[
+            StunEffect(duration=0.5, target_type="self")])],
+            uid="s", position=(5, 0))
+        sim, _ = self._run(
+            [BattleItem(
+                spec=ItemSpec(
+                    id="mine", name="Dagger", category="problem", cost=1,
+                    player_class="neutral", shape=parse_map(["#"], "d"),
+                    slug="mine", kinds=frozenset({"melee"}),
+                    triggers=[
+                        TimerTrigger(cooldown=9.0, cpu_cost=0, effects=[
+                            AttackEffect(min_damage=1, max_damage=1,
+                                         accuracy=1.0, crit_chance=0.0)]),
+                        OnStunTrigger(effects=[ExtraAttackEffect()])]),
+                position=(0, 0), uid="mine")],
+            seconds=3.0, against=[theirs, their_own_fault])
+        mine = [a for a in sim.actions
+                if a.action == "damage" and a.source == "mine"]
+        assert len(mine) == 1, "their stun was on them, so it is my opening"
+
+    def test_an_item_with_no_attack_has_nothing_to_do_again(self):
+        quiet = self._item([OnStunTrigger(effects=[ExtraAttackEffect()])],
+                           uid="q")
+        sim, _ = self._run([quiet, self._stunner()], seconds=3.0)
+        assert not [a for a in sim.actions if a.action == "damage"]
+
+
+class TestAMiss(_WithOneItem):
+    """"On miss: Gain 3 Luck" is this item's own swing going wide; "Opponent
+    misses attack: Gain +2 damage" is the other player's."""
+
+    @staticmethod
+    def _wild(uid="wild", position=(0, 0), whose="self", accuracy=0.0):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Wild", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "w"), slug=uid,
+                kinds=frozenset({"melee"}),
+                triggers=[
+                    TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                        AttackEffect(min_damage=5, max_damage=5,
+                                     accuracy=accuracy, crit_chance=0.0)]),
+                    OnMissTrigger(whose=whose, effects=[
+                        BuffEffect("calibrated", 3, "self")]),
+                ]),
+            position=position, uid=uid)
+
+    def test_its_own_miss_sets_it_off(self):
+        sim, _ = self._run([self._wild()], seconds=2.5)
+        assert sim.player1.buffs["calibrated"] == 6, "two swings, two misses"
+
+    def test_a_hit_does_not(self):
+        sim, _ = self._run([self._wild(accuracy=1.0)], seconds=2.5)
+        assert "calibrated" not in sim.player1.buffs
+
+    def test_another_item_missing_does_not(self):
+        """"On miss" belongs to the weapon that swung."""
+        other = self._wild(uid="other", position=(1, 0))
+        sim, _ = self._run(
+            [self._item([OnMissTrigger(whose="self", effects=[
+                BuffEffect("spiked", 1, "self")])], uid="watcher"), other],
+            seconds=2.5,
+        )
+        assert "spiked" not in sim.player1.buffs
+
+    def test_the_opponent_missing_sets_off_the_other_kind(self):
+        sim, _ = self._run(
+            [self._item([OnMissTrigger(whose="enemy", effects=[
+                BuffEffect("spiked", 1, "self")])], uid="watcher")],
+            seconds=2.5,
+            against=[self._wild(uid="them", position=(4, 0))],
+        )
+        assert sim.player1.buffs["spiked"] == 2
+
+    def test_that_kind_stays_quiet_when_its_own_side_misses(self):
+        """"Opponent misses attack" is theirs, so my own wild swings are not
+        it."""
+        sim, _ = self._run(
+            [self._item([OnMissTrigger(whose="enemy", effects=[
+                BuffEffect("spiked", 1, "self")])], uid="watcher"),
+             self._wild(uid="mine", position=(1, 0))],
+            seconds=2.5,
+        )
+        assert "spiked" not in sim.player1.buffs
+
+
+class TestWhatTheNewTriggersLetTheCatalogueDo(TestTheSweptClauses):
+    """The items the seven trigger families were built for, run as they stand.
+
+    Inherits the bigger room and the placement helper: these are real items
+    with real shapes, and a star drawn above one has to have somewhere to land.
+    """
+
+    def test_glowing_crown_waits_for_its_ten_mana(self):
+        """"Use 10 Mana: Become invulnerable for 2s (once)." The wiki: "Once
+        the player has 10 Mana, the Glowing Crown will spend it.\""""
+        where, _ = self._place("glowing_crown")
+        poor, _ = self._fight([self._real("glowing_crown", where)], seconds=1.0)
+        rich, _ = self._fight([self._real("glowing_crown", where)], seconds=1.0,
+                              buffs={"credits": 10})
+        assert poor.player1.modifier("damage_taken", 0.5) == 0
+        assert rich.player1.modifier("damage_taken", 0.5) == -1.0
+        assert "credits" not in rich.player1.buffs, "spent"
+
+    def test_the_crown_is_invulnerable_only_for_its_two_seconds(self):
+        where, _ = self._place("glowing_crown")
+        sim, result = self._fight(
+            [self._real("glowing_crown", where)], seconds=5.0,
+            buffs={"credits": 10},
+            against=[self._swinger(damage=20, cooldown=1.0, position=(6, 0))])
+        assert 350 - result["player1_quota"] > 0, "it stopped being invulnerable"
+        assert sim.player1.modifier("damage_taken", 5.0) == 0
+
+    def test_heart_container_pays_once_and_no_more(self):
+        """"Use 7 Regeneration: Gain 100 maximum health, 2 Empower and your
+        healing is increased by 15% (once).\""""
+        where, _ = self._place("heart_container")
+        sim, result = self._fight([self._real("heart_container", where)],
+                                  seconds=30.0)
+        assert result["player1_quota"] == 450, "350 and the 100 it gained"
+        assert sim.player1.buffs["monitored"] == 2, "once, not once a payment"
+
+    def test_gloves_of_power_answer_a_hit_in_their_star(self):
+        """"Star Weapon hits: gain 7 Block." A hit, so a miss is not one."""
+        where, (one,) = self._place("gloves_of_power", 1)
+        weapon = BattleItem(
+            spec=ItemSpec(
+                id="w", name="Weapon", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "w"), slug="w",
+                kinds=frozenset({"melee"}),
+                triggers=[TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                                 crit_chance=0.0)])]),
+            position=one, uid="w")
+        sim, _ = self._fight([self._real("gloves_of_power", where), weapon],
+                             seconds=3.5)
+        assert sim.player1.block == 21, "three hits, 7 each"
+
+    def test_gloves_of_power_ignore_a_miss(self):
+        where, (one,) = self._place("gloves_of_power", 1)
+        missing = BattleItem(
+            spec=ItemSpec(
+                id="w", name="Weapon", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "w"), slug="w",
+                kinds=frozenset({"melee"}),
+                triggers=[TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=1, max_damage=1, accuracy=0.0,
+                                 crit_chance=0.0)])]),
+            position=one, uid="w")
+        sim, _ = self._fight([self._real("gloves_of_power", where), missing],
+                             seconds=3.5)
+        assert sim.player1.block == 0, "it activated, and it did not hit"
+
+    def test_thornbloom_grows_when_empower_arrives(self):
+        """"Empower gained: Gain 11 maximum health." Its own on-hit clause is
+        what feeds it, so the two work together."""
+        where, _ = self._place("thornbloom")
+        sim, result = self._fight([self._real("thornbloom", where)],
+                                  seconds=20.0)
+        assert sim.player1.buffs.get("monitored", 0) > 0
+        assert result["player1_quota"] > 350, "maximum health went up with it"
+
+    def test_frostbite_answers_the_cold_it_piles_on(self):
+        """"Opponent reaches 30 Cold: Gain 12 Vampirism (once)." Its own on-hit
+        inflicts the Cold, so it gets there by itself."""
+        where, _ = self._place("frostbite")
+        chiller = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            DebuffEffect("throttled", 10, target_type="enemy")])],
+            uid="c", position=(5, 5))
+        early, _ = self._fight([self._real("frostbite", where), chiller],
+                               seconds=1.5)
+        late, _ = self._fight([self._real("frostbite", where), chiller],
+                              seconds=3.5)
+        assert "draining" not in early.player1.buffs, "10 Cold, not 30"
+        assert late.player1.buffs.get("draining", 0) >= 12
+
+    def test_manathirst_counts_the_mana_it_spends(self):
+        """"30 Mana gained." Gained, not held: an item that waited for 30 at
+        once would never fire beside one that spends them."""
+        where, _ = self._place("manathirst")
+        _, result = self._fight([self._real("manathirst", where)], seconds=40.0,
+                                buffs={"credits": 30})
+        assert result["player2_quota"] < 350
+
+    def test_dark_web_access_counts_the_damage_it_deals(self):
+        """"22 Effect-damage dealt: Inflict 1 random debuff.\""""
+        where, (one,) = self._place("dark_web_access", 1)
+        ticker = self._item([TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
+            BuffEffect("calibrated", 0, "self")])], uid="t", position=one)
+        sim, _ = self._fight([self._real("dark_web_access", where), ticker],
+                             seconds=40.0)
+        assert sim.player2.debuffs, "22 dealt, so a debuff was inflicted"
+
+    def test_a_dagger_swings_again_when_its_owner_stuns(self):
+        """"On stun: Triggers extra attack." The Hammer does the stunning."""
+        def swings(with_a_stunner):
+            items = [self._real("poison_dagger", (0, 0))]
+            if with_a_stunner:
+                # An After trigger rather than the Hammer, so the number of
+                # stuns is fixed and the comparison is not about a 45% roll.
+                from item_effects import AfterTrigger
+                items.append(self._item([AfterTrigger(delay=1.0, effects=[
+                    StunEffect(duration=0.1, target_type="enemy")])],
+                    uid="s", position=(4, 0)))
+            sim, _ = self._fight(items, seconds=6.0)
+            return len([a for a in sim.actions if a.action != "miss"
+                        and a.source == "poison_dagger"
+                        and a.action == "damage"])
+
+        plain, stunning = swings(False), swings(True)
+        assert stunning == plain + 1, "one stun, one extra swing"
+
+    def test_the_heroic_potion_is_drunk_when_the_pool_cannot_pay(self):
+        """"Out of stamina: Consume this and regenerate 4 stamina and gain 1
+        Empower.\""""
+        where, _ = self._place("strong_heroic_potion")
+        hungry = self._item([TimerTrigger(cooldown=0.5, cpu_cost=3.0, effects=[
+            AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                         crit_chance=0.0)])], uid="h", position=(5, 5))
+        sim, _ = self._fight(
+            [self._real("strong_heroic_potion", where), hungry], seconds=6.0)
+        assert "strong_heroic_potion" in sim.consumed_items
+        assert sim.player1.buffs.get("monitored") == 1
+
+    def test_the_rapier_gains_luck_when_it_swings_wide(self):
+        """"On miss: Gain 3 Luck", which its other clause spends: "On hit:
+        Use 3 Luck to gain 3 damage." So the Luck never piles up, and what
+        shows is the damage the missing paid for.
+        """
+        where, _ = self._place("fancy_fencing_rapier")
+        sim, _ = self._fight([self._real("fancy_fencing_rapier", where)],
+                             seconds=40.0)
+        misses = [a for a in sim.actions if a.action == "miss"]
+        gained = [a for a in sim.actions if a.action == "gain_damage"]
+        rapier = next(i for i in sim.loadout[1]
+                      if i.uid == "fancy_fencing_rapier")
+        assert misses, "its accuracy is under 1, so it will miss"
+        assert gained, "and each miss buys a hit its damage"
+        assert rapier.damage_gained == 3 * len(gained)
+
+    def test_thermal_throttle_arms_the_weapons_at_ten_heat(self):
+        """"10 Heat reached: Star Weapons gain 8 damage.\""""
+        where, (one,) = self._place("thermal_throttle", 1)
+        weapon = BattleItem(
+            spec=ItemSpec(
+                id="w", name="Weapon", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "w"), slug="w",
+                kinds=frozenset({"melee"}), triggers=[]),
+            position=one, uid="w")
+        cold, _ = self._fight([self._real("thermal_throttle", where), weapon],
+                              seconds=1.0)
+        hot, _ = self._fight([self._real("thermal_throttle", where), weapon],
+                             seconds=1.0, buffs={"optimized": 10})
+        assert next(i for i in cold.loadout[1] if i.uid == "w").damage_gained == 0
+        assert next(i for i in hot.loadout[1] if i.uid == "w").damage_gained == 8
+
+    def test_system_restore_drinks_itself_at_ten_debuffs(self):
+        where, _ = self._place("system_restore")
+        sim, _ = self._fight(
+            [self._real("system_restore", where)], seconds=4.0,
+            against=[self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                DebuffEffect("memory_leaked", 4, target_type="enemy")])],
+                uid="them", position=(6, 0))])
+        assert "system_restore" in sim.consumed_items
+        assert sim.player1.debuffs.get("memory_leaked", 0) < 10
+
+
+class TestATriggerThatRemembersForgetsBetweenBattles(_WithOneItem):
+    """Three triggers keep state while a battle runs, and a catalogue is
+    shared between every battle a process ever simulates.
+
+    An aura counts activations towards its sixth, a counter remembers whether
+    it has crossed, and a limit remembers what it has spent. If any of that
+    reached the catalogue's own objects, the second battle of a run would
+    start where the first one left off -- and every test that runs one battle
+    would pass regardless.
+    """
+
+    def _twice(self, item):
+        return [self._run([item], seconds=4.0)[0] for _ in range(2)]
+
+    def test_a_counter_crosses_again_in_the_next_battle(self):
+        watcher = self._item([CounterTrigger(
+            counting="block", amount=10, whose="self", counts="held",
+            effects=[BuffEffect("spiked", 1, "self")])] + [
+            BattleStartTrigger(effects=[BlockEffect(block_amount=20)])])
+        first, second = self._twice(watcher)
+        assert first.player1.buffs["spiked"] == 1
+        assert second.player1.buffs["spiked"] == 1, "it forgot, as it should"
+
+    def test_an_allowance_is_new_each_battle(self):
+        spender = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            LimitEffect(times=2, effects=[BuffEffect("spiked", 1, "self")])])])
+        first, second = self._twice(spender)
+        assert first.player1.buffs["spiked"] == 2
+        assert second.player1.buffs["spiked"] == 2
+
+    def test_an_aura_counts_from_nothing_each_battle(self):
+        from item_effects import AuraTrigger
+
+        watcher = BattleItem(
+            spec=ItemSpec(
+                id="w", name="Watcher", category="infrastructure", cost=1,
+                player_class="neutral", slug="w",
+                shape=parse_map(["#*"], "w"),
+                triggers=[AuraTrigger(zone="star", counting="any", after=3,
+                                      on="activates",
+                                      effects=[BuffEffect("spiked", 1, "self")])]),
+            position=(0, 0), uid="w")
+        ticker = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            BuffEffect("calibrated", 0, "self")])], uid="t", position=(1, 0))
+        first, _ = self._run([watcher, ticker], seconds=3.5)
+        second, _ = self._run([watcher, ticker], seconds=3.5)
+        assert first.player1.buffs["spiked"] == 1, "three activations"
+        assert second.player1.buffs["spiked"] == 1
+
+
+class TestATriggerDoesNotFireItself(_WithOneItem):
+    """A trigger that answers a status and grants that status answers itself.
+
+    "Empower gained: gain 1 Empower" ran until the stack gave out. No item is
+    written that way today and one will be -- "Buff used: Refund 25% of the
+    used buffs" is the same shape once spending announces itself -- so the
+    rule is in the engine rather than in the catalogue's good manners.
+    """
+
+    def test_a_status_trigger_that_grants_what_it_watches_stops(self):
+        sim, _ = self._run(
+            [self._item([
+                BattleStartTrigger(effects=[BuffEffect("monitored", 1, "self")]),
+                StatusChangeTrigger(status="monitored", whose="self",
+                                    effects=[BuffEffect("monitored", 1, "self")]),
+            ])],
+            seconds=0.3,
+        )
+        assert sim.player1.buffs["monitored"] == 2, (
+            "the gain, and the one answer to it"
+        )
+
+    def test_it_answers_the_next_arrival_as_well(self):
+        """Not firing while it is firing is not the same as firing once. The
+        mark has to come off when the effects are done."""
+        sim, _ = self._run(
+            [self._item([StatusChangeTrigger(
+                status="monitored", whose="self",
+                effects=[BlockEffect(block_amount=10)])], uid="w"),
+             self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                 BuffEffect("monitored", 1, "self")])],
+                uid="g", position=(1, 0))],
+            seconds=3.5,
+        )
+        assert sim.player1.block == 30, "three arrivals, three answers"
+
+    def test_two_items_still_answer_each_other(self):
+        """The rule is that a trigger does not fire *itself*. Two of them
+        answering each other's gains is an honest thing to do, and each
+        answers once."""
+        sim, _ = self._run(
+            [self._item([
+                BattleStartTrigger(effects=[BuffEffect("monitored", 1, "self")]),
+                StatusChangeTrigger(status="spiked", whose="self",
+                                    effects=[BuffEffect("monitored", 1, "self")]),
+            ], uid="a"),
+             self._item([StatusChangeTrigger(
+                 status="monitored", whose="self",
+                 effects=[BuffEffect("spiked", 1, "self")])],
+                uid="b", position=(1, 0))],
+            seconds=0.3,
+        )
+        assert sim.player1.buffs == {"monitored": 2, "spiked": 1}
+
+    def test_an_item_that_stuns_on_hit_and_swings_on_stun_stops(self):
+        sim, result = self._run(
+            [self._item([
+                TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                                 crit_chance=0.0)]),
+                OnHitTrigger(chance=1.0, effects=[
+                    StunEffect(duration=0.5, target_type="enemy")]),
+                OnStunTrigger(effects=[ExtraAttackEffect()]),
+            ])],
+            seconds=3.0,
+        )
+        assert result["player2_quota"] < 350, "it did swing"
+
+
+class TestOnePlaceSpendsABuff(_WithOneItem):
+    """A `cost` effect and a `use` trigger both pay a price, and both pay it
+    the same way.
+
+    They each had their own copy of the four lines, which is the shape that
+    let Vampirism ignore a healing share one commit earlier.
+    """
+
+    def test_a_cost_effect_and_a_use_trigger_pay_alike(self):
+        by_effect, _ = self._run(
+            [self._item([BattleStartTrigger(effects=[
+                CostEffect(costs={"credits": 3},
+                           effects=[BlockEffect(block_amount=20)])])])],
+            seconds=0.3, buffs={"credits": 5},
+        )
+        by_trigger, _ = self._run(
+            [self._item([WhenAffordableTrigger(
+                costs={"credits": 3},
+                effects=[LimitEffect(times=1, effects=[
+                    BlockEffect(block_amount=20)])])])],
+            seconds=0.3, buffs={"credits": 5},
+        )
+        assert by_effect.player1.buffs == by_trigger.player1.buffs == {"credits": 2}
+        assert by_effect.player1.block == by_trigger.player1.block == 20
+
+    def test_both_say_what_they_spent(self):
+        for item in (
+            self._item([BattleStartTrigger(effects=[CostEffect(
+                costs={"credits": 3}, effects=[BlockEffect(block_amount=1)])])]),
+            self._item([WhenAffordableTrigger(
+                costs={"credits": 3},
+                effects=[LimitEffect(times=1, effects=[
+                    BlockEffect(block_amount=1)])])]),
+        ):
+            sim, _ = self._run([item], seconds=0.3, buffs={"credits": 5})
+            spent = [a for a in sim.actions if a.action == "spend"]
+            assert len(spent) == 1
+            assert spent[0].details["costs"] == {"credits": 3}
+
+
+class TestWhatCountsAsDealt(_WithOneItem):
+    """"22 Effect-damage dealt" counts what arrived, not what was aimed."""
+
+    def test_damage_a_target_refuses_is_not_counted(self):
+        hit = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            EffectDamageEffect(amount=10, lifesteal=0.0, per_status={},
+                               whose={})])])
+        plain, _ = self._run([hit], seconds=1.5)
+        assert plain.player1.effect_damage_dealt == 10
+
+        shielded, _ = self._run(
+            [hit, self._item([BattleStartTrigger(effects=[PlayerModifyEffect(
+                "damage_taken", -1.0, "enemy", -1)])], uid="i", position=(1, 0))],
+            seconds=1.5,
+        )
+        assert shielded.player1.effect_damage_dealt == 0, (
+            "the target took none of it"
+        )
+
+
+class TestADebuffYouPutOnYourself(_WithOneItem):
+    """A random debuff aimed at its own owner is not one to reflect either.
+
+    The named kind already knew this. The random one did not, so
+    "Inflict a random debuff to yourself" would have gone across the table.
+    """
+
+    def test_a_random_debuff_on_yourself_is_not_reflected(self):
+        sim, _ = self._run(
+            [self._item([BattleStartTrigger(effects=[
+                ReflectEffect(count=5, target_type="self"),
+                RandomStatusEffect(kind="debuff", count=3,
+                                   target_type="self")])])],
+            seconds=0.3,
+        )
+        assert sum(sim.player1.debuffs.values()) == 3
+        assert not sim.player2.debuffs
+        assert sim.player1.reflect == 5, "no charge spent"
+
+
+class TestAChainWithNoEnd(_WithOneItem):
+    """Two triggers taking turns is a loop the per-trigger guard cannot see.
+
+    `_firing` stops a trigger answering itself. It cannot stop a pair: two
+    weapons, each with an aura that answers the other's hit with an extra
+    attack, ran until the stack gave out. A depth limit is what ends that.
+    """
+
+    @staticmethod
+    def _weapon(uid, at):
+        from item_effects import AuraTrigger
+
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name=uid, category="problem", cost=1,
+                player_class="neutral", slug=uid,
+                kinds=frozenset({"melee"}),
+                # Stars either side, so two of these side by side reach each
+                # other. An aura never reaches the item projecting it, so one
+                # alone is safe.
+                shape=parse_map(["*#*"], uid),
+                triggers=[
+                    TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                        AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                                     crit_chance=0.0)]),
+                    AuraTrigger(zone="star", counting="any", after=1,
+                                on="hits", effects=[ExtraAttackEffect()])]),
+            position=at, uid=uid)
+
+    def test_a_pair_answering_each_other_stops(self):
+        sim, result = self._run(
+            [self._weapon("a", (0, 0)), self._weapon("b", (1, 0))], seconds=3.0
+        )
+        assert result["player2_quota"] < 350, "they did swing"
+
+    def test_honest_nesting_is_nowhere_near_the_limit(self):
+        """A trigger, a chance, a price, a count and the effects is a deep
+        clause, and it is five."""
+        assert BattleSimulator.DEEPEST > 5 * 4
