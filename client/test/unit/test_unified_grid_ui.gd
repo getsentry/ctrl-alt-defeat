@@ -1679,7 +1679,7 @@ func test_a_square_of_the_zone_with_something_in_it_is_doing_something():
 
 
 func test_a_zone_nothing_acts_through_is_worth_nothing():
-	"""102 of the 117 items that draw a zone have no clause built yet. The
+	"""68 of the 117 items that draw a zone have no clause built yet. The
 	zone is real, and it is doing nothing."""
 	_rack_holding([
 		_an_aura_item({"aura": {}}),

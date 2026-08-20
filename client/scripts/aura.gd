@@ -36,7 +36,7 @@ static func tags_of(item: APITypes.Item) -> Array[String]:
 ## `wants` is what the server said the zone acts on: one entry per clause, each
 ## naming the tags it wants. An item matches a clause by carrying one of
 ## `any_of`, or all of `all_of`; a clause wanting nothing wants everything. No
-## clauses at all means nothing acts through the zone, which is true of 102 of
+## clauses at all means nothing acts through the zone, which is true of 68 of
 ## the 117 items that draw one, and they must not light up.
 static func acts_on(wants: Array, item: APITypes.Item) -> bool:
 	var tags := tags_of(item)

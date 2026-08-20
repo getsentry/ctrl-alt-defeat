@@ -39,7 +39,7 @@ func test_a_zone_that_wants_nothing_acts_on_everything():
 
 
 func test_a_zone_nothing_acts_through_acts_on_nothing():
-	"""102 of the 117 items that draw a zone have no clause built yet. Their
+	"""68 of the 117 items that draw a zone have no clause built yet. Their
 	zone is real, does nothing, and must never light up."""
 	assert_false(Aura.acts_on([], _item()))
 
@@ -51,6 +51,22 @@ func test_a_narrowed_zone_acts_only_on_what_it_wants():
 	assert_true(Aura.acts_on(pets_and_scripts, _item({"category": "pet"})))
 	assert_true(Aura.acts_on(pets_and_scripts, _item({"category": "script"})))
 	assert_false(Aura.acts_on(pets_and_scripts, _item({"category": "problem"})))
+
+
+func test_a_zone_wanting_weapons_acts_on_a_weapon():
+	"""Edge Cache: "Star Weapons gain 1 damage".
+
+	A weapon is not a category -- it is any of the three kinds an item can
+	attack with -- so the server sends the three and the item is matched on
+	the kind it carries. This is the shape of clause the server sends for 21
+	items, and every one of them used to send nothing at all, so no weapon
+	ever lit up under one.
+	"""
+	var weapons := [{"any_of": ["melee", "ranged", "magic"], "all_of": []}]
+
+	assert_true(Aura.acts_on(weapons, _item({"kinds": ["melee"]})), "a blade")
+	assert_true(Aura.acts_on(weapons, _item({"kinds": ["magic"]})), "a spell")
+	assert_false(Aura.acts_on(weapons, _item({"kinds": ["food"]})), "not a snack")
 
 
 func test_a_kind_narrows_it_as_well_as_a_category():

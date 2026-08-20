@@ -605,7 +605,7 @@ func _end_drag(dropped_at := Vector2.INF):
 
 	if drop_changes_nothing(grid_pos, item_data):
 		# Nothing to tell the server, so it is put back and that is that.
-		_place_item_at(temp_object, original_grid_pos)
+		_place_item_at(temp_object, original_grid_pos, original_facing)
 		return
 
 	# Shuffling things around inside the chest changes nothing the server holds,
@@ -615,7 +615,7 @@ func _end_drag(dropped_at := Vector2.INF):
 		if _can_place_item(item_data, grid_pos):
 			_place_item_at(temp_object, grid_pos)
 		else:
-			_place_item_at(temp_object, original_grid_pos)
+			_place_item_at(temp_object, original_grid_pos, original_facing)
 		return
 
 	# Check if the new position is valid
@@ -635,11 +635,11 @@ func _end_drag(dropped_at := Vector2.INF):
 		else:
 			print("Failed to persist move on server, reverting")
 			# Move failed, return to original position
-			_place_item_at(temp_object, original_grid_pos)
+			_place_item_at(temp_object, original_grid_pos, original_facing)
 
 	else:
 		# Can't place at target position, return to original
-		_place_item_at(temp_object, original_grid_pos)
+		_place_item_at(temp_object, original_grid_pos, original_facing)
 
 func drop_changes_nothing(grid_pos: Vector2i, item_data: APITypes.Item) -> bool:
 	"""Whether putting the held item down here leaves the board as it was.
@@ -652,8 +652,16 @@ func drop_changes_nothing(grid_pos: Vector2i, item_data: APITypes.Item) -> bool:
 	return grid_pos == original_grid_pos and item_data.facing() == original_facing
 
 
-func _place_item_at(item_visual: Control, grid_pos: Vector2i):
-	"""Place item visual at grid position"""
+func _place_item_at(item_visual: Control, grid_pos: Vector2i, facing := -1):
+	"""Place item visual at grid position, facing the way it is asked to.
+
+	`facing` is for putting an item back. A turn during a drag is already on
+	the item, so a drop that comes to nothing has to be told the facing to
+	return to as well as the square: put back turned, the item covers squares
+	it was never checked against, and the server -- which was told nothing --
+	goes on holding the placement the player last agreed to. That is an item
+	drawn hanging off the grid until the battle starts and puts it back.
+	"""
 	item_visual.position = grid_to_pixel(grid_pos)
 	item_visual.set_meta("grid_pos", grid_pos)
 	item_visual.z_index = 0  # Reset z-index after placing
@@ -661,8 +669,12 @@ func _place_item_at(item_visual: Control, grid_pos: Vector2i):
 	# The item itself has to know where it now is. Anything asking which
 	# squares it covers -- what a container carries, above all -- reads it from
 	# here, and would otherwise be told where the item used to be.
-	var item_data = item_visual.get_meta("item_data").placed_at(grid_pos)
+	var was_facing: int = item_visual.get_meta("item_data").facing()
+	var item_data = item_visual.get_meta("item_data").placed_at(grid_pos, facing)
 	item_visual.set_meta("item_data", item_data)
+	# A facing put back is a different set of squares, so it is drawn again.
+	if item_data.facing() != was_facing:
+		item_visual.redraw_as(item_data)
 	for offset in item_data.turned_shape():
 		var cell_x = grid_pos.x + offset[0]
 		var cell_y = grid_pos.y + offset[1]

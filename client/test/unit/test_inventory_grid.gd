@@ -434,6 +434,67 @@ func test_shuffling_inside_a_chest_is_not_sent_anywhere():
 	assert_eq(grid.items.size(), 1, "The item is still in the chest")
 
 
+# ============ A drop that comes to nothing ============
+#
+# A drag can turn the item, and a drop that is refused has to undo both. Put
+# back turned, the item stands on squares nothing ever checked -- and the
+# server, which is only told about a drop that lands, goes on holding the
+# placement the player last agreed to. What a player sees is an item hanging
+# off the grid until the battle starts and puts it back where it really was.
+#
+# _end_drag() drops at the pointer, which in a test is off the board, so every
+# drop here is one the grid refuses.
+
+func _tall_item(id: String) -> Resource:
+	# One wide and two tall, so a quarter turn makes it two wide.
+	return _item({"id": id, "shape": [[0, 0], [0, 1]]})
+
+
+func test_a_refused_drop_puts_the_turn_back_as_well_as_the_item():
+	_load_default_containers()
+	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
+
+	grid._start_drag(grid.items[0])
+	assert_true(grid.turn_dragged(1), "setup: the drag turned it")
+	grid._end_drag()
+	await get_tree().process_frame
+
+	var put_back = grid.items[0].get_meta("item_data")
+	assert_eq(put_back.facing(), 0, "A refused drop leaves the item as it was")
+	assert_eq(grid.items[0].get_meta("grid_pos"), Vector2i(2, 3), "and where it was")
+
+
+func test_a_refused_drop_leaves_the_squares_it_really_covers_taken():
+	# The bug behind the bug: the grid marks the squares of whatever facing it
+	# put back, so a facing that was not put back marks the wrong squares and
+	# a second item can be dropped on top of the first.
+	_load_default_containers()
+	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
+
+	grid._start_drag(grid.items[0])
+	grid.turn_dragged(1)
+	grid._end_drag()
+	await get_tree().process_frame
+
+	assert_eq(grid.item_grid[3][2], grid.items[0], "its own square")
+	assert_eq(grid.item_grid[4][2], grid.items[0], "and the one below it")
+	assert_null(grid.item_grid[3][3], "not the one it would have covered turned")
+
+
+func test_a_refused_drop_draws_the_item_the_way_it_put_it_back():
+	_load_default_containers()
+	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
+
+	grid._start_drag(grid.items[0])
+	grid.turn_dragged(1)
+	grid._end_drag()
+	await get_tree().process_frame
+
+	assert_eq(grid.items[0].item_data.facing(), 0,
+		"The artwork is drawn from the item the visual holds, so that has to "
+		+ "be put back too")
+
+
 # ============ Marking where a held item would land ============
 #
 # update_drag_preview takes the pointer rather than reading it, so these can

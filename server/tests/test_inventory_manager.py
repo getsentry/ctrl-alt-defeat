@@ -561,7 +561,7 @@ class TestATurnedItemIsCheckedAsItIsTurned:
         upright = Item.of("null_blade", "item1")
         turned = upright.placed_at((7, 3), Rotation.CLOCKWISE_90)
 
-        assert turned.covered_squares() == [(7, 3), (8, 3)]
+        assert sorted(turned.covered_squares()) == [(7, 3), (8, 3)]
         assert manager.place_item(turned, placement=(7, 3)) is False
         assert manager.grid.items == [], "Nothing should have landed"
 
@@ -569,7 +569,7 @@ class TestATurnedItemIsCheckedAsItIsTurned:
         manager = InventoryManager()
         upright = Item.of("null_blade", "item1")
 
-        assert upright.placed_at((7, 3)).covered_squares() == [(7, 3), (7, 4)]
+        assert sorted(upright.placed_at((7, 3)).covered_squares()) == [(7, 3), (7, 4)]
         assert manager.place_item(upright, placement=(7, 3)) is True
 
     def test_a_turned_item_keeps_its_turn_on_the_grid(self):

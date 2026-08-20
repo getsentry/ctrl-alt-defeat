@@ -8,6 +8,14 @@ extends GutTest
 
 const APITypes = preload("res://scripts/api_types.gd")
 
+## Where the server's own turn is written, read off disk rather than over
+## HTTP: it needs nothing running, and it is the same contract either way.
+const GRID_SYSTEM_PATH := "../server/grid_system.py"
+
+## What the server makes of five maps at all four turns, written down by
+## `python tools/dump_turned_shapes.py`. See the header of that script.
+const TURNED_SHAPES_PATH := "../server/tests/fixtures/turned_shapes.json"
+
 
 func _item(overrides: Dictionary = {}) -> Dictionary:
 	# Fully populated on purpose. A real item carries all of this, and one
@@ -405,6 +413,110 @@ func test_sale_fields_survive_a_round_trip():
 # thing that only shows up as an item that cannot be placed where it looks like
 # it should fit.
 
+func test_the_server_turns_a_square_the_same_way_this_does():
+	"""The one thing that cannot be allowed to drift.
+
+	Both sides turn shapes, because the client has to draw a turn before the
+	server has heard of it. Turned opposite ways they agree about every
+	rectangle and disagree about everything else: an aura reaching out of the
+	wrong end of a spear, and an item that cannot be placed where it looks
+	like it should fit.
+	"""
+	var written := _how_the_server_turns()
+	assert_eq(written.size(), 3, "setup: three quarter turns in %s" % GRID_SYSTEM_PATH)
+
+	# The turn itself, before the result is settled back against its corner:
+	# settling a single square puts it at the origin whichever way it turned,
+	# which is exactly the disagreement this is looking for.
+	for rotation in written:
+		assert_eq(APITypes._spin(_at([[1, 2]]), rotation), _at([written[rotation]]),
+			"a turn of %d degrees" % rotation)
+
+
+## What grid_system._turn() returns for each quarter, worked out for the square
+## (1, 2). The source says `return (-y, x)`, which is the only form it takes:
+## each half is x or y, with or without a minus.
+func _how_the_server_turns() -> Dictionary:
+	var path := ProjectSettings.globalize_path("res://").path_join(GRID_SYSTEM_PATH)
+	var file := FileAccess.open(path, FileAccess.READ)
+	assert_not_null(file, "Should be able to read %s" % path)
+	if file == null:
+		return {}
+	var source := file.get_as_text()
+	file.close()
+
+	var start := source.find("def _turn(")
+	assert_true(start != -1, "%s should declare _turn()" % GRID_SYSTEM_PATH)
+	if start == -1:
+		return {}
+	var body := source.substr(start, source.find("\n@dataclass", start) - start)
+
+	var turns := {}
+	var quarter := RegEx.create_from_string(
+		"CLOCKWISE_(90|180|270):\\s*\\n\\s*return \\((-?[xy]), (-?[xy])\\)")
+	for found in quarter.search_all(body):
+		turns[int(found.get_string(1))] = [
+			_value_of(found.get_string(2)), _value_of(found.get_string(3))]
+	return turns
+
+
+## What one half of the server's answer comes to for the square (1, 2).
+func _value_of(written: String) -> int:
+	var value := 1 if written.ends_with("x") else 2
+	return -value if written.begins_with("-") else value
+
+
+func test_the_client_gives_the_answers_the_server_wrote_down():
+	"""The whole turn, not only its direction.
+
+	The turn is two steps -- spin every square, then settle the result back
+	against the FOOTPRINT's corner -- and both are written twice, once here
+	and once on the server. The direction is what drifted, but a zone settled
+	against its own corner instead of the footprint's would slide onto the
+	item just as silently.
+
+	The server is held to the same file by test_grid_system.py, so neither
+	side can be changed on its own without the other going red.
+	"""
+	var written := _the_answers_written_down()
+	assert_gt(written.size(), 4, "setup: five maps are written down")
+
+	for shape in written:
+		# The rotation-0 entry is what the server sends a client: the shape as
+		# the catalogue draws it, and the zones in the same frame.
+		var upright: Dictionary = shape["turns"]["0"]
+		for facing in ["0", "90", "180", "270"]:
+			var expected: Dictionary = shape["turns"][facing]
+			var placed = APITypes.PlacedItem.new(_item({
+				"shape": upright["squares"],
+				"star": upright["star"],
+				"diamond": upright["diamond"],
+				"anchors": shape["anchors"],
+				"position": [0, 0],
+				"rotation": int(facing),
+			}))
+			var where := "%s at %s degrees" % [shape["name"], facing]
+
+			assert_eq(_sorted_squares(placed.turned_shape()),
+				_sorted_squares(_at(expected["squares"])), where)
+			assert_eq(_sorted_squares(placed.turned_star()),
+				_sorted_squares(_at(expected["star"])), where)
+			assert_eq(_sorted_squares(placed.turned_diamond()),
+				_sorted_squares(_at(expected["diamond"])), where)
+
+
+func _the_answers_written_down() -> Array:
+	var path := ProjectSettings.globalize_path("res://").path_join(TURNED_SHAPES_PATH)
+	var file := FileAccess.open(path, FileAccess.READ)
+	assert_not_null(file, "Should be able to read %s" % path)
+	if file == null:
+		return []
+	var written = JSON.parse_string(file.get_as_text())
+	file.close()
+	assert_true(written is Array, "%s should hold a list of shapes" % path)
+	return written if written is Array else []
+
+
 func test_a_shape_turned_none_is_unchanged():
 	var wide := _at([[0, 0], [1, 0]])
 	assert_eq(APITypes.turn(wide, 0), wide, "No turn, no change")
@@ -593,7 +705,7 @@ func test_a_turned_zone_never_lands_on_its_own_item():
 
 func test_an_anchored_zone_stays_above_the_anchor():
 	# The same four answers the server gives for this map.
-	var expected = {0: [[0, -1]], 90: [[0, -1]], 180: [], 270: [[1, -1]]}
+	var expected = {0: [[0, -1]], 90: [[1, -1]], 180: [], 270: [[0, -1]]}
 	for rotation in expected:
 		var placed = APITypes.PlacedItem.new(
 			_potion({"position": [0, 0], "rotation": rotation}))
@@ -602,14 +714,60 @@ func test_an_anchored_zone_stays_above_the_anchor():
 
 
 func test_a_zone_with_no_anchor_turns_with_the_item():
-	# One square to the right becomes one square above.
+	# Rows count downwards, so a quarter clockwise sends the square on the
+	# right to the square below.
 	var reaching_right = _item({
 		"shape": [[0, 0]], "star": [[1, 0]], "diamond": [], "anchors": [], "kinds": [], "aura": {},
 	})
 	reaching_right["position"] = [0, 0]
 	reaching_right["rotation"] = 90
 	var placed = APITypes.PlacedItem.new(reaching_right)
-	assert_eq(placed.turned_star(), _at([[0, -1]]))
+	assert_eq(placed.turned_star(), _at([[0, 1]]))
+
+
+func test_a_reach_turns_the_way_the_artwork_does():
+	"""The bug this direction was found by.
+
+	Buffer Overflow is a spear: four squares of shaft, five of reach past the
+	tip. ItemVisual turns the artwork with Godot's own rotation, which is
+	clockwise on a screen whose rows count downwards. Turned the other way the
+	squares disagreed with the picture, and a spear drawn pointing right
+	threatened the five squares behind it.
+	"""
+	var spear = _item({
+		"shape": [[0, 0], [0, 1], [0, 2], [0, 3]],
+		"star": [[0, -5], [0, -4], [0, -3], [0, -2], [0, -1]],
+		"diamond": [], "anchors": [], "kinds": [], "aura": {},
+	})
+	spear["position"] = [0, 0]
+
+	spear["rotation"] = 90
+	var pointing_right = APITypes.PlacedItem.new(spear)
+	assert_eq(_sorted_squares(pointing_right.turned_shape()),
+		_at([[0, 0], [1, 0], [2, 0], [3, 0]]), "the shaft lies across")
+	for square in pointing_right.turned_star():
+		assert_gt(square.x, 3, "the reach is past the tip, not behind it")
+
+	spear["rotation"] = 270
+	var pointing_left = APITypes.PlacedItem.new(spear)
+	for square in pointing_left.turned_star():
+		assert_lt(square.x, 0, "and the other way round")
+
+
+func test_a_turn_is_the_one_a_player_asked_for():
+	# Every quarter turn, the way a clock hand goes. The artwork is turned by
+	# the same number of degrees through Godot, which is clockwise, so this is
+	# what keeps the squares and the picture together.
+	var reaching_up = _item({
+		"shape": [[0, 0]], "star": [[0, -1]],
+		"diamond": [], "anchors": [], "kinds": [], "aura": {},
+	})
+	reaching_up["position"] = [0, 0]
+	var expected = {90: [[1, 0]], 180: [[0, 1]], 270: [[-1, 0]]}
+	for rotation in expected:
+		reaching_up["rotation"] = rotation
+		assert_eq(APITypes.PlacedItem.new(reaching_up).turned_star(),
+			_at(expected[rotation]), "reaching up, turned %d degrees" % rotation)
 
 
 # ============ Combining (GDD 5.3) ============

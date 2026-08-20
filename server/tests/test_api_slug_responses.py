@@ -473,11 +473,7 @@ class TestAPISlugResponses:
 
         # Buy an item so we can battle
         shop = data["session"]["current_shop"]
-        item_to_buy = None
-        for item in shop:
-            if item and not item.get("is_container", False):  # Skip containers
-                item_to_buy = item
-                break
+        item_to_buy = _one_that_fits(shop)
 
         if item_to_buy:
             # The endpoint is /purchase/item, and [2, 3] is the top-left of the

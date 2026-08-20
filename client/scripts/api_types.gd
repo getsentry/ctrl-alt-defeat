@@ -3,11 +3,16 @@ class_name APITypes
 
 # The squares a shape covers once it has been turned, as [x, y] offsets.
 #
-# A quarter turn clockwise sends (x, y) to (y, -x), and the result is pushed
-# back so that its corner sits at the origin: turning an item changes the
-# squares it covers, not where it is. The server turns shapes the same way, and
-# the two have to agree or an item draws on squares the server has it standing
-# somewhere else.
+# Rows count downwards, so a quarter turn clockwise sends (x, y) to (-y, x) and
+# the square to the right of an item ends up below it. That is the same
+# direction Godot turns the artwork by a positive angle, and both have to be
+# the same one: turned the other way, a spear was drawn pointing one way with
+# its aura reaching the other.
+#
+# The result is pushed back so that its corner sits at the origin: turning an
+# item changes the squares it covers, not where it is. The server turns shapes
+# the same way, in grid_system._turn(), and the two have to agree or an item
+# draws on squares the server has it standing somewhere else.
 static func turn(shape: Array[Vector2i], rotation: int) -> Array[Vector2i]:
 	if rotation == 0 or shape.is_empty():
 		return shape.duplicate()
@@ -117,9 +122,9 @@ static func _spin(offsets: Array[Vector2i], rotation: int) -> Array[Vector2i]:
 	var turned: Array[Vector2i] = []
 	for square in offsets:
 		match rotation:
-			90: turned.append(Vector2i(square.y, -square.x))
+			90: turned.append(Vector2i(-square.y, square.x))
 			180: turned.append(Vector2i(-square.x, -square.y))
-			270: turned.append(Vector2i(-square.y, square.x))
+			270: turned.append(Vector2i(square.y, -square.x))
 			_: turned.append(square)
 	return turned
 

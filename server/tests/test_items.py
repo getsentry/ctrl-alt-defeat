@@ -2,12 +2,17 @@
 Tests for items.py
 """
 
+import json
+import re
+from pathlib import Path
+from typing import Dict, Set
+
 import pytest
 from pydantic import ValidationError
 
 from config_loader import config_loader
 from item_looks import CATEGORY_COLOR, PALETTE, PATTERNS
-from items import ZoneWants, SALE_CHANCE, Item, sale_price
+from items import ZONE_FIELDS, ZoneWants, SALE_CHANCE, Item, sale_price
 
 
 class TestSalePrice:
@@ -215,13 +220,40 @@ class TestWhatAnAuraActsOn:
         assert item.aura["star"] == [ZoneWants()]
 
     def test_a_zone_nothing_acts_through_is_absent(self):
-        """102 of the 117 items that draw a zone have no aura clause built
+        """68 of the 117 items that draw a zone have no aura clause built
         yet. Their zone is real and does nothing, and the client has to be
         able to tell that from a zone that acts on everything."""
-        item = Item.of(self._named("Thermal Throttle"), "x")
+        # Cold Wallet draws four squares and has no trigger at all.
+        item = Item.of(self._named("Cold Wallet"), "x")
 
         assert item.star, "it draws a zone"
         assert item.aura == {}, "and nothing acts through it"
+
+    def test_a_zone_an_effect_lands_on_says_what_it_wants(self):
+        """The commonest way to write an aura, and the one that was silent.
+
+        "Star Weapons gain 1 damage" is a gain_damage landing on `target:
+        star`, not a trigger watching a `zone`. 21 items are written that way,
+        and every one of them drew a zone the client could make nothing of --
+        so no weapon ever lit up under an Edge Cache.
+        """
+        item = Item.of(self._named("Edge Cache"), "x")
+
+        assert set(item.aura["star"][0].any_of) == {"melee", "ranged", "magic"}, (
+            "the three kinds a player calls a weapon"
+        )
+
+    def test_a_zone_counted_in_says_what_it_wants(self):
+        """The third field, `where`: an effect counting what stands in the
+        zone rather than reaching into it.
+
+        Halo Crystal blocks once for each Star Holy item. Nothing reaches out
+        of the zone, so nothing named it a `zone` or a `target`, and the
+        client was left with twelve squares and no reason for them.
+        """
+        item = Item.of(self._named("Halo Crystal"), "x")
+
+        assert item.aura["star"], "twelve squares, and now a reason for them"
 
     def test_both_zones_are_answered_separately(self):
         # CI Cauldron counts Star Potions and Diamond Foods separately.
@@ -238,17 +270,76 @@ class TestWhatAnAuraActsOn:
         assert item.kinds == ["fire", "ranged", "treasure"]
         assert item.category == "problem", "and the category it matches on too"
 
+    def test_the_client_is_told_about_every_zone_the_engine_reaches_through(self):
+        """The rule that stops this going quiet again.
+
+        An effect names its zone in whichever field reads as English for that
+        effect, and the engine reads all of them: it reaches through
+        `target_type` and `where`, and watches a `zone`. `aura_of` read only
+        `zone`, so what the client was told and what the engine did had
+        drifted apart -- 21 items lit up nothing while their effect landed
+        every battle.
+
+        Read off the engine rather than restated here: a new effect that names
+        its zone in a fourth field fails this the day it is written, instead
+        of shipping an aura the player can see no reason for.
+        """
+        engine = (Path(__file__).parent.parent / "battle_engine.py").read_text()
+        reached_through = set(
+            re.findall(r"(?:_reached_by|aura_squares)\(\s*\n?\s*\w+\.(\w+)", engine)
+        )
+
+        assert reached_through, "setup: the engine reaches through a zone somewhere"
+        assert reached_through <= set(ZONE_FIELDS), (
+            f"the engine reaches through {sorted(reached_through - set(ZONE_FIELDS))}, "
+            f"which aura_of never looks at, so the client is never told about it"
+        )
+
     def test_every_zone_the_catalogue_acts_through_is_answered(self):
         """A clause with a zone the client is never told about is an aura the
-        player cannot see the point of."""
+        player cannot see the point of.
+
+        Read off the JSON rather than off the loaded spec, so this asks what
+        the catalogue says and not what the loader made of it. An effect names
+        its zone in whichever of `zone`, `target` and `where` reads as English
+        for that effect -- a modifier lands on a target, a count is taken
+        where, an aura trigger watches a zone -- and all three are the same
+        two words. Reading only `zone` is how Edge Cache came to send a client
+        a star it could make nothing of.
+        """
         acting = 0
-        for slug, spec in config_loader.items.items():
-            zones = set()
-            for trigger in spec.triggers or []:
-                for source in [trigger] + list(getattr(trigger, "effects", [])):
-                    if getattr(source, "zone", None) in ("star", "diamond"):
-                        zones.add(source.zone)
-            if zones:
-                acting += 1
-                assert set(Item.of(slug, "x").aura) == zones, slug
+        for slug, zones in self._zones_in_the_json().items():
+            acting += 1
+            assert set(Item.of(slug, "x").aura) == zones, slug
         assert acting > 10, "setup: some items really do act through a zone"
+
+    @staticmethod
+    def _zones_in_the_json() -> Dict[str, Set[str]]:
+        """Which zones each item's own JSON names, by slug.
+
+        Every value of every field, at any depth: an effect can sit behind a
+        chance roll, and the JSON is the same shape either way.
+        """
+        found: Dict[str, Set[str]] = {}
+        for path in sorted((Path(__file__).parent.parent / "data" / "items").glob("*.json")):
+            data = json.loads(path.read_text())
+            # The containers file keeps its own key, and no container carries
+            # a trigger, so there is nothing in it to find.
+            for item_id, config in (data.get("items") or {}).items():
+                zones = set()
+
+                def walk(node):
+                    if isinstance(node, dict):
+                        for field in ("zone", "target", "where"):
+                            if node.get(field) in ("star", "diamond"):
+                                zones.add(node[field])
+                        for value in node.values():
+                            walk(value)
+                    elif isinstance(node, list):
+                        for value in node:
+                            walk(value)
+
+                walk(config.get("triggers"))
+                if zones:
+                    found[item_id] = zones
+        return found

@@ -15,14 +15,22 @@ class Rotation(Enum):
 
 
 def _turn(square: Position, rotation: Rotation) -> Position:
-    """One square, a quarter turn clockwise at a time."""
+    """One square, a quarter turn clockwise at a time.
+
+    Rows count downwards, so y points down and clockwise sends (x, y) to
+    (-y, x): the square to the right of an item ends up below it. The other
+    formula, (y, -x), is the one for a graph with y pointing up, and on a grid
+    it turns the squares anticlockwise -- which is how a spear came to be drawn
+    pointing one way with its aura reaching the other. The client turns shapes
+    in APITypes._spin() and the two have to agree.
+    """
     x, y = square
     if rotation == Rotation.CLOCKWISE_90:
-        return (y, -x)
+        return (-y, x)
     if rotation == Rotation.CLOCKWISE_180:
         return (-x, -y)
     if rotation == Rotation.CLOCKWISE_270:
-        return (-y, x)
+        return (y, -x)
     return (x, y)
 
 

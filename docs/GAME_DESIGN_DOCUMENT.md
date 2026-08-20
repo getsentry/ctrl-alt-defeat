@@ -792,7 +792,7 @@ For that to be true rather than nearly true, the client is told what each zone
 acts on and what tags each item carries -- a zone narrowed to pets lands on a
 weapon and does nothing, and a marker that filled anyway would be lying about
 the only thing it is for. A zone the item draws but nothing acts through is
-sent as absent rather than as empty: 102 of the 117 items that draw a zone have
+sent as absent rather than as empty: 68 of the 117 items that draw a zone have
 no aura clause built yet, and their markers never fill.
 
 ### 4.4 What an aura does

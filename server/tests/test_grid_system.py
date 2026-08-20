@@ -147,14 +147,45 @@ class TestTurningAnItemTurnsItsAura:
         potion = parse_map(["*", "^", "#"], "potion")
         turned = potion.rotate(Rotation.CLOCKWISE_90)
         assert sorted(turned.squares) == [(0, 0), (1, 0)], "now lying down"
-        assert sorted(turned.star) == [(0, -1)], "still above the anchor"
+        assert sorted(turned.star) == [(1, -1)], "still above the anchor"
         assert not set(turned.star) & set(turned.squares), "never on itself"
 
     def test_a_zone_that_does_not_anchor_simply_turns(self):
-        # (x, y) -> (y, -x): the square to the right ends up above.
+        # Rows count downwards, so clockwise sends (x, y) to (-y, x): the
+        # square to the right of an item ends up below it.
         item = parse_map(["#*"], "reaching right")
         assert sorted(item.star) == [(1, 0)]
-        assert sorted(item.rotate(Rotation.CLOCKWISE_90).star) == [(0, -1)]
+        assert sorted(item.rotate(Rotation.CLOCKWISE_90).star) == [(0, 1)]
+
+    def test_a_reach_turns_the_way_the_artwork_does(self):
+        """The bug this direction was found by.
+
+        Buffer Overflow is a spear: four squares of shaft with five squares of
+        reach past the tip. The client draws the artwork with Godot's own
+        rotation, which is clockwise on a screen whose rows count downwards.
+        Turned the other way the squares disagreed with the picture, and a
+        spear pointing right threatened the five squares behind it.
+        """
+        spear = parse_map(["*"] * 5 + ["#"] * 4, "spear")
+
+        pointing_right = spear.rotate(Rotation.CLOCKWISE_90)
+        assert sorted(pointing_right.squares) == [(0, 0), (1, 0), (2, 0), (3, 0)]
+        assert min(x for x, _ in pointing_right.star) > 3, "past the tip, not behind it"
+
+        pointing_left = spear.rotate(Rotation.CLOCKWISE_270)
+        assert max(x for x, _ in pointing_left.star) < 0, "and the other way round"
+
+    def test_a_turn_is_the_one_a_player_asked_for(self):
+        """Every quarter turn, against the direction a clock hand goes.
+
+        The client turns the artwork by the same number of degrees through
+        Godot, which is clockwise, so this is what keeps the two together.
+        """
+        reaching_up = parse_map(["*", "#"], "reaching up")
+
+        assert reaching_up.rotate(Rotation.CLOCKWISE_90).star == ((1, 0),), "right"
+        assert reaching_up.rotate(Rotation.CLOCKWISE_180).star == ((0, 1),), "down"
+        assert reaching_up.rotate(Rotation.CLOCKWISE_270).star == ((-1, 0),), "left"
 
     def test_four_turns_come_back_to_the_start(self):
         for item_map in (["*", "^", "#"], ["#*"], ["***", "*#*", "***"], ["##", "#."]):
@@ -169,8 +200,8 @@ class TestTurningAnItemTurnsItsAura:
         """The wiki draws Strong Heroic Potion three ways, and this is why: the
         star sits above whichever square the anchor lands on."""
         potion = parse_map(["*", "^", "#"], "potion")
-        assert sorted(potion.rotate(Rotation.CLOCKWISE_90).star) == [(0, -1)]
-        assert sorted(potion.rotate(Rotation.CLOCKWISE_270).star) == [(1, -1)]
+        assert sorted(potion.rotate(Rotation.CLOCKWISE_90).star) == [(1, -1)]
+        assert sorted(potion.rotate(Rotation.CLOCKWISE_270).star) == [(0, -1)]
 
     def test_an_anchor_pointing_into_the_item_reaches_nothing(self):
         """Upside down, the anchor's square is under the item's other square, so
@@ -185,6 +216,74 @@ class TestTurningAnItemTurnsItsAura:
         item ends up with the old square and the new one."""
         potion = parse_map(["*", "^", "#"], "potion")
         assert len(potion.rotate(Rotation.CLOCKWISE_90).star) == 1
+
+
+class TestTheAnswersBothSidesAreHeldTo:
+    """One turn, written down once, checked from both sides.
+
+    The client turns shapes too -- it has to draw a turn before the server has
+    heard of the move -- and two copies of one rule drift. They drifted:
+    the squares turned one way while the artwork turned the other, so a spear
+    was drawn pointing right with its reach behind it.
+
+    `server/tests/fixtures/turned_shapes.json` is what the server makes of five
+    maps at all four turns. This holds the server to it; the client is held to
+    the same file by test_api_types.gd. Regenerate it with
+    `python tools/dump_turned_shapes.py` after a change that is meant, and the
+    other side goes red until it agrees.
+    """
+
+    @staticmethod
+    def _written_down():
+        import json
+        from pathlib import Path
+
+        path = Path(__file__).parent / "fixtures" / "turned_shapes.json"
+        return json.loads(path.read_text())
+
+    @staticmethod
+    def _squares(offsets):
+        return sorted(tuple(offset) for offset in offsets)
+
+    def test_the_server_still_gives_the_written_answers(self):
+        written = self._written_down()
+        assert len(written) >= 5, "setup: five maps are written down"
+
+        for shape_in_file in written:
+            shape = parse_map(shape_in_file["map"], shape_in_file["name"])
+            assert self._squares(shape.anchors) == self._squares(
+                shape_in_file["anchors"]
+            ), shape_in_file["name"]
+
+            for rotation in Rotation:
+                turned = shape.rotate(rotation)
+                expected = shape_in_file["turns"][str(rotation.value)]
+                where = f"{shape_in_file['name']} at {rotation.value}"
+
+                assert self._squares(turned.squares) == self._squares(
+                    expected["squares"]
+                ), where
+                assert self._squares(turned.star) == self._squares(
+                    expected["star"]
+                ), where
+                assert self._squares(turned.diamond) == self._squares(
+                    expected["diamond"]
+                ), where
+
+    def test_the_file_covers_what_can_go_wrong(self):
+        """A fixture nobody reads the contents of is a fixture that can quietly
+        stop covering anything."""
+        written = {shape["name"]: shape for shape in self._written_down()}
+
+        spear = written["spear"]["turns"]
+        assert min(x for x, _ in spear["90"]["star"]) > 3, (
+            "a reach long enough that a turn the wrong way is unmissable"
+        )
+        assert written["anchored potion"]["anchors"], "an anchor to hold up"
+        assert written["two zones"]["turns"]["0"]["diamond"], "both zones at once"
+        assert len(written["an L"]["turns"]["0"]["squares"]) == 3, (
+            "a footprint whose corner moves when it turns"
+        )
 
 
 class TestEveryAnchoredItemInTheCatalogue:

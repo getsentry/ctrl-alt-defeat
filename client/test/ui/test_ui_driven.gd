@@ -96,17 +96,17 @@ func test_full_user_journey_through_ui():
 
 	# 5. Purchase an item from shop
 	print("   4. Purchasing from shop...")
-	var shop_item = _first_non_container_shop_item(game_ui)
-	assert_not_null(shop_item, "Shop should offer at least one non-container item")
+	# The square first, so the item can be one that fits on it.
+	var target_grid_pos = _find_first_empty_grid_cell(game_ui)
+	assert_ne(target_grid_pos, Vector2(-1, -1), "Should find empty grid cell for placement")
+
+	var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target_grid_pos))
+	assert_not_null(shop_item, "Shop should offer an item that fits on a container")
 	var item_data = shop_item.get_meta("item_data")
 	var item_cost = item_data.cost
 
 	# Simulate purchase through UI - we need to trigger the shop item's input handler
 	print("   - Simulating purchase through UI...")
-
-	# Find target position dynamically
-	var target_grid_pos = _find_first_empty_grid_cell(game_ui)
-	assert_ne(target_grid_pos, Vector2(-1, -1), "Should find empty grid cell for placement")
 
 	# Get UI references
 	var server_room_container = game_ui.server_room_container
@@ -281,7 +281,13 @@ func test_shop_purchase_and_item_placement():
 
 	# Get shop items from the game_ui's shop_items array
 	assert_gt(game_ui.shop_items.size(), 0, "Should have shop items")
-	var shop_item = _first_non_container_shop_item(game_ui)
+	# The square first, so the item can be one that fits on it.
+	var target_grid_pos = _find_first_empty_grid_cell(game_ui)
+	assert_ne(target_grid_pos, Vector2(-1, -1), "Should find at least one empty grid cell")
+	print("   - Found empty grid cell at: %s" % target_grid_pos)
+
+	var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target_grid_pos))
+	assert_not_null(shop_item, "Shop should offer an item that fits on a container")
 
 	var initial_gold = GameStateManager.gold
 	var item_data = shop_item.get_meta("item_data")
@@ -295,11 +301,6 @@ func test_shop_purchase_and_item_placement():
 	print("   - Number of containers: %d" % game_ui.inventory_grid.containers.size())
 	for placed in game_ui.inventory_grid.containers:
 		print("     Container at pos %s" % placed.position())
-
-	# Find an empty grid cell to drop the item
-	var target_grid_pos = _find_first_empty_grid_cell(game_ui)
-	assert_ne(target_grid_pos, Vector2(-1, -1), "Should find at least one empty grid cell")
-	print("   - Found empty grid cell at: %s" % target_grid_pos)
 
 	# Get the server room container directly - it's a property of UnifiedGridUI
 	var server_room_container = game_ui.server_room_container
@@ -393,10 +394,11 @@ func test_selling_an_item_pays_the_player():
 	var game_ui = get_tree().current_scene
 
 	# Buy one item onto the grid, the way the shop drop does.
-	var shop_item = _first_non_container_shop_item(game_ui)
-	var item_data = shop_item.get_meta("item_data")
 	var target = _find_first_empty_grid_cell(game_ui)
 	assert_ne(target, Vector2(-1, -1), "There should be a free cell to buy into")
+	var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target))
+	assert_not_null(shop_item, "The shop should offer something that fits there")
+	var item_data = shop_item.get_meta("item_data")
 
 	game_ui.dragging_shop_item = shop_item
 	game_ui.dragging_shop_data = item_data
@@ -451,9 +453,9 @@ func test_battle_button_and_full_battle():
 	# Purchase an item first (battles require items)
 	print("   - Shop has %d items" % game_ui.shop_items.size())
 	if game_ui.shop_items.size() > 0:
-		var shop_item = _first_non_container_shop_item(game_ui)
 		var target_grid_pos = _find_first_empty_grid_cell(game_ui)
 		print("   - Found empty cell at: %s" % target_grid_pos)
+		var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target_grid_pos))
 		if target_grid_pos != Vector2(-1, -1):
 			# Quick purchase simulation
 			var server_room_container = game_ui.server_room_container
@@ -558,9 +560,9 @@ func test_complete_round_cycle():
 	# Purchase an item first (battles require items)
 	print("   - Shop has %d items" % game_ui.shop_items.size())
 	if game_ui.shop_items.size() > 0:
-		var shop_item = _first_non_container_shop_item(game_ui)
 		var target_grid_pos = _find_first_empty_grid_cell(game_ui)
 		print("   - Found empty cell at: %s" % target_grid_pos)
+		var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target_grid_pos))
 		if target_grid_pos != Vector2(-1, -1):
 			# Quick purchase simulation
 			var server_room_container = game_ui.server_room_container
@@ -851,12 +853,13 @@ func test_item_drag_and_move_persistence():
 	# First, purchase an item to have something to move
 	print("   - Purchasing item to test move...")
 	assert_gt(game_ui.shop_items.size(), 0, "Should have shop items")
-	var shop_item = _first_non_container_shop_item(game_ui)
-	var item_data = shop_item.get_meta("item_data")
-
 	# Find first empty cell for initial placement
 	var initial_pos = _find_first_empty_grid_cell(game_ui)
 	assert_ne(initial_pos, Vector2(-1, -1), "Should find empty cell for initial placement")
+
+	var shop_item = _first_non_container_shop_item(game_ui, Vector2i(initial_pos))
+	assert_not_null(shop_item, "The shop should offer something that fits there")
+	var item_data = shop_item.get_meta("item_data")
 	print("   - Initial placement at: %s" % initial_pos)
 
 	# Purchase item via drag and drop
@@ -1009,8 +1012,8 @@ func test_multiple_rounds():
 
 		# Purchase an item first (battles require items)
 		if game_ui.shop_items.size() > 0:
-			var shop_item = _first_non_container_shop_item(game_ui)
 			var target_grid_pos = _find_first_empty_grid_cell(game_ui)
+			var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target_grid_pos))
 			if target_grid_pos != Vector2(-1, -1):
 				# Quick purchase simulation
 				var server_room_container = game_ui.server_room_container
@@ -1165,17 +1168,26 @@ func _wait_for_scene_change(from_name: String, timeout: float = DEFAULT_TIMEOUT)
 	)
 
 
-func _first_non_container_shop_item(game_ui):
+func _first_non_container_shop_item(game_ui, fitting_at := Vector2i(-1, -1)):
 	"""Pick a shop item that can go on an existing server container.
 
 	The shop is generated randomly, so slot 0 is sometimes a container. A
 	container cannot be dropped onto another container, so a test that always
 	took slot 0 failed whenever the roll produced one.
+
+	`fitting_at` is the square the caller means to drop it on. A container is
+	two squares by two and the shop can offer an item four squares tall, so an
+	item that is not a container can still have nowhere to go -- which failed
+	about one run in ten. The grid's own rule answers it, so the test is not
+	keeping a second opinion about what fits.
 	"""
 	for shop_item in game_ui.shop_items:
 		var data = shop_item.get_meta("item_data")
-		if not data.is_container:
-			return shop_item
+		if data.is_container:
+			continue
+		if fitting_at.x >= 0 and not game_ui.inventory_grid.can_place_item(data, fitting_at):
+			continue
+		return shop_item
 	return null
 
 

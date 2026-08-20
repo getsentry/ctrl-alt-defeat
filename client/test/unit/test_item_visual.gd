@@ -75,6 +75,26 @@ func test_uses_the_artwork_matching_the_slug():
 		"Should find the artwork named after the slug")
 
 
+func test_the_squares_turn_the_way_the_artwork_does():
+	"""The two halves of a turn, tied together.
+
+	An item's picture is turned by handing `facing` straight to Godot as
+	degrees, and the squares it covers are turned by APITypes. Nothing makes
+	the two agree except that they are the same turn, so this asks Godot
+	itself which way a point goes and holds the squares to that answer. Turned
+	opposite ways, a spear was drawn pointing right with its reach behind it.
+	"""
+	for facing in [90, 180, 270]:
+		# Where the artwork sends a point one square to its right.
+		var drawn := Vector2(1, 0).rotated(deg_to_rad(facing))
+		var square := APITypes._spin([Vector2i(1, 0)] as Array[Vector2i], facing)[0]
+
+		assert_eq(Vector2i(roundi(drawn.x), roundi(drawn.y)), square,
+			"the squares and the picture disagree at %d degrees" % facing)
+	# And that `facing` really is what the picture is turned by: see
+	# test_the_artwork_turns_with_the_item below.
+
+
 func test_falls_back_when_there_is_no_artwork():
 	_make(_item({"slug": "no_such_item_anywhere"}))
 	assert_eq(visual._get_texture_path(), "",

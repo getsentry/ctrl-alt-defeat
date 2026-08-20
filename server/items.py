@@ -10,7 +10,7 @@ difference between the two types. So a position is never null, and nothing has
 to work out what a missing one means.
 """
 
-from typing import Dict, List
+from typing import Dict, Iterator, List, Tuple
 
 from pydantic import BaseModel, Field, computed_field, field_validator
 
@@ -160,13 +160,33 @@ def aura_of(spec: ItemSpec) -> Dict[str, List[ZoneWants]]:
     """
     wants: Dict[str, List[ZoneWants]] = {}
     for trigger in spec.triggers or []:
-        for source in [trigger] + list(getattr(trigger, "effects", [])):
-            zone = getattr(source, "zone", None)
-            if zone in ("star", "diamond"):
-                wants.setdefault(zone, []).append(
-                    ZoneWants.of(getattr(source, "counting", "any"))
-                )
+        for zone, narrowed in _zones_named_by(trigger):
+            wants.setdefault(zone, []).append(narrowed)
     return wants
+
+
+#: The three fields an effect or a trigger can name a zone in. They differ
+#: because they read differently in the sentence the effect came from -- a
+#: modifier lands on a `target`, a count is taken `where`, an aura trigger
+#: watches a `zone` -- and all three carry the same two words. The engine
+#: reaches through all three; reading only `zone` here left 21 items, Edge
+#: Cache among them, sending a client an aura it was never told the meaning
+#: of, so nothing ever lit up under one.
+ZONE_FIELDS = ("zone", "target_type", "where")
+
+
+def _zones_named_by(source: object) -> Iterator[Tuple[str, ZoneWants]]:
+    """Every zone this trigger or effect acts through, and what it narrows to.
+
+    Recurses, because an effect can hold others -- a chance effect is a
+    modifier behind a die roll, and the modifier is the one naming the zone.
+    """
+    for field in ZONE_FIELDS:
+        zone = getattr(source, field, None)
+        if zone in ("star", "diamond"):
+            yield zone, ZoneWants.of(getattr(source, "counting", "any"))
+    for effect in getattr(source, "effects", None) or []:
+        yield from _zones_named_by(effect)
 
 
 class Item(BaseModel):
