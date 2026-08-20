@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://c0b2a7t7l6ib8"]
+[gd_scene load_steps=8 format=3 uid="uid://c0b2a7t7l6ib8"]
 
 [ext_resource type="Script" uid="uid://bf5ujancn6o07" path="res://scripts/main_menu.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://c32y670spfpwh" path="res://assets/ui/backgrounds/main_menu_background.png" id="2_0ykhv"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://s56raawub3qg" path="res://assets/characters/sentaur_shop.png" id="4_sentaur"]
 [ext_resource type="Texture2D" uid="uid://1dffqeiih0x7" path="res://assets/ui/contact_shadow.png" id="5_shadow"]
 [ext_resource type="Script" path="res://scripts/contact_shadow.gd" id="6_shadowscript"]
+[ext_resource type="AudioStream" uid="uid://brbawmn47j2i7" path="res://assets/audio/menu_music.ogg" id="99_music"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -117,7 +118,8 @@ offset_bottom = 848.0
 text = "EXIT"
 
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]
-volume_db = -10.0
+stream = ExtResource("99_music")
+volume_db = -12.0
 autoplay = true
 
 [node name="VersionLabel" type="Label" parent="."]
