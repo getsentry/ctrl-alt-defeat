@@ -334,12 +334,12 @@ func _setup_inventories():
 	# is a smudge - and the racks are what the battle is decided by, so they
 	# are what there has to be room for.
 	#
-	# As big as the room allows: the racks stand clear of the clock above them
-	# and the stats below, and leave the middle of the screen to the seam of
-	# fire and what is written over it. Everything else about a rack -- where
-	# it stands, its backdrop, the frame behind it -- is measured off the grid,
-	# so this is the one number that decides how big an item is drawn.
-	const CELL_SIZE = 70
+	# As big as the room allows, and the room is decided across the middle of
+	# the window rather than down it: nine cells have to fit between the edge
+	# of the window and the row of buttons under the clock, and seven of the
+	# same cells then have height to spare. This is the one number that decides
+	# how big an item is drawn, so it is worth every pixel it can have.
+	const CELL_SIZE = 75
 
 	# Create inventory grids using InventoryGrid class (not scene)
 	# Player inventory - standard 9x7 grid like UnifiedGridUI

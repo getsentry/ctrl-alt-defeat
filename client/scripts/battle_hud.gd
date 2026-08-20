@@ -12,7 +12,6 @@ extends RefCounted
 ## middle of the floor and the speed button off the top of the window.
 
 const NeonPlateScript = preload("res://scripts/neon_plate.gd")
-const RackBackdropScript = preload("res://scripts/rack_backdrop.gd")
 
 # Taken from the battle screen's own art: the player reads cyan, the opponent
 # reads red, and what happens between them reads amber.
@@ -57,7 +56,10 @@ const LOG_SIZE := Vector2(700, 344)
 ## it, nothing reaches over the racks any more and they start at the top of
 ## the window instead of below the middle of it.
 const RACK_TOP := 30.0
-const RACK_MARGIN := 36.0
+## How far a rack keeps from the edge of the window. Small, because every
+## pixel here is a pixel wider the rack can be drawn, and there is nothing at
+## the edge of the window for it to run into.
+const RACK_MARGIN := 16.0
 const RACK_PAD := Vector2(20, 20)
 const STATS_SIZE := Vector2(780, 372)
 ## Low, next to the fighters. Both sit in the bottom two fifths of the screen
@@ -618,32 +620,28 @@ func _place(panel: Control, at: Vector2) -> void:
 ## half as wide again as the grids they contain, so a frame built from the
 ## panel runs off both edges of the window with nothing in the overhang.
 func _frame(grid: Control, accent: Color, title: String) -> void:
+	"""Name a rack, and leave it to stand in the room on its own.
+
+	There used to be an alcove drawn behind each rack -- uprights, shelf lines,
+	status lights, cabling. It was a rack drawn behind the racks, and its shelf
+	lines were spaced off the board rather than off the racks standing on it,
+	so the eye had two pieces of hardware to read and no way to tell which one
+	the player owned.
+	"""
 	if grid == null:
 		return
-	var drawn := grid.size * grid.get_global_transform().get_scale()
-	var back: RackBackdrop = RackBackdropScript.new()
-	back.name = grid.name + "Backdrop"
-	back.accent = accent
-	back.unit = grid.cell_size + grid.cell_spacing
-	back.origin = RACK_PAD.y + 14
-	back.position = grid.global_position - Vector2(RACK_PAD.x, RACK_PAD.y + 14)
-	back.size = drawn + Vector2(RACK_PAD.x * 2, RACK_PAD.y * 2 + 14)
-	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Behind the rack it holds, and behind everything drawn over it.
-	screen.add_child(back)
-	screen.move_child(back, 1)
 
 	# The grid draws its own caption in grey at its top left corner, which
-	# reads as a debug label. One chip on the alcove instead.
+	# reads as a debug label. One chip over the board instead.
 	grid.title = ""
 	var chip := Label.new()
-	chip.name = "Title"
+	chip.name = grid.name + "Title"
 	chip.text = title
-	chip.position = Vector2(30, 4)
 	chip.add_theme_font_size_override("font_size", 18)
 	chip.add_theme_color_override("font_color", Color(accent, 0.75))
 	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	back.add_child(chip)
+	screen.add_child(chip)
+	chip.position = grid.global_position + Vector2(4, -26)
 
 
 # ============ Numbers off a hit ============
