@@ -25,14 +25,23 @@
               "description": "Start of battle: Gain 45 Block"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "resist",
+              "count": 3,
+              "chance": 0,
+              "target": "self",
+              "description": "Resist 3 debuffs"
+            }
+          ]
         }
       ],
       "slug": "basic_firewall",
       "sockets": 2,
-      "in_shop": false,
-      "unbuilt": [
-        "Resist 3 debuffs."
-      ]
+      "in_shop": false
     },
     "cryogenic_shield": {
       "name": "Heatsink Wall",

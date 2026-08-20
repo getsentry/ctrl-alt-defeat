@@ -65,14 +65,32 @@
               "description": "Gain 3 Block"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.3,
+              "effects": [
+                {
+                  "type": "cleanse",
+                  "count": 1,
+                  "removes": "draining",
+                  "target": "enemy",
+                  "description": "Remove 1 Vampirism from your opponent"
+                }
+              ],
+              "description": "30% chance"
+            }
+          ]
         }
       ],
       "slug": "firewall_script",
       "icontype": "nature",
-      "in_shop": false,
-      "unbuilt": [
-        "Every 4s: 30% chance to remove 1 Vampirism from your opponent."
-      ]
+      "in_shop": false
     },
     "cache_optimizer": {
       "name": "Hot Path",
@@ -95,21 +113,38 @@
           "cpu_cost": 0,
           "effects": [
             {
-              "type": "buff",
-              "buff_name": "credits",
-              "value": 1,
-              "target": "self",
-              "description": "Gain 1 Credits"
+              "type": "condition",
+              "subject": "status",
+              "status": "credits",
+              "whose": "self",
+              "test": "at_least",
+              "amount": 10,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "calibrated",
+                  "value": 1,
+                  "target": "self",
+                  "description": "gain 1 Luck instead"
+                }
+              ],
+              "otherwise": [
+                {
+                  "type": "buff",
+                  "buff_name": "credits",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Mana"
+                }
+              ],
+              "description": "If you have at least 10 Mana"
             }
           ]
         }
       ],
       "slug": "cache_optimizer",
       "icontype": "nature, magic",
-      "in_shop": false,
-      "unbuilt": [
-        "Every 3.5s: If you have at least 10 Mana: gain 1 Luck instead."
-      ]
+      "in_shop": false
     },
     "load_balancer_script": {
       "name": "Round Robin",
@@ -215,6 +250,18 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 0.5,
+          "effects": [
+            {
+              "type": "stun",
+              "duration": 0.5,
+              "target": "enemy",
+              "description": "Stun for 0.5s"
+            }
+          ]
         }
       ],
       "slug": "ddos_protection_module",
@@ -222,7 +269,6 @@
       "icontype": "treasure, nature, ranged",
       "in_shop": false,
       "unbuilt": [
-        "On hit: 50% chance to stun for 0.5s.",
         "Fatigue starts: gain 10 Heat."
       ]
     },

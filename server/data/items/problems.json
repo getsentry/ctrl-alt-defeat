@@ -516,6 +516,13 @@
               "value": 2,
               "target": "enemy",
               "description": "Inflict 2 Memory Leaked"
+            },
+            {
+              "type": "random_status",
+              "kind": "debuff",
+              "count": 1,
+              "target": "enemy",
+              "description": "The same roll also inflicts a random debuff"
             }
           ]
         }
@@ -524,9 +531,6 @@
       "sockets": 1,
       "icontype": "nature, ranged",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: The same 70% roll also inflicts a random debuff."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -1070,13 +1074,25 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "trigger_speed",
+              "value": 0.05,
+              "status": "draining",
+              "whose": "self",
+              "description": "Attacks 5% faster for every Vampirism"
+            }
+          ]
         }
       ],
       "slug": "credential_harvester",
       "in_shop": false,
       "unbuilt": [
-        "Star Items give +100% Vampirism.",
-        "Attacks 5% faster for every Vampirism."
+        "Star Items give +100% Vampirism."
       ],
       "sockets": 3,
       "icontype": "treasure, vampiric, melee"
@@ -1138,13 +1154,31 @@
               "description": "Use 1 Regeneration"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 1.0,
+              "status": "spiked",
+              "whose": "self",
+              "description": "Deals +1 damage per Spikes"
+            },
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 1.0,
+              "status": "draining",
+              "whose": "self",
+              "description": "and per Vampirism"
+            }
+          ]
         }
       ],
       "slug": "bloodthorne",
       "in_shop": false,
-      "unbuilt": [
-        "Deals +1 damage per Spikes and Vampirism."
-      ],
       "sockets": 2,
       "icontype": "vampiric, nature, melee",
       "recipe": [
@@ -1302,13 +1336,23 @@
               "description": "Gain 2 Optimized"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 0.3,
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 1,
+              "target": "self",
+              "counting": "any",
+              "description": "Gain 1 damage"
+            }
+          ]
         }
       ],
       "slug": "burning_torch",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: 30% chance to gain 1 damage."
-      ],
       "sockets": 1,
       "icontype": "fire, melee",
       "recipe": [
@@ -1348,13 +1392,25 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "trigger_speed",
+              "value": 0.05,
+              "status": "spiked",
+              "whose": "self",
+              "description": "Attacks 5% faster for every Spikes"
+            }
+          ]
         }
       ],
       "slug": "claws_of_attack",
       "in_shop": false,
       "unbuilt": [
-        "After 4 hits, gain 1 Empower.",
-        "Attacks 5% faster for every Spikes."
+        "After 4 hits, gain 1 Empower."
       ],
       "sockets": 1,
       "icontype": "melee",
@@ -1396,12 +1452,38 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 10,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "description": "The Star Weapon gains 10 damage"
+            },
+            {
+              "type": "modify",
+              "stat": "trigger_speed",
+              "value": 0.65,
+              "target": "diamond",
+              "counting": "any",
+              "cap": null,
+              "description": "The Diamond item triggers 65% faster"
+            }
+          ]
         }
       ],
       "slug": "crossblades",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: The Star Weapon gains 10 damage. The Diamond item triggers 65% faster.",
         "On hit: Gain 1 damage and attack 4% faster."
       ],
       "sockets": 3,
@@ -1444,14 +1526,55 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "magic"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "optimized",
+                  "value": 2,
+                  "target": "self",
+                  "description": "Gain 2 Heat"
+                },
+                {
+                  "type": "buff",
+                  "buff_name": "calibrated",
+                  "value": 2,
+                  "target": "self",
+                  "description": "Gain 2 Luck"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "damage_flat",
+              "value": 0.5,
+              "status": "optimized",
+              "whose": "self",
+              "description": "Deals +0.5 damage per Heat"
+            }
+          ]
         }
       ],
       "slug": "dancing_dragon",
       "in_shop": false,
       "unbuilt": [
-        "You have a 2% chance to resist debuffs for each Luck.",
-        "Start of battle: Gain 2 Heat and 2 Luck for each Star Magic-item.",
-        "Deals +0.5 damage per Heat."
+        "You have a 2% chance to resist debuffs for each Luck."
       ],
       "sockets": 2,
       "icontype": "treasure, fire, ranged"
@@ -1485,12 +1608,33 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_attack",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "cost",
+              "costs": {
+                "credits": 1
+              },
+              "effects": [
+                {
+                  "type": "debuff",
+                  "debuff_name": "rate_limited",
+                  "value": 1,
+                  "target": "enemy",
+                  "description": "inflict 1 Blind"
+                }
+              ],
+              "description": "Use 1 Mana"
+            }
+          ]
         }
       ],
       "slug": "darksaber",
       "in_shop": false,
       "unbuilt": [
-        "On attack: Use 1 Mana to inflict 1 Blind.",
         "Deals +0.5 damage for each debuff of your opponent."
       ],
       "sockets": 2,
@@ -1582,12 +1726,25 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "trigger_speed",
+              "value": 0.4,
+              "target": "star",
+              "counting": "any",
+              "cap": null,
+              "description": "Star items trigger 40% faster"
+            }
+          ]
         }
       ],
       "slug": "falcon_blade",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Star items trigger 40% faster.",
         "Attacks twice."
       ],
       "sockets": 2,
@@ -1631,12 +1788,33 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "cost",
+              "costs": {
+                "calibrated": 3
+              },
+              "effects": [
+                {
+                  "type": "gain_damage",
+                  "amount": 3,
+                  "target": "self",
+                  "counting": "any",
+                  "description": "gain 3 damage"
+                }
+              ],
+              "description": "Use 3 Luck"
+            }
+          ]
         }
       ],
       "slug": "fancy_fencing_rapier",
       "in_shop": false,
       "unbuilt": [
-        "On hit: Use 3 Luck to gain 3 damage.",
         "On miss: Gain 3 Luck."
       ],
       "sockets": 1,
@@ -1757,13 +1935,22 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 0.45,
+          "effects": [
+            {
+              "type": "stun",
+              "duration": 0.5,
+              "target": "enemy",
+              "description": "Stun your opponent for 0.5s"
+            }
+          ]
         }
       ],
       "slug": "hammer",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: 45% chance to stun your opponent for 0.5s."
-      ],
       "sockets": 2,
       "icontype": "melee"
     },
@@ -1797,13 +1984,28 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 3,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "description": "Star Weapons gain 3 damage"
+            }
+          ]
         }
       ],
       "slug": "hero_longsword",
       "in_shop": false,
-      "unbuilt": [
-        "Start of battle: Star Weapons gain 3 damage."
-      ],
       "sockets": 2,
       "icontype": "melee",
       "recipe": [
@@ -1845,13 +2047,28 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 1,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "description": "Star Weapons gain 1 damage"
+            }
+          ]
         }
       ],
       "slug": "hero_sword",
       "in_shop": false,
-      "unbuilt": [
-        "Start of battle: Star Weapons gain 1 damage."
-      ],
       "sockets": 1,
       "icontype": "melee",
       "recipe": [
@@ -1969,13 +2186,32 @@
               "description": "Deals +1 maximum damage per Vampirism"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "cost",
+              "costs": {
+                "regenerating": 1
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "draining",
+                  "value": 1,
+                  "target": "self",
+                  "description": "gain 1 Vampirism"
+                }
+              ],
+              "description": "Use 1 Regeneration"
+            }
+          ]
         }
       ],
       "slug": "hungry_blade",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: Use 1 Regeneration to gain 1 Vampirism."
-      ],
       "sockets": 1,
       "icontype": "vampiric, melee"
     },
@@ -2191,13 +2427,45 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "cost",
+              "costs": {
+                "credits": 1
+              },
+              "effects": [
+                {
+                  "type": "gain_damage",
+                  "amount": 1,
+                  "target": "self",
+                  "counting": "any",
+                  "description": "This gains 1 damage"
+                },
+                {
+                  "type": "gain_damage",
+                  "amount": 1,
+                  "target": "star",
+                  "counting": {
+                    "any": [
+                      "melee",
+                      "ranged",
+                      "magic"
+                    ]
+                  },
+                  "description": "and Star Weapons gain 1 damage"
+                }
+              ],
+              "description": "Use 1 Mana"
+            }
+          ]
         }
       ],
       "slug": "magic_torch",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: Use 1 Mana: This and Star Weapons gain 1 damage."
-      ],
       "sockets": 1,
       "icontype": "magic, fire, melee",
       "recipe": [
@@ -2678,11 +2946,43 @@
       "source": "Shell Totem",
       "rarity": "rare",
       "cost": 5,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.4,
+          "cpu_cost": 2.0,
+          "effects": [
+            {
+              "type": "condition",
+              "subject": "health",
+              "whose": "self",
+              "test": "above",
+              "amount": 0.7,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "monitored",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Empower"
+                }
+              ],
+              "otherwise": [
+                {
+                  "type": "heal",
+                  "min_heal": 8,
+                  "max_heal": 8,
+                  "description": "Otherwise, heal for 8"
+                }
+              ],
+              "description": "If your health is above 70%"
+            }
+          ]
+        }
+      ],
       "slug": "shell_totem",
       "in_shop": false,
       "unbuilt": [
-        "Every 3.4s: If your health is above 70%, gain 1 Empower. Otherwise, heal for 8.",
         "Uses -15% stamina for each Star Holy-item."
       ],
       "icontype": "holy",
@@ -2791,13 +3091,30 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "debuff",
+              "debuff_name": "throttled",
+              "value": 3,
+              "target": "enemy",
+              "description": "Inflict 3 Cold"
+            },
+            {
+              "type": "debuff",
+              "debuff_name": "throttled",
+              "value": 2,
+              "target": "self",
+              "description": "and 2 Cold to yourself"
+            }
+          ]
         }
       ],
       "slug": "snow_stick",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: Inflict 3 Cold and 2 Cold to yourself."
-      ],
       "sockets": 1,
       "icontype": "ice, melee",
       "recipe": [
@@ -2949,13 +3266,24 @@
               "description": "Attacks 12% faster for each Star Food"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "damage_taken",
+              "value": 0.02,
+              "target": "enemy",
+              "duration": -1,
+              "description": "Your opponent takes +2% damage"
+            }
+          ]
         }
       ],
       "slug": "stankus_toothpick",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: Your opponent takes +2% damage."
-      ],
       "sockets": 1,
       "icontype": "melee",
       "recipe": [
@@ -3031,12 +3359,37 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Empower"
+            },
+            {
+              "type": "chance",
+              "chance": 0.3,
+              "effects": [
+                {
+                  "type": "stun",
+                  "duration": 0.5,
+                  "target": "enemy",
+                  "description": "stun for 0.5s"
+                }
+              ],
+              "description": "30% chance"
+            }
+          ]
         }
       ],
       "slug": "stone_golem",
       "in_shop": false,
       "unbuilt": [
-        "On hit: Gain 1 Empower. 30% chance to stun for 0.5s.",
         "Use 7 Regeneration: Reduce cooldown to 2.6s and gain 150 Block (once).",
         "Deals +10 damage for each Star Bag of Stones."
       ],
@@ -3096,12 +3449,38 @@
               "description": "Deals +1 damage per Spikes"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Spikes"
+            },
+            {
+              "type": "chance",
+              "chance": 0.6,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "monitored",
+                  "value": 1,
+                  "target": "self",
+                  "description": "gain 1 Empower"
+                }
+              ],
+              "description": "60% chance"
+            }
+          ]
         }
       ],
       "slug": "thornbloom",
       "in_shop": false,
       "unbuilt": [
-        "On hit: Gain 1 Spikes. 60% chance to gain 1 Empower.",
         "Empower gained: Gain 11 maximum health."
       ],
       "sockets": 2,

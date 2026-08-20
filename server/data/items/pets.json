@@ -114,13 +114,63 @@
       "source": "Cubert",
       "rarity": "unique",
       "cost": 8,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 1,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.35,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "regenerating",
+                  "value": 1,
+                  "target": "self",
+                  "description": "gain 1 Regeneration"
+                }
+              ],
+              "description": "35% chance"
+            }
+          ]
+        },
+        {
+          "type": "aura",
+          "zone": "diamond",
+          "counting": "any",
+          "after": 1,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.3,
+              "effects": [
+                {
+                  "type": "cost",
+                  "costs": {
+                    "regenerating": 1
+                  },
+                  "effects": [
+                    {
+                      "type": "buff",
+                      "buff_name": "monitored",
+                      "value": 1,
+                      "target": "self",
+                      "description": "gain 1 Empower"
+                    }
+                  ],
+                  "description": "use 1 Regeneration"
+                }
+              ],
+              "description": "30% chance"
+            }
+          ]
+        }
+      ],
       "slug": "cubert",
       "in_shop": false,
-      "unbuilt": [
-        "Star activates: 35% chance to gain 1 Regeneration.",
-        "Diamond activates: 30% chance to use 1 Regeneration to gain 1 Empower."
-      ],
       "icontype": "treasure"
     },
     "hyper_hedgehog": {
@@ -1062,14 +1112,53 @@
               "description": "Triggers 15% faster for each Star Pet or Food"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 3.3,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "effect_damage",
+              "value": 5,
+              "lifesteal": 0,
+              "per_status": {},
+              "description": "Deal 5 Effect-damage"
+            },
+            {
+              "type": "chance",
+              "chance": 0.75,
+              "effects": [
+                {
+                  "type": "debuff",
+                  "debuff_name": "memory_leaked",
+                  "value": 1,
+                  "target": "enemy",
+                  "description": "Inflict 1 Poison"
+                }
+              ],
+              "description": "75%"
+            },
+            {
+              "type": "chance",
+              "chance": 0.1,
+              "effects": [
+                {
+                  "type": "debuff",
+                  "debuff_name": "rate_limited",
+                  "value": 1,
+                  "target": "enemy",
+                  "description": "Inflict 1 Blind"
+                }
+              ],
+              "description": "10%"
+            }
+          ]
         }
       ],
       "slug": "data_crawler",
       "icontype": "nature",
-      "in_shop": false,
-      "unbuilt": [
-        "Every 3.3s: Deal 5 Effect-damage. 75% to inflict 1 Poison. 10% to inflict 1 Blind."
-      ]
+      "in_shop": false
     },
     "cache_spider": {
       "name": "Cache Spider",

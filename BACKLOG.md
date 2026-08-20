@@ -33,6 +33,24 @@ choosing which item -- `Use N Mana` appears in 22 clauses and 8 of them are
 Worth knowing when planning: 377 clauses remain, 107 on modules waiting for
 sockets, 270 on everything else.
 
+### A mutation run that is killed leaves the catalogue mutated
+
+Mutation testing works by breaking a file, running the suite, and putting the
+file back. A run that is interrupted -- a timeout, a Ctrl-C -- never reaches
+the putting back, and what it leaves behind is a catalogue with a clause
+quietly missing.
+
+It happened: a run hit a two-minute limit while testing Quantum Firewall and
+left "The same 30% roll also gains 1 Spiked" gone from the item and gone from
+`unbuilt`, so nothing was owed and nothing was there. The next mutation of the
+same item reported MISSED, which is how it was found -- a missing test looks
+exactly like this.
+
+The harness restores on SIGTERM and SIGINT now, and runs one file's suite
+rather than all of them so it finishes inside the limit. Worth keeping in mind
+for any script that edits tracked files and tidies up afterwards: `git status`
+after one is not paranoia.
+
 ### `_modify` had no catch-all, and two stats did nothing because of it
 
 `damage_flat` and `max_damage_flat` were added to MODIFIERS so a status could

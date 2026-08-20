@@ -220,15 +220,17 @@ class TestOnHitLoading:
         assert (attack.min_damage, attack.max_damage) == (4, 11)
         assert attack.accuracy == 0.85
 
-        # "On hit: 70% chance to inflict 2 Poison"
+        # "On hit: 70% chance to inflict 2 Poison. The same 70% roll also
+        # inflicts a random debuff." One roll, two things behind it.
         assert isinstance(on_hit, OnHitTrigger)
         assert on_hit.chance == 0.7
+        assert len(on_hit.effects) == 2
 
     def test_the_debuff_effect_is_not_dropped(self):
         """The loader had no debuff branch, so every debuff in the
         catalogue was silently thrown away at startup"""
 
-        (debuff,) = config_loader.items["virus_injector"].triggers[1].effects
+        debuff = config_loader.items["virus_injector"].triggers[1].effects[0]
         assert isinstance(debuff, DebuffEffect)
         assert debuff.debuff_name == "memory_leaked"
         assert debuff.value == 2
@@ -236,14 +238,14 @@ class TestOnHitLoading:
     def test_the_debuff_never_wears_off(self):
         """Section 3.2: a debuff lasts to the end of the battle"""
 
-        (debuff,) = config_loader.items["virus_injector"].triggers[1].effects
+        debuff = config_loader.items["virus_injector"].triggers[1].effects[0]
         assert debuff.duration == -1
 
     def test_the_engine_reads_the_name_the_catalogue_writes(self):
         """The engine pays poison out by name. A disagreement between the two
         spellings would tick nothing, and nothing would say so."""
 
-        (debuff,) = config_loader.items["virus_injector"].triggers[1].effects
+        debuff = config_loader.items["virus_injector"].triggers[1].effects[0]
         assert debuff.debuff_name == MEMORY_LEAKED
 
 

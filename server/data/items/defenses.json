@@ -226,6 +226,20 @@
               "type": "cpu_drain",
               "value": 0.3,
               "target": "attacker"
+            },
+            {
+              "type": "limit",
+              "times": 5,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "spiked",
+                  "value": 1,
+                  "target": "self",
+                  "description": "gains 1 Spiked"
+                }
+              ],
+              "description": "up to 5"
             }
           ]
         }
@@ -233,9 +247,6 @@
       "slug": "quantum_firewall",
       "sockets": 1,
       "in_shop": false,
-      "unbuilt": [
-        "On attacked (Melee): The same 30% roll also gains 1 Spiked (up to 5)."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -269,14 +280,23 @@
               "description": "Start of battle: Gain 45 Block"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "resist",
+              "count": 3,
+              "chance": 0,
+              "target": "self",
+              "description": "Resist 3 debuffs"
+            }
+          ]
         }
       ],
       "slug": "adaptive_mesh_armor",
       "sockets": 2,
-      "in_shop": false,
-      "unbuilt": [
-        "Resist 3 debuffs."
-      ]
+      "in_shop": false
     },
     "cap_of_discomfort": {
       "name": "Itchy Firmware",
@@ -548,13 +568,32 @@
               "description": "If you have no debuffs, gain 25 Block"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "trigger_speed",
+              "value": -0.5,
+              "target": "own",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "cap": null,
+              "description": "Your Weapons attack 50% slower"
+            }
+          ]
         }
       ],
       "slug": "gold_armor",
       "in_shop": false,
       "unbuilt": [
-        "Shop entered: Gain 3 Gold.",
-        "Your Weapons attack 50% slower."
+        "Shop entered: Gain 3 Gold."
       ],
       "sockets": 3,
       "icontype": "holy",
@@ -907,12 +946,32 @@
               "description": "Items use +20% stamina"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "cleanse",
+              "count": 1,
+              "removes": "spiked",
+              "target": "enemy",
+              "description": "Remove 1 Spikes from opponent"
+            },
+            {
+              "type": "cleanse",
+              "count": 2,
+              "removes": "monitored",
+              "target": "enemy",
+              "description": "and 2 Empower"
+            }
+          ]
         }
       ],
       "slug": "stone_armor",
       "in_shop": false,
       "unbuilt": [
-        "Every 4s: Remove 1 Spikes and 2 Empower from opponent.",
         "Health drops below 50%: Gain Block equal to 40% of your missing health (once)."
       ],
       "sockets": 2,

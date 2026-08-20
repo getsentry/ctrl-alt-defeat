@@ -4287,3 +4287,376 @@ class TestAModifierThatNothingAppliesIsRefused(_WithOneItem):
         rolled = {a.damage for a in sim.actions if a.action == "damage"}
         assert min(rolled) == 1, "the bottom of the range did not move"
         assert max(rolled) > 1, "and the top did"
+
+
+class TestTheSweptClauses(_WithOneItem):
+    """Items whose clauses the loader could already say, once somebody said
+    them.
+
+    Nothing new was built for these. That makes them the ones most worth
+    running, because a clause written straight into the catalogue is never
+    exercised by a test of the mechanic it uses.
+    """
+
+    @staticmethod
+    def _real(item_id, position=(0, 0), uid=None):
+        return BattleItem(spec=ITEM_CATALOG[item_id], position=position,
+                          uid=uid or item_id)
+
+    #: A bigger room than the rest of these tests use. The room is 9 by 7 and
+    #: a rack is 3 by 3, so this gives one player six squares by six and the
+    #: other six by three. An item may cover any square a container offers, so
+    #: racks side by side make one space: a four-square-wide item has
+    #: somewhere to stand, and a star drawn above or to the left of an item
+    #: has somewhere to land.
+    ROOM = (((0, 0), (3, 0), (0, 3), (3, 3)), ((6, 0), (6, 3)))
+    MINE = {(x, y) for x in range(6) for y in range(6)}
+
+    def _room(self):
+        mine, theirs = self.ROOM
+        return ([Container.of("mesh_network_hub", at, f"p1_{i}")
+                 for i, at in enumerate(mine)],
+                [Container.of("mesh_network_hub", at, f"p2_{i}")
+                 for i, at in enumerate(theirs)])
+
+    def _place(self, item_id, how_many_star=0):
+        """Somewhere the item fits with `how_many_star` of its star inside.
+
+        A star is drawn around an item on its own map and half of it reaches
+        off the left and top, so where an item stands decides whether its own
+        aura lands anywhere at all.
+        """
+        spec = ITEM_CATALOG[item_id]
+        room = self.MINE
+        for y in range(6):
+            for x in range(6):
+                covered = {(x + dx, y + dy) for dx, dy in spec.shape.squares}
+                if not covered <= room:
+                    continue
+                star = [(x + dx, y + dy) for dx, dy in spec.shape.star
+                        if (x + dx, y + dy) in room - covered]
+                if len(star) >= how_many_star:
+                    return (x, y), star[:how_many_star]
+        raise AssertionError(
+            f"{item_id} does not fit with {how_many_star} of its star")
+
+    def _fight(self, items, seconds=3.0, against=(), hurt=None, buffs=None):
+        mine, theirs = self._room()
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        original = sim._setup_item_handlers
+
+        def setup(its, owner, enemy):
+            if owner.id == 1 and buffs:
+                owner.buffs.update(buffs)
+            out = original(its, owner, enemy)
+            if owner.id == 1 and hurt is not None:
+                owner.quota = hurt
+            return out
+
+        sim._setup_item_handlers = setup
+        return sim, sim.simulate_battle(items, list(against), 18, mine, theirs)
+
+    @staticmethod
+    def _tagged(uid, kinds, where, category="protocol"):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name=uid, category=category, cost=1,
+                player_class="neutral", shape=parse_map(["#"], "t"), slug=uid,
+                kinds=frozenset(kinds), triggers=[]),
+            position=where, uid=uid)
+
+    def _swinger(self, damage=10, uid="them", position=(4, 0), cooldown=1.0):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid, name="Swinger", category="problem", cost=1,
+                player_class="neutral", shape=parse_map(["#"], "s"), slug=uid,
+                kinds=frozenset({"melee"}),
+                triggers=[TimerTrigger(cooldown=cooldown, cpu_cost=0, effects=[
+                    AttackEffect(min_damage=damage, max_damage=damage,
+                                 accuracy=1.0, crit_chance=0.0)])]),
+            position=position, uid=uid)
+
+    # --- a standing number ------------------------------------------------
+
+    def test_basic_firewall_refuses_three_debuffs(self):
+        """"Resist 3 debuffs." Charges, spent one per stack."""
+        where, _ = self._place("basic_firewall")
+        sim, _ = self._fight(
+            [self._real("basic_firewall", where)], seconds=1.5,
+            against=[self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                DebuffEffect("memory_leaked", 5, target_type="enemy")])],
+                uid="them", position=(6, 0))],
+        )
+        assert sim.player1.debuffs["memory_leaked"] == 2, "3 of the 5 refused"
+        assert sim.player1.resist == 0
+
+    def test_gold_armor_slows_only_the_weapons(self):
+        """"Your Weapons attack 50% slower." Weapons, not everything."""
+        where, _ = self._place("gold_armor")
+        sim, _ = self._fight(
+            [self._real("gold_armor", where),
+             self._tagged("w", ["melee"], (5, 5), category="problem"),
+             self._tagged("p", ["holy"], (5, 4))],
+            seconds=0.2,
+        )
+        held = {i.uid: i.speed_mult for i in sim.loadout[1]}
+        assert held["w"] == pytest.approx(0.5)
+        assert held["p"] == pytest.approx(1.0), "not a Weapon, so untouched"
+
+    def test_redundancy_protocol_raises_healing(self):
+        healer = self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+            HealEffect(min_heal=10, max_heal=10)])], uid="h", position=(5, 5))
+        where, _ = self._place("redundancy_protocol")
+        _, plain = self._fight([healer], seconds=1.5, hurt=100)
+        _, more = self._fight(
+            [self._real("redundancy_protocol", where), healer],
+            seconds=1.5, hurt=100)
+        assert plain["player1_quota"] - 100 == 10
+        assert more["player1_quota"] - 100 == 12
+
+    def test_claws_of_attack_speed_up_with_spikes(self):
+        where, _ = self._place("claws_of_attack")
+        _, plain = self._fight([self._real("claws_of_attack", where)],
+                               seconds=9.0)
+        _, spiky = self._fight([self._real("claws_of_attack", where)],
+                               seconds=9.0, buffs={"spiked": 10})
+        assert 350 - spiky["player2_quota"] > 350 - plain["player2_quota"]
+
+    # --- start of battle --------------------------------------------------
+
+    def test_hero_sword_arms_only_the_weapons_in_its_star(self):
+        where, (one, two) = self._place("hero_sword", 2)
+        sim, _ = self._fight(
+            [self._real("hero_sword", where),
+             self._tagged("w", ["ranged"], one, category="problem"),
+             self._tagged("f", ["holy"], two)],
+            seconds=0.2,
+        )
+        gained = {i.uid: i.damage_gained for i in sim.loadout[1]}
+        assert gained["w"] == 1
+        assert gained["f"] == 0, "not a Weapon"
+
+    def test_dancing_dragon_counts_the_magic_items_in_its_star(self):
+        where, (one, two) = self._place("dancing_dragon", 2)
+        sim, _ = self._fight(
+            [self._real("dancing_dragon", where),
+             self._tagged("m", ["magic"], one),
+             self._tagged("n", ["nature"], two)],
+            seconds=0.2,
+        )
+        assert sim.player1.buffs["optimized"] == 2, "one Magic-item, not two"
+        assert sim.player1.buffs["calibrated"] == 2
+
+    def test_dancing_dragon_hits_harder_for_its_heat(self):
+        """"Deals +0.5 damage per Heat", which is a half each and so shows
+        only in pairs."""
+        where, _ = self._place("dancing_dragon")
+        _, cold = self._fight([self._real("dancing_dragon", where)], seconds=2.0)
+        _, hot = self._fight([self._real("dancing_dragon", where)], seconds=2.0,
+                             buffs={"optimized": 8})
+        assert 350 - hot["player2_quota"] > 350 - cold["player2_quota"]
+
+    def test_present_hands_out_five_buffs(self):
+        where, _ = self._place("present")
+        sim, _ = self._fight([self._real("present", where)], seconds=0.2)
+        assert sum(sim.player1.buffs.values()) == 5
+        assert set(sim.player1.buffs) <= BUFFS
+
+    def test_angel_crystal_gains_at_the_start_and_again_at_seven(self):
+        where, (one,) = self._place("angel_crystal", 1)
+        holy = [self._real("angel_crystal", where),
+                self._tagged("h", ["holy"], one)]
+        early, _ = self._fight(holy, seconds=1.0)
+        late, _ = self._fight(holy, seconds=7.5)
+        assert early.player1.buffs["regenerating"] == 5, "3 and 2 for one Holy"
+        assert "monitored" not in early.player1.buffs
+        assert late.player1.buffs["monitored"] == 4, "3 and 1 for one Holy"
+
+    # --- after a time -----------------------------------------------------
+
+    def test_rainbow_badge_gains_one_of_each(self):
+        where, _ = self._place("rainbow_badge")
+        early, _ = self._fight([self._real("rainbow_badge", where)], seconds=6.0)
+        late, _ = self._fight([self._real("rainbow_badge", where)], seconds=7.5)
+        assert early.player1.buffs == {}
+        assert late.player1.buffs == {name: 1 for name in BUFFS}
+
+    def test_shiny_shell_heals_more_beside_holy_items(self):
+        where, (one, two) = self._place("shiny_shell", 2)
+        _, alone = self._fight([self._real("shiny_shell", where)],
+                               seconds=5.5, hurt=100)
+        _, holy = self._fight(
+            [self._real("shiny_shell", where),
+             self._tagged("h", ["holy"], one),
+             self._tagged("n", ["nature"], two)],
+            seconds=5.5, hurt=100)
+        assert alone["player1_quota"] - 100 == 5
+        assert holy["player1_quota"] - 100 == 8, (
+            "5 and 3 for the one Holy-item; the Nature one adds nothing"
+        )
+
+    # --- on a clock -------------------------------------------------------
+
+    def test_stone_armor_takes_two_kinds_off_the_opponent(self):
+        """"Remove 1 Spikes and 2 Empower from opponent." Named, so it takes
+        those and nothing else."""
+        where, _ = self._place("stone_armor")
+        sim, _ = self._fight(
+            [self._real("stone_armor", where)], seconds=4.5,
+            against=[self._item([BattleStartTrigger(effects=[
+                BuffEffect("spiked", 5, "self"),
+                BuffEffect("monitored", 5, "self"),
+                BuffEffect("credits", 5, "self")])], uid="them",
+                position=(6, 0))],
+        )
+        assert sim.player2.buffs == {"spiked": 4, "monitored": 3, "credits": 5}
+
+    def test_shell_totem_takes_the_half_its_health_chooses(self):
+        where, _ = self._place("shell_totem")
+        healthy, _ = self._fight([self._real("shell_totem", where)], seconds=3.6)
+        hurt, result = self._fight([self._real("shell_totem", where)],
+                                   seconds=3.6, hurt=100)
+        assert healthy.player1.buffs.get("monitored") == 1
+        assert "monitored" not in hurt.player1.buffs
+        assert result["player1_quota"] - 100 == 8, "it healed instead"
+
+    def test_rat_deals_effect_damage_and_rolls_twice_behind_it(self):
+        """"Deal 5 Effect-damage. 75% to inflict 1 Poison. 10% to inflict 1
+        Blind." Three things, and only the first is certain."""
+        where, _ = self._place("data_crawler")
+        sim, result = self._fight([self._real("data_crawler", where)],
+                                  seconds=30.0)
+        assert 350 - result["player2_quota"] > 0
+        rolled = {a.details.get("debuff_name") for a in sim.actions
+                  if a.action == "debuff" and a.details}
+        assert "memory_leaked" in rolled, "the 75% should land in 9 tries"
+
+    def test_cache_optimizer_swaps_what_it_gives_at_ten_mana(self):
+        """"Gain 1 Mana" every 3.5s, and "gain 1 Luck instead" once ten are
+        held. Instead, so never both."""
+        where, _ = self._place("cache_optimizer")
+        early, _ = self._fight([self._real("cache_optimizer", where)], seconds=4.0)
+        rich, _ = self._fight([self._real("cache_optimizer", where)], seconds=4.0,
+                              buffs={"credits": 10})
+        assert early.player1.buffs == {"credits": 1}
+        assert rich.player1.buffs == {"credits": 10, "calibrated": 1}
+
+    def test_oil_lamp_arms_its_star_weapon_again_and_again(self):
+        where, (one,) = self._place("oil_lamp", 1)
+        sim, _ = self._fight(
+            [self._real("oil_lamp", where),
+             self._tagged("w", ["melee"], one, category="problem")],
+            seconds=7.5,
+        )
+        weapon = next(i for i in sim.loadout[1] if i.uid == "w")
+        assert weapon.damage_gained == 2, "3.4s and 6.8s"
+        assert weapon.accuracy_bonus == pytest.approx(0.1)
+
+    # --- on hit -----------------------------------------------------------
+
+    def test_stone_golem_gains_empower_on_every_hit(self):
+        where, _ = self._place("stone_golem")
+        sim, _ = self._fight([self._real("stone_golem", where)], seconds=12.0)
+        assert sim.player1.buffs.get("monitored", 0) > 0
+
+    def test_hammer_stuns_sometimes_and_not_always(self):
+        """45% chance, so over a long fight it should land and should not
+        land on every swing."""
+        where, _ = self._place("hammer")
+        sim, _ = self._fight([self._real("hammer", where)], seconds=40.0)
+        stuns = [a for a in sim.actions if a.action == "stun"]
+        hits = [a for a in sim.actions if a.action == "damage"]
+        assert stuns, "45% over that many swings should land"
+        assert len(stuns) < len(hits), "and should not land on all of them"
+
+    def test_snow_stick_chills_itself_as_well(self):
+        """"Inflict 3 Cold and 2 Cold to yourself." The second half is the
+        cost of the first."""
+        where, _ = self._place("snow_stick")
+        sim, _ = self._fight([self._real("snow_stick", where)], seconds=6.0)
+        assert sim.player2.debuffs["throttled"] > 0
+        assert sim.player1.debuffs["throttled"] > 0
+        assert sim.player2.debuffs["throttled"] > sim.player1.debuffs["throttled"]
+
+    def test_hungry_blade_buys_vampirism_with_regeneration(self):
+        where, _ = self._place("hungry_blade")
+        with_it, _ = self._fight([self._real("hungry_blade", where)],
+                                 seconds=3.0, buffs={"regenerating": 2})
+        without, _ = self._fight([self._real("hungry_blade", where)], seconds=3.0)
+        assert with_it.player1.buffs["draining"] > without.player1.buffs.get(
+            "draining", 0)
+
+    def test_magic_torch_arms_itself_and_its_star_weapons(self):
+        where, (one,) = self._place("magic_torch", 1)
+        sim, _ = self._fight(
+            [self._real("magic_torch", where),
+             self._tagged("w", ["melee"], one, category="problem")],
+            seconds=3.0, buffs={"credits": 10},
+        )
+        gained = {i.uid: i.damage_gained for i in sim.loadout[1]}
+        assert gained["magic_torch"] > 0, "this gains 1 damage"
+        assert gained["w"] == gained["magic_torch"], "and so do Star Weapons"
+
+    def test_stankus_toothpick_makes_the_opponent_softer(self):
+        where, _ = self._place("stankus_toothpick")
+        sim, _ = self._fight([self._real("stankus_toothpick", where)],
+                             seconds=3.0)
+        assert sim.player2.modifier("damage_taken", 3.0) > 0
+
+    # --- an aura as the cause ---------------------------------------------
+
+    def test_quantum_firewall_gains_spiked_on_the_same_roll(self):
+        """"The same 30% roll also gains 1 Spiked (up to 5)." One roll, three
+        things behind it, and the Spikes stop at five however long the fight.
+        """
+        where, _ = self._place("quantum_firewall")
+        sim, _ = self._fight(
+            [self._real("quantum_firewall", where)], seconds=40.0,
+            against=[self._item([TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[
+                AttackEffect(min_damage=1, max_damage=1, accuracy=1.0,
+                             crit_chance=0.0)])], uid="them", position=(6, 0))],
+        )
+        assert sim.player1.buffs.get("spiked") == 5, "up to 5, and it got there"
+
+    def test_cubert_answers_what_stands_in_its_star(self):
+        where, (one,) = self._place("cubert", 1)
+        ticker = self._item([TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
+            BuffEffect("calibrated", 0, "self")])], uid="t", position=one)
+        sim, _ = self._fight([self._real("cubert", where), ticker], seconds=20.0)
+        assert sim.player1.buffs.get("regenerating", 0) > 0
+
+    def test_cubert_answers_its_diamond_separately(self):
+        """"Diamond activates: 30% chance to use 1 Regeneration to gain 1
+        Empower." A different zone and a different clause, so an item standing
+        in the star cannot set it off."""
+        spec = ITEM_CATALOG["cubert"]
+        room = self.MINE
+        for y in range(6):
+            for x in range(6):
+                covered = {(x + dx, y + dy) for dx, dy in spec.shape.squares}
+                if not covered <= room:
+                    continue
+                diamond = [(x + dx, y + dy) for dx, dy in spec.shape.diamond
+                           if (x + dx, y + dy) in room - covered]
+                if diamond:
+                    where, one = (x, y), diamond[0]
+                    break
+            else:
+                continue
+            break
+        ticker = self._item([TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
+            BuffEffect("calibrated", 0, "self")])], uid="t", position=one)
+        sim, _ = self._fight([self._real("cubert", where), ticker],
+                             seconds=20.0, buffs={"regenerating": 40})
+        assert sim.player1.buffs.get("monitored", 0) > 0
+
+    def test_dark_web_access_deals_effect_damage_from_its_star(self):
+        where, (one,) = self._place("dark_web_access", 1)
+        ticker = self._item([TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[
+            BuffEffect("calibrated", 0, "self")])], uid="t", position=one)
+        _, alone = self._fight([self._real("dark_web_access", where)], seconds=20.0)
+        _, fed = self._fight([self._real("dark_web_access", where), ticker],
+                             seconds=20.0)
+        assert alone["player2_quota"] == 350, "nothing in its star"
+        assert fed["player2_quota"] < 350

@@ -101,11 +101,23 @@
       "source": "Amulet of Alchemy",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "random_status",
+              "kind": "buff",
+              "count": 3,
+              "target": "self",
+              "description": "Gain 3 random buffs"
+            }
+          ]
+        }
+      ],
       "slug": "script_compiler",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 3 random buffs.",
         "Star Potion consumed: 70% chance to repeat its effect after 2.5s."
       ],
       "recipe": [
@@ -130,13 +142,35 @@
       "source": "Amulet of Darkness",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 1,
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.3,
+              "effects": [
+                {
+                  "type": "effect_damage",
+                  "value": 7,
+                  "lifesteal": 0,
+                  "per_status": {},
+                  "description": "deal 7 Effect-damage"
+                }
+              ],
+              "description": "30% chance"
+            }
+          ]
+        }
+      ],
       "slug": "dark_web_access",
       "icontype": "dark",
       "in_shop": false,
       "unbuilt": [
-        "22 Effect-damage dealt: Inflict 1 random debuff.",
-        "Star item activates: 30% chance to deal 7 Effect-damage."
+        "22 Effect-damage dealt: Inflict 1 random debuff."
       ],
       "recipe": [
         {
@@ -231,13 +265,23 @@
               "value": 20
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "healing",
+              "value": 0.2,
+              "target": "self",
+              "duration": -1,
+              "description": "Your healing is increased by 20%"
+            }
+          ]
         }
       ],
       "slug": "redundancy_protocol",
       "in_shop": false,
-      "unbuilt": [
-        "Your healing is increased by 20%."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -488,12 +532,72 @@
       "source": "Angel Crystal",
       "rarity": "unique",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 3,
+              "target": "self",
+              "description": "Gain 3 Regeneration"
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "holy"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "regenerating",
+                  "value": 2,
+                  "target": "self",
+                  "description": "+2 per Star Holy-item"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "after",
+          "delay": 7.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 3,
+              "target": "self",
+              "description": "Gain 3 Empower"
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "holy"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "monitored",
+                  "value": 1,
+                  "target": "self",
+                  "description": "+1 per Star Holy-item"
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "slug": "angel_crystal",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Gain 3 Regeneration + 2 Regeneration per Star Holy-item.",
-        "After 7s: Gain 3 Empower + 1 Empower per Star Holy-item.",
         "Regeneration gained: Gain 4 maximum health."
       ],
       "icontype": "treasure,holy"
@@ -605,13 +709,32 @@
               "description": "and each Diamond Food"
             }
           ]
+        },
+        {
+          "type": "after",
+          "delay": 15.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 6,
+              "target": "self",
+              "description": "Gain 6 Heat"
+            },
+            {
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 6,
+              "target": "self",
+              "description": "Gain 6 Regeneration"
+            }
+          ]
         }
       ],
       "slug": "boiling_pot",
       "in_shop": false,
       "unbuilt": [
-        "Star Potion triggered: Heal for 10 + 2 per Diamond Food.",
-        "After 15s: Gain 6Heat and 6Regeneration."
+        "Star Potion triggered: Heal for 10 + 2 per Diamond Food."
       ],
       "sockets": 1,
       "recipe": [
@@ -982,13 +1105,45 @@
               "description": "Gain 2 Optimized"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 3.4,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 1,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "description": "The Star Weapon gains 1 damage"
+            },
+            {
+              "type": "modify",
+              "stat": "accuracy",
+              "value": 0.05,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "cap": null,
+              "description": "and 5% accuracy"
+            }
+          ]
         }
       ],
       "slug": "oil_lamp",
       "in_shop": false,
-      "unbuilt": [
-        "Every 3.4s: The Star Weapon gains 1 damage and 5% accuracy."
-      ],
       "icontype": "fire"
     },
     "platinum_customer_card": {
@@ -1036,12 +1191,24 @@
       "source": "Present",
       "rarity": "unique",
       "cost": 10,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "random_status",
+              "kind": "buff",
+              "count": 5,
+              "target": "self",
+              "description": "Gain 5 random buffs"
+            }
+          ]
+        }
+      ],
       "slug": "present",
       "in_shop": false,
       "unbuilt": [
-        "Shop entered: Instead of gold, you receive items with a higher value.",
-        "Start of battle: Gain 5 random buffs."
+        "Shop entered: Instead of gold, you receive items with a higher value."
       ],
       "icontype": "treasure"
     },
@@ -1082,12 +1249,67 @@
       "source": "Rainbow Badge",
       "rarity": "unique",
       "cost": 5,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "after",
+          "delay": 7.0,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "optimized",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 optimized"
+            },
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 monitored"
+            },
+            {
+              "type": "buff",
+              "buff_name": "calibrated",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 calibrated"
+            },
+            {
+              "type": "buff",
+              "buff_name": "regenerating",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 regenerating"
+            },
+            {
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 spiked"
+            },
+            {
+              "type": "buff",
+              "buff_name": "draining",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 draining"
+            },
+            {
+              "type": "buff",
+              "buff_name": "credits",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 credits"
+            }
+          ]
+        }
+      ],
       "slug": "rainbow_badge",
       "in_shop": false,
       "unbuilt": [
-        "Items of all classes are offered in the shop.",
-        "After 7s: Gain 1 of every type of buff."
+        "Items of all classes are offered in the shop."
       ],
       "icontype": "treasure"
     },
@@ -1191,11 +1413,29 @@
       "source": "Shepherds Crook",
       "rarity": "rare",
       "cost": 8,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 2,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "description": "Star Weapons gain 2 damage"
+            }
+          ]
+        }
+      ],
       "slug": "shepherds_crook",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: Star Weapons gain 2 damage.",
         "35% chance to protect your buffs from removal.",
         "50% chance to resist Blind and Cold."
       ],
@@ -1220,12 +1460,39 @@
       "source": "Shiny Shell",
       "rarity": "common",
       "cost": 2,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "after",
+          "delay": 5.0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 5,
+              "max_heal": 5,
+              "description": "Heal for 5"
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "holy"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "min_heal": 3,
+                  "max_heal": 3,
+                  "description": "+3 per Star Holy-item"
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "slug": "shiny_shell",
       "in_shop": false,
-      "unbuilt": [
-        "After 5s: Heal for 5 + 3 for each Star Holy-item."
-      ],
       "icontype": "holy, nature"
     },
     "sir_sand": {
@@ -1312,12 +1579,33 @@
       "source": "Stable Recombobulator",
       "rarity": "unique",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 2.5,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "random_status",
+              "kind": "buff",
+              "count": 1,
+              "target": "self",
+              "description": "Gain 1 random buff"
+            },
+            {
+              "type": "cleanse",
+              "count": 1,
+              "removes": "debuff",
+              "target": "self",
+              "description": "and cleanse 1 debuff"
+            }
+          ]
+        }
+      ],
       "slug": "stable_recombobulator",
       "in_shop": false,
       "unbuilt": [
-        "Shop entered: Consume Star items. Create different items based on the combined value.",
-        "Every 2.5s: Gain 1 random buff and cleanse 1 debuff."
+        "Shop entered: Consume Star items. Create different items based on the combined value."
       ],
       "icontype": "treasure, dark, magic"
     },
@@ -1432,12 +1720,33 @@
       "source": "Unstable Recombobulator",
       "rarity": "epic",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "random_status",
+              "kind": "buff",
+              "count": 1,
+              "target": "self",
+              "description": "Gain 1 random buff"
+            },
+            {
+              "type": "cleanse",
+              "count": 1,
+              "removes": "debuff",
+              "target": "self",
+              "description": "and cleanse 1 debuff"
+            }
+          ]
+        }
+      ],
       "slug": "unstable_recombobulator",
       "in_shop": false,
       "unbuilt": [
-        "Shop entered: Consume this and Star items. Create different items based on the combined value.",
-        "Every 4s: Gain 1 random buff and cleanse 1 debuff."
+        "Shop entered: Consume this and Star items. Create different items based on the combined value."
       ],
       "icontype": "dark, magic"
     },
@@ -1486,12 +1795,28 @@
       "source": "Whetstone",
       "rarity": "common",
       "cost": 4,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 1,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee",
+                  "ranged",
+                  "magic"
+                ]
+              },
+              "description": "Star Weapons gain 1 damage"
+            }
+          ]
+        }
+      ],
       "slug": "whetstone",
-      "in_shop": false,
-      "unbuilt": [
-        "Start of battle: Star Weapons gain 1 damage."
-      ]
+      "in_shop": false
     },
     "white_lily_collar": {
       "name": "Ivory Collar",
