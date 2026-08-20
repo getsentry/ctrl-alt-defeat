@@ -30,6 +30,10 @@ var is_hovering: bool = false
 
 # What the item is doing right now, as opposed to what it is.
 var _cooldown: Cooldown = null
+## The picture this item draws, whether that is its artwork or the coloured
+## shape it falls back on. Held onto because two things animate it rather than
+## the whole cell: the charge fills it, and a blow throws a copy of it.
+var _artwork: Control = null
 var _fire_tween: Tween = null
 
 func setup(data, size: float = 45.0, spacing: float = 1.0):
@@ -64,6 +68,8 @@ func _create_visual():
 	# Clear existing children
 	for child in get_children():
 		child.queue_free()
+	_artwork = null
+	_cooldown = null
 
 	# Calculate size from shape
 	var max_x = 0
@@ -123,6 +129,7 @@ func _create_texture_visual(texture_path: String):
 		return
 
 	var texture_rect = TextureRect.new()
+	texture_rect.name = "Artwork"
 	texture_rect.texture = texture
 
 	# An item's artwork is drawn for the way it is held in the catalogue, and
@@ -151,6 +158,7 @@ func _create_texture_visual(texture_path: String):
 	texture_rect.position = (custom_minimum_size - texture_size) / 2.0
 	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(texture_rect)
+	_artwork = texture_rect
 
 	# Add subtle background/border for better visibility
 	if show_border:
@@ -174,10 +182,12 @@ func _create_colored_visual():
 	outside of the shape rather than around each of its cells.
 	"""
 	var placeholder = ItemPlaceholder.new()
+	placeholder.name = "Artwork"
 	placeholder.setup(item_shape, _placeholder_color(), cell_size, cell_spacing,
 		_placeholder_pattern(), _placeholder_category())
 	placeholder.size = custom_minimum_size
 	add_child(placeholder)
+	_artwork = placeholder
 
 
 func _placeholder_pattern() -> String:
@@ -331,10 +341,11 @@ static func create_shop_preview(item_data: Dictionary, size: Vector2 = Vector2(6
 
 # ============ Firing ============
 
-## How much bigger an item gets at the top of its swell.
-const FIRE_SCALE := 1.35
-const FIRE_UP := 0.07
-const FIRE_DOWN := 0.16
+## How much bigger an item gets at the top of its swell. Half again: a blow is
+## the moment the whole screen is about, and a nudge does not read as one.
+const FIRE_SCALE := 1.55
+const FIRE_UP := 0.08
+const FIRE_DOWN := 0.24
 
 
 func fire(cooldown_seconds: float = 0.0) -> void:
@@ -348,6 +359,17 @@ func fire(cooldown_seconds: float = 0.0) -> void:
 	_swell()
 	if cooldown_seconds > 0.0:
 		_start_cooldown(cooldown_seconds)
+
+
+func artwork_copy() -> Control:
+	"""A copy of the picture this item draws, for something else to animate.
+
+	The picture rather than the cell, because a cell is a square of nothing
+	with a picture somewhere in it, and it is the picture that is the item.
+	"""
+	if not is_instance_valid(_artwork):
+		return null
+	return _artwork.duplicate()
 
 
 func _swell() -> void:
@@ -365,41 +387,69 @@ func _swell() -> void:
 
 
 func _start_cooldown(seconds: float) -> void:
-	if _cooldown == null:
+	if not is_instance_valid(_artwork):
+		return
+	if not is_instance_valid(_cooldown):
 		_cooldown = Cooldown.new()
 		_cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		# Over the artwork, under the tooltip.
 		_cooldown.z_index = 1
 		add_child(_cooldown)
-	_cooldown.size = size
-	_cooldown.run(seconds)
+	_cooldown.charge(_artwork, size, seconds)
 
 
 func is_cooling() -> bool:
-	return _cooldown != null and _cooldown.filling
+	return is_instance_valid(_cooldown) and _cooldown.filling
 
 
-## The dark that covers an item while it is not ready, retreating downwards as
-## the cooldown runs out.
+## An item charging back up, drawn on the item's own picture.
 ##
-## Drawn from the top so the lit part grows from the bottom up, which reads as
-## filling rather than draining. An item ready to go is not covered at all.
+## The picture goes dark and a lit copy of it grows back from the bottom, so
+## what fills is the item rather than the square it stands in. Drawing the
+## square instead put a rectangle of dark over an item that does not fill its
+## square -- most of them -- and what the player watched fill was the gap
+## around the item.
+##
+## The lit copy is a duplicate of the artwork clipped to how much of it has
+## charged. That works whatever the artwork is: a picture, a turned picture,
+## or the coloured shape an item without one falls back on.
 class Cooldown extends Control:
-	const DARK := Color(0.02, 0.02, 0.07, 0.72)
+	## How dark an item goes while it is charging. Dark enough that the lit
+	## part is plainly the lit part, light enough to still say what the item is.
+	const DIM := Color(0.36, 0.36, 0.46, 1.0)
 
 	var filling: bool = false
 	var _left: float = 0.0
 	var _total: float = 0.0
+	var _artwork: Control = null
+	var _lit: Control = null
+	## The whole cell, which the clip is measured off. Not size: that is the
+	## clip itself, and it changes as the item fills.
+	var _whole: Vector2 = Vector2.ZERO
 
-	func run(seconds: float) -> void:
+
+	func _ready() -> void:
+		clip_contents = true
+		set_process(false)
+
+
+	func charge(artwork: Control, whole: Vector2, seconds: float) -> void:
+		_artwork = artwork
+		_whole = whole
 		_total = maxf(seconds, 0.01)
 		_left = _total
 		filling = true
-		set_process(true)
-		queue_redraw()
 
-	func _ready() -> void:
-		set_process(false)
+		artwork.modulate = DIM
+		if is_instance_valid(_lit):
+			_lit.queue_free()
+		_lit = artwork.duplicate()
+		_lit.modulate = Color.WHITE
+		add_child(_lit)
+
+		set_process(true)
+		_shape()
+
 
 	func _process(delta: float) -> void:
 		_left -= delta
@@ -407,13 +457,34 @@ class Cooldown extends Control:
 			_left = 0.0
 			filling = false
 			set_process(false)
-		queue_redraw()
-
-	func _draw() -> void:
-		if not filling:
+			_ready_again()
 			return
-		var covered := size.y * (_left / _total)
-		draw_rect(Rect2(Vector2.ZERO, Vector2(size.x, covered)), DARK)
-		# A line at the waterline, so the movement is visible on a small item.
-		draw_line(Vector2(0, covered), Vector2(size.x, covered),
-			Color(0.6, 0.9, 1.0, 0.5), 1.0)
+		_shape()
+
+
+	func filled() -> float:
+		"""How much of the item has charged, from nothing to all of it"""
+		if _total <= 0.0:
+			return 1.0
+		return clampf(1.0 - _left / _total, 0.0, 1.0)
+
+
+	func _shape() -> void:
+		# The lit part grows from the bottom, which reads as filling rather
+		# than draining.
+		var lit := _whole.y * filled()
+		position = Vector2(0.0, _whole.y - lit)
+		size = Vector2(_whole.x, lit)
+		if is_instance_valid(_lit) and is_instance_valid(_artwork):
+			# Lined up with the picture it was copied from, which is measured
+			# from the cell rather than from this clip.
+			_lit.position = _artwork.position - position
+
+
+	func _ready_again() -> void:
+		if is_instance_valid(_artwork):
+			_artwork.modulate = Color.WHITE
+		if is_instance_valid(_lit):
+			_lit.queue_free()
+			_lit = null
+		size = Vector2.ZERO

@@ -271,6 +271,73 @@ func test_damage_asks_for_a_damage_number():
 	assert_eq(data["amount"], 7, "Should carry the amount of damage")
 
 
+func test_poison_says_it_is_poison():
+	# It arrives on its own clock, off an item that struck some time ago, so a
+	# player watching their health fall with nobody hitting them has to be able
+	# to see why.
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	Presentation.clear_requests()
+
+	battle_screen._on_damage_dealt(1, 4, 16, "venom", "dot")
+
+	var data = Presentation.requests("damage_number")[0]["data"]
+	assert_eq(data["kind"], "dot", "The number should know what hurt them")
+
+
+func test_poison_is_written_in_another_colour_than_a_blow():
+	# The numbers themselves are only drawn where animations run, so what the
+	# colours mean is asked for rather than looked at.
+	assert_ne(battle_screen.hurt_colour("dot"), battle_screen.hurt_colour("damage"),
+		"Poison and a blow should not be written in the same colour")
+	assert_eq(battle_screen.hurt_colour("critical_hit"), battle_screen.hurt_colour("damage"),
+		"and anything else that hurts is a blow until it says otherwise")
+
+
+func _with_an_item_to_throw() -> void:
+	"""The fixture's racks are empty, and a blow throws the item that made it"""
+	battle_screen.player_inventory.load_inventory_state(APITypes.InventoryState.new({
+		"servers": [TestHelpers.container_data({"id": "srv1", "position": [2, 3]})],
+		"items": [TestHelpers.placed_item_data({"id": "blade", "position": [2, 3]})],
+	}))
+
+
+func test_a_blow_throws_the_item_that_made_it():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	_with_an_item_to_throw()
+	Presentation.clear_requests()
+
+	battle_screen._show_item_activation("blade", 2, "damage")
+
+	assert_eq(Presentation.request_count("item_strike"), 1,
+		"A blow should throw a copy of the item that made it")
+	assert_eq(Presentation.requests("item_strike")[0]["data"]["player"], 2,
+		"through whoever it landed on")
+
+
+func test_a_miss_is_thrown_at_the_other_fighter_all_the_same():
+	# A hit says who was hurt; a miss says who swung. Read the same way round,
+	# every miss was thrown at the fighter who threw it.
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	_with_an_item_to_throw()
+	Presentation.clear_requests()
+
+	battle_screen._show_item_activation("blade", 1, "miss")
+
+	assert_eq(Presentation.requests("item_strike")[0]["data"]["player"], 2,
+		"The rack it stands in says who swung it, whatever the action says")
+
+
+func test_mending_somebody_throws_nothing_at_them():
+	assert_true(await _wait_for_playback_start(), "Playback should start")
+	_with_an_item_to_throw()
+	Presentation.clear_requests()
+
+	battle_screen._show_item_activation("blade", 1, "heal")
+
+	assert_eq(Presentation.request_count("item_strike"), 0,
+		"A red item falling through somebody says they were hit")
+
+
 func test_healing_asks_for_a_heal_effect():
 	assert_true(await _wait_for_playback_start(), "Playback should start")
 	Presentation.clear_requests()

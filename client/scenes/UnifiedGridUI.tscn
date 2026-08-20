@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://b6i7wck4p6ind"]
+[gd_scene load_steps=11 format=3 uid="uid://b6i7wck4p6ind"]
 
 [ext_resource type="Script" uid="uid://bsjwiwbja4ewd" path="res://scripts/unified_grid_ui.gd" id="1_unified"]
 [ext_resource type="Texture2D" uid="uid://c3y3cdghsx4wu" path="res://assets/ui/backgrounds/inventory_background.png" id="2_bg"]
@@ -7,6 +7,8 @@
 [ext_resource type="AudioStream" uid="uid://cxj7dtxg7ssuo" path="res://assets/audio/shop_music.ogg" id="11_music"]
 [ext_resource type="Texture2D" uid="uid://s56raawub3qg" path="res://assets/characters/sentaur_shop.png" id="3_sentaur"]
 [ext_resource type="Texture2D" uid="uid://1dffqeiih0x7" path="res://assets/ui/contact_shadow.png" id="12_shadow"]
+[ext_resource type="Texture2D" uid="uid://cxkgv632aah87" path="res://assets/ui/start_battle_key.png" id="14_startkey"]
+[ext_resource type="Texture2D" uid="uid://dyglhcb50lxk1" path="res://assets/ui/start_battle_key_pressed.png" id="15_startkeydown"]
 [ext_resource type="Script" path="res://scripts/contact_shadow.gd" id="13_shadowscript"]
 
 [node name="UnifiedGridUI" type="Control"]
@@ -255,14 +257,16 @@ offset_bottom = 332.0
 tooltip_text = "Reroll the shop for 1 gold"
 text = "REROLL 1g"
 
-[node name="ReadyButton" type="Button" parent="."]
+[node name="ReadyButton" type="TextureButton" parent="."]
 layout_mode = 0
-offset_left = 645.0
-offset_top = 100.0
+offset_left = 600.0
+offset_top = 77.0
 offset_right = 920.0
-offset_bottom = 220.0
-theme_override_font_sizes/font_size = 18
-text = "Ready for Battle!"
+offset_bottom = 229.0
+texture_normal = ExtResource("14_startkey")
+texture_pressed = ExtResource("15_startkeydown")
+ignore_texture_size = true
+stretch_mode = 5
 
 [node name="ShopMusic" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("11_music")

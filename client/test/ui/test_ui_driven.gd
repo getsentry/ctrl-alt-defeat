@@ -168,11 +168,6 @@ func test_full_user_journey_through_ui():
 	var battle_btn = get_tree().current_scene.find_child("ReadyButton", true , false)
 	if not battle_btn:
 		battle_btn = get_tree().current_scene.find_child("BattleButton", true, false)
-	if not battle_btn:
-		for child in get_tree().current_scene.get_children():
-			if child is Button and ("Battle" in str(child.text) or "Fight" in str(child.text)):
-				battle_btn = child
-				break
 
 	if battle_btn:
 		battle_btn.pressed.emit()
@@ -502,13 +497,8 @@ func test_battle_button_and_full_battle():
 		print("   - Shop is empty")
 
 	# Find and click battle button
-	var battle_btn = game_ui.find_child("BattleButton", true, false)
-	if not battle_btn:
-		# Try alternate names
-		for child in game_ui.get_children():
-			if child is Button and ("Battle" in child.text or "Fight" in child.text):
-				battle_btn = child
-				break
+	# By name. What it says is painted on the key, so there is no text on it.
+	var battle_btn = game_ui.find_child("ReadyButton", true, false)
 
 	assert_not_null(battle_btn, "Battle button must exist")
 
@@ -610,11 +600,7 @@ func test_complete_round_cycle():
 			print("   - Item purchased")
 
 	# Start battle
-	var battle_btn = null
-	for child in game_ui.get_children():
-		if child is Button and ("Battle" in str(child.text) or "Fight" in str(child.text)):
-			battle_btn = child
-			break
+	var battle_btn = game_ui.find_child("ReadyButton", true, false)
 
 	if battle_btn:
 		battle_btn.pressed.emit()
@@ -803,11 +789,7 @@ func test_inventory_persistence_across_battle():
 
 	# Start battle
 	print("   - Starting battle...")
-	var battle_btn = null
-	for child in game_ui.get_children():
-		if child is Button and ("Battle" in str(child.text) or "Fight" in str(child.text)):
-			battle_btn = child
-			break
+	var battle_btn = game_ui.find_child("ReadyButton", true, false)
 
 	assert_not_null(battle_btn, "Battle button should exist")
 	battle_btn.pressed.emit()
@@ -1067,11 +1049,7 @@ func test_multiple_rounds():
 				await _wait_for_server()
 
 		# Find and click battle button
-		var battle_btn = null
-		for child in game_ui.get_children():
-			if child is Button and ("Battle" in str(child.text) or "Fight" in str(child.text)):
-				battle_btn = child
-				break
+		var battle_btn = game_ui.find_child("ReadyButton", true, false)
 
 		if not battle_btn:
 			assert_not_null(battle_btn, "Battle button should exist for round %d" % current_round)

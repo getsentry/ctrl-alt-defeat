@@ -546,26 +546,58 @@ func _exit_tree():
 		event_processor.set_process(false)
 
 
-func _show_attack_animation(from_player: bool):
-	if not Presentation.request("attack_animation", {"from_player": from_player}):
+## What a blow looks like when it lands: a red ghost of the item that swung,
+## fired at whoever it hit.
+##
+## The item rather than a bolt, because a build is a set of items and the
+## question the player is asking is which of theirs is doing the work. Red
+## because it is being done to somebody. Its own size, because that is the size
+## the same item is in the rack and a player has to recognise it.
+const STRIKE_TINT := Color(1.0, 0.22, 0.3, 0.92)
+## Where it comes from: in front of the fighter, between the two of them, and
+## above. The height varies with every shot, so a build firing four items a
+## second does not fire all of them along one line.
+const STRIKE_AHEAD := 230.0
+const STRIKE_HIGH := Vector2(90.0, 300.0)
+## How far it turns on the way in. Enough to read as thrown rather than slid,
+## not so much that it becomes a spinning coin.
+const STRIKE_SPIN := 1.6
+const STRIKE_TIME := 0.4
+
+
+func _strike_with(visual: ItemVisual, at_player: int) -> void:
+	"""Fire a red copy of an item at the fighter it just hit."""
+	if not Presentation.request("item_strike", {"player": at_player}):
 		return
-	# A bolt crossing from whoever swung to whoever is about to be hit.
-	var effect = ColorRect.new()
-	effect.size = Vector2(26, 4)
-	effect.color = Color(0.6, 0.95, 1.0) if from_player else Color(1.0, 0.45, 0.5)
-	effect.z_index = 55
 
-	var from: Vector2 = hud.fighter_at(1 if from_player else 2)
-	var to: Vector2 = hud.fighter_at(2 if from_player else 1)
-	effect.position = from
-	add_child(effect)
+	var ghost := visual.artwork_copy()
+	if ghost == null:
+		return
 
+	ghost.modulate = STRIKE_TINT
+	ghost.z_index = 58
+	ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Turned about its own middle, or a spinning item swings around its corner.
+	ghost.pivot_offset = ghost.size / 2.0
+	add_child(ghost)
+
+	var drawn: Vector2 = ghost.size * ghost.scale
+	var lands_on: Vector2 = hud.fighter_at(at_player) - drawn / 2.0
+	# In front of them is towards the middle of the screen, which is the other
+	# side of them depending on which corner they stand in.
+	var ahead := STRIKE_AHEAD if at_player == 1 else -STRIKE_AHEAD
+	ghost.position = lands_on + Vector2(
+		ahead, -randf_range(STRIKE_HIGH.x, STRIKE_HIGH.y))
+
+	var spin: float = ghost.rotation + randf_range(-STRIKE_SPIN, STRIKE_SPIN)
 	var tween = _effect_tween()
-	tween.tween_property(effect, "position", to, 0.22) \
+	tween.tween_property(ghost, "position", lands_on, STRIKE_TIME) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.parallel().tween_property(effect, "scale", Vector2(3.0, 1.0), 0.22)
-	tween.tween_property(effect, "modulate:a", 0.0, 0.12)
-	tween.tween_callback(effect.queue_free)
+	tween.parallel().tween_property(ghost, "rotation", spin, STRIKE_TIME)
+	tween.parallel().tween_property(ghost, "modulate:a", 0.0, STRIKE_TIME * 0.35) \
+		.set_delay(STRIKE_TIME * 0.7)
+	tween.chain().tween_callback(ghost.queue_free)
+
 
 func _on_log_message(message: String, color: Color):
 	# Add colored message to battle log
@@ -581,14 +613,15 @@ func _on_battle_started():
 	# Log is handled by BattleEventProcessor
 	pass
 
-func _on_damage_dealt(player: int, amount: int, remaining_hp: int, source: String):
+func _on_damage_dealt(player: int, amount: int, remaining_hp: int, source: String,
+		kind: String = "damage"):
 	# Player parameter indicates who TAKES damage
 	if player == 1:
 		player_data.health = remaining_hp
 	else:
 		enemy_data.health = remaining_hp
 
-	_show_damage_number(player, amount)
+	_show_damage_number(player, amount, kind)
 	_update_stats_display()
 
 func _on_healing_done(player: int, amount: int, remaining_hp: int):
@@ -652,42 +685,72 @@ func _show_round_result(won: bool):
 	round_result.show_result(won, GameStateManager.wins, GameStateManager.player_lives,
 		GameStateManager.last_gold_earned)
 
-func _show_damage_number(player: int, amount: int):
-	if not Presentation.request("damage_number", {"player": player, "amount": amount}):
+## What is happening to somebody, said in the colour it is written in. A
+## player watching a battle reads the numbers before they read anything else,
+## so the colour has to carry the meaning on its own.
+const HURT := Color(1.0, 0.36, 0.42)
+## Poison is not a blow. It arrives on its own clock, off an item that struck
+## some time ago, and a player who cannot tell the two apart cannot tell why
+## their health is still falling.
+const POISON := Color(0.78, 0.45, 1.0)
+const MENDED := Color(0.45, 1.0, 0.6)
+const SHIELDED := Color(0.5, 0.85, 1.0)
+
+
+static func hurt_colour(kind: String) -> Color:
+	"""What colour a number is written in, for the thing that caused it.
+
+	Its own function because the number itself is only drawn where animations
+	run, and what a colour means is worth being sure of either way.
+	"""
+	return POISON if kind == "dot" else HURT
+
+
+func _show_damage_number(player: int, amount: int, kind: String = "damage"):
+	if not Presentation.request("damage_number",
+			{"player": player, "amount": amount, "kind": kind}):
 		return
-	# Red, and plainly so. At a breath off white it read as a label rather
-	# than as a blow, which left the healing green the only number on screen
-	# that said what it was by its colour.
-	_throw_number(player, "-%d" % amount, Color(1.0, 0.36, 0.42), 44)
+	_throw_number(player, "-%d" % amount, hurt_colour(kind), 44)
 
 func _show_heal_effect(player: int, amount: int):
 	if not Presentation.request("heal_effect", {"player": player, "amount": amount}):
 		return
-	_throw_number(player, "+%d" % amount, Color(0.45, 1.0, 0.6), 40)
+	_throw_number(player, "+%d" % amount, MENDED, 40)
+
+
+## How a number arrives, holds and goes. Short and quick: several of them land
+## in a second in a busy build, and anything slower turns into a queue.
+const NUMBER_IN := 0.12
+const NUMBER_FALL := 34.0
+const NUMBER_HOLD := 0.85
+const NUMBER_OUT := 0.3
 
 
 func _throw_number(player: int, text: String, tint: Color, size: int):
 	"""Throw a number off the fighter it happened to.
 
-	It lands, holds for a beat and drifts up as it fades, so a hit reads even
-	when several land close together.
+	It fades up as it swells, falls a little way, and fades out again. Falling
+	rather than rising: a number that rises reads as something being gained,
+	and most of these are not.
 	"""
 	var label = hud.combat_number(player, text, tint, size)
-	label.scale = Vector2(0.4, 0.4)
+	label.scale = Vector2(0.55, 0.55)
+	label.modulate.a = 0.0
 
 	var tween = _effect_tween()
-	tween.tween_property(label, "scale", Vector2.ONE, 0.14) \
+	tween.tween_property(label, "modulate:a", 1.0, NUMBER_IN)
+	tween.parallel().tween_property(label, "scale", Vector2.ONE, NUMBER_IN + 0.04) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(label, "position:y", label.position.y - 78.0, 1.1) \
+	tween.parallel().tween_property(label, "position:y",
+		label.position.y + NUMBER_FALL, NUMBER_HOLD) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(label, "modulate:a", 0.0, 1.1) \
-		.set_delay(0.35)
+	tween.chain().tween_property(label, "modulate:a", 0.0, NUMBER_OUT)
 	tween.chain().tween_callback(label.queue_free)
 
 func _show_block_effect(player: int):
 	if not Presentation.request("block_effect", {"player": player}):
 		return
-	_throw_number(player, "BLOCK", Color(0.5, 0.85, 1.0), 32)
+	_throw_number(player, "BLOCK", SHIELDED, 32)
 
 ## What an item does that counts as swinging at someone. A buff or a heal is an
 ## item doing its job too, but it is not a blow, and giving everything the same
@@ -702,17 +765,24 @@ func _show_item_activation(item_id: String, _player: int, action: String):
 	item's own uid, and the player on the action is whoever it happened *to*,
 	which for an attack is the other one.
 	"""
-	if not Presentation.request("item_activation",
-			{"item": item_id, "action": action}):
-		return
-
-	for grid in [player_inventory, enemy_inventory]:
-		var visual = grid.item_visual(item_id)
+	var racks := {1: player_inventory, 2: enemy_inventory}
+	for side in [1, 2]:
+		var visual = racks[side].item_visual(item_id)
 		if visual == null:
 			continue
-		visual.fire(visual.item_data.cooldown)
+		# Each effect asks for itself. Asking once for the lot of them and
+		# giving up on a no would mean the item is never even looked up where
+		# animations are off, and then nothing here can be tested.
+		if Presentation.request("item_activation",
+				{"item": item_id, "action": action}):
+			visual.fire(visual.item_data.cooldown)
 		if action in ATTACKS:
 			hud.item_fired()
+			# Whose rack it stands in says who swung it, and a blow lands on
+			# the other one. The action's own player cannot be asked: it is
+			# the one hurt on a hit and the one swinging on a miss, so a miss
+			# used to be thrown at the fighter who threw it.
+			_strike_with(visual, 2 if side == 1 else 1)
 		return
 
 func _go_to_round_over():

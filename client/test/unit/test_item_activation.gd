@@ -173,6 +173,62 @@ func test_an_item_with_a_cooldown_goes_dark_and_fills():
 	assert_true(visual.is_cooling(), "It should not be ready again yet")
 
 
+func test_the_charge_fills_the_picture_and_not_the_square():
+	# It used to draw a rectangle of dark over the whole cell. Most items do
+	# not fill their cell, so what the player watched fill was the gap around
+	# the item rather than the item.
+	await _load([TestHelpers.placed_item_data({"id": "one", "position": [0, 0]})])
+	var visual = grid.item_visual("one")
+
+	visual.fire(2.0)
+
+	var charging = visual._cooldown
+	assert_true(charging.get_child_count() > 0,
+		"There should be a lit copy of the picture to fill with")
+	assert_lt(visual._artwork.modulate.v, 1.0,
+		"and the picture underneath it should be dark while it charges")
+
+
+func test_the_lit_part_grows_from_the_bottom():
+	await _load([TestHelpers.placed_item_data({"id": "one", "position": [0, 0]})])
+	var visual = grid.item_visual("one")
+
+	visual.fire(0.4)
+	var charging = visual._cooldown
+	var at_first: float = charging.filled()
+	await get_tree().create_timer(0.15).timeout
+
+	assert_gt(charging.filled(), at_first, "More of it should be lit as it charges")
+	assert_almost_eq(charging.position.y + charging.size.y, visual.size.y, 1.0,
+		"and the lit part should reach the bottom of the item, not the top")
+
+
+func test_a_charged_item_is_bright_again():
+	await _load([TestHelpers.placed_item_data({"id": "one", "position": [0, 0]})])
+	var visual = grid.item_visual("one")
+
+	visual.fire(0.05)
+	await get_tree().create_timer(0.2).timeout
+
+	assert_eq(visual._artwork.modulate, Color.WHITE,
+		"A charged item is drawn as it was drawn before it fired")
+	assert_eq(visual._cooldown.get_child_count(), 0,
+		"and the lit copy has nothing left to do")
+
+
+func test_an_item_hands_out_a_copy_of_its_picture():
+	# For a blow to throw at somebody. The picture rather than the cell: a cell
+	# is a square of nothing with a picture somewhere in it.
+	await _load([TestHelpers.placed_item_data({"id": "one", "position": [0, 0]})])
+	var visual = grid.item_visual("one")
+
+	var copy = visual.artwork_copy()
+
+	assert_not_null(copy, "It should hand out a copy")
+	assert_eq(copy.size, visual._artwork.size, "the same size as its own picture")
+	assert_null(copy.get_parent(), "and not one already hanging in the scene")
+
+
 func test_an_item_with_no_cooldown_never_goes_dark():
 	await _load([TestHelpers.placed_item_data(
 		{"id": "one", "position": [0, 0], "cooldown": 0.0})])

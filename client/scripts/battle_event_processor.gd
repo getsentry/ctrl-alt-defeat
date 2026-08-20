@@ -6,7 +6,10 @@ const APITypes = preload("res://scripts/api_types.gd")
 
 signal event_processed(event: APITypes.BattleAction)
 signal battle_started()
-signal damage_dealt(player: int, amount: int, remaining_hp: int, source: String)
+## Somebody was hurt. The kind says what hurt them -- a blow, or something
+## already in their blood -- because the two are worth telling apart on screen
+## and the source alone cannot: poison names the item that applied it.
+signal damage_dealt(player: int, amount: int, remaining_hp: int, source: String, kind: String)
 signal healing_done(player: int, amount: int, remaining_hp: int)
 signal block_activated(player: int, amount: int)
 signal item_activated(item_id: String, player: int, action: String)
@@ -136,12 +139,16 @@ func _process_event(event: APITypes.BattleAction):
 			log_msg = "[%.1fs] Player %d's attack BLOCKED by Player %d's %s (%d damage blocked)" % [event_time, attacker, player, item_name, event.damage]
 			log_color = Color(0.5, 0.8, 1.0)  # Light blue for blocks
 		"miss":
-			var attacker = 1 if player == 2 else 2
-			log_msg = "[%.1fs] Player %d's %s MISSES Player %d" % [event_time, attacker, item_name, player]
+			# A miss carries whoever swung, where a hit carries whoever was
+			# hurt. Read the same way round as a hit, every miss in the log
+			# named the wrong fighter and credited it to the wrong rack.
+			var missed = 1 if player == 2 else 2
+			log_msg = "[%.1fs] Player %d's %s MISSES Player %d" % [event_time, player, item_name, missed]
 			log_color = Color(0.7, 0.7, 0.7)  # Gray for misses
 		"critical_hit":
-			var attacker = 1 if player == 2 else 2
-			log_msg = "[%.1fs] CRITICAL! Player %d's %s deals %d damage → Player %d" % [event_time, attacker, item_name, event.damage, player]
+			# The same as a miss: it carries whoever swung.
+			var struck = 1 if player == 2 else 2
+			log_msg = "[%.1fs] CRITICAL! Player %d's %s deals %d damage → Player %d" % [event_time, player, item_name, event.damage, struck]
 			log_color = Color(1.0, 0.8, 0.2)  # Orange for crits
 		"buff":
 			log_msg = "[%.1fs] Player %d's %s grants %s" % [event_time, player, item_name, event.details["buff_name"]]
@@ -190,7 +197,7 @@ func _process_event(event: APITypes.BattleAction):
 				player1_hp = remaining
 			else:
 				player2_hp = remaining
-			damage_dealt.emit(player, damage, remaining, damage_source)
+			damage_dealt.emit(player, damage, remaining, damage_source, "damage")
 
 		"heal":
 			# Get heal amount from damage field
@@ -246,7 +253,8 @@ func _process_event(event: APITypes.BattleAction):
 				player1_hp = max(0, player1_hp - damage)
 			else:
 				player2_hp = max(0, player2_hp - damage)
-			damage_dealt.emit(player, damage, player1_hp if player == 1 else player2_hp, dot_source)
+			damage_dealt.emit(player, damage,
+				player1_hp if player == 1 else player2_hp, dot_source, "dot")
 
 	# Where both fighters' CPU stood at this moment. Every action carries it,
 	# because time passes for both of them, so an action by one is also a

@@ -157,22 +157,28 @@ func test_refresh_shop_button():
 		# Note: This may not work without server connection
 
 func test_start_battle_button():
-	# Find start battle button
-	var battle_btn = null
-	for child in ui.get_children():
-		if child is Button and "Battle" in child.text:
-			battle_btn = child
-			break
-
-	if not battle_btn:
-		var controls = ui.find_child("Controls", true, false)
-		if controls:
-			for child in controls.get_children():
-				if child is Button and "Battle" in child.text:
-					battle_btn = child
-					break
+	# It used to be found by reading the word "Battle" off a button. What it
+	# says is painted on it now -- it is a picture of a key -- so there is no
+	# text on it to look for.
+	var battle_btn = ui.find_child("ReadyButton", true, false)
 
 	assert_not_null(battle_btn, "Start battle button should exist")
+	assert_true(battle_btn is TextureButton, "It should be the key artwork")
+	assert_true("start_battle_key" in battle_btn.texture_normal.resource_path,
+		"and wear the key, got: %s" % battle_btn.texture_normal.resource_path)
+	assert_not_null(battle_btn.texture_pressed,
+		"and go down when it is pressed, as a key does")
+
+
+func test_the_battle_key_keeps_the_shape_of_its_artwork():
+	# A key stretched to fill a box is a key nobody would press. It is fitted
+	# to the room it has and centred in what is left.
+	var battle_btn = ui.find_child("ReadyButton", true, false)
+
+	assert_true(battle_btn.ignore_texture_size,
+		"The rect it is given should decide its size")
+	assert_eq(battle_btn.stretch_mode, TextureButton.STRETCH_KEEP_ASPECT_CENTERED,
+		"and it should keep its own shape inside that rect")
 
 func test_drag_and_drop_initialization():
 	# UnifiedGridUI drags shop items. InventoryGrid drags items already on the
@@ -1014,9 +1020,10 @@ func test_a_tall_item_is_drawn_small_enough_for_its_alcove():
 
 func test_an_ordinary_item_is_drawn_at_the_size_the_grid_uses():
 	# Shrinking is for what will not fit. Everything else is drawn as the
-	# inventory draws it, or the same item changes size when it is bought.
+	# inventory draws it, or the same item changes size when it is bought --
+	# which it did, by a quarter, until the shelf was told what a square is.
 	var art = _art_for([[0, 0], [1, 0]])
-	assert_eq(art.size.y, ui.SHELF_CELL,
+	assert_almost_eq(art.size.y, ui.inventory_grid.cell_size, 0.01,
 		"A two-square item fits an alcove with room to spare")
 
 

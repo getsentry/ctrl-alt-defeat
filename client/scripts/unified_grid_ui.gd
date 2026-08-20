@@ -909,6 +909,11 @@ const OUT_OF_REACH := Color(0.5, 0.5, 0.58, 1.0)
 ## a slot that overhangs it lights up over the tray when the pointer is
 ## nowhere near the shelf.
 const SLOT_SIZE := Vector2(200, 180)
+## The biggest a square is drawn on a shelf, when the alcove is not what
+## decides. Only a fallback: the answer is the size the grid draws a square,
+## so that an item is the same size on the shelf as it is once it is bought.
+## The grid works its own size out from the room it is given, and there is no
+## grid at all while a screen is only being read from.
 const SHELF_CELL := 45.0
 ## The most room an item's artwork may take on a shelf. An alcove is a box
 ## with a ceiling, so anything that would not fit under it is drawn smaller
@@ -940,11 +945,9 @@ func _dress_buttons() -> void:
 	their own. The wall that replaced it is bare panelling and lit shelves, so
 	each carries its own faint plate instead.
 	"""
-	var ready_button := get_node_or_null("ReadyButton")
-	if ready_button:
-		# The neon slab it used to stand on went with the old wall, so it
-		# carries its own outline now rather than floating on bare panelling.
-		_dress_button(ready_button, Color(1.0, 0.85, 0.45), 26, 0, true)
+	# The battle key is a picture of a key, with what it says painted on it, so
+	# it wants nothing from here at all -- a plate behind it would be a second
+	# button drawn around the first.
 
 	var refresh_button := get_node_or_null("RefreshButton")
 	if refresh_button:
@@ -1085,24 +1088,29 @@ func _create_shop_item_from_data(data: APITypes.Item) -> Control:
 	return slot
 
 
-static func _shelf_cell(data: APITypes.Item) -> float:
+func _shelf_cell(data: APITypes.Item) -> float:
 	"""How big a square this item's artwork is drawn at on the shelf.
+
+	The size the grid draws a square, so that an item does not change size the
+	moment it is bought -- it used to be drawn a quarter smaller on the shelf
+	than it would be on the board.
 
 	The shelves are alcoves, not open ledges: each has a ceiling a little over
 	three squares above the floor. An item nine squares tall drawn at the size
 	the inventory uses stands straight up through the shelf above it, so it is
 	drawn smaller instead. Whichever way runs out first decides, so the item
-	keeps its shape, and nothing is ever drawn larger than the grid draws it.
+	keeps its shape.
 	"""
 	var across := 0
 	var down := 0
 	for offset in data.turned_shape():
 		across = max(across, offset[0] + 1)
 		down = max(down, offset[1] + 1)
+	var grid_cell: float = inventory_grid.cell_size if inventory_grid else SHELF_CELL
 	if across < 1 or down < 1:
-		return SHELF_CELL
+		return grid_cell
 	return min(
-		SHELF_CELL,
+		grid_cell,
 		floor((SHELF_ART.x - (across - 1) * CELL_SPACING) / across),
 		floor((SHELF_ART.y - (down - 1) * CELL_SPACING) / down)
 	)
