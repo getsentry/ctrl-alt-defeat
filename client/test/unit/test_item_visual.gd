@@ -179,6 +179,83 @@ func test_leaving_the_tree_takes_the_tooltip_with_it():
 	assert_false(is_instance_valid(panel), "The tooltip panel should be freed")
 
 
+func _hovered(at: Vector2, data = null) -> Control:
+	# An item on screen with the pointer on it, and the card it puts up.
+	var item = ItemVisual.new()
+	item.enable_tooltip = true
+	add_child(item)
+	item.setup(data if data else _item(), 45.0, 1.0)
+	item.position = at
+	await item._show_tooltip()
+	await get_tree().process_frame
+	return item
+
+
+func test_every_card_stands_in_the_same_place():
+	# A card beside the item covers the next thing the player wants to look at
+	# -- the shelf they are comparing against, the square they are about to
+	# drop into -- and has to be found again each time before it can be read.
+	var near = await _hovered(Vector2(40, 60))
+	var here = near.tooltip_panel.position
+	near._hide_tooltip()
+
+	var far = await _hovered(Vector2(1400, 900))
+	var there = far.tooltip_panel.position
+
+	assert_eq(here, there, "The card should stand where the last one stood")
+
+	far._hide_tooltip()
+	near.queue_free()
+	far.queue_free()
+
+
+func test_the_card_fills_the_column_it_stands_in():
+	# The empty column of the shop screen: between the rack and the shelves,
+	# and below the START BATTLE key.
+	var item = await _hovered(Vector2(40, 60))
+	var card = item.tooltip_panel
+
+	assert_eq(card.position, ItemVisual.TOOLTIP_SPOT,
+		"The card should stand where every card stands")
+	assert_eq(card.size.x, ItemVisual.TOOLTIP_WIDTH,
+		"and be as wide as the column it fills")
+
+	item._hide_tooltip()
+	item.queue_free()
+
+
+func test_a_tall_card_comes_up_to_meet_the_bottom_edge():
+	# Rather than running off the bottom of the screen, which is where the
+	# lines nobody has read yet would be. The card is given its height here
+	# rather than filled with text, so the test says what it means whatever
+	# the font measures.
+	var item = await _hovered(Vector2(40, 60))
+	var room = item.get_viewport_rect().size
+	item.tooltip_panel.size.y = room.y - ItemVisual.TOOLTIP_SPOT.y
+	item._place_tooltip()
+
+	assert_almost_eq(item.tooltip_panel.position.y + item.tooltip_panel.size.y,
+		room.y - ItemVisual.TOOLTIP_EDGE, 1.0,
+		"Its last line should sit just inside the bottom edge")
+
+	item._hide_tooltip()
+	item.queue_free()
+
+
+func test_a_card_taller_than_the_screen_starts_at_the_top():
+	# There is nowhere for all of it to go, so what it can show is the top.
+	var item = await _hovered(Vector2(40, 60))
+	var room = item.get_viewport_rect().size
+	item.tooltip_panel.size.y = room.y * 2
+	item._place_tooltip()
+
+	assert_eq(item.tooltip_panel.position.y, ItemVisual.TOOLTIP_EDGE,
+		"The card should start at the top edge")
+
+	item._hide_tooltip()
+	item.queue_free()
+
+
 func test_drawing_an_item_again_does_not_connect_its_tooltip_twice():
 	# An item is drawn again whenever it changes, and turning one is a redraw.
 	# Connecting on each of those raises an error every time.

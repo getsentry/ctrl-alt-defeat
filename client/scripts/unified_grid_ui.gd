@@ -1086,7 +1086,6 @@ func _create_shop_item_from_data(data: APITypes.Item) -> Control:
 	# pointer as well, or leaving the picture would take the card away while
 	# the pointer is still on the shelf.
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	art.tooltip_anchor = slot
 	slot.add_child(art)
 
 	# Store data and connect input

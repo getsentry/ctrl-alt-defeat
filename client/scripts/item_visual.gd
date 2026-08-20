@@ -15,10 +15,33 @@ var show_border: bool = false  # No border by default - cleaner look
 var enable_tooltip: bool = false  # Tooltip disabled by default
 ## Whether the tooltip should say what the shop charges. Only a shelf sets it.
 var tooltip_shows_price: bool = false
-## What the tooltip stands beside, when that is not the artwork itself. A shelf
-## is a slot much wider than the picture in it, and a card measured from the
-## picture ends up drawn across the rest of the slot.
-var tooltip_anchor: Control = null
+
+## Where the card stands, whatever the pointer is on. Always the same place.
+##
+## Beside the item is where it used to go, and a card that moves with the
+## pointer covers the next thing the player wants to look at -- the shelf they
+## are comparing against, the square they are about to drop into -- and has to
+## be found again each time before it can be read. One spot is learned once.
+##
+## The spot is the empty column of the shop screen: from the right edge of the
+## rack (584) to where the shelves begin (921), and below the START BATTLE key
+## (which ends at 229). Six pixels are left at each side so the card is not
+## crowded against either of them.
+##
+## Both edges are what a player can see rather than what a node measures. The
+## rack panel runs to 637, but the last thing drawn in it stops at 584, and a
+## card set against the panel sits visibly off to one side of the gap. Neither
+## the shelves nor the grid outline has a node of its own to ask.
+const TOOLTIP_SPOT := Vector2(590, 241)
+
+## How wide the card is, which is the column it fills. ItemTooltip.tscn holds
+## the same number as the card's own smallest width -- see the test that ties
+## the two together.
+const TOOLTIP_WIDTH := 325.0
+
+## How close to the bottom edge the card may come, where it is too tall to
+## start at TOOLTIP_SPOT and still fit.
+const TOOLTIP_EDGE := 12.0
 
 # Item data
 var item_data
@@ -282,42 +305,21 @@ func _show_tooltip():
 
 
 func _place_tooltip() -> void:
-	"""Stand the card beside the item, and keep it on screen"""
+	"""Stand the card where every card stands, and keep it on screen"""
 	if not is_inside_tree() or not is_instance_valid(tooltip_panel):
 		return
 
-	# Beside the item and level with the middle of it, so the card reads as
-	# belonging to the thing under the pointer rather than to the row above it.
-	var beside := _tooltip_anchor_rect()
-	tooltip_panel.position = Vector2(
-		beside.position.x - tooltip_panel.size.x - 24,
-		beside.get_center().y - tooltip_panel.size.y / 2.0
-	)
+	# get_viewport_rect() is the 1680 by 1050 space the card is placed in;
+	# get_viewport().size would be the real window in pixels, which the
+	# stretch mode makes a different number.
+	var room := get_viewport_rect().size
 
-	# Make sure it stays on screen. get_viewport_rect() is the 1680 by 1050
-	# space the tooltip is positioned in; get_viewport().size would be the
-	# real window in pixels, which the stretch mode makes a different number.
-	var viewport_size = get_viewport_rect().size
-
-	# If tooltip would go off the left edge, show it on the right instead
-	if tooltip_panel.position.x < 0:
-		tooltip_panel.position.x = beside.end.x + 24
-
-	# If tooltip would go off the right edge (when positioned on the right), adjust
-	if tooltip_panel.position.x + tooltip_panel.size.x > viewport_size.x:
-		tooltip_panel.position.x = viewport_size.x - tooltip_panel.size.x - 10
-
-	# Vertical positioning - center with the item, but adjust if it goes off screen
-	if tooltip_panel.position.y < 0:
-		tooltip_panel.position.y = 10
-	if tooltip_panel.position.y + tooltip_panel.size.y > viewport_size.y:
-		tooltip_panel.position.y = viewport_size.y - tooltip_panel.size.y - 10
-
-func _tooltip_anchor_rect() -> Rect2:
-	"""What the tooltip has to stand clear of"""
-	if is_instance_valid(tooltip_anchor) and tooltip_anchor.is_inside_tree():
-		return tooltip_anchor.get_global_rect()
-	return Rect2(global_position, size)
+	# A card taller than the room below the spot comes up to meet the bottom
+	# edge rather than running off it. One taller than the screen starts at
+	# the top, and the little that will not fit is lost either way.
+	var top := clampf(room.y - tooltip_panel.size.y - TOOLTIP_EDGE,
+		TOOLTIP_EDGE, TOOLTIP_SPOT.y)
+	tooltip_panel.position = Vector2(TOOLTIP_SPOT.x, roundf(top))
 
 
 func _hide_tooltip():

@@ -21,7 +21,7 @@ color = Color(0.45, 0.6, 0.9, 0.35)
 thickness = 1
 
 [node name="ItemTooltip" type="PanelContainer"]
-custom_minimum_size = Vector2(340, 0)
+custom_minimum_size = Vector2(325, 0)
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 script = ExtResource("1_tooltip")
