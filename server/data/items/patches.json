@@ -39,7 +39,8 @@
           ]
         }
       ],
-      "slug": "emergency_hotfix"
+      "slug": "emergency_hotfix",
+      "in_shop": true
     },
     "memory_injection": {
       "name": "Swap Shot",
@@ -87,7 +88,7 @@
       "cost": 6,
       "triggers": [],
       "slug": "security_hardening",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "45 Block reached: Consume this and convert 15 health to 30 Block."
       ]
@@ -108,7 +109,7 @@
       "cost": 7,
       "triggers": [],
       "slug": "virus_payload",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Opponent heals: Consume this and inflict 3 Poison and 1 Poison to yourself."
       ]
@@ -152,7 +153,7 @@
         }
       ],
       "slug": "performance_boost",
-      "in_shop": false
+      "in_shop": true
     },
     "system_restore": {
       "name": "Restore Point",
@@ -192,7 +193,7 @@
       ],
       "slug": "system_restore",
       "icontype": "holy",
-      "in_shop": false
+      "in_shop": true
     },
     "lightning_in_a_bottle": {
       "name": "Capacitor Flask",
@@ -213,7 +214,7 @@
       "cost": 7,
       "triggers": [],
       "slug": "lightning_in_a_bottle",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "After 2s-7s: Consume this and deal 10 Effect damage, inflict 10 Blind for 5s and for each {{Icon/diamond}} Holy-item, heal for 5."
       ],

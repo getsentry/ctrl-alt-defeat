@@ -126,14 +126,27 @@ def clean_database():
 
 # A game seed whose round-one shop is five non-container items. Tests that buy
 # something use it so the shop is the same every run.
-# (Reseeded when the catalogue correction changed what shops offer.)
-SHOP_SEED = 2
+# Reseeded whenever the shop's pool changes, which it does whenever an item's
+# availability is corrected. Most recently: 129 items are offered where 30
+# were, because `in_shop` had been written false almost everywhere.
+#
+# Both of these now hold a stronger property than they need, so that the next
+# correction is less likely to break them: every one of the five offers fits
+# inside a single starting container. A shop that offers a four-square-tall
+# item is a shop these tests cannot buy from at a fixed position.
+SHOP_SEED = 15
 
 # Same, but one of the five covers more than one square, and the first three
 # together cost less than the starting gold. Tests that need a multi-square
 # item, or that buy several items in a row, use this one.
-# (Reseeded when the catalogue correction changed what shops offer.)
-MULTI_SQUARE_SHOP_SEED = 59
+MULTI_SQUARE_SHOP_SEED = 15
+
+# A game seed whose round-one shop offers an item covering exactly one square.
+# The container tests move a container with something standing on it, and one
+# square is the only shape guaranteed to sit inside a 2x2 wherever it is put.
+# It was written inline as 42 and stopped working when the shop's pool grew;
+# naming it means the next correction finds it here with the others.
+SINGLE_SQUARE_SHOP_SEED = 4
 
 
 @pytest.fixture

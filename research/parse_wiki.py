@@ -20,7 +20,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PAGES = os.path.join(HERE, "wiki_pages")
 
 FIELDS = ("name", "rarity", "icontype", "type", "cost", "class", "mindamage",
-          "maxdamage", "stamina", "accuracy", "cooldown", "sockets", "inshop")
+          "maxdamage", "stamina", "accuracy", "cooldown", "sockets", "inshop",
+          "skillround", "addshop", "subclassname")
 
 
 def _params(block):
@@ -62,6 +63,48 @@ def _effects(raw):
     raw = raw.replace("'''", "")
     lines = [l.lstrip("* ").strip() for l in raw.splitlines()]
     return [l for l in lines if l]
+
+
+#: Two items the template names outright rather than deriving.
+NAMED_OUT = ("Star of Courage", "Sack of Surprises")
+
+
+def _in_shop(rec):
+    """What the wiki's own "In shop" row would say, as one word.
+
+    Template:Item_infobox decides it in this order, and so does this:
+
+    1. a subclass item                       -> `subclass`
+    2. a skill, offered on round 3 or 10     -> `skill`
+    3. something else adds it to the shop    -> `gated`
+    4. a recipe makes it                     -> `recipe_only`
+    5. Star of Courage, Sack of Surprises    -> `recipe_only`
+    6. a Chess Piece                         -> `gated`, on the Chess Board
+    7. a Puzzlebag                           -> `gated`
+    8. a Bag belonging to a class            -> `recipe_only`
+    9. anything else                         -> `normal`
+
+    Rarity is not one of the steps. A Unique item is sold like any other
+    unless one of these says otherwise.
+    """
+    name = rec["name"]
+    if rec.get("subclass"):
+        return "subclass"
+    if rec.get("skillround"):
+        return "skill"
+    if rec.get("shop_needs"):
+        return "gated"
+    if rec.get("recipes") or any(out in name for out in NAMED_OUT):
+        return "recipe_only"
+    kind = (rec.get("type") or "")
+    if "Chess Piece" in kind:
+        return "gated"
+    if "Bag" in kind:
+        if "Puzzlebag" in name:
+            return "gated"
+        # A bag of a class is that class's, and the shop does not offer it.
+        return "recipe_only" if rec.get("class") else "normal"
+    return "normal"
 
 
 def parse():
@@ -106,31 +149,27 @@ def parse():
             recipes.append(rec_entry)
         rec["recipes"] = recipes
 
-        rarity = (rec.get("rarity") or "").lower()
-        inshop = rec.get("inshop")
-        prose_hidden = bool(re.search(
-            r"cannot be found in the shop|not available in the shop", text, re.I))
-        prose_gate = re.search(
-            r"in the shop (?:once|when|while) \[\[([^|\]]+)(?:\|[^\]]*)?\]\]",
-            text, re.I)
-        sub = re.search(r"^\|subclassname=(.+)$", text, re.M)
-        if sub or "[[Category:Subclass]]" in text:
-            rec["shop"] = "subclass"
-            if sub:
-                rec["subclass"] = sub.group(1).strip()
-        elif inshop and inshop.lower() not in ("yes", "no", "true", "false"):
-            rec["shop"] = "gated"
-            rec["shop_needs"] = inshop
-        elif prose_gate:
-            rec["shop"] = "gated"
-            rec["shop_needs"] = prose_gate.group(1).strip()
-        elif rarity == "unique":
-            rec["shop"] = "treasure"
-        elif rarity == "godly" or prose_hidden or inshop in ("No", "no", "false"):
-            rec["shop"] = "recipe_only"
-        else:
-            rec["shop"] = "normal"
+        if rec.get("subclassname"):
+            rec["subclass"] = rec["subclassname"].strip()
         items[rec["name"]] = rec
+
+    # A gate is written on the item that opens it, not on the item behind it:
+    # Box of Riches says `addshop=Amethyst, Emerald, Ruby, Sapphire, Topaz`.
+    # So it can only be resolved once every page has been read.
+    for opener in list(items.values()):
+        for opened in (opener.get("addshop") or "").split(","):
+            opened = opened.strip()
+            if opened and opened in items:
+                items[opened]["shop_needs"] = opener["name"]
+
+    # The wiki renders an "In shop" row that is written on no page:
+    # Template:Item_infobox works it out. This is what it does, in its own
+    # order -- copied from the template source rather than guessed at, because
+    # guessing got it wrong twice. Rarity plays no part (Tim is Unique and
+    # sold) and the opening sentence is not evidence (Torch's says "available
+    # in the shop" and its row says No).
+    for rec in items.values():
+        rec["shop"] = _in_shop(rec)
     return items
 
 

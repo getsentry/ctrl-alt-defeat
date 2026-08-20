@@ -3,6 +3,28 @@
 from tests.conftest import SHOP_SEED
 
 
+def _one_that_fits(shop):
+    """The first offer that a single starting container can hold.
+
+    A container is two squares by two, and the shop can offer an item four
+    squares tall. These tests buy at (2, 3), the top-left of the first
+    container, so an item taller or wider than the container has nowhere to
+    go and the purchase is refused.
+
+    It used to be "the first item that is not a container", which was fine
+    while the shop offered thirty items that all happened to fit. It began
+    failing about one run in four when the catalogue was corrected and the
+    shop went to a hundred and five.
+    """
+    for item in shop:
+        if not item or item.get("is_container"):
+            continue
+        squares = [tuple(sq) for sq in item["shape"]]
+        if max(x for x, _ in squares) < 2 and max(y for _, y in squares) < 2:
+            return item
+    return None
+
+
 class TestAPISlugResponses:
     """Test that all API responses include slug fields for items"""
 
@@ -84,9 +106,7 @@ class TestAPISlugResponses:
 
         # Find a non-container item to purchase
         shop = session["current_shop"]
-        item_to_buy = next(
-            (item for item in shop if item and not item.get("is_container")), None
-        )
+        item_to_buy = _one_that_fits(shop)
 
         if item_to_buy:
             # Purchase item to storage (safe for non-containers)
@@ -233,9 +253,7 @@ class TestAPISlugResponses:
 
         # Get first non-container item from shop
         shop = session["current_shop"]
-        item_to_buy = next(
-            (item for item in shop if item and not item.get("is_container")), None
-        )
+        item_to_buy = _one_that_fits(shop)
 
         if item_to_buy:
             # Purchase to storage
@@ -345,9 +363,7 @@ class TestAPISlugResponses:
 
         # Just purchase an item without a container (items can be placed on main grid in round 1)
         shop = session["current_shop"]
-        item = next(
-            (item for item in shop if item and not item.get("is_container")), None
-        )
+        item = _one_that_fits(shop)
         print(f"Item found: {item}")
         if item:
             # Place item on first container at (2,3)

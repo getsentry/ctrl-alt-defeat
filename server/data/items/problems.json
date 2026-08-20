@@ -32,7 +32,8 @@
       ],
       "slug": "null_blade",
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "in_shop": true
     },
     "deadlock_twins": {
       "name": "Deadlock Twins",
@@ -75,7 +76,7 @@
       "slug": "deadlock_twins",
       "sockets": 1,
       "icontype": "melee",
-      "in_shop": false
+      "in_shop": true
     },
     "mobius_lash": {
       "name": "Mobius Lash",
@@ -135,7 +136,8 @@
       ],
       "slug": "mobius_lash",
       "sockets": 2,
-      "icontype": "nature, melee"
+      "icontype": "nature, melee",
+      "in_shop": true
     },
     "sql_injector": {
       "name": "SQL Injector",
@@ -173,7 +175,7 @@
       "slug": "sql_injector",
       "sockets": 1,
       "icontype": "treasure, dark, melee",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Star Melee-Weapons deal -2 damage. Deals +4 damage per Star Melee-Weapon."
       ]
@@ -278,7 +280,7 @@
       ],
       "slug": "day_zero",
       "icontype": "treasure, dark, ranged",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Can only be thrown once per battle.",
         "Star items have +8% critical hit chance per Fatigue level of your opponent."
@@ -346,7 +348,7 @@
       "slug": "nullshot",
       "sockets": 1,
       "icontype": "ranged",
-      "in_shop": false
+      "in_shop": true
     },
     "neural_interface_blade": {
       "name": "Migraine",
@@ -517,7 +519,8 @@
       ],
       "slug": "quantum_sniper",
       "sockets": 1,
-      "icontype": "ranged"
+      "icontype": "ranged",
+      "in_shop": true
     },
     "virus_injector": {
       "name": "Virus Injector",
@@ -740,7 +743,8 @@
             "quantum_probability_core"
           ]
         }
-      ]
+      ],
+      "in_shop": false
     },
     "data_leech_swarm": {
       "name": "Data Leech Swarm",
@@ -928,7 +932,8 @@
             "walrus_tusk"
           ]
         }
-      ]
+      ],
+      "in_shop": false
     },
     "plasma_edge": {
       "name": "Plasma Edge",
@@ -982,7 +987,8 @@
             "lump_of_coal"
           ]
         }
-      ]
+      ],
+      "in_shop": false
     },
     "rage_click": {
       "name": "Rage Click",
@@ -1050,7 +1056,7 @@
         }
       ],
       "slug": "rage_click",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Can only be thrown once per battle."
       ],
@@ -1122,7 +1128,7 @@
         }
       ],
       "slug": "thermal_throttle",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Can only be thrown once per battle."
       ],
@@ -1173,7 +1179,7 @@
         }
       ],
       "slug": "credential_harvester",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Star Items give +100% Vampirism."
       ],
@@ -1381,7 +1387,7 @@
         }
       ],
       "slug": "broom",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Opponent misses attack: Gain +2 damage for the next attack."
       ],
@@ -1663,7 +1669,7 @@
         }
       ],
       "slug": "dancing_dragon",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "You have a 2% chance to resist debuffs for each Luck."
       ],
@@ -1931,7 +1937,7 @@
         }
       ],
       "slug": "fancy_fencing_rapier",
-      "in_shop": false,
+      "in_shop": true,
       "sockets": 1,
       "icontype": "melee"
     },
@@ -2085,7 +2091,7 @@
         }
       ],
       "slug": "hammer",
-      "in_shop": false,
+      "in_shop": true,
       "sockets": 2,
       "icontype": "melee"
     },
@@ -2346,7 +2352,7 @@
         }
       ],
       "slug": "hungry_blade",
-      "in_shop": false,
+      "in_shop": true,
       "sockets": 1,
       "icontype": "vampiric, melee"
     },
@@ -2382,7 +2388,7 @@
         }
       ],
       "slug": "impractically_large_greatsword",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "While you have at least 5 Empower, decrease stamina usage to 2 and cooldown to 2s."
       ],
@@ -2481,7 +2487,7 @@
         }
       ],
       "slug": "lightsaber",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Use 3 Regeneration: Inflict 8 Blind for 6s (unstackable)."
       ],
@@ -2728,7 +2734,8 @@
         "Deals +1 damage for each Star Food."
       ],
       "sockets": 1,
-      "icontype": "melee"
+      "icontype": "melee",
+      "in_shop": true
     },
     "pandamonium": {
       "name": "Pandemic",
@@ -2943,7 +2950,7 @@
         }
       ],
       "slug": "pop",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Attacks 3% faster for each Mana (up to 60%)."
       ],
@@ -3035,7 +3042,7 @@
         }
       ],
       "slug": "ripsaw_blade",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "On hit: Remove 1 damage gained in battle from all opponent Weapons and gain 0.5 damage."
       ],
@@ -3320,7 +3327,7 @@
         }
       ],
       "slug": "buffer_overflow",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "On hit: Destroy 4 Block for each free Star slot."
       ],
@@ -3489,7 +3496,7 @@
         }
       ],
       "slug": "ping_flood",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Can only be thrown once per battle.",
         "On hit: Destroy 4 Block."

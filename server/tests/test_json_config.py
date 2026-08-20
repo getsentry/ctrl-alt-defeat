@@ -1019,7 +1019,16 @@ class TestTheCatalogueStillSaysWhatTheWikiSays:
         module = importlib.util.module_from_spec(spec)
         sys.modules["parse_wiki"] = module
         spec.loader.exec_module(module)
-        return {page["name"]: page for page in module.parse().values()}
+        pages = module.parse().values()
+        # Keyed by the name on the page and by the page's own filename. The
+        # two disagree where somebody typed a name wrong -- Cthulhu.wikitext
+        # says "Chtulhu" -- and an item whose source matches neither key would
+        # drop out of every comparison below without a word.
+        by_name = {page["name"]: page for page in pages}
+        for page in pages:
+            from_file = page["file"].removesuffix(".wikitext").replace("_", " ")
+            by_name.setdefault(from_file, page)
+        return by_name
 
     @staticmethod
     def _number(value):
@@ -1103,3 +1112,121 @@ class TestTheCatalogueStillSaysWhatTheWikiSays:
                     if item.get("rarity", "").lower() != theirs:
                         wrong.append(f"{item_id}: {item.get('rarity')} vs {theirs}")
         assert not wrong, "\n".join(wrong)
+
+
+class TestTheShopOffersWhatTheSourceGameSells:
+    """Whether an item can be bought is data like any other, and it was the
+    one kind nothing checked.
+
+    Every item had `in_shop` written false or left out, and the loader
+    defaults a missing one to true -- so the thirty the shop could offer were
+    the ones nobody wrote a flag for. That is not a decision anyone made. The
+    stat check beside this one compares damage, cooldown and cost and would
+    have gone on passing forever.
+    """
+
+    #: The wiki's words for how an item is got. Only these two are sold.
+    SOLD = {"normal", "gated"}
+
+    def _pages(self):
+        return TestTheCatalogueStillSaysWhatTheWikiSays._wiki()
+
+    def _catalogue(self):
+        import json
+        from pathlib import Path
+
+        items = Path(__file__).resolve().parents[1] / "data" / "items"
+        out = {}
+        for path in sorted(items.glob("*.json")):
+            data = json.loads(path.read_text())
+            for group in ("items", "containers"):
+                out.update(data.get(group, {}))
+        return out
+
+    def test_every_item_is_sold_exactly_where_the_wiki_says(self):
+        wiki, wrong, checked = self._pages(), [], 0
+        catalogue = self._catalogue()
+        have = {item.get("source") for item in catalogue.values()}
+        for item_id, item in catalogue.items():
+            page = wiki.get(item.get("source"))
+            if not page:
+                continue
+            checked += 1
+            # A gated item is sold once the player holds what opens it, so one
+            # whose opener we never imported cannot be offered at all.
+            openable = page["shop"] != "gated" or page.get("shop_needs") in have
+            sold = (page["shop"] in self.SOLD and openable
+                    and not item.get("recipe_only"))
+            if bool(item.get("in_shop", True)) != sold:
+                wrong.append(
+                    f"{item_id}: ours says {item.get('in_shop')}, the wiki "
+                    f"says {page['shop']}"
+                )
+        assert checked > 200, f"only {checked} items could be checked"
+        assert not wrong, "\n".join(wrong)
+
+    def test_a_recipe_only_item_is_never_offered(self):
+        """Some things are got by crafting and by no other means. Offering one
+        in the shop is a way to buy what the recipe is for."""
+        wiki = self._pages()
+        for item_id, item in self._catalogue().items():
+            page = wiki.get(item.get("source"))
+            if page and page["shop"] == "recipe_only":
+                assert not item.get("in_shop"), item_id
+
+    def test_a_unique_item_is_found_rather_than_bought(self):
+        """Unique rarity is treasure in the source game."""
+        wiki = self._pages()
+        for item_id, item in self._catalogue().items():
+            page = wiki.get(item.get("source"))
+            if page and page["shop"] == "treasure":
+                assert not item.get("in_shop"), item_id
+
+    def test_a_gated_item_is_gated_or_is_not_offered(self):
+        """A gate nobody named is a gate that never closes: the shop asks
+        whether the player holds `shop_needs`, and an empty one is held by
+        everybody.
+
+        Three of these are gated behind Big Bowl of Treats, which was never
+        imported. Until it is, they cannot be offered at all -- offering them
+        with no gate would be worse than not offering them.
+        """
+        wiki = self._pages()
+        loose = [
+            item_id for item_id, item in self._catalogue().items()
+            if (wiki.get(item.get("source")) or {}).get("shop") == "gated"
+            and item.get("in_shop") and not item.get("shop_needs")
+        ]
+        assert not loose, loose
+
+    def test_the_gate_an_item_names_is_an_item_we_have(self):
+        """`shop_needs` is compared against what the player holds, by id. An
+        id nothing answers to is a gate that never opens."""
+        catalogue = self._catalogue()
+        missing = {
+            item_id: item["shop_needs"]
+            for item_id, item in catalogue.items()
+            if item.get("shop_needs") and item["shop_needs"] not in catalogue
+        }
+        assert not missing, missing
+
+    def test_the_shop_can_still_offer_a_bag(self):
+        """Three of the ten containers are Unique and one is crafted. A player
+        who cannot buy a bag has nowhere to put anything."""
+        catalogue = self._catalogue()
+        bags = [k for k, v in catalogue.items()
+                if v.get("map") and v.get("cost") and v.get("in_shop")
+                and k in _containers()]
+        assert bags, "no container is offered at all"
+        assert any(catalogue[k].get("rarity") == "common" for k in bags), (
+            "the cheapest bag has to be one an early shop can show"
+        )
+
+
+def _containers():
+    import json
+    from pathlib import Path
+
+    path = (Path(__file__).resolve().parents[1] / "data" / "items"
+            / "containers.json")
+    return set(json.loads(path.read_text()).get("containers", {}))

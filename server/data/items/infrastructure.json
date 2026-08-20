@@ -29,7 +29,8 @@
           ]
         }
       ],
-      "slug": "load_balancer_module"
+      "slug": "load_balancer_module",
+      "in_shop": true
     },
     "quantum_processor": {
       "name": "Qubit Core",
@@ -185,7 +186,7 @@
       ],
       "slug": "quantum_processor",
       "icontype": "magic, vampiric, holy, dark",
-      "in_shop": false
+      "in_shop": true
     },
     "quantum_probability_core": {
       "name": "Schrodinger's Die",
@@ -214,7 +215,8 @@
         }
       ],
       "slug": "quantum_probability_core",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": true
     },
     "neural_link_collar": {
       "name": "Neural Collar",
@@ -233,7 +235,7 @@
       "triggers": [],
       "slug": "neural_link_collar",
       "icontype": "nature",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Star items gain 5% critical hit chance for each Luck."
       ]

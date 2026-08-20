@@ -15,7 +15,7 @@
       "cost": 1,
       "triggers": [],
       "slug": "performance_module_chipped",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: Gain 7% lifesteal.",
         "Armor & other sockets: Your healing is increased by 10%.",
@@ -37,7 +37,7 @@
       "cost": 2,
       "triggers": [],
       "slug": "performance_module_flawed",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: Gain 10% lifesteal.",
         "Armor & other sockets: Your healing is increased by 15%.",
@@ -67,7 +67,7 @@
       "cost": 4,
       "triggers": [],
       "slug": "performance_module_regular",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: Gain 15% lifesteal.",
         "Armor & other sockets: Your healing is increased by 20%.",
@@ -97,7 +97,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "performance_module_flawless",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: Gain 20% lifesteal.",
         "Armor & other sockets: Your healing is increased by 25%.",
@@ -127,7 +127,7 @@
       "cost": 16,
       "triggers": [],
       "slug": "performance_module_perfect",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: Gain 35% lifesteal.",
         "Armor & other sockets: Your healing is increased by 40%.",
@@ -157,7 +157,7 @@
       "cost": 1,
       "triggers": [],
       "slug": "memory_module_chipped",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 15% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
         "Armor & other sockets: 5 Mana gained: Gain 2 Block.",
@@ -179,7 +179,7 @@
       "cost": 2,
       "triggers": [],
       "slug": "memory_module_flawed",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 25% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
         "Armor & other sockets: 5 Mana gained: Gain 3 Block.",
@@ -209,7 +209,7 @@
       "cost": 4,
       "triggers": [],
       "slug": "memory_module_regular",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 40% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
         "Armor & other sockets: 5 Mana gained: Gain 4 Block.",
@@ -239,7 +239,7 @@
       "cost": 1,
       "triggers": [],
       "slug": "processing_module_chipped",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: Attacks 10% faster.",
         "Armor & other sockets: 10% chance to resist stuns. 5% chance to resist critical hits.",
@@ -261,7 +261,7 @@
       "cost": 4,
       "triggers": [],
       "slug": "processing_module_regular",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: Attacks 20% faster.",
         "Armor & other sockets: 20% chance to resist stuns. 10% chance to resist critical hits.",
@@ -291,7 +291,7 @@
       "cost": 1,
       "triggers": [],
       "slug": "efficiency_module_chipped",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 35% chance to inflict 1 Poison.",
         "Armor & other sockets: 10% chance to resist Poison.",
@@ -313,7 +313,7 @@
       "cost": 4,
       "triggers": [],
       "slug": "efficiency_module_regular",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 80% chance to inflict 1 Poison.",
         "Armor & other sockets: 20% chance to resist Poison.",
@@ -343,7 +343,7 @@
       "cost": 1,
       "triggers": [],
       "slug": "security_module_chipped",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 25% chance to remove 1 random buff from your opponent.",
         "Armor & other sockets: Reduce opponent's healing by 12%.",
@@ -365,7 +365,7 @@
       "cost": 4,
       "triggers": [],
       "slug": "security_module_regular",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 50% chance to remove 1 random buff from your opponent.",
         "Armor & other sockets: Reduce opponent's healing by 25%.",
@@ -430,7 +430,7 @@
       "cost": 7,
       "triggers": [],
       "slug": "corrupted_crystal",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets:",
         "Opponent below 30% health: Deal +50% damage.",
@@ -454,7 +454,7 @@
       "rarity": "common",
       "cost": 2,
       "slug": "lump_of_coal",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Start of battle: Gain 8 Block.",
         "Weapon sockets:",
@@ -479,7 +479,7 @@
       "cost": 10,
       "triggers": [],
       "slug": "tim",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets:",
         "On hit: 50% chance to steal a random buff.",
@@ -504,7 +504,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "wisp",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets:",
         "30 damage dealt: Gain 1 Spikes.",
@@ -529,7 +529,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "memory_module_flawless",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 60% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
         "Armor & other sockets: 5 Mana gained: Gain 5 Block.",
@@ -559,7 +559,7 @@
       "cost": 16,
       "triggers": [],
       "slug": "memory_module_perfect",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 100% chance to ignore Block, gain 1 Mana and inflict 1 Cold.",
         "Armor & other sockets: 5 Mana gained: Gain 8 Block.",
@@ -589,7 +589,7 @@
       "cost": 2,
       "triggers": [],
       "slug": "processing_module_flawed",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: Attacks 15% faster.",
         "Armor & other sockets: 15% chance to resist stuns. 7% chance to resist critical hits.",
@@ -619,7 +619,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "processing_module_flawless",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: Attacks 25% faster.",
         "Armor & other sockets: 30% chance to resist stuns. 15% chance to resist critical hits.",
@@ -649,7 +649,7 @@
       "cost": 16,
       "triggers": [],
       "slug": "processing_module_perfect",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: Attacks 40% faster.",
         "Armor & other sockets: 50% chance to resist stuns. 30% chance to resist critical hits.",
@@ -679,7 +679,7 @@
       "cost": 2,
       "triggers": [],
       "slug": "efficiency_module_flawed",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 50% chance to inflict 1 Poison.",
         "Armor & other sockets: 15% chance to resist Poison.",
@@ -709,7 +709,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "efficiency_module_flawless",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 80% chance to inflict 2 Poison.",
         "Armor & other sockets: 25% chance to resist Poison.",
@@ -739,7 +739,7 @@
       "cost": 16,
       "triggers": [],
       "slug": "efficiency_module_perfect",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 80% chance to inflict 4 Poison.",
         "Armor & other sockets: 40% chance to resist Poison.",
@@ -769,7 +769,7 @@
       "cost": 2,
       "triggers": [],
       "slug": "security_module_flawed",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 35% chance to remove 1 random buff from your opponent.",
         "Armor & other sockets: Reduce opponent's healing by 18%.",
@@ -799,7 +799,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "security_module_flawless",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 75% chance to remove 1 random buff from your opponent.",
         "Armor & other sockets: Reduce opponent's healing by 30%.",
@@ -829,7 +829,7 @@
       "cost": 16,
       "triggers": [],
       "slug": "security_module_perfect",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Weapon sockets: On hit: 70% chance to remove 2 random buffs from your opponent.",
         "Armor & other sockets: Reduce opponent's healing by 45%.",

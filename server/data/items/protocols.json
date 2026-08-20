@@ -28,7 +28,8 @@
         }
       ],
       "slug": "api_token",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": true
     },
     "bitcoin_wallet": {
       "name": "Cold Wallet",
@@ -46,7 +47,7 @@
       "cost": 3,
       "triggers": [],
       "slug": "bitcoin_wallet",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Shop entered: Gain 1 Gold.",
         "Start of battle: Gain 2 maximum health for each Star Start of battle-item."
@@ -79,7 +80,8 @@
         }
       ],
       "slug": "captcha_module",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": true
     },
     "script_compiler": {
       "name": "Build Step",
@@ -385,7 +387,7 @@
       "cost": 5,
       "triggers": [],
       "slug": "crypto_mining_rig",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Shop entered: Generate a low-quality Gemstone. Gemstones are offered in the shop."
       ]
@@ -413,7 +415,8 @@
             "hammer"
           ]
         }
-      ]
+      ],
+      "in_shop": false
     },
     "premium_subscription": {
       "name": "Free Trial",
@@ -429,7 +432,7 @@
       "cost": 4,
       "triggers": [],
       "slug": "premium_subscription",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Shop refreshes: Increase the rarity of 1 item. 10% chance for a Trade offer."
       ]
@@ -466,7 +469,8 @@
         }
       ],
       "slug": "vampire_rootkit",
-      "icontype": "vampiric"
+      "icontype": "vampiric",
+      "in_shop": true
     },
     "amulet_of_fortune": {
       "name": "Lucky Bitflip",
@@ -634,7 +638,7 @@
         }
       ],
       "slug": "angel_crystal",
-      "in_shop": false,
+      "in_shop": true,
       "icontype": "treasure,holy"
     },
     "bag_of_stones": {
@@ -653,7 +657,7 @@
       "cost": 3,
       "triggers": [],
       "slug": "bag_of_stones",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Star Stones above can be thrown repeatedly."
       ]
@@ -795,7 +799,7 @@
       "cost": 11,
       "triggers": [],
       "slug": "djinn_lamp",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Every 1.6s: Gain 1 Luck or 1 Spikes or 1 Mana, depending on what you have the least of.",
         "Use 7 Block, 7 Luck, 7 Spikes, 7 Mana and 27 health: Give the Star Weapon +27 damage (once)."
@@ -834,7 +838,7 @@
         }
       ],
       "slug": "fanfare",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Every 3s: Randomly gain 1 Empower or gain 3 Mana and remove 2 Mana from opponent or remove 1 stamina from opponent."
       ],
@@ -872,7 +876,7 @@
         }
       ],
       "slug": "flute",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Every 4.7s: Randomly gain 14 Block or 2 stamina or 2 Luck."
       ],
@@ -892,7 +896,7 @@
       "cost": 5,
       "triggers": [],
       "slug": "furcifer_prime_subscription",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Shop entered: Pay 2 Gold fees. For the next shop:",
         "Sales chance +10%. Crafted items are offered in the shop."
@@ -913,7 +917,7 @@
       "cost": 7,
       "triggers": [],
       "slug": "happy_bomb",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "After 12s: Use all your buffs, your opponent takes +4% damage for each buff used. Deal 30 Effect-damage."
       ],
@@ -984,7 +988,7 @@
         }
       ],
       "slug": "heart_container",
-      "in_shop": false,
+      "in_shop": true,
       "sockets": 1,
       "icontype": "holy"
     },
@@ -1104,7 +1108,7 @@
         }
       ],
       "slug": "leaf_badge",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Ranger items are offered in the shop.",
         "Star items gain 2% critical hit chance for each Luck."
@@ -1171,7 +1175,7 @@
       "cost": 10,
       "triggers": [],
       "slug": "maneki_neko",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Sale chance +3%.",
         "Value of Star items > 20 Gold",
@@ -1244,7 +1248,7 @@
         }
       ],
       "slug": "oil_lamp",
-      "in_shop": false,
+      "in_shop": true,
       "icontype": "fire"
     },
     "platinum_customer_card": {
@@ -1307,7 +1311,7 @@
         }
       ],
       "slug": "present",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Shop entered: Instead of gold, you receive items with a higher value."
       ],
@@ -1330,7 +1334,7 @@
       "cost": 5,
       "triggers": [],
       "slug": "puzzle_badge",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Star item triggers 20% slower.",
         "After 5s: They trigger 50% faster instead.",
@@ -1408,7 +1412,7 @@
         }
       ],
       "slug": "rainbow_badge",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Items of all classes are offered in the shop."
       ],
@@ -1472,7 +1476,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "repeater",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "After 12s: Repeat the Start of battle effects of the Star items."
       ],
@@ -1511,7 +1515,7 @@
         "#*",
         "**"
       ],
-      "source": "Shepherds Crook",
+      "source": "Shepherd's Crook",
       "rarity": "rare",
       "cost": 8,
       "triggers": [
@@ -1593,7 +1597,7 @@
         }
       ],
       "slug": "shiny_shell",
-      "in_shop": false,
+      "in_shop": true,
       "icontype": "holy, nature"
     },
     "sir_sand": {
@@ -1704,7 +1708,7 @@
         }
       ],
       "slug": "stable_recombobulator",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Shop entered: Consume Star items. Create different items based on the combined value."
       ],
@@ -1758,7 +1762,7 @@
         }
       ],
       "slug": "stone_badge",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Your starting class items are no longer offered in the shop (even when this item is in storage).",
         "Shop entered: Generate items worth 1 Gold."
@@ -1779,7 +1783,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "time_dilator",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Your and your opponent's Weapons attack 30% slower.",
         "Every 1s: Your item with the highest cooldown triggers 6% faster."
@@ -1800,7 +1804,7 @@
       "cost": 6,
       "triggers": [],
       "slug": "unidentified_amulet",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "On buy: Gain a random effect."
       ]
@@ -1845,7 +1849,7 @@
         }
       ],
       "slug": "unstable_recombobulator",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Shop entered: Consume this and Star items. Create different items based on the combined value."
       ],
@@ -1879,7 +1883,7 @@
         }
       ],
       "slug": "walrus_tusk",
-      "in_shop": false,
+      "in_shop": true,
       "icontype": "nature"
     },
     "whetstone": {
@@ -1917,7 +1921,7 @@
         }
       ],
       "slug": "whetstone",
-      "in_shop": false
+      "in_shop": true
     },
     "white_lily_collar": {
       "name": "Ivory Collar",
@@ -2007,7 +2011,7 @@
       "cost": 8,
       "triggers": [],
       "slug": "wonky_snowman",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "On Buy: Split into 2 Snowballs."
       ],

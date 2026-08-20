@@ -33,39 +33,47 @@ choosing which item -- `Use N Mana` appears in 22 clauses and 8 of them are
 Worth knowing when planning: 377 clauses remain, 107 on modules waiting for
 sockets, 270 on everything else.
 
-### The shop offers 30 items of 232, and most of that is wrong
+### The corpus is missing the wiki's own "In shop" row
 
-No item in the catalogue has `in_shop: true`. 201 say `false` and 31 say
-nothing, and the loader defaults a missing one to true -- so the 30 the shop
-can offer are the ones nobody wrote a flag for. That is not a decision anyone
-made; it is what is left when a flag is written everywhere except by accident.
+Every item page renders one -- "In shop: Yes", "No", "Box of Riches needed",
+"Beastmaster's Subclass item" -- and none of it is in `research/wiki_pages/`.
+It is not a parameter anyone types. Template:Item_infobox works it out, so
+downloading the wikitext gets everything except the answer.
 
-Three separate faults, and they want different fixes.
+`parse_wiki.py` now works it out the same way, copied from the template's
+source rather than inferred:
 
-**109 items are switched off that the wiki says are sold.** 34 weapons, 31
-protocols, 12 defenses, 12 pets and the rest. 42 of them already do everything
-they say and could be switched on today. The other 67 still have unbuilt
-clauses, and switching those on would offer the player an item that does less
-than it claims -- which is the argument for doing this as a pass tied to the
-`unbuilt` lists rather than one flag flip.
+1. `subclassname` set                  -> that subclass's item
+2. `skillround` set                    -> a round 3 or 10 skill
+3. another page's `addshop` names it   -> gated behind that page's item
+4. a recipe makes it                   -> No
+5. Star of Courage, Sack of Surprises  -> No, by name
+6. a Chess Piece                       -> with the Chess Board
+7. a Puzzlebag                         -> with a Puzzlebox or Puzzle Badge
+8. a Bag belonging to a class          -> No
+9. anything else                       -> Yes
 
-**4 items are offered that should not be.** Three are Unique, which the source
-game gives out as treasure rather than selling, and one is recipe-only.
+**Two guesses were wrong before this, and both mattered.** Rarity plays no
+part -- Tim is Unique and sold -- so filing every Unique as treasure hid
+items the shop should offer. And the opening sentence is not evidence: Torch's
+page says "available in the shop for all classes", it has a recipe, and its
+own row says No. Reading the prose put seven items in the shop that the game
+does not sell.
 
-**`research/parse_wiki.py` mis-files 10 items**, so this cannot be fixed by
-copying the parser's answer. Its rule is `rarity == "godly" -> recipe_only`, a
-blanket assumption that Godly items are never sold, and ten Godly pages say
-the opposite in as many words -- Divine Potion's begins "is a godly Potion
-available in the shop for all classes". The parser has to read the prose
-before the catalogue can be corrected from it. The ten: Divine Potion, Djinn
-Lamp, Fancy Fencing Rapier, Fanfare, Glowing Crown, Heart Container,
-Impractically Large Greatsword, Lightsaber, Prismatic Orb, Wolpertinger.
+The rule is still a copy of a template rather than the template's output.
+Capturing the rendered row for all 240 items would end the question; the
+Cargo table behind the wiki has 19 columns and this is not one of them,
+because it is computed.
 
-**Why no test caught it.** `TestTheCatalogueStillSaysWhatTheWikiSays` compares
-damage, accuracy, cooldown, stamina, cost and sockets. Shop availability was
-never in the list, so this whole class of data has been unchecked. Extending
-that test is part of the fix and not an extra: without it the flags drift
-again the next time somebody edits an item by hand.
+### Big Bowl of Treats is a subclass item, and three pets wait behind it
+
+Hedgehog, Rat and Squirrel are gated behind it, and it is the Beastmaster's
+subclass item rather than an ordinary one. It is not in the catalogue, so
+those three cannot be offered at all -- which is right for now, since offering
+them with no gate would be worse.
+
+Importing it means importing subclass items, which is a different job: seven
+of them, one per subclass, none of them bought.
 
 ### Every Potion has a clause the import missed: spillover
 

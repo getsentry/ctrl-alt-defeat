@@ -202,6 +202,12 @@ class ConfigLoader:
             recipe=self._parse_recipes(config.get("recipe", []), container_id),
             recipe_only=bool(config.get("recipe_only", False)),
             shop_needs=config.get("shop_needs", ""),
+            # Read the same way an item's is. It was not read at all, so every
+            # container was offered in the shop whatever its own file said --
+            # three Unique bags the source game gives out as treasure among
+            # them.
+            in_shop=config.get("in_shop", True)
+            and not config.get("recipe_only"),
         )
 
         return spec

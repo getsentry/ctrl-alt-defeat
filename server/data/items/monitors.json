@@ -41,7 +41,7 @@
       ],
       "slug": "basic_firewall",
       "sockets": 2,
-      "in_shop": false
+      "in_shop": true
     },
     "cryogenic_shield": {
       "name": "Heatsink Wall",
@@ -180,7 +180,7 @@
       "slug": "sanctified_firewall",
       "sockets": 3,
       "icontype": "holy",
-      "in_shop": false
+      "in_shop": true
     },
     "corrupted_kernel": {
       "name": "Corrupted Kernel",

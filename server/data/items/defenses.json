@@ -35,7 +35,8 @@
         }
       ],
       "slug": "error_monitoring",
-      "sockets": 1
+      "sockets": 1,
+      "in_shop": true
     },
     "firewall": {
       "name": "Firewall",
@@ -71,7 +72,8 @@
         }
       ],
       "slug": "firewall",
-      "sockets": 1
+      "sockets": 1,
+      "in_shop": true
     },
     "rate_limiter": {
       "name": "Throttle Gate",
@@ -195,7 +197,8 @@
             "snowball"
           ]
         }
-      ]
+      ],
+      "in_shop": false
     },
     "quantum_firewall": {
       "name": "Barbed Firewall",
@@ -296,7 +299,7 @@
       ],
       "slug": "adaptive_mesh_armor",
       "sockets": 2,
-      "in_shop": false
+      "in_shop": true
     },
     "cap_of_discomfort": {
       "name": "Itchy Firmware",
@@ -384,7 +387,7 @@
         }
       ],
       "slug": "cap_of_resilience",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "15% chance to resist critical hits.",
         "15% chance to resist stuns."
@@ -529,7 +532,7 @@
         }
       ],
       "slug": "glowing_crown",
-      "in_shop": false,
+      "in_shop": true,
       "sockets": 1,
       "icontype": "holy, magic"
     },
@@ -752,7 +755,7 @@
         }
       ],
       "slug": "leather_boots",
-      "in_shop": false,
+      "in_shop": true,
       "sockets": 1
     },
     "moon_armor": {
@@ -962,7 +965,7 @@
         }
       ],
       "slug": "shield_of_valor",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "StarItems give 30% more Block."
       ],

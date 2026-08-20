@@ -7,7 +7,11 @@ from battle_engine import BattleSimulator
 from containers import Container
 from items import sale_price
 from main import generate_ai_opponent
-from tests.conftest import MULTI_SQUARE_SHOP_SEED, SHOP_SEED
+from tests.conftest import (
+    MULTI_SQUARE_SHOP_SEED,
+    SHOP_SEED,
+    SINGLE_SQUARE_SHOP_SEED,
+)
 from tests.test_utils import find_bad_positions
 
 
@@ -777,7 +781,8 @@ class TestMoveContainerAPI:
 
     def _start(self, auth_client):
         response = auth_client.post(
-            "/session/start", json={"player_name": "mover", "seed": 42}
+            "/session/start",
+            json={"player_name": "mover", "seed": SINGLE_SQUARE_SHOP_SEED},
         )
         assert response.status_code == 200
         return response.json()["session"]

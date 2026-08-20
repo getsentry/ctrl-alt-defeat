@@ -289,7 +289,7 @@ class TestPurchaseValidation:
 
 # A seed whose round-one shop has a non-container item on sale, costing less today.
 # (Reseeded when the catalogue correction changed what shops offer.)
-SALE_SEED = 4
+SALE_SEED = 15
 
 
 class TestBuyingOnSale:

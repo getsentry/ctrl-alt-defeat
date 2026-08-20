@@ -93,7 +93,7 @@
         }
       ],
       "slug": "cthulhu",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Every 3.3s: Deal 10 Effect-damage with 100% lifesteal and trigger a random Star Food.",
         "Star Food gains Dark."
@@ -173,7 +173,7 @@
         }
       ],
       "slug": "cubert",
-      "in_shop": false,
+      "in_shop": true,
       "icontype": "treasure"
     },
     "hyper_hedgehog": {
@@ -316,7 +316,7 @@
         }
       ],
       "slug": "jynx_torquilla",
-      "in_shop": false,
+      "in_shop": true,
       "icontype": "nature, musical"
     },
     "king_goobert": {
@@ -416,7 +416,7 @@
       "cost": 6,
       "triggers": [],
       "slug": "lil_chestnut",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Shop refreshes: 40% chance for a Trade offer.",
         "Every 6s: Gain 3 buffs of the type you have most of.",
@@ -595,7 +595,7 @@
         }
       ],
       "slug": "ruby_egg",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Hatches after 2 rounds in your backpack."
       ],
@@ -760,7 +760,7 @@
         }
       ],
       "slug": "sloth",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Start of battle: Gain 10% maximum health + 15% per Star item."
       ],
@@ -901,7 +901,7 @@
         }
       ],
       "slug": "thorn_elemental",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Return damage limit of Spikes against Ranged- and Effect-attacks +50%.",
         "Spikes have 10% critical hit chance per Star Nature-item."
@@ -924,7 +924,7 @@
       "cost": 10,
       "triggers": [],
       "slug": "unsettling_presence",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Deal +30% of your healing as Effect-damage.",
         "Every 3s: Use a random buff to heal for 12."
@@ -966,7 +966,7 @@
         }
       ],
       "slug": "wolpertinger",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Increase base stamina regeneration by 0.7% for each buff you have.",
         "Every 5s: Gain 3 of the buff you have least of."

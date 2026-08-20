@@ -46,7 +46,7 @@
       ],
       "slug": "health_check_script",
       "icontype": "nature",
-      "in_shop": false
+      "in_shop": true
     },
     "firewall_script": {
       "name": "Nope Stamp",
@@ -100,7 +100,7 @@
       ],
       "slug": "firewall_script",
       "icontype": "nature",
-      "in_shop": false
+      "in_shop": true
     },
     "cache_optimizer": {
       "name": "Hot Path",
@@ -154,7 +154,7 @@
       ],
       "slug": "cache_optimizer",
       "icontype": "nature, magic",
-      "in_shop": false
+      "in_shop": true
     },
     "load_balancer_script": {
       "name": "Round Robin",
@@ -195,7 +195,8 @@
         }
       ],
       "slug": "load_balancer_script",
-      "icontype": "nature"
+      "icontype": "nature",
+      "in_shop": true
     },
     "ai_assistant_bot": {
       "name": "Autocomplete",
@@ -226,7 +227,7 @@
       ],
       "slug": "ai_assistant_bot",
       "icontype": "treasure, magic",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Every 3s: Use 1 Luck, 1 Heat and 1 Mana: Gain 1 Empower, 3 Regeneration and 20 maximum health."
       ]
@@ -288,7 +289,7 @@
       "slug": "ddos_protection_module",
       "sockets": 2,
       "icontype": "treasure, nature, ranged",
-      "in_shop": false
+      "in_shop": true
     },
     "cryogenic_cooling_system": {
       "name": "Chill Loop",
@@ -321,7 +322,7 @@
       ],
       "slug": "cryogenic_cooling_system",
       "icontype": "treasure, ice",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Every 3s: If your opponent has at least 10 Cold, increase Effect-damage by 10% and deal 10 Effect-damage."
       ]
@@ -342,7 +343,7 @@
       "cost": 5,
       "triggers": [],
       "slug": "cupcake",
-      "in_shop": false,
+      "in_shop": true,
       "unbuilt": [
         "Every 6s: Heal for 10 and gain 2 buffs of the type of which you have the most."
       ],

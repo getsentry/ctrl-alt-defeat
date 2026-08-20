@@ -11,7 +11,8 @@
       "rarity": "common",
       "cost": 4,
       "effects": [],
-      "slug": "standard_vm"
+      "slug": "standard_vm",
+      "in_shop": true
     },
     "edge_node": {
       "name": "Hot Pocket",
@@ -33,7 +34,8 @@
           "cap": null
         }
       ],
-      "slug": "edge_node"
+      "slug": "edge_node",
+      "in_shop": true
     },
     "memory_cache": {
       "name": "Memory Cache",
@@ -54,7 +56,8 @@
           "description": "Gain 1 maximum CPU"
         }
       ],
-      "slug": "memory_cache"
+      "slug": "memory_cache",
+      "in_shop": true
     },
     "load_balancer": {
       "name": "Pocket Dimension",
@@ -72,7 +75,8 @@
           "description": "Start of battle: Gain 15 Block"
         }
       ],
-      "slug": "load_balancer"
+      "slug": "load_balancer",
+      "in_shop": true
     },
     "patch_registry": {
       "name": "Bandolier",
@@ -91,7 +95,8 @@
       "unbuilt": [
         "First Potion inside consumed: Gain a random buff.",
         "4 Potions inside consumed: Cleanse 10 debuffs."
-      ]
+      ],
+      "in_shop": true
     },
     "container_orchestrator": {
       "name": "Container Orchestrator",
@@ -121,7 +126,8 @@
             "hammer"
           ]
         }
-      ]
+      ],
+      "in_shop": false
     },
     "serverless_function": {
       "name": "The Cloud",
@@ -155,7 +161,8 @@
             "hammer"
           ]
         }
-      ]
+      ],
+      "in_shop": false
     },
     "network_cache": {
       "name": "Dead Drop",
@@ -172,7 +179,8 @@
       "slug": "network_cache",
       "unbuilt": [
         "Items inside gain 10% critical hit chance +3% for each Luck."
-      ]
+      ],
+      "in_shop": false
     },
     "mesh_network_hub": {
       "name": "Motherboard",
@@ -190,7 +198,8 @@
       "unbuilt": [
         "Your healing is amplified by 12% + 5% per Nature-item inside.",
         "In rounds 1 and 10, sale chance is increased by 20%."
-      ]
+      ],
+      "in_shop": false
     },
     "chaos_experiment": {
       "name": "Loot Box",
@@ -206,7 +215,8 @@
       "slug": "chaos_experiment",
       "unbuilt": [
         "Game started: Replace this with random starting bags and items."
-      ]
+      ],
+      "in_shop": false
     }
   }
 }
