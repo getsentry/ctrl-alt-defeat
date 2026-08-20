@@ -87,6 +87,24 @@ class MoveItemRequest(BaseModel):
     )
 
 
+class RackRequest(BaseModel):
+    """What to stand on the player's rack. TEST MODE ONLY.
+
+    A test that wants two particular items together cannot buy them: the shop
+    offers what the seed says it offers. So it says what it wants instead, and
+    the server puts it there as if it had been bought.
+    """
+
+    player_id: str = Field(description="Whose rack to stand them on")
+    items: List["RackItem"]
+
+
+class RackItem(BaseModel):
+    item_type: str = Field(description="Catalogue slug of the item to stand")
+    position: Position = Field(description="The square it stands on")
+    rotation: Rotation = Field(default=Rotation.NONE)
+
+
 # ============ Response Models ============
 
 

@@ -186,6 +186,42 @@ func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResponse:
 	error_occurred.emit(error_msg)
 	return null
 
+func combining_catalogue() -> APITypes.CombiningCatalogue:
+	"""Which item types go together in a recipe, and what to call each one.
+
+	Neither a session nor a token: it is the same for every player and it never
+	changes, so the client asks once -- before there is a rack to ask about --
+	and answers from it after that. A line is wanted on hover and while
+	dragging, and a line every frame cannot be a request every frame.
+	"""
+	# Its own request rather than the shared one. It is asked for as the shop
+	# screen opens, which is exactly when the screen is also loading a session,
+	# and two requests down one HTTPRequest is one refused request and one
+	# await that never returns.
+	var asking := HTTPRequest.new()
+	add_child(asking)
+
+	var sent := asking.request(BASE_URL + "/catalogue/combining",
+		["Content-Type: application/json"])
+	if sent != OK:
+		# request_completed never fires for a request that never went, so
+		# waiting on it would hang here, holding the node for the whole run.
+		asking.queue_free()
+		push_error("Could not ask for the combining catalogue: error %d" % sent)
+		return null
+
+	var result = await asking.request_completed
+	asking.queue_free()
+
+	if result[1] == 200:
+		var json = JSON.new()
+		if json.parse(result[3].get_string_from_utf8()) == OK:
+			return APITypes.CombiningCatalogue.new(json.data)
+
+	push_error("Could not fetch the combining catalogue: code %d" % result[1])
+	return null
+
+
 func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 	# Refresh shop from real server
 	if player_id == "":
@@ -272,6 +308,7 @@ func purchase_item(
 		if parse_result == OK:
 			var data = json.data
 			response = APITypes.PurchaseResponse.new(data)
+			GameStateManager.note_pending(response.pending)
 			# HTTP 200 means success
 			print("DEBUG: Purchase successful, gold now: %d" % response.gold)
 			purchase_completed.emit(response)
@@ -313,6 +350,7 @@ func sell_item(item_id: String) -> APITypes.SellResponse:
 		if parse_result == OK:
 			var data = json.data
 			response = APITypes.SellResponse.new(data)
+			GameStateManager.note_pending(response.pending)
 			sell_completed.emit(response)
 			return response
 
@@ -359,6 +397,7 @@ func move_item(
 		if parse_result == OK:
 			var data = json.data
 			var response = APITypes.MoveItemResponse.new(data)
+			GameStateManager.note_pending(response.pending)
 			print("DEBUG: Move successful")
 			return response
 

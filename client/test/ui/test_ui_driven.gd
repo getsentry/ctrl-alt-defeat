@@ -1177,3 +1177,148 @@ func _first_non_container_shop_item(game_ui):
 		if not data.is_container:
 			return shop_item
 	return null
+
+
+func test_the_server_says_which_items_go_together():
+	"""GDD 5.3: the client answers hover lines from this, so what it fetches
+	once has to be what it thinks it fetched.
+
+	Against the real catalogue, so a slug renamed on the server, or a field
+	renamed on either side, is caught here rather than by a line that silently
+	stops being drawn.
+	"""
+	await GameStateManager.fetch_combining_catalogue()
+	var combining = GameStateManager.combining
+
+	assert_true(combining.knows_the_catalogue(), "the catalogue arrived")
+	assert_true(combining.goes_with("hero_sword", "whetstone"),
+		"a Long Poll is a Main Branch and two Edge Caches")
+	assert_true(combining.goes_with("whetstone", "hero_sword"),
+		"and it is named from both ends")
+	assert_true(combining.goes_with("whetstone", "whetstone"),
+		"two of them, so one Edge Cache points at another")
+	assert_eq(combining.name_of("hero_longsword"), "Long Poll",
+		"and it can name a thing that does not exist yet")
+
+
+func test_buying_something_says_what_the_rack_is_on_the_way_to():
+	"""Every answer that can change the rack carries it, so the glow and the
+	progress label are never a round behind."""
+	var game_ui = await _start_a_game()
+	var slot = _first_buyable_shop_slot(game_ui)
+	assert_not_null(slot, "Setup: the shop offers something to buy")
+
+	var item = slot.get_meta("item_data")
+	var answer = await BattleServerAPI.purchase_item(item.id, "storage")
+
+	assert_not_null(answer, "the purchase went through")
+	assert_eq(typeof(answer.pending), TYPE_ARRAY,
+		"and it said what the rack is on the way to")
+	assert_eq(GameStateManager.combining.pending.size(), answer.pending.size(),
+		"which the screen is now holding")
+
+
+func _start_a_game() -> Node:
+	"""Open the shop screen the way the player does, and wait for the shelf."""
+	var main_menu = load("res://scenes/MainMenu.tscn").instantiate()
+	get_tree().root.add_child(main_menu)
+	get_tree().current_scene = main_menu
+	await get_tree().process_frame
+	main_menu.new_game_button.pressed.emit()
+	await _wait_for_shop_ready()
+	return get_tree().current_scene
+
+
+func _first_buyable_shop_slot(game_ui: Node) -> Panel:
+	for slot in game_ui.shop_items:
+		var data = slot.get_meta("item_data")
+		if not data.is_container and data.price <= GameStateManager.gold:
+			return slot
+	return null
+
+
+func test_the_screen_lights_the_two_items_the_server_will_combine():
+	"""GDD 5.3, the whole way through: the server's rules decide that these two
+	combine, the answer travels over the wire, and the screen lights the right
+	two items.
+
+	Every other test of the glow builds the answer by hand. This one does not
+	know what combines -- it puts a Neural Link Collar next to a CPU Booster and
+	lets the server say.
+	"""
+	var game_ui = await _start_a_game()
+	await _stand_on_the_rack([
+		{"item_type": "neural_link_collar", "position": [2, 3]},
+		{"item_type": "cpu_booster", "position": [3, 3]},
+	])
+
+	# A real move, so the answer comes back the way it does in play. The booster
+	# goes under the collar rather than beside it, which is still touching:
+	# corners do not count, so [3, 4] would have broken the pair up.
+	var answer = await BattleServerAPI.move_item("test1", [2, 4])
+	assert_not_null(answer, "the server took the move")
+	game_ui.inventory_grid.load_inventory_state(answer.as_inventory_state())
+
+	assert_eq(GameStateManager.combining.about_to_combine().size(), 1,
+		"the server says these two will combine")
+	game_ui.refresh_combining(Vector2(-500, -500))
+
+	assert_eq(game_ui.combining_overlay.glowing().size(), 2,
+		"and both of them are lit, whatever the pointer is doing")
+
+
+func test_a_rack_that_combines_is_played_out_on_the_shop_screen():
+	"""The other half: the battle combines them, and the shop screen the player
+	comes back to plays it and ends on the rack the server sent."""
+	await _start_a_game()
+	await _stand_on_the_rack([
+		{"item_type": "neural_link_collar", "position": [2, 3]},
+		{"item_type": "cpu_booster", "position": [3, 3]},
+	])
+
+	# What the Start Battle button does, without the battle playback. That
+	# button is covered by test_battle_button_and_full_battle.
+	var battle = await BattleServerAPI.submit_battle({})
+	assert_not_null(battle, "the battle was fought")
+	GameStateManager.update_after_battle(battle)
+
+	var combinations = GameStateManager.combinations_to_play
+	assert_eq(combinations.size(), 1, "the collar and the booster combined")
+	assert_eq(combinations[0].made, "blue_sage_collar", "into an Amethyst Collar")
+	var made_id = combinations[0].made_id
+
+	# Coming back to the shop, which is where the player sees it.
+	var shop = load("res://scenes/UnifiedGridUI.tscn").instantiate()
+	get_tree().root.add_child(shop)
+	var drawn = await _wait_until(func():
+		return shop.inventory_grid != null \
+			and shop.inventory_grid.item_visual(made_id) != null)
+
+	assert_true(drawn, "the rack ends holding what the server made")
+	assert_null(shop.inventory_grid.item_visual("test0"),
+		"and the items it was made from are gone")
+
+
+func _stand_on_the_rack(items: Array) -> void:
+	"""Put these items on the player's rack through the server's test hook.
+
+	A test cannot buy two particular items: the shop offers what the seed says
+	it offers. The hook is TEST_MODE only and is named by player rather than by
+	token, because the token belongs to the client and this is not the client.
+	"""
+	var http := HTTPRequest.new()
+	get_tree().root.add_child(http)
+
+	var base_url := OS.get_environment("BATTLE_SERVER_URL")
+	if base_url == "":
+		base_url = "http://localhost:8081"
+
+	var body := JSON.stringify({
+		"player_id": BattleServerAPI.player_id, "items": items})
+	http.request(base_url + "/test/rack", ["Content-Type: application/json"],
+		HTTPClient.METHOD_POST, body)
+	var result = await http.request_completed
+	http.queue_free()
+
+	assert_eq(result[1], 200,
+		"the rack was set: %s" % result[3].get_string_from_utf8())

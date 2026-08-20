@@ -1933,6 +1933,88 @@ class TestTheClientIsWarnedBeforeItemsCombine:
         ]
 
 
+class TestStandingItemsOnTheRackForATest:
+    """The hook a client test uses to set a board up. TEST MODE only.
+
+    A test that wants two particular items together cannot buy them: the shop
+    offers what the seed says it offers, and hunting for a seed that offers a
+    pair is a search rather than a test.
+    """
+
+    def test_it_stands_the_items_where_it_is_told(self, auth_client):
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+
+        answered = auth_client.post("/test/rack", json={
+            "player_id": str(auth_client.user_id), "items": [
+            {"item_type": "neural_link_collar", "position": [2, 3]},
+            {"item_type": "cpu_booster", "position": [3, 3]},
+        ]})
+
+        assert answered.status_code == 200, answered.text
+        rack = answered.json()["inventory_grid"]
+        assert [item["item_type"] for item in rack] == [
+            "neural_link_collar", "cpu_booster"
+        ]
+        assert [item["position"] for item in rack] == [[2, 3], [3, 3]]
+
+    def test_the_rack_it_sets_is_the_rack_the_session_has(self, auth_client):
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/test/rack", json={
+            "player_id": str(auth_client.user_id), "items": [
+            {"item_type": "whetstone", "position": [2, 3]},
+        ]})
+
+        held = auth_client.get("/session").json()["inventory_grid"]
+
+        assert [item["item_type"] for item in held] == ["whetstone"]
+
+    def test_it_says_what_that_rack_is_on_the_way_to(self, auth_client):
+        """So a client can set a board up and draw the glow without a move."""
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+
+        answered = auth_client.post("/test/rack", json={
+            "player_id": str(auth_client.user_id), "items": [
+            {"item_type": "neural_link_collar", "position": [2, 3]},
+            {"item_type": "cpu_booster", "position": [3, 3]},
+        ]}).json()
+
+        assert [(p["makes"], p["have"], p["need"]) for p in answered["pending"]] == [
+            ("blue_sage_collar", 2, 2)
+        ]
+
+    def test_it_replaces_the_rack_rather_than_adding_to_it(self, auth_client):
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/test/rack", json={
+            "player_id": str(auth_client.user_id), "items": [
+            {"item_type": "whetstone", "position": [2, 3]},
+        ]})
+
+        answered = auth_client.post("/test/rack", json={
+            "player_id": str(auth_client.user_id), "items": [
+            {"item_type": "cpu_booster", "position": [4, 3]},
+        ]})
+
+        assert [item["item_type"] for item in answered.json()["inventory_grid"]] == [
+            "cpu_booster"
+        ], "a test setting the board up wants the board it asked for"
+
+    def test_an_item_that_does_not_exist_is_refused(self, auth_client):
+        auth_client.post("/session/start", json={"player_name": "Tester"})
+
+        answered = auth_client.post("/test/rack", json={
+            "player_id": str(auth_client.user_id), "items": [
+            {"item_type": "no_such_item", "position": [2, 3]},
+        ]})
+
+        assert answered.status_code == 400, "a typo in a test is a failed test"
+
+    def test_it_needs_a_session(self, auth_client):
+        answered = auth_client.post("/test/rack", json={
+            "player_id": str(auth_client.user_id), "items": []})
+
+        assert answered.status_code == 404
+
+
 class TestWhichItemsGoTogether:
     """GDD 5.3, the line the client draws on hover and while dragging.
 

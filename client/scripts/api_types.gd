@@ -43,6 +43,15 @@ static func squares(offsets: Array) -> Array[Vector2i]:
 	return out
 
 
+# Read a list of names a response carries. JSON hands over an untyped Array,
+# and an Array[String] is what the rest of the client wants to hold.
+static func strings(values: Array) -> Array[String]:
+	var out: Array[String] = []
+	for value in values:
+		out.append(str(value))
+	return out
+
+
 # And back, for a response this client builds or echoes.
 static func offsets(squares_in: Array[Vector2i]) -> Array:
 	var out := []
@@ -362,6 +371,132 @@ class InventoryState extends Resource:
 		for container_data in data["servers"]:
 			containers.append(PlacedItem.new(container_data))
 
+# Everything the player holds: the rack, the chest and the containers.
+#
+# What a battle answers with, and what a move answers with, are the same three
+# lists, so they are read the same way.
+class WholeInventory extends Resource:
+	var inventory_grid: Array[PlacedItem] = []
+	var inventory_storage: Array[Item] = []
+	# Moving a container moves the containers, so the whole board comes back.
+	var server_containers: Array[PlacedItem] = []
+
+	func _init(data: Dictionary):
+		for item_data in data["inventory_grid"]:
+			inventory_grid.append(PlacedItem.new(item_data))
+		for item_data in data["inventory_storage"]:
+			inventory_storage.append(Item.new(item_data))
+		for container_data in data["server_containers"]:
+			server_containers.append(PlacedItem.new(container_data))
+
+	# The board as the grid loads it.
+	func as_inventory_state() -> InventoryState:
+		var items: Array[Dictionary] = []
+		for item in inventory_grid:
+			items.append(item.to_dict())
+		var servers: Array[Dictionary] = []
+		for container in server_containers:
+			servers.append(container.to_dict())
+		return InventoryState.new({"items": items, "servers": servers})
+
+
+# A recipe the rack is part or all of the way towards (GDD 5.3).
+#
+# `have` of `need` parts are there and touching each other. Equal means it will
+# combine the moment the battle starts, which is the glow to draw. Fewer means
+# it is progress, which is the label to put beside the part just put down.
+#
+# The parts are named by id, because the client is looking at those items.
+# What it makes is named by type, because that item does not exist yet.
+class Pending extends Resource:
+	var makes: String = ""
+	var have: int = 0
+	var need: int = 0
+	# Ids on the rack that would be used up.
+	var ingredients: Array[String] = []
+	# Ids on the rack that are needed and kept.
+	var catalysts: Array[String] = []
+	# Parts still wanted: an item type, or a `class:` wildcard over a kind.
+	var missing: Array[String] = []
+
+	func _init(data: Dictionary):
+		makes = data["makes"]
+		have = int(data["have"])
+		need = int(data["need"])
+		ingredients = APITypes.strings(data["ingredients"])
+		catalysts = APITypes.strings(data["catalysts"])
+		missing = APITypes.strings(data["missing"])
+
+	# Whether this is a combination that will happen rather than progress
+	# towards one.
+	func complete() -> bool:
+		return have == need
+
+	# Every item on the rack this names, eaten or kept.
+	func item_ids() -> Array[String]:
+		var ids: Array[String] = []
+		ids.append_array(ingredients)
+		ids.append_array(catalysts)
+		return ids
+
+	func names(item_id: String) -> bool:
+		return ingredients.has(item_id) or catalysts.has(item_id)
+
+
+# One combining that happened, for the client to play (GDD 5.3).
+#
+# The consumed items are gone from the rack by the time this is read, so they
+# arrive whole rather than named: a name would not be enough to draw one, and
+# with two of a kind on the rack it would not say which two were eaten.
+class Combination extends Resource:
+	var made: String = ""
+	var made_id: String = ""
+	var consumed: Array[PlacedItem] = []
+	var kept: Array[PlacedItem] = []
+	# The squares the ingredients were standing on.
+	var freed: Array[Vector2i] = []
+	# Where the result landed. Null means it went to the chest.
+	var position: Position = null
+
+	func _init(data: Dictionary):
+		made = data["made"]
+		made_id = data["made_id"]
+		for item_data in data["consumed"]:
+			consumed.append(PlacedItem.new(item_data))
+		for item_data in data["kept"]:
+			kept.append(PlacedItem.new(item_data))
+		freed = APITypes.squares(data["freed"])
+		if data["position"] != null:
+			position = Position.new(data["position"])
+
+
+# Which item types go together in a recipe, for the whole catalogue.
+#
+# The same for every player and every rack, so it is fetched once and answered
+# from here. It says these two appear in a recipe together and nothing more:
+# whether a combination will actually happen is `pending`, which needs rules
+# that stay on the server.
+class CombiningCatalogue extends Resource:
+	var partners: Dictionary = {}  # item type -> Array[String]
+	var names: Dictionary = {}     # item type -> the name to show for it
+
+	func _init(data: Dictionary):
+		for item_type in data["partners"]:
+			partners[item_type] = APITypes.strings(data["partners"][item_type])
+		for item_type in data["names"]:
+			names[item_type] = str(data["names"][item_type])
+
+	func partners_of(item_type: String) -> Array[String]:
+		var found: Array[String] = []
+		found.assign(partners.get(item_type, []))
+		return found
+
+	# What to call an item type on screen. The slug where the catalogue has
+	# never heard of it, which is better than a blank label.
+	func name_of(item_type: String) -> String:
+		return names.get(item_type, item_type)
+
+
 # Battle action - matches server BattleAction schema
 class BattleAction extends Resource:
 	var timestamp: int = 0  # milliseconds
@@ -429,6 +564,10 @@ class SessionUpdate extends Resource:
 	var lives: int = 0
 	var game_over: bool
 	var victory: bool
+	# What combined as this shop phase began, in the order it happened.
+	var combinations: Array[Combination] = []
+	# What the rack is on the way to now, after that combining.
+	var pending: Array[Pending] = []
 
 	func _init(data: Dictionary):
 		# Required fields per server SessionUpdate schema
@@ -440,6 +579,10 @@ class SessionUpdate extends Resource:
 		lives = data["lives"]
 		game_over = data["game_over"]
 		victory = data["victory"]
+		for made in data["combinations"]:
+			combinations.append(Combination.new(made))
+		for waiting in data["pending"]:
+			pending.append(Pending.new(waiting))
 
 
 class GameSession extends Resource:
@@ -457,6 +600,8 @@ class GameSession extends Resource:
 	var inventory_grid: Array[PlacedItem] = []
 	var inventory_storage: Array[Item] = []
 	var server_containers: Array[PlacedItem]
+	# What the rack is on the way to combining. See Pending.
+	var pending: Array[Pending] = []
 
 	func _init(data: Dictionary):
 		player_id = data["player_id"]
@@ -479,6 +624,9 @@ class GameSession extends Resource:
 		server_containers = []
 		for container_data in data["server_containers"]:
 			server_containers.append(PlacedItem.new(container_data))
+
+		for waiting in data["pending"]:
+			pending.append(Pending.new(waiting))
 
 
 # Session start response - matches server StartSessionResponse
@@ -506,12 +654,15 @@ class PurchaseResponse extends Resource:
 	var purchased_item: Item
 	var gold: int = 0
 	var server_containers: Array[PlacedItem] = []
+	var pending: Array[Pending] = []
 
 	func _init(data: Dictionary):
 		purchased_item = Item.new(data["purchased_item"])
 		gold = data["gold"]
 		for container_data in data["server_containers"]:
 			server_containers.append(PlacedItem.new(container_data))
+		for waiting in data["pending"]:
+			pending.append(Pending.new(waiting))
 
 # Battle response - matches server BattleResponse schema
 class BattleResponse extends Resource:
@@ -519,45 +670,37 @@ class BattleResponse extends Resource:
 	var session_update: SessionUpdate  # Typed SessionUpdate
 	var new_shop: Array[Item] = []  # null in a slot whose item was bought
 	var battle_id: String = ""
+	# What the player holds now, after the combining that began this shop
+	# phase. Not the same as battle_result.player_inventory, which is the rack
+	# that fought and so the rack before anything combined.
+	var inventory: WholeInventory
 
 	func _init(data: Dictionary):
 		battle_result = BattleResult.new(data["battle_result"])
 		session_update = SessionUpdate.new(data["session_update"])
 		new_shop = APITypes.parse_shop(data["new_shop"])
 		battle_id = data["battle_id"]
+		inventory = WholeInventory.new(data["inventory"])
 
 # Sell response
 class SellResponse extends Resource:
 	var gold_gained: int = 0
 	var gold: int = 0
 	var sold_item: Item
+	var pending: Array[Pending] = []
 
 	func _init(data: Dictionary):
 		gold_gained = int(data["gold_gained"])
 		gold = int(data["gold"])
 		sold_item = Item.new(data["sold_item"])
+		for waiting in data["pending"]:
+			pending.append(Pending.new(waiting))
 
 # Move item response
-class MoveItemResponse extends Resource:
-	var inventory_grid: Array[PlacedItem] = []
-	var inventory_storage: Array[Item] = []
-	# Moving a container moves the containers, so the whole board comes back.
-	var server_containers: Array[PlacedItem] = []
+class MoveItemResponse extends WholeInventory:
+	var pending: Array[Pending] = []
 
 	func _init(data: Dictionary):
-		for item_data in data["inventory_grid"]:
-			inventory_grid.append(PlacedItem.new(item_data))
-		for item_data in data["inventory_storage"]:
-			inventory_storage.append(Item.new(item_data))
-		for container_data in data["server_containers"]:
-			server_containers.append(PlacedItem.new(container_data))
-
-	# The board as the grid loads it.
-	func as_inventory_state() -> InventoryState:
-		var items: Array[Dictionary] = []
-		for item in inventory_grid:
-			items.append(item.to_dict())
-		var servers: Array[Dictionary] = []
-		for container in server_containers:
-			servers.append(container.to_dict())
-		return InventoryState.new({"items": items, "servers": servers})
+		super(data)
+		for waiting in data["pending"]:
+			pending.append(Pending.new(waiting))

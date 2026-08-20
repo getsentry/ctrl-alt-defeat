@@ -2,6 +2,7 @@ extends GutTest
 # Test inventory persistence between scenes
 
 const APITypes = preload("res://scripts/api_types.gd")
+const TestHelpers = preload("res://test/utils/test_helpers.gd")
 
 func before_each():
 	GameStateManager.start_new_game()
@@ -25,13 +26,17 @@ func test_save_and_load_inventory():
 	assert_eq(loaded.items[0].data.name, "CPU", "First item should be CPU")
 	assert_eq(loaded.servers[0].data.name, "Rack", "Server should be Rack")
 
-func test_inventory_survives_battle():
-	# Setup inventory
-	var items = [{"data": {"name": "Test", "shape": [[0, 0]], "width": 1, "height": 1}, "grid_pos": Vector2i(1, 1)}]
-	var servers = [{"data": {"name": "Server", "pattern": [[1,1]]}, "pos": Vector2i(0, 0)}]
-	GameStateManager.save_inventory_state(items, servers)
+func test_the_rack_after_a_battle_is_the_one_the_server_answered_with():
+	"""Items combine as the shop phase begins (GDD 5.3).
 
-	# Simulate battle with typed response
+	So the rack changes without the player touching it, and what is held here
+	is what the shop screen draws. Believing the cache over the server would
+	leave the ingredients sitting there after they had been eaten.
+	"""
+	GameStateManager.save_inventory_state(
+		[TestHelpers.placed_item_data({"id": "ingredient"})],
+		[TestHelpers.container_data({"id": "srv"})])
+
 	var mock_response = APITypes.BattleResponse.new({
 		"battle_result": {
 			"winner": 1,
@@ -53,17 +58,23 @@ func test_inventory_survives_battle():
 			"losses": 0,
 			"lives": 5,
 			"game_over": false,
-			"victory": false
+			"victory": false,
+			"combinations": [], "pending": []
 		},
 		"new_shop": [],
+		"inventory": {
+			"inventory_grid": [TestHelpers.placed_item_data({"id": "made"})],
+			"inventory_storage": [],
+			"server_containers": [TestHelpers.container_data({"id": "srv"})]
+		},
 		"battle_id": "test-123"
 	})
 	GameStateManager.update_after_battle(mock_response)
 
-	# Check inventory still there
 	var after = GameStateManager.get_inventory_state()
-	assert_eq(after.items.size(), 1, "Items should persist")
-	assert_eq(after.servers.size(), 1, "Servers should persist")
+	assert_eq(after.items.size(), 1, "The rack should hold what the server sent")
+	assert_eq(after.items[0].id, "made", "and it is the item the server named")
+	assert_eq(after.servers.size(), 1, "The containers come back with it")
 
 func test_empty_inventory_is_valid():
 	GameStateManager.save_inventory_state([], [])

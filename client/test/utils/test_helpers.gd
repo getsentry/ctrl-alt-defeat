@@ -133,10 +133,24 @@ static func create_test_session_update(round: int = 1, gold: int = 12, lives: in
 		"losses": 0,
 		"lives": lives,
 		"game_over": lives <= 0,
-		"victory": false
+		"victory": false,
+		"combinations": [],
+		"pending": []
 	}
 
 	return APITypes.SessionUpdate.new(session_data)
+
+
+# The three lists a battle answers with: the rack, the chest and the containers
+# as the shop phase begins, which is after anything on the rack has combined.
+static func inventory_after_battle(overrides: Dictionary = {}) -> Dictionary:
+	var whole := {
+		"inventory_grid": [],
+		"inventory_storage": [],
+		"server_containers": [container_data({"id": "test_srv1"})]
+	}
+	whole.merge(overrides, true)
+	return whole
 
 # Helper to wait for a signal with timeout
 static func wait_for_signal_with_timeout(test: GutTest, sig: Signal, timeout_sec: float = 2.0) -> bool:

@@ -872,6 +872,15 @@ func update_drag_preview(pointer: Vector2) -> void:
 
 func clear_all():
 	"""Clear all items and containers"""
+	# Nothing survives a clear, including whatever was in the middle of being
+	# dragged. Left behind, the reference outlives the node it points at, and
+	# the next mouse-up asks a freed item where it landed. The board is redrawn
+	# under the player's hand more often than it looks: a move the server
+	# refuses, a container that displaces something, and the merge that plays
+	# as the shop opens.
+	dragging_object = null
+	dragging_container = null
+
 	# Remove all item visuals
 	for item_visual in items:
 		item_visual.queue_free()

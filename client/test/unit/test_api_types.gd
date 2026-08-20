@@ -270,9 +270,11 @@ func test_battle_response_resolves_to_leaf_values():
 		}),
 		"session_update": {
 			"round": 3, "gold": 21, "gold_earned": 9, "wins": 2,
-			"losses": 0, "lives": 5, "game_over": false, "victory": false
+			"losses": 0, "lives": 5, "game_over": false, "victory": false,
+			"combinations": [], "pending": []
 		},
 		"new_shop": [],
+		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "battle-123"
 	})
 
@@ -287,7 +289,8 @@ func test_battle_response_resolves_to_leaf_values():
 func test_session_update_carries_the_whole_session():
 	var update = APITypes.SessionUpdate.new({
 		"round": 4, "gold": 30, "gold_earned": 12, "wins": 3,
-		"losses": 1, "lives": 4, "game_over": false, "victory": false
+		"losses": 1, "lives": 4, "game_over": false, "victory": false,
+		"combinations": [], "pending": []
 	})
 
 	assert_eq(update.round, 4, "round should survive parsing")
@@ -308,7 +311,7 @@ func test_session_start_response_resolves_the_session():
 			"player_id": "42", "player_name": "Tester", "round": 1, "gold": 12,
 			"lives": 5, "wins": 0, "losses": 0, "last_battle_result": null,
 			"current_shop": [], "game_seed": 777, "shop_refresh_count": 0,
-			"inventory_grid": [], "inventory_storage": [],
+			"inventory_grid": [], "inventory_storage": [], "pending": [],
 			"server_containers": [_container(), _container({"id": "container_b", "position": [4, 3]})]
 		}
 	})
@@ -605,3 +608,107 @@ func test_a_zone_with_no_anchor_turns_with_the_item():
 	reaching_right["rotation"] = 90
 	var placed = APITypes.PlacedItem.new(reaching_right)
 	assert_eq(placed.turned_star(), _at([[0, -1]]))
+
+
+# ============ Combining (GDD 5.3) ============
+
+func test_what_the_rack_is_on_the_way_to_survives_parsing():
+	var waiting = APITypes.Pending.new({
+		"makes": "hero_longsword",
+		"have": 2,
+		"need": 3,
+		"ingredients": ["sword", "stone"],
+		"catalysts": [],
+		"missing": ["whetstone"],
+	})
+
+	assert_eq(waiting.makes, "hero_longsword")
+	assert_eq(waiting.have, 2)
+	assert_eq(waiting.need, 3)
+	assert_eq(waiting.ingredients, ["sword", "stone"] as Array[String])
+	assert_eq(waiting.missing, ["whetstone"] as Array[String])
+	assert_false(waiting.complete(), "two of three is not finished")
+
+
+func test_a_finished_recipe_says_so():
+	var waiting = APITypes.Pending.new({
+		"makes": "serverless_function", "have": 2, "need": 2,
+		"ingredients": ["rig"], "catalysts": ["cat"], "missing": [],
+	})
+
+	assert_true(waiting.complete())
+	assert_eq(waiting.item_ids(), ["rig", "cat"] as Array[String],
+		"a catalyst is one of the items this names")
+	assert_true(waiting.names("cat"))
+	assert_false(waiting.names("somebody_else"))
+
+
+func test_a_combination_carries_the_items_it_ate():
+	var made = APITypes.Combination.new({
+		"made": "blue_sage_collar",
+		"made_id": "new_1",
+		"consumed": [_item({"id": "eaten"})],
+		"kept": [_item({"id": "catalyst"})],
+		"freed": [[2, 3], [3, 3]],
+		"position": [2, 3],
+	})
+
+	assert_eq(made.made, "blue_sage_collar")
+	assert_eq(made.consumed[0].id, "eaten",
+		"whole items, because the client has no catalogue to draw from")
+	assert_eq(made.kept[0].id, "catalyst")
+	assert_eq(made.freed, _at([[2, 3], [3, 3]]))
+	assert_eq(made.position.to_vector2i(), Vector2i(2, 3))
+
+
+func test_a_result_with_nowhere_to_stand_has_no_position():
+	var made = APITypes.Combination.new({
+		"made": "stone_golem", "made_id": "new_2",
+		"consumed": [], "kept": [], "freed": [], "position": null,
+	})
+
+	assert_null(made.position, "no position means the chest, and never nowhere")
+
+
+func test_the_combining_catalogue_names_both_sides_and_the_items():
+	var catalogue = APITypes.CombiningCatalogue.new({
+		"partners": {"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]},
+		"names": {"hero_longsword": "Long Poll"},
+	})
+
+	assert_eq(catalogue.partners_of("hero_sword"), ["whetstone"] as Array[String])
+	assert_eq(catalogue.partners_of("bloodthorne"), [] as Array[String],
+		"an item in no recipe is absent from the map")
+	assert_eq(catalogue.name_of("hero_longsword"), "Long Poll")
+
+
+func test_the_battle_answer_carries_the_rack_the_combining_left():
+	var response = APITypes.BattleResponse.new({
+		"battle_result": _battle_result({
+			"player_inventory": {"items": [_item({"id": "fought_with"})], "servers": []}
+		}),
+		"session_update": {
+			"round": 3, "gold": 21, "gold_earned": 9, "wins": 2,
+			"losses": 0, "lives": 5, "game_over": false, "victory": false,
+			"combinations": [{
+				"made": "blue_sage_collar", "made_id": "new_1",
+				"consumed": [_item({"id": "fought_with"})], "kept": [],
+				"freed": [[2, 3]], "position": [2, 3],
+			}],
+			"pending": [],
+		},
+		"new_shop": [],
+		"inventory": {
+			"inventory_grid": [_item({"id": "new_1"})],
+			"inventory_storage": [],
+			"server_containers": [],
+		},
+		"battle_id": "battle-9",
+	})
+
+	assert_eq(response.battle_result.player_inventory.items[0].id, "fought_with",
+		"the rack that fought is the rack before anything combined")
+	assert_eq(response.inventory.inventory_grid[0].id, "new_1",
+		"and the inventory is the rack the player holds now")
+	assert_eq(response.session_update.combinations[0].made, "blue_sage_collar",
+		"with what happened in between")

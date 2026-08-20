@@ -848,3 +848,21 @@ func test_a_container_is_drawn_a_little_short_of_solid():
 		"A solid container hides the grid and the marks underneath it")
 	assert_gt(drawn.modulate.a, 0.5,
 		"but it is furniture, not a ghost")
+
+
+func test_redrawing_the_board_lets_go_of_whatever_was_being_dragged():
+	"""The board is redrawn under the player's hand more often than it looks:
+	a move the server refuses, a container that displaces something, and the
+	merge that plays as the shop opens. A drag that outlived the redraw would
+	ask a freed item where it landed on the next mouse-up."""
+	grid.load_inventory_state(APITypes.InventoryState.new({
+		"items": [TestHelpers.placed_item_data({"id": "held", "position": [2, 3]})],
+		"servers": [TestHelpers.container_data({"id": "srv", "position": [2, 3]})]
+	}))
+	grid._start_drag(grid.item_visual("held"))
+	assert_not_null(grid.dragging_object, "Setup: something is being dragged")
+
+	grid.load_inventory_state(APITypes.InventoryState.new(
+		{"items": [], "servers": []}))
+
+	assert_null(grid.dragging_object, "the drag is over, because the item is gone")

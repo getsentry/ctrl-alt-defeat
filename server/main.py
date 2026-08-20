@@ -43,6 +43,7 @@ from schemas import (
     CombiningPartners,
     InventoryAfterBattle,
     Pending,
+    RackRequest,
     BattleHistoryResponse,
     BattleResponse,
     BattleResult,
@@ -1532,6 +1533,45 @@ async def get_battle_history(
 if TEST_MODE:
     # Store active test transactions
     test_transactions = {}
+
+    @app.post("/test/rack")
+    async def stand_items_on_the_rack(request: RackRequest) -> GameSession:
+        """Put these items on a player's rack, as if they had been bought.
+
+        A test that wants two particular items together cannot buy them: the
+        shop offers what the seed says it offers, and hunting for a seed that
+        offers a pair is a search, not a test. So it says what it wants.
+
+        Named by player rather than by token, like the other test endpoints.
+        A client test drives the game through the real client, which keeps the
+        token to itself; the player id it has.
+
+        The rack is replaced, not added to. Anything that was standing there
+        is gone, which is what a test setting the board up wants.
+        """
+        session = await session_manager.get_session(request.player_id)
+        if not session:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="Session not found"
+            )
+
+        for wanted in request.items:
+            if wanted.item_type not in config_loader.items:
+                raise HTTPException(
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail=f"No such item: {wanted.item_type}",
+                )
+
+        session.inventory_grid = [
+            Item.of(wanted.item_type, f"test{n}").placed_at(
+                wanted.position, wanted.rotation
+            )
+            for n, wanted in enumerate(request.items)
+        ]
+        await session_manager.update_session(session)
+
+        session.pending = pending_for(session)
+        return session
 
     @app.post("/test/start-session")
     async def start_test_session() -> Dict[str, str]:

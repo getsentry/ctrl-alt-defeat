@@ -6,6 +6,7 @@ const InventoryGrid = preload("res://scripts/inventory_grid.gd")
 const StorageBin = preload("res://scripts/storage_bin.gd")
 const Presentation = preload("res://scripts/presentation.gd")
 const PriceTag = preload("res://scripts/price_tag.gd")
+const CombiningOverlay = preload("res://scripts/combining_overlay.gd")
 
 # Game state is pulled from GameStateManager - no local copies
 
@@ -446,6 +447,9 @@ var held_visual: ItemVisual = null
 # UI References
 var shop_container: Control
 var sell_chest: Control
+# The arcs, the glow and the progress label (GDD 5.3). Drawn over the shelf,
+# the rack and the chest at once, because it joins one to another.
+var combining_overlay: Control
 ## The box the five numbers are written in, one row each.
 var stats_panel: Control
 ## The value label of each row, by the caption beside it.
@@ -479,6 +483,11 @@ func _ready():
 		print("Read-only mode - skipping inventory initialization")
 		return
 
+	# Which items go together never changes, so it is asked for once and
+	# answered from here after that. Nothing waits on it: until it arrives the
+	# screen simply draws no arcs.
+	GameStateManager.fetch_combining_catalogue()
+
 	# Then load saved inventory if it exists
 	var saved_inventory = GameStateManager.get_inventory_state()
 	print("DEBUG: Loading saved inventory on UnifiedGridUI startup:")
@@ -491,6 +500,9 @@ func _ready():
 
 	if not hide_shop:
 		_load_shop_from_state()
+
+	# Last, because it draws the rack twice: as it fought, and as it is now.
+	await play_combining()
 
 func configure(settings: Dictionary):
 	read_only_mode = settings.get("read_only", false)
@@ -544,6 +556,7 @@ func _setup_ui():
 		$CharacterStats.visible = false
 
 	_dress_buttons()
+	_create_combining_overlay()
 
 	print("UI setup complete")
 
@@ -1698,3 +1711,276 @@ func _show_error_message(message: String):
 	add_child(error_dialog)
 	error_dialog.popup_centered()
 	error_dialog.connect("confirmed", func(): error_dialog.queue_free())
+
+
+# ============= Combining: the arcs, the glow and the label (GDD 5.3) =============
+#
+# Three places hold items -- the shelf, the rack and the chest -- and combining
+# does not care which of them an item is in. So the drawing is one node over
+# the lot of them, and what is under the pointer is asked of all three.
+#
+# Worked out each frame rather than kept. Every one of these answers depends on
+# where a thing is on screen, and the shop redraws, the chest settles and an
+# item being dragged moves every frame anyway; state kept beside that would
+# only be a second copy that goes stale.
+
+
+func _create_combining_overlay() -> void:
+	if read_only_mode:
+		# A rack being watched cannot be changed, so there is nothing to warn
+		# about and nothing to reach for.
+		return
+	combining_overlay = CombiningOverlay.new()
+	combining_overlay.name = "CombiningOverlay"
+	add_child(combining_overlay)
+
+
+func _process(_delta: float) -> void:
+	refresh_combining()
+
+
+func refresh_combining(pointer := Vector2.INF) -> void:
+	"""Draw what the player is reaching for, and what is about to happen.
+
+	Takes where the pointer is, so that what the screen would draw can be asked
+	about without a mouse. Told nothing, it reads the pointer itself.
+	"""
+	if combining_overlay == null:
+		return
+
+	_show_the_glow()
+
+	var reaching := combining_source(pointer)
+	if reaching.is_empty():
+		combining_overlay.no_lines()
+		combining_overlay.no_progress()
+		return
+
+	var item: APITypes.Item = reaching["item"]
+	combining_overlay.lines_from(reaching["node"], partner_nodes(item))
+	combining_overlay.progress(
+		GameStateManager.combining.progress_label(item.id), reaching["node"])
+
+
+func _show_the_glow() -> void:
+	"""Light the items that will combine when the battle starts.
+
+	Only the rack: an item in the chest or on the shelf is not in the rack, and
+	nothing combines anywhere else.
+	"""
+	var groups := []
+	for ids in GameStateManager.combining.groups_about_to_combine():
+		var lit := []
+		for item_id in ids:
+			var visual = inventory_grid.item_visual(item_id)
+			if is_instance_valid(visual):
+				lit.append(visual)
+		if lit.size() > 1:
+			groups.append(lit)
+	combining_overlay.glow_around(groups)
+
+
+func combining_source(pointer := Vector2.INF) -> Dictionary:
+	"""The item the arcs come from: whatever is in hand, else what is hovered.
+
+	Empty when the player is neither holding nor pointing at anything, which is
+	when nothing is drawn -- the arcs answer a question, and nobody asked one.
+
+	What is held wins over what is under the pointer. An item in hand is drawn
+	under the pointer, so the two are usually the same thing anyway, and where
+	they differ the one in the hand is the one being decided about.
+	"""
+	if held_item != null and is_instance_valid(held_visual):
+		return {"item": held_item, "node": held_visual}
+	if dragging_shop_data != null and is_instance_valid(drag_preview):
+		return {"item": dragging_shop_data, "node": drag_preview}
+	if inventory_grid != null and inventory_grid.dragging_object != null:
+		var dragged = inventory_grid.dragging_object
+		return {"item": dragged.get_meta("item_data"), "node": dragged}
+	if storage_bin != null and storage_bin.dragged() != null:
+		return {"item": storage_bin.dragged(), "node": storage_bin.dragged_visual()}
+	return item_under(
+		get_global_mouse_position() if pointer == Vector2.INF else pointer)
+
+
+func item_under(pointer: Vector2) -> Dictionary:
+	"""What the pointer is on, wherever it is, as {item, node}. Empty for none.
+
+	The shelf answers with the whole slot rather than the picture on it: a
+	player reaching for an item aims at the item, and 45 pixels of artwork is a
+	small thing to have to hit.
+	"""
+	for slot in shop_items:
+		if not is_instance_valid(slot) or slot.get_meta("sold", false):
+			continue
+		if slot.get_global_rect().has_point(pointer):
+			return {"item": slot.get_meta("item_data"), "node": slot.get_meta("art")}
+
+	if inventory_grid != null:
+		for visual in inventory_grid.items:
+			if is_instance_valid(visual) and visual.get_global_rect().has_point(pointer):
+				return {"item": visual.get_meta("item_data"), "node": visual}
+
+	if storage_bin != null:
+		# The chest is asked rather than measured: what lies in it lies at
+		# whatever angle it landed at, and only the chest knows that.
+		var lying = storage_bin.item_at(pointer)
+		if lying != null:
+			return {"item": lying, "node": storage_bin.drawn(lying.id)}
+
+	return {}
+
+
+func partner_nodes(item: APITypes.Item) -> Array:
+	"""Every item on screen this one could combine with, as its drawing.
+
+	Answered from the catalogue, which the client holds, rather than by asking
+	the server: this is wanted on every frame of a drag.
+
+	By id, not by type. A Long Poll eats two Edge Caches, so one Edge Cache
+	draws an arc to another -- but never to itself.
+	"""
+	var partners := GameStateManager.combining.partners_of(item.item_type)
+	var reaches := []
+	if partners.is_empty():
+		return reaches
+
+	for other in items_on_screen():
+		var its: APITypes.Item = other["item"]
+		if its.id != item.id and partners.has(its.item_type):
+			reaches.append(other["node"])
+	return reaches
+
+
+func items_on_screen() -> Array:
+	"""Everything the player can see, as [{item, node}], wherever it stands."""
+	var seen := []
+	for slot in shop_items:
+		if is_instance_valid(slot) and not slot.get_meta("sold", false):
+			seen.append({
+				"item": slot.get_meta("item_data"), "node": slot.get_meta("art")})
+
+	if inventory_grid != null:
+		for visual in inventory_grid.items:
+			if is_instance_valid(visual):
+				seen.append({"item": visual.get_meta("item_data"), "node": visual})
+
+	if storage_bin != null:
+		for item in GameStateManager.inventory_storage:
+			var visual = storage_bin.drawn(item.id)
+			if is_instance_valid(visual):
+				seen.append({"item": item, "node": visual})
+
+	return seen
+
+
+# ============= Playing back what combined (GDD 5.3) =============
+#
+# Combining happens the moment the battle ends, but the player does not see the
+# rack again until they have watched the battle and closed the result. So the
+# shop screen plays it forwards, and never shows the result before the merge.
+
+
+func play_combining() -> void:
+	"""Show what the rack did while the player was watching the battle.
+
+	Three steps, and the last is what makes the rest of it safe:
+
+	1. the rack that fought, which is the rack before anything combined;
+	2. each combining, all of them at once -- an ingredient is never used twice
+	   and a result never feeds another combination in the same shop phase, so
+	   none of them waits on another;
+	3. what the player holds now, from the server's own answer.
+
+	Ending on step 3 means a bug in step 2, an interruption, or a player who
+	clicks straight through cannot leave the wrong rack on the screen.
+	"""
+	var combinations := GameStateManager.combinations_to_play
+	var fought_with := GameStateManager.rack_that_fought
+	# Taken rather than read: this is shown once, on the way into the shop.
+	GameStateManager.combinations_to_play = []
+	GameStateManager.rack_that_fought = null
+	if combinations.is_empty() or fought_with == null:
+		return
+
+	inventory_grid.load_inventory_state(fought_with)
+	await get_tree().process_frame
+	# Starting a battle is one keypress, and the merge takes most of a second.
+	# A player who leaves in that time takes this screen with them, and what is
+	# left of this is a coroutine drawing on a screen that is gone.
+	if not is_inside_tree():
+		return
+
+	for made in combinations:
+		_play_one_combining(made)
+	await get_tree().create_timer(Presentation.delay(0.75) + 0.01).timeout
+	if not is_inside_tree():
+		return
+
+	_reload_board()
+
+
+func _play_one_combining(made: APITypes.Combination) -> void:
+	"""The ingredients slide together, flash, and are gone.
+
+	The catalysts are not touched: they are still there afterwards, and an
+	animation that swept them up as well would say they had been eaten.
+	"""
+	if not Presentation.request("item_combined",
+			{"made": made.made, "ate": made.consumed.size()}):
+		return
+
+	var lands_on := _where_the_result_lands(made)
+	for eaten in made.consumed:
+		var visual = inventory_grid.item_visual(eaten.id)
+		if not is_instance_valid(visual):
+			continue
+		var tween := create_tween().set_parallel(true)
+		tween.tween_property(visual, "position",
+			lands_on - visual.size / 2.0, 0.35) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tween.tween_property(visual, "modulate:a", 0.0, 0.35) \
+			.set_delay(0.2)
+
+	for kept in made.kept:
+		var visual = inventory_grid.item_visual(kept.id)
+		if is_instance_valid(visual):
+			# One pulse, so the player can see which item stayed behind.
+			var tween := create_tween()
+			tween.tween_property(visual, "modulate", Color(1.6, 1.4, 1.0), 0.2)
+			tween.tween_property(visual, "modulate", Color.WHITE, 0.25)
+
+	# When they arrive, not when they set off: the flash is the moment the two
+	# items become one.
+	var flash := create_tween()
+	flash.tween_interval(0.3)
+	flash.tween_callback(_flash_at.bind(
+		inventory_grid.get_global_transform() * lands_on))
+
+
+func _where_the_result_lands(made: APITypes.Combination) -> Vector2:
+	"""The middle of the squares the ingredients were standing on.
+
+	Those squares, whether or not the result fits in them: a result too big for
+	them goes to the chest, and the merge still happened where they stood.
+	"""
+	if made.freed.is_empty():
+		return inventory_grid.size / 2.0
+
+	var middle := Vector2.ZERO
+	for square in made.freed:
+		middle += inventory_grid.grid_to_pixel(square)
+	middle /= made.freed.size()
+	var cell := inventory_grid.cell_size / 2.0
+	return middle + Vector2(cell, cell)
+
+
+func _flash_at(spot_on_screen: Vector2) -> void:
+	"""A bloom of light where the ingredients met.
+
+	Drawn by the overlay, which is already above the rack, the shelf and the
+	chest. A node of its own would have to be put somewhere, and a result that
+	flies to the chest merges on the rack and lands off it.
+	"""
+	if combining_overlay != null:
+		combining_overlay.flash_at(spot_on_screen)

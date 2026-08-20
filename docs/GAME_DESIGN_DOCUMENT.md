@@ -854,18 +854,30 @@ answers it, so a Dead Cell points at all eight items that are on fire; none of
 those eight points at another, because they answer the same one part and one
 part takes one item.
 
-#### What the client has to show (not built)
-- A **line** from the item under the cursor, or being dragged, to every item it
-  could combine with, wherever it is: the shop, the chest or the rack. Drawn
-  from the partner map, so there can be several at once, and it says only that
-  the two go together -- the parts may take several rounds to collect.
+#### What the client shows
+
+All four are drawn over the shop screen at once, by one node above the shelf,
+the rack and the chest -- because each of them joins an item in one of those
+places to an item in another.
+
+- An **arc of electricity** from the item under the pointer, or in hand, to
+  every item it could combine with, wherever it is: the shop, the chest or the
+  rack. Drawn from the partner map, so there can be several at once, and it
+  says only that the two go together -- the parts may take several rounds to
+  collect. It appears only while the player is hovering, holding or dragging
+  something: it answers a question, so it is not there when nobody has asked
+  one.
 - An **orange glow** joining items that are about to combine, so the player can
   see it coming and break it up before starting the battle. Drawn from the
-  `pending` entries where `have == need`.
-- A **progress label** beside a part just put down -- "Hero Longsword 2/3" --
-  from a `pending` entry where `have < need`, with `makes` giving the name.
-- A **merge animation** over the squares the ingredients were standing on, after
-  which the result appears on some of those squares, or flies to the chest.
+  `pending` entries where `have == need`, and drawn whatever the pointer is
+  doing: it is a warning, not an answer.
+- A **progress label** above the item the arcs come from -- "Long Poll 2/3" --
+  from the `pending` entry where `have < need` that the item is furthest along.
+  The name comes from the catalogue's `names`, because what it will make does
+  not exist yet and the client has nothing else to look it up in.
+- A **merge animation**: the ingredients slide onto the squares they will free,
+  flash, and are gone; a catalyst pulses once and stays. Then the result is
+  drawn where the server put it, on those squares or in the chest.
 
 Combining happens the moment the battle ends, but the player does not see the
 rack again until they have watched the battle and closed the result screen. So

@@ -2,6 +2,7 @@ extends GutTest
 # Comprehensive tests for UnifiedGridUI
 
 const APITypes = preload("res://scripts/api_types.gd")
+const Presentation = preload("res://scripts/presentation.gd")
 var ui_scene = preload("res://scenes/UnifiedGridUI.tscn")
 var ui
 
@@ -551,7 +552,8 @@ func test_a_move_answer_refreshes_the_chest():
 	var response = APITypes.MoveItemResponse.new({
 		"inventory_grid": [],
 		"inventory_storage": [TestHelpers.item_data({"id": "set_down"})],
-		"server_containers": []
+		"server_containers": [],
+		"pending": []
 	})
 
 	ui._on_inventory_returned(response)
@@ -1177,3 +1179,360 @@ func test_an_item_carried_to_the_bay_is_drawn_in_front_of_it():
 	assert_gt(held.z_index, ui.sell_chest.z_index,
 		"What is in hand should draw over the bay, not under it")
 	ui.storage_bin.release_at(Vector2(700, 900))
+
+
+# ============ Combining: the arcs, the glow and the label (GDD 5.3) ============
+#
+# The screen joins three places -- the shelf, the rack and the chest -- so what
+# these check is that an item is found wherever it stands and that the arcs go
+# to the right ones. What the arc looks like is test_combining_overlay.gd.
+
+func _knows_that(partners: Dictionary, names := {}) -> void:
+	GameStateManager.combining.catalogue = APITypes.CombiningCatalogue.new(
+		{"partners": partners, "names": names})
+
+
+func _rack_holding(items: Array) -> void:
+	ui.inventory_grid.load_inventory_state(APITypes.InventoryState.new({
+		"items": items,
+		"servers": [
+			TestHelpers.container_data({"id": "container_a", "position": [2, 3]}),
+			TestHelpers.container_data({"id": "container_b", "position": [4, 3]}),
+			TestHelpers.container_data({"id": "container_c", "position": [6, 3]}),
+		]
+	}))
+
+
+func _where(node: Control) -> Vector2:
+	return node.get_global_rect().get_center()
+
+
+func test_hovering_an_item_draws_an_arc_to_what_it_goes_with():
+	_knows_that({"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]})
+	_rack_holding([
+		TestHelpers.placed_item_data({
+			"id": "sword", "item_type": "hero_sword", "position": [2, 3]}),
+		TestHelpers.placed_item_data({
+			"id": "stone", "item_type": "whetstone", "position": [3, 3]}),
+	])
+
+	ui.refresh_combining(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.combining_overlay.arcs().size(), 1,
+		"one arc, to the item it goes with")
+
+
+func test_hovering_something_that_goes_with_nothing_draws_nothing():
+	_knows_that({"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]})
+	_rack_holding([
+		TestHelpers.placed_item_data({
+			"id": "lonely", "item_type": "bloodthorne", "position": [2, 3]}),
+		TestHelpers.placed_item_data({
+			"id": "stone", "item_type": "whetstone", "position": [3, 3]}),
+	])
+
+	ui.refresh_combining(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.combining_overlay.arcs(), [])
+
+
+func test_pointing_at_nothing_draws_nothing():
+	"""The arcs answer a question. Nobody asked one."""
+	_knows_that({"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]})
+	_rack_holding([
+		TestHelpers.placed_item_data({
+			"id": "sword", "item_type": "hero_sword", "position": [2, 3]}),
+		TestHelpers.placed_item_data({
+			"id": "stone", "item_type": "whetstone", "position": [3, 3]}),
+	])
+
+	ui.refresh_combining(Vector2(-500, -500))
+
+	assert_eq(ui.combining_overlay.arcs(), [])
+
+
+func test_an_item_never_draws_an_arc_to_itself():
+	"""A Long Poll eats two Edge Caches, so one points at another -- and a lone
+	Edge Cache points at nothing."""
+	_knows_that({"whetstone": ["whetstone"]})
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "only_one", "item_type": "whetstone", "position": [2, 3]})])
+
+	ui.refresh_combining(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.combining_overlay.arcs(), [])
+
+
+func test_an_arc_reaches_from_the_rack_to_the_shelf():
+	"""Buying it is the point: a line to the shop says so."""
+	_knows_that({"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]})
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "sword", "item_type": "hero_sword", "position": [2, 3]})])
+	var shop: Array[APITypes.Item] = [APITypes.Item.new(TestHelpers.item_data({
+		"id": "on_the_shelf", "item_type": "whetstone", "slug": "whetstone"}))]
+	ui._display_shop_items(shop)
+	await get_tree().process_frame
+
+	ui.refresh_combining(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.combining_overlay.arcs().size(), 1,
+		"the item on the shelf is one it could combine with")
+
+
+func test_an_arc_reaches_the_chest():
+	_knows_that({"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]})
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "sword", "item_type": "hero_sword", "position": [2, 3]})])
+	GameStateManager.inventory_storage = [
+		APITypes.Item.new(TestHelpers.item_data({
+			"id": "put_away", "item_type": "whetstone", "slug": "whetstone"}))]
+	ui.load_storage()
+
+	ui.refresh_combining(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.combining_overlay.arcs().size(), 1,
+		"an item in the chest is still an item it goes with")
+
+
+func test_an_item_in_hand_draws_the_arcs_instead():
+	"""What is in the hand is what is being decided about."""
+	_knows_that({"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]})
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "sword", "item_type": "hero_sword", "position": [2, 3]})])
+
+	ui.hold(APITypes.Item.new(TestHelpers.item_data({
+		"id": "in_hand", "item_type": "whetstone", "slug": "whetstone"})))
+	ui.refresh_combining(Vector2(-500, -500))
+
+	assert_eq(ui.combining_overlay.arcs().size(), 1,
+		"held, so the arcs are drawn wherever the pointer happens to be")
+
+
+func test_the_items_about_to_combine_are_lit():
+	_rack_holding([
+		TestHelpers.placed_item_data({"id": "one", "position": [2, 3]}),
+		TestHelpers.placed_item_data({"id": "two", "position": [3, 3]}),
+	])
+	GameStateManager.note_pending([APITypes.Pending.new({
+		"makes": "blue_sage_collar", "have": 2, "need": 2,
+		"ingredients": ["one", "two"], "catalysts": [], "missing": []})])
+
+	ui.refresh_combining(Vector2(-500, -500))
+
+	assert_eq(ui.combining_overlay.glowing().size(), 2,
+		"both of them, whatever the pointer is doing")
+
+
+func test_nothing_is_lit_while_a_recipe_is_unfinished():
+	_rack_holding([
+		TestHelpers.placed_item_data({"id": "one", "position": [2, 3]}),
+		TestHelpers.placed_item_data({"id": "two", "position": [3, 3]}),
+	])
+	GameStateManager.note_pending([APITypes.Pending.new({
+		"makes": "hero_longsword", "have": 2, "need": 3,
+		"ingredients": ["one", "two"], "catalysts": [], "missing": ["whetstone"]})])
+
+	ui.refresh_combining(Vector2(-500, -500))
+
+	assert_eq(ui.combining_overlay.glowing(), [],
+		"nothing will happen yet, so nothing is warned about")
+
+
+func test_hovering_a_part_says_how_far_along_it_is():
+	_knows_that({}, {"hero_longsword": "Long Poll"})
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "sword", "item_type": "hero_sword", "position": [2, 3]})])
+	GameStateManager.note_pending([APITypes.Pending.new({
+		"makes": "hero_longsword", "have": 2, "need": 3,
+		"ingredients": ["sword", "stone"], "catalysts": [],
+		"missing": ["whetstone"]})])
+
+	ui.refresh_combining(_where(ui.inventory_grid.items[0]))
+
+	assert_eq(ui.combining_overlay.label_text(), "Long Poll 2/3")
+
+
+func test_the_label_goes_when_the_pointer_does():
+	_knows_that({}, {"hero_longsword": "Long Poll"})
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "sword", "item_type": "hero_sword", "position": [2, 3]})])
+	GameStateManager.note_pending([APITypes.Pending.new({
+		"makes": "hero_longsword", "have": 2, "need": 3,
+		"ingredients": ["sword"], "catalysts": [], "missing": ["whetstone"]})])
+	ui.refresh_combining(_where(ui.inventory_grid.items[0]))
+
+	ui.refresh_combining(Vector2(-500, -500))
+
+	assert_eq(ui.combining_overlay.label_text(), "")
+
+
+func test_a_rack_being_watched_draws_none_of_it():
+	"""The battle screen shows a rack that cannot be changed. There is nothing
+	to warn about and nothing to reach for."""
+	var watched = ui_scene.instantiate()
+	watched.configure({"read_only": true, "hide_shop": true, "hide_storage": true})
+	add_child_autofree(watched)
+	await get_tree().process_frame
+
+	assert_null(watched.combining_overlay, "no overlay at all")
+
+
+# ============ Playing back what combined (GDD 5.3) ============
+
+func _a_combining(overrides := {}) -> APITypes.Combination:
+	var data := {
+		"made": "blue_sage_collar",
+		"made_id": "made_1",
+		"consumed": [
+			TestHelpers.placed_item_data({"id": "eaten_a", "position": [2, 3]}),
+			TestHelpers.placed_item_data({"id": "eaten_b", "position": [3, 3]}),
+		],
+		"kept": [],
+		"freed": [[2, 3], [3, 3]],
+		"position": [2, 3],
+	}
+	data.merge(overrides, true)
+	return APITypes.Combination.new(data)
+
+
+func test_it_plays_what_the_battle_answered_with():
+	GameStateManager.rack_that_fought = APITypes.InventoryState.new({
+		"items": [
+			TestHelpers.placed_item_data({"id": "eaten_a", "position": [2, 3]}),
+			TestHelpers.placed_item_data({"id": "eaten_b", "position": [3, 3]}),
+		],
+		"servers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
+	})
+	GameStateManager.combinations_to_play = [_a_combining()]
+	Presentation.clear_requests()
+
+	await ui.play_combining()
+
+	assert_eq(Presentation.request_count("item_combined"), 1,
+		"the screen asked to play the merge")
+
+
+func test_it_ends_on_the_rack_the_server_sent():
+	"""Whatever the animation did, the last thing drawn is the server's answer.
+	A client that ignored the merge entirely would still be right."""
+	GameStateManager.save_inventory_state(
+		[TestHelpers.placed_item_data({"id": "made_1", "position": [2, 3]})],
+		[TestHelpers.container_data({"id": "container_a", "position": [2, 3]})])
+	GameStateManager.rack_that_fought = APITypes.InventoryState.new({
+		"items": [
+			TestHelpers.placed_item_data({"id": "eaten_a", "position": [2, 3]}),
+			TestHelpers.placed_item_data({"id": "eaten_b", "position": [3, 3]}),
+		],
+		"servers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
+	})
+	GameStateManager.combinations_to_play = [_a_combining()]
+
+	await ui.play_combining()
+
+	assert_not_null(ui.inventory_grid.item_visual("made_1"),
+		"what the server says the player holds is what is drawn")
+	assert_null(ui.inventory_grid.item_visual("eaten_a"),
+		"and what it ate is gone")
+
+
+func test_it_is_played_once():
+	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
+		{"items": [], "servers": []})
+	GameStateManager.combinations_to_play = [_a_combining()]
+	await ui.play_combining()
+	Presentation.clear_requests()
+
+	await ui.play_combining()
+
+	assert_eq(Presentation.request_count("item_combined"), 0,
+		"coming back to the shop does not replay the last round's merges")
+
+
+func test_a_round_where_nothing_combined_plays_nothing():
+	GameStateManager.combinations_to_play = []
+	Presentation.clear_requests()
+
+	await ui.play_combining()
+
+	assert_eq(Presentation.request_count("item_combined"), 0)
+
+
+func test_every_merge_of_the_round_is_played():
+	"""They run at once: no ingredient is eaten twice and no result feeds
+	another, so none of them waits on another."""
+	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
+		{"items": [], "servers": []})
+	GameStateManager.combinations_to_play = [
+		_a_combining(),
+		_a_combining({"made": "serverless_function", "made_id": "made_2",
+			"freed": [[6, 3]], "position": [6, 3]}),
+	]
+	Presentation.clear_requests()
+
+	await ui.play_combining()
+
+	assert_eq(Presentation.request_count("item_combined"), 2)
+
+
+func test_hovering_the_shelf_draws_arcs_to_the_rack():
+	"""Either end of a pair may be the one the player reaches for."""
+	_knows_that({"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]})
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "sword", "item_type": "hero_sword", "position": [2, 3]})])
+	var shop: Array[APITypes.Item] = [APITypes.Item.new(TestHelpers.item_data({
+		"id": "on_the_shelf", "item_type": "whetstone", "slug": "whetstone"}))]
+	ui._display_shop_items(shop)
+	await get_tree().process_frame
+
+	ui.refresh_combining(ui.shop_items[0].get_global_rect().get_center())
+
+	assert_eq(ui.combining_overlay.arcs().size(), 1,
+		"the whole shelf answers for the item on it, not just the picture")
+
+
+func test_dragging_an_item_on_the_rack_draws_its_arcs():
+	_knows_that({"hero_sword": ["whetstone"], "whetstone": ["hero_sword"]})
+	_rack_holding([
+		TestHelpers.placed_item_data({
+			"id": "sword", "item_type": "hero_sword", "position": [2, 3]}),
+		TestHelpers.placed_item_data({
+			"id": "stone", "item_type": "whetstone", "position": [3, 3]}),
+	])
+
+	ui.inventory_grid._start_drag(ui.inventory_grid.item_visual("sword"))
+	ui.refresh_combining(Vector2(-500, -500))
+
+	assert_eq(ui.combining_overlay.arcs().size(), 1,
+		"an item in the middle of being moved is the one being decided about")
+
+
+func test_a_merge_left_partway_through_draws_no_more():
+	"""Starting a battle is one keypress and the merge takes most of a second.
+	A player who leaves in that time takes the screen with them, and what is
+	left of the merge must not draw on it."""
+	GameStateManager.save_inventory_state(
+		[TestHelpers.placed_item_data({"id": "made_1", "position": [2, 3]})],
+		[TestHelpers.container_data({"id": "container_a", "position": [2, 3]})])
+	GameStateManager.rack_that_fought = APITypes.InventoryState.new({
+		"items": [TestHelpers.placed_item_data({"id": "eaten_a", "position": [2, 3]})],
+		"servers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
+	})
+	GameStateManager.combinations_to_play = [_a_combining()]
+
+	# Deferred, so the merge is left running while the test carries on and can
+	# take the screen away underneath it.
+	ui.call_deferred("play_combining")
+	await get_tree().process_frame
+	assert_not_null(ui.inventory_grid.item_visual("eaten_a"),
+		"Setup: the merge got as far as drawing the rack that fought")
+
+	remove_child(ui)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_null(ui.inventory_grid.item_visual("made_1"),
+		"the screen was gone before the rack was drawn again")
+
+	# Put back where the teardown expects to find it, so that taking it out
+	# does not leave the whole screen behind as orphans.
+	add_child(ui)

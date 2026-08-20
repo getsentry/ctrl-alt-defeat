@@ -806,6 +806,32 @@ where they fail at the same rate.
 
 ---
 
+### Two owners for the same client state, and no rule saying which
+
+`GameStateManager.pending` is written from two layers. `battle_server_api.gd`
+writes it as it parses a purchase, a sale and a move; `game_state_manager.gd`
+writes it itself for a battle. Nothing in either file says which is the rule,
+so the next endpoint that answers with `pending` gets whichever its author
+happens to read first.
+
+It is also an undeclared side effect. `move_item()` says it returns a
+`MoveItemResponse`; it also changes a global, and that is visible neither in
+the signature nor in the five signals at the top of the file, which is where
+that file otherwise announces what it does.
+
+Neither cheap fix works. A `pending_changed` signal would make the effect
+declared -- a real gain -- but the author of the next endpoint still has to
+remember to emit it. Moving the writes out to the callers is worse: there are
+ten call sites across `unified_grid_ui.gd` and `inventory_grid.gd`, and the
+responses are consumed inconsistently -- `_on_inventory_returned` covers two
+of the five move and sell paths. That turns one forgettable place into ten.
+
+**What would work** is `GameStateManager` becoming the front door: the screen
+asks it to buy, sell or move, it calls the server and records what came back.
+One place, and forgetting becomes impossible, because the state is written by
+the thing that owns it. That is a refactor of ten call sites in two files and
+it is not a combining change, so it wants its own commit.
+
 ## Also found, lower priority
 
 *(Found while building the bot trainer. Each is real and reproducible; none is

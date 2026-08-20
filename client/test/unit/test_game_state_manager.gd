@@ -89,9 +89,11 @@ func test_battle_result_updates_state():
 			"losses": 0,
 			"lives": 5,
 			"game_over": false,
-			"victory": false
+			"victory": false,
+			"combinations": [], "pending": []
 		},
 		"new_shop": [TestHelpers.item_data({"id": "shop_item_1", "cost": 3})],
+		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-123"
 	})
 
@@ -135,9 +137,11 @@ func test_battle_result_stores_events_for_playback():
 		},
 		"session_update": {
 			"round": 2, "gold": 20, "gold_earned": 10, "wins": 1, "losses": 0,
-			"lives": 5, "game_over": false, "victory": false
+			"lives": 5, "game_over": false, "victory": false,
+			"combinations": [], "pending": []
 		},
 		"new_shop": [],
+		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-123"
 	})
 
@@ -162,9 +166,11 @@ func test_defeat_updates_losses_and_lives():
 		},
 		"session_update": {
 			"round": 1, "gold": 12, "gold_earned": 0, "wins": 0, "losses": 1,
-			"lives": 4, "game_over": false, "victory": false
+			"lives": 4, "game_over": false, "victory": false,
+			"combinations": [], "pending": []
 		},
 		"new_shop": [],
+		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-456"
 	})
 
@@ -189,9 +195,11 @@ func test_game_over_comes_from_the_session_update():
 		},
 		"session_update": {
 			"round": 5, "gold": 0, "gold_earned": 0, "wins": 2, "losses": 5,
-			"lives": 0, "game_over": true, "victory": false
+			"lives": 0, "game_over": true, "victory": false,
+			"combinations": [], "pending": []
 		},
 		"new_shop": [],
+		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-789"
 	})
 
