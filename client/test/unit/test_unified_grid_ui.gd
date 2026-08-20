@@ -1102,6 +1102,19 @@ func test_a_shop_item_let_go_of_over_the_chest_is_not_put_on_the_grid():
 	assert_null(ui.dragging_shop_data, "and the drag is over either way")
 
 
+func test_the_shop_character_stands_on_a_shadow():
+	# The same smudge as the menu and the battle screen. Without it the Sentaur
+	# is a cut-out laid over the floor of the room.
+	var shadow = ui.find_child("CharacterShadow", true, false)
+	var who = ui.find_child("PlayerCharacter", true, false)
+	assert_not_null(shadow, "There should be a shadow under the character")
+	assert_not_null(who, "and a character for it to be under")
+	assert_lt(shadow.get_index(), who.get_index(),
+		"It should be drawn before the character, or it lies on top of it")
+	assert_almost_eq(shadow.get_rect().get_center().y, shadow.stands_on(who).end.y,
+		1.0, "and lie across its feet")
+
+
 func test_the_tray_is_a_picture_behind_what_is_in_it():
 	var tray = ui.get_node_or_null("StoragePanel/Tray")
 	assert_not_null(tray, "The storage panel should hold the tray picture")

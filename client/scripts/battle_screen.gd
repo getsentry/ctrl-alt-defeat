@@ -164,8 +164,6 @@ func _setup_ui_references():
 	})
 	hud.pause_button.pressed.connect(_on_toggle_pause)
 
-## How much of itself a rack's frame shows around the rack.
-const FRAME_MARGIN := 12.0
 ## How far the parapet settles past the line the roof starts on. That line is
 ## read off a painting rather than measured, and a wall standing exactly on it
 ## leaves a hair of city showing under the join. A few pixels of overlap puts
@@ -174,14 +172,12 @@ const PARAPET_SETTLE := 8.0
 func _place_battle_art() -> void:
 	"""Put the scenery where the room and the fighters actually are.
 
-	None of it is measured out in the scene. The parapet takes its shape from
-	its own picture and its place from the roof painted in the background; the
-	frames take theirs from the racks they sit behind. The numbers the scene
-	carries are only so the nodes can be seen while it is being edited.
+	The parapet takes its shape from its own picture and its place from the
+	roof painted in the background, rather than from anything measured out in
+	the scene. The numbers the scene carries are only so the node can be seen
+	while it is being edited.
 	"""
 	_lay_the_parapet()
-	_frame_the_rack(player_inventory, $Player1Inventory/GridFrame)
-	_frame_the_rack(enemy_inventory, $Player2Inventory/GridFrame)
 
 
 func _lay_the_parapet() -> void:
@@ -326,15 +322,6 @@ static func _roof_line_of(texture: Texture2D) -> float:
 	if found >= high:
 		return 1.0
 	return float(found) / float(high)
-
-
-func _frame_the_rack(rack: Control, frame: TextureRect) -> void:
-	"""Sit a frame behind a rack, showing a margin of itself all round."""
-	if rack == null or not is_instance_valid(rack) or frame == null:
-		return
-	var margin := Vector2(FRAME_MARGIN, FRAME_MARGIN)
-	frame.position = rack.position - margin
-	frame.size = rack.size + margin * 2.0
 
 
 func _setup_inventories():

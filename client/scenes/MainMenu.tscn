@@ -3,9 +3,9 @@
 [ext_resource type="Script" uid="uid://bf5ujancn6o07" path="res://scripts/main_menu.gd" id="1_main"]
 [ext_resource type="Texture2D" uid="uid://c32y670spfpwh" path="res://assets/ui/backgrounds/main_menu_background.png" id="2_0ykhv"]
 [ext_resource type="Texture2D" uid="uid://c54wpcuis6nbr" path="res://assets/sprites/backgrounds/ctrl_alt_defeat_logo.png" id="3_l72w3"]
-[ext_resource type="Texture2D" uid="uid://fe2xqisr404b" path="res://assets/characters/player_main.png" id="4_826wr"]
-[ext_resource type="Texture2D" uid="uid://c4g3exoq4quim" path="res://assets/characters/robot.png" id="5_ucygd"]
-[ext_resource type="Texture2D" uid="uid://d1km7nycan2ch" path="res://assets/ui/buttons/new_game_button.png" id="6_826wr"]
+[ext_resource type="Texture2D" uid="uid://s56raawub3qg" path="res://assets/characters/sentaur_shop.png" id="4_sentaur"]
+[ext_resource type="Texture2D" uid="uid://1dffqeiih0x7" path="res://assets/ui/contact_shadow.png" id="5_shadow"]
+[ext_resource type="Script" path="res://scripts/contact_shadow.gd" id="6_shadowscript"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -28,96 +28,92 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="LogoContainer" type="TextureRect" parent="."]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -637.0
-offset_top = 24.0
-offset_right = 551.0
-offset_bottom = 790.0
-grow_horizontal = 2
-scale = Vector2(0.725133, 0.725133)
+layout_mode = 0
+offset_left = 90.0
+offset_top = 45.0
+offset_right = 710.0
+offset_bottom = 403.0
 texture = ExtResource("3_l72w3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharacterShadow" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 1195.0
+offset_top = 847.0
+offset_right = 1564.0
+offset_bottom = 962.0
+texture = ExtResource("5_shadow")
+expand_mode = 1
+stretch_mode = 0
+script = ExtResource("6_shadowscript")
+stands_under = NodePath("../PlayerCharacter")
 
 [node name="PlayerCharacter" type="TextureRect" parent="."]
 z_index = 1
-layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 17.0
-offset_top = -609.0
-offset_right = 1041.0
-offset_bottom = 927.0
-grow_vertical = 0
-scale = Vector2(0.636037, 0.636037)
-texture = ExtResource("4_826wr")
+layout_mode = 0
+offset_left = 1160.0
+offset_top = 525.0
+offset_right = 1460.0
+offset_bottom = 965.0
+texture = ExtResource("4_sentaur")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="RobotCharacter" type="TextureRect" parent="."]
+visible = false
 z_index = 1
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -656.0
-offset_top = -555.0
-offset_right = 368.0
-offset_bottom = 981.0
-grow_horizontal = 0
-grow_vertical = 0
-scale = Vector2(0.494615, 0.494615)
-texture = ExtResource("5_ucygd")
+layout_mode = 0
+offset_left = 120.0
+offset_top = 435.0
+offset_right = 441.0
+offset_bottom = 905.0
+texture = ExtResource("4_sentaur")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="NameInputContainer" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -206.0
-offset_top = 23.0
-offset_right = 194.0
-offset_bottom = 118.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 0
+offset_left = 110.0
+offset_top = 466.0
+offset_right = 560.0
+offset_bottom = 522.0
 theme_override_constants/separation = 10
 
-[node name="NameLabel" type="Label" parent="NameInputContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Enter Your Name"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="NameInput" type="LineEdit" parent="NameInputContainer"]
+custom_minimum_size = Vector2(450, 56)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-placeholder_text = "Player"
+theme_override_font_sizes/font_size = 26
+placeholder_text = "Enter your name"
 alignment = 1
 max_length = 20
 
 [node name="MenuPanel_ButtonContainer#NewGameButton" type="Button" parent="."]
-custom_minimum_size = Vector2(400, 60)
-layout_mode = 2
-offset_left = 613.0
-offset_top = 639.0
-offset_right = 1098.0
-offset_bottom = 806.0
-scale = Vector2(0.897124, 0.897124)
-icon = ExtResource("6_826wr")
+custom_minimum_size = Vector2(450, 80)
+layout_mode = 0
+offset_left = 110.0
+offset_top = 560.0
+offset_right = 560.0
+offset_bottom = 640.0
+text = "NEW GAME"
+
+[node name="MenuPanel_ButtonContainer#ContinueButton" type="Button" parent="."]
+custom_minimum_size = Vector2(450, 80)
+layout_mode = 0
+offset_left = 110.0
+offset_top = 664.0
+offset_right = 560.0
+offset_bottom = 744.0
+disabled = true
+text = "CONTINUE"
 
 [node name="MenuPanel_ButtonContainer#QuitButton" type="Button" parent="."]
-visible = false
-custom_minimum_size = Vector2(400, 60)
-layout_mode = 2
-offset_left = 1094.0
-offset_top = 1220.0
-offset_right = 1494.0
-offset_bottom = 1280.0
+custom_minimum_size = Vector2(450, 80)
+layout_mode = 0
+offset_left = 110.0
+offset_top = 768.0
+offset_right = 560.0
+offset_bottom = 848.0
 text = "EXIT"
 
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]

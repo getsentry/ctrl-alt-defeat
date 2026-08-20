@@ -343,6 +343,29 @@ func test_each_fighter_stands_on_a_shadow():
 			"The shadow should be on screen")
 
 
+func test_a_fighter_stands_on_the_same_smudge_as_everyone_else():
+	# One picture of a shadow, under every standing character in the game. This
+	# screen used to draw its own out of a stack of ellipses.
+	var shadow = battle_screen.get_node("Player1Container").find_child(
+		"Player1ContainerShadow", true, false)
+
+	assert_not_null(shadow.texture, "The shadow should be drawn from artwork")
+	assert_true("contact_shadow" in shadow.texture.resource_path,
+		"and from the artwork the other screens use, got: %s"
+		% shadow.texture.resource_path)
+
+
+func test_a_fighter_is_drawn_to_the_shape_of_its_own_artwork():
+	# The proportions used to be written down here. The artwork has been
+	# replaced twice since, and a fighter drawn to the last one's shape is a
+	# fighter stretched.
+	var player = battle_screen.get_node("Player1Container/CharacterDisplay")
+	var art: Vector2 = player.texture.get_size()
+
+	assert_almost_eq(player.size.y / player.size.x, art.y / art.x, 0.01,
+		"A fighter should keep the shape of the picture it is drawn from")
+
+
 func test_the_fighters_do_not_cover_the_stats():
 	var plate = hud.stats_plate.get_global_rect()
 

@@ -66,16 +66,20 @@ const STATS_TOP := 634.0
 # Width only. The art is 1024 by 1536, and a box of any other shape letterboxes
 # it: ask for 236 by 430 and you get 236 by 352 with the rest left empty, which
 # is why the fighters came out smaller than the numbers said.
-const FIGHTER_WIDTH := 380.0
-const FIGHTER_ART := Vector2(1024, 1536)
+const FIGHTER_WIDTH := 350.0
+## The proportions of a fighter's artwork, for a fighter that has none to read.
+const FIGHTER_ART := Vector2(800, 1141)
 ## How far past the bottom edge their feet go. Cut off slightly by the frame
 ## they stand in, they read as standing in the room rather than pasted on top
 ## of it - the same trick the game this is modelled on uses.
 const FEET_BELOW := 26.0
-## Where the ground shadow sits, up from the bottom edge. Above the crop, or
-## the one thing saying they are standing on something is off screen too.
+## How far the bottom of the ground shadow stays above the bottom edge. Above
+## the crop, or the one thing saying they are standing on something is off the
+## screen along with their feet.
 const SHADOW_ABOVE := 42.0
-const SHADOW_SIZE := Vector2(340, 66)
+## The smudge under a fighter, the same one the shop and the menu use.
+const GROUND = preload("res://assets/ui/contact_shadow.png")
+const ContactShadow = preload("res://scripts/contact_shadow.gd")
 const COLUMN_INSET := 26.0
 ## How far a name keeps away from each end of its column. The blades sit in the
 ## middle, and a name that runs into them reads as one long word.
@@ -482,8 +486,15 @@ func add_effect(player: int, effect_name: String, good: bool) -> void:
 ## where they took up more room than the racks and the numbers together. They
 ## are scenery: the racks are what the battle is decided by.
 ## How big a fighter is drawn, keeping the art's own proportions.
-func _fighter_size() -> Vector2:
-	return Vector2(FIGHTER_WIDTH, FIGHTER_WIDTH * FIGHTER_ART.y / FIGHTER_ART.x)
+##
+## Read off the artwork itself where there is any, because the artwork has been
+## replaced twice now and a fighter drawn to the last one's proportions is a
+## fighter squashed.
+func _fighter_size(fighter: Control = null) -> Vector2:
+	var art := FIGHTER_ART
+	if fighter is TextureRect and fighter.texture:
+		art = fighter.texture.get_size()
+	return Vector2(FIGHTER_WIDTH, FIGHTER_WIDTH * art.y / art.x)
 
 
 func _place_fighters(art: Dictionary) -> void:
@@ -494,35 +505,42 @@ func _place_fighters(art: Dictionary) -> void:
 			art[key].visible = false
 
 	var window := _window()
-	var drawn := _fighter_size()
-	var top := window.y + FEET_BELOW - drawn.y
-	_stand(art.get("player"), Vector2(2, top), PLAYER_ACCENT)
-	_stand(art.get("enemy"), Vector2(window.x - drawn.x - 2, top), ENEMY_ACCENT)
+	var player: Control = art.get("player")
+	var enemy: Control = art.get("enemy")
+	_stand(player, Vector2(2, window.y + FEET_BELOW - _fighter_size(player).y))
+	var theirs := _fighter_size(enemy)
+	_stand(enemy, Vector2(window.x - theirs.x - 2, window.y + FEET_BELOW - theirs.y))
 
 
-func _stand(fighter: Control, at: Vector2, accent: Color) -> void:
+func _stand(fighter: Control, at: Vector2) -> void:
 	if fighter == null:
 		return
 	var holder := fighter.get_parent() as Control
 	if holder != null:
 		holder.scale = Vector2.ONE
 		_place(holder, Vector2.ZERO)
-	var drawn := _fighter_size()
 	fighter.scale = Vector2.ONE
-	_put(fighter, at, drawn)
+	_put(fighter, at, _fighter_size(fighter))
 
 	# Under their feet, and behind them: without it they are a picture over a
-	# background rather than someone standing in it.
-	var shadow := Shadow.new()
-	shadow.tint = accent
+	# background rather than someone standing in it. Their feet are cropped by
+	# the bottom of the screen on purpose, so the ground they stand on is the
+	# last of the floor still in view rather than the line their hooves are on.
+	var shadow := ContactShadow.new()
 	shadow.name = holder.name + "Shadow" if holder != null else "Shadow"
-	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shadow.position = Vector2(at.x + drawn.x / 2.0 - SHADOW_SIZE.x / 2.0,
-		_window().y - SHADOW_ABOVE - SHADOW_SIZE.y / 2.0)
-	shadow.size = SHADOW_SIZE
+	shadow.texture = GROUND
+	shadow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shadow.lift = FEET_BELOW + SHADOW_ABOVE
 	if holder != null:
 		holder.add_child(shadow)
 		holder.move_child(shadow, 0)
+		shadow.stands_under = shadow.get_path_to(fighter)
+		# Twice: the first settling is what says how big the smudge is, and how
+		# big it is decides how far up from the feet it has to sit to stay on
+		# the screen.
+		shadow.settle()
+		shadow.lift = FEET_BELOW + SHADOW_ABOVE + shadow.size.y / 2.0
+		shadow.settle()
 
 
 # ============ The bars ============
@@ -705,38 +723,6 @@ func _reparent(node: Node, to: Node) -> void:
 	if node.get_parent() != null:
 		node.get_parent().remove_child(node)
 	to.add_child(node)
-
-
-## The pool of light a fighter stands in.
-##
-## A shadow, on this floor, is invisible: the ground is already almost black,
-## so darkening it says nothing. What does read is the floor lit around their
-## feet, which grounds them the same way and belongs to a neon-lit room.
-##
-## Godot's 2D drawing has no gradient fill, so it is a stack of ellipses, each
-## one smaller than the last, piling up alpha towards the middle.
-class Shadow extends Control:
-	const RINGS := 10
-
-	var tint: Color = Color.WHITE
-
-	func _draw() -> void:
-		var middle := size / 2.0
-		for ring in range(RINGS, 0, -1):
-			var scaling := float(ring) / RINGS
-			var points := PackedVector2Array()
-			for step in 32:
-				var angle := TAU * step / 32.0
-				points.append(middle + Vector2(cos(angle) * middle.x * scaling,
-					sin(angle) * middle.y * scaling))
-			draw_colored_polygon(points, Color(tint, 0.035))
-		# A darker core right under them, so it is contact and not just a glow.
-		var core := PackedVector2Array()
-		for step in 32:
-			var angle := TAU * step / 32.0
-			core.append(middle + Vector2(cos(angle) * middle.x * 0.42,
-				sin(angle) * middle.y * 0.5))
-		draw_colored_polygon(core, Color(0.02, 0.0, 0.06, 0.35))
 
 
 ## The bar that fills as the battle runs out.

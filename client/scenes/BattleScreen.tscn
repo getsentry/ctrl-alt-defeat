@@ -1,13 +1,12 @@
-[gd_scene load_steps=9 format=3 uid="uid://b7t4s8m6l2n3x"]
+[gd_scene load_steps=8 format=3 uid="uid://b7t4s8m6l2n3x"]
 
 [ext_resource type="Script" uid="uid://xk1kc0lapshy" path="res://scripts/battle_screen.gd" id="1_wqk2m"]
-[ext_resource type="Texture2D" uid="uid://fe2xqisr404b" path="res://assets/characters/player_main.png" id="2_e26j6"]
+[ext_resource type="Texture2D" uid="uid://bo6n7cokt03x" path="res://assets/characters/sentaur_battle.png" id="2_e26j6"]
 [ext_resource type="Texture2D" uid="uid://cynagqb4r7a81" path="res://assets/ui/backgrounds/battle_background.png" id="2_oihk3"]
-[ext_resource type="Texture2D" uid="uid://cc2w1tv4jsrlh" path="res://assets/characters/enemy_battle.png" id="3_6vv1o"]
+[ext_resource type="Texture2D" uid="uid://bo6n7cokt03x" path="res://assets/characters/sentaur_battle.png" id="3_6vv1o"]
 [ext_resource type="Texture2D" uid="uid://b2tjp151rify1" path="res://assets/ui/backgrounds/player_status_area.png" id="4_tji62"]
 [ext_resource type="Texture2D" uid="uid://bivolioys1fh2" path="res://assets/ui/backgrounds/opponent_status_area.png" id="6_3n4vy"]
 [ext_resource type="Texture2D" uid="uid://bdgn6pibt0748" path="res://assets/ui/rooftop_parapet.png" id="7_parapet"]
-[ext_resource type="Texture2D" uid="uid://diwiu5ecuj2aj" path="res://assets/ui/battle_grid_frame.png" id="10_frame"]
 
 [node name="BattleScreen" type="Control"]
 layout_mode = 3
@@ -99,13 +98,13 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -180.0
-offset_top = -342.0
-offset_right = 20.0
-offset_bottom = -142.0
+offset_left = -186.0
+offset_top = -459.0
+offset_right = 14.0
+offset_bottom = -259.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(6.21843, 6.21843)
+scale = Vector2(5.5, 5.5)
 texture = ExtResource("2_e26j6")
 expand_mode = 1
 stretch_mode = 5
@@ -212,14 +211,15 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -992.0
-offset_top = -309.0
-offset_right = -792.0
-offset_bottom = -109.0
+offset_left = -932.0
+offset_top = -456.0
+offset_right = -732.0
+offset_bottom = -256.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(6.218, 6.218)
+scale = Vector2(5.5, 5.5)
 pivot_offset = Vector2(5, 0)
+self_modulate = Color(1, 0.66, 0.72, 1)
 texture = ExtResource("3_6vv1o")
 expand_mode = 1
 stretch_mode = 5
@@ -298,12 +298,6 @@ offset_right = 1197.0
 offset_bottom = 614.0
 scale = Vector2(0.616159, 0.616159)
 
-[node name="GridFrame" type="TextureRect" parent="Player1Inventory"]
-layout_mode = 0
-mouse_filter = 2
-texture = ExtResource("10_frame")
-expand_mode = 1
-
 [node name="GridContainer" type="GridContainer" parent="Player1Inventory"]
 layout_mode = 1
 anchors_preset = 15
@@ -328,12 +322,6 @@ offset_right = 443.0
 offset_bottom = 614.0
 grow_horizontal = 0
 scale = Vector2(0.612477, 0.612477)
-
-[node name="GridFrame" type="TextureRect" parent="Player2Inventory"]
-layout_mode = 0
-mouse_filter = 2
-texture = ExtResource("10_frame")
-expand_mode = 1
 
 [node name="GridContainer" type="GridContainer" parent="Player2Inventory"]
 layout_mode = 1

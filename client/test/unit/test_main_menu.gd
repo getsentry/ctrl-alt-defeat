@@ -36,7 +36,12 @@ func test_all_buttons_exist():
 
 
 func test_continue_button_disabled_initially():
-	pending("No Continue button exists. Save/resume is not implemented.")
+	# The menu is three keys. Carrying on from where you left off is not built,
+	# so the key is there and dead rather than missing: the shape of the menu
+	# is the shape of the game.
+	assert_not_null(main_menu.continue_button, "There should be a Continue button")
+	assert_true(main_menu.continue_button.disabled,
+		"and it should be dead until save and resume exist")
 
 
 func test_settings_button_exists_but_disabled():
@@ -93,6 +98,48 @@ func test_title_displayed():
 	assert_gt(logo.texture.get_width(), 0, "Title artwork should have loaded")
 	assert_true("logo" in logo.texture.resource_path,
 		"Title artwork should be the logo asset, got: " + logo.texture.resource_path)
+
+
+func test_the_buttons_are_cut_from_the_keycap_artwork():
+	# The logo is a broken keyboard, so the menu is the keys that still work.
+	for button in [main_menu.new_game_button, main_menu.continue_button,
+			main_menu.quit_button]:
+		var normal = button.get_theme_stylebox("normal")
+		assert_true(normal is StyleBoxTexture,
+			"%s should be drawn from artwork, not a flat slab" % button.name)
+		assert_true("menu_button" in normal.texture.resource_path,
+			"%s should wear the keycap, got: %s"
+			% [button.name, normal.texture.resource_path])
+
+
+func test_a_button_lights_up_under_the_pointer():
+	# The magenta key is the other half of the logo, so a lit key reads as the
+	# same keyboard rather than as a second style.
+	var lit = main_menu.new_game_button.get_theme_stylebox("hover")
+	assert_true("magenta" in lit.texture.resource_path,
+		"A key under the pointer should light magenta, got: %s"
+		% lit.texture.resource_path)
+
+
+func test_the_menu_shows_the_sentaur():
+	var who = main_menu.find_child("PlayerCharacter", true, false)
+	assert_not_null(who, "The menu should show a character")
+	assert_true("sentaur" in who.texture.resource_path,
+		"and it should be the Sentaur, got: %s" % who.texture.resource_path)
+
+
+func test_the_sentaur_stands_on_a_shadow():
+	# Without one it is a cut-out laid over the rooftop rather than standing on
+	# it.
+	var shadow = main_menu.find_child("CharacterShadow", true, false)
+	var who = main_menu.find_child("PlayerCharacter", true, false)
+	assert_not_null(shadow, "There should be a shadow under the character")
+	assert_lt(shadow.get_index(), who.get_index(),
+		"and it should be drawn before the character, or it lies on top of it")
+
+	var feet = shadow.stands_on(who).end.y
+	assert_almost_eq(shadow.get_rect().get_center().y, feet, 1.0,
+		"It should lie across the feet")
 
 
 func test_name_input_exists():
