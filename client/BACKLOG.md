@@ -126,3 +126,31 @@ route actually reaches.
 
 It is the second of the two red UI tests, alongside the sale above, and both
 are about what happens after a battle rather than during one.
+
+## A fighter with many buffs is a wall of chips
+
+The chips beside each fighter are laid out in one run, one per status, and a
+build that stacks several at once fills the middle of the battle screen with
+them. Nothing is wrong with any one chip; there are simply too many, and the
+row they make is the busiest thing on a screen whose subject is two fighters
+hitting each other.
+
+The card that explains one of them (`status_tooltip.gd`) came out of the same
+question and answers it for a single chip. What is left is the row itself:
+what a player sees before they hover anything.
+
+Worth trying, in the order they get cheaper:
+
+- **One chip per status, not per stack** is already how it works -- the count
+  is on the chip. So the row grows with the *variety* of a build, and a build
+  with eight kinds of buff is rare enough that the row could simply be allowed
+  to wrap into two lines rather than run on.
+- **Sort them** so the same status is in the same place every battle, and a
+  player reads position rather than text.
+- **Fold the small ones away**: show the largest few and a "+3" chip that
+  explains the rest on hover, the way the card already explains one.
+- **Shrink the chips while there are many of them**, so the row keeps its
+  width and the cost of a busy build is legibility rather than layout.
+
+`battle_hud.gd` builds the rows in `_build_effects`/`add_effect`, at the two
+offsets the block plate left them (196 and 280).

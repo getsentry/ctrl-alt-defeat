@@ -236,7 +236,7 @@ func _on_item_unstored(item_data: APITypes.Item, global_pos: Vector2):
 	"""Called when an item is dragged out of the chest onto the grid"""
 	# The chest has already let go of it on screen, so a move that does not
 	# happen has to draw the chest again with the item still in it.
-	if await put_on_grid(item_data, _global_to_grid(global_pos)):
+	if await put_on_grid(item_data, square_carried_to(item_data, global_pos)):
 		print("Took %s out of the chest" % item_data.name)
 	else:
 		load_storage()
@@ -352,19 +352,53 @@ func follow_pointer(pointer: Vector2) -> void:
 	"""
 	if not held_item:
 		return
+	var holding := APITypes.middle_square(held_item.turned_shape())
 	if is_instance_valid(held_visual):
-		# On the screen, whatever the pointer says. The pointer can leave the
-		# window while an item is in hand, and an item that goes with it is
-		# being carried where the player cannot see it.
-		var half := held_visual.size / 2
+		# Hung from the square being held, so the artwork and the mark under it
+		# cover the same squares. Hung from the middle of its artwork instead,
+		# a four-square spear was drawn two squares off the mark.
+		var corner := pointer + inventory_grid.held_by_offset(holding)
+		# And on the screen. The pointer can leave the window while an item is
+		# in hand, and an item that goes with it is being carried where the
+		# player cannot see it.
 		var view := get_viewport_rect()
-		held_visual.global_position = \
-			pointer.clamp(view.position + half, view.end - half) - half
+		held_visual.global_position = corner.clamp(
+			view.position, (view.end - held_visual.size).max(view.position))
 
-	var grid_pos := _global_to_grid(pointer)
+	var grid_pos := inventory_grid.square_held_over(pointer, holding)
 	inventory_grid.mark_square(
 		held_item.turned_shape(), grid_pos,
 		inventory_grid.can_place_item(held_item, grid_pos))
+
+
+func held_by() -> Vector2i:
+	"""Which square of the thing in hand the player has hold of.
+
+	The same four ways of holding something that carrying_something() lists.
+	Dragged off the grid, the square is the one the player put the pointer on.
+	The other three were never put down anywhere, so they are held by the
+	middle: an item carried off the shelf hangs from its middle square rather
+	than from its corner.
+
+	It matters because the mark that says where an item would land goes under
+	its corner. A spear held by the middle and marked under the pointer had the
+	mark two squares off, and the drop went where the mark was.
+	"""
+	if held_item:
+		return APITypes.middle_square(held_item.turned_shape())
+	if dragging_shop_data:
+		return APITypes.middle_square(dragging_shop_data.turned_shape())
+	if inventory_grid != null and inventory_grid.dragging_object != null:
+		return inventory_grid.grab_cell
+	if storage_bin != null and storage_bin.dragged() != null:
+		return APITypes.middle_square(storage_bin.dragged().turned_shape())
+	return Vector2i.ZERO
+
+
+func square_carried_to(item: APITypes.Item, pointer: Vector2) -> Vector2i:
+	"""The square this item's corner lands on, carried by its middle to here"""
+	return inventory_grid.square_held_over(
+		pointer, APITypes.middle_square(item.turned_shape()))
 
 
 func carrying_something() -> bool:
@@ -380,8 +414,11 @@ func carrying_something() -> bool:
 		or (storage_bin != null and storage_bin.dragged() != null)
 
 
-func turn(quarters: int) -> bool:
+func turn(quarters: int, pointer := Vector2.INF) -> bool:
 	"""Turn whatever is held, however it came to be held.
+
+	Takes the pointer rather than reading it, so what a turn draws can be asked
+	about without a mouse.
 
 	An item is held for four different reasons -- dragged off the grid, taken
 	out of the chest, carried off the shop shelf, or picked up after a
@@ -390,26 +427,31 @@ func turn(quarters: int) -> bool:
 	only one list of what counts as holding something. carrying_something()
 	asks that same list.
 	"""
+	var at := get_global_mouse_position() if pointer == Vector2.INF else pointer
 	if held_item:
 		held_item = held_item.turned(quarters)
 		if is_instance_valid(held_visual):
 			held_visual.redraw_as(held_item)
-		follow_pointer(get_global_mouse_position())
+		# Which hangs it from its new middle square as well as drawing the mark.
+		follow_pointer(at)
 		return true
 
 	if dragging_shop_data:
 		dragging_shop_data = dragging_shop_data.turned(quarters)
 		if is_instance_valid(drag_preview):
 			drag_preview.redraw_as(dragging_shop_data)
+			# Turned, its middle square is somewhere else, so the artwork is
+			# hung again or it swings away from the pointer holding it.
+			_hang_the_shop_drag(at)
 		# And the mark under it, which is a different set of squares now. The
 		# mark used to be drawn only when the pointer moved, so a turn showed
 		# the shape the item had before it, until the player moved off the
 		# square and back to see what they had actually asked for.
-		mark_where_the_shop_item_would_land()
+		mark_where_the_shop_item_would_land(at)
 		return true
 
-	return inventory_grid.turn_dragged(quarters) \
-		or (storage_bin != null and storage_bin.turn_dragged(quarters))
+	return inventory_grid.turn_dragged(quarters, at) \
+		or (storage_bin != null and storage_bin.turn_dragged(quarters, at))
 
 
 func release_hand() -> void:
@@ -442,7 +484,7 @@ func place_held_at(pointer: Vector2) -> void:
 	# It stays in hand unless it lands, so a misclick cannot put it somewhere
 	# the player did not choose.
 	var item = held_item
-	if await put_on_grid(item, _global_to_grid(pointer)):
+	if await put_on_grid(item, square_carried_to(item, pointer)):
 		release_hand()
 		print("Put %s down" % item.name)
 
@@ -520,9 +562,21 @@ func _input(event):
 		elif event is InputEventMouseMotion:
 			# Update drag preview position
 			if drag_preview:
-				drag_preview.global_position = event.global_position - drag_preview.size / 2
+				_hang_the_shop_drag(event.global_position)
 
 			mark_where_the_shop_item_would_land(event.global_position)
+
+
+func _hang_the_shop_drag(pointer: Vector2) -> void:
+	"""Put the artwork of a shop item under the pointer, by its middle square.
+
+	The same hold an item in hand is carried by, so the two look the same to
+	the player and the mark under either one is under the artwork.
+	"""
+	if not is_instance_valid(drag_preview) or dragging_shop_data == null:
+		return
+	drag_preview.global_position = pointer + inventory_grid.held_by_offset(
+		APITypes.middle_square(dragging_shop_data.turned_shape()))
 
 
 func mark_where_the_shop_item_would_land(pointer := Vector2.INF) -> void:
@@ -535,7 +589,7 @@ func mark_where_the_shop_item_would_land(pointer := Vector2.INF) -> void:
 	if dragging_shop_data == null:
 		return
 	var at := get_global_mouse_position() if pointer == Vector2.INF else pointer
-	var grid_pos := _global_to_grid(at)
+	var grid_pos := square_carried_to(dragging_shop_data, at)
 	if dragging_shop_data.is_container:
 		_show_container_preview(dragging_shop_data, grid_pos)
 	else:
@@ -1515,7 +1569,7 @@ func _end_shop_drag(drop_position: Vector2):
 		return
 
 	# Check if we're over the inventory grid
-	var grid_pos = _global_to_grid(drop_position)
+	var grid_pos = square_carried_to(dragging_shop_data, drop_position)
 
 	# Check if this is a container/server
 	var is_container = dragging_shop_data.is_container
@@ -2419,7 +2473,7 @@ func _aura_square(item: APITypes.Item, pointer: Vector2) -> Vector2i:
 	otherwise.
 	"""
 	if _something_is_being_moved():
-		return _global_to_grid(pointer)
+		return inventory_grid.square_held_over(pointer, held_by())
 
 	# Where the board says it is, not where the item says it is. An item put
 	# in the chest is still the object that was on the grid, remembering the

@@ -1057,3 +1057,235 @@ func test_redrawing_the_board_lets_go_of_whatever_was_being_dragged():
 		{"items": [], "servers": []}))
 
 	assert_null(grid.dragging_object, "the drag is over, because the item is gone")
+
+
+# ============ Carrying a long item ============
+#
+# An item is held by whichever of its own squares the player put the pointer
+# on. The mark that says where it would land goes under its corner, and for
+# anything longer than one square those are not the same place: a spear picked
+# up by its tip was drawn with its tip in the player's hand and marked three
+# squares away, and the drop followed the mark rather than the artwork.
+
+const SPEAR_SHAPE := [[0, 0], [0, 1], [0, 2], [0, 3]]
+
+
+func _spear(id := "spear", at := Vector2i(2, 0)) -> Resource:
+	return _item({"id": id, "position": [at.x, at.y], "shape": SPEAR_SHAPE})
+
+
+func _a_column_to_stand_a_spear_in() -> void:
+	# Four rows deep in columns 2 and 3, which the three starting containers
+	# are not: they make a band two rows tall and nothing longer fits in it.
+	grid.load_inventory_state(_state([], [
+		_container({"id": "upper", "position": [2, 1]}),
+		_container({"id": "lower", "position": [2, 3]}),
+		_container({"id": "beside", "position": [4, 3]}),
+	]))
+
+
+func _put_down(item: Resource) -> Control:
+	grid.load_inventory_state(_state([item], []))
+	return grid.items[0]
+
+
+func _middle_of(square: Vector2i) -> Vector2:
+	"""A point well inside this square of the grid, in the grid's own pixels"""
+	return grid.grid_to_pixel(square) + Vector2(grid.cell_size, grid.cell_size) / 2.0
+
+
+func _pointer_over(square: Vector2i) -> Vector2:
+	return grid.get_global_transform() * _middle_of(square)
+
+
+func test_an_item_is_held_by_the_square_the_pointer_went_down_on():
+	var spear := _put_down(_spear())
+
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
+
+	assert_eq(grid.grab_cell, Vector2i(0, 3),
+		"Picked up by its fourth square, it is held by its fourth square")
+
+
+func test_an_item_taken_hold_of_nowhere_near_is_held_by_its_corner():
+	# Which is where a pointer is in a test, there being no mouse to put on it.
+	var spear := _put_down(_spear())
+
+	grid._start_drag(spear, grid.get_global_transform() * Vector2(-500, -500))
+
+	assert_eq(grid.grab_cell, Vector2i.ZERO)
+
+
+func test_the_mark_goes_under_the_item_rather_than_under_the_pointer():
+	_a_column_to_stand_a_spear_in()
+	var spear := _put_down(_spear())
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
+
+	grid.update_drag_preview(_pointer_over(Vector2i(4, 4)))
+
+	assert_eq(grid.hover_preview.position, grid.grid_to_pixel(Vector2i(4, 1)),
+		"Held by its fourth square with the pointer on row 4, a spear reaches "
+		+ "up to row 1 -- which is where the mark belongs")
+
+
+func test_a_spear_lands_where_the_mark_said_it_would():
+	_a_column_to_stand_a_spear_in()
+	grid.place_shop_item(_spear("mover", Vector2i(2, 1)), Vector2i(2, 1))
+	var spear: Control = grid.items[0]
+	# Drawn and not sent, the way the chest's own grid works. A drop that goes
+	# to the server needs one, and the square it is asked about is this one.
+	grid.saves_positions = false
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 4)))
+
+	grid._end_drag(_pointer_over(Vector2i(3, 4)))
+	await get_tree().process_frame
+
+	assert_eq(grid.items[0].get_meta("grid_pos"), Vector2i(3, 1),
+		"Dropped with the pointer on the last row it reaches, the spear's tip "
+		+ "is on that row and its corner three above it")
+
+
+func test_the_mark_and_the_item_agree_wherever_it_is_held():
+	_a_column_to_stand_a_spear_in()
+	for held_by in range(4):
+		var spear := _put_down(_spear("held_%d" % held_by))
+		grid._start_drag(spear, _pointer_over(Vector2i(2, held_by)))
+		var pointer := _pointer_over(Vector2i(4, 4))
+
+		grid.update_drag_preview(pointer)
+		# Where _process would put the artwork for that pointer.
+		var drawn: Vector2 = grid.get_global_transform().affine_inverse() \
+			* pointer + grid.drag_offset
+
+		assert_eq(grid.hover_preview.position, drawn,
+			"Held by square %d, the mark should be drawn over the artwork" % held_by)
+		grid._end_drag(grid.get_global_transform() * Vector2(-900, -900))
+		await get_tree().process_frame
+
+
+# ============ Turning what is in hand ============
+
+func test_a_turn_keeps_hold_of_the_square_in_hand():
+	var spear := _put_down(_spear())
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
+
+	grid.turn_dragged(1)
+
+	assert_eq(grid.grab_cell, Vector2i(0, 0),
+		"The tip of a spear turned clockwise is its left end, and the hand "
+		+ "is still on the tip")
+
+
+func test_a_turn_swings_the_item_about_the_hand_and_not_about_its_corner():
+	var spear := _put_down(_spear())
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
+	var was: Vector2 = spear.position
+
+	grid.turn_dragged(1)
+
+	assert_eq(spear.position, was + Vector2(0, 3 * (grid.cell_size + grid.cell_spacing)),
+		"Held by its fourth square and turned so that square is its first, "
+		+ "the corner comes down three squares to meet the hand")
+
+
+func test_a_turn_moves_the_artwork_and_the_hold_together():
+	# Whatever _process does next, the pointer must still be over the square it
+	# was holding: drag_offset is what _process puts the artwork at.
+	var spear := _put_down(_spear())
+	var pointer := _pointer_over(Vector2i(2, 3))
+	grid._start_drag(spear, pointer)
+
+	grid.turn_dragged(1)
+
+	var local: Vector2 = grid.get_global_transform().affine_inverse() * pointer
+	assert_eq(spear.position, local + grid.drag_offset,
+		"where the next frame would draw it")
+
+
+func test_a_turn_marks_the_new_shape_at_once():
+	# The mark used to wait for the pointer to move, so a turn showed the shape
+	# the item had before it until the player wandered off the square.
+	_a_column_to_stand_a_spear_in()
+	var spear := _put_down(_spear())
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
+	grid.update_drag_preview(_pointer_over(Vector2i(2, 3)))
+	var upright: Vector2 = grid.hover_preview.size
+
+	grid.turn_dragged(1, _pointer_over(Vector2i(2, 3)))
+
+	assert_ne(grid.hover_preview.size, upright,
+		"A spear laid flat is marked flat, without waiting for the pointer")
+	assert_gt(grid.hover_preview.size.x, grid.hover_preview.size.y,
+		"and it is wider than it is tall")
+
+
+func test_four_turns_bring_the_item_back_where_it_started():
+	var spear := _put_down(_spear())
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 2)))
+	var was: Vector2 = spear.position
+	var held: Vector2i = grid.grab_cell
+
+	for quarter in range(4):
+		grid.turn_dragged(1)
+
+	assert_eq(grid.grab_cell, held, "Still held by the same square")
+	assert_eq(spear.position, was, "and back where it was drawn")
+
+
+# ============ Drawing the mark ============
+
+func test_the_mark_is_not_drawn_again_when_it_has_not_changed():
+	"""It is asked for on every frame of a drag. Redrawn every time, it throws
+	away one Panel per square and builds another sixty times a second."""
+	_load_default_containers()
+	var shape := APITypes.squares(SPEAR_SHAPE)
+
+	grid.mark_square(shape, Vector2i(2, 2), true)
+	var patches: Array = grid.hover_preview.get_children()
+
+	grid.mark_square(shape, Vector2i(3, 2), true)
+
+	assert_eq(grid.hover_preview.get_children(), patches,
+		"Moved to another square, the mark is the same mark")
+
+
+func test_the_mark_is_drawn_again_when_it_is_refused():
+	_load_default_containers()
+	var shape := APITypes.squares(SPEAR_SHAPE)
+	grid.mark_square(shape, Vector2i(2, 2), true)
+	var patches: Array = grid.hover_preview.get_children()
+
+	grid.mark_square(shape, Vector2i(2, 2), false)
+
+	assert_ne(grid.hover_preview.get_children(), patches,
+		"Red is not green, so it is drawn again")
+
+
+func test_the_mark_is_drawn_again_when_the_shape_changes():
+	_load_default_containers()
+	grid.mark_square(APITypes.squares(SPEAR_SHAPE), Vector2i(2, 2), true)
+
+	grid.mark_square(APITypes.squares([[0, 0]]), Vector2i(2, 2), true)
+
+	assert_eq(grid.hover_preview.get_children().size(), 1,
+		"One square, one patch")
+
+
+func test_the_pointer_is_still_on_the_item_after_any_turn():
+	"""The property the rest of it is for: turn a spear as many times as you
+	like, from wherever you took hold of it, and the hand is still on it. A
+	spear turned about its corner ends up a length away from the pointer."""
+	for held_by in range(4):
+		var spear := _put_down(_spear("held_%d" % held_by))
+		var pointer := _pointer_over(Vector2i(2, held_by))
+		grid._start_drag(spear, pointer)
+		var local: Vector2 = grid.get_global_transform().affine_inverse() * pointer
+
+		for quarter in range(4):
+			grid.turn_dragged(1, pointer)
+			assert_true(Rect2(spear.position, spear.size).has_point(local),
+				"Held by square %d and turned %d times, the pointer should "
+				% [held_by, quarter + 1] + "still be over the item")
+
+		grid._end_drag(grid.get_global_transform() * Vector2(-900, -900))
+		await get_tree().process_frame

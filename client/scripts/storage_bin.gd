@@ -443,8 +443,11 @@ func dragged() -> APITypes.Item:
 	return _dragged
 
 
-func turn_dragged(quarters: int) -> bool:
+func turn_dragged(quarters: int, pointer := Vector2.INF) -> bool:
 	"""Turn what was picked out of the chest, and say whether there was one.
+
+	Takes the pointer rather than reading it, so what the turn draws can be
+	asked about without a mouse.
 
 	Worth turning even though the chest keeps no facing: an item is often
 	picked out of the chest to be put on the grid, and turning it on the way is
@@ -453,10 +456,15 @@ func turn_dragged(quarters: int) -> bool:
 	if not _dragged:
 		return false
 	_dragged = _dragged.turned(quarters)
+	var at := get_global_mouse_position() if pointer == Vector2.INF else pointer
 	if is_instance_valid(_dragged_visual):
 		_dragged_visual.redraw_as(_dragged)
-	# It covers different squares now, so the mark is drawn again for them.
-	mark_where_it_would_land(get_global_mouse_position())
+		# Turned, it hangs from a different square of itself, so it is hung
+		# again -- and hanging it draws the mark for the squares it covers now.
+		_follow(at)
+	else:
+		# It covers different squares now, so the mark is drawn again for them.
+		mark_where_it_would_land(at)
 	return true
 
 
@@ -584,9 +592,29 @@ func _follow(pointer: Vector2) -> void:
 	"""
 	if not is_instance_valid(_dragged_visual):
 		return
+	# Hung from the square it is held by rather than by the middle of its
+	# artwork, so that a long item covers the squares the mark says it will.
+	# The grid says how far that is, because the squares are the grid's.
+	var hang := Vector2.ZERO
+	if is_instance_valid(grid_zone):
+		hang = grid_zone.held_by_offset(_held_by())
+	else:
+		hang = -_dragged_visual.size / 2.0
 	_dragged_visual.position = get_global_transform().affine_inverse() \
-		* on_the_screen(pointer, _dragged_visual.size) - _dragged_visual.size / 2.0
+		* on_the_screen(pointer + hang, _dragged_visual.size)
 	mark_where_it_would_land(pointer)
+
+
+func _held_by() -> Vector2i:
+	"""Which square of what is in hand the chest is holding it by.
+
+	The middle one. Nobody picked a square: an item comes out of the chest as
+	a whole, unlike one dragged off the grid, which is held wherever the
+	pointer went down on it.
+	"""
+	if not _dragged:
+		return Vector2i.ZERO
+	return APITypes.middle_square(_dragged.turned_shape())
 
 
 func mark_where_it_would_land(pointer: Vector2) -> void:
@@ -602,15 +630,20 @@ func mark_where_it_would_land(pointer: Vector2) -> void:
 		grid_zone.hide_hover_preview()
 		return
 
-	grid_zone.show_hover_preview_for_shop(_dragged, grid_zone.pixel_to_grid(
-		grid_zone.get_global_transform().affine_inverse() * pointer))
+	grid_zone.show_hover_preview_for_shop(
+		_dragged, grid_zone.square_held_over(pointer, _held_by()))
 
 
-func on_the_screen(pointer: Vector2, item_size: Vector2) -> Vector2:
-	"""The nearest place to the pointer where an item of this size is in view"""
-	var half := item_size / 2.0
+func on_the_screen(corner: Vector2, item_size: Vector2) -> Vector2:
+	"""The nearest place to this corner where an item of this size is in view.
+
+	The corner rather than the middle, because an item is carried by whichever
+	of its own squares was picked up, and the middle of its artwork is not
+	where the pointer is.
+	"""
 	var view := get_viewport_rect()
-	return pointer.clamp(view.position + half, (view.end - half).max(view.position + half))
+	return corner.clamp(
+		view.position, (view.end - item_size).max(view.position))
 
 
 func _input(event: InputEvent) -> void:

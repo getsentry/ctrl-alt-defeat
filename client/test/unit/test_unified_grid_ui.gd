@@ -4,6 +4,7 @@ extends GutTest
 const APITypes = preload("res://scripts/api_types.gd")
 const Presentation = preload("res://scripts/presentation.gd")
 const CombiningOverlay = preload("res://scripts/combining_overlay.gd")
+const ItemVisual = preload("res://scripts/item_visual.gd")
 var ui_scene = preload("res://scenes/UnifiedGridUI.tscn")
 var ui
 
@@ -2198,3 +2199,92 @@ func test_two_auras_reaching_the_same_square_both_pop():
 	ui.pop_what_took_effect("between")
 
 	assert_eq(Presentation.request_count("aura_took_effect"), 2)
+
+
+# ============ Carrying something longer than a square ============
+#
+# Everything carried without a square being chosen -- off the shelf, out of the
+# chest, handed back after a container move -- hangs from its middle square.
+# Hung from the middle of its artwork instead, a four-square spear covered
+# squares the mark under it did not, and the drop went by the mark.
+
+const SPEAR := [[0, 0], [0, 1], [0, 2], [0, 3]]
+
+
+func _a_spear(id := "spear") -> Resource:
+	return TestHelpers.item({"id": id, "shape": SPEAR})
+
+
+func test_a_held_spear_is_marked_where_its_artwork_is():
+	GameStateManager.inventory_storage = [_a_spear("held")]
+	ui.hold(GameStateManager.inventory_storage[0])
+	var grid = ui.inventory_grid
+
+	ui.follow_pointer(_square(Vector2i(4, 4)))
+
+	assert_ne(grid.hover_preview.position, grid.grid_to_pixel(Vector2i(4, 4)),
+		"A spear held by its middle does not begin at the pointer")
+	assert_almost_eq(
+		grid.global_position + grid.hover_preview.position,
+		ui.held_visual.global_position, Vector2.ONE * grid.cell_size,
+		"The mark should be drawn over the artwork it is marking")
+
+
+func test_a_held_spear_lands_where_it_was_marked():
+	GameStateManager.inventory_storage = [_a_spear("held")]
+	ui.hold(GameStateManager.inventory_storage[0])
+	var grid = ui.inventory_grid
+	var pointer := _square(Vector2i(4, 4))
+	ui.follow_pointer(pointer)
+	var marked: Vector2 = grid.hover_preview.position
+
+	var landing: Vector2i = ui.square_carried_to(ui.held_item, pointer)
+
+	assert_eq(grid.grid_to_pixel(landing), marked,
+		"Where it lands and where it was marked are the same square")
+
+
+func test_turning_a_held_spear_keeps_it_in_the_hand():
+	GameStateManager.inventory_storage = [_a_spear("held")]
+	ui.hold(GameStateManager.inventory_storage[0])
+	var pointer := _square(Vector2i(4, 4))
+	ui.follow_pointer(pointer)
+
+	ui.turn(1, pointer)
+
+	var drawn: Rect2 = Rect2(ui.held_visual.global_position, ui.held_visual.size)
+	assert_true(drawn.grow(ui.inventory_grid.cell_size).has_point(pointer),
+		"Turned, a spear still hangs from the hand rather than beside it")
+
+
+func test_a_shop_spear_hangs_from_the_hand_and_is_marked_under_itself():
+	_rack_holding([])
+	ui.dragging_shop_item = Panel.new()
+	add_child_autofree(ui.dragging_shop_item)
+	ui.dragging_shop_data = _a_spear("buying")
+	ui.drag_preview = ItemVisual.new()
+	add_child_autofree(ui.drag_preview)
+	ui.drag_preview.setup(ui.dragging_shop_data,
+		ui.inventory_grid.cell_size, ui.inventory_grid.cell_spacing)
+	var pointer := _square(Vector2i(4, 4))
+
+	ui._hang_the_shop_drag(pointer)
+	ui.mark_where_the_shop_item_would_land(pointer)
+
+	var grid = ui.inventory_grid
+	assert_almost_eq(
+		grid.global_position + grid.hover_preview.position,
+		ui.drag_preview.global_position, Vector2.ONE * grid.cell_size,
+		"The mark should be drawn over the artwork it is marking")
+
+
+func test_the_square_a_carried_item_lands_on_counts_back_from_its_middle():
+	# One square has no middle to speak of, so it lands where the pointer is.
+	var pointer := _square(Vector2i(4, 4))
+
+	assert_eq(ui.square_carried_to(TestHelpers.item({"id": "chip"}), pointer),
+		Vector2i(4, 4), "One square lands under the pointer")
+	assert_eq(ui.square_carried_to(_a_spear(), pointer).x, 4,
+		"A spear lands in the pointer's column")
+	assert_lt(ui.square_carried_to(_a_spear(), pointer).y, 4,
+		"and reaches up above the pointer, because it is held in the middle")

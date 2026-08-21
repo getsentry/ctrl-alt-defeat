@@ -92,12 +92,26 @@ var dragging_object = null
 var dragging_container: PlacedContainer = null
 var container_riders: Array[Rider] = []
 var drag_offset = Vector2.ZERO
+## Which of the item's own squares the player has hold of.
+##
+## A spear is four squares long, and the mark that says where it would land
+## goes under the square its corner is on -- not under the pointer. Picked up
+## by its tip, those are three squares apart: the mark sat a spear's length
+## from the spear, and the drop followed the mark rather than the artwork.
+##
+## The corner square when the pointer is not on the item at all, which is where
+## a pointer is in a test: there is no mouse to put on it.
+var grab_cell := Vector2i.ZERO
 var original_position = Vector2.ZERO
 var original_grid_pos = Vector2i(-1, -1)
 # Which way the item was facing when it was picked up. Turning it and putting
 # it back down on the same square is a change, even though it has not moved.
 var original_facing := 0
 var hover_preview: Panel = null
+## What the mark is drawn as at the moment, so it is only drawn again when it
+## has something else to say. See mark_square().
+var _marked_squares: Array[Vector2i] = []
+var _marked_allowed := false
 var valid_placement = false
 
 ## What the mark under a held item looks like. Green is "let go here", red is
@@ -249,6 +263,8 @@ func _create_hover_preview():
 	hover_preview.z_index = MARK_LAYER
 	hover_preview.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(hover_preview)
+	# A new mark has nothing drawn on it, whatever the old one was showing.
+	_marked_squares = []
 
 func item_visual(item_id: String) -> ItemVisual:
 	"""The drawing of one item, by the id the server calls it.
@@ -269,6 +285,47 @@ func grid_to_pixel(grid_pos: Vector2i) -> Vector2:
 		grid_pos.x * (cell_size + cell_spacing) + cell_spacing,
 		grid_pos.y * (cell_size + cell_spacing) + cell_spacing
 	)
+
+func square_grabbed(item_visual: Control, pointer: Vector2) -> Vector2i:
+	"""Which of the item's own squares this pointer is on.
+
+	The corner square where the pointer is not on the item, so an item taken
+	hold of from nowhere in particular is held the way it always was.
+	"""
+	var within := pointer - item_visual.position
+	if within.x < 0 or within.y < 0:
+		return Vector2i.ZERO
+	var step := cell_size + cell_spacing
+	var square := Vector2i(int(within.x / step), int(within.y / step))
+	var shape: Array[Vector2i] = item_visual.get_meta("item_data").turned_shape()
+	return square if shape.has(square) else Vector2i.ZERO
+
+
+func held_by_offset(held_by: Vector2i) -> Vector2:
+	"""Where an item's corner goes, held by this square, for a pointer at zero.
+
+	The middle of the held square lands under the pointer, which is what makes
+	the square the pointer is in the square the item is held by -- whatever
+	part of that square the pointer is on.
+	"""
+	var step := cell_size + cell_spacing
+	return -Vector2(held_by) * step - Vector2(cell_size, cell_size) / 2.0
+
+
+func square_held_over(pointer: Vector2, held_by := Vector2i.ZERO) -> Vector2i:
+	"""The square the corner of a held item is over, for a pointer here.
+
+	The pointer's own square, less the square the item is held by. Held by its
+	corner those are the same; held by the tip of a spear they are a spear
+	apart, and it is the corner that says where the item goes.
+
+	Off the board stays off the board: there is no square to count back from.
+	"""
+	var here := pixel_to_grid(get_global_transform().affine_inverse() * pointer)
+	if here.x < 0 or here.y < 0:
+		return here
+	return here - held_by
+
 
 func pixel_to_grid(pixel_pos: Vector2) -> Vector2i:
 	"""Convert pixel position to grid coordinates"""
@@ -382,8 +439,11 @@ func _add_item(item: APITypes.PlacedItem):
 	add_child(item_visual)
 	items.append(item_visual)
 
-func turn_dragged(quarters: int) -> bool:
+func turn_dragged(quarters: int, pointer := Vector2.INF) -> bool:
 	"""Turn the item being dragged, and say whether there was one.
+
+	Takes the pointer rather than reading it, so what the turn draws can be
+	asked about without a mouse.
 
 	A container is not turned. Turning one would have to turn everything
 	standing on it about its anchor, which is a different thing from turning
@@ -392,11 +452,33 @@ func turn_dragged(quarters: int) -> bool:
 	if not dragging_object:
 		return false
 
+	var was: Array[Vector2i] = dragging_object.get_meta("item_data").turned_shape()
 	var turned = dragging_object.get_meta("item_data").turned(quarters)
 	dragging_object.set_meta("item_data", turned)
 
 	# Drawn again, because the squares it covers have changed.
 	dragging_object.redraw_as(turned)
+
+	# It swings about the square in hand rather than about its corner. Turned
+	# about the corner, a spear held by its tip throws itself a length across
+	# the board and leaves the mark behind: the player is holding one end of it
+	# and the game has moved the other one.
+	#
+	# Keeping that square under the pointer means moving the corner by however
+	# far the square moved, which needs no pointer to work out -- and so a turn
+	# looks the same to a test as it does to a hand.
+	var swung := APITypes.turn_within(was, posmod(quarters * 90, 360), grab_cell)
+	var step := cell_size + cell_spacing
+	var moved := Vector2(grab_cell - swung) * step
+	grab_cell = swung
+	drag_offset += moved
+	dragging_object.position += moved
+
+	# And the mark, which is a different set of squares now and in a different
+	# place. Left to the next frame, a turn showed the shape the item had
+	# before it until the pointer moved.
+	update_drag_preview(
+		get_global_mouse_position() if pointer == Vector2.INF else pointer)
 	return true
 
 
@@ -524,14 +606,20 @@ func _on_item_input(event: InputEvent, item_visual: Control):
 				# aiming at what the aura reaches was picking the item up.
 				if not item_visual.covers_point(event.position):
 					return
-				# Start dragging
-				_start_drag(item_visual)
+				# Taken hold of where the click landed, so a spear grabbed by
+				# the tip is carried by the tip.
+				_start_drag(item_visual,
+					item_visual.get_global_transform() * event.position)
 			else:
 				# End dragging
 				_end_drag()
 
-func _start_drag(item_visual: Control):
-	"""Start dragging an item"""
+func _start_drag(item_visual: Control, taken_at := Vector2.INF):
+	"""Start dragging an item, from the pointer unless told somewhere else.
+
+	Takes where it was taken hold of, so which square is in hand can be placed
+	by a test: headless has no pointer to put on an item.
+	"""
 	# Don't allow dragging in read-only mode
 	if read_only:
 		return
@@ -541,7 +629,10 @@ func _start_drag(item_visual: Control):
 	original_position = item_visual.position
 	original_grid_pos = item_visual.get_meta("grid_pos")
 	original_facing = item_visual.get_meta("item_data").facing()
-	drag_offset = item_visual.position - get_local_mouse_position()
+	var taken := get_local_mouse_position() if taken_at == Vector2.INF \
+		else get_global_transform().affine_inverse() * taken_at
+	drag_offset = item_visual.position - taken
+	grab_cell = square_grabbed(item_visual, taken)
 
 	# Ensure the item visual stays at its proper size while dragging
 	item_visual.z_index = 10  # Bring to front
@@ -566,8 +657,7 @@ func _pointer_is_over_grid_zone(pointer: Vector2) -> bool:
 
 func _grid_zone_square(pointer: Vector2) -> Vector2i:
 	"""The square under the pointer, in the other grid's squares"""
-	return grid_zone.pixel_to_grid(
-		grid_zone.get_global_transform().affine_inverse() * pointer)
+	return grid_zone.square_held_over(pointer, grab_cell)
 
 
 func _end_drag(dropped_at := Vector2.INF):
@@ -588,7 +678,7 @@ func _end_drag(dropped_at := Vector2.INF):
 	# The square comes from where the drop landed, not from the pointer. They
 	# are the same thing in a real drag, and only the first can be placed by a
 	# test -- which is what the drop point is for.
-	var grid_pos = pixel_to_grid(get_global_transform().affine_inverse() * dropped_at)
+	var grid_pos = square_held_over(dropped_at, grab_cell)
 	var item_data = dragging_object.get_meta("item_data")
 	var temp_object = dragging_object
 	dragging_object = null
@@ -817,6 +907,16 @@ func mark_square(item_shape: Array, grid_pos: Vector2i, allowed: bool) -> void:
 	hover_preview.visible = true
 	hover_preview.position = grid_to_pixel(grid_pos)
 	hover_preview.size = _shape_extent(squares)
+
+	# The mark is asked for on every frame of a drag, and the answer is the
+	# same on nearly all of them. Drawing it throws away one Panel per square
+	# and builds another, sixty times a second, for a picture that has not
+	# changed. The patches move with the mark, so only its shape and its
+	# colour are worth watching.
+	if squares == _marked_squares and allowed == _marked_allowed:
+		return
+	_marked_squares = squares.duplicate()
+	_marked_allowed = allowed
 	_draw_mark(squares, allowed)
 
 
@@ -850,8 +950,14 @@ func _draw_mark(squares: Array[Vector2i], allowed: bool) -> void:
 	mark drawn for a real item -- whose shape is Vector2i -- came out with no
 	patches in it at all, which is a highlight the player never saw.
 	"""
+	# Taken off the screen now rather than at the end of the frame. queue_free()
+	# on its own leaves the patches standing for one more draw, at their old
+	# offsets inside a mark that has already moved and resized -- which is a
+	# ghost of the old shape, and it shows on exactly the frame a turn happens.
 	for old in hover_preview.get_children():
+		hover_preview.remove_child(old)
 		old.queue_free()
+
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = MARK_ALLOWED_FILL if allowed else MARK_REFUSED_FILL
@@ -949,7 +1055,7 @@ func update_drag_preview(pointer: Vector2) -> void:
 	if grid_zone:
 		grid_zone.hide_hover_preview()
 
-	var grid_pos := pixel_to_grid(get_global_transform().affine_inverse() * pointer)
+	var grid_pos := square_held_over(pointer, grab_cell)
 	mark_square(item_data.turned_shape(), grid_pos, _can_place_item(item_data, grid_pos))
 
 func clear_all():

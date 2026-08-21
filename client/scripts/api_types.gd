@@ -36,6 +36,49 @@ static func _corner(squares: Array[Vector2i]) -> Vector2i:
 	return least
 
 
+# Where one square of a shape ends up when the whole shape is turned.
+#
+# A square cannot be turned on its own. Turning the tip of a spear -- (0, 3) --
+# gives (-3, 0), and where that lands depends on the corner the rest of the
+# shape settles against. So the shape it belongs to comes too, and the answer
+# is the square turn() puts in the same place.
+#
+# This is what keeps hold of an item while it is turned: a spear picked up by
+# its tip is still held by its tip once it lies the other way.
+static func turn_within(shape: Array[Vector2i], rotation: int,
+		square: Vector2i) -> Vector2i:
+	if rotation == 0 or shape.is_empty():
+		return square
+	return _spin([square], rotation)[0] - _corner(_spin(shape, rotation))
+
+
+# The square of a shape nearest the middle of it.
+#
+# Where an item is taken hold of when nobody picked a square: off the shelf,
+# out of the chest, or handed back after a container was moved. Only dragging
+# an item off the grid has a square the player chose.
+#
+# Nearest the middle rather than the middle itself, because the middle of an L
+# is the corner it does not have.
+static func middle_square(shape: Array[Vector2i]) -> Vector2i:
+	if shape.is_empty():
+		return Vector2i.ZERO
+	var far := shape[0]
+	for square in shape:
+		far.x = maxi(far.x, square.x)
+		far.y = maxi(far.y, square.y)
+	var middle := Vector2(far) / 2.0
+
+	var nearest := shape[0]
+	var closest := INF
+	for square in shape:
+		var how_far := Vector2(square).distance_squared_to(middle)
+		if how_far < closest:
+			closest = how_far
+			nearest = square
+	return nearest
+
+
 # Read the [x, y] pairs a server response carries as squares. The parameter is
 # an untyped Array because that is what JSON hands over, and its numbers arrive
 # as floats: [[0.0, 0.0]]. Converting here is what stops a float reaching the

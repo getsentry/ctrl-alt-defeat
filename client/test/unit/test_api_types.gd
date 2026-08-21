@@ -877,3 +877,90 @@ func test_the_battle_answer_carries_the_rack_the_combining_left():
 		"and the inventory is the rack the player holds now")
 	assert_eq(response.session_update.combinations[0].made, "blue_sage_collar",
 		"with what happened in between")
+
+
+# ============ Keeping hold of a square while the shape turns ============
+#
+# An item is carried by one of its own squares -- a spear picked up by the tip
+# is held by the tip -- and turning it must not change which one. turn_within()
+# is what says where that square went, and it has to agree with turn(), which
+# says where every square went.
+
+const SPEAR := [[0, 0], [0, 1], [0, 2], [0, 3]]
+
+
+func test_the_tip_of_a_spear_is_still_the_tip_once_it_lies_flat():
+	# Turned clockwise, a spear pointing down points left: the square that was
+	# furthest down is now furthest left, which is the corner.
+	var tip := Vector2i(0, 3)
+
+	assert_eq(APITypes.turn_within(_at(SPEAR), 90, tip), Vector2i(0, 0),
+		"The far end of a spear turned clockwise is its near end")
+
+
+func test_the_butt_of_a_spear_ends_up_at_the_far_end():
+	assert_eq(APITypes.turn_within(_at(SPEAR), 90, Vector2i(0, 0)), Vector2i(3, 0),
+		"and the near end is the far one")
+
+
+func test_a_square_turned_none_is_where_it_was():
+	assert_eq(APITypes.turn_within(_at(SPEAR), 0, Vector2i(0, 2)), Vector2i(0, 2))
+
+
+func test_every_square_of_a_shape_lands_on_a_square_of_the_turned_shape():
+	"""The property that matters: hold an item anywhere, turn it any way, and
+	the square in hand is still one of the item's own. Anything else is a hand
+	holding thin air, and a mark drawn away from the item."""
+	for shape in [SPEAR, [[0, 0]], [[0, 0], [1, 0], [0, 1]],
+			[[1, 0], [0, 1], [1, 1], [2, 1]]]:
+		for rotation in [0, 90, 180, 270]:
+			var squares := _at(shape)
+			var turned := APITypes.turn(squares, rotation)
+			var landed := {}
+			for square in squares:
+				var where := APITypes.turn_within(squares, rotation, square)
+				assert_true(turned.has(where),
+					"%s of %s turned %d lands on %s, which the turned shape %s does not have"
+						% [square, shape, rotation, where, turned])
+				landed[where] = true
+			assert_eq(landed.size(), squares.size(),
+				"No two squares of %s turned %d may land on one" % [shape, rotation])
+
+
+func test_a_square_turned_all_the_way_round_comes_home():
+	var shape := _at([[0, 0], [1, 0], [0, 1]])
+	var square := Vector2i(1, 0)
+	for quarter in range(4):
+		square = APITypes.turn_within(shape, 90, square)
+		shape = APITypes.turn(shape, 90)
+
+	assert_eq(square, Vector2i(1, 0), "Four quarters later, the same square")
+
+
+# ============ Which square something is carried by ============
+
+func test_the_middle_of_a_single_square_is_that_square():
+	assert_eq(APITypes.middle_square(_at([[0, 0]])), Vector2i.ZERO)
+
+
+func test_a_spear_is_carried_somewhere_along_its_shaft():
+	var middle := APITypes.middle_square(_at(SPEAR))
+
+	assert_eq(middle.x, 0, "A spear one square wide is carried on that column")
+	assert_true(middle.y in [1, 2], "and somewhere in the middle of it, not by an end")
+
+
+func test_a_shape_is_always_carried_by_a_square_it_has():
+	"""The middle of an L is the corner it does not have, and an item carried
+	by a square it does not have is held nowhere."""
+	for shape in [SPEAR, [[0, 0]], [[0, 0], [1, 0], [0, 1]],
+			[[2, 0], [0, 1], [1, 1], [2, 1]]]:
+		var squares := _at(shape)
+		assert_true(squares.has(APITypes.middle_square(squares)),
+			"%s should be carried by one of its own squares" % [shape])
+
+
+func test_an_empty_shape_is_carried_by_nothing_in_particular():
+	var nothing: Array[Vector2i] = []
+	assert_eq(APITypes.middle_square(nothing), Vector2i.ZERO)
+	assert_eq(APITypes.turn_within(nothing, 90, Vector2i.ZERO), Vector2i.ZERO)

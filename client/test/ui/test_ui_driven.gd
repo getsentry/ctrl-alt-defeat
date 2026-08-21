@@ -4,6 +4,7 @@ extends GutTest
 # Now using real server with transaction-based test isolation
 
 var TestSessionManager = preload("res://test/integration/test_session_manager.gd")
+const APITypes = preload("res://scripts/api_types.gd")
 
 func before_all():
 	# Verify server is in test mode - this is required for transaction isolation
@@ -113,7 +114,12 @@ func test_full_user_journey_through_ui():
 	var cell_size = game_ui.inventory_grid.cell_size
 	var cell_spacing = game_ui.inventory_grid.cell_spacing
 	var grid_global_pos = server_room_container.global_position
-	var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
+	# Aimed at the square the item is carried by, so its corner lands on the
+	# square that was chosen. An item off the shelf hangs from its middle
+	# square, and for anything bigger than one square that is not its corner.
+	var aim = Vector2(target_grid_pos) \
+		+ Vector2(APITypes.middle_square(item_data.turned_shape()))
+	var drag_end = grid_global_pos + aim * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
 
 	# Get shop item center position
 	var shop_item_center = shop_item.global_position + shop_item.size / 2
@@ -310,7 +316,11 @@ func test_shop_purchase_and_item_placement():
 	var cell_size = game_ui.inventory_grid.cell_size
 	var cell_spacing = game_ui.inventory_grid.cell_spacing
 	var grid_global_pos = server_room_container.global_position
-	var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
+	# Aimed at the square the item is carried by, so its corner lands on the
+	# square that was chosen. See the note on the other purchase above.
+	var aim = Vector2(target_grid_pos) \
+		+ Vector2(APITypes.middle_square(item_data.turned_shape()))
+	var drag_end = grid_global_pos + aim * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
 
 	print("   - Grid container at: %s" % grid_global_pos)
 	print("   - Cell size: %d, spacing: %d" % [cell_size, cell_spacing])

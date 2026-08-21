@@ -529,3 +529,71 @@ func test_nothing_is_picked_up_out_of_a_chest_being_watched():
 
 	assert_null(bin.dragged(), "Nothing can be picked up")
 	assert_eq(bin.count(), 1, "and it is still lying in the tray")
+
+
+# ============ Carrying a long item to the grid ============
+#
+# What comes out of the chest is carried by its middle square rather than by
+# the middle of its artwork, so that the mark on the grid falls under the item
+# rather than under the pointer. A four-square spear marked at the pointer was
+# marked two squares off the artwork, and the drop went where the mark was.
+
+func _spear(id := "spear") -> Resource:
+	return TestHelpers.item({"id": id, "shape": [[0, 0], [0, 1], [0, 2], [0, 3]]})
+
+
+func _carry(item: Resource, to: Vector2) -> void:
+	bin.show_items([item])
+	bin.pick_up(bin.item_at(bin.global_position + _in_the_tray(item.id)),
+		bin.global_position + Vector2(50, 50))
+	bin._follow(to)
+
+
+func _over(square: Vector2i) -> Vector2:
+	var step := grid_zone.cell_size + grid_zone.cell_spacing
+	return grid_zone.global_position + grid_zone.grid_to_pixel(square) \
+		+ Vector2(step, step) / 2.0
+
+
+func test_the_mark_falls_under_a_carried_spear_and_not_under_the_pointer():
+	_carry(_spear(), _over(Vector2i(4, 4)))
+
+	var mark: Vector2 = grid_zone.hover_preview.position
+	assert_ne(mark, grid_zone.grid_to_pixel(Vector2i(4, 4)),
+		"A spear carried by its middle does not start at the pointer")
+	assert_eq(mark.x, grid_zone.grid_to_pixel(Vector2i(4, 4)).x,
+		"It is in the pointer's column")
+	assert_lt(mark.y, grid_zone.grid_to_pixel(Vector2i(4, 4)).y,
+		"and reaches up above it, which is where the artwork is")
+
+
+func test_the_mark_covers_the_artwork_it_is_marking():
+	_carry(_spear(), _over(Vector2i(4, 4)))
+	var drawn: Vector2 = bin.dragged_visual().global_position
+
+	var mark: Vector2 = grid_zone.global_position + grid_zone.hover_preview.position
+
+	assert_almost_eq(mark.x, drawn.x, float(grid_zone.cell_size),
+		"The mark should sit over the artwork, not beside it")
+	assert_almost_eq(mark.y, drawn.y, float(grid_zone.cell_size),
+		"in both directions")
+
+
+func test_a_single_square_item_is_carried_on_the_pointer_as_it_always_was():
+	_carry(TestHelpers.item({"id": "chip"}), _over(Vector2i(4, 4)))
+
+	assert_eq(grid_zone.hover_preview.position,
+		grid_zone.grid_to_pixel(Vector2i(4, 4)),
+		"One square has no middle to speak of")
+
+
+func test_turning_what_is_carried_hangs_it_again():
+	# Turned, its middle square is somewhere else. Left hanging from the old
+	# one, a spear swings a length away from the hand holding it.
+	_carry(_spear(), _over(Vector2i(4, 4)))
+	var upright: Vector2 = grid_zone.hover_preview.size
+
+	bin.turn_dragged(1, _over(Vector2i(4, 4)))
+
+	assert_gt(grid_zone.hover_preview.size.x, upright.x,
+		"A spear laid flat is marked flat")
