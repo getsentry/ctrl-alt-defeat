@@ -89,7 +89,7 @@ func test_battle_result_updates_state():
 			"losses": 0,
 			"lives": 5,
 			"game_over": false,
-			"victory": false,
+			"victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
 		"new_shop": [TestHelpers.item_data({"id": "shop_item_1", "cost": 3})],
@@ -112,6 +112,38 @@ func test_battle_result_updates_state():
 	assert_eq(GameStateManager.current_shop[0]["item_type"], "null_blade", "Shop should hold the new item")
 	assert_not_null(GameStateManager.last_battle_result, "Battle result should be kept for the post-battle screen")
 	assert_eq(GameStateManager.last_battle_result.winner, 1, "Battle result should keep the winner")
+
+
+func test_a_battle_brings_back_what_the_new_round_charges_to_reroll():
+	"""The round resets the count the price climbs with, and the battle is
+	where the client hears the round changed. Left alone, the shop opens
+	saying the last roll's price over a roll that costs less."""
+	GameStateManager.start_new_game()
+	GameStateManager.shop_refresh_cost = 2
+
+	GameStateManager.update_after_battle(APITypes.BattleResponse.new({
+		"battle_result": {
+			"winner": 1, "duration": 10.0, "player1_quota": 100,
+			"player2_quota": 0, "actions": [], "seed": 1,
+			"opponent_name": "AI", "opponent_type": "ai",
+			"player_inventory": {"items": [], "servers": []},
+			"enemy_inventory": {"items": [], "servers": []},
+		},
+		"session_update": {
+			"round": 2, "gold": 12, "gold_earned": 10, "wins": 1, "losses": 0,
+			"lives": 5, "game_over": false, "victory": false,
+			"shop_refresh_cost": 1, "combinations": [], "pending": []
+		},
+		"new_shop": [],
+		"inventory": {
+			"inventory_grid": [], "inventory_storage": [],
+			"server_containers": []
+		},
+		"battle_id": "b1"
+	}))
+
+	assert_eq(GameStateManager.shop_refresh_cost, 1,
+		"A new round rolls the shelf for a gold again")
 
 
 func test_battle_result_stores_events_for_playback():
@@ -137,7 +169,7 @@ func test_battle_result_stores_events_for_playback():
 		},
 		"session_update": {
 			"round": 2, "gold": 20, "gold_earned": 10, "wins": 1, "losses": 0,
-			"lives": 5, "game_over": false, "victory": false,
+			"lives": 5, "game_over": false, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
 		"new_shop": [],
@@ -166,7 +198,7 @@ func test_defeat_updates_losses_and_lives():
 		},
 		"session_update": {
 			"round": 1, "gold": 12, "gold_earned": 0, "wins": 0, "losses": 1,
-			"lives": 4, "game_over": false, "victory": false,
+			"lives": 4, "game_over": false, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
 		"new_shop": [],
@@ -195,7 +227,7 @@ func test_game_over_comes_from_the_session_update():
 		},
 		"session_update": {
 			"round": 5, "gold": 0, "gold_earned": 0, "wins": 2, "losses": 5,
-			"lives": 0, "game_over": true, "victory": false,
+			"lives": 0, "game_over": true, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
 		"new_shop": [],

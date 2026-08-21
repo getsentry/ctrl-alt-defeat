@@ -586,6 +586,10 @@ class SessionUpdate extends Resource:
 	var wins: int = 0
 	var losses: int = 0
 	var lives: int = 0
+	## What the first roll of the new round's shelf costs. The round resets the
+	## count the price climbs with, and this is where a client learns the round
+	## changed at all.
+	var shop_refresh_cost: int = 1
 	var game_over: bool
 	var victory: bool
 	# What combined as this shop phase began, in the order it happened.
@@ -603,6 +607,7 @@ class SessionUpdate extends Resource:
 		lives = data["lives"]
 		game_over = data["game_over"]
 		victory = data["victory"]
+		shop_refresh_cost = int(data["shop_refresh_cost"])
 		for made in data["combinations"]:
 			combinations.append(Combination.new(made))
 		for waiting in data["pending"]:
@@ -620,6 +625,11 @@ class GameSession extends Resource:
 	var current_shop: Array[Item]  # null in a slot whose item was bought
 	var game_seed: int
 	var shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
+	## What the next roll of the shelf costs. Quoted by the server rather than
+	## worked out here: the price climbs with the rolls already taken, and a
+	## client holding that rule says one number while the server charges
+	## another the moment the rule moves.
+	var shop_refresh_cost: int = 1
 	# Inventory fields
 	var inventory_grid: Array[PlacedItem] = []
 	var inventory_storage: Array[Item] = []
@@ -638,6 +648,7 @@ class GameSession extends Resource:
 		current_shop = APITypes.parse_shop(data["current_shop"])
 		game_seed = data["game_seed"]
 		shop_refresh_count = data["shop_refresh_count"]
+		shop_refresh_cost = int(data["shop_refresh_cost"])
 		inventory_grid = []
 		for item_data in data["inventory_grid"]:
 			inventory_grid.append(PlacedItem.new(item_data))
@@ -668,10 +679,14 @@ class SessionStartResponse extends Resource:
 class ShopRefreshResponse extends Resource:
 	var shop: Array[Item] = []  # null in a slot whose item was bought
 	var gold: int = 0
+	## What the roll after this one costs, so the button can say so without
+	## asking the server again.
+	var next_refresh_cost: int = 1
 
 	func _init(data: Dictionary):
 		shop = APITypes.parse_shop(data["shop"])
 		gold = data["gold"]
+		next_refresh_cost = int(data["next_refresh_cost"])
 
 # Purchase response - matches server PurchaseResponse
 class PurchaseResponse extends Resource:

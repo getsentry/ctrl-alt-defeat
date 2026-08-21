@@ -193,6 +193,24 @@ func test_the_clock_counts_up_and_against_nothing():
 	assert_eq(timer_label.text, "4.2s",
 		"The clock should say how far into the battle we are, and nothing else")
 
+func test_a_speed_change_reaches_the_charges_already_filling():
+	"""A cooldown is a battle second like the rest of the battle. One left
+	filling at the old pace finishes after the item has fired again."""
+	battle_screen.battle_speed_multiplier = 1.0
+	var rack = battle_screen.player_inventory
+	assert_not_null(rack, "setup: the screen draws the player's rack")
+	# The fixture's rack is empty, and this is about what happens to the items
+	# standing on it. The container it holds stands at (2, 3).
+	rack.place_shop_item(TestHelpers.item({"id": "charging"}), Vector2i(2, 3))
+	assert_false(rack.items.is_empty(), "setup: an item is on the rack")
+	var visual = rack.items[0]
+
+	battle_screen._on_toggle_speed()
+
+	assert_eq(visual.charge_pace, battle_screen.battle_speed_multiplier,
+		"Every item on the rack charges at the speed the battle is replayed at")
+
+
 func test_animation_speed_control():
 	# Speed control is $ControlButtons/SpeedButton.
 	var speed_control = battle_screen.find_child("SpeedButton", true, false)

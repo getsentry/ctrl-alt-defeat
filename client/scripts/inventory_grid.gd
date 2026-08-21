@@ -519,6 +519,11 @@ func _on_item_input(event: InputEvent, item_visual: Control):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
+				# On the item, not merely inside the box around it. The empty
+				# corner of an L is where its aura is drawn, and a player
+				# aiming at what the aura reaches was picking the item up.
+				if not item_visual.covers_point(event.position):
+					return
 				# Start dragging
 				_start_drag(item_visual)
 			else:

@@ -17,6 +17,10 @@ var player_name: String = "Player"
 var current_round: int = 1
 var player_lives: int = STARTING_LIVES  # Tries left in the run
 var gold: int = 12  # Start with 12 gold
+## What rolling the shelf again costs. The server quotes it, because the price
+## climbs with the rolls already taken this round and a copy of that rule over
+## here would name one price while the server charged another.
+var shop_refresh_cost: int = 1
 var wins: int = 0
 var losses: int = 0
 var game_over: bool = false
@@ -98,6 +102,7 @@ func update_from_session(session: APITypes.GameSession):
 	current_round = session.round
 	player_id = session.player_id
 	gold = session.gold
+	shop_refresh_cost = session.shop_refresh_cost
 	current_shop = session.current_shop
 
 	inventory_storage = session.inventory_storage
@@ -174,6 +179,9 @@ func update_after_battle(response: APITypes.BattleResponse):
 	var update = response.session_update
 	current_round = update.round
 	gold = update.gold
+	# The round resets what a roll of the shelf costs, and this is where the
+	# client hears the round changed.
+	shop_refresh_cost = update.shop_refresh_cost
 	wins = update.wins
 	losses = update.losses
 	player_lives = update.lives

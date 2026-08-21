@@ -84,6 +84,72 @@ class TestShopRefresh:
         new_gold = response.json()["gold"]
         assert new_gold == initial_gold - 1, "Shop refresh should cost 1 gold"
 
+    def test_the_session_quotes_what_the_next_roll_will_cost(self, auth_client):
+        """The button names a price, and it has to be the one that is charged.
+
+        It climbs -- a gold each for the first four rolls of a round, two from
+        the fifth on -- and a client with that rule written into it says "1g"
+        while the server takes 2.
+        """
+        auth_client.post("/session/start", json={"seed": None})
+
+        for roll in range(1, 7):
+            quoted = auth_client.get("/session").json()["shop_refresh_cost"]
+            before = auth_client.get("/session").json()["gold"]
+
+            response = auth_client.post("/shop/refresh", json={"round": 1})
+            assert response.status_code == 200, response.text
+
+            paid = before - response.json()["gold"]
+            assert paid == quoted, (
+                f"roll {roll}: the shelf quoted {quoted} and charged {paid}"
+            )
+
+    def test_the_quoted_price_climbs_after_the_fourth_roll(self, auth_client):
+        auth_client.post("/session/start", json={"seed": None})
+
+        quoted = []
+        for _ in range(6):
+            quoted.append(auth_client.get("/session").json()["shop_refresh_cost"])
+            auth_client.post("/shop/refresh", json={"round": 1})
+
+        assert quoted == [1, 1, 1, 1, 2, 2], quoted
+
+    def test_a_new_round_is_quoted_at_the_price_it_will_charge(self, auth_client):
+        """The round resets the count the price climbs with, and the battle is
+        where a client learns the round changed. Told nothing, it opens the
+        new shop still saying what the last roll of the last round cost."""
+        auth_client.post("/session/start", json={"seed": None})
+        for _ in range(5):
+            auth_client.post("/shop/refresh", json={"round": 1})
+        assert auth_client.get("/session").json()["shop_refresh_cost"] == 2, (
+            "setup: five rolls in, the shelf costs two"
+        )
+
+        # A battle needs something on the rack.
+        shop = auth_client.get("/session").json()["current_shop"]
+        small = next(
+            item
+            for item in shop
+            if item
+            and not item["is_container"]
+            and max(x for x, _ in item["shape"]) < 2
+            and max(y for _, y in item["shape"]) < 2
+        )
+        auth_client.post(
+            "/purchase/item",
+            json={"item_id": small["id"], "target_position": [2, 3]},
+        )
+        fought = auth_client.post("/battle/simulate", json={})
+        assert fought.status_code == 200, fought.text
+
+        assert fought.json()["session_update"]["shop_refresh_cost"] == 1, (
+            "The new round's first roll is a gold, and the battle has to say so"
+        )
+        assert auth_client.get("/session").json()["shop_refresh_cost"] == 1, (
+            "and the session agrees with it"
+        )
+
     def test_shop_refresh_deterministic_with_seed(self, auth_client):
         """Test that shop generation is deterministic with the same seed"""
         from fastapi.testclient import TestClient

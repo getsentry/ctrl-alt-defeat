@@ -46,6 +46,7 @@ from schemas import (
     Pending,
     RackRequest,
     ShopRequest,
+    refresh_price,
     BattleHistoryResponse,
     BattleResponse,
     BattleResult,
@@ -350,7 +351,7 @@ async def refresh_shop(
     if len(session.current_shop) > 0:  # Not the first shop of the round
         # Backpack Battles charges 1 gold for the first four rolls of a round
         # and 2 gold from the fifth on.
-        price = 1 if session.shop_refresh_count < FREE_PRICE_REFRESHES else 2
+        price = refresh_price(session.shop_refresh_count)
         if session.gold < price:
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST, detail="Not enough gold"
@@ -371,7 +372,11 @@ async def refresh_shop(
     await session_manager.update_session(session)
 
     # Shop already contains ShopItem models
-    return ShopRefreshResponse(shop=session.current_shop, gold=session.gold)
+    return ShopRefreshResponse(
+        shop=session.current_shop,
+        gold=session.gold,
+        next_refresh_cost=refresh_price(session.shop_refresh_count),
+    )
 
 
 # Gold on entering the shop, from Backpack Battles. Eighteen rounds is the
@@ -379,9 +384,6 @@ async def refresh_shop(
 # clamps to the last rather than inventing a rule. Round 1's entry is also
 # what a new game starts with.
 ROUND_GOLD = (13, 13, 15, 10, 11, 11, 12, 22, 13, 18, 14, 14, 15, 15, 16, 16, 16, 16)
-
-# Rolling the shop costs 1 gold this many times a round, then 2 gold.
-FREE_PRICE_REFRESHES = 4
 
 
 def get_rarity_weights(round_number: int) -> Dict[str, float]:
@@ -933,6 +935,7 @@ async def simulate_battle(
         lives=session.lives,
         game_over=game_over,
         victory=victory,
+        shop_refresh_cost=refresh_price(session.shop_refresh_count),
         combinations=[
             Combination(
                 made=made.made,
@@ -1417,12 +1420,23 @@ async def move_item(
             status_code=HTTPStatus.NOT_FOUND, detail="Item not found in inventory"
         )
 
-    # Check for same position move (no-op)
-    if current_location == to_loc:
+    # Nothing to do only if it is going where it already is AND facing the way
+    # it already faces. A turn where it stands covers other squares, so it is a
+    # move like any other -- treated as nothing, the item fought the battle
+    # facing the way it did before the player turned it.
+    going_nowhere = current_location == to_loc and (
+        to_loc == "storage" or item_found.rotation == request.rotation
+    )
+    if going_nowhere:
         return MoveItemResponse(
             pending=pending_for(session),
             inventory_grid=session.inventory_grid,
             inventory_storage=session.inventory_storage,
+            # The containers as well. Left out, this answers with an empty
+            # list, and a client that draws what it is handed rubs the
+            # containers off the board -- they come back at the next battle,
+            # because that answer carries them.
+            server_containers=session.server_containers,
         )
 
     # Attempt the move using InventoryManager

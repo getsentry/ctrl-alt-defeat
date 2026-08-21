@@ -53,6 +53,9 @@ var is_hovering: bool = false
 
 # What the item is doing right now, as opposed to what it is.
 var _cooldown: Cooldown = null
+## How fast this item charges against the clock on the wall. The battle screen
+## sets it from the speed the replay is running at; everywhere else it is 1.
+var charge_pace: float = 1.0
 ## The picture this item draws, whether that is its artwork or the coloured
 ## shape it falls back on. Held onto because two things animate it rather than
 ## the whole cell: the charge fills it, and a blow throws a copy of it.
@@ -76,6 +79,36 @@ func redraw_as(data) -> void:
 	at is already known here, so a caller does not have to carry it about.
 	"""
 	setup(data, cell_size, cell_spacing)
+
+
+func covers_point(point: Vector2) -> bool:
+	"""Whether this point is on a square the item actually stands on.
+
+	An item's rectangle is the box around its shape, so the empty corner of an
+	L or a T is inside the rectangle and on none of the item -- and those are
+	the squares an aura is drawn in. A player aiming at what an aura reaches
+	was picking the item up.
+
+	The rectangle still takes the click: answering _has_point() with false
+	instead lets it fall through to the container underneath, so aiming at the
+	gap picked up the whole container. A gap inside an item's box belongs to
+	nothing and does nothing.
+
+	Asked on every press on the board, so it walks the shape rather than
+	building anything.
+	"""
+	var step := cell_size + cell_spacing
+	if step <= 0.0:
+		return Rect2(Vector2.ZERO, size).has_point(point)
+	var square := Vector2i(floori(point.x / step), floori(point.y / step))
+	# The whole step, hairline and all. The gap ruled between two squares is
+	# inside the item's own drawing, and a point in it that answered "not the
+	# item" would be a one pixel line through the middle of an item that does
+	# nothing when it is clicked.
+	for offset in item_shape:
+		if square.x == int(offset[0]) and square.y == int(offset[1]):
+			return true
+	return false
 
 
 func _is_container() -> bool:
@@ -406,7 +439,20 @@ func _start_cooldown(seconds: float) -> void:
 		# Over the artwork, under the tooltip.
 		_cooldown.z_index = 1
 		add_child(_cooldown)
+	_cooldown.pace = charge_pace
 	_cooldown.charge(_artwork, size, seconds)
+
+
+func set_charge_pace(pace: float) -> void:
+	"""Run the charge at this many battle seconds per real second.
+
+	Takes hold of one already running as well as the next: the speed control
+	is pressed in the middle of a battle, and a charge that went on filling at
+	the old pace would finish after the item had already fired again.
+	"""
+	charge_pace = maxf(pace, 0.01)
+	if is_instance_valid(_cooldown):
+		_cooldown.pace = charge_pace
 
 
 func is_cooling() -> bool:
@@ -430,6 +476,11 @@ class Cooldown extends Control:
 	const DIM := Color(0.36, 0.36, 0.46, 1.0)
 
 	var filling: bool = false
+	## How many battle seconds pass for each second of real time. The battle is
+	## a replay and the player can run it at 2x or 3x, and an item's charge is
+	## a battle second like any other: at 3x a two second cooldown fills in two
+	## thirds of a second, because that is when the item fires again.
+	var pace: float = 1.0
 	var _left: float = 0.0
 	var _total: float = 0.0
 	var _artwork: Control = null
@@ -463,7 +514,7 @@ class Cooldown extends Control:
 
 
 	func _process(delta: float) -> void:
-		_left -= delta
+		_left -= delta * pace
 		if _left <= 0.0:
 			_left = 0.0
 			filling = false

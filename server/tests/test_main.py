@@ -4,6 +4,7 @@ Tests for AI opponent generation with containers
 
 
 from battle_engine import BattleSimulator
+from pydantic import BaseModel
 from containers import Container
 from items import sale_price
 from main import generate_ai_opponent
@@ -888,6 +889,135 @@ class TestATurnIsKept:
         assert moved["rotation"] == 0, (
             "A move says which way the item faces when it lands, and this one "
             "said square on"
+        )
+
+
+class TestAMoveAlwaysAnswersWithTheWholeBoard:
+    """Every move answers with the board, and a client draws what it is
+    handed. An answer that leaves a list out is an answer that rubs that list
+    off the screen.
+    """
+
+    @staticmethod
+    def _an_item_on_the_grid(auth_client):
+        started = auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        shop = started.json()["session"]["current_shop"]
+        offer = next(
+            item
+            for item in shop
+            if item
+            and not item["is_container"]
+            and max(x for x, _ in item["shape"]) < 2
+            and max(y for _, y in item["shape"]) < 2
+        )
+        bought = auth_client.post(
+            "/purchase/item",
+            json={"item_id": offer["id"], "target_position": [2, 3]},
+        )
+        assert bought.status_code == 200, bought.text
+        return bought.json()["purchased_item"]["id"]
+
+    def test_a_move_to_the_square_it_already_holds_still_names_the_containers(
+        self, auth_client
+    ):
+        """The answer used to leave them out, and the screen went blank of
+        containers until the next battle put them back."""
+        item_id = self._an_item_on_the_grid(auth_client)
+
+        response = auth_client.post(
+            "/move/item", json={"item_id": item_id, "to_location": [2, 3]}
+        )
+
+        assert response.status_code == 200, response.text
+        assert response.json()["server_containers"], (
+            "A move that changes nothing still has to say what the board holds"
+        )
+
+    def test_every_answer_that_names_the_containers_names_them(self, auth_client):
+        """The net for the whole class of it.
+
+        Two responses carry `server_containers`, and both default it to an
+        empty list, so an endpoint that forgets to fill one in is a silent
+        change of shape rather than an error. A client draws what it is
+        handed: an empty list rubs the containers off the board.
+
+        Read off the schemas rather than listed here, so a third response
+        with that field is covered the day it is written.
+        """
+        import schemas
+
+        carries = sorted(
+            name
+            for name, model in vars(schemas).items()
+            if isinstance(model, type)
+            and issubclass(model, BaseModel)
+            and "server_containers" in getattr(model, "model_fields", {})
+        )
+        assert carries == [
+            "GameSession",
+            "InventoryAfterBattle",
+            "MoveItemResponse",
+            "PurchaseResponse",
+        ], f"a response carrying the containers is not covered here: {carries}"
+
+        item_id = self._an_item_on_the_grid(auth_client)
+
+        # Every way a move can go: somewhere new, nowhere, and to the chest.
+        for to in ([4, 3], [4, 3], "storage"):
+            response = auth_client.post(
+                "/move/item", json={"item_id": item_id, "to_location": to}
+            )
+            assert response.status_code == 200, response.text
+            assert response.json()["server_containers"], f"moving to {to}"
+
+        # And a purchase, the other one that says what the board holds.
+        shop = auth_client.get("/session").json()["current_shop"]
+        offer = next(
+            item
+            for item in shop
+            if item
+            and not item["is_container"]
+            and max(x for x, _ in item["shape"]) < 2
+            and max(y for _, y in item["shape"]) < 2
+        )
+        bought = auth_client.post(
+            "/purchase/item",
+            json={"item_id": offer["id"], "target_position": [2, 3]},
+        )
+        assert bought.status_code == 200, bought.text
+        assert bought.json()["server_containers"], "buying onto the board"
+
+        # The session itself, which is what a screen loads from.
+        assert auth_client.get("/session").json()["server_containers"], "the session"
+
+        # And what the player holds once the battle is over, which is the rack
+        # the shop screen is drawn from next.
+        fought = auth_client.post("/battle/simulate", json={})
+        assert fought.status_code == 200, fought.text
+        after = fought.json()["inventory"]
+        assert after["server_containers"], "the rack the battle left behind"
+
+    def test_turning_an_item_where_it_stands_is_a_move_and_not_nothing(
+        self, auth_client
+    ):
+        """The square is the same and the squares it covers are not. Treated
+        as nothing, the item fights the battle facing the way it did before
+        the player turned it.
+        """
+        item_id = self._an_item_on_the_grid(auth_client)
+
+        response = auth_client.post(
+            "/move/item",
+            json={"item_id": item_id, "to_location": [2, 3], "rotation": 90},
+        )
+
+        assert response.status_code == 200, response.text
+        turned = next(
+            i for i in response.json()["inventory_grid"] if i["id"] == item_id
+        )
+        assert turned["rotation"] == 90, (
+            "A turn in place has to be kept, or the battle is fought with the "
+            "old facing"
         )
 
 

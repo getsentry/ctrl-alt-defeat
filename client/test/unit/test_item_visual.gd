@@ -66,6 +66,104 @@ func test_cell_size_is_honoured():
 	assert_eq(visual.size, Vector2(60, 60), "Should draw at the size it was given")
 
 
+# ============ Charging back up ============
+#
+# A cooldown is a battle second like the rest of the battle, and the battle is
+# a replay the player can run at 2x or 3x. One filling at wall speed while the
+# battle runs at 3x is still filling after the item has fired twice more.
+
+func test_a_charge_fills_at_the_pace_it_is_given():
+	var visual := _make(_item({"slug": "null_blade"}), 45.0, 1.0)
+	visual.set_charge_pace(3.0)
+	visual.fire(3.0)
+
+	# One second of real time at three battle seconds a second finishes it.
+	visual._cooldown._process(1.01)
+
+	assert_false(visual.is_cooling(), "Three seconds of battle have gone by")
+
+
+func test_a_charge_at_ordinary_speed_takes_its_own_time():
+	var visual := _make(_item({"slug": "null_blade"}), 45.0, 1.0)
+	visual.set_charge_pace(1.0)
+	visual.fire(3.0)
+
+	visual._cooldown._process(1.01)
+
+	assert_true(visual.is_cooling(), "and is still filling a second in")
+
+
+func test_a_charge_already_running_follows_a_change_of_speed():
+	"""The speed control is pressed in the middle of a battle as often as
+	before it."""
+	var visual := _make(_item({"slug": "null_blade"}), 45.0, 1.0)
+	visual.fire(3.0)
+
+	visual.set_charge_pace(3.0)
+	visual._cooldown._process(1.01)
+
+	assert_false(visual.is_cooling(), "The one already filling sped up too")
+
+
+# ============ Where a click lands ============
+#
+# A Control answers for its whole rectangle, and an item's rectangle is the box
+# around its shape. So the empty corner of an L picked the item up -- and those
+# are the squares an aura is drawn in, so a player aiming at what an aura
+# reached was picking up the item projecting it.
+#
+# The rectangle still takes the press. What is done about it is the grid's, in
+# test_inventory_grid.gd: refusing the press outright hands it to the container
+# underneath, which then comes up instead of the item.
+
+func _an_L() -> Control:
+	# Covers three squares of a two-by-two box: the fourth is empty.
+	return _make(_item({"shape": [[0, 0], [1, 0], [0, 1]]}), 45.0, 1.0)
+
+
+func test_a_click_on_a_square_the_item_covers_is_on_the_item():
+	var visual := _an_L()
+
+	for offset in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1)]:
+		var middle: Vector2 = offset * 46.0 + Vector2(22, 22)
+		assert_true(visual.covers_point(middle),
+			"the square at %s is the item's own" % offset)
+
+
+func test_a_click_on_the_empty_corner_is_not_on_the_item():
+	var visual := _an_L()
+
+	assert_false(visual.covers_point(Vector2(46, 46) + Vector2(22, 22)),
+		"The fourth square of the box is not covered, so it is not the item")
+
+
+
+func test_the_hairline_between_two_of_its_squares_is_still_the_item():
+	"""The gap ruled between two squares is inside the item's own drawing. A
+	point in it that answered "not the item" would be a one pixel line through
+	the middle of an item where clicking does nothing."""
+	var visual := _an_L()
+
+	# Dead on the ruled line between the item's two top squares.
+	assert_true(visual.covers_point(Vector2(45.5, 22)))
+
+
+func test_a_click_outside_the_box_is_not_on_the_item():
+	var visual := _an_L()
+
+	assert_false(visual.covers_point(Vector2(-5, 10)), "left of it")
+	assert_false(visual.covers_point(Vector2(10, 400)), "below it")
+
+
+func test_a_rectangle_answers_for_all_of_itself():
+	# The common case, and the one that must not change.
+	var visual := _make(_item({"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]}), 45.0, 1.0)
+
+	for offset in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
+		assert_true(visual.covers_point(offset * 46.0 + Vector2(22, 22)),
+			"every square of a 2x2 is the item")
+
+
 # ============ Artwork ============
 
 func test_uses_the_artwork_matching_the_slug():

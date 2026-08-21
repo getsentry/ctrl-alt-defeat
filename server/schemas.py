@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from containers import Container
 from grid_system import Rotation
 from items import Item, PlacedItem
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 from utils import Position
 
 
@@ -34,6 +34,39 @@ class GameSession(BaseModel):
     inventory_grid: List[PlacedItem] = []  # Items on the grid, each with a position
     inventory_storage: List[Item] = []  # Items in the chest, not used in battle
     server_containers: List[Container] = []  # Containers the player owns
+
+    @computed_field
+    @property
+    def shop_refresh_cost(self) -> int:
+        """What rolling the shelf again costs right now.
+
+        Sent, so the button cannot name one price while the server charges
+        another. It climbs: the first four rolls of a round are a gold each
+        and the fifth on are two, and a client with the rule written into it
+        would have to be shipped again every time the rule moved.
+
+        Nothing at all with no shelf to roll: the first shop of a round is
+        laid out free, and /shop/refresh charges only once there is one to
+        replace.
+        """
+        if not self.current_shop:
+            return 0
+        return refresh_price(self.shop_refresh_count)
+
+
+#: How many rolls of the shelf are a gold each before the price goes up.
+#: Backpack Battles charges 1 for the first four rolls of a round and 2 from
+#: the fifth on.
+FREE_PRICE_REFRESHES = 4
+
+
+def refresh_price(rolls_so_far: int) -> int:
+    """What the next roll of the shelf costs.
+
+    One rule, read by the endpoint that charges it and by the session that
+    quotes it, so the button cannot name a price the server will not honour.
+    """
+    return 1 if rolls_so_far < FREE_PRICE_REFRESHES else 2
 
 
 class StartSessionRequest(BaseModel):
@@ -318,6 +351,15 @@ class SessionUpdate(BaseModel):
     lives: int = Field(description="Remaining lives")
     game_over: bool = Field(description="Whether game has ended")
     victory: bool = Field(description="Whether player achieved victory")
+    shop_refresh_cost: int = Field(
+        default=1,
+        description=(
+            "What the first roll of the new round's shelf costs. The count it "
+            "climbs with is reset by the round, so a client that kept the "
+            "last round's price would open the shop saying 2g over a roll "
+            "that costs 1."
+        ),
+    )
     combinations: List[Combination] = Field(
         default_factory=list,
         description="Items that combined as the next shop phase began",
@@ -363,6 +405,11 @@ class ShopRefreshResponse(BaseModel):
 
     shop: List[Optional[Item]] = Field(description="New shop items")
     gold: int = Field(description="Remaining gold after refresh cost")
+    next_refresh_cost: int = Field(
+        default=1,
+        description="What the roll after this one costs, so the button can "
+        "say so without asking again",
+    )
 
 
 class SellResponse(BaseModel):

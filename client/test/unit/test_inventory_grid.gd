@@ -520,6 +520,45 @@ func test_shuffling_inside_a_chest_is_not_sent_anywhere():
 	assert_eq(grid.items.size(), 1, "The item is still in the chest")
 
 
+# ============ What a press on an item picks up ============
+
+func _press_at(where: Vector2) -> InputEventMouseButton:
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = where
+	return press
+
+
+func test_pressing_on_the_item_picks_it_up():
+	_load_default_containers()
+	grid.place_shop_item(
+		_item({"id": "ell", "shape": [[0, 0], [1, 0], [0, 1]]}), Vector2i(2, 3))
+	var visual: Control = grid.items[0]
+
+	grid._on_item_input(_press_at(Vector2(10, 10)), visual)
+
+	assert_eq(grid.dragging_object, visual, "the square it stands on is the item")
+
+
+func test_pressing_the_empty_corner_of_an_L_picks_up_nothing():
+	"""That corner is where the item's aura is drawn. Aiming at what an aura
+	reaches was picking up the item projecting it -- and answering that the
+	press was not the item's at all handed it to the container underneath,
+	which then came up instead."""
+	_load_default_containers()
+	grid.place_shop_item(
+		_item({"id": "ell", "shape": [[0, 0], [1, 0], [0, 1]]}), Vector2i(2, 3))
+	var visual: Control = grid.items[0]
+	var gap := Vector2(grid.cell_size + grid.cell_spacing + 5,
+		grid.cell_size + grid.cell_spacing + 5)
+
+	grid._on_item_input(_press_at(gap), visual)
+
+	assert_null(grid.dragging_object, "not the item")
+	assert_null(grid.dragging_container, "and not the container under it either")
+
+
 # ============ A drop that comes to nothing ============
 #
 # A drag can turn the item, and a drop that is refused has to undo both. Put

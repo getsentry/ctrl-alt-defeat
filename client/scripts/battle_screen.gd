@@ -400,6 +400,24 @@ func _on_toggle_speed():
 	if is_instance_valid(event_processor):
 		event_processor.set_playback_speed(battle_speed_multiplier)
 
+	_charge_at_the_new_speed()
+
+
+func _charge_at_the_new_speed() -> void:
+	"""Tell every item on both racks how fast it is charging now.
+
+	The speed control is pressed in the middle of a battle as often as before
+	it, and a charge already running would otherwise go on filling at the pace
+	it started at -- finishing well after the item it belongs to had fired
+	again.
+	"""
+	for rack in [player_inventory, enemy_inventory]:
+		if not is_instance_valid(rack):
+			continue
+		for visual in rack.items:
+			if is_instance_valid(visual) and visual.has_method("set_charge_pace"):
+				visual.set_charge_pace(battle_speed_multiplier)
+
 
 func _on_toggle_pause():
 	"""Hold the battle where it is, or let it run on."""
@@ -885,6 +903,11 @@ func _show_item_activation(item_id: String, _player: int, action: String):
 		# animations are off, and then nothing here can be tested.
 		if Presentation.request("item_activation",
 				{"item": item_id, "action": action}):
+			# At the pace the battle is being replayed at: a cooldown is a
+			# battle second like the rest of it, and one filling at wall speed
+			# while the battle runs at 3x is still filling when the item has
+			# fired twice more.
+			visual.set_charge_pace(battle_speed_multiplier)
 			visual.fire(visual.item_data.cooldown)
 		if action in ATTACKS:
 			hud.item_fired()

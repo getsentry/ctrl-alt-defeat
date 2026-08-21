@@ -401,6 +401,11 @@ func turn(quarters: int) -> bool:
 		dragging_shop_data = dragging_shop_data.turned(quarters)
 		if is_instance_valid(drag_preview):
 			drag_preview.redraw_as(dragging_shop_data)
+		# And the mark under it, which is a different set of squares now. The
+		# mark used to be drawn only when the pointer moved, so a turn showed
+		# the shape the item had before it, until the player moved off the
+		# square and back to see what they had actually asked for.
+		mark_where_the_shop_item_would_land()
 		return true
 
 	return inventory_grid.turn_dragged(quarters) \
@@ -517,14 +522,24 @@ func _input(event):
 			if drag_preview:
 				drag_preview.global_position = event.global_position - drag_preview.size / 2
 
-			var grid_pos = _global_to_grid(event.global_position)
+			mark_where_the_shop_item_would_land(event.global_position)
 
-			# Show container preview if dragging a container
-			if dragging_shop_data.is_container:
-				_show_container_preview(dragging_shop_data, grid_pos)
-			else:
-				# For normal items, use the inventory grid's hover preview
-				inventory_grid.show_hover_preview_for_shop(dragging_shop_data, grid_pos)
+
+func mark_where_the_shop_item_would_land(pointer := Vector2.INF) -> void:
+	"""Mark the square an item carried off the shelf would land on.
+
+	Takes the pointer rather than reading it, so what it decides can be asked
+	about without a mouse. Called on every movement and on every turn: both
+	change which squares the item would cover.
+	"""
+	if dragging_shop_data == null:
+		return
+	var at := get_global_mouse_position() if pointer == Vector2.INF else pointer
+	var grid_pos := _global_to_grid(at)
+	if dragging_shop_data.is_container:
+		_show_container_preview(dragging_shop_data, grid_pos)
+	else:
+		inventory_grid.show_hover_preview_for_shop(dragging_shop_data, grid_pos)
 
 
 func _turn_asked_for(event: InputEvent) -> int:
@@ -1012,7 +1027,7 @@ func _create_controls():
 				# Fallback to creating new
 				var refresh_btn = Button.new()
 				refresh_btn.name = "RefreshButton"
-				refresh_btn.text = "Refresh (1g)"
+				refresh_btn.text = "REROLL 1g"  # _update_stats writes the real price
 				refresh_btn.position = Vector2(1950, 200)
 				refresh_btn.size = Vector2(120, 40)
 				refresh_btn.pressed.connect(_on_refresh_shop)
@@ -1388,7 +1403,12 @@ func _price_what_can_be_afforded() -> void:
 	"""
 	var refresh_button := get_node_or_null("RefreshButton")
 	if refresh_button:
-		refresh_button.disabled = GameStateManager.gold < 1
+		var price: int = GameStateManager.shop_refresh_cost
+		refresh_button.disabled = GameStateManager.gold < price
+		# The sign says the price the server will charge. It said "1g" whatever
+		# the price was, and the fifth roll of a round costs two.
+		refresh_button.text = "REROLL %dg" % price
+		refresh_button.tooltip_text = "Reroll the shop for %d gold" % price
 
 	for slot in shop_items:
 		if not is_instance_valid(slot) or slot.get_meta("sold", false):
@@ -1845,12 +1865,15 @@ func _on_purchase_completed(response: APITypes.PurchaseResponse):
 		_save_current_state()
 
 func _on_refresh_shop():
-	if GameStateManager.gold >= 1:
+	if GameStateManager.gold >= GameStateManager.shop_refresh_cost:
 		print("Refreshing shop from server...")
 		# Call the real server to refresh shop
 		var response = await BattleServerAPI.refresh_shop(GameStateManager.current_round)
 		if response != null and response.shop.size() > 0:
 			GameStateManager.gold = response.gold  # Server manages gold deduction
+			# The next one costs what the server says it will, which is not
+			# what this one cost: the price climbs through the round.
+			GameStateManager.shop_refresh_cost = response.next_refresh_cost
 			_update_stats()
 			_display_shop_items(response.shop)
 			GameStateManager.current_shop = response.shop

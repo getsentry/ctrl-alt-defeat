@@ -1387,6 +1387,84 @@ func test_a_rack_being_watched_draws_none_of_it():
 	assert_null(watched.rotate_hint, "and nothing to say about turning one")
 
 
+# ============ Marking where a turned item would land ============
+
+func _carrying_a_tall_item_off_the_shelf() -> void:
+	_rack_holding([])
+	ui.dragging_shop_item = Panel.new()
+	add_child_autofree(ui.dragging_shop_item)
+	ui.dragging_shop_data = TestHelpers.item(
+		{"id": "tall", "shape": [[0, 0], [0, 1]]})
+
+
+func test_the_mark_is_the_shape_the_item_faces_now():
+	_carrying_a_tall_item_off_the_shelf()
+	var mark: Panel = ui.inventory_grid.hover_preview
+
+	ui.mark_where_the_shop_item_would_land(_square(Vector2i(2, 3)))
+	var upright := mark.size
+
+	ui.dragging_shop_data = ui.dragging_shop_data.turned(1)
+	ui.mark_where_the_shop_item_would_land(_square(Vector2i(2, 3)))
+
+	assert_gt(mark.size.x, upright.x, "Two squares across, where it was one")
+	assert_lt(mark.size.y, upright.y, "and one square down, where it was two")
+
+
+func test_turning_a_shop_item_marks_again_without_waiting_for_the_pointer():
+	"""The mark was drawn only when the pointer moved, so a turn showed the
+	shape the item had before it until the player moved off the square and
+	back to see what they had actually asked for.
+
+	The pointer is off the board in a test, and a mark asked for off the board
+	is taken down -- which is what says the turn asked for one at all.
+	"""
+	_carrying_a_tall_item_off_the_shelf()
+	ui.mark_where_the_shop_item_would_land(_square(Vector2i(2, 3)))
+	var mark: Panel = ui.inventory_grid.hover_preview
+	assert_true(mark.visible, "setup: the mark is up")
+
+	assert_true(ui.turn(1), "setup: the shop item turned")
+
+	assert_false(mark.visible,
+		"A turn should ask for the mark again there and then")
+
+
+func _square(at: Vector2i) -> Vector2:
+	"""The middle of a grid square, in the window's own coordinates."""
+	return ui.inventory_grid.global_position \
+		+ ui.inventory_grid.grid_to_pixel(at) \
+		+ Vector2.ONE * ui.inventory_grid.cell_size / 2.0
+
+
+# ============ The sign on the reroll button ============
+
+func test_the_reroll_button_names_the_price_the_server_quoted():
+	"""The price climbs through a round -- a gold each for the first four
+	rolls, two from the fifth on -- and the button said "1g" whatever it was.
+	It is quoted rather than worked out here, so the sign and the charge
+	cannot disagree."""
+	GameStateManager.shop_refresh_cost = 2
+	GameStateManager.gold = 10
+
+	ui._update_stats()
+
+	var button: Button = ui.get_node("RefreshButton")
+	assert_true(button.text.contains("2"), "the sign reads %s" % button.text)
+	assert_false(button.disabled, "and ten gold covers two")
+
+
+func test_the_reroll_button_goes_out_when_the_price_is_out_of_reach():
+	GameStateManager.shop_refresh_cost = 2
+	GameStateManager.gold = 1
+
+	ui._update_stats()
+
+	assert_true(ui.get_node("RefreshButton").disabled,
+		"One gold does not cover a two gold roll, and the button used to "
+		+ "stay lit because it only ever asked whether the player had one")
+
+
 # ============ The chest asking for what is in hand ============
 #
 # The chest never moves and never lights up, so it read as scenery next to the
