@@ -49,6 +49,7 @@ from item_effects import (
     LimitEffect,
     MaxHealthEffect,
     ModifyEffect,
+    OUTSIDE_BATTLE,
     ModifyPerEffect,
     ModifyPerStatusEffect,
     NextAttackEffect,
@@ -1865,6 +1866,12 @@ class BattleSimulator:
         self, effects: List[Effect], item: BattleItem, owner: Player, enemy: Player
     ):
         for effect in effects:
+            # A shop effect standing on a passive trigger reaches here and has
+            # nothing to do. Skipped by name rather than left to fall through,
+            # so the raise at the bottom still catches a real gap.
+            if isinstance(effect, OUTSIDE_BATTLE):
+                continue
+
             # Pass item as source for ConsumeEffect to work
             result = effect.apply(item, enemy, self)
 

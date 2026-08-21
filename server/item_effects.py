@@ -776,6 +776,20 @@ class SaleChanceEffect(Effect):
         return {"type": "sale_chance", "amount": self.amount}
 
 
+#: Effects that belong to the shop rather than to a fight.
+#
+# Most are carried by a ShopEnteredTrigger, which the battle never walks, so
+# they never reach the simulator. A SALE CHANCE IS DIFFERENT: it stands for as
+# long as the item is held, so it hangs off a PassiveTrigger -- and the battle
+# does walk those. It arrived at _apply_each, matched no branch, and raised.
+#
+# The raise is right and stays: an effect nobody handles is a bug, not
+# something to ignore quietly. This names the ones that genuinely have nothing
+# to do in a battle, so the check keeps its teeth for everything else. Add to
+# it rather than adding another branch that does nothing.
+OUTSIDE_BATTLE = (GoldEffect, SaleChanceEffect)
+
+
 @dataclass
 class ChoiceEffect(Effect):
     """One of these, picked at random, and not the others.

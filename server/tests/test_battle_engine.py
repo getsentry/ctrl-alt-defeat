@@ -61,6 +61,7 @@ from item_effects import (
     PreventDamageEffect,
     RandomStatusEffect,
     ReflectEffect,
+    SaleChanceEffect,
     ResistEffect,
     StaminaEffect,
     StatusChangeTrigger,
@@ -201,6 +202,35 @@ class TestGameDesignCompliance:
 
         assert result["player1_quota"] < result["player2_quota"]
         assert result["winner"] == 2
+
+    def test_a_shop_effect_does_not_stop_a_battle(self):
+        """A sale chance stands while the item is held, so it hangs off a
+        passive trigger -- and the battle walks those.
+
+        It reached the dispatcher, matched no branch, and raised, so any rack
+        holding Fortune Bot could not fight at all. The item is in the shop and
+        turns up in about one offer in a hundred, so this was reachable.
+        """
+        sim = BattleSimulator(seed=TEST_SEED)
+        p1_containers, p2_containers = get_test_containers()
+        lucky = BattleItem(
+            spec=deepcopy(ITEM_CATALOG["maneki_neko"]), position=(0, 0)
+        )
+        assert any(
+            isinstance(effect, SaleChanceEffect)
+            for trigger in lucky.spec.triggers
+            for effect in getattr(trigger, "effects", []) or []
+        ), "maneki_neko no longer carries a sale chance; pick another item"
+
+        result = sim.simulate_battle(
+            [lucky],
+            [],
+            round_number=1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
+
+        assert result["winner"] in (1, 2)
 
     def test_every_action_says_where_both_fighters_stand(self):
         """The client draws a health bar and cannot be left to work it out.
