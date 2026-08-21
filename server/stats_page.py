@@ -157,8 +157,8 @@ def render_players(players: List[Player], token: str = "") -> str:
   player: they have a single run, reset when they start again. Runs counts runs
   played to the end, and how many of those went the distance &mdash; a run
   walked away from is paid for but not counted as played. The battle record is
-  a different number: it adds up every battle of every run that has been paid
-  out, so it does not yet include the run beside it.</footer>
+  counted a battle at a time, over every run, so the run beside it is already
+  in it.</footer>
 </div></body></html>"""
 
 

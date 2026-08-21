@@ -41,6 +41,16 @@ async def _a_run(db, user, started=None, active=None, round_reached=1,
     return run
 
 
+async def _battles(db, run, won: int, lost: int) -> None:
+    """Battles this player fought, as the history keeps them"""
+    for number in range(won + lost):
+        db.add(BattleHistory(
+            player1_id=run.player_id, round_number=number + 1,
+            winner=1 if number < won else 2, battle_data={},
+            created_at=utc_now()))
+    await db.flush()
+
+
 class TestWhatTheCountsSay:
     """The counts are read as differences.
 
@@ -275,9 +285,8 @@ class TestWhoHasBeenPlaying:
             player = await _a_player(db)
             player.total_games_played = 3
             player.total_runs_won = 1
-            player.total_wins = 17
-            player.total_losses = 8
-            await _a_run(db, player, round_reached=2, wins=1, losses=1)
+            run = await _a_run(db, player, round_reached=2, wins=1, losses=1)
+            await _battles(db, run, won=17, lost=8)
 
             latest = (await stats.recent(db, limit=1))[0]
 
@@ -285,8 +294,28 @@ class TestWhoHasBeenPlaying:
         assert latest.runs == 3, "the runs they have played to the end"
         assert latest.runs_won == 1, "and how many of those they won"
         assert latest.battles_won == 17 and latest.battles_lost == 8, \
-            "which is a different number: battles, over every paid-out run"
+            "which is a different number: battles, over every run"
         assert latest.win_rate == 68, "17 of 25"
+
+    @pytest.mark.asyncio
+    async def test_the_run_being_played_is_in_the_battle_record(
+            self, transactional_db):
+        """The complaint this was changed for.
+
+        The record used to be added up from the account, and the account is
+        only added to as a run is paid out. So somebody in the middle of a run
+        -- four battles won, four lost, round nine -- was shown 0-0, which
+        reads as somebody who has never fought anything.
+        """
+        async with transactional_db() as db:
+            player = await _a_player(db)
+            run = await _a_run(db, player, round_reached=9, wins=4, losses=4)
+            await _battles(db, run, won=4, lost=4)
+
+            latest = (await stats.recent(db, limit=1))[0]
+
+        assert (latest.battles_won, latest.battles_lost) == (4, 4)
+        assert latest.runs == 0, "and none of it is banked yet"
 
     def test_a_player_who_has_fought_nothing_does_not_divide_by_zero(self):
         empty = stats.Player(

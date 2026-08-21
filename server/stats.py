@@ -63,9 +63,11 @@ class Player:
     #: run walked away from pays out but is not counted as one played -- and
     #: `runs_won` how many of those went the distance.
     #:
-    #: The battle record is a different question and a different number: it is
-    #: added up over every run that has been paid out, walked away from or
-    #: not, so it does not yet include the run above.
+    #: The battle record is counted from `battle_history`, a row per battle,
+    #: so it is every battle this player has ever fought and the run above is
+    #: in it. Not from the totals on the account: those are added up as a run
+    #: is paid out, so a run still being played counts for nothing until it
+    #: ends, and somebody at 4-4 in round nine reads 0-0.
     runs: int
     runs_won: int
     battles_won: int
@@ -108,23 +110,49 @@ async def _count(db, table, column, since=None) -> int:
     return int((await db.execute(query)).scalar() or 0)
 
 
+async def _battles_fought(db, players: List[str]) -> Dict[str, Dict[str, int]]:
+    """How many battles each of these players has fought, and won.
+
+    One question for the whole page rather than one per row. `player1_id` is
+    the account id and the player is always player one, so a player's battles
+    are all under the one key however many runs they span.
+    """
+    if not players:
+        return {}
+
+    won = func.count().filter(BattleHistory.winner == 1)
+    lost = func.count().filter(BattleHistory.winner != 1)
+    rows = await db.execute(
+        select(BattleHistory.player1_id, won, lost)
+        .where(BattleHistory.player1_id.in_(players))
+        .group_by(BattleHistory.player1_id)
+    )
+    return {row[0]: {"won": int(row[1]), "lost": int(row[2])}
+            for row in rows.all()}
+
+
 async def recent(db, limit: int = 50) -> List[Player]:
     """The people who played most recently, latest first.
 
     One row each, because that is all the schema keeps: a player has one
     session, reset when they start again, so this is where each of them got
-    to rather than everything they have ever done.
+    to rather than everything they have ever done. What they have ever done
+    is asked of the two tables that do remember -- the account, for runs, and
+    the battle history, for battles.
     """
-    rows = await db.execute(
+    rows = (await db.execute(
         select(GameSession.player_name, GameSession.round, GameSession.wins,
                GameSession.losses, GameSession.created_at,
                GameSession.last_activity, GameSession.finished_at,
-               User.total_games_played, User.total_wins, User.total_losses,
-               User.total_runs_won)
+               User.total_games_played, User.total_runs_won,
+               GameSession.player_id)
         .join(User, User.id == GameSession.user_id)
         .order_by(GameSession.last_activity.desc())
         .limit(max(1, min(limit, 200)))
-    )
+    )).all()
+
+    fought = await _battles_fought(db, [row[9] for row in rows])
+    none_yet = {"won": 0, "lost": 0}
     return [
         Player(
             name=row[0] or "Player",
@@ -132,14 +160,14 @@ async def recent(db, limit: int = 50) -> List[Player]:
             wins=int(row[2]),
             losses=int(row[3]),
             runs=int(row[7]),
-            runs_won=int(row[10]),
-            battles_won=int(row[8]),
-            battles_lost=int(row[9]),
+            runs_won=int(row[8]),
+            battles_won=fought.get(row[9], none_yet)["won"],
+            battles_lost=fought.get(row[9], none_yet)["lost"],
             started=row[4].isoformat(),
             last_seen=row[5].isoformat(),
             finished=row[6] is not None,
         )
-        for row in rows.all()
+        for row in rows
     ]
 
 
