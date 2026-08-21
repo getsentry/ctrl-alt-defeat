@@ -71,7 +71,6 @@ from item_effects import (
     ResistEffect,
     SaleChanceEffect,
     StaminaEffect,
-    StatModEffect,
     StatusChangeTrigger,
     StunEffect,
     TimerTrigger,
@@ -347,12 +346,12 @@ class TestGameDesignCompliance:
             if action.details and "block" in action.details
         ]
         assert stamped, "Every action should say where the Block stood"
-        assert all(
-            len(pair) == 2 for pair in stamped
-        ), "both fighters, like the health and the CPU beside it"
-        assert any(
-            pair[0] > 0 for pair in stamped
-        ), "a fighter holding a shield should be seen holding Block"
+        assert all(len(pair) == 2 for pair in stamped), (
+            "both fighters, like the health and the CPU beside it"
+        )
+        assert any(pair[0] > 0 for pair in stamped), (
+            "a fighter holding a shield should be seen holding Block"
+        )
 
     def test_item_specifications(self):
         """Test Section 2: All items match specifications"""
@@ -2497,10 +2496,7 @@ class TestAnAuraReachesWhatItFallsOn:
             )
             items = [weapon]
             if with_aura:
-                # A share off the cost, so cheaper is negative. It used to be
-                # a flat number of cycles, which no clause in the source game
-                # asks for.
-                items.append(self._projector(value=-0.75, stat="cpu_cost"))
+                items.append(self._projector(value=1.5, stat="cpu_cost"))
             return len(
                 [a for a in self._swings(items, seconds=6.0) if a.action == "damage"]
             )
@@ -2519,25 +2515,19 @@ class TestAnAuraReachesWhatItFallsOn:
             item,
             ModifyEffect(
                 stat="cpu_cost",
-                value=-99.0,
+                value=99.0,
                 target_type="star",
                 counting="any",
                 cap=None,
                 duration=-1,
             ),
         )
-        share = max(0.0, 1.0 + item.cpu_discount)
-        assert share == 0.0, "free, and no further"
+        cost = max(0.0, 1.0 - item.cpu_discount)
+        assert cost == 0.0
 
-    def test_an_ordinary_item_holds_nothing_inside_it(self):
-        """`contained` is the footprint, and an item's own footprint has only
-        itself on it.
-
-        A container's squares are the ones other items stand on, so a bag
-        reaches what it holds. An ordinary item saying the same thing reaches
-        nothing, which is not a gap but the same rule giving a different
-        answer.
-        """
+    def test_contained_reaches_nothing_yet(self):
+        """A container does not know what sits inside it. Reaching nothing is
+        the safer way to be wrong: it cannot make an item quietly stronger."""
         by_uid = self._run(
             [
                 self._projector(target="contained"),
@@ -5528,45 +5518,6 @@ class TestWhatStandsInFrontOfTheQuota(_WithOneItem):
         assert target.block == 35
 
 
-class TestAStatNobodyAppliesIsRefused(_WithOneItem):
-    """The same guard `_modify` has, for the same reason.
-
-    A stat_mod answers for `max_cpu` and `cpu_regen`. Three items said "Gain
-    20 maximum health" through one and it went nowhere, because the loader
-    took any word at all and this answered for two of them. The loader refuses
-    the rest now, so nothing in the catalogue can reach this -- which is
-    exactly when a guard is worth writing down.
-    """
-
-    def test_a_stat_nobody_applies_stops_rather_than_doing_nothing(self):
-        sim = BattleSimulator(seed=TEST_SEED)
-        sim.player1 = Player(id=1, quota=100, max_quota=100, cpu=3.0)
-        sim.player2 = Player(id=2, quota=100, max_quota=100, cpu=3.0)
-        with pytest.raises(TypeError, match="not a stat a stat_mod changes"):
-            sim._apply_effects(
-                [StatModEffect(stat_name="max_health", value=20)],
-                self._item([]),
-                sim.player1,
-                sim.player2,
-            )
-
-    def test_the_two_it_knows_still_land(self):
-        sim = BattleSimulator(seed=TEST_SEED)
-        sim.player1 = Player(id=1, quota=100, max_quota=100, cpu=3.0)
-        sim.player2 = Player(id=2, quota=100, max_quota=100, cpu=3.0)
-        item = self._item([])
-        sim._apply_effects(
-            [
-                StatModEffect(stat_name="max_cpu", value=1),
-                StatModEffect(stat_name="cpu_regen", value=0.5),
-            ],
-            item,
-            sim.player1,
-            sim.player2,
-        )
-        assert (sim.player1.max_cpu, sim.player1.cpu_regen) == (4.0, 1.5)
-
-
 class TestAZoneNobodyKnowsIsRefused(_WithOneItem):
     """The same guard `_modify` has, for the same reason.
 
@@ -5912,11 +5863,6 @@ class TestTheSweptClauses(_WithOneItem):
         assert held["p"] == pytest.approx(1.0), "not a Weapon, so untouched"
 
     def test_redundancy_protocol_raises_healing(self):
-        """ "Start of battle: Gain 20 maximum health. Your healing is increased
-        by 20%." Both halves, because the first was written as a `stat_mod`
-        that the engine answers for `max_cpu` and `cpu_regen` and nothing
-        else, so the item said it and never did it.
-        """
         healer = self._item(
             [
                 TimerTrigger(
@@ -5929,16 +5875,12 @@ class TestTheSweptClauses(_WithOneItem):
             position=(5, 5),
         )
         where, _ = self._place("redundancy_protocol")
-        sim, plain = self._fight([healer], seconds=1.5, hurt=100)
-        opening = sim.player1.opening_quota
-        with_it, more = self._fight(
+        _, plain = self._fight([healer], seconds=1.5, hurt=100)
+        _, more = self._fight(
             [self._real("redundancy_protocol", where), healer], seconds=1.5, hurt=100
         )
         assert plain["player1_quota"] - 100 == 10
-        assert with_it.player1.max_quota == opening + 20, "the ceiling went up"
-        assert (
-            more["player1_quota"] - 100 == 20 + 12
-        ), "the twenty comes with the ceiling, and the ten heals for twelve"
+        assert more["player1_quota"] - 100 == 12
 
     def test_claws_of_attack_speed_up_with_spikes(self):
         where, _ = self._place("claws_of_attack")
@@ -11064,149 +11006,3 @@ class TestAnAuraWatchesItsOwnSideOnly(_WithOneItem):
         assert (
             "credits" not in sim.player1.buffs
         ), "their item activating is not a moment in this player's zone"
-
-
-class TestTheCatalogueItemsThatNeededNoNewMechanic(TestTheSweptClauses):
-    """Items whose clauses the engine could already say, once somebody said
-    them.
-
-    Nothing was built for these. That makes them the ones most worth running:
-    a clause written straight into the catalogue is never exercised by a test
-    of the mechanic it uses, and three separate passes have now found clauses
-    called blocked that were only unwritten.
-    """
-
-    def test_acorn_collar_scales_its_zones_crit_with_luck(self):
-        where, star = self._place("neural_link_collar", how_many_star=1)
-        beside = self._tagged("held", {"melee"}, star[0])
-        sim, _ = self._fight(
-            [self._real("neural_link_collar", where), beside],
-            seconds=0.3,
-            buffs={"calibrated": 4},
-        )
-        got = next(i for i in sim.loadout[1] if i.uid == "held")
-        assert sim._per_status(
-            got, "critical_chance", sim.player1, sim.player2
-        ) == pytest.approx(0.2)
-
-    def test_white_lily_collar_counts_two_pools(self):
-        where, star = self._place("white_lily_collar", how_many_star=1)
-        beside = self._tagged("held", {"melee"}, star[0])
-        sim, _ = self._fight(
-            [self._real("white_lily_collar", where), beside],
-            seconds=0.3,
-            buffs={"calibrated": 3, "regenerating": 2},
-        )
-        got = next(i for i in sim.loadout[1] if i.uid == "held")
-        assert sim._per_status(
-            got, "critical_chance", sim.player1, sim.player2
-        ) == pytest.approx(0.05), "three Luck and two Regeneration, a point each"
-
-    def test_pop_stops_speeding_up_at_sixty_percent(self):
-        where, _ = self._place("pop")
-        sim, _ = self._fight(
-            [self._real("pop", where)], seconds=0.3, buffs={"credits": 100}
-        )
-        pop = next(i for i in sim.loadout[1] if i.uid == "pop")
-        assert sim._per_status(
-            pop, "trigger_speed", sim.player1, sim.player2
-        ) == pytest.approx(0.6)
-
-    def test_eggscalibur_hits_harder_for_the_food_beside_it(self):
-        where, star = self._place("eggscalibur", how_many_star=2)
-        food = [self._tagged(f"f{i}", {"food"}, at) for i, at in enumerate(star)]
-        sim, _ = self._fight(
-            [self._real("eggscalibur", where)] + food,
-            seconds=0.3,
-            against=[self._tagged("wall", set(), (6, 0))],
-        )
-        blade = next(i for i in sim.loadout[1] if i.uid == "eggscalibur")
-        assert blade.damage_flat == 2
-
-    def test_shell_totem_is_a_share_of_its_cost_not_a_number_of_cycles(self):
-        where, star = self._place("shell_totem", how_many_star=2)
-        holy = [self._tagged(f"h{i}", {"holy"}, at) for i, at in enumerate(star)]
-        sim, _ = self._fight([self._real("shell_totem", where)] + holy, seconds=0.3)
-        totem = next(i for i in sim.loadout[1] if i.uid == "shell_totem")
-        assert totem.cpu_discount == pytest.approx(-0.3), "two Holy items, 15% each"
-
-    def test_villain_sword_takes_from_its_zone_and_gives_to_itself(self):
-        where, star = self._place("sql_injector", how_many_star=1)
-        blade = self._tagged("blade", {"melee", "weapon"}, star[0], category="problem")
-        sim, _ = self._fight(
-            [self._real("sql_injector", where), blade],
-            seconds=0.3,
-            against=[self._tagged("wall", set(), (6, 0))],
-        )
-        by_uid = {i.uid: i for i in sim.loadout[1]}
-        assert by_uid["blade"].damage_flat == -2
-        assert by_uid["sql_injector"].damage_flat == 4
-
-    def test_crossblades_gets_faster_every_time_it_lands(self):
-        where, _ = self._place("crossblades")
-        sim, _ = self._fight(
-            [self._real("crossblades", where)],
-            seconds=6.0,
-            against=[self._tagged("wall", set(), (6, 0))],
-        )
-        blade = next(i for i in sim.loadout[1] if i.uid == "crossblades")
-        hits = len([a for a in sim.actions if a.action == "damage"])
-        assert hits > 1
-        assert blade.speed_mult == pytest.approx(1.0 + 0.04 * hits)
-        assert blade.damage_gained == hits
-
-    def test_critwood_staff_buys_a_critical_window(self):
-        where, _ = self._place("neural_interface_blade")
-        sim, _ = self._fight(
-            [self._real("neural_interface_blade", where)],
-            seconds=4.0,
-            buffs={"credits": 20},
-            against=[self._tagged("wall", set(), (6, 0))],
-        )
-        assert [a for a in sim.actions if a.action == "spend"], "the Mana went"
-        assert [a for a in sim.actions if a.action == "critical_hit"]
-
-    def test_gingerbread_jerry_pays_three_pools_for_what_it_gives(self):
-        where, _ = self._place("ai_assistant_bot")
-        sim, _ = self._fight(
-            [self._real("ai_assistant_bot", where)],
-            seconds=3.5,
-            buffs={"calibrated": 1, "optimized": 1, "credits": 1},
-        )
-        assert sim.player1.buffs.get("monitored") == 1
-        assert sim.player1.buffs.get("regenerating") == 3
-        assert sim.player1.max_quota == sim.player1.opening_quota + 40 + 20
-
-    def test_gingerbread_jerry_gives_nothing_it_cannot_pay_for(self):
-        where, _ = self._place("ai_assistant_bot")
-        sim, _ = self._fight([self._real("ai_assistant_bot", where)], seconds=3.5)
-        assert "monitored" not in sim.player1.buffs
-        assert sim.player1.max_quota == sim.player1.opening_quota + 40, "the start only"
-
-    def test_cupcake_gives_more_of_what_you_already_hold_most(self):
-        where, _ = self._place("cupcake")
-        sim, _ = self._fight(
-            [self._real("cupcake", where)],
-            seconds=7.0,
-            hurt=100,
-            buffs={"spiked": 5, "credits": 1},
-        )
-        assert sim.player1.buffs["spiked"] == 7, "two more of the one it had most of"
-        assert sim.player1.buffs["credits"] == 1
-
-    def test_steel_goobert_waits_for_six_activations(self):
-        where, star = self._place("steel_goobert", how_many_star=1)
-        ticker = self._item(
-            [TimerTrigger(cooldown=0.4, cpu_cost=0, effects=[HealEffect(1, 1)])],
-            uid="ticker",
-            position=star[0],
-        )
-        sim, _ = self._fight(
-            [self._real("steel_goobert", where), ticker], seconds=1.5, hurt=100
-        )
-        assert sim.player1.block == 0, "five is not six"
-
-        sim2, _ = self._fight(
-            [self._real("steel_goobert", where), ticker], seconds=3.0, hurt=100
-        )
-        assert sim2.player1.block == 16

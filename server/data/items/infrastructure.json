@@ -234,25 +234,13 @@
       "source": "Acorn Collar",
       "rarity": "epic",
       "cost": 8,
-      "triggers": [
-        {
-          "type": "passive",
-          "effects": [
-            {
-              "type": "modify_per_status",
-              "stat": "critical_chance",
-              "value": 0.05,
-              "status": "calibrated",
-              "whose": "self",
-              "target": "star",
-              "description": "Star items gain 5% critical hit chance for each Luck"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "neural_link_collar",
       "icontype": "nature, accessory",
-      "in_shop": true
+      "in_shop": true,
+      "unbuilt": [
+        "Star items gain 5% critical hit chance for each Luck."
+      ]
     }
   }
 }

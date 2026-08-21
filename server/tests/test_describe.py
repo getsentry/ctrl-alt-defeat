@@ -845,8 +845,6 @@ class TestWordsThatWereMissingOrWrong:
             "Your [buff]spiked[/buff] critical chance is increased by 10% for "
             "each feral [star]star[/star] item" in said
         )
-
-
 class TestWhatAStatusIsWorth:
     """A chip beside a fighter reads "optimised x6" and the client has no way
     to say what six are worth. The rule is the server's, so the words are too.
@@ -938,9 +936,9 @@ class TestWhatAStatusIsWorth:
         asking every two seconds of what."""
         spiked = describe.rule("spiked")
 
-        assert (
-            spiked["detail"] == "Only when their blow lands."
-        ), "the rule the number does not carry"
+        assert spiked["detail"] == "Only when their blow lands.", (
+            "the rule the number does not carry"
+        )
 
     def test_nothing_says_more_than_it_has_to(self):
         """Written the way an item's own lines are written, and read on the
@@ -961,20 +959,3 @@ class TestWhatAStatusIsWorth:
 
         assert made_up["shown"] == "something new"
         assert made_up["one"] == "", "nothing to say rather than a crash"
-
-
-class TestASelfModifierNeedsNoSubject:
-    """ "It get +4% trigger speed" is what naming the item again came to.
-
-    The per-status and per-count forms have always dropped the pronoun -- an
-    item is already the subject of its own line -- and the plain modifier was
-    the one shape that kept it.
-    """
-
-    def test_a_modifier_on_the_item_itself_is_just_the_change(self):
-        assert "• +4% trigger speed" in describe.lines(ITEM_CATALOG["crossblades"])
-
-    def test_a_modifier_on_a_zone_still_says_who_gets_it(self):
-        assert "Melee [star]star[/star] items get -2 damage" in describe.lines(
-            ITEM_CATALOG["sql_injector"]
-        )

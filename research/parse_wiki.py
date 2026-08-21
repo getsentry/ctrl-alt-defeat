@@ -162,15 +162,6 @@ def parse():
             if opened and opened in items:
                 items[opened]["shop_needs"] = opener["name"]
 
-    # The gemstones write the other end of the same gate: each says
-    # `inshop=Box of Riches`. Both ends agree today, so this changes nothing --
-    # it is here because the field was being read into the record and used by
-    # nothing, which is the state a gate quietly goes missing from when a page
-    # is added without its opener.
-    for rec in items.values():
-        if rec.get("inshop") and not rec.get("shop_needs"):
-            rec["shop_needs"] = rec["inshop"].strip()
-
     # The wiki renders an "In shop" row that is written on no page:
     # Template:Item_infobox works it out. This is what it does, in its own
     # order -- copied from the template source rather than guessed at, because

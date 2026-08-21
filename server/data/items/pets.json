@@ -937,35 +937,12 @@
       "source": "Steel Goobert",
       "rarity": "legendary",
       "cost": 17,
-      "triggers": [
-        {
-          "type": "aura",
-          "zone": "star",
-          "counting": "any",
-          "after": 6,
-          "on": "activates",
-          "effects": [
-            {
-              "type": "gain_damage",
-              "amount": 2,
-              "target": "diamond",
-              "counting": {
-                "any": [
-                  "weapon"
-                ]
-              },
-              "description": "Diamond Weapons gain +2 damage"
-            },
-            {
-              "type": "block",
-              "value": 16,
-              "description": "Gain 16 Block"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "steel_goobert",
       "in_shop": false,
+      "unbuilt": [
+        "6 Star item activations: Diamond Weapons gain +2 damage. Gain 16 Block."
+      ],
       "recipe": [
         {
           "ingredients": [

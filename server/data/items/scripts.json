@@ -218,53 +218,19 @@
           "type": "battle_start",
           "effects": [
             {
-              "type": "max_health",
-              "value": 40,
-              "description": "Gain 40 maximum health"
-            }
-          ]
-        },
-        {
-          "type": "timer",
-          "cooldown": 3.0,
-          "cpu_cost": 0,
-          "effects": [
-            {
-              "type": "cost",
-              "costs": {
-                "calibrated": 1,
-                "optimized": 1,
-                "credits": 1
-              },
-              "effects": [
-                {
-                  "type": "buff",
-                  "buff_name": "monitored",
-                  "value": 1,
-                  "target": "self",
-                  "description": "Gain 1 Empower"
-                },
-                {
-                  "type": "buff",
-                  "buff_name": "regenerating",
-                  "value": 3,
-                  "target": "self",
-                  "description": "3 Regeneration"
-                },
-                {
-                  "type": "max_health",
-                  "value": 20,
-                  "description": "and 20 maximum health"
-                }
-              ],
-              "description": "Use 1 Luck, 1 Heat and 1 Mana"
+              "type": "stat_mod",
+              "stat": "max_health",
+              "value": 40
             }
           ]
         }
       ],
       "slug": "ai_assistant_bot",
       "icontype": "treasure, magic, food",
-      "in_shop": true
+      "in_shop": true,
+      "unbuilt": [
+        "Every 3s: Use 1 Luck, 1 Heat and 1 Mana: Gain 1 Empower, 3 Regeneration and 20 maximum health."
+      ]
     },
     "ddos_protection_module": {
       "name": "Traffic Cop",
@@ -375,31 +341,12 @@
       "source": "Cupcake",
       "rarity": "legendary",
       "cost": 5,
-      "triggers": [
-        {
-          "type": "timer",
-          "cooldown": 6.0,
-          "cpu_cost": 0,
-          "effects": [
-            {
-              "type": "heal",
-              "min_heal": 10,
-              "max_heal": 10,
-              "description": "Heal for 10"
-            },
-            {
-              "type": "random_status",
-              "kind": "buff",
-              "count": 2,
-              "target": "self",
-              "pick": "most",
-              "description": "and gain 2 buffs of the type of which you have the most"
-            }
-          ]
-        }
-      ],
+      "triggers": [],
       "slug": "cupcake",
       "in_shop": true,
+      "unbuilt": [
+        "Every 6s: Heal for 10 and gain 2 buffs of the type of which you have the most."
+      ],
       "icontype": "magic, food"
     }
   }

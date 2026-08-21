@@ -216,7 +216,7 @@ class Counting:
 class ModifyEffect(Counting, Effect):
     """Change a number on some items.
 
-    "Items inside trigger 10% faster", "+15% accuracy", "uses -15% stamina".
+    "Items inside trigger 10% faster", "+15% accuracy", "costs 1 less CPU".
     Nobody carries these and they do not stack, so they are not buffs. Each
     says which items it reaches, and the engine already keeps a field for it:
     `speed_mult`, `accuracy_bonus`, `damage_mult`, `cpu_discount`.

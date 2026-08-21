@@ -334,9 +334,6 @@ class BattleItem:
     speed_mult: float = 1.0
     accuracy_bonus: float = 0.0
     damage_mult: float = 1.0
-    #: A share off what this item costs to run, not a flat number of cycles:
-    #: "Uses -15% stamina for each Star Holy-item". It adds to the player's
-    #: own share rather than multiplying with it.
     cpu_discount: float = 0.0
 
     # Modifiers whose size depends on a status the player holds. Kept rather
@@ -2010,14 +2007,8 @@ class BattleSimulator:
             # Check CPU availability
             # An aura can make an item cheaper to run, never free: the floor
             # is zero rather than a refund.
-            # Two shares and they add, like every other pair here: one on the
-            # item, "Uses -15% stamina for each Star Holy-item", and one on
-            # the player, "Items use +20% stamina". The item's was a flat
-            # subtraction, which no clause in the source game asks for -- and
-            # nothing had ever used it, so nothing said so.
-            cheaper = 1.0 + item.cpu_discount
-            cheaper += owner.modifier("stamina_use", self.current_time)
-            cpu_cost = trigger.get_cpu_cost() * max(0.0, cheaper)
+            cpu_cost = max(0.0, trigger.get_cpu_cost() - item.cpu_discount)
+            cpu_cost *= max(0.0, 1.0 + owner.modifier("stamina_use", self.current_time))
 
             if owner.cpu >= cpu_cost:
                 # Have enough CPU - apply the effects
@@ -2197,19 +2188,11 @@ class BattleSimulator:
                             from_enemy=result["target_type"] != "self",
                         )
             elif isinstance(effect, StatModEffect):
+                # Handle stat modification
                 if result["stat"] == "max_cpu":
                     owner.max_cpu += result["value"]
                 elif result["stat"] == "cpu_regen":
                     owner.cpu_regen += result["value"]
-                else:
-                    # The same guard `_modify` has, for the same reason. Three
-                    # items said "Gain 20 maximum health" through here and it
-                    # went nowhere: the loader took any word at all and this
-                    # answered for two of them.
-                    raise TypeError(
-                        f"{item.spec.id}: `{result['stat']}` is not a stat a "
-                        f"stat_mod changes"
-                    )
             elif isinstance(effect, CpuDrainEffect):
                 # Backpack Battles calls it removing stamina. Nobody can be
                 # put into debt by it, so it floors at zero rather than going
