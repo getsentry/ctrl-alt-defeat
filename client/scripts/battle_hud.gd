@@ -89,6 +89,8 @@ const SHADOW_ABOVE := 42.0
 ## The smudge under a fighter, the same one the shop and the menu use.
 const GROUND = preload("res://assets/ui/contact_shadow.png")
 const ContactShadow = preload("res://scripts/contact_shadow.gd")
+## The card that says what a buff or a debuff on a fighter is doing.
+const STATUS_CARD = preload("res://scenes/StatusTooltip.tscn")
 const COLUMN_INSET := 26.0
 ## How far a name keeps away from each end of its column. The blades sit in the
 ## middle, and a name that runs into them reads as one long word.
@@ -99,6 +101,11 @@ const BAR_WIDTH := 244.0
 ## Health below this fraction turns the bar amber, so a fighter about to go
 ## down reads as such without anyone having to do the arithmetic.
 const LOW_HEALTH := 0.3
+
+## The blue Block is written in. Not the health's colour: Block is spent before
+## health is touched, and a player deciding whether they will survive the next
+## blow is adding the two rather than reading one.
+const BLOCK_TINT := Color(0.5, 0.85, 1.0)
 
 var screen: Control
 var clock_plate: NeonPlate
@@ -112,6 +119,10 @@ var _voices: Array[AudioStreamPlayer] = []
 var _next_voice: int = 0
 var _last_hit: int = -HIT_GAP_MS
 var _effects: Dictionary = {}
+## The Block figure for each side, by "player" and "enemy". See _build_block().
+var _block: Dictionary = {}
+## The card explaining whichever chip the pointer is on, or null.
+var _explaining: Control = null
 var _log_open: bool = false
 
 
@@ -402,9 +413,13 @@ func _build_column(stats: Dictionary, side: String, accent: Color, left: float) 
 
 	_build_row(stats, side, "health", accent, left, 72, HEALTH_FILL)
 	_build_row(stats, side, "stamina", accent, left, 122, STAMINA_FILL)
+	_block[side] = _build_block(side, left, 160)
 
-	_effects[side + "_buff"] = _build_effects(side, "BUFFS", Color(0.4, 1.0, 0.6), left, 184)
-	_effects[side + "_debuff"] = _build_effects(side, "DEBUFFS", Color(1.0, 0.45, 0.5), left, 268)
+	# The rows below the Block moved down to make room for it. Drawn where they
+	# were, "BLOCK 12" sat against the word BUFFS with no gap at all and read
+	# as the first line of them.
+	_effects[side + "_buff"] = _build_effects(side, "BUFFS", Color(0.4, 1.0, 0.6), left, 196)
+	_effects[side + "_debuff"] = _build_effects(side, "DEBUFFS", Color(1.0, 0.45, 0.5), left, 280)
 
 
 func _build_row(stats: Dictionary, side: String, what: String, accent: Color,
@@ -441,6 +456,35 @@ func _build_row(stats: Dictionary, side: String, what: String, accent: Color,
 	value.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+## The Block a fighter is standing behind.
+##
+## No bar: Block has no maximum to fill, and a bar without one is a bar that
+## means nothing. It reads as a shield with a number on it, and it is only
+## there while there is any -- most fighters never hold a point of it, and a
+## permanent "BLOCK 0" is a line to read that says nothing.
+func _build_block(side: String, left: float, top: float) -> Label:
+	var held := Label.new()
+	held.name = side.capitalize() + "Block"
+	held.position = Vector2(left + 4, top)
+	held.size = Vector2(ROW_LABEL + BAR_WIDTH, 24)
+	held.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	held.add_theme_font_size_override("font_size", 18)
+	held.add_theme_color_override("font_color", BLOCK_TINT)
+	held.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	held.visible = false
+	stats_plate.add_child(held)
+	return held
+
+
+## Say how much Block this fighter is standing behind, or take it away.
+func set_block(player: int, amount: int) -> void:
+	var held: Label = _block.get("player" if player == 1 else "enemy")
+	if not is_instance_valid(held):
+		return
+	held.visible = amount > 0
+	held.text = "BLOCK  %d" % amount
+
+
 func _build_effects(side: String, title: String, tint: Color, left: float,
 		top: float) -> HBoxContainer:
 	var caption := Label.new()
@@ -463,28 +507,81 @@ func _build_effects(side: String, title: String, tint: Color, left: float,
 
 
 ## Note that a fighter has picked something up, or had something done to them.
-func add_effect(player: int, effect_name: String, good: bool) -> void:
+##
+## `status` is what the engine calls it, which is what a rule about it is
+## looked up by; `effect_name` is the word a player reads on the chip.
+func add_effect(player: int, effect_name: String, good: bool,
+		status: String = "", stacks: int = 1) -> void:
 	var key := ("player" if player == 1 else "enemy") + ("_buff" if good else "_debuff")
 	var row: HBoxContainer = _effects.get(key)
 	if row == null:
 		return
 
 	# One chip per kind, counted, rather than a row that grows without end.
+	# Counted in stacks rather than in actions: API Token grants 2 Regenerating
+	# in one action, and a chip counting the action said one.
 	for chip in row.get_children():
 		if chip.get_meta("effect") == effect_name:
-			chip.set_meta("count", chip.get_meta("count") + 1)
+			chip.set_meta("count", chip.get_meta("count") + stacks)
 			chip.text = "%s x%d" % [effect_name, chip.get_meta("count")]
+			# A stack landing while the card for it is up: the card is about
+			# how many there are, so it is drawn again saying the new number.
+			if is_instance_valid(_explaining):
+				_explain(chip)
 			return
 
 	var tint := Color(0.4, 1.0, 0.6) if good else Color(1.0, 0.45, 0.5)
 	var chip := Label.new()
-	chip.text = effect_name
+	chip.text = effect_name if stacks <= 1 else "%s x%d" % [effect_name, stacks]
 	chip.set_meta("effect", effect_name)
-	chip.set_meta("count", 1)
+	chip.set_meta("status", status)
+	chip.set_meta("count", stacks)
 	chip.add_theme_font_size_override("font_size", 17)
 	chip.add_theme_color_override("font_color", tint)
-	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# It answers the pointer, because it has something to say when asked.
+	chip.mouse_filter = Control.MOUSE_FILTER_STOP
+	chip.mouse_entered.connect(_explain.bind(chip))
+	chip.mouse_exited.connect(_stop_explaining)
 	row.add_child(chip)
+
+
+## Put up the card for this chip, at once.
+##
+## Godot's own tooltip was tried first and is wrong for this three ways over:
+## it waits half a second, it is one run of plain text, and it is drawn in a
+## style that belongs to nothing else here. This is the card the shop draws for
+## an item, and it arrives with the pointer.
+func _explain(chip: Label) -> void:
+	_stop_explaining()
+	var rule: Dictionary = GameStateManager.about_a_status(
+		chip.get_meta("status", ""))
+	if rule.is_empty():
+		return
+
+	_explaining = STATUS_CARD.instantiate()
+	_explaining.z_index = 100
+	screen.get_tree().root.add_child(_explaining)
+	if not _explaining.say(rule, chip.get_meta("count", 1)):
+		_stop_explaining()
+		return
+
+	# The card takes its own size once it has been laid out, and where it
+	# stands depends on how tall it came out, so it is placed again when that
+	# settles rather than guessed at now.
+	_explaining.resized.connect(_explaining.stand_beside.bind(chip))
+	_explaining.stand_beside(chip)
+
+	# The board is drawn again on every action of the battle, so the chip can
+	# be freed while the pointer is still on it. The card goes with it: left
+	# standing, the next layout pass would hand a freed chip to stand_beside(),
+	# which is a hard error rather than something a guard inside it can catch.
+	chip.tree_exiting.connect(_stop_explaining)
+
+
+func _stop_explaining() -> void:
+	if is_instance_valid(_explaining):
+		_explaining.queue_free()
+	_explaining = null
 
 
 # ============ The fighters ============

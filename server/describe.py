@@ -17,7 +17,7 @@ Heat" is one sentence with one roll behind it.
 """
 
 from functools import singledispatch
-from typing import List
+from typing import Dict, List
 
 from item_effects import (
     DEBUFFS,
@@ -94,7 +94,10 @@ SHOWN = {
     "optimized": "optimised",
     "throttled": "throttled",
     "monitored": "monitored",
-    "calibrated": "calibrated",
+    # Section 3.1 names this one Compute. The identifier stays `calibrated`,
+    # because the catalogue and the engine are written against it, and this is
+    # the one place a player's word for it is decided.
+    "calibrated": "compute",
     "rate_limited": "rate limited",
     "regenerating": "regenerating",
     "spiked": "spiked",
@@ -228,6 +231,99 @@ def by_how_much(stat: str, value: float) -> str:
     if stat in FLAT:
         return f"{signed(value)} {name}"
     return f"{signed(value * 100)}% {name}"
+
+
+#: What each status does, in the words a player reads. Section 3.1 and 3.2 of
+#: the design document hold the rules; these are those rules said out loud.
+#:
+#: `each` is what one stack is worth, and `many` is the same sentence with the
+#: total in it, so a client holding six stacks can say what six come to without
+#: knowing the rule that got there. A status whose worth is not a number -- the
+#: credits an item spends -- carries no `each` and is only ever described one
+#: way.
+#:
+#: Written the way an item's own lines are written -- "Every 1.6s: gain 1
+#: [buff]compute[/buff]" -- because they are read on the same screen minutes
+#: apart. Terse, and no sentence where a number will do. `detail` is only for a
+#: rule the number does not carry, and most of them have none.
+STATUS_RULES = {
+    "optimized": {
+        "each": 2,
+        "one": "Items trigger 2% faster",
+        "many": "Items trigger {total}% faster",
+        "detail": "Speed-ups and slow-downs add. 1000% either way at most.",
+    },
+    "throttled": {
+        "each": 2,
+        "one": "Items trigger 2% slower",
+        "many": "Items trigger {total}% slower",
+        "detail": "Slow-downs and speed-ups add. 1000% either way at most.",
+    },
+    "monitored": {
+        "each": 1,
+        "one": "+1 damage to your attacks",
+        "many": "+{total} damage to your attacks",
+    },
+    "calibrated": {
+        "each": 5,
+        "one": "+5% accuracy",
+        "many": "+{total}% accuracy",
+    },
+    "rate_limited": {
+        "each": 5,
+        "one": "-5% accuracy",
+        "many": "-{total}% accuracy",
+    },
+    "regenerating": {
+        "each": 1,
+        "one": "Heals 1 health every 2s",
+        "many": "Heals {total} health every 2s",
+    },
+    "memory_leaked": {
+        "each": 1,
+        "one": "1 damage every 2s",
+        "many": "{total} damage every 2s",
+    },
+    "spiked": {
+        "each": 1,
+        "one": "1 damage to melee attackers",
+        "many": "{total} damage to melee attackers",
+        "detail": "Only when their blow lands.",
+    },
+    "draining": {
+        "each": 1,
+        "one": "Heals 1 on a melee hit",
+        "many": "Heals {total} on a melee hit",
+        "detail": "Only your own melee weapons.",
+    },
+    "credits": {
+        "one": "Spent by items that ask for it",
+    },
+}
+
+
+def rule(status: str) -> Dict[str, object]:
+    """What one stack of a status is worth, and how to say what several are.
+
+    A status nobody has written a rule for is described by its own name and
+    nothing else, so a status added to the engine without a line here shows up
+    as a chip that explains nothing rather than as a crash.
+    """
+    written = STATUS_RULES.get(status, {})
+    return {
+        "status": status,
+        "shown": shown(status),
+        "kind": "debuff" if status in DEBUFFS else "buff",
+        "each": written.get("each", 0),
+        "one": written.get("one", ""),
+        "many": written.get("many", ""),
+        "detail": written.get("detail", ""),
+    }
+
+
+def every_rule() -> List[Dict[str, object]]:
+    """Every status a battle can put on a fighter, in a fixed order."""
+    return [rule(status) for status in sorted(SHOWN)]
 
 
 def shown(status: str) -> str:

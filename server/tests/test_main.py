@@ -1021,6 +1021,45 @@ class TestAMoveAlwaysAnswersWithTheWholeBoard:
         )
 
 
+class TestTheStatusCatalogue:
+    """What every buff and debuff does, fetched once and answered from the
+    client after that.
+    """
+
+    def test_the_endpoint_answers(self, auth_client):
+        """It 500'd in the real server while every test passed, because none
+        of them called it -- only the function behind it."""
+        response = auth_client.get("/catalogue/statuses")
+
+        assert response.status_code == 200, response.text
+
+    def test_it_names_every_status_a_battle_can_apply(self, auth_client):
+        statuses = auth_client.get("/catalogue/statuses").json()["statuses"]
+
+        named = {entry["status"] for entry in statuses}
+        assert {"optimized", "throttled", "memory_leaked", "regenerating"} <= named
+        assert len(statuses) >= 10, f"only {len(statuses)} statuses"
+
+    def test_each_entry_says_what_a_stack_is_worth(self, auth_client):
+        statuses = auth_client.get("/catalogue/statuses").json()["statuses"]
+        optimised = next(e for e in statuses if e["status"] == "optimized")
+
+        assert optimised["shown"] == "optimised"
+        assert optimised["kind"] == "buff"
+        assert optimised["each"] == 2
+        assert optimised["one"] == "Items trigger 2% faster"
+        assert "{total}" in optimised["many"]
+
+    def test_it_needs_no_session(self, auth_client):
+        """The same for every player and it never changes, like the combining
+        catalogue beside it."""
+        from fastapi.testclient import TestClient
+
+        from main import app
+
+        assert TestClient(app).get("/catalogue/statuses").status_code == 200
+
+
 class TestMoveContainerAPI:
     """A container moves through /move/item, because it is an item.
 

@@ -1,0 +1,94 @@
+[gd_scene load_steps=4 format=3 uid="uid://cstatustooltip1"]
+
+[ext_resource type="Script" path="res://scripts/status_tooltip.gd" id="1_status"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.04, 0.03, 0.11, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.4, 0.7, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.55)
+shadow_size = 10
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_rule"]
+color = Color(0.45, 0.6, 0.9, 0.35)
+thickness = 1
+
+[node name="StatusTooltip" type="PanelContainer"]
+custom_minimum_size = Vector2(300, 0)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("1_status")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="NameRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/NameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "Regenerating"
+
+[node name="CountLabel" type="Label" parent="MarginContainer/VBoxContainer/NameRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 22
+text = "x6"
+horizontal_alignment = 2
+
+[node name="KindLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.63, 0.75, 1)
+theme_override_font_sizes/font_size = 15
+text = "Buff"
+
+[node name="TopRule" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_rule")
+
+[node name="EachLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "Heals 1 every 2 seconds"
+autowrap_mode = 2
+
+[node name="DetailLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.75, 0.86, 1)
+theme_override_font_sizes/font_size = 15
+text = "On its own clock, every two seconds."
+autowrap_mode = 2
+
+[node name="FootRule" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_rule")
+
+[node name="TotalLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "All 6: Heals 6 every 2 seconds"
+autowrap_mode = 2
+

@@ -13,9 +13,16 @@ signal damage_dealt(player: int, amount: int, remaining_hp: int, source: String,
 signal healing_done(player: int, amount: int, remaining_hp: int)
 signal block_activated(player: int, amount: int)
 signal item_activated(item_id: String, player: int, action: String)
-signal buff_applied(player: int, buff_name: String)
-signal debuff_applied(player: int, debuff_name: String)
+## `stacks` is how many the action granted at once, which is not always one:
+## API Token grants 2 Regenerating in a single action, and a chip counting
+## actions rather than stacks showed one of them.
+signal buff_applied(player: int, shown: String, status: String, stacks: int)
+signal debuff_applied(player: int, shown: String, status: String, stacks: int)
 signal cpu_changed(player: int, cpu: float, max_cpu: float)
+## How much Block a fighter is standing behind. Every action carries it, the
+## same as the health and the CPU: it is spent a point at a time by every blow
+## that lands, so it is different at every moment of the battle.
+signal block_changed(player: int, block: int)
 signal player_died(player: int)
 ## Night fell and fatigue began. Once a battle, before the first payout.
 signal nightfall_began()
@@ -63,6 +70,7 @@ func load_battle_events(battle_data: APITypes.BattleResult):
 	events = battle_data.actions
 	_winner = battle_data.winner
 	_finished = false
+	_read_the_cpu_off_the_timeline()
 	print("Loaded %d battle events" % events.size())
 
 	# Build item lookup from both inventories
@@ -285,12 +293,17 @@ func _process_event(event: APITypes.BattleAction):
 			block_activated.emit(player, amount)
 
 		"buff":
-			# Named as a player reads it. The engine writes the word beside the
-			# identifier, so nothing here keeps a second list of the ten.
-			buff_applied.emit(player, event.details["shown"])
+			# Named as a player reads it, and named as the engine calls it.
+			# The word is what the chip says; the identifier is what a rule
+			# about the status is looked up by, and nothing here keeps a
+			# second list of either. How many arrived is the action's own
+			# figure -- one action can grant several.
+			buff_applied.emit(player, event.details["shown"],
+				event.details.get("buff_name", ""), _stacks_in(event))
 
 		"debuff":
-			debuff_applied.emit(player, event.details["shown"])
+			debuff_applied.emit(player, event.details["shown"],
+				event.details.get("debuff_name", ""), _stacks_in(event))
 
 		"cpu_fail":
 			# Nothing to show yet: the item simply did not activate
@@ -401,6 +414,14 @@ func _process_event(event: APITypes.BattleAction):
 		for side in [0, 1]:
 			cpu_changed.emit(side + 1, float(levels[side]), float(pools[side]))
 
+	# And where their Block stood, which the log never said: a blow spends a
+	# point of it at a time, so a player could see Block arrive and never see
+	# it go.
+	if event.details != null and event.details.has("block"):
+		var held = event.details["block"]
+		for side in [0, 1]:
+			block_changed.emit(side + 1, int(held[side]))
+
 	# Every action with an item behind it is that item firing, and the source
 	# is that item's own uid. This signal has been declared and connected since
 	# the class was written and never once emitted, so nothing on screen has
@@ -430,6 +451,70 @@ func get_current_time() -> float:
 	if paused or not is_playing:
 		return played
 	return played + (Time.get_ticks_msec() / 1000.0 - start_time) * playback_speed
+
+
+## Where each fighter's CPU stood, at every moment the timeline says so.
+##
+## Each entry is [seconds, player one's CPU, player two's CPU]. Read off once
+## when the battle is loaded rather than searched for every frame.
+var _cpu_marks: Array = []
+## Where the last look landed, so a battle of a thousand actions is not walked
+## from the start sixty times a second. Time only goes forwards.
+var _cpu_mark := 0
+
+
+func _read_the_cpu_off_the_timeline() -> void:
+	_cpu_marks = []
+	_cpu_mark = 0
+	for event in events:
+		if event.details == null or not event.details.has("cpu"):
+			continue
+		var levels = event.details["cpu"]
+		_cpu_marks.append([
+			event.timestamp / 1000.0, float(levels[0]), float(levels[1])])
+
+
+## What a fighter's CPU was at this moment of the battle.
+##
+## The timeline says where it stood when something happened, and it refills
+## steadily in between, so the moments between two of them are the line drawn
+## between the two. Drawn straight from the timeline instead, the bar stood
+## still and then jumped -- which reads as a broken bar rather than a filling
+## one -- and it is climbing the whole time.
+##
+## Nothing about how fast it refills is worked out here: both ends of the line
+## are figures the battle recorded.
+func cpu_at(player: int, at: float) -> float:
+	if _cpu_marks.is_empty():
+		return 0.0
+	var which := 1 if player == 1 else 2
+
+	# Forwards from where the last look landed, and back to the start if the
+	# playhead has been moved backwards.
+	if _cpu_mark >= _cpu_marks.size() or _cpu_marks[_cpu_mark][0] > at:
+		_cpu_mark = 0
+	while _cpu_mark + 1 < _cpu_marks.size() and _cpu_marks[_cpu_mark + 1][0] <= at:
+		_cpu_mark += 1
+
+	var here: Array = _cpu_marks[_cpu_mark]
+	if _cpu_mark + 1 >= _cpu_marks.size():
+		return here[which]
+	var next: Array = _cpu_marks[_cpu_mark + 1]
+	var span: float = next[0] - here[0]
+	if span <= 0.0:
+		return next[which]
+	return lerpf(here[which], next[which], clampf((at - here[0]) / span, 0.0, 1.0))
+
+
+## How many stacks one buff or debuff action granted.
+##
+## The engine writes it as `actual_value`, because what an item asks for and
+## what lands are not always the same number. One at the least: an action that
+## granted none would not have been recorded.
+func _stacks_in(event: APITypes.BattleAction) -> int:
+	if event.details == null:
+		return 1
+	return maxi(1, int(event.details.get("actual_value", 1)))
 
 
 func _bank() -> void:

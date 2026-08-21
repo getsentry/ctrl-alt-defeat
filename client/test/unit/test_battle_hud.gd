@@ -132,6 +132,222 @@ func test_the_bar_stays_full_once_night_has_fallen():
 		"A battle running long should not overfill the bar")
 
 
+# ============ What a buff on a fighter is worth ============
+#
+# A chip reads "optimised x6" and the player is left to guess what six of them
+# do. The words come from the server, because the rule does.
+
+func _the_rules(entries: Array) -> void:
+	GameStateManager.status_rules = APITypes.StatusRules.new({"statuses": entries})
+
+
+func _optimised_is_known() -> void:
+	_the_rules([{
+		"status": "optimized", "shown": "optimised", "kind": "buff", "each": 2,
+		"one": "Items trigger 2% faster",
+		"many": "Items trigger {total}% faster",
+	}])
+
+
+func _chip(index: int = 0) -> Label:
+	return hud._effects["player_buff"].get_child(index)
+
+
+func test_hovering_a_chip_puts_up_a_card_at_once():
+	"""Godot's own tooltip waits half a second, is one run of plain text and
+	is drawn in a style that belongs to nothing else here."""
+	_optimised_is_known()
+	hud.add_effect(1, "optimised", true, "optimized")
+
+	hud._explain(_chip())
+
+	assert_true(is_instance_valid(hud._explaining), "The card is up")
+	assert_eq(hud._explaining.name_label.text, "Optimised")
+	autofree(hud._explaining)
+
+
+func test_the_card_says_what_one_stack_does_before_what_all_of_them_do():
+	"""The total means nothing until the rule above it has been read."""
+	_optimised_is_known()
+	for stack in range(6):
+		hud.add_effect(1, "optimised", true, "optimized")
+
+	hud._explain(_chip())
+	var card = hud._explaining
+
+	assert_eq(card.each_label.text, "Items trigger 2% faster", "one of them")
+	assert_true(card.total_label.visible, "and what six come to")
+	assert_true(card.total_label.text.contains("12%"),
+		"reads %s" % card.total_label.text)
+	assert_true(card.count_label.text.contains("6"), "how many there are")
+	autofree(card)
+
+
+func test_the_card_explains_more_than_the_number():
+	_the_rules([{
+		"status": "regenerating", "shown": "regenerating", "kind": "buff",
+		"each": 1, "one": "Heals 1 every 2 seconds",
+		"many": "Heals {total} every 2 seconds",
+		"detail": "On its own clock, whatever your items are doing.",
+	}])
+	hud.add_effect(1, "regenerating", true, "regenerating")
+
+	hud._explain(_chip())
+	var card = hud._explaining
+
+	assert_true(card.detail_label.visible,
+		"There is a rule here the number does not carry")
+	assert_eq(card.detail_label.text,
+		"On its own clock, whatever your items are doing.")
+	autofree(card)
+
+
+func test_one_stack_is_not_told_what_all_one_of_them_do():
+	""""All 1: Heals 1 every 2 seconds" is the line above it said twice."""
+	_optimised_is_known()
+	hud.add_effect(1, "optimised", true, "optimized")
+
+	hud._explain(_chip())
+
+	assert_false(hud._explaining.total_label.visible)
+	assert_false(hud._explaining.count_label.visible, "and no x1 either")
+	autofree(hud._explaining)
+
+
+func test_a_debuff_card_is_drawn_as_a_debuff():
+	_the_rules([{
+		"status": "memory_leaked", "shown": "memory leak", "kind": "debuff",
+		"each": 1, "one": "Takes 1 damage every 2 seconds",
+		"many": "Takes {total} damage every 2 seconds",
+		"detail": "On its own clock.",
+	}])
+	hud.add_effect(1, "memory leak", false, "memory_leaked")
+
+	hud._explain(hud._effects["player_debuff"].get_child(0))
+
+	assert_eq(hud._explaining.kind_label.text, "Debuff")
+	autofree(hud._explaining)
+
+
+func test_the_card_goes_when_its_chip_does():
+	"""The board is drawn again on every action of the battle, so a chip can
+	be freed while the pointer is still on it. Left standing, the next layout
+	pass hands a freed chip to the card, which is a hard error."""
+	_optimised_is_known()
+	hud.add_effect(1, "optimised", true, "optimized")
+	var chip := _chip()
+	hud._explain(chip)
+	assert_true(is_instance_valid(hud._explaining), "setup: the card is up")
+
+	chip.get_parent().remove_child(chip)
+	chip.queue_free()
+	await get_tree().process_frame
+
+	assert_null(hud._explaining, "The card went with it")
+
+
+func test_the_card_goes_when_the_pointer_does():
+	_optimised_is_known()
+	hud.add_effect(1, "optimised", true, "optimized")
+	hud._explain(_chip())
+
+	hud._stop_explaining()
+
+	assert_null(hud._explaining)
+
+
+func test_a_chip_counts_stacks_rather_than_actions():
+	"""API Token grants 2 Regenerating in one action, and the chip said one."""
+	_optimised_is_known()
+
+	hud.add_effect(1, "optimised", true, "optimized", 2)
+
+	assert_true(_chip().text.contains("x2"), "reads %s" % _chip().text)
+	assert_eq(_chip().get_meta("count"), 2)
+
+
+func test_stacks_arriving_later_are_added_to_what_is_there():
+	_optimised_is_known()
+
+	hud.add_effect(1, "optimised", true, "optimized", 2)
+	hud.add_effect(1, "optimised", true, "optimized", 3)
+
+	assert_eq(_chip().get_meta("count"), 5)
+	assert_true(_chip().text.contains("x5"), "reads %s" % _chip().text)
+
+
+func test_the_card_counts_them_the_same_way():
+	_optimised_is_known()
+	hud.add_effect(1, "optimised", true, "optimized", 6)
+
+	hud._explain(_chip())
+
+	assert_true(hud._explaining.total_label.text.contains("12%"),
+		"six stacks of 2%%, reads %s" % hud._explaining.total_label.text)
+	autofree(hud._explaining)
+
+
+func test_a_chip_answers_the_pointer():
+	"""It was set to ignore the mouse, so there was nothing to hover."""
+	_optimised_is_known()
+
+	hud.add_effect(1, "optimised", true, "optimized")
+
+	assert_ne(_chip().mouse_filter, Control.MOUSE_FILTER_IGNORE)
+
+
+func test_a_status_nothing_is_known_about_has_no_card():
+	"""Nothing fetched, or a status added to the engine with no rule written
+	for it. No card rather than an empty one."""
+	GameStateManager.status_rules = null
+	hud.add_effect(1, "something new", true, "something_new")
+
+	hud._explain(_chip())
+
+	assert_null(hud._explaining)
+	assert_eq(_chip().text, "something new", "and the chip is what it was")
+
+
+# ============ The Block a fighter stands behind ============
+
+func test_a_fighter_with_no_block_says_nothing_about_it():
+	"""Most fighters never hold a point of it, and a permanent "BLOCK 0" is a
+	line to read that says nothing."""
+	hud.set_block(1, 0)
+
+	var held: Label = hud._block["player"]
+	assert_false(held.visible)
+
+
+func test_block_is_shown_while_there_is_any():
+	hud.set_block(1, 12)
+
+	var held: Label = hud._block["player"]
+	assert_true(held.visible, "It is there while it is there")
+	assert_true(held.text.contains("12"), "reads %s" % held.text)
+
+
+func test_block_goes_down_as_well_as_up():
+	"""A blow spends a point of it at a time. Before this, a player could see
+	Block arrive and never see it go."""
+	hud.set_block(2, 9)
+	hud.set_block(2, 4)
+
+	assert_true(hud._block["enemy"].text.contains("4"))
+
+	hud.set_block(2, 0)
+
+	assert_false(hud._block["enemy"].visible, "and away when it is spent")
+
+
+func test_each_fighter_keeps_its_own_block():
+	hud.set_block(1, 7)
+	hud.set_block(2, 3)
+
+	assert_true(hud._block["player"].text.contains("7"))
+	assert_true(hud._block["enemy"].text.contains("3"))
+
+
 func test_the_speed_control_says_the_speed_the_battle_starts_at():
 	var button = battle_screen.find_child("SpeedButton", true, false)
 

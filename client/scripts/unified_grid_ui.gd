@@ -641,6 +641,11 @@ func _ready():
 	# answered from here after that. Nothing waits on it: until it arrives the
 	# screen simply draws no arcs.
 	GameStateManager.fetch_combining_catalogue()
+	# And what the buffs do, for the chips beside each fighter in the battle
+	# that comes after this shop. Asked for here rather than there because the
+	# shop is where a player spends their time, so it has arrived long before
+	# anything is hovered.
+	GameStateManager.fetch_status_rules()
 
 	# Then load saved inventory if it exists
 	var saved_inventory = GameStateManager.get_inventory_state()

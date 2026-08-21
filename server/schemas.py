@@ -436,6 +436,34 @@ class MoveItemResponse(BaseModel):
     )
 
 
+class StatusRule(BaseModel):
+    """What one stack of a buff or a debuff is worth, and how to say several.
+
+    Sent rather than written into the client, because the rules are the
+    server's: section 3.1 and 3.2 of the design document say what a stack does,
+    and a copy of that over there would go on saying 2% after the day it
+    stopped being 2%.
+    """
+
+    status: str = Field(description="The name the engine calls it by")
+    shown: str = Field(description="The name a player reads")
+    kind: str = Field(description='"buff" or "debuff"')
+    each: int = Field(description="What one stack is worth, or 0 for no number")
+    one: str = Field(description="What one stack does, in words")
+    many: str = Field(
+        description="The same sentence with {total} where the number goes"
+    )
+    detail: str = Field(
+        default="", description="What is worth knowing beyond the number"
+    )
+
+
+class StatusRules(BaseModel):
+    """Every status a battle can put on a fighter."""
+
+    statuses: List[StatusRule] = Field(description="One entry per status")
+
+
 class LeaderboardEntry(BaseModel):
     """Single leaderboard entry"""
 

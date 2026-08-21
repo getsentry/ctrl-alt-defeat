@@ -514,6 +514,49 @@ class Combination extends Resource:
 # from here. It says these two appear in a recipe together and nothing more:
 # whether a combination will actually happen is `pending`, which needs rules
 # that stay on the server.
+## What every buff and debuff does, per stack, as the server describes them.
+##
+## Asked for once: the rules never change, and a chip beside a fighter is
+## hovered far too often to be a request each time. The words are the
+## server's, because the rules are -- a copy over here would go on saying 2%
+## the day after it stopped being 2%.
+class StatusRules extends Resource:
+	## Keyed by the name the engine uses: "optimized", "memory_leaked".
+	var rules: Dictionary = {}
+
+	func _init(data: Dictionary):
+		for rule in data["statuses"]:
+			rules[str(rule["status"])] = {
+				"shown": str(rule["shown"]),
+				"kind": str(rule["kind"]),
+				"each": int(rule["each"]),
+				"one": str(rule["one"]),
+				"many": str(rule["many"]),
+				"detail": str(rule.get("detail", "")),
+			}
+
+	## One status as the server describes it, or empty for one nothing is
+	## known about.
+	func about(status: String) -> Dictionary:
+		return rules.get(status, {})
+
+	func knows_any() -> bool:
+		return not rules.is_empty()
+
+	## What this many stacks of a status come to, in words. Empty for a status
+	## nobody has written a rule for, and for one whose worth is not a number.
+	func what_it_does(status: String, stacks: int) -> String:
+		var rule: Dictionary = rules.get(status, {})
+		if rule.is_empty():
+			return ""
+		if stacks <= 1 or int(rule["each"]) == 0 or str(rule["many"]) == "":
+			return str(rule["one"])
+		# The only arithmetic on this side: the rule that got to `each` stays
+		# on the server.
+		var total := int(rule["each"]) * stacks
+		return str(rule["many"]).replace("{total}", str(total))
+
+
 class CombiningCatalogue extends Resource:
 	var partners: Dictionary = {}  # item type -> Array[String]
 	var names: Dictionary = {}     # item type -> the name to show for it

@@ -35,6 +35,7 @@ from inventory_manager import (
     ItemNotFoundError,
     combining_partners,
 )
+import describe
 from items import SALE_CHANCE, Item, PlacedItem
 from shop_phase import entering_the_shop, sale_chance_from
 from matchmaking import MatchmakingService
@@ -46,6 +47,8 @@ from schemas import (
     Pending,
     RackRequest,
     ShopRequest,
+    StatusRule,
+    StatusRules,
     refresh_price,
     BattleHistoryResponse,
     BattleResponse,
@@ -317,6 +320,23 @@ async def combining_endpoint() -> CombiningPartners:
         partners=combining_partners(),
         names={slug: spec.name for slug, spec in config_loader.items.items()},
     )
+
+
+@app.get("/catalogue/statuses")
+async def statuses_endpoint() -> StatusRules:
+    """What every buff and debuff does, per stack.
+
+    The same for every player and it never changes, so it is fetched once and
+    answered on the client from then on -- the same as the combining
+    catalogue beside it.
+
+    The client draws a chip reading "optimised x6" beside each fighter and had
+    no way to say what six of them were worth. The rule is the server's, so
+    the words are too: each entry says what one stack does and carries the
+    same sentence with a hole in it for the total, which is the only
+    arithmetic left over there.
+    """
+    return StatusRules(statuses=[StatusRule(**rule) for rule in describe.every_rule()])
 
 
 @app.get("/session")

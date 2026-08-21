@@ -742,7 +742,7 @@ class TestWordsForContainersConversionsAndProtection:
         assert self._said("network_cache") == [
             "The items it holds get +10% critical chance",
             "The items it holds get +3% critical chance for each "
-            "[buff]calibrated[/buff] you have",
+            "[buff]compute[/buff] you have",
         ]
 
     def test_a_share_on_what_an_item_gives_says_give_not_get(self):
@@ -824,7 +824,7 @@ class TestWordsThatWereMissingOrWrong:
     def test_a_chance_that_grows_is_said_the_way_the_source_game_says_it(self):
         assert self._said("blue_sage_collar") == [
             "When a weapon [star]star[/star] item hits: 7% chance for each "
-            "[buff]calibrated[/buff] to gain 3 [buff]credits[/buff]"
+            "[buff]compute[/buff] to gain 3 [buff]credits[/buff]"
         ]
 
     def test_an_excluded_tag_reads_as_a_prefix(self):
@@ -845,3 +845,117 @@ class TestWordsThatWereMissingOrWrong:
             "Your [buff]spiked[/buff] critical chance is increased by 10% for "
             "each feral [star]star[/star] item" in said
         )
+class TestWhatAStatusIsWorth:
+    """A chip beside a fighter reads "optimised x6" and the client has no way
+    to say what six are worth. The rule is the server's, so the words are too.
+    """
+
+    def test_a_stack_says_what_it_does(self):
+        optimised = describe.rule("optimized")
+
+        assert optimised["shown"] == "optimised"
+        assert optimised["kind"] == "buff"
+        assert optimised["each"] == 2
+        assert optimised["one"] == "Items trigger 2% faster"
+
+    def test_several_stacks_are_the_same_sentence_with_the_total_in_it(self):
+        """The client multiplies and drops the answer in. It does not know the
+        rule that got there, and does not need to."""
+        optimised = describe.rule("optimized")
+
+        assert "{total}" in optimised["many"]
+        assert optimised["many"].replace("{total}", str(optimised["each"] * 6)) == (
+            "Items trigger 12% faster"
+        )
+
+    def test_a_debuff_says_it_is_one(self):
+        assert describe.rule("memory_leaked")["kind"] == "debuff"
+        assert describe.rule("throttled")["kind"] == "debuff"
+        assert describe.rule("rate_limited")["kind"] == "debuff"
+
+    def test_a_status_worth_no_number_is_only_described_one_way(self):
+        """Credits are spent by the items that ask for them, and six of them
+        do not do anything six times over."""
+        credits = describe.rule("credits")
+
+        assert credits["each"] == 0
+        assert credits["many"] == ""
+        assert credits["one"]
+
+    def test_every_status_the_battle_can_apply_has_a_rule(self):
+        """A status added to the engine without a line here would show up as a
+        chip that explains nothing."""
+        for rule in describe.every_rule():
+            assert rule["shown"], rule["status"]
+            assert rule["one"], f"{rule['status']} says nothing about itself"
+            if rule["each"]:
+                assert "{total}" in rule["many"], rule["status"]
+
+    def test_the_rules_match_the_design_document(self):
+        """Section 3.1 and 3.2 quote these numbers. They came from there, so
+        they can drift."""
+        worth = {rule["status"]: rule["each"] for rule in describe.every_rule()}
+
+        assert worth["optimized"] == 2, "2% faster a stack"
+        assert worth["throttled"] == 2, "2% slower a stack"
+        assert worth["monitored"] == 1, "+1 damage a stack"
+        assert worth["calibrated"] == 5, "+5% accuracy a stack"
+        assert worth["rate_limited"] == 5, "-5% accuracy a stack"
+        assert worth["regenerating"] == 1, "1 HP a stack every 2 seconds"
+        assert worth["memory_leaked"] == 1, "1 damage a stack every 2 seconds"
+        assert worth["spiked"] == 1, "1 damage a stack to a melee attacker"
+        assert worth["draining"] == 1, "1 healed a stack on a melee hit"
+
+    def test_the_names_are_the_ones_the_design_document_gives(self):
+        """Section 3.1 and 3.2 name all ten. The identifiers are the source
+        game's words, kept because the catalogue is written against them, so
+        the two lists are not the same list and can drift -- Compute was shown
+        as "calibrated" on every card until somebody read them side by side.
+        """
+        named = {rule["status"]: rule["shown"] for rule in describe.every_rule()}
+
+        assert named["calibrated"] == "compute", "Section 3.1 calls it Compute"
+        assert named["optimized"] == "optimised"
+        assert named["monitored"] == "monitored"
+        assert named["regenerating"] == "regenerating"
+        assert named["spiked"] == "spiked"
+        assert named["draining"] == "draining"
+        assert named["credits"] == "credits"
+        assert named["throttled"] == "throttled"
+        assert named["memory_leaked"] == "memory leak"
+        assert named["rate_limited"] == "rate limited"
+
+    def test_no_name_a_player_reads_is_an_identifier(self):
+        """A card reading "memory_leaked" is a card written for whoever wrote
+        the catalogue."""
+        for rule in describe.every_rule():
+            assert "_" not in rule["shown"], rule["status"]
+
+    def test_a_status_explains_itself_beyond_the_number(self):
+        """A card that says only "Heals 1 every 2 seconds" leaves a player
+        asking every two seconds of what."""
+        spiked = describe.rule("spiked")
+
+        assert spiked["detail"] == "Only when their blow lands.", (
+            "the rule the number does not carry"
+        )
+
+    def test_nothing_says_more_than_it_has_to(self):
+        """Written the way an item's own lines are written, and read on the
+        same screen minutes apart. A detail is only for a rule the number does
+        not carry, and most of them have none."""
+        for rule in describe.every_rule():
+            assert len(rule["one"]) <= 34, (
+                f"{rule['status']}: {rule['one']!r} is a sentence where a "
+                f"number would do"
+            )
+            assert len(rule["detail"]) <= 60, (
+                f"{rule['status']}: {rule['detail']!r} is too much to read "
+                f"in a battle"
+            )
+
+    def test_a_status_nobody_has_written_a_rule_for_still_answers(self):
+        made_up = describe.rule("something_new")
+
+        assert made_up["shown"] == "something new"
+        assert made_up["one"] == "", "nothing to say rather than a crash"

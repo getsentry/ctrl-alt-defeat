@@ -221,6 +221,34 @@ func combining_catalogue() -> APITypes.CombiningCatalogue:
 	return null
 
 
+func status_rules() -> APITypes.StatusRules:
+	"""What every buff and debuff does, per stack.
+
+	Neither a session nor a token, like the combining catalogue beside it: the
+	same for every player, never changes, asked for once.
+	"""
+	var asking := HTTPRequest.new()
+	add_child(asking)
+
+	var sent := asking.request(BASE_URL + "/catalogue/statuses",
+		["Content-Type: application/json"])
+	if sent != OK:
+		asking.queue_free()
+		push_error("Could not ask what the statuses do: error %d" % sent)
+		return null
+
+	var result = await asking.request_completed
+	asking.queue_free()
+
+	if result[1] == 200:
+		var json = JSON.new()
+		if json.parse(result[3].get_string_from_utf8()) == OK:
+			return APITypes.StatusRules.new(json.data)
+
+	push_error("Could not fetch what the statuses do: code %d" % result[1])
+	return null
+
+
 func refresh_shop(round: int) -> APITypes.ShopRefreshResponse:
 	# Refresh shop from real server
 	if player_id == "":

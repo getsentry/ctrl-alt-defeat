@@ -322,6 +322,37 @@ class TestGameDesignCompliance:
             isinstance(level, float) for level in levels
         ), "A full pool is as fractional as a spent one"
 
+    def test_every_action_says_where_the_block_stands(self):
+        """Block is spent a point at a time by every blow that lands, so a
+        player watching cannot tell how much is left unless the timeline says
+        -- and it only ever said the health and the CPU."""
+        p1_containers, p2_containers = get_test_containers()
+        sim = BattleSimulator(seed=TEST_SEED)
+        # Stone Badge gives 4 Block every 3 seconds, so the battle is watched
+        # by a fighter who really does stand behind some.
+        shield = "stone_badge"
+
+        sim.simulate_battle(
+            [BattleItem(spec=deepcopy(ITEM_CATALOG[shield]), position=(0, 0))],
+            [BattleItem(spec=deepcopy(ITEM_CATALOG["null_blade"]), position=(4, 0))],
+            1,
+            p1_containers=p1_containers,
+            p2_containers=p2_containers,
+        )
+
+        stamped = [
+            action.details["block"]
+            for action in sim.actions
+            if action.details and "block" in action.details
+        ]
+        assert stamped, "Every action should say where the Block stood"
+        assert all(len(pair) == 2 for pair in stamped), (
+            "both fighters, like the health and the CPU beside it"
+        )
+        assert any(pair[0] > 0 for pair in stamped), (
+            "a fighter holding a shield should be seen holding Block"
+        )
+
     def test_item_specifications(self):
         """Test Section 2: All items match specifications"""
         # Null Blade, from Wooden Sword (Section 2.3)

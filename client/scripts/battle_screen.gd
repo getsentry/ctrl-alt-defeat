@@ -80,6 +80,11 @@ func _ready():
 	add_child(event_processor)
 	_connect_event_signals()
 
+	# What the buffs do, for the chips beside each fighter. The shop asks for
+	# it too and this returns at once when it already knows, but a battle
+	# reached without the shop having answered leaves every chip silent.
+	GameStateManager.fetch_status_rules()
+
 	_setup_ui_references()
 
 	# Wait for child nodes to be ready
@@ -435,8 +440,11 @@ func _update_stats_display():
 	hud.health_changed(player_health_bar)
 
 	player_stamina_bar.max_value = player_data.max_stamina
-	player_stamina_bar.value = player_data.stamina
-	player_stamina_label.text = "%.1f/%.0f" % [player_data.stamina, player_data.max_stamina]
+	# The number reads the same line the bar is drawn from: both ends of it
+	# are figures the battle recorded, so a value between them is one the
+	# battle really passed through.
+	player_stamina_bar.value = _cpu_shown[1]
+	player_stamina_label.text = "%.1f/%.0f" % [_cpu_shown[1], player_data.max_stamina]
 
 	# Update enemy stats
 	enemy_health_bar.max_value = enemy_data.max_health
@@ -446,8 +454,8 @@ func _update_stats_display():
 	hud.health_changed(enemy_health_bar)
 
 	enemy_stamina_bar.max_value = enemy_data.max_stamina
-	enemy_stamina_bar.value = enemy_data.stamina
-	enemy_stamina_label.text = "%.1f/%.0f" % [enemy_data.stamina, enemy_data.max_stamina]
+	enemy_stamina_bar.value = _cpu_shown[2]
+	enemy_stamina_label.text = "%.1f/%.0f" % [_cpu_shown[2], enemy_data.max_stamina]
 
 
 
@@ -458,6 +466,7 @@ func _connect_event_signals():
 	event_processor.healing_done.connect(_on_healing_done)
 	event_processor.block_activated.connect(_on_block_activated)
 	event_processor.cpu_changed.connect(_on_cpu_changed)
+	event_processor.block_changed.connect(_on_block_changed)
 	event_processor.buff_applied.connect(_on_buff_applied)
 	event_processor.debuff_applied.connect(_on_debuff_applied)
 	event_processor.item_activated.connect(_on_item_activated)
@@ -532,13 +541,34 @@ func _start_battle_playback():
 	# Start event playback with configurable speed
 	event_processor.start_playback(battle_speed_multiplier)
 
+## Where the CPU bars stand right now, which is between the two moments the
+## timeline recorded either side of the playhead. Keyed 1 and 2.
+var _cpu_shown := {1: 0.0, 2: 0.0}
+
+
 func _process(delta):
 	if battle_active and event_processor.is_playing:
 		current_time = event_processor.get_current_time()
 		time_label.text = "%.1fs" % current_time
 		hud.tick(current_time)
 
+		_read_the_cpu_bars()
 		_update_stats_display()
+
+
+func _read_the_cpu_bars() -> void:
+	"""Where each fighter's CPU stands at this instant of the battle.
+
+	Between the two moments the timeline recorded either side of the playhead,
+	not at the last one it passed. CPU refills the whole time, so a bar taken
+	from the last recorded moment stands still until the next action and then
+	jumps -- which is a bar that reads as broken rather than as filling.
+
+	Nothing about the refill rate is worked out here. Both ends of the line
+	are figures the battle recorded; this is the line between them.
+	"""
+	_cpu_shown[1] = event_processor.cpu_at(1, current_time)
+	_cpu_shown[2] = event_processor.cpu_at(2, current_time)
 
 var _effect_tweens: Array[Tween] = []
 
@@ -634,8 +664,10 @@ func _on_log_message(message: String, color: Color):
 
 # Event handler functions for battle events
 func _on_battle_started():
-	# Log is handled by BattleEventProcessor
-	pass
+	# Log is handled by BattleEventProcessor.
+	# The bars start where the fighters start rather than at nothing: nobody
+	# begins a battle with no CPU.
+	_read_the_cpu_bars()
 
 func _on_damage_dealt(player: int, amount: int, remaining_hp: int, source: String,
 		kind: String = "damage"):
@@ -661,6 +693,16 @@ func _on_block_activated(player: int, amount: int):
 	# Log is handled by BattleEventProcessor
 	_show_block_effect(player)
 
+func _on_block_changed(player: int, block: int):
+	"""How much Block this fighter is standing behind, at this moment.
+
+	Every action carries it, so it goes down as blows land rather than only up
+	as it is gained. Nothing on the screen said it before, and Block is the
+	difference between surviving the next hit and not.
+	"""
+	hud.set_block(player, block)
+
+
 func _on_cpu_changed(player: int, cpu: float, max_cpu: float):
 	"""Take the CPU level from the battle rather than making one up."""
 	var side = player_data if player == 1 else enemy_data
@@ -668,11 +710,11 @@ func _on_cpu_changed(player: int, cpu: float, max_cpu: float):
 	side.max_stamina = max_cpu
 
 
-func _on_buff_applied(player: int, buff_name: String):
-	hud.add_effect(player, buff_name, true)
+func _on_buff_applied(player: int, shown: String, status: String, stacks: int):
+	hud.add_effect(player, shown, true, status, stacks)
 
-func _on_debuff_applied(player: int, debuff_name: String):
-	hud.add_effect(player, debuff_name, false)
+func _on_debuff_applied(player: int, shown: String, status: String, stacks: int):
+	hud.add_effect(player, shown, false, status, stacks)
 
 func _on_item_activated(item_id: String, player: int, action: String):
 	# Log is handled by BattleEventProcessor

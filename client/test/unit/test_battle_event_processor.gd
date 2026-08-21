@@ -376,7 +376,8 @@ func test_a_buff_is_announced_by_name():
 	processor.skip_to_end()
 
 	# The name travels in the server's details, under buff_name.
-	assert_signal_emitted_with_parameters(processor, "buff_applied", [1, "Optimised"])
+	assert_signal_emitted_with_parameters(
+		processor, "buff_applied", [1, "Optimised", "optimized", 1])
 
 
 func test_a_debuff_is_announced_by_name():
@@ -390,7 +391,7 @@ func test_a_debuff_is_announced_by_name():
 	processor.skip_to_end()
 
 	assert_signal_emitted_with_parameters(
-		processor, "debuff_applied", [2, "Memory Leak"])
+		processor, "debuff_applied", [2, "Memory Leak", "memory_leaked", 1])
 
 
 func test_damage_over_time_wears_health_down():
@@ -405,6 +406,96 @@ func test_damage_over_time_wears_health_down():
 
 
 # ============ Fatigue ============
+
+# ============ Where the CPU stood between two moments ============
+#
+# CPU refills the whole time, and the timeline says where it stood only when
+# something happened. A bar drawn from the last recorded moment stands still
+# and then jumps, which reads as broken rather than as filling.
+
+func _a_battle_with_cpu(marks: Array) -> void:
+	var actions := []
+	for mark in marks:
+		actions.append(_action({
+			"timestamp": mark[0], "action": "battle_start", "player": 0,
+			"details": {"cpu": [mark[1], mark[2]], "max_cpu": [3.0, 3.0],
+				"hp": [80, 80], "max_hp": [80, 80]}}))
+	processor.load_battle_events(_battle(actions))
+
+
+func test_between_two_moments_the_cpu_is_the_line_between_them():
+	_a_battle_with_cpu([[0, 0.0, 0.0], [2000, 2.0, 2.0]])
+
+	assert_almost_eq(processor.cpu_at(1, 0.0), 0.0, 0.001, "at the first")
+	assert_almost_eq(processor.cpu_at(1, 1.0), 1.0, 0.001, "half way along")
+	assert_almost_eq(processor.cpu_at(1, 2.0), 2.0, 0.001, "at the second")
+
+
+func test_the_cpu_keeps_climbing_every_moment_in_between():
+	"""What the bar is for: it should never be standing still while the pool
+	is filling."""
+	_a_battle_with_cpu([[0, 0.0, 0.0], [3000, 3.0, 3.0]])
+
+	var was := -1.0
+	for tenth in range(30):
+		var now: float = processor.cpu_at(1, tenth / 10.0)
+		assert_gt(now, was, "at %.1fs it should have moved on" % (tenth / 10.0))
+		was = now
+
+
+func test_each_fighter_is_read_separately():
+	_a_battle_with_cpu([[0, 0.0, 3.0], [2000, 2.0, 1.0]])
+
+	assert_almost_eq(processor.cpu_at(1, 1.0), 1.0, 0.001, "one filling")
+	assert_almost_eq(processor.cpu_at(2, 1.0), 2.0, 0.001, "the other spending")
+
+
+func test_past_the_last_moment_it_stays_where_it_ended():
+	_a_battle_with_cpu([[0, 0.0, 0.0], [1000, 1.0, 1.0]])
+
+	assert_almost_eq(processor.cpu_at(1, 9.0), 1.0, 0.001)
+
+
+func test_a_playhead_that_goes_backwards_is_read_correctly():
+	"""The look walks forwards from where it last landed, so going back has to
+	send it to the start again."""
+	_a_battle_with_cpu([[0, 0.0, 0.0], [2000, 2.0, 2.0]])
+	processor.cpu_at(1, 2.0)
+
+	assert_almost_eq(processor.cpu_at(1, 0.5), 0.5, 0.001)
+
+
+func test_a_battle_that_says_nothing_about_the_cpu_reads_as_nothing():
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "battle_start", "player": 0})]))
+
+	assert_eq(processor.cpu_at(1, 1.0), 0.0, "nothing to draw, and no crash")
+
+
+func test_a_buff_says_how_many_stacks_arrived_at_once():
+	"""API Token grants 2 Regenerating in one action. Counting actions rather
+	than stacks, the chip beside the fighter said one."""
+	watch_signals(processor)
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 500, "action": "buff", "player": 1,
+			"details": {"buff_name": "regenerating", "shown": "regenerating",
+				"actual_value": 2}})]))
+	processor.skip_to_end()
+
+	assert_signal_emitted_with_parameters(
+		processor, "buff_applied", [1, "regenerating", "regenerating", 2])
+
+
+func test_an_action_that_does_not_say_how_many_counts_as_one():
+	watch_signals(processor)
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 500, "action": "buff", "player": 1,
+			"details": {"buff_name": "spiked", "shown": "spiked"}})]))
+	processor.skip_to_end()
+
+	assert_signal_emitted_with_parameters(
+		processor, "buff_applied", [1, "spiked", "spiked", 1])
+
 
 func test_nightfall_is_announced():
 	watch_signals(processor)

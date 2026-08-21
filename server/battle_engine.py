@@ -883,6 +883,11 @@ class BattleSimulator:
             details["max_cpu"] = [self.player1.max_cpu, self.player2.max_cpu]
             details["hp"] = [self.player1.quota, self.player2.quota]
             details["max_hp"] = [self.player1.max_quota, self.player2.max_quota]
+            # Block stands with the health it is protecting. It is spent a
+            # point at a time by every blow that lands, so a player watching a
+            # battle cannot tell how much of it is left from the log -- and
+            # nothing else in the timeline ever said.
+            details["block"] = [self.player1.block, self.player2.block]
             # A status is named here as it is named in a tooltip. The client
             # was printing the identifier on the chip beside each fighter --
             # "memory_leaked x2" -- because nothing else ever told it the word.

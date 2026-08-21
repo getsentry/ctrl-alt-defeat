@@ -142,6 +142,36 @@ func fetch_combining_catalogue() -> void:
 		combining.catalogue = catalogue
 
 
+## What every buff and debuff does, per stack. Empty until it is fetched.
+var status_rules: APITypes.StatusRules = null
+
+
+func fetch_status_rules() -> void:
+	"""Learn what the statuses do. Asked for once a run, like the combining
+	catalogue: a chip is hovered far too often to ask each time."""
+	if status_rules != null and status_rules.knows_any():
+		return
+	var rules = await BattleServerAPI.status_rules()
+	if rules != null:
+		status_rules = rules
+
+
+## What this many stacks of a status come to, in words, or empty where nothing
+## has been fetched or nothing is known about it.
+func what_a_status_does(status: String, stacks: int) -> String:
+	if status_rules == null:
+		return ""
+	return status_rules.what_it_does(status, stacks)
+
+
+## Everything the server says about one status, for the card that explains it.
+## Empty where nothing has been fetched or nothing is known about it.
+func about_a_status(status: String) -> Dictionary:
+	if status_rules == null:
+		return {}
+	return status_rules.about(status)
+
+
 func get_inventory_state() -> Dictionary:
 	# Ensure we always return both items and servers
 	if not current_inventory.has("servers") and server_containers.size() > 0:

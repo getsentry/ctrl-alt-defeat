@@ -211,6 +211,59 @@ func test_a_speed_change_reaches_the_charges_already_filling():
 		"Every item on the rack charges at the speed the battle is replayed at")
 
 
+# ============ What a buff chip says when it is hovered ============
+
+func test_a_buff_from_the_timeline_carries_what_it_does():
+	"""The whole path: an action in the timeline, through the processor, onto
+	a chip beside the fighter. Testing the hud on its own missed that the
+	identifier has to survive the journey."""
+	GameStateManager.status_rules = APITypes.StatusRules.new({"statuses": [{
+		"status": "regenerating", "shown": "regenerating", "kind": "buff",
+		"each": 1, "one": "Heals 1 every 2 seconds",
+		"many": "Heals {total} every 2 seconds",
+	}]})
+
+	battle_screen.event_processor._process_event(_buff_action("regenerating"))
+	await get_tree().process_frame
+
+	var row = battle_screen.hud._effects["player_buff"]
+	assert_eq(row.get_child_count(), 1, "a chip for it")
+
+	battle_screen.hud._explain(row.get_child(0))
+
+	assert_true(is_instance_valid(battle_screen.hud._explaining),
+		"and hovering it puts up a card")
+	assert_eq(battle_screen.hud._explaining.each_label.text,
+		"Heals 1 every 2 seconds")
+	autofree(battle_screen.hud._explaining)
+
+
+func _buff_action(status: String) -> APITypes.BattleAction:
+	return APITypes.BattleAction.new({
+		"timestamp": 1000, "source": "an_item", "action": "buff",
+		"player": 1, "target": null, "damage": null,
+		"details": {
+			"buff_name": status, "shown": status, "actual_value": 1,
+			"hp": [80, 80], "max_hp": [80, 80],
+		},
+	})
+
+
+# ============ The CPU bar between the moments ============
+
+func test_the_bar_and_the_number_read_the_same_line():
+	battle_screen.current_time = 0.5
+	battle_screen._read_the_cpu_bars()
+
+	battle_screen._update_stats_display()
+
+	assert_almost_eq(battle_screen.player_stamina_bar.value,
+		battle_screen._cpu_shown[1], 0.001)
+	assert_true(battle_screen.player_stamina_label.text.begins_with(
+		"%.1f" % battle_screen._cpu_shown[1]),
+		"reads %s" % battle_screen.player_stamina_label.text)
+
+
 func test_animation_speed_control():
 	# Speed control is $ControlButtons/SpeedButton.
 	var speed_control = battle_screen.find_child("SpeedButton", true, false)
