@@ -763,7 +763,17 @@ class BattleSimulator:
             self.current_time += self.tick_rate
 
         # Determine winner (Section 6.2)
-        winner = 1 if player1.quota > player2.quota else 2
+        #
+        # A DRAW GOES TO PLAYER 1. Both fighters running out in the same tick
+        # is common rather than rare -- quota is clamped at nothing, so the
+        # overkill that used to separate them is gone, and fatigue lands on
+        # both in the same tick by design. Measured at 63% of mirror matches
+        # and 5% of battles between real builds.
+        #
+        # `>` sent every one of those to player 2, which is always the bot or
+        # the ghost. Player 1 is the person playing, and they are the one who
+        # cares, so the tie goes to them.
+        winner = 1 if player1.quota >= player2.quota else 2
 
         return BattleResult(
             winner=winner,
