@@ -33,6 +33,7 @@ from item_effects import (
     CleanseEffect,
     ConditionEffect,
     ConsumeEffect,
+    ConvertHealthEffect,
     CostEffect,
     CounterTrigger,
     CpuDrainEffect,
@@ -150,7 +151,21 @@ STAT_SHOWN = {
     "max_cpu": "maximum CPU",
     "cpu_regen": "CPU regeneration",
     "max_health": "maximum quota",
+    "max_health_from_items": "maximum quota from items",
+    "block_given": "Block",
+    "vampirism_given": "Vampirism",
 }
+
+#: Stats that are a share of what an item hands over, not of what it has.
+#: They read with a different verb -- "Star items give +30% Block", never
+#: "get" -- and their names in STAT_SHOWN are the bare noun that verb wants.
+GIVEN = frozenset({"block_given", "vampirism_given"})
+
+
+def having_or_giving(stat: str) -> str:
+    """`get` or `give`, whichever the stat is about"""
+    return "give" if stat in GIVEN else "get"
+
 
 #: The two zones an item draws on its own map. Marked, so the card can show
 #: them the way the board does -- the shape beside the word, in the colour the
@@ -331,6 +346,18 @@ def counted(counting: object, noun: str = "items") -> str:
     return f"{either(tags)} {noun}"
 
 
+def counted_in(counting: object, where: str) -> str:
+    """What a "for each" counts, and where it counts it.
+
+    A zone goes in front -- "each [star]star[/star] Nature-item" -- and a
+    container goes behind, because "each Nature-item inside" is how every
+    clause that means a container writes it.
+    """
+    if where == "contained":
+        return f"{counted(counting, 'item')} inside"
+    return counted(counting, f"{zone(where)} item")
+
+
 def gathered(effects: List[Effect]) -> List[str]:
     """The clauses for a run of effects, with the repetition taken out.
 
@@ -447,7 +474,21 @@ def _(effect: HealEffect) -> str:
 
 @of_effect.register
 def _(effect: BlockEffect) -> str:
+    share = (
+        f"{percent(effect.share_of_missing_health)} of your missing quota"
+        if effect.share_of_missing_health
+        else ""
+    )
+    if effect.block_amount and share:
+        return f"gain {number(effect.block_amount)} Block and {share} as Block"
+    if share:
+        return f"gain Block equal to {share}"
     return f"gain {number(effect.block_amount)} Block"
+
+
+@of_effect.register
+def _(effect: ConvertHealthEffect) -> str:
+    return f"turn {number(effect.health)} quota into {number(effect.block)} Block"
 
 
 @of_effect.register
@@ -511,6 +552,11 @@ def _(effect: EffectDamageEffect) -> str:
 
 @of_effect.register
 def _(effect: MaxHealthEffect) -> str:
+    share = f"{percent(effect.share)} maximum quota" if effect.share else ""
+    if effect.amount and share:
+        return f"gain {number(effect.amount)} maximum quota and {share}"
+    if share:
+        return f"gain {share}"
     return f"gain {number(effect.amount)} maximum quota"
 
 
@@ -530,7 +576,21 @@ def _(effect: ResistEffect) -> str:
     what = {"critical": "a critical hit", "stun": "a stun"}.get(
         effect.against, "a debuff"
     )
-    if effect.only:
+    if effect.against == "removal":
+        # Not refusing something sent at you but keeping something you have,
+        # so it is said the way round a player reads it.
+        pool = effect.only[0] if effect.only else "buff"
+        whose = "your opponent's" if theirs(effect.target_type) else "your"
+        if effect.count:
+            return (
+                f"protect {number(effect.count)} of {whose} {pool}s "
+                f"from being taken"
+            )
+        return (
+            f"protect {whose} {pool}s from being taken "
+            f"{percent(effect.chance)} of the time"
+        )
+    elif effect.only:
         what = either([marked(name) for name in sorted(effect.only)])
     if effect.per_status:
         # A chance that grows: "2% chance to resist debuffs for each Luck".
@@ -671,7 +731,8 @@ def _(effect: CleanseEffect) -> str:
 @of_effect.register
 def _(effect: ModifyEffect) -> str:
     reach = counted(effect.counting, REACH.get(effect.target_type, effect.target_type))
-    text = f"{reach} get {by_how_much(effect.stat, effect.value)}"
+    verb = having_or_giving(effect.stat)
+    text = f"{reach} {verb} {by_how_much(effect.stat, effect.value)}"
     if effect.duration and effect.duration > 0:
         text += f" for {seconds(effect.duration)}"
     if effect.cap is not None:
@@ -683,17 +744,23 @@ def _(effect: ModifyEffect) -> str:
 def _(effect: ModifyPerEffect) -> str:
     return (
         f"{by_how_much(effect.stat, effect.value)} for each "
-        f"{counted(effect.counting, f'{zone(effect.zone)} item')}"
+        f"{counted_in(effect.counting, effect.zone)}"
     )
 
 
 @of_effect.register
 def _(effect: ModifyPerStatusEffect) -> str:
     whose = "your opponent has" if effect.whose == "enemy" else "you have"
-    return (
+    change = (
         f"{by_how_much(effect.stat, effect.value)} for each "
         f"{marked(effect.status)} {whose}"
     )
+    if effect.cap is not None:
+        change += f" (up to {percent(effect.cap)})"
+    if effect.target_type == "self":
+        return change
+    verb = having_or_giving(effect.stat)
+    return f"{REACH.get(effect.target_type, effect.target_type)} {verb} {change}"
 
 
 @of_effect.register
@@ -707,7 +774,7 @@ def _(effect: GainDamageEffect) -> str:
 @of_effect.register
 def _(effect: PerCountEffect) -> str:
     inner = joined(gathered(effect.effects))
-    return f"{inner} for each {counted(effect.counting, f'{zone(effect.where)} item')}"
+    return f"{inner} for each {counted_in(effect.counting, effect.where)}"
 
 
 @of_effect.register
@@ -876,6 +943,13 @@ def _(trigger: CounterTrigger) -> str:
         what = "Block"
     else:
         what = marked(trigger.counting)
+
+    if trigger.where:
+        # Not the player's own total but what one zone has handed over:
+        # "Star items gained 12 Block". `whose` and `counts` say nothing here
+        # and the loader refuses to let them try.
+        givers = REACH.get(trigger.where, trigger.where)
+        return f"once {givers} have given {number(trigger.amount)} {what}"
 
     # `held` is what they have now, and spending it puts them back under the
     # line; `gained` is everything that ever arrived, and only goes up.

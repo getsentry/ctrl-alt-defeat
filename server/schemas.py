@@ -180,6 +180,7 @@ class BattleActionName(str, Enum):
     CPU_DRAIN = "cpu_drain"
     CLEANSE = "cleanse"
     GAIN_DAMAGE = "gain_damage"
+    CONVERT_HEALTH = "convert_health"
     SPEND = "spend"
     STUN = "stun"
     RESIST = "resist"

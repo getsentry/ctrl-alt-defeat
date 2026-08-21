@@ -161,8 +161,18 @@ func _process_event(event: APITypes.BattleAction):
 			log_msg = "[%.1fs] Battle starts!" % [event_time]
 			log_color = Color(1.0, 1.0, 0.5)  # Yellow for battle start
 		"block":
-			var attacker = 1 if player == 2 else 2
-			log_msg = "[%.1fs] Player %d's attack BLOCKED by Player %d's %s (%d damage blocked)" % [event_time, attacker, player, item_name, event.damage]
+			# Two different things share this name: Block arriving, and Block
+			# spending itself on a blow. The action says which in details.type.
+			# Reading every one as a blow put "attack BLOCKED" in the log at
+			# 0.0s, against an attack nobody had made.
+			var how = ""
+			if event.details != null and event.details.has("type"):
+				how = event.details["type"]
+			if how == "gained":
+				log_msg = "[%.1fs] Player %d's %s gains %d Block" % [event_time, player, item_name, event.damage]
+			else:
+				var attacker = 1 if player == 2 else 2
+				log_msg = "[%.1fs] Player %d's attack BLOCKED by Player %d's %s (%d damage blocked)" % [event_time, attacker, player, item_name, event.damage]
 			log_color = Color(0.5, 0.8, 1.0)  # Light blue for blocks
 		"miss":
 			# A miss carries whoever swung, where a hit carries whoever was
@@ -212,6 +222,9 @@ func _process_event(event: APITypes.BattleAction):
 		"gain_damage":
 			log_msg = "[%.1fs] Player %d's %s gains %d damage" % [event_time, player, item_name, event.damage]
 			log_color = Color(1.0, 0.8, 0.4)  # Amber, a weapon getting stronger
+		"convert_health":
+			log_msg = "[%.1fs] Player %d's %s turns %d quota into Block" % [event_time, player, item_name, event.damage]
+			log_color = Color(0.5, 0.8, 1.0)  # Blue, the colour Block is drawn in
 		"spend":
 			# details.costs is {buff name: how many}, and more than one can be
 			# spent at once.
@@ -294,6 +307,16 @@ func _process_event(event: APITypes.BattleAction):
 		"gain_damage":
 			# Nothing to show yet: an item's damage is not drawn during a battle
 			pass
+
+		"convert_health":
+			# The health bar is driven by this signal and nothing else, so a
+			# price paid in health has to send one or the bar sits still until
+			# the next blow. It goes as damage with a kind of its own rather
+			# than as its own signal: what the screen does with it -- move the
+			# bar, throw a number -- is what it does with every other way
+			# health leaves, and only the colour differs.
+			damage_dealt.emit(player, event.damage, _quota_left(player, event),
+				source, "convert_health")
 
 		"spend":
 			# Nothing to show yet: the buff icons are not driven from the log

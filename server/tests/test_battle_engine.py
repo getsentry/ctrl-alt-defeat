@@ -18,6 +18,7 @@ from battle_engine import (
     MemoryLeaked,
     Player,
     Timed,
+    _Zone,
 )
 from containers import Container
 from grid_system import parse_map
@@ -33,6 +34,7 @@ from item_effects import (
     CleanseEffect,
     ConditionEffect,
     ConsumeEffect,
+    ConvertHealthEffect,
     CostEffect,
     CounterTrigger,
     CpuDrainEffect,
@@ -47,6 +49,7 @@ from item_effects import (
     InflictFatigueEffect,
     ItemSpec,
     LimitEffect,
+    MaxHealthEffect,
     ModifyEffect,
     ModifyPerStatusEffect,
     NextAttackEffect,
@@ -61,8 +64,8 @@ from item_effects import (
     PreventDamageEffect,
     RandomStatusEffect,
     ReflectEffect,
-    SaleChanceEffect,
     ResistEffect,
+    SaleChanceEffect,
     StaminaEffect,
     StatusChangeTrigger,
     StunEffect,
@@ -89,14 +92,26 @@ def charges_left(player):
 
 
 def get_test_containers():
-    """A 3x3 for each player.
+    """A quiet rack of four squares each, four wide and four deep.
 
-    A 2x2 was enough while every item covered a square or two. Items carry
-    their real shapes now, and a four square L reaches three rows down.
+    Four plain VMs rather than one big bag, because every bag in the
+    catalogue carries a clause now: the 3x3 this used to be amplifies its
+    owner's healing by 12%, which every healing test would have to allow for.
+    A rack of standard_vm covers the same squares and says nothing.
     """
     return (
-        [Container.of("mesh_network_hub", (0, 0), "p1_test_rack")],
-        [Container.of("mesh_network_hub", (4, 0), "p2_test_rack")],
+        [
+            Container.of("standard_vm", (0, 0), "p1_test_rack_a"),
+            Container.of("standard_vm", (2, 0), "p1_test_rack_b"),
+            Container.of("standard_vm", (0, 2), "p1_test_rack_c"),
+            Container.of("standard_vm", (2, 2), "p1_test_rack_d"),
+        ],
+        [
+            Container.of("standard_vm", (4, 0), "p2_test_rack_a"),
+            Container.of("standard_vm", (6, 0), "p2_test_rack_b"),
+            Container.of("standard_vm", (4, 2), "p2_test_rack_c"),
+            Container.of("standard_vm", (6, 2), "p2_test_rack_d"),
+        ],
     )
 
 
@@ -213,9 +228,7 @@ class TestGameDesignCompliance:
         """
         sim = BattleSimulator(seed=TEST_SEED)
         p1_containers, p2_containers = get_test_containers()
-        lucky = BattleItem(
-            spec=deepcopy(ITEM_CATALOG["maneki_neko"]), position=(0, 0)
-        )
+        lucky = BattleItem(spec=deepcopy(ITEM_CATALOG["maneki_neko"]), position=(0, 0))
         assert any(
             isinstance(effect, SaleChanceEffect)
             for trigger in lucky.spec.triggers
@@ -1131,18 +1144,8 @@ class TestOneRollCoversTheList:
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = seconds
 
-        seen = []
-        original = sim._setup_item_handlers
-
-        def watch(items, owner, enemy):
-            if owner.id == 2:
-                seen.append(owner)
-            return original(items, owner, enemy)
-
-        sim._setup_item_handlers = watch
         sim.simulate_battle([shield], [attacker], 18, p1_containers, p2_containers)
-        (attacking_player,) = seen
-        return sim, attacking_player
+        return sim, sim.player2
 
     def test_a_roll_that_lands_does_both(self):
         """Prevent the damage AND take the CPU. Never one without the other.
@@ -1205,20 +1208,10 @@ class TestOneRollCoversTheList:
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = 3.5
 
-        seen = []
-        original = sim._setup_item_handlers
-
-        def watch(items, owner, enemy):
-            if owner.id == 2:
-                seen.append(owner)
-            return original(items, owner, enemy)
-
-        sim._setup_item_handlers = watch
         sim.simulate_battle(
             [shield], [self._attacker(5)], 18, p1_containers, p2_containers
         )
-        (attacker_player,) = seen
-        assert attacker_player.cpu >= 0.0
+        assert sim.player2.cpu >= 0.0
 
     def test_a_shield_never_rolls_against_a_miss(self):
         """There is nothing to block, so the CPU stays on the attacker too"""
@@ -1262,20 +1255,9 @@ class TestCpuDrainIsAnOrdinaryEffect:
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = 3.5
 
-        seen = []
-        original = sim._setup_item_handlers
-
-        def watch(items, owner, enemy):
-            if owner.id == 2:
-                seen.append(owner)
-            return original(items, owner, enemy)
-
-        sim._setup_item_handlers = watch
         sim.simulate_battle([drainer], [], 18, p1_containers, p2_containers)
-        (victim,) = seen
-
         assert [a for a in sim.actions if a.action == "cpu_drain"]
-        assert victim.cpu < victim.max_cpu
+        assert sim.player2.cpu < sim.player2.max_cpu
 
     def test_it_never_puts_anyone_into_debt(self):
         """Negative CPU would lock a player out for the rest of the battle"""
@@ -1303,18 +1285,8 @@ class TestCpuDrainIsAnOrdinaryEffect:
         sim = BattleSimulator(seed=TEST_SEED)
         sim.max_duration = 5.0
 
-        seen = []
-        original = sim._setup_item_handlers
-
-        def watch(items, owner, enemy):
-            if owner.id == 2:
-                seen.append(owner)
-            return original(items, owner, enemy)
-
-        sim._setup_item_handlers = watch
         sim.simulate_battle([greedy], [], 18, p1_containers, p2_containers)
-        (victim,) = seen
-        assert victim.cpu >= 0.0
+        assert sim.player2.cpu >= 0.0
 
     def test_a_shield_still_drains_the_attacker(self):
         """The route changed, the behaviour did not"""
@@ -3030,6 +3002,31 @@ class _WithOneItem:
                 cost=1,
                 player_class="neutral",
                 shape=parse_map(["#"], "i"),
+                slug=uid,
+                kinds=frozenset({"melee"}),
+                triggers=triggers,
+            ),
+            position=position,
+            uid=uid,
+        )
+
+    @staticmethod
+    def _starred(triggers, uid="starred", position=(1, 1), category="protocol"):
+        """An item whose star is the two squares above it.
+
+        `_item` draws no zone, which is right for most tests and useless for
+        one about an aura: a zone that reaches nowhere passes by doing
+        nothing. Two squares wide so that two of these can share one square of
+        zone, which is how "shares add" gets asked.
+        """
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid,
+                name=uid,
+                category=category,
+                cost=1,
+                player_class="neutral",
+                shape=parse_map(["**", ".#"], uid),
                 slug=uid,
                 kinds=frozenset({"melee"}),
                 triggers=triggers,
@@ -5480,6 +5477,38 @@ class TestWhatStandsInFrontOfTheQuota(_WithOneItem):
         assert target.block == 35
 
 
+class TestAZoneNobodyKnowsIsRefused(_WithOneItem):
+    """The same guard `_modify` has, for the same reason.
+
+    `aura_squares` answers anything that is not `star` with the diamond, so a
+    zone name it does not know quietly projects the wrong shape. `_reached_by`
+    used to whitelist the two and return nothing for anything else, which was
+    safe; asking `_zone_squares` for the squares of a third is not.
+
+    The loader keeps this off the catalogue, so nothing here can reach it --
+    which is exactly when a guard is worth writing down, because nothing else
+    will notice when it stops holding.
+    """
+
+    def test_a_zone_nobody_knows_stops_rather_than_guessing(self):
+        sim = BattleSimulator(seed=TEST_SEED)
+        with pytest.raises(TypeError, match="is not a zone"):
+            sim._zone_squares(self._starred([]), "sideways")
+
+    def test_the_three_it_knows_all_answer(self):
+        sim = BattleSimulator(seed=TEST_SEED)
+        item = self._starred([], position=(2, 2))
+        zones = {
+            name: sim._zone_squares(item, name)
+            for name in ("star", "diamond", "contained")
+        }
+        assert zones == {
+            "star": [(1, 1), (2, 1)],
+            "diamond": [],
+            "contained": [(2, 2)],
+        }
+
+
 class TestAModifierThatNothingAppliesIsRefused(_WithOneItem):
     """A stat that loads and then does nothing is worse than one that will
     not load.
@@ -5625,31 +5654,32 @@ class TestTheSweptClauses(_WithOneItem):
     #: racks side by side make one space: a four-square-wide item has
     #: somewhere to stand, and a star drawn above or to the left of an item
     #: has somewhere to land.
-    ROOM = (((0, 0), (3, 0), (0, 3), (3, 3)), ((6, 0), (6, 3)))
+    # Plain VMs rather than the 3x3 bags that used to stand here. Every bag
+    # in the catalogue carries a clause now, and four of that one would have
+    # amplified this room's healing by 48% behind every test in the class.
+    ROOM = (
+        tuple((x, y) for y in (0, 2, 4) for x in (0, 2, 4)),
+        ((6, 0), (6, 2), (6, 4)),
+    )
     MINE = {(x, y) for x in range(6) for y in range(6)}
 
     def _room(self):
         mine, theirs = self.ROOM
         return (
-            [
-                Container.of("mesh_network_hub", at, f"p1_{i}")
-                for i, at in enumerate(mine)
-            ],
-            [
-                Container.of("mesh_network_hub", at, f"p2_{i}")
-                for i, at in enumerate(theirs)
-            ],
+            [Container.of("standard_vm", at, f"p1_{i}") for i, at in enumerate(mine)],
+            [Container.of("standard_vm", at, f"p2_{i}") for i, at in enumerate(theirs)],
         )
 
-    def _place(self, item_id, how_many_star=0):
+    def _place(self, item_id, how_many_star=0, avoiding=()):
         """Somewhere the item fits with `how_many_star` of its star inside.
 
         A star is drawn around an item on its own map and half of it reaches
         off the left and top, so where an item stands decides whether its own
-        aura lands anywhere at all.
+        aura lands anywhere at all. `avoiding` names squares already spoken
+        for, which is how a second real item gets a place beside the first.
         """
         spec = ITEM_CATALOG[item_id]
-        room = self.MINE
+        room = self.MINE - set(avoiding)
         for y in range(6):
             for x in range(6):
                 covered = {(x + dx, y + dy) for dx, dy in spec.shape.squares}
@@ -5683,6 +5713,23 @@ class TestTheSweptClauses(_WithOneItem):
 
         sim._setup_item_handlers = setup
         return sim, sim.simulate_battle(items, list(against), 18, mine, theirs)
+
+    def _somewhere_outside(self, item_id, at, taken=()):
+        """A free square of the room that `item_id`'s star does not fall on.
+
+        `_place` answers where an item goes; this answers where to put one
+        that must *not* be reached, which is the other half of proving a zone
+        is what a clause counts. `taken` names squares already spoken for.
+        """
+        spec = ITEM_CATALOG[item_id]
+        busy = {(at[0] + dx, at[1] + dy) for dx, dy in spec.shape.squares}
+        busy |= {(at[0] + dx, at[1] + dy) for dx, dy in spec.shape.star}
+        busy |= set(taken)
+        for y in range(5, -1, -1):
+            for x in range(5, -1, -1):
+                if (x, y) in self.MINE and (x, y) not in busy:
+                    return (x, y)
+        raise AssertionError(f"nowhere in the room is outside {item_id}")
 
     @staticmethod
     def _tagged(uid, kinds, where, category="protocol"):
@@ -8810,11 +8857,13 @@ class TestWhatTheseTenLetTheCatalogueDo(TestTheSweptClauses):
     def test_shepherds_crook_refuses_only_what_it_names(self):
         """ "50% chance to resist Blind and Cold" leaves Poison alone."""
         spec = ITEM_CATALOG["shepherds_crook"]
+        # Two of them now: this one, and the 35% that keeps your buffs from
+        # being taken. Only the debuff half is what this test is about.
         (resist,) = [
             r
             for t in spec.triggers
             for r in getattr(t, "effects", []) or []
-            if isinstance(r, ResistEffect)
+            if isinstance(r, ResistEffect) and r.against == "debuff"
         ]
         assert set(resist.only) == {"rate_limited", "throttled"}
 
@@ -9066,3 +9115,1061 @@ class TestWhatTheseTenLetTheCatalogueDo(TestTheSweptClauses):
         assert (
             sim._per_status(blade, "damage_flat", sim.player1, sim.player2) == 4.0
         ), "eight debuffs at half a point each, not four"
+
+
+class TestAContainerKnowsWhatIsInside(_WithOneItem):
+    """A container is an item too, and `contained` is its own footprint.
+
+    Its squares are the ones other items stand on, so what is inside one is
+    whatever sits on the squares it covers. Nothing read that until now: a
+    shelf that speeds up what it holds reached nothing at all, and every
+    clause written "inside" did nothing.
+    """
+
+    @staticmethod
+    def _rack(container_id, at=(0, 0)):
+        return (
+            [Container.of(container_id, at, "rack")],
+            [Container.of("standard_vm", (6, 0), "theirs")],
+        )
+
+    def _fight(self, container_id, items, seconds=1.0, at=(0, 0)):
+        mine, theirs = self._rack(container_id, at)
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        sim.nightfall = seconds + 1
+        return sim, sim.simulate_battle(items, [], 18, mine, theirs)
+
+    def test_a_shelf_speeds_up_what_stands_on_it(self):
+        """Hot Pocket: "Items inside trigger 10% faster"."""
+        held = self._item([], uid="held", position=(0, 0))
+        sim, _ = self._fight("edge_node", [held])
+        assert sim.loadout[1][0].speed_mult == pytest.approx(1.1)
+
+    def test_a_shelf_reaches_nothing_it_does_not_cover(self):
+        """The rack is two squares wide at the origin; this stands past it"""
+        far = self._item([], uid="far", position=(6, 0))
+        mine = [
+            Container.of("edge_node", (0, 0), "rack"),
+            Container.of("standard_vm", (6, 0), "spare"),
+        ]
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 1.0
+        sim.simulate_battle(
+            [far], [], 18, mine, [Container.of("standard_vm", (6, 3), "theirs")]
+        )
+        assert sim.loadout[1][0].speed_mult == 1.0
+
+    def test_a_container_counts_what_it_holds(self):
+        """Holdall: "Gain 8 Block for each Neutral item inside"."""
+        two = [
+            self._item([], uid="a", position=(0, 0)),
+            self._item([], uid="b", position=(1, 0)),
+        ]
+        sim, _ = self._fight("container_orchestrator", two)
+        assert sim.player1.block == 16
+
+    def test_it_counts_none_when_the_shelf_is_bare(self):
+        sim, _ = self._fight("container_orchestrator", [])
+        assert sim.player1.block == 0
+
+    def test_a_container_is_not_standing_on_its_own_shelf(self):
+        """Its squares are offered, not filled.
+
+        Counting the container itself would fill every shelf it offers, so a
+        clause that counts free squares inside one would find none at all.
+        Asked of the counting rather than of the lists, because the lists are
+        an arrangement and this is what the arrangement is for.
+        """
+        holding = self._item([], uid="held", position=(0, 0))
+        sim, _ = self._fight("container_orchestrator", [holding])
+        rack = sim.racks[1][0]
+        free = sim._free_squares(_Zone("contained"), rack, sim.loadout[1])
+        assert free == 5, "six squares, one item standing on one of them"
+
+    def test_a_container_gets_its_own_copy_of_the_catalogues_spec(self):
+        """A trigger keeps its state on itself and the catalogue holds one
+        spec per container type. Shared, one battle's crossed counter would
+        still be crossed in the next, and both players would read the same
+        one. An item's spec is copied for exactly this reason.
+        """
+        mine = [Container.of("edge_node", (0, 0), "mine")]
+        theirs = [Container.of("edge_node", (6, 0), "theirs")]
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 0.2
+        sim.simulate_battle([], [], 18, mine, theirs)
+
+        assert sim.racks[1][0].spec is not ITEM_CATALOG["edge_node"]
+        assert sim.racks[1][0].spec is not sim.racks[2][0].spec
+
+    def test_a_container_cannot_reach_the_other_players_items(self):
+        theirs = self._item([], uid="theirs", position=(6, 0))
+        mine = [Container.of("edge_node", (0, 0), "rack")]
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 1.0
+        sim.simulate_battle(
+            [], [theirs], 18, mine, [Container.of("standard_vm", (6, 0), "theirs")]
+        )
+        assert sim.loadout[2][0].speed_mult == 1.0
+
+    def test_a_battle_leaves_nothing_behind_on_the_session_container(self):
+        """The catalogue's spec is shared by every container of a type, and
+        triggers keep their own state on themselves."""
+        rack = Container.of("container_orchestrator", (0, 0), "rack")
+        before = deepcopy(ITEM_CATALOG["container_orchestrator"])
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 1.0
+        sim.simulate_battle(
+            [self._item([], uid="a")],
+            [],
+            18,
+            [rack],
+            [Container.of("standard_vm", (6, 0), "theirs")],
+        )
+        assert ITEM_CATALOG["container_orchestrator"] == before
+
+
+class TestAnAuraCanHandOutAScaledModifier(_WithOneItem):
+    """ "Star items gain 4% critical chance for each Luck".
+
+    A modifier whose size depends on what the player holds was something an
+    item could only ever say about itself. An aura hands one out here, and
+    each item in the zone reads its own copy against the same pool.
+    """
+
+    def _giver(self, effect, uid="giver", position=(1, 1)):
+        """An item that projects one standing modifier over its star"""
+        return self._starred([PassiveTrigger(effects=[effect])], uid, position)
+
+    def test_the_zone_reads_the_pool_the_owner_holds(self):
+        giver = self._giver(
+            ModifyPerStatusEffect(
+                stat="critical_chance",
+                value=0.04,
+                status="calibrated",
+                whose="self",
+                target_type="star",
+            )
+        )
+        taker = self._item([], uid="taker", position=(0, 0))
+        sim, _ = self._run([giver, taker], seconds=0.3, buffs={"calibrated": 3})
+        got = next(i for i in sim.loadout[1] if i.uid == "taker")
+        assert sim._per_status(
+            got, "critical_chance", sim.player1, sim.player2
+        ) == pytest.approx(0.12)
+
+    def test_it_grows_and_shrinks_with_the_pool(self):
+        """Kept rather than folded in, so it follows the count either way"""
+        giver = self._giver(
+            ModifyPerStatusEffect(
+                stat="damage_flat",
+                value=1.0,
+                status="calibrated",
+                whose="self",
+                target_type="star",
+            )
+        )
+        taker = self._item([], uid="taker", position=(0, 0))
+        sim, _ = self._run([giver, taker], seconds=0.3, buffs={"calibrated": 2})
+        got = next(i for i in sim.loadout[1] if i.uid == "taker")
+        assert sim._per_status(got, "damage_flat", sim.player1, sim.player2) == 2.0
+        sim.player1.buffs["calibrated"] = 0
+        assert sim._per_status(got, "damage_flat", sim.player1, sim.player2) == 0.0
+
+    def test_the_item_projecting_it_does_not_get_it(self):
+        """A zone is drawn beside the footprint, never on it"""
+        giver = self._giver(
+            ModifyPerStatusEffect(
+                stat="damage_flat",
+                value=1.0,
+                status="calibrated",
+                whose="self",
+                target_type="star",
+            )
+        )
+        sim, _ = self._run([giver], seconds=0.3, buffs={"calibrated": 5})
+        assert sim.loadout[1][0].per_status == []
+
+    def test_a_cap_stops_it_growing(self):
+        """ "(up to 50%)" is a ceiling on the reading, not on a total"""
+        giver = self._giver(
+            ModifyPerStatusEffect(
+                stat="critical_chance",
+                value=0.04,
+                status="calibrated",
+                whose="self",
+                target_type="star",
+                cap=0.5,
+            )
+        )
+        taker = self._item([], uid="taker", position=(0, 0))
+        sim, _ = self._run([giver, taker], seconds=0.3, buffs={"calibrated": 100})
+        got = next(i for i in sim.loadout[1] if i.uid == "taker")
+        assert sim._per_status(
+            got, "critical_chance", sim.player1, sim.player2
+        ) == pytest.approx(0.5)
+
+    def test_an_item_saying_it_about_itself_still_keeps_it(self):
+        """The commoner half, and unchanged"""
+        mine = self._giver(
+            ModifyPerStatusEffect(
+                stat="damage_flat", value=1.0, status="calibrated", whose="self"
+            ),
+            position=(0, 0),
+        )
+        sim, _ = self._run([mine], seconds=0.3, buffs={"calibrated": 2})
+        assert (
+            sim._per_status(sim.loadout[1][0], "damage_flat", sim.player1, sim.player2)
+            == 2.0
+        )
+
+
+class TestHealthTurnsIntoBlock(_WithOneItem):
+    """ "Convert 50 health into 100 Block".
+
+    A price paid in health, not damage taken: nothing that answers an attack
+    answers this.
+    """
+
+    def _converter(self, health, block, uid="conv"):
+        return self._item(
+            [BattleStartTrigger(effects=[ConvertHealthEffect(health, block)])], uid
+        )
+
+    def test_the_health_goes_and_the_block_arrives(self):
+        sim, _ = self._run([self._converter(50, 100)], seconds=0.3)
+        assert sim.player1.quota == sim.player1.max_quota - 50
+        assert sim.player1.block == 100
+
+    def test_it_cannot_be_paid_when_the_price_is_the_last_of_you(self):
+        """All of it or none of it, and never the last point"""
+        sim, _ = self._run([self._converter(50, 100)], seconds=0.3, hurt=50)
+        assert sim.player1.quota == 50, "nothing was paid"
+        assert sim.player1.block == 0
+
+    def test_a_threshold_notices_health_leaving_this_way_too(self):
+        """ "Health drops below 50%" is written about health, not about being
+        hit. A conversion that went round the one road down took its owner to
+        37% with the threshold item standing beside it and nothing fired.
+        """
+        watcher = self._item(
+            [
+                HealthThresholdTrigger(
+                    threshold=0.5,
+                    effects=[
+                        BuffEffect(buff_name="monitored", value=1, target_type="self")
+                    ],
+                )
+            ],
+            uid="watcher",
+            position=(1, 0),
+        )
+        sim, _ = self._run([self._converter(60, 10), watcher], seconds=0.3, hurt=180)
+        assert sim.player1.quota == 120
+        assert sim.player1.buffs.get("monitored") == 1
+
+    def test_a_threshold_stays_quiet_when_the_price_leaves_you_above_it(self):
+        watcher = self._item(
+            [
+                HealthThresholdTrigger(
+                    threshold=0.5,
+                    effects=[
+                        BuffEffect(buff_name="monitored", value=1, target_type="self")
+                    ],
+                )
+            ],
+            uid="watcher",
+            position=(1, 0),
+        )
+        sim, _ = self._run([self._converter(10, 10), watcher], seconds=0.3, hurt=300)
+        assert "monitored" not in sim.player1.buffs
+
+    def test_nothing_answers_it_as_though_it_were_damage(self):
+        """Spikes answer an attack. A price is not an attack."""
+        sim, _ = self._run([self._converter(20, 40)], seconds=0.3, buffs={"spiked": 5})
+        assert sim.player2.quota == sim.player2.max_quota
+
+    def test_block_from_a_share_of_missing_health(self):
+        """Stone Armor: "Block equal to 40% of your missing health"."""
+        sim, _ = self._run(
+            [
+                self._item(
+                    [
+                        BattleStartTrigger(
+                            effects=[
+                                BlockEffect(block_amount=0, share_of_missing_health=0.4)
+                            ]
+                        )
+                    ]
+                )
+            ],
+            seconds=0.3,
+            hurt=100,
+        )
+        missing = sim.player1.max_quota - 100
+        assert sim.player1.block == int(missing * 0.4)
+
+    def test_a_share_of_nothing_missing_is_nothing(self):
+        sim, _ = self._run(
+            [
+                self._item(
+                    [
+                        BattleStartTrigger(
+                            effects=[
+                                BlockEffect(block_amount=0, share_of_missing_health=0.4)
+                            ]
+                        )
+                    ]
+                )
+            ],
+            seconds=0.3,
+        )
+        assert sim.player1.block == 0
+
+
+class TestAStatusCanBeProtectedFromRemoval(_WithOneItem):
+    """ "35% chance to protect your buffs from removal".
+
+    Not refusing something sent at you but keeping something you have, so it
+    goes the same road a refused debuff goes and is asked about removal.
+    """
+
+    def _protector(self, count=0, chance=0.0, pool="buff", target="self"):
+        return self._item(
+            [
+                PassiveTrigger(
+                    effects=[
+                        ResistEffect(
+                            count=count,
+                            chance=chance,
+                            target_type=target,
+                            against="removal",
+                            only=(pool,),
+                        )
+                    ]
+                )
+            ]
+        )
+
+    def test_a_charge_keeps_one_stack(self):
+        sim, _ = self._run([self._protector(count=1)], seconds=0.3)
+        sim.player1.buffs["calibrated"] = 2
+        assert sim._cleanse(sim.player1, "buff", 2) == {"calibrated": 1}
+        assert sim.player1.buffs["calibrated"] == 1
+
+    def test_a_spent_charge_does_not_come_back(self):
+        sim, _ = self._run([self._protector(count=1)], seconds=0.3)
+        sim.player1.buffs["calibrated"] = 4
+        sim._cleanse(sim.player1, "buff", 1)
+        assert sim._cleanse(sim.player1, "buff", 1) == {"calibrated": 1}
+
+    def test_a_certain_chance_keeps_everything(self):
+        sim, _ = self._run([self._protector(chance=1.0)], seconds=0.3)
+        sim.player1.buffs["calibrated"] = 3
+        assert sim._cleanse(sim.player1, "buff", 3) == {}
+        assert sim.player1.buffs["calibrated"] == 3
+
+    def test_it_protects_only_the_pool_it_names(self):
+        """Protecting your buffs says nothing about cleansing your debuffs"""
+        sim, _ = self._run([self._protector(chance=1.0, pool="buff")], seconds=0.3)
+        sim.player1.debuffs["throttled"] = 2
+        assert sim._cleanse(sim.player1, "debuff", 2) == {"throttled": 2}
+
+    def test_it_can_be_put_on_the_other_player(self):
+        """Corrupted Kernel keeps the debuffs it put on its opponent there"""
+        sim, _ = self._run(
+            [self._protector(chance=1.0, pool="debuff", target="enemy")], seconds=0.3
+        )
+        sim.player2.debuffs["throttled"] = 2
+        assert sim._cleanse(sim.player2, "debuff", 2) == {}
+
+    def test_nothing_is_protected_when_nothing_protects(self):
+        sim, _ = self._run([self._item([])], seconds=0.3)
+        sim.player1.buffs["calibrated"] = 2
+        assert sim._cleanse(sim.player1, "buff", 2) == {"calibrated": 2}
+
+    def test_a_protected_stack_still_costs_the_remover_a_go(self):
+        """One protected stack is one fewer taken, not one taken later"""
+        sim, _ = self._run([self._protector(count=1)], seconds=0.3)
+        sim.player1.buffs["calibrated"] = 5
+        assert sum(sim._cleanse(sim.player1, "buff", 3).values()) == 2
+
+
+class TestAShareOnWhatAnItemGives(_WithOneItem):
+    """ "Star items give +30% Block", "Star Items give +100% Vampirism".
+
+    A share on the giving item rather than on the player, so two items in a
+    zone are each scaled by it and one standing outside gives what it always
+    gave.
+    """
+
+    def _giver(self, stat, value, uid="aura", position=(1, 1)):
+        return self._starred(
+            [
+                PassiveTrigger(
+                    effects=[
+                        ModifyEffect(
+                            stat=stat,
+                            value=value,
+                            target_type="star",
+                            duration=-1,
+                            cap=None,
+                            counting="any",
+                        )
+                    ]
+                )
+            ],
+            uid,
+            position,
+        )
+
+    def _blocker(self, amount=10, uid="blocker", position=(0, 0)):
+        return self._item(
+            [BattleStartTrigger(effects=[BlockEffect(block_amount=amount)])],
+            uid,
+            position,
+        )
+
+    def test_the_zone_scales_the_block_an_item_gives(self):
+        sim, _ = self._run(
+            [self._giver("block_given", 0.3), self._blocker()], seconds=0.3
+        )
+        assert sim.player1.block == 13
+
+    def test_an_item_outside_the_zone_gives_what_it_always_gave(self):
+        far = self._blocker(position=(3, 3))
+        sim, _ = self._run([self._giver("block_given", 0.3), far], seconds=0.3)
+        assert sim.player1.block == 10
+
+    def test_gaining_block_says_it_was_gained(self):
+        """Two different things share the `block` action name: Block arriving
+        and Block spending itself on a blow. Each says which it is, because
+        reading the name alone put "attack BLOCKED" in the battle log at 0.0s
+        against an attack nobody had made."""
+        sim, _ = self._run([self._blocker(amount=10)], seconds=0.3)
+        (arrived,) = [a for a in sim.actions if a.action == "block"]
+        assert arrived.details["type"] == "gained"
+
+    def test_block_spending_itself_says_that_instead(self):
+        hard = self._item(
+            [
+                TimerTrigger(
+                    cooldown=0.2,
+                    cpu_cost=0,
+                    effects=[
+                        AttackEffect(
+                            min_damage=5, max_damage=5, accuracy=1.0, crit_chance=0.0
+                        )
+                    ],
+                )
+            ],
+            uid="hard",
+            position=(6, 0),
+        )
+        sim, _ = self._run([self._blocker(amount=50)], seconds=1.0, against=[hard])
+        kinds = {a.details["type"] for a in sim.actions if a.action == "block"}
+        assert kinds == {"gained", "absorbed"}
+
+    def test_two_shares_add_rather_than_multiply(self):
+        sim, _ = self._run(
+            [
+                self._giver("block_given", 0.3, uid="a", position=(1, 1)),
+                self._giver("block_given", 0.3, uid="b", position=(2, 1)),
+                self._blocker(position=(1, 0)),
+            ],
+            seconds=0.3,
+        )
+        assert sim.player1.block == 16, "1.6 of ten, not 1.69"
+
+    def test_a_share_on_the_player_and_one_on_the_item_both_count(self):
+        raise_it = self._item(
+            [
+                PassiveTrigger(
+                    effects=[
+                        PlayerModifyEffect(
+                            stat="block_gained",
+                            value=0.5,
+                            target_type="self",
+                            duration=-1,
+                        )
+                    ]
+                )
+            ],
+            uid="player_share",
+            position=(3, 3),
+        )
+        sim, _ = self._run(
+            [self._giver("block_given", 0.5), self._blocker(), raise_it], seconds=0.3
+        )
+        assert sim.player1.block == 22, "1.5 by 1.5 of ten"
+
+    def test_the_zone_scales_the_vampirism_an_item_gives(self):
+        drainer = self._item(
+            [
+                BattleStartTrigger(
+                    effects=[
+                        BuffEffect(buff_name="draining", value=2, target_type="self")
+                    ]
+                )
+            ],
+            uid="drainer",
+        )
+        sim, _ = self._run([self._giver("vampirism_given", 1.0), drainer], seconds=0.3)
+        assert sim.player1.buffs["draining"] == 4
+
+    def test_a_counter_can_watch_what_one_zone_has_given(self):
+        """ "Star items gained 12 Block: Gain 1 Mana"."""
+        watcher = self._starred(
+            [
+                CounterTrigger(
+                    counting="block",
+                    amount=12,
+                    whose="self",
+                    counts="gained",
+                    where="star",
+                    effects=[
+                        BuffEffect(buff_name="credits", value=1, target_type="self")
+                    ],
+                )
+            ],
+            uid="watcher",
+            position=(1, 1),
+        )
+        sim, _ = self._run([watcher, self._blocker(amount=15)], seconds=0.5)
+        assert sim.player1.buffs.get("credits") == 1
+
+    def test_block_from_outside_the_zone_does_not_count_towards_it(self):
+        watcher = self._starred(
+            [
+                CounterTrigger(
+                    counting="block",
+                    amount=12,
+                    whose="self",
+                    counts="gained",
+                    where="star",
+                    effects=[
+                        BuffEffect(buff_name="credits", value=1, target_type="self")
+                    ],
+                )
+            ],
+            uid="watcher",
+            position=(1, 1),
+        )
+        far = self._blocker(amount=99, position=(3, 3))
+        sim, _ = self._run([watcher, far], seconds=0.5)
+        assert "credits" not in sim.player1.buffs
+        assert sim.player1.block == 99, "the Block still arrived"
+
+
+class TestAShareOfMaximumHealth(_WithOneItem):
+    """ "Gain 10% maximum health + 15% per Star item"."""
+
+    def _grower(self, amount=0, share=0.0, uid="grow", position=(0, 0)):
+        return self._item(
+            [BattleStartTrigger(effects=[MaxHealthEffect(amount=amount, share=share)])],
+            uid,
+            position,
+        )
+
+    def test_a_share_of_the_maximum_raises_the_ceiling(self):
+        sim, _ = self._run([self._grower(share=0.1)], seconds=0.3)
+        opening = sim.player1.opening_quota
+        assert sim.player1.max_quota == opening + int(opening * 0.1)
+        assert (
+            sim.player1.quota == sim.player1.max_quota
+        ), "the health comes with the room"
+
+    def test_two_shares_add_rather_than_compound(self):
+        """Every other pair of shares here adds, and two halves of one
+        sentence certainly should."""
+        sim, _ = self._run(
+            [
+                self._grower(share=0.1, uid="a", position=(0, 0)),
+                self._grower(share=0.15, uid="b", position=(1, 0)),
+            ],
+            seconds=0.3,
+        )
+        opening = sim.player1.opening_quota
+        assert sim.player1.max_quota == opening + int(opening * 0.1) + int(
+            opening * 0.15
+        ), "a quarter of the opening quota, not 1.1 by 1.15"
+
+    def test_a_flat_amount_still_works(self):
+        sim, _ = self._run([self._grower(amount=3)], seconds=0.3)
+        assert sim.player1.max_quota == sim.player1.opening_quota + 3
+
+    def test_an_opponent_can_shrink_what_an_item_hands_over(self):
+        """Snowball: "Your opponent gains 15% less maximum health from items"."""
+        theirs = self._item(
+            [
+                PassiveTrigger(
+                    effects=[
+                        PlayerModifyEffect(
+                            stat="max_health_from_items",
+                            value=-0.15,
+                            target_type="enemy",
+                            duration=-1,
+                        )
+                    ]
+                )
+            ],
+            uid="snow",
+            position=(6, 0),
+        )
+        sim, _ = self._run([self._grower(amount=100)], seconds=0.3, against=[theirs])
+        assert sim.player1.max_quota == sim.player1.opening_quota + 85
+
+    def test_it_says_nothing_about_healing(self):
+        """Raising the ceiling and filling the new room is not healing"""
+        theirs = self._item(
+            [
+                PassiveTrigger(
+                    effects=[
+                        PlayerModifyEffect(
+                            stat="healing_taken",
+                            value=-0.5,
+                            target_type="enemy",
+                            duration=-1,
+                        )
+                    ]
+                )
+            ],
+            uid="dampener",
+            position=(6, 0),
+        )
+        sim, _ = self._run([self._grower(amount=100)], seconds=0.3, against=[theirs])
+        assert sim.player1.max_quota == sim.player1.opening_quota + 100
+
+
+class TestWhatTheseSixLetTheCatalogueDo(TestTheSweptClauses):
+    """The items these six mechanics were built for, run as they stand.
+
+    Everything above tests a mechanic on an item made for the purpose, which
+    proves the mechanic and not the translation. A catalogue entry is a
+    separate thing that can be wrong on its own -- the wrong number, the wrong
+    zone, the wrong status -- and only running the real item finds it.
+    """
+
+    def test_sloth_grows_by_a_share_of_the_opening_quota(self):
+        """ "Gain 10% maximum health + 15% per Star item"."""
+        where, star = self._place("sloth", how_many_star=2)
+        beside = [self._tagged(f"n{i}", {"nature"}, at) for i, at in enumerate(star)]
+        sim, _ = self._fight([self._real("sloth", where)] + beside, seconds=0.3)
+        opening = sim.player1.opening_quota
+        assert sim.player1.max_quota == opening + int(opening * 0.1) + 2 * int(
+            opening * 0.15
+        )
+
+    def test_sloth_alone_gains_only_its_own_tenth(self):
+        where, _ = self._place("sloth")
+        sim, _ = self._fight([self._real("sloth", where)], seconds=0.3)
+        opening = sim.player1.opening_quota
+        assert sim.player1.max_quota == opening + int(opening * 0.1)
+
+    def test_snowball_shrinks_what_an_opponents_item_hands_over(self):
+        """ "Your opponent gains 15% less maximum health from items"."""
+        where, _ = self._place("sloth")
+        theirs = self._real("snowball", (6, 0), uid="snow")
+        sim, _ = self._fight(
+            [self._real("sloth", where)], seconds=0.3, against=[theirs]
+        )
+        opening = sim.player1.opening_quota
+        assert sim.player1.max_quota == opening + int(int(opening * 0.1) * 0.85)
+
+    def test_vampiric_armor_pays_health_for_block(self):
+        """ "Convert 50 health into 100 Block and gain 5 Vampirism"."""
+        where, _ = self._place("vampiric_armor")
+        sim, _ = self._fight([self._real("vampiric_armor", where)], seconds=0.3)
+        assert sim.player1.quota == sim.player1.max_quota - 50
+        assert sim.player1.block == 100
+        assert sim.player1.buffs["draining"] == 5
+
+    def test_vampiric_armor_keeps_paying_on_its_clock(self):
+        """ "Every 2.8s: Convert 10 health into 20 Block"."""
+        where, _ = self._place("vampiric_armor")
+        sim, _ = self._fight([self._real("vampiric_armor", where)], seconds=6.0)
+        paid = [a for a in sim.actions if a.action == "convert_health"]
+        assert [a.damage for a in paid] == [50, 10, 10]
+
+    def test_stone_armor_answers_its_own_wound(self):
+        """ "Health drops below 50%: Block equal to 40% of your missing health".
+
+        Wounded by a real hit rather than by writing the quota down: falling
+        past the line is what fires this, and a number set behind the engine's
+        back falls past nothing.
+        """
+        where, _ = self._place("stone_armor")
+        hard = self._item(
+            [
+                TimerTrigger(
+                    cooldown=0.2,
+                    cpu_cost=0,
+                    effects=[
+                        EffectDamageEffect(
+                            amount=200,
+                            lifesteal=0.0,
+                            per_status={},
+                            whose="self",
+                        )
+                    ],
+                )
+            ],
+            uid="hard",
+            position=(6, 0),
+        )
+        sim, _ = self._fight(
+            [self._real("stone_armor", where)], seconds=0.3, against=[hard]
+        )
+        missing = sim.player1.max_quota - sim.player1.quota
+        # Its own battle-start Block comes first, so the share is what is over.
+        assert sim.player1.block == 120 + int(missing * 0.4)
+
+    def test_stone_armor_answers_the_health_vampiric_armor_spends(self):
+        """The two are written for each other, and the price is what wounds.
+
+        Vampiric Armor pays 50 health at battle start and 10 every 2.8s after,
+        which is what carries an already-hurt player past half. Stone Armor's
+        threshold went round the one road down and never saw it.
+        """
+        va, _ = self._place("vampiric_armor")
+        held = {
+            (va[0] + dx, va[1] + dy)
+            for dx, dy in ITEM_CATALOG["vampiric_armor"].shape.squares
+        }
+        sa, _ = self._place("stone_armor", avoiding=held)
+        sim, _ = self._fight(
+            [self._real("vampiric_armor", va), self._real("stone_armor", sa)],
+            seconds=0.3,
+            hurt=180,
+        )
+        missing = sim.player1.max_quota - sim.player1.quota
+        assert (
+            sim.player1.quota < sim.player1.max_quota / 2
+        ), "the price took them past half"
+        assert sim.player1.block == 120 + 100 + int(missing * 0.4)
+
+    def test_stone_armor_at_full_health_adds_nothing(self):
+        where, _ = self._place("stone_armor")
+        sim, _ = self._fight([self._real("stone_armor", where)], seconds=0.3)
+        assert sim.player1.block == 120
+
+    def test_shepherds_crook_keeps_the_buffs_it_protects(self):
+        """ "35% chance to protect your buffs from removal"."""
+        where, _ = self._place("shepherds_crook")
+        sim, _ = self._fight([self._real("shepherds_crook", where)], seconds=0.3)
+        (kept,) = [spec for spec in sim.player1.resists if spec.against == "removal"]
+        assert kept.chance == 0.35
+        assert kept.only == ("buff",)
+
+    def test_shield_of_valor_scales_the_block_a_star_item_gives(self):
+        """ "StarItems give 30% more Block"."""
+        where, star = self._place("shield_of_valor", how_many_star=1)
+        blocker = self._item(
+            [BattleStartTrigger(effects=[BlockEffect(block_amount=10)])],
+            uid="blocker",
+            position=star[0],
+        )
+        sim, _ = self._fight(
+            [self._real("shield_of_valor", where), blocker], seconds=0.3
+        )
+        given = sum(
+            a.damage
+            for a in sim.actions
+            if a.action == "block" and a.source == "blocker"
+        )
+        assert given == 13
+
+    def test_moon_shield_pays_a_mana_for_the_block_its_zone_gives(self):
+        """ "Star items gained 12 Block: Gain 1 Mana"."""
+        where, star = self._place("moon_shield", how_many_star=1)
+        blocker = self._item(
+            [BattleStartTrigger(effects=[BlockEffect(block_amount=10)])],
+            uid="blocker",
+            position=star[0],
+        )
+        sim, _ = self._fight([self._real("moon_shield", where), blocker], seconds=0.5)
+        assert sim.player1.buffs.get("credits") == 1, "ten by 1.3 clears twelve"
+
+    def test_moon_shield_waits_when_the_zone_has_given_too_little(self):
+        """Block from outside the zone is not what the clause counts.
+
+        The item standing outside gives 99 on its own, which would clear the
+        line several times over if the zone were not what was being asked
+        about.
+        """
+        where, star = self._place("moon_shield", how_many_star=1)
+        small = self._item(
+            [BattleStartTrigger(effects=[BlockEffect(block_amount=4)])],
+            uid="blocker",
+            position=star[0],
+        )
+        far = self._item(
+            [BattleStartTrigger(effects=[BlockEffect(block_amount=99)])],
+            uid="far",
+            position=self._somewhere_outside("moon_shield", where, star),
+        )
+        sim, _ = self._fight(
+            [self._real("moon_shield", where), small, far], seconds=0.5
+        )
+        assert "credits" not in sim.player1.buffs
+        assert sim.player1.block >= 99, "the Block still arrived"
+
+    def test_encryption_module_watches_its_own_zone(self):
+        """ "Star items gained 40 Block: Gain 1 Empower"."""
+        where, star = self._place("encryption_module", how_many_star=1)
+        blocker = self._item(
+            [BattleStartTrigger(effects=[BlockEffect(block_amount=40)])],
+            uid="blocker",
+            position=star[0],
+        )
+        sim, _ = self._fight(
+            [self._real("encryption_module", where), blocker], seconds=0.5
+        )
+        assert sim.player1.buffs.get("monitored") == 1
+
+    def test_encryption_modules_own_block_does_not_count(self):
+        """It gains 30 Block itself, and that is not what the clause counts"""
+        where, _ = self._place("encryption_module")
+        sim, _ = self._fight([self._real("encryption_module", where)], seconds=0.5)
+        assert sim.player1.block == 30
+        assert "monitored" not in sim.player1.buffs
+
+    def test_encryption_waits_for_the_whole_forty(self):
+        """Thirty from the zone is not forty, and 30 is over any smaller line"""
+        where, star = self._place("encryption_module", how_many_star=1)
+        blocker = self._item(
+            [BattleStartTrigger(effects=[BlockEffect(block_amount=30)])],
+            uid="blocker",
+            position=star[0],
+        )
+        sim, _ = self._fight(
+            [self._real("encryption_module", where), blocker], seconds=0.5
+        )
+        assert "monitored" not in sim.player1.buffs
+
+    def test_credential_harvester_doubles_the_vampirism_its_zone_gives(self):
+        """ "Star Items give +100% Vampirism"."""
+        where, star = self._place("credential_harvester", how_many_star=1)
+        giver = self._item(
+            [
+                BattleStartTrigger(
+                    effects=[
+                        BuffEffect(buff_name="draining", value=3, target_type="self")
+                    ]
+                )
+            ],
+            uid="giver",
+            position=star[0],
+        )
+        sim, _ = self._fight(
+            [self._real("credential_harvester", where), giver], seconds=0.3
+        )
+        assert sim.player1.buffs["draining"] == 6
+
+    def test_bloody_dagger_stops_at_five_vampirism(self):
+        """ "Gain 1 Vampirism (up to 5 per battle)"."""
+        where, _ = self._place("bloody_dagger")
+        sim, _ = self._fight(
+            [self._real("bloody_dagger", where)],
+            seconds=16.0,
+            against=[self._tagged("wall", set(), (6, 0))],
+        )
+        assert sim.player1.buffs["draining"] == 5
+
+    def test_bloody_dagger_heals_for_the_vampiric_items_beside_it(self):
+        """ "Heal 4 per Star Vampiric-item"."""
+        where, star = self._place("bloody_dagger", how_many_star=1)
+        beside = self._tagged("leech", {"vampiric"}, star[0])
+        sim, _ = self._fight(
+            [self._real("bloody_dagger", where), beside],
+            seconds=6.0,
+            hurt=100,
+            against=[self._tagged("wall", set(), (6, 0))],
+        )
+        # Vampirism heals on the same hits and is written down the same way,
+        # so the buff it names is what tells the two apart.
+        heals = [
+            a
+            for a in sim.actions
+            if a.action == "heal" and not (a.details or {}).get("buff_name")
+        ]
+        assert heals, "one heal per hit, one Vampiric item beside it"
+        assert all(a.damage == 4 for a in heals)
+
+    def test_king_crown_holds_a_charge_against_removal(self):
+        """ "Heal for 8 and protect 1 buff from removal"."""
+        where, _ = self._place("king_crown")
+        sim, _ = self._fight([self._real("king_crown", where)], seconds=3.0)
+        charges = [
+            spec
+            for spec in sim.player1.resists
+            if spec.against == "removal" and spec.count
+        ]
+        assert charges, "the timer has come round once"
+        sim.player1.buffs["calibrated"] = 2
+        assert sim._cleanse(sim.player1, "buff", 1) == {}
+
+    def test_corrupted_kernel_protects_its_opponents_debuffs(self):
+        """ "10% chance for each Star Dark-item to protect debuffs on your
+        opponent from being cleansed"."""
+        where, star = self._place("corrupted_kernel", how_many_star=2)
+        dark = [self._tagged(f"d{i}", {"dark"}, at) for i, at in enumerate(star)]
+        sim, _ = self._fight(
+            [self._real("corrupted_kernel", where)] + dark, seconds=0.3
+        )
+        held = [spec for spec in sim.player2.resists if spec.against == "removal"]
+        assert [spec.chance for spec in held] == [0.1, 0.1], "one per Dark item"
+        assert all(spec.only == ("debuff",) for spec in held)
+
+    def test_corrupted_kernel_with_no_dark_beside_it_protects_nothing(self):
+        where, _ = self._place("corrupted_kernel")
+        sim, _ = self._fight([self._real("corrupted_kernel", where)], seconds=0.3)
+        assert [s for s in sim.player2.resists if s.against == "removal"] == []
+
+
+class TestWhatTheseSixLetTheContainersDo(_WithOneItem):
+    """The three bags these mechanics were built for, run as they stand.
+
+    Their own class because a container is the thing under test rather than
+    the room the test happens in, so each one brings the rack it is about.
+    """
+
+    def _fight(self, container_id, items, seconds=0.5, hurt=None):
+        mine = [Container.of(container_id, (0, 0), "rack")]
+        theirs = [Container.of("standard_vm", (6, 0), "theirs")]
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = seconds
+        sim.nightfall = seconds + 1
+        original = sim._setup_item_handlers
+
+        def setup(its, owner, enemy):
+            out = original(its, owner, enemy)
+            if owner.id == 1 and hurt is not None:
+                owner.quota = hurt
+            return out
+
+        sim._setup_item_handlers = setup
+        return sim, sim.simulate_battle(items, [], 18, mine, theirs)
+
+    def test_holdall_blocks_for_each_neutral_item_inside(self):
+        """ "Start of battle: Gain 8 Block for each Neutral item inside".
+
+        One of the four is a Sentaur item, and Neutral is what the clause
+        says: counting anything inside would come to 32.
+        """
+        inside = [
+            self._item([], uid=f"n{i}", position=at)
+            for i, at in enumerate(((0, 0), (1, 0), (2, 0)))
+        ]
+        inside.append(
+            BattleItem(
+                spec=ItemSpec(
+                    id="theirs",
+                    name="Sentaur thing",
+                    category="protocol",
+                    cost=1,
+                    player_class="sentaur",
+                    shape=parse_map(["#"], "s"),
+                    slug="theirs",
+                    kinds=frozenset({"melee"}),
+                    triggers=[],
+                ),
+                position=(0, 1),
+                uid="sentaur",
+            )
+        )
+        sim, _ = self._fight("container_orchestrator", inside)
+        assert sim.player1.block == 24
+
+    def test_holdall_with_nothing_inside_blocks_nothing(self):
+        sim, _ = self._fight("container_orchestrator", [])
+        assert sim.player1.block == 0
+
+    def test_dead_drop_hands_its_items_a_scaled_crit_chance(self):
+        """ "Items inside gain 10% critical hit chance +3% for each Luck"."""
+        held = self._item(
+            [
+                BattleStartTrigger(
+                    effects=[
+                        BuffEffect(buff_name="calibrated", value=4, target_type="self")
+                    ]
+                )
+            ],
+            uid="held",
+        )
+        sim, _ = self._fight("network_cache", [held])
+        got = sim.loadout[1][0]
+        assert got.crit_bonus == pytest.approx(0.1)
+        assert sim._per_status(
+            got, "critical_chance", sim.player1, sim.player2
+        ) == pytest.approx(0.12)
+
+    def test_motherboard_amplifies_healing_by_what_it_holds(self):
+        """ "Your healing is amplified by 12% + 5% per Nature-item inside"."""
+        nature = [
+            BattleItem(
+                spec=ItemSpec(
+                    id=f"n{i}",
+                    name="Leaf",
+                    category="protocol",
+                    cost=1,
+                    player_class="neutral",
+                    shape=parse_map(["#"], "n"),
+                    slug=f"n{i}",
+                    kinds=frozenset({"nature"}),
+                    triggers=[],
+                ),
+                position=at,
+                uid=f"n{i}",
+            )
+            for i, at in enumerate(((0, 0), (1, 0)))
+        ]
+        healer = self._item(
+            [BattleStartTrigger(effects=[HealEffect(min_heal=100, max_heal=100)])],
+            uid="healer",
+            position=(2, 0),
+        )
+        sim, _ = self._fight("mesh_network_hub", nature + [healer], hurt=100)
+        healed = [a for a in sim.actions if a.action == "heal"]
+        assert [a.damage for a in healed] == [122], "12% and two lots of 5%"
+
+    def test_motherboard_with_nothing_green_inside_still_gives_its_twelfth(self):
+        healer = self._item(
+            [BattleStartTrigger(effects=[HealEffect(min_heal=100, max_heal=100)])],
+            uid="healer",
+        )
+        sim, _ = self._fight("mesh_network_hub", [healer], hurt=100)
+        healed = [a for a in sim.actions if a.action == "heal"]
+        assert [a.damage for a in healed] == [112]
+
+
+class TestAFullPoolMeansThePoolTheItemsLeft(_WithOneItem):
+    """CPU is filled after the items have had their say, not before.
+
+    Nothing in the catalogue but a Stamina Sack changes the size of the pool,
+    and until containers acted nothing ran it. Filled first, it gave its owner
+    a bigger pool and started them a second of regeneration short of it.
+    """
+
+    def _rack(self, container_id):
+        return (
+            [Container.of(container_id, (0, 0), "rack")],
+            [Container.of("standard_vm", (6, 0), "theirs")],
+        )
+
+    def _open_on(self, container_id):
+        mine, theirs = self._rack(container_id)
+        sim = BattleSimulator(seed=TEST_SEED)
+        sim.max_duration = 0.1
+        sim.simulate_battle([], [], 18, mine, theirs)
+        return sim.player1
+
+    def test_a_bigger_pool_opens_full(self):
+        opened = self._open_on("memory_cache")
+        assert opened.max_cpu == 4.0
+        assert opened.cpu == pytest.approx(opened.max_cpu, abs=0.11)
+
+    def test_an_ordinary_pool_is_unchanged(self):
+        opened = self._open_on("standard_vm")
+        assert opened.max_cpu == 3.0
+        assert opened.cpu == pytest.approx(opened.max_cpu, abs=0.11)

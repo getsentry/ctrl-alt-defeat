@@ -56,6 +56,32 @@ class AttackEffect(Effect):
 
 
 @dataclass
+class ConvertHealthEffect(Effect):
+    """Pay health and get Block for it.
+
+    "Convert 50 health into 100 Block". The health is spent, not lost to an
+    attack, so nothing that stands in front of damage stands in front of it --
+    no Block, no share on damage taken -- and nothing that answers being hit
+    answers it, so Spikes send nothing back.
+
+    It is still health falling. A threshold notices: "Health drops below 50%"
+    is written about health and not about being hit.
+
+    What comes back is Block gained like any other, so a share on Block gained
+    still applies to it.
+
+    All of it or none of it. A player with less health than the price keeps
+    what they have and gains nothing, so this can never be what kills them.
+    """
+
+    health: int
+    block: int
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "convert_health", "health": self.health, "block": self.block}
+
+
+@dataclass
 class HealEffect(Effect):
     """Heal the target"""
 
@@ -74,16 +100,26 @@ class HealEffect(Effect):
 
 @dataclass
 class BlockEffect(Effect):
-    """Gain Block, the resource that absorbs damage a point at a time."""
+    """Gain Block, the resource that absorbs damage a point at a time.
+
+    It says who gains it by not saying: Block only ever lands on whoever the
+    clause belongs to. There was a `target_type` here that the catalogue had
+    no way to set and the engine never read, and nothing in the source game
+    gives Block to the other player.
+    """
 
     block_amount: int
-    target_type: str = "self"
+
+    #: A share of the health the owner is short of their maximum, added to
+    #: the flat amount: "Gain Block equal to 40% of your missing health".
+    #: Worth nothing at full health, which is when it is written to fire.
+    share_of_missing_health: float = 0.0
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "block",
             "amount": self.block_amount,
-            "target_type": self.target_type,
+            "share_of_missing_health": self.share_of_missing_health,
         }
 
 
@@ -511,8 +547,15 @@ PLAYER_MODIFIERS = frozenset(
         "healing_taken",
         # What this player's items cost to run: "Items use +20% stamina".
         "stamina_use",
-        # Block this player gains: "Star items give +30% Block".
+        # Block this player gains, whichever item gave it. The other half of
+        # the pair is `block_given` below, which sits on the giving item:
+        # "Star items give +30% Block" scales two items in a zone and leaves
+        # a third outside it alone, so it cannot be this.
         "block_gained",
+        # Maximum health an item hands over: "Your opponent gains 15% less
+        # maximum health from items". Not healing and not a share of damage,
+        # so it is neither of the two above.
+        "max_health_from_items",
         # Every attack this player makes: "for the next 1.5s, all your attacks are
         # Critical hits" is this at 1.0.
         "critical_chance",
@@ -536,6 +579,12 @@ MODIFIERS = frozenset(
         # Backpack Battles' Critical hits page: damage starts at 0% and only ever
         # gains crit chance from outside. This is that outside.
         "critical_chance",
+        # Shares on what this item hands over rather than on what it does:
+        # "Star items give +30% Block", "Star Items give +100% Vampirism".
+        # A zone can scale what the items in it give without scaling what
+        # anything else gives, which a modifier on the player cannot do.
+        "block_given",
+        "vampirism_given",
     }
 )
 
@@ -605,12 +654,25 @@ class ModifyPerStatusEffect(Effect):
     kind: "Deals +0.5 damage for each debuff of your opponent" counts the
     whole pool, and counting one named debuff would give a different and
     smaller number.
+
+    An aura can hand this out rather than keep it: "Star items steal 3% life
+    for each Luck" is a scaled modifier given to the items in a zone, and each
+    of them reads its own copy against the same pool.
     """
 
     stat: str
     value: float
     status: str
     whose: str  # "self" or "enemy"
+
+    #: Which items get it. `self` is the item saying it about itself, and
+    #: `star`, `diamond` or `contained` hand it to the items a zone reaches.
+    target_type: str = "self"
+
+    #: How far it is allowed to grow -- "(up to 50%)". A ceiling on the
+    #: reading rather than on a running total: the count can fall again, and
+    #: the modifier falls back with it.
+    cap: Optional[float] = None
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
@@ -863,8 +925,18 @@ class MaxHealthEffect(Effect):
 
     amount: int
 
+    #: A share of the maximum, added to the flat amount: "Gain 10% maximum
+    #: health". Read against the maximum the battle opened on rather than the
+    #: one standing now, so "10% + 15% per Star item" with two Star items
+    #: comes to 40% and not 45%: shares add here, as they do everywhere else.
+    share: float = 0.0
+
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "max_health", "amount": self.amount}
+        return {
+            "type": "max_health",
+            "amount": self.amount,
+            "share": self.share,
+        }
 
 
 @dataclass
@@ -962,8 +1034,12 @@ class ResistEffect(Effect):
     #: stuns", which are the same idea aimed at something else.
     against: str = "debuff"
 
-    #: When `against` is `debuff`, the debuffs it refuses, or empty for any.
-    #: "50% chance to resist Blind and Cold" names two.
+    #: What it narrows to, and the answer depends on `against`. For a
+    #: `debuff`, the debuffs it refuses, or empty for any: "50% chance to
+    #: resist Blind and Cold" names two. For a `removal`, which pool it
+    #: protects -- `("buff",)` or `("debuff",)` -- because a cleanse takes
+    #: from one or the other and protecting your buffs says nothing about
+    #: cleansing your debuffs.
     only: Tuple[str, ...] = ()
 
     #: A chance that grows with what its owner holds: "You have a 2% chance to
@@ -1414,6 +1490,12 @@ class CounterTrigger(Trigger):
     amount: float = 0.0
     whose: str = "self"
     counts: str = "held"  # "held" or "gained"
+
+    #: Whose giving is counted, rather than the owner's whole total: "Star
+    #: items gained 12 Block" counts the Block the items in the zone handed
+    #: over and no other. Empty counts the player's own total, as before.
+    where: str = ""
+
     effects: List[Effect] = field(default_factory=list)
 
     # Runtime state: whether it has already gone off.

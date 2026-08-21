@@ -269,7 +269,7 @@
       "category": "defense",
       "color": "blue",
       "pattern": "stripe_h_bold",
-      "class": "sentaur",
+      "class": "neutral",
       "map": [
         "##",
         "##",
@@ -723,12 +723,35 @@
               "description": "(once)"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 2.4,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 8,
+              "max_heal": 8,
+              "description": "Heal for 8"
+            },
+            {
+              "type": "resist",
+              "count": 1,
+              "chance": 0,
+              "target": "self",
+              "against": "removal",
+              "only": [
+                "buff"
+              ],
+              "description": "protect 1 buff from removal"
+            }
+          ]
         }
       ],
       "slug": "king_crown",
       "in_shop": false,
       "unbuilt": [
-        "Every 2.4s: Heal for 8 and protect 1 buff from removal.",
         "Effects of Gemstones socketed in this are increased by 50%."
       ],
       "sockets": 2,
@@ -908,14 +931,42 @@
               "description": "Remove 0.7 CPU from the attacker"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "block_given",
+              "value": 0.3,
+              "target": "star",
+              "counting": "any",
+              "cap": null,
+              "duration": -1,
+              "description": "Star items give +30% Block"
+            }
+          ]
+        },
+        {
+          "type": "counter",
+          "counting": "block",
+          "amount": 12,
+          "whose": "self",
+          "counts": "gained",
+          "where": "star",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "credits",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Mana"
+            }
+          ]
         }
       ],
       "slug": "moon_shield",
       "in_shop": false,
-      "unbuilt": [
-        "Star items give +30% Block.",
-        "Star items gained 12 Block: Gain 1 Mana."
-      ],
       "sockets": 2,
       "icontype": "holy, magic, shield",
       "recipe": [
@@ -998,13 +1049,25 @@
               "description": "Remove 0.7 CPU from the attacker"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "block_given",
+              "value": 0.3,
+              "target": "star",
+              "counting": "any",
+              "cap": null,
+              "duration": -1,
+              "description": "Star items give 30% more Block"
+            }
+          ]
         }
       ],
       "slug": "shield_of_valor",
       "in_shop": true,
-      "unbuilt": [
-        "StarItems give 30% more Block."
-      ],
       "sockets": 2,
       "icontype": "holy, shield"
     },
@@ -1066,13 +1129,21 @@
               "description": "and 2 Empower"
             }
           ]
+        },
+        {
+          "type": "health_threshold",
+          "threshold": 0.5,
+          "effects": [
+            {
+              "type": "block",
+              "of_missing_health": 0.4,
+              "description": "Gain Block equal to 40% of your missing health"
+            }
+          ]
         }
       ],
       "slug": "stone_armor",
       "in_shop": false,
-      "unbuilt": [
-        "Health drops below 50%: Gain Block equal to 40% of your missing health (once)."
-      ],
       "sockets": 2,
       "recipe": [
         {
@@ -1195,13 +1266,41 @@
       "source": "Vampiric Armor",
       "rarity": "legendary",
       "cost": 15,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "convert_health",
+              "health": 50,
+              "block": 100,
+              "description": "Convert 50 health into 100 Block"
+            },
+            {
+              "type": "buff",
+              "buff_name": "draining",
+              "value": 5,
+              "target": "self",
+              "description": "Gain 5 Vampirism"
+            }
+          ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 2.8,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "convert_health",
+              "health": 10,
+              "block": 20,
+              "description": "Convert 10 health into 20 Block"
+            }
+          ]
+        }
+      ],
       "slug": "vampiric_armor",
       "in_shop": false,
-      "unbuilt": [
-        "Start of battle: Convert 50 health into 100 Block and gain 5 Vampirism.",
-        "Every 2.8s: Convert 10 health into 20 Block."
-      ],
       "sockets": 2,
       "icontype": "vampiric, armor",
       "recipe": [

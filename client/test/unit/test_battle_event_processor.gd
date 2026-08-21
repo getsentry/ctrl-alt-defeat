@@ -306,6 +306,53 @@ func test_healing_reaches_the_health_bar():
 	assert_signal_emitted(processor, "healing_done", "A heal should be announced")
 
 
+func test_turning_quota_into_block_moves_the_health_bar():
+	# A price paid in health, not a hit taken -- but the screen's health bar
+	# is driven by this signal and by nothing else, so a price that sent none
+	# would leave the bar sitting still until the next blow. `player1_hp`
+	# proves nothing on its own: every action carries both quotas and the
+	# processor reads them whether it knows the action or not.
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "convert_health", "damage": 6,
+			"player": 1, "source": "armor", "details": _standing([19, QUOTA])})
+	]))
+	watch_signals(processor)
+
+	processor.skip_to_end()
+
+	assert_eq(processor.player1_hp, 19, "The price should come off the bar")
+	var spent = get_signal_parameters(processor, "damage_dealt", 0)
+	assert_eq(spent[1], 6, "and be announced, or the bar never redraws")
+	assert_eq(spent[2], 19, "with what is left")
+	assert_eq(spent[4], "convert_health",
+		"named as itself, so it is not drawn in the colour of a wound")
+
+
+
+func test_block_arriving_and_block_spending_itself_read_differently():
+	# One action name, two things. Every gain used to be logged as "attack
+	# BLOCKED" -- at 0.0s, against an attack nobody had made -- because the
+	# log read the name and not what the action said about itself.
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "block", "damage": 100,
+			"player": 1, "source": "armor",
+			"details": _standing([QUOTA, QUOTA], {"type": "gained"})}),
+		_action({"timestamp": 500, "action": "block", "damage": 7,
+			"player": 1, "source": "system",
+			"details": _standing([QUOTA, QUOTA], {"type": "absorbed"})})
+	]))
+	var said: Array[String] = []
+	processor.log_message.connect(func(text, _colour): said.append(text))
+
+	processor.skip_to_end()
+
+	assert_eq(said.size(), 2, "both should be logged")
+	assert_true("gains 100 Block" in said[0],
+		"Block arriving should read as arriving, got: %s" % said[0])
+	assert_true("BLOCKED" in said[1],
+		"and Block spending itself should still read as a blow stopped")
+
+
 func test_a_heal_cannot_take_health_past_full():
 	# The engine caps it and says so. The screen shows what it is told, which
 	# is the whole of the client's job here.

@@ -38,6 +38,11 @@ A Sentry-themed autobattler where players manage a "server rack" (backpack) fill
 - **CPU Usage**: Each item activation consumes CPU cycles, in fractions
 - **Throttling**: When CPU hits 0, items skip activations but maintain schedule
 
+**A battle opens on a full pool, and full means the pool the items left.** The
+pool is filled after every item and container has had its say, not before: a
+Stamina Sack that raises the ceiling to 4 and leaves its owner starting on 3
+has given them a second of regeneration rather than a cycle.
+
 **Regeneration is Backpack Battles': 1 per second.** Three things agree on it.
 Its wiki says the Mecha Bat's 1.5 stamina every 3 seconds is "about 50% of the
 player's default stamina allowance", which puts the allowance at 1 per second,
@@ -723,11 +728,23 @@ successful, occurs before Resist."**
 Both are counted in stacks and neither is a buff: nothing stacks them as one
 and nothing cleanses them, so they are not among the seven in Section 3.1.
 
-**Resist is written about three things, not one.** The wiki's page is about
+**Resist is written about four things, not one.** The wiki's page is about
 debuffs, and the source game also writes "30% chance to resist critical hits"
 and "40% chance to resist stuns". Each says what it refuses, so one does not
 cover another. A resisted critical hit still lands — it simply lands as an
 ordinary swing.
+
+The fourth is **removal**: "35% chance to protect your buffs from removal",
+"protect 1 buff from removal", "protect debuffs on your opponent from being
+cleansed". It is not something sent at you but something you already have
+being taken, and it works the same way round — a chance or a charge, checked
+per stack, with every chance added together. It says which pool it protects,
+buffs or debuffs, because a cleanse takes from one or the other. It can also
+be granted to the *other* player, which is what protecting the debuffs you
+put on them means.
+
+A protected stack still costs the remover one of their count: taking three
+from somebody who protects one takes two, not three later.
 
 A resist may also **name which debuffs** it refuses ("50% chance to resist
 Blind and Cold") or have a **chance that grows** with what its owner holds
@@ -860,10 +877,11 @@ The wording on each item says what it grants and to what kind of item.
 
 **A zone can be narrowed.** "Star items trigger 20% faster" reaches everything
 standing in the zone; "Star Weapons deal +2 damage" reaches only the weapons.
-What narrows it is a tag: a kind an item carries (melee, holy, nature, ice) or
-the category it belongs to, so "Star Food" and "Star Weapons" read the same
-way. A filter can want any of a list of tags or all of them, and an item
-matches once however many it matches.
+What narrows it is a tag: a kind an item carries (melee, holy, nature, ice),
+the category it belongs to, or the class it belongs to, so "Star Food", "Star
+Weapons" and "each Neutral item" all read the same way. A filter can want any
+of a list of tags or all of them, and an item matches once however many it
+matches.
 
 The source game writes the singular -- "The Star Weapon gains 10 damage" --
 when an item draws a one-square star, where the only weapon that can stand
@@ -908,12 +926,51 @@ what stands in the zone), or when something happens (a trigger that fires when
 an item in the zone activates). A fourth reads the player rather than the grid,
 sizing a modifier by a status its owner holds.
 
+**A zone can hand out a modifier that is itself sized by a status.** "Star
+items gain 4% critical chance for each Luck" is the third and fourth ways at
+once: which items get it is the grid's answer, and how much is the player's,
+read as the battle goes on rather than settled before it. A ceiling on one of
+these -- "(up to 50%)" -- is a ceiling on the reading and not on a total, so
+the count can fall again and the modifier falls back with it.
+
+**A zone can scale what the items in it *give*.** "Star items give +30% Block",
+"Star Items give +100% Vampirism". The share sits on the giving item rather
+than on the player, so two items in the zone are each scaled by it and one
+standing outside gives what it always gave. A share on the player -- "you gain
+25% more Block" -- is a separate thing, and the two add.
+
+**A running total can be narrowed to a zone.** "Star items gained 12 Block"
+counts what the items in the zone have handed over and no other Block, so a
+shield gaining 30 on its own does not answer it. A zone answers for itself —
+what it gave is the owner's, and it only ever goes up — so a total narrowed
+this way cannot also name whose it is or ask for what is held.
+
 There are no synergies that count how many of a category sit beside each other.
 An earlier version of this document described six, of which two were built
 against orthogonal adjacency. Neither the six nor adjacency exist in the game
 this one is based on, so both are gone.
 
-### 4.5 What a Potion does for the Potion above it
+### 4.5 What a container knows
+
+**A container is an item.** It is bought from the same shop, built from the
+same catalogue, stands on the same grid and carries clauses like anything
+else, so it says when they happen the same way: a passive, a start of battle,
+a timer.
+
+**"Inside" is the container's own footprint.** Its squares are the ones other
+items stand on, so what is inside one is whatever sits on the squares it
+covers. That makes `inside` a zone like a star or a diamond, and everything a
+zone can do it can do: reach what stands there ("Items inside trigger 10%
+faster"), count what stands there ("Gain 8 Block for each Neutral item
+inside"), or hand out a scaled modifier ("Items inside gain 10% critical hit
+chance +3% for each Luck").
+
+**A container is not standing on its own shelf.** Its squares are offered
+rather than filled, so nothing counts it as an item on the grid: a clause
+counting free squares would otherwise find none, and a shelf would hold one
+more item than it does.
+
+### 4.6 What a Potion does for the Potion above it
 
 Every Potion, when it is drunk, also applies the effect of the Potion above
 it, **without consuming that one**. The source game calls it potion spillover
@@ -1272,6 +1329,41 @@ lands.
 - Base 5% chance
 - Deals 2x damage
 - Can trigger special effects
+
+### 7.2.1 Turning health into Block
+
+"Convert 50 health into 100 Block", "Consume this and convert 15 health to 30
+Block". The health is a **price**, not damage: nothing that stands in front of
+damage stands in front of it — no Block, no share on damage taken — and
+nothing that answers being *hit* answers it, so Spikes send nothing back.
+
+**It is still health falling, and a threshold still notices.** "Health drops
+below 50%" is written about health, not about being hit, and Vampiric Armor
+paying 50 at the start and 10 every 2.8s is exactly what carries an already
+hurt player past the line. Every way a quota goes down goes through one place,
+which is what says so.
+
+**All of it or none of it, and never the last point.** A player with less
+health than the price keeps what they have and gains nothing, so a conversion
+can never be what kills them.
+
+What comes back is Block gained like any other, so a share on Block gained
+still applies to it.
+
+### 7.2.2 A share of maximum health
+
+"Gain 10% maximum health + 15% per Star item". A share is read against the
+maximum the battle **opened on**, not the one standing now, so two of them
+add to 25% rather than compounding to 26.5% — the same rule every other pair
+of shares here follows.
+
+Raising the ceiling gives the health with it, rather than leaving a gap to
+fill. It is still not healing: a clause that changes healing has nothing to
+say about how much bigger somebody just got.
+
+The other side of it is written too — "Your opponent gains 15% less maximum
+health from items" — and it is a share on what an item hands over, not on
+healing and not on damage.
 
 ### 7.3 What stands in front of the quota
 

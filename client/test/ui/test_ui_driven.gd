@@ -456,7 +456,11 @@ func test_battle_button_and_full_battle():
 		var target_grid_pos = _find_first_empty_grid_cell(game_ui)
 		print("   - Found empty cell at: %s" % target_grid_pos)
 		var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target_grid_pos))
-		if target_grid_pos != Vector2(-1, -1):
+		# A round where the shop offers nothing that fits simply does not
+		# buy. The shop is unseeded, so which rounds those are moves with
+		# any change to the catalogue, and this loop is about playing the
+		# rounds rather than about buying in every one of them.
+		if shop_item != null and target_grid_pos != Vector2(-1, -1):
 			# Quick purchase simulation
 			var server_room_container = game_ui.server_room_container
 			var cell_size = game_ui.inventory_grid.cell_size
@@ -565,7 +569,11 @@ func test_complete_round_cycle():
 		var target_grid_pos = _find_first_empty_grid_cell(game_ui)
 		print("   - Found empty cell at: %s" % target_grid_pos)
 		var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target_grid_pos))
-		if target_grid_pos != Vector2(-1, -1):
+		# A round where the shop offers nothing that fits simply does not
+		# buy. The shop is unseeded, so which rounds those are moves with
+		# any change to the catalogue, and this loop is about playing the
+		# rounds rather than about buying in every one of them.
+		if shop_item != null and target_grid_pos != Vector2(-1, -1):
 			# Quick purchase simulation
 			var server_room_container = game_ui.server_room_container
 			var cell_size = game_ui.inventory_grid.cell_size
@@ -1014,7 +1022,11 @@ func test_multiple_rounds():
 		if game_ui.shop_items.size() > 0:
 			var target_grid_pos = _find_first_empty_grid_cell(game_ui)
 			var shop_item = _first_non_container_shop_item(game_ui, Vector2i(target_grid_pos))
-			if target_grid_pos != Vector2(-1, -1):
+			# A round where the shop offers nothing that fits simply does not
+			# buy. The shop is unseeded, so which rounds those are moves with
+			# any change to the catalogue, and this loop is about playing the
+			# rounds rather than about buying in every one of them.
+			if shop_item != null and target_grid_pos != Vector2(-1, -1):
 				# Quick purchase simulation
 				var server_room_container = game_ui.server_room_container
 				var cell_size = game_ui.inventory_grid.cell_size

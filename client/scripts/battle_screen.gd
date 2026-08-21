@@ -745,6 +745,11 @@ static func hurt_colour(kind: String) -> Color:
 		return POISON
 	if kind == "fatigue":
 		return TIRED
+	if kind == "convert_health":
+		# Health spent on Block, not health lost. Written in the colour Block
+		# is written in, because that is where it went: a player reading it as
+		# a hit goes looking for what hit them, and nothing did.
+		return SHIELDED
 	return HURT
 
 

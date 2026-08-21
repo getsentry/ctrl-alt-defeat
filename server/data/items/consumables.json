@@ -223,7 +223,7 @@
       "category": "consumable",
       "color": "pink",
       "pattern": "chevron_up",
-      "class": "sentaur",
+      "class": "neutral",
       "map": [
         "#"
       ],

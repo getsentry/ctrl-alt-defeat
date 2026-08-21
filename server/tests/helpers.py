@@ -5,31 +5,46 @@ from containers import Container
 
 
 def get_test_containers():
-    """Standard test containers: a 3x3 square each.
+    """A quiet rack for each player: four plain VMs, four squares by four.
 
-    A 2x2 was enough while every test item covered a square or two. Items carry
-    their real shapes now, and a four square L reaches three rows down, so it
-    needs somewhere three rows deep to stand.
+    One 3x3 bag used to stand here. Every bag in the catalogue carries a
+    clause now and that one amplifies its owner's healing by 12%, which every
+    healing test would otherwise have to allow for. Four standard_vm cover the
+    same ground and further, and say nothing at all.
     """
     return (
-        [Container.of("mesh_network_hub", (0, 0), "p1_test_hub")],
-        [Container.of("mesh_network_hub", (4, 0), "p2_test_hub")],
+        [
+            Container.of("standard_vm", (0, 0), "p1_test_rack_a"),
+            Container.of("standard_vm", (2, 0), "p1_test_rack_b"),
+            Container.of("standard_vm", (0, 2), "p1_test_rack_c"),
+            Container.of("standard_vm", (2, 2), "p1_test_rack_d"),
+        ],
+        [
+            Container.of("standard_vm", (4, 0), "p2_test_rack_a"),
+            Container.of("standard_vm", (6, 0), "p2_test_rack_b"),
+            Container.of("standard_vm", (4, 2), "p2_test_rack_c"),
+            Container.of("standard_vm", (6, 2), "p2_test_rack_d"),
+        ],
     )
 
 
 def get_large_test_containers():
-    """Get larger test containers for tests that need more space"""
-    # Player 1 gets a container orchestrator at (0,0) - 3x2 container (6 slots)
-    p1_container = Container.of(
-        "container_orchestrator", (0, 0), "p1_test_orchestrator"
-    )
+    """Eight squares each, four wide and two deep, and nothing to say.
 
-    # Player 2 gets a container orchestrator at (3,0)
-    p2_container = Container.of(
-        "container_orchestrator", (3, 0), "p2_test_orchestrator"
+    A Holdall used to stand here, six squares of it. It gives its owner Block
+    for every Neutral item inside now, which is not something a test about
+    anything else wants happening behind it.
+    """
+    return (
+        [
+            Container.of("standard_vm", (0, 0), "p1_test_large_a"),
+            Container.of("standard_vm", (2, 0), "p1_test_large_b"),
+        ],
+        [
+            Container.of("standard_vm", (3, 0), "p2_test_large_a"),
+            Container.of("standard_vm", (5, 0), "p2_test_large_b"),
+        ],
     )
-
-    return [p1_container], [p2_container]
 
 
 def get_battle_containers():

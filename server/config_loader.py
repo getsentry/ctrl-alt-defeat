@@ -28,6 +28,7 @@ from item_effects import (
     CleanseEffect,
     ConditionEffect,
     ConsumeEffect,
+    ConvertHealthEffect,
     CostEffect,
     CounterTrigger,
     CpuDrainEffect,
@@ -180,17 +181,17 @@ class ConfigLoader:
         """Create a container specification from config"""
         shape = self._parse_shape(config["map"], config["name"])
 
-        # Parse effects
-        effects = []
+        # Read the same way an item's are. A container used to write a bare
+        # list of effects that were wrapped in a passive trigger here, which
+        # meant a container could only ever be passive -- and one of them says
+        # "Start of battle". A container is bought from the same shop and
+        # built from the same catalogue, so it says when its clauses happen
+        # the same way everything else does.
         triggers = []
-        for effect_config in config.get("effects", []):
-            effect = self._parse_effect(effect_config, container_id)
-            if effect:
-                effects.append(effect)
-
-        # Create trigger if there are effects
-        if effects:
-            triggers = [PassiveTrigger(effects=effects)]
+        for trigger_config in config.get("triggers", []):
+            trigger = self._parse_trigger(trigger_config, container_id)
+            if trigger:
+                triggers.append(trigger)
 
         # Create ItemSpec for the container
         spec = ItemSpec(
@@ -402,11 +403,34 @@ class ConfigLoader:
                     f"{item_id}: a counter counts what is `held` or what was "
                     f"`gained`, not `{config['counts']}`."
                 )
+            where = config.get("where", "")
+            if where:
+                if where not in MODIFIER_TARGETS:
+                    raise ValueError(
+                        f"{item_id}: a counter narrowed to a zone names one "
+                        f"of {sorted(MODIFIER_TARGETS)}, not `{where}`."
+                    )
+                if counting != "block":
+                    raise ValueError(
+                        f"{item_id}: only `block` can be narrowed to a zone, "
+                        f"because only Block is counted per item that gave it."
+                    )
+                # A zone answers for itself: what the items in it handed over
+                # is the owner's, and it only ever goes up. Letting the other
+                # two fields say otherwise would let a catalogue entry state
+                # something nothing reads.
+                if config["whose"] != "self" or config["counts"] != "gained":
+                    raise ValueError(
+                        f"{item_id}: a counter narrowed to a zone counts what "
+                        f"that zone `gained` for `self`, so it cannot also say "
+                        f'whose={config["whose"]!r} counts={config["counts"]!r}.'
+                    )
             return CounterTrigger(
                 counting=counting,
                 amount=config["amount"],
                 whose=config["whose"],
                 counts=config["counts"],
+                where=where,
                 effects=effects,
             )
         elif trigger_type == "on_stun":
@@ -704,9 +728,15 @@ class ConfigLoader:
                 whose=whose,
             )
         elif effect_type == "max_health":
-            if "value" not in config:
-                raise ValueError(f"{item_id}: max_health needs a `value`")
-            return MaxHealthEffect(amount=config["value"])
+            if "value" not in config and "share" not in config:
+                raise ValueError(
+                    f"{item_id}: max_health needs a `value`, a `share` of the "
+                    f"maximum the battle opened on, or both."
+                )
+            return MaxHealthEffect(
+                amount=config.get("value", 0),
+                share=config.get("share", 0.0),
+            )
         elif effect_type == "modify_per_status":
             for needed in ("stat", "value", "status", "whose"):
                 if needed not in config:
@@ -723,11 +753,20 @@ class ConfigLoader:
                 raise ValueError(f"{item_id}: `{status}` is not a status to count.")
             if config["whose"] not in ("self", "enemy"):
                 raise ValueError(f"{item_id}: `whose` is `self` or `enemy`.")
+            target = config.get("target", "self")
+            if target not in MODIFIER_TARGETS:
+                raise ValueError(
+                    f"{item_id}: `{target}` is not somewhere a scaled "
+                    f"modifier reaches. There are {len(MODIFIER_TARGETS)}: "
+                    f"{', '.join(sorted(MODIFIER_TARGETS))}."
+                )
             return ModifyPerStatusEffect(
                 stat=config["stat"],
                 value=config["value"],
                 status=status,
                 whose=config["whose"],
+                target_type=target,
+                cap=config.get("cap"),
             )
         elif effect_type == "chance":
             if "chance" not in config:
@@ -903,17 +942,23 @@ class ConfigLoader:
                     f"chance refuses nothing."
                 )
             against = config.get("against", "debuff")
-            if against not in ("debuff", "critical", "stun"):
+            if against not in ("debuff", "critical", "stun", "removal"):
                 raise ValueError(
-                    f"{item_id}: a resist refuses a `debuff`, a `critical` or "
-                    f"a `stun`, not `{against}`."
+                    f"{item_id}: a resist refuses a `debuff`, a `critical`, a "
+                    f"`stun` or a `removal`, not `{against}`."
                 )
             only = tuple(config.get("only", ()))
-            unknown = set(only) - DEBUFFS
+            # Against a removal, `only` says which pool is protected -- "35%
+            # chance to protect your buffs from removal" -- because a cleanse
+            # takes from one or the other. Against a debuff it names the
+            # debuffs refused.
+            if against == "removal":
+                allowed, what = {"buff", "debuff"}, "a pool to protect"
+            else:
+                allowed, what = DEBUFFS, "a debuff to resist"
+            unknown = set(only) - allowed
             if unknown:
-                raise ValueError(
-                    f"{item_id}: {sorted(unknown)} is not a debuff to resist."
-                )
+                raise ValueError(f"{item_id}: {sorted(unknown)} is not {what}.")
             per_status = config.get("per_status", {})
             unknown = set(per_status) - (BUFFS | DEBUFFS)
             if unknown:
@@ -1095,9 +1140,23 @@ class ConfigLoader:
                 raise ValueError(f"{item_id}: inflict_fatigue needs a `target`")
             return InflictFatigueEffect(target_type=config["target"])
         elif effect_type == "block":
-            if "value" not in config:
-                raise ValueError(f"{item_id}: a block needs a `value`")
-            return BlockEffect(block_amount=config["value"])
+            if "value" not in config and "of_missing_health" not in config:
+                raise ValueError(
+                    f"{item_id}: a block needs a `value`, a share "
+                    f"`of_missing_health`, or both."
+                )
+            return BlockEffect(
+                block_amount=config.get("value", 0),
+                share_of_missing_health=config.get("of_missing_health", 0.0),
+            )
+        elif effect_type == "convert_health":
+            for needed in ("health", "block"):
+                if needed not in config:
+                    raise ValueError(
+                        f"{item_id}: a convert_health needs a `{needed}`: it "
+                        f"names a price in health and what it buys."
+                    )
+            return ConvertHealthEffect(health=config["health"], block=config["block"])
         elif effect_type == "consume":
             return ConsumeEffect()
 

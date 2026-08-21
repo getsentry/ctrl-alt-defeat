@@ -10,7 +10,7 @@
       "source": "Leather Bag",
       "rarity": "common",
       "cost": 4,
-      "effects": [],
+      "triggers": [],
       "slug": "standard_vm",
       "in_shop": true,
       "icontype": "bag"
@@ -24,16 +24,21 @@
       "source": "Fanny Pack",
       "rarity": "rare",
       "cost": 3,
-      "effects": [
+      "triggers": [
         {
-          "type": "modify",
-          "stat": "trigger_speed",
-          "value": 0.1,
-          "target": "contained",
-          "description": "Modules inside execute 10% faster",
-          "counting": "any",
-          "cap": null,
-          "duration": -1
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "trigger_speed",
+              "value": 0.1,
+              "target": "contained",
+              "description": "Items inside trigger 10% faster",
+              "counting": "any",
+              "cap": null,
+              "duration": -1
+            }
+          ]
         }
       ],
       "slug": "edge_node",
@@ -51,12 +56,17 @@
       "source": "Stamina Sack",
       "rarity": "epic",
       "cost": 5,
-      "effects": [
+      "triggers": [
         {
-          "type": "stat_mod",
-          "stat": "max_cpu",
-          "value": 1,
-          "description": "Gain 1 maximum CPU"
+          "type": "passive",
+          "effects": [
+            {
+              "type": "stat_mod",
+              "stat": "max_cpu",
+              "value": 1,
+              "description": "Gain 1 maximum CPU"
+            }
+          ]
         }
       ],
       "slug": "memory_cache",
@@ -72,11 +82,16 @@
       "source": "Protective Purse",
       "rarity": "godly",
       "cost": 2,
-      "effects": [
+      "triggers": [
         {
-          "type": "block",
-          "value": 15,
-          "description": "Start of battle: Gain 15 Block"
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "block",
+              "value": 15,
+              "description": "Start of battle: Gain 15 Block"
+            }
+          ]
         }
       ],
       "slug": "load_balancer",
@@ -95,7 +110,7 @@
       "source": "Potion Belt",
       "rarity": "legendary",
       "cost": 5,
-      "effects": [],
+      "triggers": [],
       "slug": "patch_registry",
       "unbuilt": [
         "First Potion inside consumed: Gain a random buff.",
@@ -114,11 +129,31 @@
       "source": "Holdall",
       "rarity": "epic",
       "cost": 7,
-      "effects": [],
-      "slug": "container_orchestrator",
-      "unbuilt": [
-        "Start of battle: Gain 8 Block for each Neutral item inside."
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "per_count",
+              "where": "contained",
+              "counting": {
+                "any": [
+                  "neutral"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "block",
+                  "value": 8,
+                  "description": "Gain 8 Block"
+                }
+              ],
+              "description": "for each Neutral item inside"
+            }
+          ]
+        }
       ],
+      "slug": "container_orchestrator",
       "recipe": [
         {
           "ingredients": [
@@ -146,7 +181,7 @@
       "source": "Box of Prosperity",
       "rarity": "epic",
       "cost": 5,
-      "effects": [],
+      "triggers": [],
       "slug": "serverless_function",
       "unbuilt": [
         "Shop entered: If this has at least 2 Godly or Unique items inside, generate a chipped Gemstone."
@@ -183,11 +218,33 @@
       "source": "Ranger Bag",
       "rarity": "unique",
       "cost": 16,
-      "effects": [],
-      "slug": "network_cache",
-      "unbuilt": [
-        "Items inside gain 10% critical hit chance +3% for each Luck."
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "critical_chance",
+              "value": 0.1,
+              "target": "contained",
+              "counting": "any",
+              "cap": null,
+              "duration": -1,
+              "description": "Items inside gain 10% critical hit chance"
+            },
+            {
+              "type": "modify_per_status",
+              "stat": "critical_chance",
+              "value": 0.03,
+              "status": "calibrated",
+              "whose": "self",
+              "target": "contained",
+              "description": "+3% for each Luck"
+            }
+          ]
+        }
       ],
+      "slug": "network_cache",
       "in_shop": false,
       "icontype": "bag"
     },
@@ -202,10 +259,43 @@
       "source": "Vineweave Basket",
       "rarity": "unique",
       "cost": 20,
-      "effects": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "healing",
+              "value": 0.12,
+              "target": "self",
+              "duration": -1,
+              "description": "Your healing is amplified by 12%"
+            },
+            {
+              "type": "per_count",
+              "where": "contained",
+              "counting": {
+                "any": [
+                  "nature"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "player_modify",
+                  "stat": "healing",
+                  "value": 0.05,
+                  "target": "self",
+                  "duration": -1,
+                  "description": "Your healing is amplified by 5%"
+                }
+              ],
+              "description": "per Nature-item inside"
+            }
+          ]
+        }
+      ],
       "slug": "mesh_network_hub",
       "unbuilt": [
-        "Your healing is amplified by 12% + 5% per Nature-item inside.",
         "In rounds 1 and 10, sale chance is increased by 20%."
       ],
       "in_shop": false,
@@ -221,7 +311,7 @@
       "source": "Sack of Surprises",
       "rarity": "unique",
       "cost": 10,
-      "effects": [],
+      "triggers": [],
       "slug": "chaos_experiment",
       "unbuilt": [
         "Game started: Replace this with random starting bags and items."

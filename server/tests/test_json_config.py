@@ -1340,3 +1340,76 @@ class TestAModifierCannotBeBothCappedAndLent:
                 "some_item",
             )
             assert effect is not None
+
+
+class TestACounterNarrowedToAZoneCannotSayTheRest:
+    """A zone answers for itself, so the other two fields would be a lie.
+
+    "Star items gained 12 Block" counts what the items in the zone handed
+    over: the owner's, and only ever going up. `whose` and `counts` are read
+    by nothing once a zone is named, and a field nothing reads is a field a
+    catalogue entry can be wrong in for as long as nobody looks.
+    """
+
+    def _counter(self, **extra):
+        return ConfigLoader()._parse_trigger(
+            {
+                "type": "counter",
+                "counting": "block",
+                "amount": 12,
+                "whose": "self",
+                "counts": "gained",
+                "effects": [],
+                **extra,
+            },
+            "some_item",
+        )
+
+    def test_the_zone_it_names_has_to_be_one(self):
+        with pytest.raises(ValueError, match="narrowed to a zone names one"):
+            self._counter(where="sideways")
+
+    def test_only_block_is_counted_per_giver(self):
+        with pytest.raises(ValueError, match="only `block` can be narrowed"):
+            self._counter(where="star", counting="optimized")
+
+    def test_it_cannot_also_point_at_the_opponent(self):
+        with pytest.raises(ValueError, match="cannot also say"):
+            self._counter(where="star", whose="enemy")
+
+    def test_it_cannot_also_ask_for_what_is_held(self):
+        with pytest.raises(ValueError, match="cannot also say"):
+            self._counter(where="star", counts="held")
+
+    def test_the_shape_the_catalogue_uses_loads(self):
+        assert self._counter(where="star").where == "star"
+
+    def test_a_counter_without_a_zone_is_free_to_say_the_rest(self):
+        trigger = self._counter(counting="optimized", whose="enemy", counts="held")
+        assert (trigger.whose, trigger.counts) == ("enemy", "held")
+
+
+class TestAClassIsWhatTheWikiSaysItIs:
+    """`player_class` is read now, so it has to be right.
+
+    "Gain 8 Block for each Neutral item inside" is the first clause that asks,
+    and three items answered wrongly: Leather Armor, Torch and Healing Herbs
+    were stored as Sentaur, which is our name for the wiki's Ranger. The wiki
+    gives that class to thirty items and no more.
+    """
+
+    def test_only_the_source_games_class_items_carry_a_class(self):
+        loader = ConfigLoader()
+        loader.load_all()
+        classed = [
+            key for key, spec in loader.items.items() if spec.player_class != "neutral"
+        ]
+        assert len(classed) == 30, sorted(classed)
+
+    def test_no_item_carries_a_class_nobody_has_heard_of(self):
+        loader = ConfigLoader()
+        loader.load_all()
+        assert {spec.player_class for spec in loader.items.values()} == {
+            "neutral",
+            "sentaur",
+        }

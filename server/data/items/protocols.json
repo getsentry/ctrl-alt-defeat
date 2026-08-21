@@ -379,13 +379,27 @@
               "description": "Start of battle: Gain 30 Block"
             }
           ]
+        },
+        {
+          "type": "counter",
+          "counting": "block",
+          "amount": 40,
+          "whose": "self",
+          "counts": "gained",
+          "where": "star",
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 1,
+              "target": "self",
+              "description": "Gain 1 Empower"
+            }
+          ]
         }
       ],
       "slug": "encryption_module",
       "in_shop": false,
-      "unbuilt": [
-        "Star items gained 40 Block: Gain 1 Empower."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -1741,13 +1755,26 @@
               ]
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "resist",
+              "count": 0,
+              "chance": 0.35,
+              "target": "self",
+              "against": "removal",
+              "only": [
+                "buff"
+              ],
+              "description": "35% chance to protect your buffs from removal"
+            }
+          ]
         }
       ],
       "slug": "shepherds_crook",
       "in_shop": false,
-      "unbuilt": [
-        "35% chance to protect your buffs from removal."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -1858,13 +1885,23 @@
               "description": "Inflict 2 Throttled"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "max_health_from_items",
+              "value": -0.15,
+              "target": "enemy",
+              "duration": -1,
+              "description": "Your opponent gains 15% less maximum health from items"
+            }
+          ]
         }
       ],
       "slug": "snowball",
       "in_shop": false,
-      "unbuilt": [
-        "Your opponent gains 15% less maximum health from items."
-      ],
       "icontype": "ice, accessory",
       "recipe": [
         {

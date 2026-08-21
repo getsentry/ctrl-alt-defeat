@@ -209,6 +209,34 @@
               "description": "Start of battle: Gain 85 Block"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "dark"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "resist",
+                  "count": 0,
+                  "chance": 0.1,
+                  "target": "enemy",
+                  "against": "removal",
+                  "only": [
+                    "debuff"
+                  ],
+                  "description": "10% chance to protect debuffs on your opponent from being cleansed"
+                }
+              ],
+              "description": "for each Star Dark-item"
+            }
+          ]
         }
       ],
       "slug": "corrupted_kernel",
@@ -217,7 +245,6 @@
       "in_shop": false,
       "unbuilt": [
         "Star Holy-items gain Dark.",
-        "10% chance for each Star Dark-item to protect debuffs on your opponent from being cleansed.",
         "Every 2.4s: Cleanse 2 debuffs and inflict them on your opponent."
       ],
       "recipe": [

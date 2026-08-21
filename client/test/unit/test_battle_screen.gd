@@ -342,6 +342,16 @@ func test_fatigue_is_written_in_another_colour_again():
 		"nor fatigue and poison, which arrive for different reasons")
 
 
+func test_health_spent_on_block_is_not_written_as_a_wound():
+	# "Convert 50 health into 100 Block" takes health and nothing hit them.
+	# Written in the colour Block is written in, because that is where it went.
+	var spent = battle_screen.hurt_colour("convert_health")
+	assert_ne(spent, battle_screen.hurt_colour("damage"),
+		"A price and a blow should not be written in the same colour")
+	assert_eq(spent, battle_screen.SHIELDED,
+		"and it should be written in the one the Block it bought is")
+
+
 func _with_an_item_to_throw() -> void:
 	"""The fixture's racks are empty, and a blow throws the item that made it"""
 	battle_screen.player_inventory.load_inventory_state(APITypes.InventoryState.new({

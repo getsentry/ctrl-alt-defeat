@@ -1,3 +1,48 @@
+### A container's clauses now run, and two dormant bugs woke with them
+
+Making containers act was the batch's structural change and it made two
+things reachable that had never run:
+
+- **Stamina Sack is the only `max_cpu` in the catalogue.** The pool used to be
+  filled before an item could resize it, so it gave +1 maximum and left its
+  owner a second of regeneration short. Fixed by filling after the handlers.
+- **A container's spec was the catalogue's own object**, shared by both
+  players and every battle in the process. Nothing broke because no container
+  yet carries a trigger that keeps state — `patch_registry` will be the first.
+  Fixed by copying it, the way an item's has always been copied.
+
+Worth remembering as a shape: a feature that was never reachable has never
+been tested either, and the code around it has been free to rot.
+
+### Red Orchid Collar wants lifesteal on an attack, which nothing has
+
+"Star items steal 3% life for each Luck (up to 50%) and gain 4% critical
+chance for each Vampirism." The second half is a scaled aura and is built; the
+first is not. Lifesteal exists on effect damage alone -- `EffectDamageEffect`
+carries a `lifesteal` share -- and an attack has nowhere to put one. It wants
+a modifier stat that `_process_attack` reads and heals by after the damage
+lands, which is a different mechanic from the aura that hands it out.
+
+One clause, one item.
+
+### A container can only be reached, never counted, from outside
+
+`contained` is the container's own footprint, so an item asking about "the
+items inside" means the container it is written on. Nothing yet lets an item
+ask about a *different* container -- "the Potion above it" already goes by the
+star zone, but "4 Potions inside consumed" (Patch Registry) wants a trigger
+that fires when an item standing on this container is used up, which is a
+moment nothing raises.
+
+Two clauses, one item.
+
+### Motherboard's sale chance is round-conditional
+
+"In rounds 1 and 10, sale chance is increased by 20%." `sale_chance_from`
+reads the specs a player holds and knows nothing about which round it is, and
+`SaleChanceEffect` has no condition. One clause; it is the last thing between
+Motherboard and being whole.
+
 ### A shop effect that lasts wants session state, not a payout
 
 Gold is paid and gone. A free reroll, a discount, "For the next shop: ..." are
@@ -366,13 +411,6 @@ something that is not a debuff at all.
 
 Six clauses across four items.
 
-### An item-level modifier on Block granted
-
-"Star items give +30% Block", "StarItems give 30% more Block". `block_gained`
-is a modifier on the *player*, so it changes every source of Block rather than
-only the items the star reaches. Three clauses want the narrower one, which
-needs Block to be granted through the item that granted it.
-
 ### Backpack Battles "Food" has no tag of its own here
 
 10 clauses say "Star Food", "for each Star Pet or Food", "Trigger all Star
@@ -401,12 +439,6 @@ no other trigger does: a default cannot be told from a transcription that lost
 a value. It also carries its own copy of `matches`, which is now the `Counting`
 mixin's job -- `ModifyEffect`, `ModifyPerEffect`, `PerCountEffect` and
 `GainDamageEffect` all take it from there.
-
-### `contained` still reaches nothing
-
-A container does not know what sits inside it, so `_reached_by("contained")`
-returns nothing and `per_count` with `where: "contained"` counts nothing.
-"Start of battle: Gain 8 Block for each Neutral item inside" waits on this.
 
 ### A limit on a buff is not a limit on a modifier
 

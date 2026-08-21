@@ -819,13 +819,33 @@
               "description": "Stun the opponent for 1.5s"
             }
           ]
+        },
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "max_health",
+              "share": 0.1,
+              "description": "Gain 10% maximum health"
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": "any",
+              "effects": [
+                {
+                  "type": "max_health",
+                  "share": 0.15,
+                  "description": "Gain 15% maximum health"
+                }
+              ],
+              "description": "per Star item"
+            }
+          ]
         }
       ],
       "slug": "sloth",
       "in_shop": true,
-      "unbuilt": [
-        "Start of battle: Gain 10% maximum health + 15% per Star item."
-      ],
       "icontype": "treasure, nature, pet"
     },
     "snowmaster": {

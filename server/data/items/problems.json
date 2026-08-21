@@ -940,7 +940,7 @@
       "category": "problem",
       "color": "red",
       "pattern": "dot_small_grid",
-      "class": "sentaur",
+      "class": "neutral",
       "map": [
         "#",
         "#"
@@ -1176,13 +1176,25 @@
               "description": "Attacks 5% faster for every Vampirism"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "vampirism_given",
+              "value": 1.0,
+              "target": "star",
+              "counting": "any",
+              "cap": null,
+              "duration": -1,
+              "description": "Star items give +100% Vampirism"
+            }
+          ]
         }
       ],
       "slug": "credential_harvester",
       "in_shop": true,
-      "unbuilt": [
-        "Star Items give +100% Vampirism."
-      ],
       "sockets": 3,
       "icontype": "treasure, vampiric, melee, weapon"
     },
@@ -1317,13 +1329,48 @@
               "description": "Triggers extra attack"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "limit",
+              "times": 5,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "draining",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Vampirism"
+                }
+              ],
+              "description": "(up to 5 per battle)"
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "vampiric"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "min_heal": 4,
+                  "max_heal": 4,
+                  "description": "Heal 4"
+                }
+              ],
+              "description": "per Star Vampiric-item"
+            }
+          ]
         }
       ],
       "slug": "bloody_dagger",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: Gain 1 Vampirism (up to 5 per battle). Heal 4 per Star Vampiric-item."
-      ],
       "sockets": 1,
       "icontype": "vampiric, melee, weapon",
       "recipe": [

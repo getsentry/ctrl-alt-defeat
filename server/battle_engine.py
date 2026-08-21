@@ -21,6 +21,7 @@ from grid_system import ItemShape, Rotation
 from item_effects import (
     BUFFS,
     DEBUFFS,
+    OUTSIDE_BATTLE,
     AfterTrigger,
     AttackEffect,
     AuraTrigger,
@@ -32,6 +33,7 @@ from item_effects import (
     CleanseEffect,
     ConditionEffect,
     ConsumeEffect,
+    ConvertHealthEffect,
     CostEffect,
     CounterTrigger,
     CpuDrainEffect,
@@ -49,7 +51,6 @@ from item_effects import (
     LimitEffect,
     MaxHealthEffect,
     ModifyEffect,
-    OUTSIDE_BATTLE,
     ModifyPerEffect,
     ModifyPerStatusEffect,
     NextAttackEffect,
@@ -358,6 +359,12 @@ class BattleItem:
     damage_flat: float = 0.0
     max_damage_flat: float = 0.0
 
+    # Shares on what this item hands over: "Star items give +30% Block",
+    # "Star Items give +100% Vampirism". A modifier on the giver rather than
+    # on the player, so an item outside the zone gives what it always gave.
+    block_given: float = 0.0
+    vampirism_given: float = 0.0
+
     def aura_squares(self, zone: str) -> List[Tuple[int, int]]:
         """The grid squares this item's star or diamond zone falls on.
 
@@ -397,6 +404,13 @@ class Player:
     cpu: float  # Current cycles
     max_cpu: float = 3.0
     cpu_regen: float = 1.0  # Per second
+
+    #: The maximum quota this battle opened on, which a share of maximum
+    #: health is read against. It sits down here rather than beside
+    #: `max_quota`, where it belongs, only because a field with a default
+    #: cannot come before one without. 0 outside a battle, where nothing
+    #: reads it.
+    opening_quota: int = 0
 
     block: int = 0  # Block absorbs a point of damage per point and is spent
 
@@ -551,6 +565,16 @@ class BattleSimulator:
         # battle. A test that calls one method on its own has neither.
         self.loadout: Dict[int, List[BattleItem]] = {}
 
+        # The containers each player's items stand on, as things that act.
+        # Apart from the loadout because a container's squares are offered
+        # rather than filled, so counting one as standing on the grid would
+        # make its own shelf look full.
+        self.racks: Dict[int, List[BattleItem]] = {}
+
+        # How much Block each item has handed over, keyed by its uid, so a
+        # clause can wait on a zone's giving: "Star items gained 12 Block".
+        self.block_by_item: Dict[str, int] = {}
+
         # How deep the effects being applied right now are nested.
         self.depth = 0
 
@@ -618,13 +642,17 @@ class BattleSimulator:
         # Get quota based on round (Section 1.1)
         quota = self._get_round_quota(round_number)
 
-        # Initialize players
-        # Both start on a full pool. Naming the number here would let it drift
-        # from max_cpu, which is what happened when the pool was last changed.
+        # Initialize players. The pool is filled further down, once the items
+        # have had their say about how big it is.
         player1 = Player(id=1, quota=quota, max_quota=quota, cpu=0.0)
         player2 = Player(id=2, quota=quota, max_quota=quota, cpu=0.0)
-        player1.cpu = player1.max_cpu
-        player2.cpu = player2.max_cpu
+        # What a share of maximum health is read against. Held apart from
+        # `max_quota` so that "10% maximum health + 15% per Star item" adds up
+        # to 40% with two of them rather than compounding to 45%: every other
+        # pair of shares here adds, and two halves of one sentence certainly
+        # should.
+        player1.opening_quota = player1.max_quota
+        player2.opening_quota = player2.max_quota
 
         # Deep copy items to avoid mutation
         p1_items = deepcopy(p1_items)
@@ -654,6 +682,16 @@ class BattleSimulator:
         self.event_manager.clear()
         self.consumed_items = set()
         self.loadout = {player1.id: p1_items, player2.id: p2_items}
+        # A container is an item too: it is bought from the same shop and
+        # built from the same catalogue, and several of them carry clauses.
+        # It is kept out of `loadout` rather than added to it because a
+        # container's squares are the ones other items stand on, so counting
+        # it as standing there would fill its own shelf.
+        self.racks = {
+            player1.id: self._as_items(p1_containers),
+            player2.id: self._as_items(p2_containers),
+        }
+        self.block_by_item = {}
         self.settled = IdentitySet()
         self.stunned_until = {}
         self.watched = []
@@ -668,6 +706,8 @@ class BattleSimulator:
         # anything is scheduled, since an aura changes how fast things go.
         self._apply_auras(p1_items, player1, player2)
         self._apply_auras(p2_items, player2, player1)
+        self._apply_auras(self.racks[player1.id], player1, player2, p1_items)
+        self._apply_auras(self.racks[player2.id], player2, player1, p2_items)
 
         # Set up event handlers for items. Passive effects are applied here as
         # the handlers go on, which is the only place they are applied: an
@@ -676,6 +716,17 @@ class BattleSimulator:
         # every battle with twice the pool its own data gives it.
         self._setup_item_handlers(p1_items, player1, player2)
         self._setup_item_handlers(p2_items, player2, player1)
+        self._setup_item_handlers(self.racks[player1.id], player1, player2)
+        self._setup_item_handlers(self.racks[player2.id], player2, player1)
+
+        # Both start on a full pool, and full means the pool as the items have
+        # left it. Filled before the handlers ran, a Stamina Sack raised the
+        # ceiling to 4 and left its owner opening the battle on 3 -- a second
+        # of regeneration short of the full pool it had just been given.
+        # Read off max_cpu rather than named here, which is how it drifted the
+        # last time the pool's size changed.
+        player1.cpu = player1.max_cpu
+        player2.cpu = player2.max_cpu
 
         # Emit battle start event
         self.event_manager.emit(Event(EventType.BATTLE_START, None, None))
@@ -866,7 +917,38 @@ class BattleSimulator:
     #: modifiers out as it fires.
     STANDING_TRIGGERS = (PassiveTrigger, BattleStartTrigger)
 
-    def _apply_auras(self, items: List[BattleItem], owner=None, enemy=None):
+    @staticmethod
+    def _as_items(containers: List[Container]) -> List[BattleItem]:
+        """The containers of one rack, as things that can act.
+
+        A container carries triggers like any other item and until now nothing
+        ran them, so a shelf that speeds up what sits on it did nothing at
+        all.
+
+        The spec is copied for the same reason an item's is: a trigger keeps
+        its own state -- whether a counter has crossed, where a timer stands --
+        and the catalogue holds one spec for every container of a type. Shared,
+        one battle's crossing would be every later battle's, and both players
+        would be reading the same one.
+        """
+        return [
+            BattleItem(
+                spec=deepcopy(ITEM_CATALOG[held.item_type]),
+                position=tuple(held.position),
+                uid=held.id,
+                rotation=held.rotation,
+            )
+            for held in containers
+            if held.item_type in ITEM_CATALOG
+        ]
+
+    def _apply_auras(
+        self,
+        items: List[BattleItem],
+        owner=None,
+        enemy=None,
+        reaches: Optional[List[BattleItem]] = None,
+    ):
         """Let every aura change the items it falls on.
 
         Worked out once, before the battle. Nothing moves on the grid during a
@@ -878,6 +960,10 @@ class BattleSimulator:
         away at the start of the battle, in full, whether or not the item ever
         hit anything. It is applied where it happens instead.
         """
+        # A rack projects onto the items standing on it, and is not itself
+        # one of them: `reaches` is what the auras land on, `items` who casts
+        # them. For a loadout the two are the same list.
+        reaches = items if reaches is None else reaches
         for item in items:
             for trigger in item.spec.triggers:
                 if not isinstance(trigger, self.STANDING_TRIGGERS):
@@ -893,19 +979,27 @@ class BattleSimulator:
                             continue
                         self.settled.add(effect)
                         for reached in self._reached_by(
-                            effect.target_type, item, items
+                            effect.target_type, item, reaches
                         ):
                             if effect.matches(self._tags(reached)):
                                 self._modify(reached, effect, source=item)
                     elif isinstance(effect, ModifyPerStatusEffect):
-                        # The player is asked rather than the grid. Statuses
-                        # from battle_start have not been granted yet, so this
-                        # reads what the player begins with.
-                        item.per_status.append(effect)
+                        # The player is asked rather than the grid, so the
+                        # amount is kept and read as the battle goes on. An
+                        # aura can hand one out -- "Star items steal 3% life
+                        # for each Luck" -- and then each item in the zone
+                        # keeps its own copy to read.
+                        if effect.target_type == "self":
+                            item.per_status.append(effect)
+                        else:
+                            for reached in self._reached_by(
+                                effect.target_type, item, reaches
+                            ):
+                                reached.per_status.append(effect)
                     elif isinstance(effect, ModifyPerEffect):
                         # The other direction: what stands in the zone decides
                         # how much the item projecting it changes.
-                        standing = self._counted_in(effect, item, items)
+                        standing = self._counted_in(effect, item, reaches)
                         if standing:
                             self._modify(item, effect, times=standing)
 
@@ -914,33 +1008,56 @@ class BattleSimulator:
     ) -> List[BattleItem]:
         """The items a modifier reaches.
 
-        A star or diamond is a zone on the grid, so an item is reached when a
-        square it covers is in that zone. An item never reaches itself through
-        its own aura: a zone is drawn beside the footprint, not on it.
+        A zone is a set of squares on the grid, so an item is reached when a
+        square it covers is one of them. A star or a diamond is drawn beside
+        the footprint; `contained` is the footprint itself, which is how a
+        container reaches what stands on it.
+
+        An item never reaches itself: a zone is drawn beside the footprint and
+        not on it, and a container is not standing on its own shelf.
         """
         if target == "self":
             # "Gain 1 damage" is the item saying it about itself.
             return [source]
         if target == "own":
             return items
-        if target in ("star", "diamond"):
-            zone = set(source.aura_squares(target))
-            return [
-                other
-                for other in items
-                if other.uid != source.uid and zone & set(other.get_occupied_squares())
-            ]
-        # `contained` waits on a container knowing what sits inside it.
-        # Reaching nothing is the safer of the two ways to be wrong: it cannot
-        # make an item quietly stronger than it should be.
-        return []
+        zone = set(self._zone_squares(source, target))
+        return [
+            other
+            for other in items
+            if other.uid != source.uid and zone & set(other.get_occupied_squares())
+        ]
+
+    @staticmethod
+    def _zone_squares(source: BattleItem, zone: str) -> List[Tuple[int, int]]:
+        """The grid squares a zone name covers.
+
+        A star or a diamond is drawn beside the footprint. `contained` is the
+        footprint itself: a container's squares are the ones other items stand
+        on, so what is inside one is whatever sits on the squares it covers.
+
+        A name that is none of the three is refused rather than guessed at:
+        `aura_squares` answers anything that is not `star` with the diamond,
+        so a typo here would silently project the wrong zone.
+        """
+        if zone == "contained":
+            return source.get_occupied_squares()
+        if zone not in ("star", "diamond"):
+            raise TypeError(f"{source.spec.id}: `{zone}` is not a zone")
+        return source.aura_squares(zone)
 
     @staticmethod
     def _tags(item: BattleItem) -> set:
-        """What an item can be narrowed by: the kinds it carries and the
-        category it belongs to, lowered so the catalogue's casing does not
-        matter."""
-        return {k.lower() for k in item.spec.kinds} | {item.spec.category.lower()}
+        """What an item can be narrowed by: the kinds it carries, the category
+        it belongs to and the class it belongs to, lowered so the catalogue's
+        casing does not matter. "Neutral item" is the class; "Nature-item" is
+        a kind; "Food" is both a kind and a category and matches either
+        way."""
+        return (
+            {k.lower() for k in item.spec.kinds}
+            | {item.spec.category.lower()}
+            | {item.spec.player_class.lower()}
+        )
 
     def _free_squares(self, effect, source: BattleItem, items: List[BattleItem]) -> int:
         """Squares of the zone that nothing stands on.
@@ -949,7 +1066,7 @@ class BattleSimulator:
         counts that is not an item, so it is worked out here rather than
         through `matches`, which asks an item for its tags.
         """
-        zone = set(source.aura_squares(effect.zone))
+        zone = set(self._zone_squares(source, effect.zone))
         taken = {sq for other in items for sq in other.get_occupied_squares()}
         return len(zone - taken)
 
@@ -962,7 +1079,7 @@ class BattleSimulator:
         to, so "nature" and "food" both work. Empty counts anything standing
         there.
         """
-        zone = set(source.aura_squares(effect.zone))
+        zone = set(self._zone_squares(source, effect.zone))
         standing = [
             other
             for other in items
@@ -1207,11 +1324,19 @@ class BattleSimulator:
         self, item: BattleItem, stat: str, owner: Player, enemy: Player
     ) -> float:
         """What the status-counting modifiers add to one stat, as it stands."""
-        return sum(
-            effect.value * self._held(effect, owner, enemy)
-            for effect in item.per_status
-            if effect.stat == stat
-        )
+        total = 0.0
+        for effect in item.per_status:
+            if effect.stat != stat:
+                continue
+            amount = effect.value * self._held(effect, owner, enemy)
+            cap = getattr(effect, "cap", None)
+            if cap is not None:
+                # A ceiling on the reading, not on a running total: the count
+                # can fall again and the modifier falls back with it. Written
+                # the way round it is so a negative one caps downwards.
+                amount = min(amount, cap) if cap >= 0 else max(amount, cap)
+            total += amount
+        return total
 
     def _modify(self, item: BattleItem, effect, times: int = 1, source=None):
         """Put a modifier onto one item, `times` over.
@@ -1253,6 +1378,10 @@ class BattleSimulator:
             item.damage_flat += effect.value * times
         elif effect.stat == "max_damage_flat":
             item.max_damage_flat += effect.value * times
+        elif effect.stat == "block_given":
+            item.block_given += effect.value * times
+        elif effect.stat == "vampirism_given":
+            item.vampirism_given += effect.value * times
         else:
             # The same guard _apply_effects has, for the same reason: a stat
             # that loads and then quietly does nothing is worse than one that
@@ -1263,6 +1392,62 @@ class BattleSimulator:
                 f"{item.spec.id}: `{effect.stat}` is a modifier nothing here "
                 f"applies"
             )
+
+    def _share_given(
+        self, item: BattleItem, what: str, owner: Player, enemy: Player
+    ) -> float:
+        """How much of what an item hands over actually arrives.
+
+        "Star items give +30% Block", "Star Items give +100% Vampirism". The
+        share sits on the giving item and not on the player, so two items in
+        the same zone are each scaled by it and one standing outside gives
+        what it always gave. Nothing can turn a gift into a taking, so it
+        stops at nothing.
+        """
+        stat = f"{what}_given"
+        return max(
+            0.0,
+            1.0 + getattr(item, stat) + self._per_status(item, stat, owner, enemy),
+        )
+
+    def _gain_block(
+        self, owner: Player, amount: float, item: BattleItem, enemy: Player
+    ) -> int:
+        """The one road to Block gained.
+
+        Two shares stand between an amount and the Block that arrives: one on
+        the player, "you gain 25% more Block", and one on the item that gives
+        it, "Star items give +30% Block". They add rather than multiply, like
+        every other pair of shares here.
+
+        What each item has handed over is kept, because a clause can wait on
+        it: "Star items gained 12 Block: Gain 1 Mana".
+        """
+        gained = int(
+            amount
+            * max(0.0, 1.0 + owner.modifier("block_gained", self.current_time))
+            * self._share_given(item, "block", owner, enemy)
+        )
+        if gained <= 0:
+            return 0
+        owner.block += gained
+        self.block_by_item[item.uid] = self.block_by_item.get(item.uid, 0) + gained
+        self._record(
+            BattleAction(
+                timestamp=self._time_ms(),
+                source=item.uid,
+                action="block",
+                target=None,
+                damage=gained,
+                player=owner.id,
+                # Gaining Block and Block absorbing a blow are one action name
+                # and two different things, and the client was reading every
+                # gain as "attack BLOCKED" -- at 0.0s, with no attack. Both
+                # say which they are rather than one saying and one not.
+                details={"type": "gained"},
+            )
+        )
+        return gained
 
     def _trigger(
         self, item: BattleItem, owner: Player, enemy: Player, by: BattleItem
@@ -1390,16 +1575,31 @@ class BattleSimulator:
                 # the way past and not on every tick after.
                 if trigger.crossed:
                     continue
-                if self._total(trigger, owner, enemy) < trigger.amount:
+                if self._total(trigger, owner, enemy, item) < trigger.amount:
                     continue
                 trigger.crossed = True
                 self._apply_effects(trigger.effects, item, owner, enemy)
 
-    def _total(self, trigger: CounterTrigger, owner: Player, enemy: Player) -> float:
+    def _total(
+        self,
+        trigger: CounterTrigger,
+        owner: Player,
+        enemy: Player,
+        item: BattleItem,
+    ) -> float:
         """The running total a CounterTrigger is watching."""
         who = owner if trigger.whose == "self" else enemy
         pool = who.ever_gained if trigger.counts == "gained" else None
 
+        if trigger.where:
+            # "Star items gained 12 Block" counts what the items in the zone
+            # handed over, and not the Block that arrived from anywhere else.
+            return sum(
+                self.block_by_item.get(other.uid, 0)
+                for other in self._reached_by(
+                    trigger.where, item, self.loadout[owner.id]
+                )
+            )
         if trigger.counting == "block":
             return who.block
         if trigger.counting == "effect_damage":
@@ -1885,33 +2085,37 @@ class BattleSimulator:
                     item.uid,
                 )
             elif isinstance(effect, BlockEffect):
-                # "Star items give +30% Block" is a share on whoever gains it.
-                gained = int(
+                # A flat amount, a share of the health the owner is short, or
+                # both: "Gain Block equal to 40% of your missing health".
+                self._gain_block(
+                    owner,
                     result["amount"]
-                    * max(0.0, 1.0 + owner.modifier("block_gained", self.current_time))
+                    + result["share_of_missing_health"]
+                    * max(0, owner.max_quota - owner.quota),
+                    item,
+                    enemy,
                 )
-                owner.block += gained
-                self._record(
-                    BattleAction(
-                        timestamp=self._time_ms(),
-                        source=item.uid,
-                        action="block",
-                        target=None,
-                        damage=gained,
-                        player=owner.id,
-                        details=None,
+            elif isinstance(effect, ConvertHealthEffect):
+                # All of it or none of it, and never the last point: health
+                # spent this way is a price, so it cannot be what kills you.
+                if owner.quota > result["health"]:
+                    self._health_falls(
+                        owner, result["health"], item.uid, "convert_health"
                     )
-                )
+                    self._gain_block(owner, result["block"], item, enemy)
             elif isinstance(effect, InflictFatigueEffect):
                 self.inflict_fatigue(
                     owner if result["target_type"] == "self" else enemy,
                     source=item.uid,
                 )
             elif isinstance(effect, BuffEffect):
+                stacks = result["value"]
+                if result["buff_name"] == DRAINING:
+                    stacks *= self._share_given(item, "vampirism", owner, enemy)
                 self._grant(
                     owner if result["target_type"] != "enemy" else enemy,
                     result["buff_name"],
-                    result["value"],
+                    stacks,
                     item.uid,
                     result["duration"],
                 )
@@ -2083,15 +2287,30 @@ class BattleSimulator:
                 # healing -- "your healing is increased by 15%" -- has nothing
                 # to say about how much bigger somebody just got. Every other
                 # source of health does go through _heal.
-                owner.max_quota += result["amount"]
-                owner.quota += result["amount"]
+                # "Gain 10% maximum health" is read against the maximum the
+                # battle opened on, so two of these add rather than compound,
+                # and "Your opponent gains 15% less maximum health from items"
+                # is a share on whatever an item hands over.
+                grown = int(
+                    (
+                        result["amount"]
+                        + result["share"] * (owner.opening_quota or owner.max_quota)
+                    )
+                    * max(
+                        0.0,
+                        1.0
+                        + owner.modifier("max_health_from_items", self.current_time),
+                    )
+                )
+                owner.max_quota += grown
+                owner.quota += grown
                 self._record(
                     BattleAction(
                         timestamp=self._time_ms(),
                         source=item.uid,
                         action="heal",
                         target=None,
-                        damage=result["amount"],
+                        damage=grown,
                         player=owner.id,
                         details={"kind": "max_health"},
                     )
@@ -2351,6 +2570,14 @@ class BattleSimulator:
                 if not present:
                     break
                 chosen = present[self.rng.randrange(len(present))]
+
+            # "35% chance to protect your buffs from removal", "protect 1 buff
+            # from removal". The same shape as refusing a debuff -- a chance
+            # or a charge, checked the same way -- so it is the same road,
+            # asked about removal instead. The attempt is spent either way:
+            # one protected stack costs the remover one of their count.
+            if self._refused(target, "removal", removes):
+                continue
 
             held[chosen] -= 1
             removed[chosen] = removed.get(chosen, 0) + 1
@@ -2648,8 +2875,8 @@ class BattleSimulator:
     ):
         """Put damage on a player and tell everyone watching.
 
-        The one place a quota goes down, and the one place the two things that
-        stand in front of it are worked out, in this order:
+        The one place the two things that stand in front of a quota are worked
+        out, in this order:
 
         1. **The share the target carries.** "Reduce damage taken by 25%",
            and invulnerability at -1.0. It answers to every kind of damage:
@@ -2681,12 +2908,35 @@ class BattleSimulator:
                     target=None,
                     damage=absorbed,
                     player=target.id,
-                    details={"type": "buff_block"},
+                    details={"type": "absorbed"},
                 )
             )
 
-        target.quota = max(0, target.quota - damage)
-        landed = damage
+        return self._health_falls(target, damage, source, action, attacker, details)
+
+    def _health_falls(
+        self,
+        target: Player,
+        amount: int,
+        source: str,
+        action: str,
+        attacker: Optional[Player] = None,
+        details: Optional[Dict] = None,
+    ) -> int:
+        """Write a quota down, say so, and let the watchers notice.
+
+        The one place a quota goes down. Damage comes here through
+        `_take_damage`, which works out what stands in front of it first. A
+        price paid in health -- "Convert 50 health into 100 Block" -- comes
+        here directly, because nothing stands in front of a price: no Block,
+        no share, no shield.
+
+        Either way a threshold has to notice. "Health drops below 50%" is
+        written about health and not about being hit, and a conversion that
+        went round this took its owner to 37% with Stone Armor standing beside
+        it and nothing fired.
+        """
+        target.quota = max(0, target.quota - amount)
 
         self._record(
             BattleAction(
@@ -2694,17 +2944,15 @@ class BattleSimulator:
                 source=source,
                 action=action,
                 target=None,  # Target is implicit from the player field
-                damage=damage,
+                damage=amount,
                 player=target.id,
                 details=details,
             )
         )
-
-        # Every kind of damage arrives here so this is the one place that can say health fell.
         self.event_manager.emit(
-            Event(EventType.HEALTH_FELL, attacker, target, EventData(damage=damage))
+            Event(EventType.HEALTH_FELL, attacker, target, EventData(damage=amount))
         )
-        return landed
+        return amount
 
     def _fall_night(self) -> None:
         """Start fatigue, once, and tell everyone watching.

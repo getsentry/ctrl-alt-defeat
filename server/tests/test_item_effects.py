@@ -81,12 +81,13 @@ class TestEffects:
 
     def test_block_effect(self):
         """Test block effect properties"""
-        effect = BlockEffect(block_amount=10, target_type="all_allies")
+        effect = BlockEffect(block_amount=10)
         result = effect.apply(None, None, None)
 
         assert result["type"] == "block"
         assert result["amount"] == 10
-        assert result["target_type"] == "all_allies"
+        # No target: Block only ever lands on whoever gained it.
+        assert "target_type" not in result
 
     def test_buff_effect(self):
         """Test buff effect properties"""

@@ -718,3 +718,79 @@ class TestTheWholeCatalogue:
         spec.triggers = []
 
         assert describe.lines(spec) == []
+
+
+class TestTheSixNewestWays:
+    """The words the six mechanics of this batch put on a card.
+
+    Each is a shape a player has not read before, and each one had a first
+    draft that came out as English nobody would write: "Star items get +30%
+    the Block it gives", "Protect buff of your from being taken".
+    """
+
+    def _said(self, item_id):
+        return describe.lines(ITEM_CATALOG[item_id])
+
+    def test_a_container_says_inside_rather_than_naming_a_zone(self):
+        # "for each neutral contained item" is the shape the zones use and is
+        # not how any clause about a bag is written.
+        assert self._said("container_orchestrator") == [
+            "Battle start: gain 8 Block for each neutral item inside"
+        ]
+
+    def test_a_scaled_aura_says_who_gets_it_and_what_sizes_it(self):
+        assert self._said("network_cache") == [
+            "The items it holds get +10% critical chance",
+            "The items it holds get +3% critical chance for each "
+            "[buff]calibrated[/buff] you have",
+        ]
+
+    def test_a_share_on_what_an_item_gives_says_give_not_get(self):
+        assert "[star]Star[/star] items give +30% Block" in self._said(
+            "shield_of_valor"
+        )
+
+    def test_a_counter_narrowed_to_a_zone_says_whose_giving_it_counts(self):
+        assert (
+            "Once [star]star[/star] items have given 12 Block: gain 1 "
+            "[buff]credits[/buff]" in self._said("moon_shield")
+        )
+
+    def test_a_conversion_says_what_it_costs_and_what_it_buys(self):
+        assert self._said("vampiric_armor") == [
+            "Battle start:",
+            "• Turn 50 quota into 100 Block",
+            "• Gain 5 [buff]draining[/buff]",
+            "Every 2.8s: turn 10 quota into 20 Block",
+        ]
+
+    def test_block_from_missing_health_says_what_it_is_a_share_of(self):
+        assert (
+            "First time below 50% quota: gain Block equal to 40% of your "
+            "missing quota" in self._said("stone_armor")
+        )
+
+    def test_a_protecting_chance_reads_as_keeping_rather_than_refusing(self):
+        assert "Protect your buffs from being taken 35% of the time" in self._said(
+            "shepherds_crook"
+        )
+
+    def test_a_protecting_charge_counts_what_it_keeps(self):
+        assert "• Protect 1 of your buffs from being taken" in self._said("king_crown")
+
+    def test_protecting_the_other_players_debuffs_says_whose_they_are(self):
+        assert (
+            "Protect your opponent's debuffs from being taken 10% of the time "
+            "for each malware [star]star[/star] item" in self._said("corrupted_kernel")
+        )
+
+    def test_a_share_of_maximum_health_says_it_is_a_share(self):
+        said = self._said("sloth")
+        assert "• Gain 10% maximum quota" in said
+        assert "• Gain 15% maximum quota for each [star]star[/star] item" in said
+
+    def test_shrinking_what_an_opponent_gains_names_the_source(self):
+        assert (
+            "Your opponent's maximum quota from items is reduced by 15%"
+            in self._said("snowball")
+        )
