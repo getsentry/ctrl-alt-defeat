@@ -324,9 +324,9 @@
           "type": "battle_start",
           "effects": [
             {
-              "type": "stat_mod",
-              "stat": "max_health",
-              "value": 20
+              "type": "max_health",
+              "value": 20,
+              "description": "Gain 20 maximum health"
             }
           ]
         },
@@ -572,9 +572,9 @@
               "description": "Start of battle: Gain 2 Draining"
             },
             {
-              "type": "stat_mod",
-              "stat": "max_health",
-              "value": 20
+              "type": "max_health",
+              "value": 20,
+              "description": "Gain 20 maximum health"
             }
           ]
         }
@@ -2370,13 +2370,33 @@
             }
           ],
           "on": "activates"
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "critical_chance",
+              "value": 0.01,
+              "status": "calibrated",
+              "whose": "self",
+              "target": "star",
+              "description": "Star items gain 1% critical hit chance for each Luck"
+            },
+            {
+              "type": "modify_per_status",
+              "stat": "critical_chance",
+              "value": 0.01,
+              "status": "regenerating",
+              "whose": "self",
+              "target": "star",
+              "description": "and 1% for each Regeneration"
+            }
+          ]
         }
       ],
       "slug": "white_lily_collar",
       "in_shop": false,
-      "unbuilt": [
-        "Star item gains 1% critical hit chance for each Luck and Regeneration."
-      ],
       "icontype": "holy, nature, accessory",
       "recipe": [
         {

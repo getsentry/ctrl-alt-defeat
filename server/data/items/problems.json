@@ -170,15 +170,43 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "damage_flat",
+              "value": -2,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "melee"
+                ]
+              },
+              "cap": null,
+              "duration": -1,
+              "description": "Star Melee-Weapons deal -2 damage"
+            },
+            {
+              "type": "modify_per",
+              "stat": "damage_flat",
+              "value": 4,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "melee"
+                ]
+              },
+              "description": "Deals +4 damage per Star Melee-Weapon"
+            }
+          ]
         }
       ],
       "slug": "sql_injector",
       "sockets": 1,
       "icontype": "treasure, dark, melee, weapon",
-      "in_shop": true,
-      "unbuilt": [
-        "Star Melee-Weapons deal -2 damage. Deals +4 damage per Star Melee-Weapon."
-      ]
+      "in_shop": true
     },
     "denier_of_service": {
       "name": "Denier of Service",
@@ -379,15 +407,41 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "on_attack",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "cost",
+              "costs": {
+                "credits": 3
+              },
+              "effects": [
+                {
+                  "type": "next_attack",
+                  "damage": 7,
+                  "ignores_block": false,
+                  "description": "deal +7 damage"
+                },
+                {
+                  "type": "player_modify",
+                  "stat": "critical_chance",
+                  "value": 1.0,
+                  "target": "self",
+                  "duration": 1.5,
+                  "description": "and for the next 1.5s, all your attacks are critical"
+                }
+              ],
+              "description": "Use 3 Mana"
+            }
+          ]
         }
       ],
       "slug": "neural_interface_blade",
       "sockets": 1,
       "icontype": "magic, nature, ranged, weapon",
       "in_shop": false,
-      "unbuilt": [
-        "On attack: Use 3 Mana to deal +7 damage and for the next 1.5s, all your attacks are critical."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -1658,13 +1712,33 @@
               "duration": -1
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "effects": [
+            {
+              "type": "gain_damage",
+              "amount": 1,
+              "target": "self",
+              "counting": "any",
+              "description": "Gain 1 damage"
+            },
+            {
+              "type": "modify",
+              "stat": "trigger_speed",
+              "value": 0.04,
+              "target": "self",
+              "counting": "any",
+              "cap": null,
+              "duration": -1,
+              "description": "and attack 4% faster"
+            }
+          ]
         }
       ],
       "slug": "crossblades",
       "in_shop": false,
-      "unbuilt": [
-        "On hit: Gain 1 damage and attack 4% faster."
-      ],
       "sockets": 3,
       "icontype": "melee, weapon",
       "recipe": [
@@ -1905,13 +1979,27 @@
               "description": "Use 11 Mana"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "damage_flat",
+              "value": 1,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "food"
+                ]
+              },
+              "description": "Deals +1 damage for each Star Food"
+            }
+          ]
         }
       ],
       "slug": "eggscalibur",
       "in_shop": false,
-      "unbuilt": [
-        "Deals +1 damage for each Star Food."
-      ],
       "sockets": 2,
       "icontype": "holy, magic, melee, weapon",
       "recipe": [
@@ -3131,13 +3219,24 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per_status",
+              "stat": "trigger_speed",
+              "value": 0.03,
+              "status": "credits",
+              "whose": "self",
+              "cap": 0.6,
+              "description": "Attacks 3% faster for each Mana (up to 60%)"
+            }
+          ]
         }
       ],
       "slug": "pop",
       "in_shop": true,
-      "unbuilt": [
-        "Attacks 3% faster for each Mana (up to 60%)."
-      ],
       "sockets": 4,
       "icontype": "treasure, magic, effect, ranged, weapon, pet",
       "pet": true
@@ -3326,13 +3425,27 @@
               "description": "If your health is above 70%"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "cpu_cost",
+              "value": -0.15,
+              "zone": "star",
+              "counting": {
+                "any": [
+                  "holy"
+                ]
+              },
+              "description": "Uses -15% stamina for each Star Holy-item"
+            }
+          ]
         }
       ],
       "slug": "shell_totem",
       "in_shop": false,
-      "unbuilt": [
-        "Uses -15% stamina for each Star Holy-item."
-      ],
       "icontype": "holy, weapon",
       "recipe": [
         {

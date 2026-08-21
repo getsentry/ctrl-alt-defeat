@@ -175,7 +175,10 @@ game's own wording:
 - **MAX_HEALTH**: Raise the ceiling, and heal by the same amount, so gaining
   maximum health gives you the health with it
 - **BUFF/DEBUFF**: Apply status effects
-- **MODIFY_STAT**: Change max CPU, CPU regen, etc.
+- **MODIFY_STAT**: Change max CPU or CPU regeneration, and nothing else. It is
+  not the road to maximum health -- that is MAX_HEALTH, because a ceiling gained
+  gives you the health with it and this would not. Three items said "Gain 20
+  maximum health" through this and none of them did it
 - **REFLECT**: Return damage to attacker
 - **CONSUME**: Remove item from battle after use
 - **CLEANSE**: Remove statuses from somebody. Taking a debuff off yourself and
@@ -936,6 +939,11 @@ Star items trigger 5% faster" -- and it is applied where it happens.
 +44%. This is the same rule Section 3.1 gives for speed, where everything that
 speeds an item up is added before anything is divided, and it is what makes a
 limit mean what it says: "5% faster (up to 50%)" is ten grants of 5%.
+
+**What an item costs to run is changed by a share, not by a number of
+cycles.** "Uses -15% stamina for each Star Holy-item" is a share, and it adds
+to the player's own -- "Items use +20% stamina" -- rather than multiplying with
+it. It was a flat subtraction for as long as nothing used it.
 
 **A modifier on an item can carry a clock**, the way one on a player always
 could. "The Star item triggers 100% faster for 1s" is lent rather than given,

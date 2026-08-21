@@ -1,3 +1,27 @@
+### Three items said "Gain 20 maximum health" and none of them did it
+
+Amulet of Life, Blood Amulet and Gingerbread Jerry wrote it as a `stat_mod`,
+which the engine answers for `max_cpu` and `cpu_regen` and for nothing else --
+so it loaded, described correctly on the card, and changed no number at all.
+All three are corrected and both ends now refuse the shape: the loader names
+the two stats it takes, and the engine raises on anything else.
+
+It is the third time a stat has loaded and quietly done nothing, after
+`damage_flat` in MODIFIERS and `cpu_cost` being a flat subtraction nobody
+used. The pattern is a field with a default -- `config.get("stat", "max_cpu")`
+took any word at all. Every catalogue value is stated rather than defaulted for
+exactly this reason, and this one had slipped through.
+
+### Translation finds bugs, because nothing else reads the shipped shapes
+
+Eleven items were translated with no new mechanic built, and the pass turned up
+two live faults on the way: the `stat_mod` above, and an item-level stamina
+modifier that subtracted cycles where every clause writing it means a share.
+Neither had a test, because nothing in the catalogue had ever used either.
+
+Worth doing again the same way: pick clauses that need nothing built, write
+them, and see what the writing runs into.
+
 ### Two clauses stood in `patch` and `script` for Potion and Food, and ten did
 
 The import gave Potion and Food no tag of its own, so ten clauses counted the

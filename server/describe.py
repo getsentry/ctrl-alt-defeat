@@ -837,9 +837,17 @@ def _(effect: CleanseEffect) -> str:
 
 @of_effect.register
 def _(effect: ModifyEffect) -> str:
-    reach = counted(effect.counting, REACH.get(effect.target_type, effect.target_type))
-    verb = having_or_giving(effect.stat)
-    text = f"{reach} {verb} {by_how_much(effect.stat, effect.value)}"
+    change = by_how_much(effect.stat, effect.value)
+    if effect.target_type == "self":
+        # No subject: the item is already the subject of its own line, and
+        # "it get +4% trigger speed" is what naming it again came to. The
+        # per-status and per-count forms have always read this way.
+        text = change
+    else:
+        reach = counted(
+            effect.counting, REACH.get(effect.target_type, effect.target_type)
+        )
+        text = f"{reach} {having_or_giving(effect.stat)} {change}"
     if effect.duration and effect.duration > 0:
         text += f" for {seconds(effect.duration)}"
     if effect.cap is not None:
