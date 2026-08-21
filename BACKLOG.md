@@ -14,6 +14,32 @@ rest. The two real "Shop refreshes:" clauses want trade offers and a rarity
 bump, and a third trigger for a refresh as against an entry, none of which
 exists.
 
+### The client suite was never broken
+
+Thirteen failures were reported against it for several commits and put down to
+"pre-existing, from the pull". They were a stale Godot import cache in the old
+checkout: `godot --headless --import` and the suite is green at 725 with exit
+code 0.
+
+Worth remembering how that went unnoticed. The number was stable, so it looked
+like a known quantity, and every check compared *against the same broken
+baseline* -- which is exactly what a baseline cannot tell you. A suite that
+fails the same way every time is not evidence that the failures are real.
+
+The fresh checkout also needed `devenv sync`, and that needed the bare Python
+3.14 venv moved out of the way first: it installs into whatever `.venv` is
+there, and the project's pinned pydantic-core and greenlet do not build on
+3.14. `devenv/config.ini` says 3.11.
+
+### Wolpertinger wants a per-status modifier on the player
+
+"Increase base stamina regeneration by 0.7% for each buff you have." Every
+per-status modifier we have changes a number on an *item*; this changes one on
+the player, and `PLAYER_MODIFIERS` has no way to scale by what is held.
+
+One clause, so it waits. Worth doing with the next player-modifier work rather
+than alone.
+
 ### Two clauses stand in `patch` and `script` for Potion and Food
 
 CI Cauldron counts "Star Potions and Diamond Foods", and the catalogue says

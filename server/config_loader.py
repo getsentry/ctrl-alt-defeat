@@ -9,65 +9,68 @@ from typing import Any, Dict, List, Optional
 
 from grid_system import ItemShape, parse_map
 from item_effects import (
-    Recipe,
+    BUFFS,
     DEBUFFS,
+    MODIFIER_TARGETS,
+    MODIFIERS,
+    PLAYER_MODIFIERS,
+    UNBUILT_EFFECTS,
+    UNBUILT_TRIGGERS,
+    WEAPON_KINDS,
+    AfterTrigger,
     AttackEffect,
     AuraTrigger,
-    AfterTrigger,
+    BattleStartTrigger,
+    BlockEffect,
+    BuffEffect,
     ChanceEffect,
+    ChoiceEffect,
+    CleanseEffect,
     ConditionEffect,
-    ExtraAttackEffect,
-    GoldEffect,
-    SaleChanceEffect,
-    ShopEnteredTrigger,
-    StaminaEffect,
-    TriggerItemEffect,
+    ConsumeEffect,
+    CostEffect,
     CounterTrigger,
+    CpuDrainEffect,
+    DebuffEffect,
+    DestroyBlockEffect,
+    EffectDamageEffect,
+    ExtraAttackEffect,
+    FatigueStartTrigger,
+    GainDamageEffect,
+    GoldEffect,
+    HealEffect,
+    HealthThresholdTrigger,
+    InflictFatigueEffect,
+    ItemSpec,
+    LimitEffect,
+    MaxHealthEffect,
+    ModifyEffect,
+    ModifyPerEffect,
+    ModifyPerStatusEffect,
+    NextAttackEffect,
+    OnAttackedTrigger,
+    OnAttackTrigger,
+    OnHitTrigger,
     OnMissTrigger,
     OnStunTrigger,
     OutOfStaminaTrigger,
-    StatusChangeTrigger,
-    WhenAffordableTrigger,
-    LimitEffect,
-    PLAYER_MODIFIERS,
+    PassiveTrigger,
+    PerCountEffect,
     PlayerModifyEffect,
+    PreventDamageEffect,
     RandomStatusEffect,
+    Recipe,
     ReflectEffect,
     ResistEffect,
-    CostEffect,
-    EffectDamageEffect,
-    GainDamageEffect,
-    PerCountEffect,
-    StunEffect,
-    MaxHealthEffect,
-    ModifyPerStatusEffect,
-    OnAttackTrigger,
-    BattleStartTrigger,
-    BlockEffect,
-    BUFFS,
-    MODIFIERS,
-    MODIFIER_TARGETS,
-    WEAPON_KINDS,
-    UNBUILT_EFFECTS,
-    UNBUILT_TRIGGERS,
-    FatigueStartTrigger,
-    InflictFatigueEffect,
-    BuffEffect,
-    CleanseEffect,
-    ConsumeEffect,
-    CpuDrainEffect,
-    HealthThresholdTrigger,
-    DebuffEffect,
-    HealEffect,
-    ItemSpec,
-    ModifyEffect,
-    ModifyPerEffect,
-    OnAttackedTrigger,
-    OnHitTrigger,
-    PassiveTrigger,
-    PreventDamageEffect,
+    SaleChanceEffect,
+    ShopEnteredTrigger,
+    StaminaEffect,
     StatModEffect,
+    StatusChangeTrigger,
+    StunEffect,
     TimerTrigger,
+    TriggerItemEffect,
+    WhenAffordableTrigger,
 )
 
 logger = logging.getLogger(__name__)
@@ -163,9 +166,7 @@ class ConfigLoader:
                 try:
                     items[item_id] = self._create_item_spec(item_id, config)
                 except Exception as bad_item:
-                    raise CatalogueError(
-                        f"{category_file.name}: {bad_item}"
-                    ) from None
+                    raise CatalogueError(f"{category_file.name}: {bad_item}") from None
 
         if not items:
             raise CatalogueError(f"no items in any file under {items_dir}")
@@ -210,8 +211,7 @@ class ConfigLoader:
             # container was offered in the shop whatever its own file said --
             # three Unique bags the source game gives out as treasure among
             # them.
-            in_shop=config.get("in_shop", True)
-            and not config.get("recipe_only"),
+            in_shop=config.get("in_shop", True) and not config.get("recipe_only"),
         )
 
         return spec
@@ -245,7 +245,8 @@ class ConfigLoader:
             in_shop=config.get("in_shop", True) and not config.get("recipe_only"),
             # One comma-separated string in the catalogue, a set here.
             kinds=frozenset(
-                tag.strip() for tag in config.get("icontype", "").split(",")
+                tag.strip()
+                for tag in config.get("icontype", "").split(",")
                 if tag.strip()
             ),
             recipe=self._parse_recipes(config.get("recipe", []), item_id),
@@ -264,9 +265,7 @@ class ConfigLoader:
             ingredients = tuple(recipe.get("ingredients", ()))
             if not ingredients:
                 raise CatalogueError(f"{item_id}: a recipe with no ingredients")
-            recipes.append(
-                Recipe(ingredients, tuple(recipe.get("catalysts", ())))
-            )
+            recipes.append(Recipe(ingredients, tuple(recipe.get("catalysts", ()))))
         return tuple(recipes)
 
     def _parse_shape(self, item_map: list, name: str) -> ItemShape:
@@ -332,7 +331,7 @@ class ConfigLoader:
                 raise ValueError(
                     f"{item_id}: an on_attacked trigger has to say what it "
                     f"`answers_to`. Every shield in the source game is written "
-                    f"\"On attacked (Melee)\"."
+                    f'"On attacked (Melee)".'
                 )
             answers_to = frozenset(config["answers_to"])
             unknown = answers_to - WEAPON_KINDS
@@ -367,29 +366,33 @@ class ConfigLoader:
                 )
             status = config.get("status", "")
             if status and status not in BUFFS | DEBUFFS:
-                raise ValueError(
-                    f"{item_id}: `{status}` is not a buff or a debuff."
-                )
+                raise ValueError(f"{item_id}: `{status}` is not a buff or a debuff.")
             if not status and "kind" not in config:
                 raise ValueError(
                     f"{item_id}: a status_gained trigger with no `status` has "
                     f"to say its `kind`, `buff` or `debuff`."
                 )
             return StatusChangeTrigger(
-                status=status, kind=config.get("kind", "buff"),
-                whose=config["whose"], effects=effects,
+                status=status,
+                kind=config.get("kind", "buff"),
+                whose=config["whose"],
+                effects=effects,
             )
         elif trigger_type == "counter":
             for needed in ("counting", "amount", "whose", "counts"):
                 if needed not in config:
                     raise ValueError(
                         f"{item_id}: a counter trigger needs a `{needed}`. "
-                        f"`counts` is \"held\" for what a player has now or "
-                        f"\"gained\" for everything that ever arrived."
+                        f'`counts` is "held" for what a player has now or '
+                        f'"gained" for everything that ever arrived.'
                     )
             counting = config["counting"]
             if counting not in BUFFS | DEBUFFS | {
-                "block", "effect_damage", "health", "buffs", "debuffs"
+                "block",
+                "effect_damage",
+                "health",
+                "buffs",
+                "debuffs",
             }:
                 raise ValueError(
                     f"{item_id}: `{counting}` is not a total anything counts."
@@ -400,8 +403,11 @@ class ConfigLoader:
                     f"`gained`, not `{config['counts']}`."
                 )
             return CounterTrigger(
-                counting=counting, amount=config["amount"],
-                whose=config["whose"], counts=config["counts"], effects=effects,
+                counting=counting,
+                amount=config["amount"],
+                whose=config["whose"],
+                counts=config["counts"],
+                effects=effects,
             )
         elif trigger_type == "on_stun":
             return OnStunTrigger(effects=effects)
@@ -411,8 +417,8 @@ class ConfigLoader:
             if "whose" not in config:
                 raise ValueError(
                     f"{item_id}: an on_miss trigger has to say `whose` miss "
-                    f"it answers. \"On miss\" is `self` and \"Opponent "
-                    f"misses attack\" is `enemy`."
+                    f'it answers. "On miss" is `self` and "Opponent '
+                    f'misses attack" is `enemy`.'
                 )
             return OnMissTrigger(whose=config["whose"], effects=effects)
         elif trigger_type == "shop_entered":
@@ -421,8 +427,7 @@ class ConfigLoader:
             for needed in ("zone", "counting", "after", "on"):
                 if needed not in config:
                     raise ValueError(
-                        f"{item_id}: an aura trigger has to state its "
-                        f"`{needed}`."
+                        f"{item_id}: an aura trigger has to state its " f"`{needed}`."
                     )
             if config["zone"] not in ("star", "diamond"):
                 raise ValueError(
@@ -437,8 +442,8 @@ class ConfigLoader:
                 or not next(iter(counting.values()))
             ):
                 raise ValueError(
-                    f"{item_id}: `counting` is \"any\" for every item, or one "
-                    f"of {{\"any\": [...]}} and {{\"all\": [...]}}."
+                    f'{item_id}: `counting` is "any" for every item, or one '
+                    f'of {{"any": [...]}} and {{"all": [...]}}.'
                 )
             if config["after"] < 1:
                 raise ValueError(
@@ -517,9 +522,9 @@ class ConfigLoader:
         transcription, not a clause that does nothing, so it stops the load.
         """
         behind = [
-            e for e in (
-                self._parse_effect(sub, item_id) for sub in config.get(key, [])
-            ) if e
+            e
+            for e in (self._parse_effect(sub, item_id) for sub in config.get(key, []))
+            if e
         ]
         if not behind:
             raise ValueError(f"{item_id}: {what} needs something behind it.")
@@ -534,22 +539,26 @@ class ConfigLoader:
         """
         if "counting" not in config:
             raise ValueError(
-                f"{item_id}: this needs a `counting`. Write \"any\" if it "
-                f"means every item."
+                f'{item_id}: this needs a `counting`. Write "any" if it '
+                f'means every item, or "free" for the empty squares.'
             )
         counting = config["counting"]
-        if counting == "any":
+        # "any" is every item; "free" is the squares no item stands on, which
+        # is the only thing counted that is not an item at all.
+        if counting in ("any", "free"):
             return counting
-        if not isinstance(counting, dict) or len(counting) != 1 or (
-            set(counting) - {"any", "all"}
+        if (
+            not isinstance(counting, dict)
+            or len(counting) != 1
+            or (set(counting) - {"any", "all"})
         ):
             raise ValueError(
-                f"{item_id}: `counting` is \"any\" for every item, or "
-                f"one of {{\"any\": [...]}} and {{\"all\": [...]}}."
+                f'{item_id}: `counting` is "any" for every item, or '
+                f'one of {{"any": [...]}} and {{"all": [...]}}.'
             )
         if not next(iter(counting.values())):
             raise ValueError(
-                f"{item_id}: `counting` lists nothing. Write \"any\" if it "
+                f'{item_id}: `counting` lists nothing. Write "any" if it '
                 f"means every item."
             )
         return counting
@@ -563,7 +572,7 @@ class ConfigLoader:
                 if needed not in config:
                     raise ValueError(
                         f"{item_id}: an attack needs a `{needed}`. Write "
-                        f"`\"crit_chance\": 0` unless the item says otherwise: "
+                        f'`"crit_chance": 0` unless the item says otherwise: '
                         f"nothing crits until something grants it."
                     )
             effect = AttackEffect(
@@ -593,9 +602,7 @@ class ConfigLoader:
                 raise ValueError(f"{item_id}: cpu_drain needs a `value`")
             if "target" not in config:
                 raise ValueError(f"{item_id}: cpu_drain needs a `target`")
-            return CpuDrainEffect(
-                amount=config["value"], target_type=config["target"]
-            )
+            return CpuDrainEffect(amount=config["value"], target_type=config["target"])
         elif effect_type == "stat_mod":
             return StatModEffect(
                 stat_name=config.get("stat", "max_cpu"), value=config.get("value", 1)
@@ -630,11 +637,12 @@ class ConfigLoader:
                     f"can change. There are {len(MODIFIERS)}: "
                     f"{', '.join(sorted(MODIFIERS))}."
                 )
-            for needed in ("value", "target", "cap"):
+            for needed in ("value", "target", "cap", "duration"):
                 if needed not in config:
                     raise ValueError(
                         f"{item_id}: a modify needs a `{needed}`. Write "
-                        f"`\"cap\": null` for a modifier with no limit."
+                        f'`"cap": null` for a modifier with no limit, and '
+                        f'`"duration": -1` for one that lasts the battle.'
                     )
             if config["target"] not in MODIFIER_TARGETS:
                 raise ValueError(
@@ -642,12 +650,20 @@ class ConfigLoader:
                     f"modifier can reach. There are {len(MODIFIER_TARGETS)}: "
                     f"{', '.join(sorted(MODIFIER_TARGETS))}."
                 )
+            if config["cap"] is not None and config["duration"] > 0:
+                raise ValueError(
+                    f"{item_id}: a modify cannot have both a `cap` and a "
+                    f"`duration`. Taking a lent modifier back does not know "
+                    f"which grant it undid, so the limit would say it was "
+                    f"spent when it was not."
+                )
             return ModifyEffect(
                 stat=stat,
                 value=config["value"],
                 target_type=config["target"],
                 counting=self._counting(config, item_id),
                 cap=config["cap"],
+                duration=config["duration"],
             )
         elif effect_type == "modify_per":
             stat = config.get("stat")
@@ -682,8 +698,10 @@ class ConfigLoader:
                     )
             per_status, whose = self._per_status(config["per_status"], item_id)
             return EffectDamageEffect(
-                amount=config["value"], lifesteal=config["lifesteal"],
-                per_status=per_status, whose=whose,
+                amount=config["value"],
+                lifesteal=config["lifesteal"],
+                per_status=per_status,
+                whose=whose,
             )
         elif effect_type == "max_health":
             if "value" not in config:
@@ -692,26 +710,24 @@ class ConfigLoader:
         elif effect_type == "modify_per_status":
             for needed in ("stat", "value", "status", "whose"):
                 if needed not in config:
-                    raise ValueError(
-                        f"{item_id}: modify_per_status needs a `{needed}`"
-                    )
+                    raise ValueError(f"{item_id}: modify_per_status needs a `{needed}`")
             if config["stat"] not in MODIFIERS:
                 raise ValueError(
                     f"{item_id}: `{config['stat']}` is not something a "
                     f"modifier can change."
                 )
             status = config["status"]
-            if status not in BUFFS and status not in DEBUFFS:
-                raise ValueError(
-                    f"{item_id}: `{status}` is not a status to count."
-                )
+            # `buffs` and `debuffs` count every stack of every kind: "Deals
+            # +0.5 damage for each debuff of your opponent".
+            if status not in BUFFS | DEBUFFS | {"buffs", "debuffs"}:
+                raise ValueError(f"{item_id}: `{status}` is not a status to count.")
             if config["whose"] not in ("self", "enemy"):
-                raise ValueError(
-                    f"{item_id}: `whose` is `self` or `enemy`."
-                )
+                raise ValueError(f"{item_id}: `whose` is `self` or `enemy`.")
             return ModifyPerStatusEffect(
-                stat=config["stat"], value=config["value"],
-                status=status, whose=config["whose"],
+                stat=config["stat"],
+                value=config["value"],
+                status=status,
+                whose=config["whose"],
             )
         elif effect_type == "chance":
             if "chance" not in config:
@@ -723,9 +739,7 @@ class ConfigLoader:
         elif effect_type == "gain_damage":
             for needed in ("amount", "target"):
                 if needed not in config:
-                    raise ValueError(
-                        f"{item_id}: a gain_damage needs an `{needed}`"
-                    )
+                    raise ValueError(f"{item_id}: a gain_damage needs an `{needed}`")
             if config["target"] not in MODIFIER_TARGETS | {"self", "enemy"}:
                 raise ValueError(
                     f"{item_id}: `{config['target']}` is not somewhere gained "
@@ -755,10 +769,15 @@ class ConfigLoader:
             )
         elif effect_type == "cost":
             costs = config.get("costs")
-            if not costs:
+            if not costs and not config.get("from_pool"):
                 raise ValueError(
                     f"{item_id}: a cost effect needs `costs`, as buff to "
-                    f"stacks."
+                    f"stacks, or a `from_pool` of `one` or `all`."
+                )
+            if config.get("from_pool") not in (None, "", "one", "all"):
+                raise ValueError(
+                    f"{item_id}: a cost spends `one` of the pool or `all` of "
+                    f"it, not `{config['from_pool']}`."
                 )
             unknown = set(costs) - BUFFS
             if unknown:
@@ -774,13 +793,12 @@ class ConfigLoader:
             return CostEffect(
                 costs=dict(costs),
                 effects=self._behind(config, item_id, "a cost effect"),
+                from_pool=config.get("from_pool", ""),
             )
         elif effect_type == "condition":
             for needed in ("subject", "whose", "test"):
                 if needed not in config:
-                    raise ValueError(
-                        f"{item_id}: a condition needs a `{needed}`"
-                    )
+                    raise ValueError(f"{item_id}: a condition needs a `{needed}`")
             if config["subject"] not in ("status", "buffs", "debuffs", "health"):
                 raise ValueError(
                     f"{item_id}: a condition reads a `status`, all your "
@@ -820,10 +838,12 @@ class ConfigLoader:
                 amount=config.get("amount", 0),
                 effects=self._behind(config, item_id, "a condition"),
                 otherwise=[
-                    e for e in (
+                    e
+                    for e in (
                         self._parse_effect(sub, item_id)
                         for sub in config.get("otherwise", [])
-                    ) if e
+                    )
+                    if e
                 ],
             )
         elif effect_type == "stun":
@@ -835,9 +855,7 @@ class ConfigLoader:
                     f"{item_id}: a stun lands on `self` or `enemy`, not "
                     f"`{config['target']}`."
                 )
-            return StunEffect(
-                duration=config["duration"], target_type=config["target"]
-            )
+            return StunEffect(duration=config["duration"], target_type=config["target"])
         elif effect_type == "player_modify":
             for needed in ("stat", "value", "target", "duration"):
                 if needed not in config:
@@ -858,16 +876,16 @@ class ConfigLoader:
                     f"`both`, not `{config['target']}`."
                 )
             return PlayerModifyEffect(
-                stat=config["stat"], value=config["value"],
-                target_type=config["target"], duration=config["duration"],
+                stat=config["stat"],
+                value=config["value"],
+                target_type=config["target"],
+                duration=config["duration"],
             )
         elif effect_type == "reflect":
             for needed in ("count", "target"):
                 if needed not in config:
                     raise ValueError(f"{item_id}: a reflect needs a `{needed}`")
-            return ReflectEffect(
-                count=config["count"], target_type=config["target"]
-            )
+            return ReflectEffect(count=config["count"], target_type=config["target"])
         elif effect_type == "resist":
             for needed in ("count", "chance", "target"):
                 if needed not in config:
@@ -875,34 +893,72 @@ class ConfigLoader:
                         f"{item_id}: a resist needs a `{needed}`. Write 0 for "
                         f"whichever of `count` and `chance` it does not grant."
                     )
-            if not config["count"] and not config["chance"]:
+            if (
+                not config["count"]
+                and not config["chance"]
+                and not config.get("per_status")
+            ):
                 raise ValueError(
                     f"{item_id}: a resist that grants neither charges nor a "
                     f"chance refuses nothing."
                 )
+            against = config.get("against", "debuff")
+            if against not in ("debuff", "critical", "stun"):
+                raise ValueError(
+                    f"{item_id}: a resist refuses a `debuff`, a `critical` or "
+                    f"a `stun`, not `{against}`."
+                )
+            only = tuple(config.get("only", ()))
+            unknown = set(only) - DEBUFFS
+            if unknown:
+                raise ValueError(
+                    f"{item_id}: {sorted(unknown)} is not a debuff to resist."
+                )
+            per_status = config.get("per_status", {})
+            unknown = set(per_status) - (BUFFS | DEBUFFS)
+            if unknown:
+                raise ValueError(
+                    f"{item_id}: {sorted(unknown)} is not a status to count."
+                )
             return ResistEffect(
-                count=config["count"], chance=config["chance"],
+                count=config["count"],
+                chance=config["chance"],
                 target_type=config["target"],
+                against=against,
+                only=only,
+                per_status=dict(per_status),
             )
         elif effect_type == "random_status":
             for needed in ("kind", "count", "target"):
                 if needed not in config:
-                    raise ValueError(
-                        f"{item_id}: a random_status needs a `{needed}`"
-                    )
+                    raise ValueError(f"{item_id}: a random_status needs a `{needed}`")
             if config["kind"] not in ("buff", "debuff"):
                 raise ValueError(
                     f"{item_id}: a random_status hands out a `buff` or a "
                     f"`debuff`, not `{config['kind']}`."
                 )
+            if config.get("pick", "random") not in ("random", "most", "least"):
+                raise ValueError(
+                    f"{item_id}: a random_status picks at `random`, or the "
+                    f"kind held `most` or `least`, not `{config['pick']}`."
+                )
+            among = tuple(config.get("among", ()))
+            unknown = set(among) - (BUFFS | DEBUFFS)
+            if unknown:
+                raise ValueError(
+                    f"{item_id}: {sorted(unknown)} is not a buff or a debuff."
+                )
             return RandomStatusEffect(
-                kind=config["kind"], count=config["count"],
+                kind=config["kind"],
+                count=config["count"],
                 target_type=config["target"],
+                pick=config.get("pick", "random"),
+                among=among,
             )
         elif effect_type == "limit":
             if "times" not in config:
                 raise ValueError(
-                    f"{item_id}: a limit needs `times`. Write 1 for \"(once)\"."
+                    f'{item_id}: a limit needs `times`. Write 1 for "(once)".'
                 )
             if config["times"] < 1:
                 raise ValueError(
@@ -917,9 +973,7 @@ class ConfigLoader:
             for needed in ("amount", "target"):
                 if needed not in config:
                     raise ValueError(f"{item_id}: a stamina needs an `{needed}`")
-            return StaminaEffect(
-                amount=config["amount"], target_type=config["target"]
-            )
+            return StaminaEffect(amount=config["amount"], target_type=config["target"])
         elif effect_type == "extra_attack":
             return ExtraAttackEffect()
         elif effect_type == "trigger_item":
@@ -942,7 +996,8 @@ class ConfigLoader:
             return TriggerItemEffect(
                 where=config["where"],
                 counting=self._counting(config, item_id),
-                how_many=config["how_many"], pick=config["pick"],
+                how_many=config["how_many"],
+                pick=config["pick"],
             )
         elif effect_type == "gold":
             if "amount" not in config:
@@ -952,13 +1007,48 @@ class ConfigLoader:
             if "amount" not in config:
                 raise ValueError(f"{item_id}: a sale_chance needs an `amount`")
             return SaleChanceEffect(amount=config["amount"])
+        elif effect_type == "choice":
+            choices = []
+            for one in config.get("choices", []):
+                behind = [
+                    e for e in (self._parse_effect(sub, item_id) for sub in one) if e
+                ]
+                if not behind:
+                    raise ValueError(
+                        f"{item_id}: a choice with nothing behind it is not an "
+                        f"alternative."
+                    )
+                choices.append(behind)
+            if len(choices) < 2:
+                raise ValueError(
+                    f"{item_id}: a choice needs at least two `choices` to "
+                    f"choose between."
+                )
+            return ChoiceEffect(choices=choices)
+        elif effect_type == "destroy_block":
+            for needed in ("amount", "target"):
+                if needed not in config:
+                    raise ValueError(f"{item_id}: a destroy_block needs an `{needed}`")
+            return DestroyBlockEffect(
+                amount=config["amount"], target_type=config["target"]
+            )
+        elif effect_type == "next_attack":
+            for needed in ("damage", "ignores_block"):
+                if needed not in config:
+                    raise ValueError(
+                        f"{item_id}: a next_attack needs a `{needed}`. Write 0 "
+                        f"for damage and false for ignores_block."
+                    )
+            return NextAttackEffect(
+                damage=config["damage"], ignores_block=bool(config["ignores_block"])
+            )
         elif effect_type == "cleanse":
             if "count" not in config:
                 raise ValueError(
                     f"{item_id}: a cleanse has to state its `count`, the "
                     f"number of statuses it takes off."
                 )
-            named = ', '.join(sorted(BUFFS | DEBUFFS))
+            named = ", ".join(sorted(BUFFS | DEBUFFS))
             if "removes" not in config:
                 raise ValueError(
                     f"{item_id}: a cleanse has to state what it `removes`. "
@@ -998,6 +1088,7 @@ class ConfigLoader:
                 value=config.get("value", 1),
                 target_type=config.get("target", "enemy"),
                 duration=config.get("duration", -1),
+                unstackable=bool(config.get("unstackable", False)),
             )
         elif effect_type == "inflict_fatigue":
             if "target" not in config:

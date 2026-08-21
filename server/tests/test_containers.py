@@ -7,7 +7,6 @@ from containers import Container, PlacementValidator
 from grid_system import Rotation, parse_map
 from items import Item, PlacedItem
 
-
 # The shapes these tests place, built the way the catalogue builds them.
 ONE = parse_map(["#"], "one square")
 TWO_BY_TWO = parse_map(["##", "##"], "two by two")

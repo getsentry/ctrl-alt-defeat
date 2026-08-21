@@ -14,7 +14,6 @@ from item_effects import Recipe
 from items import Item, PlacedItem
 from utils import Position
 
-
 # ============= COMBINING (GDD 5.3) =============
 
 # What a recipe part says in front of a kind, to mean any item of it.
@@ -87,7 +86,7 @@ def any_of(part: str) -> List[str]:
     the catalogue cannot answer, which is a recipe nobody could complete.
     """
     if part.startswith(CLASS):
-        kind = part[len(CLASS):]
+        kind = part[len(CLASS) :]
         return sorted(
             slug for slug, spec in config_loader.items.items() if kind in spec.kinds
         )
@@ -98,7 +97,7 @@ def _answers(part: str, item_type: str) -> bool:
     """Whether an item of this type can stand for that part of a recipe."""
     if part.startswith(CLASS):
         spec = config_loader.items.get(item_type)
-        return spec is not None and part[len(CLASS):] in spec.kinds
+        return spec is not None and part[len(CLASS) :] in spec.kinds
     return part == item_type
 
 
@@ -377,14 +376,16 @@ class InventoryGrid:
         for made, recipe, items in self.plan():
             eaten = {item.id for item in self._consumed(recipe, items)}
             spoken_for |= {item.id for item in items}
-            complete.append(Pending(
-                makes=made,
-                have=len(items),
-                need=len(recipe.parts()),
-                ingredients=tuple(i.id for i in items if i.id in eaten),
-                catalysts=tuple(i.id for i in items if i.id not in eaten),
-                missing=(),
-            ))
+            complete.append(
+                Pending(
+                    makes=made,
+                    have=len(items),
+                    need=len(recipe.parts()),
+                    ingredients=tuple(i.id for i in items if i.id in eaten),
+                    catalysts=tuple(i.id for i in items if i.id not in eaten),
+                    missing=(),
+                )
+            )
         return complete + self._partly_there(spoken_for)
 
     def _partly_there(self, spoken_for: Set[str]) -> List[Pending]:
@@ -487,9 +488,7 @@ class InventoryGrid:
                 return container
         return None
 
-    def move_container(
-        self, container_id: str, position: Position
-    ) -> List[PlacedItem]:
+    def move_container(self, container_id: str, position: Position) -> List[PlacedItem]:
         """Move a container, and everything resting on it, to a new anchor.
 
         Every item with a square on the container travels with it, shifted by
@@ -517,9 +516,7 @@ class InventoryGrid:
         # what sits wholly inside: half an item cannot stay behind.
         carried_squares = set(container.covered_squares())
         travellers = [
-            item
-            for item in self.items
-            if carried_squares & set(item.covered_squares())
+            item for item in self.items if carried_squares & set(item.covered_squares())
         ]
         stayed = [item for item in self.items if item not in travellers]
 
@@ -527,9 +524,7 @@ class InventoryGrid:
 
         # Travellers keep their positions relative to each other, so they can
         # only collide with an item that stayed put.
-        taken_squares = {
-            square for item in stayed for square in item.covered_squares()
-        }
+        taken_squares = {square for item in stayed for square in item.covered_squares()}
         self.items = stayed
         displaced: List[PlacedItem] = []
         for item in travellers:
@@ -551,9 +546,7 @@ class InventoryGrid:
         self, container: Container, others: Sequence[Container]
     ) -> None:
         """Whether a container may stand on these squares, or why it may not"""
-        occupied = {
-            square for other in others for square in other.covered_squares()
-        }
+        occupied = {square for other in others for square in other.covered_squares()}
         for x, y in container.covered_squares():
             if x < 0 or x >= self.width or y < 0 or y >= self.height:
                 raise InvalidPlacementError(
@@ -663,9 +656,7 @@ class InventoryManager:
         if from_location == "storage":
             item = self.storage.remove_item(item_id)
         else:
-            item = next(
-                (held for held in self.grid.items if held.id == item_id), None
-            )
+            item = next((held for held in self.grid.items if held.id == item_id), None)
             if item is None:
                 raise ItemNotFoundError(
                     f"Item {item_id} not found at position {from_location}"

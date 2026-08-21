@@ -12,8 +12,6 @@ to work out what a missing one means.
 
 from typing import Dict, Iterator, List, Tuple
 
-from pydantic import BaseModel, Field, computed_field, field_validator
-
 import describe
 from config_loader import config_loader
 from grid_system import ItemShape, Rotation
@@ -26,6 +24,7 @@ from item_effects import (
     Trigger,
 )
 from item_looks import PATTERNS, hex_of
+from pydantic import BaseModel, Field, computed_field, field_validator
 from utils import Position, Shape
 
 # A colour on the wire is what Godot's Color.html() can read, or nothing at all
@@ -108,8 +107,7 @@ def already_shown(trigger: Trigger, stats: ItemStats) -> bool:
             and effect.max_damage == stats.max_damage
         )
     if isinstance(effect, HealEffect):
-        return (effect.min_heal == stats.min_heal
-                and effect.max_heal == stats.max_heal)
+        return effect.min_heal == stats.min_heal and effect.max_heal == stats.max_heal
     if isinstance(effect, BlockEffect):
         return effect.block_amount == stats.block_amount
     return False
@@ -204,7 +202,9 @@ class Item(BaseModel):
     # The zones the item reaches into, in the same frame as `shape`, so a square
     # above or left of the item is negative. Sent so the client can show a
     # player what an item reaches; nothing draws them yet.
-    star: Shape = Field(default_factory=list, description="Star zone, as [x, y] offsets")
+    star: Shape = Field(
+        default_factory=list, description="Star zone, as [x, y] offsets"
+    )
     diamond: Shape = Field(
         default_factory=list, description="Diamond zone, as [x, y] offsets"
     )
@@ -288,11 +288,14 @@ class Item(BaseModel):
             diamond=[(x, y) for x, y in spec.shape.diamond],
             anchors=[(x, y) for x, y in spec.shape.anchors],
             kinds=sorted(kind.lower() for kind in spec.kinds),
-            traits=[describe.trait(kind)
-                    for kind in sorted(kind.lower() for kind in spec.kinds)],
+            traits=[
+                describe.trait(kind)
+                for kind in sorted(kind.lower() for kind in spec.kinds)
+            ],
             aura=aura_of(spec),
             effects=describe.lines(
-                spec, skipping=lambda trigger: already_shown(trigger, stats)),
+                spec, skipping=lambda trigger: already_shown(trigger, stats)
+            ),
             # The catalogue names a colour, the client is sent the value. That
             # way the client keeps no palette and a colour can be retuned
             # without shipping a new client.

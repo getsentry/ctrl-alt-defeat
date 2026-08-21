@@ -19,14 +19,9 @@ player it works.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import List
 
-from item_effects import (
-    GoldEffect,
-    ItemSpec,
-    SaleChanceEffect,
-    ShopEnteredTrigger,
-)
+from item_effects import GoldEffect, ItemSpec, SaleChanceEffect, ShopEnteredTrigger
 
 
 @dataclass

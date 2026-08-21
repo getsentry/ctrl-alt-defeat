@@ -222,6 +222,16 @@ game's own wording:
   It runs everything their own triggers would, less the standing ones (a
   passive is on already) and less any CONSUME, which is what "without
   consuming it" means
+- **CHOICE**: One of several alternatives, picked at random, and not the
+  others. "Randomly gain 14 Block or 2 stamina or 2 Luck." Each alternative is
+  a list, because they are not always one effect each. Not RANDOM_STATUS,
+  which picks a status out of the seven; this picks between clauses the item
+  wrote out
+- **DESTROY_BLOCK**: Take Block off somebody without dealing damage. The Block
+  is simply gone, and a target with none loses nothing
+- **NEXT_ATTACK**: Put damage, or the ability to go past Block, on this item's
+  next swing and only the next one. Spent by swinging, so an item that never
+  swings again keeps it. Not GAIN_DAMAGE, which an item keeps for the battle
 - **STAMINA**: Put CPU straight into a player's pool. Not MODIFY_STAT, which
   changes how big the pool is or how fast it fills; this is the pool going up
   now
@@ -676,6 +686,24 @@ taken by 25% for 7s", "Become invulnerable for 2s".
 - **A modifier is read while it is live and written nowhere.** One place
   decides whether it still counts, which is the moment it is read.
 
+### 3.3.1 Counting and choosing among statuses
+
+Several clauses treat the buffs or debuffs somebody holds as one pool rather
+than naming a kind.
+
+- **Counting the pool.** "Deals +0.5 damage for each debuff of your opponent"
+  counts every stack of every kind. Naming one debuff would be a different and
+  smaller number, so `buffs` and `debuffs` are written where a name would go.
+- **Choosing by what is held.** "Gain 3 buffs of the type you have most of",
+  "Gain 3 of the buff you have least of". Chosen **once**, so all the stacks
+  go to the one kind — three separate picks would be a different clause. A
+  kind held at nothing counts as the one held least, because an item saying so
+  plainly means to give you a new one. Ties break the same way every time.
+- **Spending the pool.** "Use a random buff to heal for 12" takes one stack of
+  a kind picked at random; "Use all your buffs" takes every stack of every
+  kind. Spending the pool happens even when the pool is empty; taking one from
+  it needs there to be one.
+
 ### 3.4 Refusing a debuff
 
 Two things stand between a debuff and the player it was aimed at, and
@@ -694,6 +722,24 @@ successful, occurs before Resist."**
 
 Both are counted in stacks and neither is a buff: nothing stacks them as one
 and nothing cleanses them, so they are not among the seven in Section 3.1.
+
+**Resist is written about three things, not one.** The wiki's page is about
+debuffs, and the source game also writes "30% chance to resist critical hits"
+and "40% chance to resist stuns". Each says what it refuses, so one does not
+cover another. A resisted critical hit still lands — it simply lands as an
+ordinary swing.
+
+A resist may also **name which debuffs** it refuses ("50% chance to resist
+Blind and Cold") or have a **chance that grows** with what its owner holds
+("a 2% chance to resist debuffs for each Luck"). Both are why the resists a
+player has been granted are kept whole rather than summed into one number:
+one may refuse only Blind, another only critical hits, and a total cannot say
+which is which.
+
+**Unstackable.** A few debuffs say "(unstackable)". Those top the stacks up to
+the number given and refresh the clock, rather than adding: a second helping
+is worth nothing to somebody already carrying a full one, but somebody
+carrying two of five gets three more.
 
 Every debuff travels this one road, so a new source of debuffs cannot forget
 to offer itself to either.
@@ -836,6 +882,12 @@ Star items trigger 5% faster" -- and it is applied where it happens.
 speeds an item up is added before anything is divided, and it is what makes a
 limit mean what it says: "5% faster (up to 50%)" is ten grants of 5%.
 
+**A modifier on an item can carry a clock**, the way one on a player always
+could. "The Star item triggers 100% faster for 1s" is lent rather than given,
+and taken back when the time comes. A modifier with a clock is therefore not
+settled with the standing ones before the battle — settling it once is exactly
+wrong for something that has to be taken back.
+
 **A modifier handed out again and again can carry a limit.** The limit is on
 what one item has given another, not on what the receiver has been given by
 everybody, so two items each granting 5% up to 50% reach 100% between them.
@@ -845,6 +897,10 @@ A grant that would overshoot is trimmed rather than refused.
 common one, but the source game also writes "Star Weapon hits", "Star Weapon
 crits" and "Star Potion consumed", and those are different moments: a weapon
 that missed activated and did not hit.
+
+**A zone can count its empty squares.** "Destroy 4 Block for each free Star
+slot" counts the squares of the zone that no item stands on — the only thing
+an aura counts that is not an item.
 
 **Counting works three ways round.** A zone can decide what it falls on
 (a modifier), what it counts (a modifier on the item projecting it, sized by

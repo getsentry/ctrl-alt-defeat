@@ -32,7 +32,8 @@
           "target": "contained",
           "description": "Modules inside execute 10% faster",
           "counting": "any",
-          "cap": null
+          "cap": null,
+          "duration": -1
         }
       ],
       "slug": "edge_node",

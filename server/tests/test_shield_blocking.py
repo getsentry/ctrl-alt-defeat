@@ -40,13 +40,13 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                            answers_to=frozenset({"melee"}),
-                            chance=1.0,
-                            effects=[
-                                PreventDamageEffect(10),
-                                CpuDrainEffect(0.5, target_type="attacker"),
-                            ],
-                        )
+                        answers_to=frozenset({"melee"}),
+                        chance=1.0,
+                        effects=[
+                            PreventDamageEffect(10),
+                            CpuDrainEffect(0.5, target_type="attacker"),
+                        ],
+                    )
                 ],
             ),
             position=(0, 0),
@@ -69,7 +69,12 @@ class TestShieldBlocking:
                         cooldown=1.0,
                         cpu_cost=2,
                         effects=[
-                            AttackEffect(min_damage=15, max_damage=15, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=15,
+                                max_damage=15,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],
@@ -119,13 +124,13 @@ class TestShieldBlocking:
                         player_class="neutral",
                         triggers=[
                             OnAttackedTrigger(
-                            answers_to=frozenset({"melee"}),
-                            chance=0.3,
-                            effects=[
-                                PreventDamageEffect(8),
-                                CpuDrainEffect(0.0, target_type="attacker"),
-                            ],
-                        )
+                                answers_to=frozenset({"melee"}),
+                                chance=0.3,
+                                effects=[
+                                    PreventDamageEffect(8),
+                                    CpuDrainEffect(0.0, target_type="attacker"),
+                                ],
+                            )
                         ],
                     ),
                     position=(i % 3, i // 3),
@@ -149,7 +154,12 @@ class TestShieldBlocking:
                         cooldown=0.5,  # Fast attacks
                         cpu_cost=1,
                         effects=[
-                            AttackEffect(min_damage=3, max_damage=3, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=3,
+                                max_damage=3,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],
@@ -208,13 +218,13 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                            answers_to=frozenset({"melee"}),
-                            chance=1.0,
-                            effects=[
-                                PreventDamageEffect(5),
-                                CpuDrainEffect(3.0, target_type="attacker"),
-                            ],
-                        )
+                        answers_to=frozenset({"melee"}),
+                        chance=1.0,
+                        effects=[
+                            PreventDamageEffect(5),
+                            CpuDrainEffect(3.0, target_type="attacker"),
+                        ],
+                    )
                 ],
             ),
             position=(0, 0),
@@ -237,7 +247,12 @@ class TestShieldBlocking:
                         cooldown=1.0,
                         cpu_cost=6,  # High CPU cost
                         effects=[
-                            AttackEffect(min_damage=10, max_damage=10, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=10,
+                                max_damage=10,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],
@@ -280,13 +295,13 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                            answers_to=frozenset({"melee"}),
-                            chance=1.0,
-                            effects=[
-                                PreventDamageEffect(5),
-                                CpuDrainEffect(0.0, target_type="attacker"),
-                            ],
-                        )
+                        answers_to=frozenset({"melee"}),
+                        chance=1.0,
+                        effects=[
+                            PreventDamageEffect(5),
+                            CpuDrainEffect(0.0, target_type="attacker"),
+                        ],
+                    )
                 ],
             ),
             position=(0, 0),
@@ -304,13 +319,13 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                            answers_to=frozenset({"melee"}),
-                            chance=1.0,
-                            effects=[
-                                PreventDamageEffect(7),
-                                CpuDrainEffect(0.0, target_type="attacker"),
-                            ],
-                        )
+                        answers_to=frozenset({"melee"}),
+                        chance=1.0,
+                        effects=[
+                            PreventDamageEffect(7),
+                            CpuDrainEffect(0.0, target_type="attacker"),
+                        ],
+                    )
                 ],
             ),
             position=(1, 0),
@@ -333,7 +348,12 @@ class TestShieldBlocking:
                         cooldown=2.0,
                         cpu_cost=2,
                         effects=[
-                            AttackEffect(min_damage=20, max_damage=20, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=20,
+                                max_damage=20,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],
@@ -380,13 +400,13 @@ class TestShieldBlocking:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                            answers_to=frozenset({"melee"}),
-                            chance=1.0,
-                            effects=[
-                                PreventDamageEffect(10),
-                                CpuDrainEffect(0.0, target_type="attacker"),
-                            ],
-                        )
+                        answers_to=frozenset({"melee"}),
+                        chance=1.0,
+                        effects=[
+                            PreventDamageEffect(10),
+                            CpuDrainEffect(0.0, target_type="attacker"),
+                        ],
+                    )
                 ],
             ),
             position=(0, 0),

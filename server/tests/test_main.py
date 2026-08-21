@@ -7,11 +7,7 @@ from battle_engine import BattleSimulator
 from containers import Container
 from items import sale_price
 from main import generate_ai_opponent
-from tests.conftest import (
-    MULTI_SQUARE_SHOP_SEED,
-    SHOP_SEED,
-    SINGLE_SQUARE_SHOP_SEED,
-)
+from tests.conftest import MULTI_SQUARE_SHOP_SEED, SHOP_SEED, SINGLE_SQUARE_SHOP_SEED
 from tests.test_utils import find_bad_positions
 
 
@@ -611,7 +607,6 @@ class TestAContainerHasToSitOnTheGrid:
 class TestOnePlayerCannotActAsAnother:
     def _player(self, name):
         from fastapi.testclient import TestClient
-
         from main import app
 
         client = TestClient(app)
@@ -661,7 +656,6 @@ class TestOnePlayerCannotActAsAnother:
 
     def test_every_session_endpoint_requires_a_token(self):
         from fastapi.testclient import TestClient
-
         from main import app
 
         anonymous = TestClient(app)
@@ -738,9 +732,9 @@ class TestSellItemAPI:
 
         assert response.status_code == 200, response.text
         sold = response.json()
-        assert sold["gold_gained"] == sale_price(item["cost"]), (
-            "A sale pays half the cost, rounded up"
-        )
+        assert sold["gold_gained"] == sale_price(
+            item["cost"]
+        ), "A sale pays half the cost, rounded up"
         assert sold["gold"] == gold_after_buying + sold["gold_gained"]
         assert sold["sold_item"]["id"] == item["id"], "The sold item comes back"
 
@@ -936,9 +930,7 @@ class TestMoveContainerAPI:
 
         assert response.status_code == 200, response.json()
         result = response.json()
-        moved = next(
-            c for c in result["server_containers"] if c["id"] == "container_a"
-        )
+        moved = next(c for c in result["server_containers"] if c["id"] == "container_a")
         assert moved["position"] == [0, 0]
         item = next(i for i in result["inventory_grid"] if i["id"] == item_id)
         assert item["position"] == [0, 0], "The item travelled with the container"
@@ -984,7 +976,6 @@ class TestMoveContainerAPI:
             "is what this move set down"
         )
         assert item_id not in [i["id"] for i in result["inventory_grid"]]
-
 
     def test_a_container_cannot_land_on_another_container(self, auth_client):
         self._start(auth_client)
@@ -1436,7 +1427,6 @@ class TestMoveItemAPI:
     def test_move_item_without_session(self):
         """A move needs a session, so a player who has not started one is refused."""
         from fastapi.testclient import TestClient
-
         from main import app
 
         client = TestClient(app)
@@ -1453,7 +1443,6 @@ class TestMoveItemAPI:
     def test_a_move_without_a_token_is_refused(self):
         """Every endpoint that touches a session needs to know who is asking."""
         from fastapi.testclient import TestClient
-
         from main import app
 
         response = TestClient(app).post(
@@ -1712,7 +1701,6 @@ class TestOpenApiDeclaresThePositionShape:
 
     def test_placed_item_position_is_a_bounded_array(self):
         from fastapi.testclient import TestClient
-
         from main import app
 
         schema = TestClient(app).get("/openapi.json").json()
@@ -1725,7 +1713,6 @@ class TestOpenApiDeclaresThePositionShape:
 
     def test_server_container_position_is_a_bounded_array(self):
         from fastapi.testclient import TestClient
-
         from main import app
 
         schema = TestClient(app).get("/openapi.json").json()
@@ -1772,7 +1759,8 @@ class TestItemsCombineAfterTheBattle:
         )
         rack_holding(
             auth_client.user_id,
-            ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
         )
 
         result = auth_client.post(
@@ -1798,7 +1786,8 @@ class TestItemsCombineAfterTheBattle:
         )
         rack_holding(
             auth_client.user_id,
-            ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
         )
         made = auth_client.post(
             "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
@@ -1820,7 +1809,8 @@ class TestItemsCombineAfterTheBattle:
         )
         rack_holding(
             auth_client.user_id,
-            ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
         )
         body = auth_client.post(
             "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
@@ -1846,7 +1836,9 @@ class TestItemsCombineAfterTheBattle:
         )
         rack_holding(
             auth_client.user_id,
-            ("hero_sword", [2, 3]), ("whetstone", [3, 3]), ("whetstone", [3, 4]),
+            ("hero_sword", [2, 3]),
+            ("whetstone", [3, 3]),
+            ("whetstone", [3, 4]),
         )
         body = auth_client.post(
             "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
@@ -1858,19 +1850,15 @@ class TestItemsCombineAfterTheBattle:
 
         assert body["inventory"]["inventory_grid"] == [], "nothing left on the rack"
         chest = body["inventory"]["inventory_storage"]
-        assert [i["id"] for i in chest] == [made["made_id"]], (
-            "and it is in the chest under the id the client was told"
-        )
-
+        assert [i["id"] for i in chest] == [
+            made["made_id"]
+        ], "and it is in the chest under the id the client was told"
 
     def test_a_rack_that_cannot_craft_reports_nothing(self, auth_client):
         auth_client.post(
             "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
         )
-        rack_holding(
-            auth_client.user_id,
-            ("null_blade", [2, 3])
-        )
+        rack_holding(auth_client.user_id, ("null_blade", [2, 3]))
         result = auth_client.post(
             "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
         ).json()
@@ -2022,7 +2010,8 @@ class TestTheClientIsWarnedBeforeItemsCombine:
             ("whetstone", [6, 3]),
         )
         promised = [
-            p["makes"] for p in auth_client.get("/session").json()["pending"]
+            p["makes"]
+            for p in auth_client.get("/session").json()["pending"]
             if p["have"] == p["need"]
         ]
 
@@ -2048,9 +2037,11 @@ class TestTheClientIsWarnedBeforeItemsCombine:
         rack_holding(
             auth_client.user_id,
             # These two combine.
-            ("neural_link_collar", [2, 3]), ("cpu_booster", [3, 3]),
+            ("neural_link_collar", [2, 3]),
+            ("cpu_booster", [3, 3]),
             # These two do not: a Long Poll wants a second Edge Cache.
-            ("hero_sword", [6, 3]), ("whetstone", [7, 3]),
+            ("hero_sword", [6, 3]),
+            ("whetstone", [7, 3]),
         )
 
         after = auth_client.post(
@@ -2074,25 +2065,36 @@ class TestStandingItemsOnTheRackForATest:
     def test_it_stands_the_items_where_it_is_told(self, auth_client):
         auth_client.post("/session/start", json={"player_name": "Tester"})
 
-        answered = auth_client.post("/test/rack", json={
-            "player_id": str(auth_client.user_id), "items": [
-            {"item_type": "neural_link_collar", "position": [2, 3]},
-            {"item_type": "cpu_booster", "position": [3, 3]},
-        ]})
+        answered = auth_client.post(
+            "/test/rack",
+            json={
+                "player_id": str(auth_client.user_id),
+                "items": [
+                    {"item_type": "neural_link_collar", "position": [2, 3]},
+                    {"item_type": "cpu_booster", "position": [3, 3]},
+                ],
+            },
+        )
 
         assert answered.status_code == 200, answered.text
         rack = answered.json()["inventory_grid"]
         assert [item["item_type"] for item in rack] == [
-            "neural_link_collar", "cpu_booster"
+            "neural_link_collar",
+            "cpu_booster",
         ]
         assert [item["position"] for item in rack] == [[2, 3], [3, 3]]
 
     def test_the_rack_it_sets_is_the_rack_the_session_has(self, auth_client):
         auth_client.post("/session/start", json={"player_name": "Tester"})
-        auth_client.post("/test/rack", json={
-            "player_id": str(auth_client.user_id), "items": [
-            {"item_type": "whetstone", "position": [2, 3]},
-        ]})
+        auth_client.post(
+            "/test/rack",
+            json={
+                "player_id": str(auth_client.user_id),
+                "items": [
+                    {"item_type": "whetstone", "position": [2, 3]},
+                ],
+            },
+        )
 
         held = auth_client.get("/session").json()["inventory_grid"]
 
@@ -2102,11 +2104,16 @@ class TestStandingItemsOnTheRackForATest:
         """So a client can set a board up and draw the glow without a move."""
         auth_client.post("/session/start", json={"player_name": "Tester"})
 
-        answered = auth_client.post("/test/rack", json={
-            "player_id": str(auth_client.user_id), "items": [
-            {"item_type": "neural_link_collar", "position": [2, 3]},
-            {"item_type": "cpu_booster", "position": [3, 3]},
-        ]}).json()
+        answered = auth_client.post(
+            "/test/rack",
+            json={
+                "player_id": str(auth_client.user_id),
+                "items": [
+                    {"item_type": "neural_link_collar", "position": [2, 3]},
+                    {"item_type": "cpu_booster", "position": [3, 3]},
+                ],
+            },
+        ).json()
 
         assert [(p["makes"], p["have"], p["need"]) for p in answered["pending"]] == [
             ("blue_sage_collar", 2, 2)
@@ -2114,15 +2121,25 @@ class TestStandingItemsOnTheRackForATest:
 
     def test_it_replaces_the_rack_rather_than_adding_to_it(self, auth_client):
         auth_client.post("/session/start", json={"player_name": "Tester"})
-        auth_client.post("/test/rack", json={
-            "player_id": str(auth_client.user_id), "items": [
-            {"item_type": "whetstone", "position": [2, 3]},
-        ]})
+        auth_client.post(
+            "/test/rack",
+            json={
+                "player_id": str(auth_client.user_id),
+                "items": [
+                    {"item_type": "whetstone", "position": [2, 3]},
+                ],
+            },
+        )
 
-        answered = auth_client.post("/test/rack", json={
-            "player_id": str(auth_client.user_id), "items": [
-            {"item_type": "cpu_booster", "position": [4, 3]},
-        ]})
+        answered = auth_client.post(
+            "/test/rack",
+            json={
+                "player_id": str(auth_client.user_id),
+                "items": [
+                    {"item_type": "cpu_booster", "position": [4, 3]},
+                ],
+            },
+        )
 
         assert [item["item_type"] for item in answered.json()["inventory_grid"]] == [
             "cpu_booster"
@@ -2131,16 +2148,22 @@ class TestStandingItemsOnTheRackForATest:
     def test_an_item_that_does_not_exist_is_refused(self, auth_client):
         auth_client.post("/session/start", json={"player_name": "Tester"})
 
-        answered = auth_client.post("/test/rack", json={
-            "player_id": str(auth_client.user_id), "items": [
-            {"item_type": "no_such_item", "position": [2, 3]},
-        ]})
+        answered = auth_client.post(
+            "/test/rack",
+            json={
+                "player_id": str(auth_client.user_id),
+                "items": [
+                    {"item_type": "no_such_item", "position": [2, 3]},
+                ],
+            },
+        )
 
         assert answered.status_code == 400, "a typo in a test is a failed test"
 
     def test_it_needs_a_session(self, auth_client):
-        answered = auth_client.post("/test/rack", json={
-            "player_id": str(auth_client.user_id), "items": []})
+        answered = auth_client.post(
+            "/test/rack", json={"player_id": str(auth_client.user_id), "items": []}
+        )
 
         assert answered.status_code == 404
 
@@ -2155,7 +2178,6 @@ class TestWhichItemsGoTogether:
     def test_the_catalogue_answers_without_a_session(self):
         """It is wanted in the shop, before a rack exists."""
         from fastapi.testclient import TestClient
-
         from main import app
 
         answered = TestClient(app).get("/catalogue/combining")
@@ -2225,14 +2247,18 @@ class TestStockingTheShopForATest:
     def test_it_offers_what_it_is_told_to(self, auth_client):
         auth_client.post("/session/start", json={"player_name": "Tester"})
 
-        answered = auth_client.post("/test/shop", json={
-            "player_id": str(auth_client.user_id),
-            "items": ["cubert", "data_crawler"],
-        })
+        answered = auth_client.post(
+            "/test/shop",
+            json={
+                "player_id": str(auth_client.user_id),
+                "items": ["cubert", "data_crawler"],
+            },
+        )
 
         assert answered.status_code == 200, answered.text
         assert [i["item_type"] for i in answered.json()["current_shop"]] == [
-            "cubert", "data_crawler"
+            "cubert",
+            "data_crawler",
         ]
 
     def test_it_offers_items_no_shop_would(self, auth_client):
@@ -2240,8 +2266,10 @@ class TestStockingTheShopForATest:
         for sale anywhere."""
         auth_client.post("/session/start", json={"player_name": "Tester"})
 
-        auth_client.post("/test/shop", json={
-            "player_id": str(auth_client.user_id), "items": ["cubert"]})
+        auth_client.post(
+            "/test/shop",
+            json={"player_id": str(auth_client.user_id), "items": ["cubert"]},
+        )
 
         held = auth_client.get("/session").json()
         assert held["current_shop"][0]["name"] == "Cube Garbo"
@@ -2249,11 +2277,15 @@ class TestStockingTheShopForATest:
 
     def test_the_shelf_is_replaced_rather_than_added_to(self, auth_client):
         auth_client.post("/session/start", json={"player_name": "Tester"})
-        auth_client.post("/test/shop", json={
-            "player_id": str(auth_client.user_id), "items": ["cubert"]})
+        auth_client.post(
+            "/test/shop",
+            json={"player_id": str(auth_client.user_id), "items": ["cubert"]},
+        )
 
-        answered = auth_client.post("/test/shop", json={
-            "player_id": str(auth_client.user_id), "items": ["ping_flood"]})
+        answered = auth_client.post(
+            "/test/shop",
+            json={"player_id": str(auth_client.user_id), "items": ["ping_flood"]},
+        )
 
         assert [i["item_type"] for i in answered.json()["current_shop"]] == [
             "ping_flood"
@@ -2262,13 +2294,16 @@ class TestStockingTheShopForATest:
     def test_an_item_that_does_not_exist_is_refused(self, auth_client):
         auth_client.post("/session/start", json={"player_name": "Tester"})
 
-        answered = auth_client.post("/test/shop", json={
-            "player_id": str(auth_client.user_id), "items": ["no_such_item"]})
+        answered = auth_client.post(
+            "/test/shop",
+            json={"player_id": str(auth_client.user_id), "items": ["no_such_item"]},
+        )
 
         assert answered.status_code == 400
 
     def test_it_needs_a_session(self, auth_client):
         answered = auth_client.post(
-            "/test/shop", json={"player_id": "nobody", "items": []})
+            "/test/shop", json={"player_id": "nobody", "items": []}
+        )
 
         assert answered.status_code == 404

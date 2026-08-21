@@ -16,14 +16,7 @@ from pathlib import Path
 from typing import Dict, Iterator, Tuple
 
 import pytest
-
-from item_looks import (
-    CATEGORY_COLOR,
-    CATEGORY_EXTRA_COLOR,
-    PALETTE,
-    PATTERNS,
-    hex_of,
-)
+from item_looks import CATEGORY_COLOR, CATEGORY_EXTRA_COLOR, PALETTE, PATTERNS, hex_of
 
 ITEMS_DIR = Path(__file__).parent.parent / "data" / "items"
 
@@ -70,7 +63,9 @@ class TestThePalette:
     def test_every_extra_colour_is_in_the_palette(self):
         for category, color in CATEGORY_EXTRA_COLOR.items():
             assert category in CATEGORY_COLOR, f"{category} has no first colour"
-            assert color in PALETTE, f"{category} overflows to {color}, which does not exist"
+            assert (
+                color in PALETTE
+            ), f"{category} overflows to {color}, which does not exist"
 
 
 class TestHexOf:
@@ -102,9 +97,9 @@ class TestTheCatalogue:
         looks: Dict[Tuple[str, str], str] = {}
         for item_id, config in ITEMS.items():
             look = (config["color"], config["pattern"])
-            assert look not in looks, (
-                f"{item_id} and {looks[look]} are both {look[0]} {look[1]}"
-            )
+            assert (
+                look not in looks
+            ), f"{item_id} and {looks[look]} are both {look[0]} {look[1]}"
             looks[look] = item_id
 
     def test_every_item_has_a_look(self):

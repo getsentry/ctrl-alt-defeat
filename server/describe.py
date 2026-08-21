@@ -23,25 +23,28 @@ from item_effects import (
     DEBUFFS,
     WEAPON_KINDS,
     AfterTrigger,
-    CounterTrigger,
     AttackEffect,
     AuraTrigger,
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
     ChanceEffect,
+    ChoiceEffect,
     CleanseEffect,
     ConditionEffect,
     ConsumeEffect,
     CostEffect,
-    ExtraAttackEffect,
-    FatigueStartTrigger,
+    CounterTrigger,
     CpuDrainEffect,
     DamageDealtTrigger,
     DebuffEffect,
+    DestroyBlockEffect,
     Effect,
     EffectDamageEffect,
+    ExtraAttackEffect,
+    FatigueStartTrigger,
     GainDamageEffect,
+    GoldEffect,
     HealEffect,
     HealthThresholdTrigger,
     InflictFatigueEffect,
@@ -52,15 +55,13 @@ from item_effects import (
     ModifyEffect,
     ModifyPerEffect,
     ModifyPerStatusEffect,
-    OnAttackTrigger,
+    NextAttackEffect,
     OnAttackedTrigger,
+    OnAttackTrigger,
     OnHitTrigger,
-    GoldEffect,
     OnMissTrigger,
     OnStunTrigger,
     OutOfStaminaTrigger,
-    SaleChanceEffect,
-    ShopEnteredTrigger,
     PassiveTrigger,
     PerCountEffect,
     PlayerModifyEffect,
@@ -68,6 +69,8 @@ from item_effects import (
     RandomStatusEffect,
     ReflectEffect,
     ResistEffect,
+    SaleChanceEffect,
+    ShopEnteredTrigger,
     StaminaEffect,
     StatModEffect,
     StatusChangeTrigger,
@@ -271,7 +274,7 @@ def capital(text: str) -> str:
             return text
         at = shut + 1
     if at < len(text) and text[at].isalpha():
-        return text[:at] + text[at].upper() + text[at + 1:]
+        return text[:at] + text[at].upper() + text[at + 1 :]
     return text
 
 
@@ -303,11 +306,15 @@ def either(parts: List[str]) -> str:
 def counted(counting: object, noun: str = "items") -> str:
     """What an effect is counting, from the tags it narrows itself to.
 
-    See item_effects.Counting: `"any"` is everything, and a dict narrows to
-    items carrying one of the tags or all of them.
+    See item_effects.Counting: `"any"` is everything, `"free"` is the squares
+    nothing stands on, and a dict narrows to items carrying one of the tags or
+    all of them.
     """
     if counting == "any" or not counting:
         return noun
+    if counting == "free":
+        # Not items at all, so the noun it was given does not apply.
+        return noun.replace("item", "free slot")
     wanted = set(next(iter(counting.values())))
     # The three weapon kinds together are what a player calls a weapon, and
     # "melee, ranged or magic star items" is a long way of saying so.
@@ -348,10 +355,12 @@ def gathered(effects: List[Effect]) -> List[str]:
             return
         if len({count for count, _ in buffs}) == 1:
             clauses.append(
-                f"gain {number(buffs[0][0])} {joined([name for _, name in buffs])}")
+                f"gain {number(buffs[0][0])} {joined([name for _, name in buffs])}"
+            )
         else:
             clauses.append(
-                f"gain {joined([f'{number(n)} {name}' for n, name in buffs])}")
+                f"gain {joined([f'{number(n)} {name}' for n, name in buffs])}"
+            )
         buffs = []
 
     def flush_taken() -> None:
@@ -470,10 +479,17 @@ def _(effect: DebuffEffect) -> str:
     # Who it lands on, said either way round. A debuff nearly always goes to
     # the other player, and "apply 1 rate limited" left a reader working out
     # which of them was being rate limited.
-    text = (f"apply {what} to your opponent" if theirs(effect.target_type)
-            else f"take {what} yourself")
+    text = (
+        f"apply {what} to your opponent"
+        if theirs(effect.target_type)
+        else f"take {what} yourself"
+    )
     if effect.duration and effect.duration > 0:
         text += f" for {seconds(effect.duration)}"
+    if effect.unstackable:
+        # Worth saying: a second helping is worth nothing to somebody already
+        # carrying a full one, which a player cannot guess from the number.
+        text += " (does not stack)"
     if effect.accuracy < 1.0:
         text = f"{percent(effect.accuracy)} of the time, {text}"
     return text
@@ -511,9 +527,23 @@ def _(effect: ReflectEffect) -> str:
 @of_effect.register
 def _(effect: ResistEffect) -> str:
     who = "your opponent refuses" if theirs(effect.target_type) else "refuse"
+    what = {"critical": "a critical hit", "stun": "a stun"}.get(
+        effect.against, "a debuff"
+    )
+    if effect.only:
+        what = either([marked(name) for name in sorted(effect.only)])
+    if effect.per_status:
+        # A chance that grows: "2% chance to resist debuffs for each Luck".
+        grows = joined(
+            [
+                f"{percent(rate)} for each {marked(status)}"
+                for status, rate in sorted(effect.per_status.items())
+            ]
+        )
+        return f"{who} {what} {grows} you have"
     if effect.chance:
-        return f"{who} a debuff {percent(effect.chance)} of the time"
-    stacks = "debuff" if effect.count == 1 else "debuffs"
+        return f"{who} {what} {percent(effect.chance)} of the time"
+    stacks = what if effect.count == 1 else f"{what}s".replace("a ", "")
     return f"{who} the next {number(effect.count)} {stacks}"
 
 
@@ -536,7 +566,14 @@ def _(effect: PlayerModifyEffect) -> str:
 @of_effect.register
 def _(effect: RandomStatusEffect) -> str:
     what = "buff" if effect.kind == "buff" else "debuff"
-    if effect.count == 1:
+    if effect.pick in ("most", "least"):
+        among = (
+            either([marked(name) for name in sorted(effect.among)])
+            if effect.among
+            else f"the {what}"
+        )
+        many = f"{number(effect.count)} of {among} you have " f"{effect.pick} of"
+    elif effect.count == 1:
         many = f"a random {what}"
     else:
         many = f"{number(effect.count)} random {what}s"
@@ -546,7 +583,8 @@ def _(effect: RandomStatusEffect) -> str:
 def happens_once(trigger: Trigger) -> bool:
     """Whether the condition itself can only come round once in a battle"""
     return isinstance(
-        trigger, (BattleStartTrigger, AfterTrigger, HealthThresholdTrigger))
+        trigger, (BattleStartTrigger, AfterTrigger, HealthThresholdTrigger)
+    )
 
 
 def how_often(effect: LimitEffect) -> str:
@@ -570,6 +608,27 @@ def _(effect: StatModEffect) -> str:
 @of_effect.register
 def _(effect: ExtraAttackEffect) -> str:
     return "attack again"
+
+
+@of_effect.register
+def _(effect: DestroyBlockEffect) -> str:
+    whose = "your own" if not theirs(effect.target_type) else "your opponent's"
+    return f"destroy {number(effect.amount)} of {whose} Block"
+
+
+@of_effect.register
+def _(effect: NextAttackEffect) -> str:
+    said = []
+    if effect.damage:
+        said.append(f"deal {number(effect.damage)} more damage")
+    if effect.ignores_block:
+        said.append("go past Block")
+    return f"{joined(said)} on your next attack"
+
+
+@of_effect.register
+def _(effect: ChoiceEffect) -> str:
+    return either([joined(gathered(one)) for one in effect.choices])
 
 
 @of_effect.register
@@ -613,6 +672,8 @@ def _(effect: CleanseEffect) -> str:
 def _(effect: ModifyEffect) -> str:
     reach = counted(effect.counting, REACH.get(effect.target_type, effect.target_type))
     text = f"{reach} get {by_how_much(effect.stat, effect.value)}"
+    if effect.duration and effect.duration > 0:
+        text += f" for {seconds(effect.duration)}"
     if effect.cap is not None:
         text += f" (up to {percent(effect.cap)})"
     return text
@@ -631,7 +692,8 @@ def _(effect: ModifyPerStatusEffect) -> str:
     whose = "your opponent has" if effect.whose == "enemy" else "you have"
     return (
         f"{by_how_much(effect.stat, effect.value)} for each "
-        f"{marked(effect.status)} {whose}")
+        f"{marked(effect.status)} {whose}"
+    )
 
 
 @of_effect.register
@@ -656,8 +718,12 @@ def _(effect: ChanceEffect) -> str:
 
 @of_effect.register
 def _(effect: CostEffect) -> str:
-    price = joined([f"{number(n)} {marked(name)}" for name, n in effect.costs.items()])
     inner = joined(gathered(effect.effects))
+    if effect.from_pool == "all":
+        return f"use all your buffs to {inner}"
+    if effect.from_pool == "one":
+        return f"use a random buff to {inner}"
+    price = joined([f"{number(n)} {marked(name)}" for name, n in effect.costs.items()])
     return f"use {price} to {inner}"
 
 
@@ -773,7 +839,6 @@ def _(trigger: ShopEnteredTrigger) -> str:
     return "when the shop opens"
 
 
-
 @of_trigger.register
 def _(trigger: FatigueStartTrigger) -> str:
     return "at nightfall"
@@ -789,8 +854,7 @@ def _(trigger: StatusChangeTrigger) -> str:
 
 @of_trigger.register
 def _(trigger: WhenAffordableTrigger) -> str:
-    price = joined([f"{number(n)} {marked(name)}"
-                    for name, n in trigger.costs.items()])
+    price = joined([f"{number(n)} {marked(name)}" for name, n in trigger.costs.items()])
     return f"as soon as you can spend {price}"
 
 

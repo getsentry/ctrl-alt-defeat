@@ -5,7 +5,6 @@ Tests for the matchmaking system
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from containers import Container
 from matchmaking import MatchmakingService
 from models import PlayerBuild

@@ -162,11 +162,7 @@ class Counting:
         if self.counting == "any":
             return True
         wanted = {t.lower() for t in next(iter(self.counting.values()))}
-        return (
-            bool(wanted & tags)
-            if "any" in self.counting
-            else wanted <= tags
-        )
+        return bool(wanted & tags) if "any" in self.counting else wanted <= tags
 
 
 @dataclass
@@ -191,7 +187,21 @@ class ModifyEffect(Counting, Effect):
     #: is what a container holds; `own` is everything the player has.
     target_type: str
 
-    #: How much this effect may ever grant, or None for no limit. Only a
+    #: How long it lasts, or -1 for the rest of the battle -- the same word a
+    #: buff uses. "The Star item triggers 100% faster for 1s", "The Diamond
+    #: item triggers 10% faster for 6s". A modifier on a *player* has had a
+    #: clock since durations were built; one on an item had not, and the
+    #: difference was nothing but where it was written.
+    duration: float
+
+    #: How much this effect may ever grant, or None for no limit.
+    #:
+    #: Not with a `duration`. The tally of what one item has given another is
+    #: kept against the receiver, and taking a lent modifier back does not
+    #: know which grant it was undoing -- so a capped, timed modifier would
+    #: leave the tally saying the cap was spent when it was not. No clause
+    #: wants both, and the loader refuses the pair rather than letting it go
+    #: quietly wrong. Only a
     #: modifier handed out again and again -- "Star items trigger 5% faster
     #: (up to 50%)" -- can reach a limit, so an aura leaves it None. Counted
     #: per pair of items, because the limit is on what one item has given
@@ -216,6 +226,7 @@ class ModifyEffect(Counting, Effect):
             "target_type": self.target_type,
             "counting": self.counting,
             "cap": self.cap,
+            "duration": self.duration,
         }
 
 
@@ -277,15 +288,19 @@ DEBUFFS = frozenset({"throttled", "memory_leaked", "rate_limited"})
 
 # Section 3.1. Ours for Heat, Empower, Luck, Regeneration, Spikes, Vampirism
 # and Mana.
-BUFFS = frozenset({
-    "optimized",
-    "monitored",
-    "calibrated",
-    "regenerating",
-    "spiked",
-    "draining",
-    "credits",
-})
+BUFFS = frozenset(
+    {
+        "optimized",
+        "monitored",
+        "calibrated",
+        "regenerating",
+        "spiked",
+        "draining",
+        "credits",
+    }
+)
+
+
 @dataclass
 class GainDamageEffect(Counting, Effect):
     """Flat damage an item picks up during a battle and keeps.
@@ -327,7 +342,13 @@ class PerCountEffect(Counting, Effect):
     """
 
     where: str
+
+    #: See Counting, and one more: `"free"` counts the squares of the zone
+    #: that no item stands on -- "Destroy 4 Block for each free Star slot".
+    #: The only thing counted that is not an item, and only here, because only
+    #: this effect is ever asked to.
     counting: object
+
     effects: List[Effect] = field(default_factory=list)
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
@@ -352,6 +373,15 @@ class CostEffect(Effect):
     #: What it costs, as buff name to stacks. More than one is allowed.
     costs: Dict[str, int]
     effects: List[Effect] = field(default_factory=list)
+
+    #: Spending without naming what. `one` takes a single stack of a kind
+    #: picked at random -- "Use a random buff to heal for 12" -- and `all`
+    #: takes every stack of every buff, which is what "Use all your buffs"
+    #: means. Empty spends `costs` and nothing else.
+    #:
+    #: A clause that spends the pool has nothing to be unable to afford, so
+    #: `all` happens even with nothing to spend; `one` needs a stack.
+    from_pool: str = ""
 
     def affordable(self, buffs: Dict[str, int]) -> bool:
         return all(buffs.get(name, 0) >= n for name, n in self.costs.items())
@@ -429,8 +459,11 @@ class StunEffect(Effect):
     target_type: str
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "stun", "duration": self.duration,
-                "target_type": self.target_type}
+        return {
+            "type": "stun",
+            "duration": self.duration,
+            "target_type": self.target_type,
+        }
 
 
 # What an item modifier can change. Each is a field the engine already keeps,
@@ -464,50 +497,47 @@ WEAPON_KINDS = frozenset({"melee", "ranged", "magic"})
 
 #: What a modifier on a player can change, as against one on an item. Each is
 #: a share: 0.12 is twelve percent more, -0.3 is thirty percent less.
-PLAYER_MODIFIERS = frozenset({
-    # What lands on this player, so -1.0 is invulnerable. Backpack Battles'
-    # Invulnerability page: "Prevents receiving any damage during a certain
-    # amount of time." That is the same sentence as "take -25% damage for 7s"
-    # with the number turned up, so it is the same number.
-    "damage_taken",
-
-    # Healing this player does, and healing done to them. Two clauses, one
-    # each way: "Increase your healing by 4%" against "Your opponent's healing
-    # is reduced by 30%".
-    "healing",
-    "healing_taken",
-
-    # What this player's items cost to run: "Items use +20% stamina".
-    "stamina_use",
-
-    # Block this player gains: "Star items give +30% Block".
-    "block_gained",
-
-    # Every attack this player makes: "for the next 1.5s, all your attacks are
-    # Critical hits" is this at 1.0.
-    "critical_chance",
-})
+PLAYER_MODIFIERS = frozenset(
+    {
+        # What lands on this player, so -1.0 is invulnerable. Backpack Battles'
+        # Invulnerability page: "Prevents receiving any damage during a certain
+        # amount of time." That is the same sentence as "take -25% damage for 7s"
+        # with the number turned up, so it is the same number.
+        "damage_taken",
+        # Healing this player does, and healing done to them. Two clauses, one
+        # each way: "Increase your healing by 4%" against "Your opponent's healing
+        # is reduced by 30%".
+        "healing",
+        "healing_taken",
+        # What this player's items cost to run: "Items use +20% stamina".
+        "stamina_use",
+        # Block this player gains: "Star items give +30% Block".
+        "block_gained",
+        # Every attack this player makes: "for the next 1.5s, all your attacks are
+        # Critical hits" is this at 1.0.
+        "critical_chance",
+    }
+)
 
 MODIFIER_TARGETS = frozenset({"self", "star", "diamond", "contained", "own"})
 
-MODIFIERS = frozenset({
-    "trigger_speed",
-    "accuracy",
-    "damage",
-    "cpu_cost",
-
-    # Flat, where `damage` multiplies. "Deals +1 damage per Spikes" adds to
-    # what the weapon rolls; "+15% damage" scales it. Both are written on the
-    # same items, so they cannot be the same number.
-    "damage_flat",
-
-    # The top of the range only. "Deals +1 maximum damage per Vampirism".
-    "max_damage_flat",
-
-    # Backpack Battles' Critical hits page: damage starts at 0% and only ever
-    # gains crit chance from outside. This is that outside.
-    "critical_chance",
-})
+MODIFIERS = frozenset(
+    {
+        "trigger_speed",
+        "accuracy",
+        "damage",
+        "cpu_cost",
+        # Flat, where `damage` multiplies. "Deals +1 damage per Spikes" adds to
+        # what the weapon rolls; "+15% damage" scales it. Both are written on the
+        # same items, so they cannot be the same number.
+        "damage_flat",
+        # The top of the range only. "Deals +1 maximum damage per Vampirism".
+        "max_damage_flat",
+        # Backpack Battles' Critical hits page: damage starts at 0% and only ever
+        # gains crit chance from outside. This is that outside.
+        "critical_chance",
+    }
+)
 
 
 @dataclass
@@ -519,12 +549,18 @@ class DebuffEffect(Effect):
     #: Seconds, or -1 for the rest of the battle. "Inflict 5 Blind for 2s"
     #: is one of the few that says a number; nearly every debuff is -1.
     duration: float = -1
+
+    #: "(unstackable)": inflicting it again does not add to what is there. It
+    #: tops the stacks up to this many and refreshes the clock, so a second
+    #: helping is worth nothing to somebody already carrying a full one.
+    unstackable: bool = False
     accuracy: float = 1.0
     target_type: str = "enemy"
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {
             "type": "debuff",
+            "unstackable": self.unstackable,
             "debuff_name": self.debuff_name,
             "value": self.value,
             "duration": self.duration,
@@ -564,6 +600,11 @@ class ModifyPerStatusEffect(Effect):
     "Triggers 10% faster for each Luck", "Deals +1 damage for each Blind of
     your opponent". The counting direction of an aura asks the grid; this asks
     the player.
+
+    `status` names one, or is `buffs` or `debuffs` for every stack of every
+    kind: "Deals +0.5 damage for each debuff of your opponent" counts the
+    whole pool, and counting one named debuff would give a different and
+    smaller number.
     """
 
     stat: str
@@ -572,8 +613,13 @@ class ModifyPerStatusEffect(Effect):
     whose: str  # "self" or "enemy"
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "modify_per_status", "stat": self.stat,
-                "value": self.value, "status": self.status, "whose": self.whose}
+        return {
+            "type": "modify_per_status",
+            "stat": self.stat,
+            "value": self.value,
+            "status": self.status,
+            "whose": self.whose,
+        }
 
 
 @dataclass
@@ -607,9 +653,13 @@ class EffectDamageEffect(Effect):
     whose: Dict[str, str]
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "effect_damage", "amount": self.amount,
-                "lifesteal": self.lifesteal, "per_status": self.per_status,
-                "whose": self.whose}
+        return {
+            "type": "effect_damage",
+            "amount": self.amount,
+            "lifesteal": self.lifesteal,
+            "per_status": self.per_status,
+            "whose": self.whose,
+        }
 
 
 @dataclass
@@ -625,8 +675,11 @@ class StaminaEffect(Effect):
     target_type: str
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "stamina", "amount": self.amount,
-                "target_type": self.target_type}
+        return {
+            "type": "stamina",
+            "amount": self.amount,
+            "target_type": self.target_type,
+        }
 
 
 @dataclass
@@ -690,8 +743,12 @@ class TriggerItemEffect(Counting, Effect):
     pick: str
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "trigger_item", "where": self.where,
-                "how_many": self.how_many, "pick": self.pick}
+        return {
+            "type": "trigger_item",
+            "where": self.where,
+            "how_many": self.how_many,
+            "pick": self.pick,
+        }
 
 
 @dataclass
@@ -717,6 +774,69 @@ class SaleChanceEffect(Effect):
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {"type": "sale_chance", "amount": self.amount}
+
+
+@dataclass
+class ChoiceEffect(Effect):
+    """One of these, picked at random, and not the others.
+
+    "Randomly gain 1 Empower or gain 3 Mana and remove 2 Mana from opponent or
+    ...", "Randomly gain 14 Block or 2 stamina or 2 Luck." Each choice is a
+    list, because the alternatives are not always one effect each.
+
+    Not RandomStatusEffect, which picks a *status* out of the seven. This
+    picks between clauses the item wrote out.
+    """
+
+    #: The alternatives, each a list of effects that happen together.
+    choices: List[List[Effect]] = field(default_factory=list)
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {"type": "choice", "choices": len(self.choices)}
+
+
+@dataclass
+class DestroyBlockEffect(Effect):
+    """Take Block off somebody without dealing any damage.
+
+    "Destroy 4 Block", "remove 15 Block on crit". Not damage that Block
+    absorbs -- the Block is simply gone, and a target with none loses nothing.
+    """
+
+    amount: int
+    target_type: str
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {
+            "type": "destroy_block",
+            "amount": self.amount,
+            "target_type": self.target_type,
+        }
+
+
+@dataclass
+class NextAttackEffect(Effect):
+    """Put something on this item's next swing, and only the next one.
+
+    "Gain +2 damage for the next attack", "deal +9 damage on the next attack",
+    "Use 1 Mana to ignore Block and deal +6 damage".
+
+    Not `gain_damage`, which an item keeps for the rest of the battle. This is
+    spent by swinging, so an item that never swings again never spends it.
+    """
+
+    #: Flat damage on that one swing.
+    damage: int
+
+    #: Whether that swing goes past Block entirely.
+    ignores_block: bool
+
+    def apply(self, source, target, battle_state: "BattleSimulator"):
+        return {
+            "type": "next_attack",
+            "damage": self.damage,
+            "ignores_block": self.ignores_block,
+        }
 
 
 @dataclass
@@ -798,8 +918,7 @@ class ReflectEffect(Effect):
     target_type: str
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "reflect", "count": self.count,
-                "target_type": self.target_type}
+        return {"type": "reflect", "count": self.count, "target_type": self.target_type}
 
 
 @dataclass
@@ -824,9 +943,26 @@ class ResistEffect(Effect):
 
     target_type: str
 
+    #: What is refused. `debuff` is the wiki's own Resist; the source game
+    #: also writes "chance to resist critical hits" and "chance to resist
+    #: stuns", which are the same idea aimed at something else.
+    against: str = "debuff"
+
+    #: When `against` is `debuff`, the debuffs it refuses, or empty for any.
+    #: "50% chance to resist Blind and Cold" names two.
+    only: Tuple[str, ...] = ()
+
+    #: A chance that grows with what its owner holds: "You have a 2% chance to
+    #: resist debuffs for each Luck". {status: share per stack}.
+    per_status: Dict[str, float] = field(default_factory=dict)
+
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "resist", "count": self.count, "chance": self.chance,
-                "target_type": self.target_type}
+        return {
+            "type": "resist",
+            "count": self.count,
+            "chance": self.chance,
+            "target_type": self.target_type,
+        }
 
 
 @dataclass
@@ -848,9 +984,13 @@ class PlayerModifyEffect(Effect):
     duration: float
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "player_modify", "stat": self.stat,
-                "value": self.value, "target_type": self.target_type,
-                "duration": self.duration}
+        return {
+            "type": "player_modify",
+            "stat": self.stat,
+            "value": self.value,
+            "target_type": self.target_type,
+            "duration": self.duration,
+        }
 
 
 @dataclass
@@ -871,9 +1011,28 @@ class RandomStatusEffect(Effect):
 
     target_type: str
 
+    #: How the kind is chosen. `random` looks again for each stack, which is
+    #: how cleansing picks. `most` and `least` choose by what is already held
+    #: -- "Gain 3 buffs of the type you have most of", "Gain 3 of the buff you
+    #: have least of" -- and choose once, so all the stacks go to one kind.
+    #:
+    #: `least` counts kinds at nothing as well, since a buff you have none of
+    #: is the one you have least of, and an item that says so plainly means
+    #: to give you a new one.
+    pick: str = "random"
+
+    #: When `pick` is `most` or `least`, the kinds worth choosing between.
+    #: Empty means all of them; "Gain 1 Luck or 1 Spikes or 1 Mana, depending
+    #: on what you have the least of" names three.
+    among: Tuple[str, ...] = ()
+
     def apply(self, source, target, battle_state: "BattleSimulator"):
-        return {"type": "random_status", "kind": self.kind,
-                "count": self.count, "target_type": self.target_type}
+        return {
+            "type": "random_status",
+            "kind": self.kind,
+            "count": self.count,
+            "target_type": self.target_type,
+        }
 
 
 @dataclass
@@ -1069,6 +1228,7 @@ class ChanceTrigger(Trigger):
 @dataclass
 class OnHitTrigger(ChanceTrigger):
     """Activates when this item's attack hits. Doesn't fire after a miss."""
+
     event_name: ClassVar[str] = "on_hit"
 
 
@@ -1492,4 +1652,3 @@ class ItemSpec:
 
     # Offered only while the player holds this item. Empty means always.
     shop_needs: str = ""
-

@@ -3,7 +3,6 @@ Tests for purchase validation and placement
 """
 
 import pytest
-
 from tests.conftest import SHOP_SEED
 
 

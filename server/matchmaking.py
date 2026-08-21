@@ -6,11 +6,10 @@ import random
 from datetime import timedelta
 from typing import Dict, List, Optional
 
-from sqlalchemy import and_, delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from containers import Container
 from models import MatchmakingHistory, PlayerBuild
+from sqlalchemy import and_, delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from utils import dump_all, utc_now
 
 

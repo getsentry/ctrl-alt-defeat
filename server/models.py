@@ -14,7 +14,6 @@ from sqlalchemy import (
     String,
 )
 from sqlalchemy.ext.declarative import declarative_base
-
 from utils import utc_now
 
 Base = declarative_base()

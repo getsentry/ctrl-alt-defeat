@@ -6,7 +6,7 @@ Tests written first, following TDD principles
 import json
 
 import pytest
-
+from containers import Container
 from grid_system import Rotation, parse_map
 from inventory_manager import (
     InvalidPlacementError,
@@ -15,7 +15,6 @@ from inventory_manager import (
     InventoryStorage,
     ItemNotFoundError,
 )
-from containers import Container
 from items import Item, PlacedItem
 from tests.test_utils import find_bad_positions
 from utils import dump_all
@@ -423,9 +422,7 @@ class TestAnAnchorIsNotAlwaysOneOfTheSquares:
         manager = InventoryManager()
         self._plus_on_the_grid(manager, "plus2")
 
-        manager.move_item(
-            item_id="plus2", from_location=(1, 1), to_location="storage"
-        )
+        manager.move_item(item_id="plus2", from_location=(1, 1), to_location="storage")
 
         assert manager.grid.items == []
         assert [held.id for held in manager.storage.items] == ["plus2"]
@@ -483,9 +480,7 @@ class TestStoredPositions:
                 "grid": dump_all([Item.of("null_blade", "item_1").placed_at((2, 3))]),
                 "storage": [],
                 "containers": [
-                    dump_all(
-                        [Container.of("standard_vm", (2, 3), "container_a")]
-                    )[0]
+                    dump_all([Container.of("standard_vm", (2, 3), "container_a")])[0]
                 ],
             }
         )
@@ -657,9 +652,9 @@ class TestMovingAContainer:
 
         displaced = grid.move_container("container_a", (2, 5))
 
-        assert [item.id for item in displaced] == ["straddler"], (
-            "The item being moved gives way, not the one that stayed still"
-        )
+        assert [item.id for item in displaced] == [
+            "straddler"
+        ], "The item being moved gives way, not the one that stayed still"
         assert [item.id for item in grid.items] == ["stayed"]
         assert grid.items[0].position == (4, 5), "The stationary item did not move"
 
@@ -726,9 +721,9 @@ class TestMovingAContainer:
 
         grid.move_container("container_a", (0, 0))
 
-        assert grid.can_hold([(2, 3)]) is False, (
-            "The squares container A used to cover are bare floor now"
-        )
+        assert (
+            grid.can_hold([(2, 3)]) is False
+        ), "The squares container A used to cover are bare floor now"
         assert grid.can_hold([(3, 4)]) is False
         with pytest.raises(InvalidPlacementError):
             grid.place_item(Item.of("null_blade", "nowhere"), (2, 3))
@@ -795,7 +790,6 @@ class TestCombiningItems:
     real ones fail.
     """
 
-
     def test_two_items_together_become_the_item_they_make(self):
         rack = a_rack(("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)))
         made = rack.combine()
@@ -813,7 +807,6 @@ class TestCombiningItems:
         rack = a_rack(("neural_link_collar", (3, 3)), ("cpu_booster", (4, 4)))
         assert rack.combine() == []
 
-
     def test_one_item_touches_all_the_others_not_every_pair(self):
         """A Stone Golem is a Heart Container and four Stones.
 
@@ -822,7 +815,7 @@ class TestCombiningItems:
         recipe impossible rather than merely hard.
         """
         rack = a_wide_rack(
-            ("heart_container", (0, 0)),   # covers (0,0) (1,0) (0,1) (1,1)
+            ("heart_container", (0, 0)),  # covers (0,0) (1,0) (0,1) (1,1)
             ("ping_flood", (2, 0)),
             ("ping_flood", (2, 1)),
             ("ping_flood", (0, 2)),
@@ -849,7 +842,7 @@ class TestCombiningItems:
             ("ping_flood", (2, 0)),
             ("ping_flood", (2, 1)),
             ("ping_flood", (0, 2)),
-            ("ping_flood", (2, 2)),   # touches (2,1), not the heart
+            ("ping_flood", (2, 2)),  # touches (2,1), not the heart
         )
         assert rack.combine() == [], "three stones reach the heart, not four"
 
@@ -860,9 +853,9 @@ class TestCombiningItems:
         assert [c.made for c in made] == ["serverless_function"]
         assert [i.item_type for i in made[0].consumed] == ["crypto_mining_rig"]
         assert [i.item_type for i in made[0].kept] == ["maneki_neko"]
-        assert [i.item_type for i in rack.grid.items] == ["maneki_neko"], (
-            "the catalyst is still there"
-        )
+        assert [i.item_type for i in rack.grid.items] == [
+            "maneki_neko"
+        ], "the catalyst is still there"
 
     def test_without_the_catalyst_nothing_happens(self):
         rack = a_rack(("crypto_mining_rig", (2, 3)))
@@ -898,14 +891,15 @@ class TestCombiningItems:
         assert made[0].position is None
         assert rack.grid.items == []
         assert [i.item_type for i in rack.storage.items] == ["hero_longsword"]
-        assert rack.storage.items[0].id == made[0].made_id, (
-            "the client is told an id, and that is the item it gets"
-        )
+        assert (
+            rack.storage.items[0].id == made[0].made_id
+        ), "the client is told an id, and that is the item it gets"
 
     def test_the_result_does_not_spread_beyond_the_squares_it_freed(self):
         """A combination should not take space the player was keeping."""
         rack = a_rack(
-            ("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)),
+            ("neural_link_collar", (2, 3)),
+            ("cpu_booster", (3, 3)),
             ("null_blade", (4, 3)),
         )
         rack.combine()
@@ -935,12 +929,13 @@ class TestCombiningItems:
             ("neural_link_collar", (2, 3)),
             ("white_lily_collar", (4, 3)),
         )
+
         def eaten(rack):
             return sorted(i.item_type for i in rack.combine()[0].consumed)
 
-        assert eaten(first) != eaten(second), (
-            "which collar was eaten should follow which was placed last"
-        )
+        assert eaten(first) != eaten(
+            second
+        ), "which collar was eaten should follow which was placed last"
 
     def test_the_same_rack_always_combines_the_same_way(self):
         def once():
@@ -950,16 +945,17 @@ class TestCombiningItems:
                 ("neural_link_collar", (2, 3)),
             )
             return [
-                (c.made, tuple(i.item_type for i in c.consumed))
-                for c in rack.combine()
+                (c.made, tuple(i.item_type for i in c.consumed)) for c in rack.combine()
             ]
 
         assert once() == once() == once()
 
     def test_separate_combinations_all_happen(self):
         rack = a_rack(
-            ("neural_link_collar", (2, 3)), ("cpu_booster", (3, 3)),
-            ("crypto_mining_rig", (6, 3)), ("maneki_neko", (5, 3)),
+            ("neural_link_collar", (2, 3)),
+            ("cpu_booster", (3, 3)),
+            ("crypto_mining_rig", (6, 3)),
+            ("maneki_neko", (5, 3)),
         )
         made = {c.made for c in rack.combine()}
         assert made == {"blue_sage_collar", "serverless_function"}
@@ -981,13 +977,14 @@ class TestCombiningItems:
         first = rack.combine()
         assert [c.made for c in first] == ["blue_sage_collar"], "one step only"
         assert {i.item_type for i in rack.grid.items} == {
-            "blue_sage_collar", "vampire_rootkit"
+            "blue_sage_collar",
+            "vampire_rootkit",
         }
 
         second = rack.combine()
-        assert [c.made for c in second] == ["red_orchid_collar"], (
-            "the next shop phase takes the next step"
-        )
+        assert [c.made for c in second] == [
+            "red_orchid_collar"
+        ], "the next shop phase takes the next step"
 
     def test_an_empty_rack_combines_nothing(self):
         assert InventoryManager().combine() == []
@@ -1008,9 +1005,9 @@ class TestAPartThatIsAKindNotAnItem:
 
             assert [c.made for c in made] == ["burning_coal"], f"{lighter} lights it"
             assert [i.item_type for i in made[0].consumed] == ["lump_of_coal"]
-            assert [i.item_type for i in made[0].kept] == [lighter], (
-                "the fire is a catalyst, so it is still there"
-            )
+            assert [i.item_type for i in made[0].kept] == [
+                lighter
+            ], "the fire is a catalyst, so it is still there"
 
     def test_an_item_of_another_kind_does_not(self):
         # An Edge Cache is of no kind at all, and a Null Blade is melee. Both
@@ -1026,7 +1023,8 @@ class TestAPartThatIsAKindNotAnItem:
         assert [c.made for c in made] == ["burning_coal"]
         assert [i.id for i in made[0].consumed] == ["item0"], "the coal, not the cell"
         assert sorted(i.item_type for i in rack.grid.items) == [
-            "burning_coal", "burning_coal"
+            "burning_coal",
+            "burning_coal",
         ]
 
     def test_the_fire_has_to_be_touching_like_any_part(self):
@@ -1065,11 +1063,13 @@ class TestWhatTheRackIsOnTheWayTo:
         rack.pending()
         rack.pending()
         assert [i.item_type for i in rack.grid.items] == [
-            "neural_link_collar", "cpu_booster"
+            "neural_link_collar",
+            "cpu_booster",
         ], "the rack is untouched by being asked about"
 
     def test_it_promises_exactly_what_combining_does(self):
         """The two read one plan, so they cannot disagree."""
+
         def rack():
             return a_rack(
                 ("cpu_booster", (3, 3)),
@@ -1115,9 +1115,9 @@ class TestWhatTheRackIsOnTheWayTo:
         for entry in pending:
             if entry.complete:
                 continue
-            assert not (set(entry.ingredients) & combining), (
-                f"{entry.makes} offers an item that is already spoken for"
-            )
+            assert not (
+                set(entry.ingredients) & combining
+            ), f"{entry.makes} offers an item that is already spoken for"
 
 
 class TestWhichItemsGoTogether:
@@ -1170,9 +1170,9 @@ class TestWhichItemsGoTogether:
                         if len(parts) < 2:
                             alone.add(slug)
                         else:
-                            assert slug in partners, (
-                                f"{slug} can be part of a recipe and has no partners"
-                            )
+                            assert (
+                                slug in partners
+                            ), f"{slug} can be part of a recipe and has no partners"
         assert alone, "no single-part recipes at all makes the exception dead"
 
     def test_a_wildcard_part_is_every_item_that_answers_it(self):
@@ -1204,5 +1204,6 @@ class TestWhichItemsGoTogether:
         from inventory_manager import combining_partners
 
         assert combining_partners()["thermal_throttle"] == [
-            "lump_of_coal", "plasma_edge"
+            "lump_of_coal",
+            "plasma_edge",
         ]

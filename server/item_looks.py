@@ -31,8 +31,8 @@ PALETTE = {
 # hue to its first so the category still reads as one thing. Only the two big
 # categories need one: 63 weapons and 58 accessories against 36 patterns.
 CATEGORY_EXTRA_COLOR = {
-    "problem": "ember",     # red-orange, beside red
-    "protocol": "citron",   # yellow-green, beside green
+    "problem": "ember",  # red-orange, beside red
+    "protocol": "citron",  # yellow-green, beside green
 }
 
 # Which colour every item of a category wears.

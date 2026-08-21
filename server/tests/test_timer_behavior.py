@@ -35,7 +35,12 @@ class TestTimerScheduling:
                         cooldown=1.0,  # 1 second cooldown
                         cpu_cost=15,  # More than max CPU (10)
                         effects=[
-                            AttackEffect(min_damage=10, max_damage=10, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=10,
+                                max_damage=10,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],
@@ -86,7 +91,12 @@ class TestTimerScheduling:
                         cooldown=1.0,  # 1 second cooldown
                         cpu_cost=2,  # More than a second of regeneration
                         effects=[
-                            AttackEffect(min_damage=5, max_damage=5, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=5,
+                                max_damage=5,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],
@@ -164,7 +174,12 @@ class TestTimerScheduling:
                         cooldown=1.0,  # 1 second
                         cpu_cost=3,
                         effects=[
-                            AttackEffect(min_damage=1, max_damage=1, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=1,
+                                max_damage=1,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],
@@ -187,7 +202,12 @@ class TestTimerScheduling:
                         cooldown=3.0,  # 3 seconds
                         cpu_cost=4,
                         effects=[
-                            AttackEffect(min_damage=1, max_damage=1, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=1,
+                                max_damage=1,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],

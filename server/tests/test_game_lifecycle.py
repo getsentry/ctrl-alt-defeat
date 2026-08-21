@@ -8,7 +8,6 @@ import os
 os.environ["TEST_MODE"] = "true"
 
 import pytest  # noqa: E402
-
 from containers import Container, PlacementValidator  # noqa: E402
 from grid_system import ItemShape  # noqa: E402
 

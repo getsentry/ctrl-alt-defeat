@@ -221,11 +221,26 @@
       "source": "Amulet of Energy",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "battle_start",
+          "effects": [
+            {
+              "type": "modify",
+              "stat": "trigger_speed",
+              "value": 1.0,
+              "target": "star",
+              "counting": "any",
+              "cap": null,
+              "duration": 1.0,
+              "description": "The Star item triggers 100% faster for 1s"
+            }
+          ]
+        }
+      ],
       "slug": "power_management_unit",
       "in_shop": false,
       "unbuilt": [
-        "Start of battle: The Star item triggers 100% faster for 1s.",
         "Buff used: Refund 25% of the used buffs."
       ],
       "recipe": [
@@ -272,7 +287,8 @@
                 ]
               },
               "cap": null,
-              "description": "Star Food triggers 40% faster"
+              "description": "Star Food triggers 40% faster",
+              "duration": -1
             }
           ]
         }
@@ -837,11 +853,31 @@
       "source": "Djinn Lamp",
       "rarity": "godly",
       "cost": 11,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 1.6,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "random_status",
+              "kind": "buff",
+              "count": 1,
+              "target": "self",
+              "description": "Gain 1 Luck or 1 Spikes or 1 Mana, whichever you have least of",
+              "pick": "least",
+              "among": [
+                "calibrated",
+                "spiked",
+                "credits"
+              ]
+            }
+          ]
+        }
+      ],
       "slug": "djinn_lamp",
       "in_shop": true,
       "unbuilt": [
-        "Every 1.6s: Gain 1 Luck or 1 Spikes or 1 Mana, depending on what you have the least of.",
         "Use 7 Block, 7 Luck, 7 Spikes, 7 Mana and 27 health: Give the Star Weapon +27 damage (once)."
       ],
       "icontype": "magic, accessory"
@@ -875,13 +911,56 @@
               "description": "Triggers 10% faster for each Star item"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "choice",
+              "choices": [
+                [
+                  {
+                    "type": "buff",
+                    "buff_name": "monitored",
+                    "value": 1,
+                    "target": "self",
+                    "description": "gain 1 Empower"
+                  }
+                ],
+                [
+                  {
+                    "type": "buff",
+                    "buff_name": "credits",
+                    "value": 3,
+                    "target": "self",
+                    "description": "gain 3 Mana"
+                  },
+                  {
+                    "type": "cleanse",
+                    "count": 2,
+                    "removes": "credits",
+                    "target": "enemy",
+                    "description": "remove 2 Mana from opponent"
+                  }
+                ],
+                [
+                  {
+                    "type": "cpu_drain",
+                    "value": 1,
+                    "target": "attacker",
+                    "description": "remove 1 stamina from opponent"
+                  }
+                ]
+              ],
+              "description": "Randomly, one of three"
+            }
+          ]
         }
       ],
       "slug": "fanfare",
       "in_shop": true,
-      "unbuilt": [
-        "Every 3s: Randomly gain 1 Empower or gain 3 Mana and remove 2 Mana from opponent or remove 1 stamina from opponent."
-      ],
       "icontype": "magic, musical, accessory"
     },
     "flute": {
@@ -913,13 +992,47 @@
               "description": "Triggers 10% faster for each Star item"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 4.7,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "choice",
+              "choices": [
+                [
+                  {
+                    "type": "block",
+                    "value": 14,
+                    "description": "gain 14 Block"
+                  }
+                ],
+                [
+                  {
+                    "type": "stamina",
+                    "amount": 2,
+                    "target": "self",
+                    "description": "2 stamina"
+                  }
+                ],
+                [
+                  {
+                    "type": "buff",
+                    "buff_name": "calibrated",
+                    "value": 2,
+                    "target": "self",
+                    "description": "2 Luck"
+                  }
+                ]
+              ],
+              "description": "Randomly, one of three"
+            }
+          ]
         }
       ],
       "slug": "flute",
       "in_shop": true,
-      "unbuilt": [
-        "Every 4.7s: Randomly gain 14 Block or 2 stamina or 2 Luck."
-      ],
       "icontype": "magic, musical, accessory"
     },
     "furcifer_prime_subscription": {
@@ -1234,13 +1347,25 @@
               "description": "Sale chance +3%"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "resist",
+              "count": 0,
+              "chance": 0.15,
+              "target": "self",
+              "description": "15% chance to resist critical hits",
+              "against": "critical"
+            }
+          ]
         }
       ],
       "slug": "maneki_neko",
       "in_shop": true,
       "unbuilt": [
         "Value of Star items > 20 Gold",
-        "15% chance to resist critical hits.",
         "Value of Star items > 40 Gold",
         "Godly and Unique items trigger 15% faster."
       ],
@@ -1303,7 +1428,8 @@
                 ]
               },
               "cap": null,
-              "description": "and 5% accuracy"
+              "description": "and 5% accuracy",
+              "duration": -1
             }
           ]
         }
@@ -1599,13 +1725,28 @@
               "description": "Star Weapons gain 2 damage"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "resist",
+              "count": 0,
+              "chance": 0.5,
+              "target": "self",
+              "description": "50% chance to resist Blind and Cold",
+              "only": [
+                "rate_limited",
+                "throttled"
+              ]
+            }
+          ]
         }
       ],
       "slug": "shepherds_crook",
       "in_shop": false,
       "unbuilt": [
-        "35% chance to protect your buffs from removal.",
-        "50% chance to resist Blind and Cold."
+        "35% chance to protect your buffs from removal."
       ],
       "recipe": [
         {

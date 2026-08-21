@@ -6,10 +6,6 @@ import random
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy import select
-
 from auth import (
     Token,
     TokenData,
@@ -19,7 +15,10 @@ from auth import (
     verify_password,
 )
 from database import db_manager
+from fastapi import APIRouter, Depends, HTTPException, status
 from models import User
+from pydantic import BaseModel
+from sqlalchemy import select
 from utils import utc_now
 
 router = APIRouter(prefix="/auth", tags=["authentication"])

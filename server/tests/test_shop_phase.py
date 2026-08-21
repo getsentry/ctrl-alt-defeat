@@ -5,8 +5,8 @@ beginning and an item changing hands. Neither exists here, so the shop phase
 has an applier of its own and this tests that rather than the engine.
 """
 import pytest
-
 from battle_engine import ITEM_CATALOG
+from grid_system import parse_map
 from item_effects import (
     GoldEffect,
     ItemSpec,
@@ -14,28 +14,38 @@ from item_effects import (
     SaleChanceEffect,
     ShopEnteredTrigger,
 )
-from grid_system import parse_map
 from shop_phase import entering_the_shop, sale_chance_from
 
 
 def _item(uid, triggers):
     return ItemSpec(
-        id=uid, name=uid, category="protocol", cost=1, player_class="neutral",
-        slug=uid, shape=parse_map(["#"], uid), triggers=triggers)
+        id=uid,
+        name=uid,
+        category="protocol",
+        cost=1,
+        player_class="neutral",
+        slug=uid,
+        shape=parse_map(["#"], uid),
+        triggers=triggers,
+    )
 
 
 class TestTheShopOpening:
-    """"Shop entered: Gain 3 Gold\""""
+    """ "Shop entered: Gain 3 Gold\" """
 
     def test_an_item_hands_over_its_gold(self):
-        got = entering_the_shop([
-            _item("a", [ShopEnteredTrigger(effects=[GoldEffect(amount=3)])])])
+        got = entering_the_shop(
+            [_item("a", [ShopEnteredTrigger(effects=[GoldEffect(amount=3)])])]
+        )
         assert got.gold == 3
 
     def test_every_item_that_says_so_is_counted(self):
-        got = entering_the_shop([
-            _item("a", [ShopEnteredTrigger(effects=[GoldEffect(amount=3)])]),
-            _item("b", [ShopEnteredTrigger(effects=[GoldEffect(amount=1)])])])
+        got = entering_the_shop(
+            [
+                _item("a", [ShopEnteredTrigger(effects=[GoldEffect(amount=3)])]),
+                _item("b", [ShopEnteredTrigger(effects=[GoldEffect(amount=1)])]),
+            ]
+        )
         assert got.gold == 4
 
     def test_an_item_that_says_nothing_gives_nothing(self):
@@ -43,28 +53,32 @@ class TestTheShopOpening:
 
     def test_it_says_what_it_did(self):
         """The player is told, so gold appearing has a reason attached."""
-        got = entering_the_shop([
-            _item("a", [ShopEnteredTrigger(effects=[GoldEffect(amount=3)])])])
+        got = entering_the_shop(
+            [_item("a", [ShopEnteredTrigger(effects=[GoldEffect(amount=3)])])]
+        )
         assert got.said == ["a: +3 gold"]
 
     def test_a_battle_trigger_is_not_a_shop_trigger(self):
         """A passive is on during a battle and says nothing about the shop."""
-        got = entering_the_shop([
-            _item("a", [PassiveTrigger(effects=[GoldEffect(amount=99)])])])
+        got = entering_the_shop(
+            [_item("a", [PassiveTrigger(effects=[GoldEffect(amount=99)])])]
+        )
         assert got.gold == 0
 
 
 class TestTheChanceOfASale:
-    """"Sale chance +3%." It stands for as long as the item is held."""
+    """ "Sale chance +3%." It stands for as long as the item is held."""
 
     def test_an_item_adds_to_the_chance(self):
-        assert sale_chance_from([
-            _item("a", [PassiveTrigger(
-                effects=[SaleChanceEffect(amount=0.03)])])]) == pytest.approx(0.03)
+        assert sale_chance_from(
+            [_item("a", [PassiveTrigger(effects=[SaleChanceEffect(amount=0.03)])])]
+        ) == pytest.approx(0.03)
 
     def test_two_of_them_add_together(self):
-        held = [_item("a", [PassiveTrigger(effects=[SaleChanceEffect(0.03)])]),
-                _item("b", [PassiveTrigger(effects=[SaleChanceEffect(0.10)])])]
+        held = [
+            _item("a", [PassiveTrigger(effects=[SaleChanceEffect(0.03)])]),
+            _item("b", [PassiveTrigger(effects=[SaleChanceEffect(0.10)])]),
+        ]
         assert sale_chance_from(held) == pytest.approx(0.13)
 
     def test_holding_nothing_changes_nothing(self):
@@ -73,14 +87,17 @@ class TestTheChanceOfASale:
     def test_the_shop_marks_more_down_when_one_is_held(self):
         """End to end: the same seed, and the shop is more generous."""
         import os
+
         os.environ.setdefault("TEST_MODE", "1")
         from main import generate_shop_items
 
         def sales(held):
             return sum(
-                1 for seed in range(300)
+                1
+                for seed in range(300)
                 for item in generate_shop_items(5, seed=seed, held=held)
-                if item and item.on_sale)
+                if item and item.on_sale
+            )
 
         assert sales({"maneki_neko"}) > sales(set())
 
@@ -91,12 +108,12 @@ class TestTheCatalogueUsesIt:
         assert got.gold == 3
 
     def test_the_lucky_cat_makes_sales_likelier(self):
-        assert sale_chance_from(
-            [ITEM_CATALOG["maneki_neko"]]) == pytest.approx(0.03)
+        assert sale_chance_from([ITEM_CATALOG["maneki_neko"]]) == pytest.approx(0.03)
 
     def test_holding_all_three_gold_items_pays_all_three(self):
-        got = entering_the_shop([ITEM_CATALOG[k] for k in
-                                 ("gold_armor", "bitcoin_wallet", "lucky_piggy")])
+        got = entering_the_shop(
+            [ITEM_CATALOG[k] for k in ("gold_armor", "bitcoin_wallet", "lucky_piggy")]
+        )
         assert got.gold == 5
 
 
@@ -109,8 +126,7 @@ class TestTheGoldReachesThePlayer:
     """
 
     def _session(self, auth_client, name="shopper"):
-        response = auth_client.post(
-            "/session/start", json={"player_name": name})
+        response = auth_client.post("/session/start", json={"player_name": name})
         assert response.status_code == 200
         return response.json()["session"]
 
@@ -126,25 +142,28 @@ class TestTheGoldReachesThePlayer:
         Not Gold Armor, which says 3 and is two squares by three: the starting
         racks are two rows tall and it does not fit on one.
         """
+
         # Both sides need something to fight with, so they differ only in
         # whether the armour is there.
         def gold_after(items):
             session = self._session(auth_client, name=f"p{len(items)}")
-            got = auth_client.post("/test/rack", json={
-                "player_id": session["player_id"],
-                "items": [{"item_type": t, "position": p}
-                          for t, p in items]})
+            got = auth_client.post(
+                "/test/rack",
+                json={
+                    "player_id": session["player_id"],
+                    "items": [{"item_type": t, "position": p} for t, p in items],
+                },
+            )
             assert got.status_code == 200, got.json()
             before = auth_client.get("/session").json()["gold"]
             self._fight(auth_client)
             return auth_client.get("/session").json()["gold"] - before
 
         plain = gold_after([("firewall", [2, 3])])
-        with_wallet = gold_after([("firewall", [2, 3]),
-                                  ("bitcoin_wallet", [4, 3])])
-        assert with_wallet == plain + 1, (
-            "the round's gold, and the one the wallet says it gives"
-        )
+        with_wallet = gold_after([("firewall", [2, 3]), ("bitcoin_wallet", [4, 3])])
+        assert (
+            with_wallet == plain + 1
+        ), "the round's gold, and the one the wallet says it gives"
 
 
 class TestItOnlyPaysOnceARound:
@@ -160,10 +179,16 @@ class TestItOnlyPaysOnceARound:
         r = auth_client.post("/session/start", json={"player_name": name})
         assert r.status_code == 200
         session = r.json()["session"]
-        got = auth_client.post("/test/rack", json={
-            "player_id": session["player_id"],
-            "items": [{"item_type": "firewall", "position": [2, 3]},
-                      {"item_type": "bitcoin_wallet", "position": [4, 3]}]})
+        got = auth_client.post(
+            "/test/rack",
+            json={
+                "player_id": session["player_id"],
+                "items": [
+                    {"item_type": "firewall", "position": [2, 3]},
+                    {"item_type": "bitcoin_wallet", "position": [4, 3]},
+                ],
+            },
+        )
         assert got.status_code == 200, got.json()
         return session
 

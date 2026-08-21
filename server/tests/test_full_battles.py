@@ -10,8 +10,8 @@ from item_effects import (
     BattleStartTrigger,
     ConsumeEffect,
     CpuDrainEffect,
-    HealthThresholdTrigger,
     HealEffect,
+    HealthThresholdTrigger,
     ItemSpec,
     OnAttackedTrigger,
     PassiveTrigger,
@@ -77,7 +77,9 @@ class TestFullBattleScenarios:
                                     min_damage=2,
                                     max_damage=4,
                                     accuracy=0.95,
-                                    special="stacking", crit_chance=0.0)
+                                    special="stacking",
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -198,7 +200,12 @@ class TestFullBattleScenarios:
                             cooldown=3.0,
                             cpu_cost=3,
                             effects=[
-                                AttackEffect(min_damage=5, max_damage=7, accuracy=0.9, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=5,
+                                    max_damage=7,
+                                    accuracy=0.9,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -263,7 +270,12 @@ class TestFullBattleScenarios:
                             cooldown=2.0,
                             cpu_cost=2,
                             effects=[
-                                AttackEffect(min_damage=3, max_damage=5, accuracy=0.85, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=3,
+                                    max_damage=5,
+                                    accuracy=0.85,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -286,7 +298,12 @@ class TestFullBattleScenarios:
                             cooldown=2.0,
                             cpu_cost=2,
                             effects=[
-                                AttackEffect(min_damage=3, max_damage=5, accuracy=0.85, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=3,
+                                    max_damage=5,
+                                    accuracy=0.85,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -309,7 +326,12 @@ class TestFullBattleScenarios:
                             cooldown=2.0,
                             cpu_cost=2,
                             effects=[
-                                AttackEffect(min_damage=3, max_damage=5, accuracy=0.85, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=3,
+                                    max_damage=5,
+                                    accuracy=0.85,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -336,7 +358,12 @@ class TestFullBattleScenarios:
                             cooldown=1.8,
                             cpu_cost=3,
                             effects=[
-                                AttackEffect(min_damage=4, max_damage=6, accuracy=0.9, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=4,
+                                    max_damage=6,
+                                    accuracy=0.9,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -400,7 +427,6 @@ class TestFullBattleScenarios:
         # Battle should complete
         assert result["winner"] in [1, 2]
 
-
     def test_consumable_heavy_battle(self):
         """Test battle with consumable items (potions)"""
         # Player 1: Standard damage with health potions
@@ -420,7 +446,12 @@ class TestFullBattleScenarios:
                             cooldown=2.0,
                             cpu_cost=3,
                             effects=[
-                                AttackEffect(min_damage=6, max_damage=8, accuracy=0.9, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=6,
+                                    max_damage=8,
+                                    accuracy=0.9,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -512,7 +543,12 @@ class TestFullBattleScenarios:
                             cooldown=1.5,
                             cpu_cost=5,  # High CPU cost
                             effects=[
-                                AttackEffect(min_damage=8, max_damage=12, accuracy=0.85, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=8,
+                                    max_damage=12,
+                                    accuracy=0.85,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -535,7 +571,12 @@ class TestFullBattleScenarios:
                             cooldown=1.0,
                             cpu_cost=4,
                             effects=[
-                                AttackEffect(min_damage=4, max_damage=6, accuracy=0.95, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=4,
+                                    max_damage=6,
+                                    accuracy=0.95,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -584,7 +625,12 @@ class TestFullBattleScenarios:
                             cooldown=2.5,
                             cpu_cost=4,
                             effects=[
-                                AttackEffect(min_damage=8, max_damage=12, accuracy=0.9, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=8,
+                                    max_damage=12,
+                                    accuracy=0.9,
+                                    crit_chance=0.0,
+                                )
                             ],  # High damage
                         )
                     ],
@@ -707,7 +753,12 @@ class TestFullBattleScenarios:
                             cooldown=3.0,
                             cpu_cost=2,
                             effects=[
-                                AttackEffect(min_damage=2, max_damage=3, accuracy=0.95, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=2,
+                                    max_damage=3,
+                                    accuracy=0.95,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -753,7 +804,12 @@ class TestFullBattleScenarios:
                             cooldown=3.0,
                             cpu_cost=2,
                             effects=[
-                                AttackEffect(min_damage=2, max_damage=3, accuracy=0.95, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=2,
+                                    max_damage=3,
+                                    accuracy=0.95,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -824,7 +880,12 @@ class TestFullBattleScenarios:
                             cooldown=1.0,
                             cpu_cost=6,  # High cost
                             effects=[
-                                AttackEffect(min_damage=7, max_damage=9, accuracy=0.9, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=7,
+                                    max_damage=9,
+                                    accuracy=0.9,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -847,7 +908,12 @@ class TestFullBattleScenarios:
                             cooldown=1.2,
                             cpu_cost=5,
                             effects=[
-                                AttackEffect(min_damage=6, max_damage=8, accuracy=0.85, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=6,
+                                    max_damage=8,
+                                    accuracy=0.85,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -895,7 +961,12 @@ class TestFullBattleScenarios:
                             cooldown=1.5,
                             cpu_cost=2,  # Low cost
                             effects=[
-                                AttackEffect(min_damage=4, max_damage=5, accuracy=0.95, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=4,
+                                    max_damage=5,
+                                    accuracy=0.95,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],
@@ -918,7 +989,12 @@ class TestFullBattleScenarios:
                             cooldown=1.5,
                             cpu_cost=2,
                             effects=[
-                                AttackEffect(min_damage=4, max_damage=5, accuracy=0.95, crit_chance=0.0)
+                                AttackEffect(
+                                    min_damage=4,
+                                    max_damage=5,
+                                    accuracy=0.95,
+                                    crit_chance=0.0,
+                                )
                             ],
                         )
                     ],

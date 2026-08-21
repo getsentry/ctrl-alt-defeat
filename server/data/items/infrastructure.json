@@ -24,7 +24,8 @@
               "target": "star",
               "description": "Star items trigger 20% faster",
               "counting": "any",
-              "cap": null
+              "cap": null,
+              "duration": -1
             }
           ]
         }

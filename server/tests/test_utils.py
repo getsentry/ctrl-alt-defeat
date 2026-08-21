@@ -8,7 +8,6 @@ is a utility over decoded JSON rather than a test of any one endpoint.
 from typing import Any, Iterator, List, Tuple
 
 import pytest
-
 from utils import to_position
 
 

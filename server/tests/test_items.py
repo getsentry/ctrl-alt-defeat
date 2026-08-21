@@ -8,11 +8,10 @@ from pathlib import Path
 from typing import Dict, Set
 
 import pytest
-from pydantic import ValidationError
-
 from config_loader import config_loader
 from item_looks import CATEGORY_COLOR, PALETTE, PATTERNS
-from items import ZONE_FIELDS, ZoneWants, SALE_CHANCE, Item, sale_price
+from items import SALE_CHANCE, ZONE_FIELDS, Item, ZoneWants, sale_price
+from pydantic import ValidationError
 
 
 class TestSalePrice:
@@ -239,9 +238,11 @@ class TestWhatAnAuraActsOn:
         """
         item = Item.of(self._named("Edge Cache"), "x")
 
-        assert set(item.aura["star"][0].any_of) == {"melee", "ranged", "magic"}, (
-            "the three kinds a player calls a weapon"
-        )
+        assert set(item.aura["star"][0].any_of) == {
+            "melee",
+            "ranged",
+            "magic",
+        }, "the three kinds a player calls a weapon"
 
     def test_a_zone_counted_in_says_what_it_wants(self):
         """The third field, `where`: an effect counting what stands in the
@@ -324,7 +325,9 @@ class TestWhatAnAuraActsOn:
         chance roll, and the JSON is the same shape either way.
         """
         found: Dict[str, Set[str]] = {}
-        for path in sorted((Path(__file__).parent.parent / "data" / "items").glob("*.json")):
+        for path in sorted(
+            (Path(__file__).parent.parent / "data" / "items").glob("*.json")
+        ):
             data = json.loads(path.read_text())
             # The containers file keeps its own key, and no container carries
             # a trigger, so there is nothing in it to find.

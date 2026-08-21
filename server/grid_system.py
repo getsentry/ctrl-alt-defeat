@@ -104,13 +104,13 @@ class ItemShape:
 
 
 # What each character in an item's map means. See docs/item_grid_model.md.
-FOOTPRINT = "#"          # a square the item covers
-ANCHOR = "^"             # covered, and projects its aura straight up in world
-                         # space however the item is turned. The projection is
-                         # dropped only where it lands on this item's own
-                         # squares; another item in the way does not stop it.
-STAR = "*"               # the star aura the item reaches into
-DIAMOND = "+"            # the diamond aura, a second and separate zone
+FOOTPRINT = "#"  # a square the item covers
+ANCHOR = "^"  # covered, and projects its aura straight up in world
+# space however the item is turned. The projection is
+# dropped only where it lands on this item's own
+# squares; another item in the way does not stop it.
+STAR = "*"  # the star aura the item reaches into
+DIAMOND = "+"  # the diamond aura, a second and separate zone
 EMPTY = "."
 
 # What each aura character is called, for when something reads them. Nothing
@@ -130,7 +130,9 @@ class BadMap(ValueError):
 
 
 def _cells(rows: Sequence[str], wanted: str) -> List[Position]:
-    return [(x, y) for y, row in enumerate(rows) for x, c in enumerate(row) if c in wanted]
+    return [
+        (x, y) for y, row in enumerate(rows) for x, c in enumerate(row) if c in wanted
+    ]
 
 
 def _is_connected(cells: Iterable[Position]) -> bool:
@@ -180,7 +182,9 @@ def parse_map(rows: List[str], name: str) -> "ItemShape":
         raise BadMap(f"{name}: nothing drawn")
     if not any(y == 0 for _, y in used) or not any(y == len(rows) - 1 for _, y in used):
         raise BadMap(f"{name}: blank row at the top or bottom. Trim it.")
-    if not any(x == 0 for x, _ in used) or not any(x == len(rows[0]) - 1 for x, _ in used):
+    if not any(x == 0 for x, _ in used) or not any(
+        x == len(rows[0]) - 1 for x, _ in used
+    ):
         raise BadMap(f"{name}: blank column at the left or right. Trim it.")
 
     # Offsets from the item's own top left, not the map's. The map is bigger
@@ -199,8 +203,6 @@ def parse_map(rows: List[str], name: str) -> "ItemShape":
         relative(_cells(rows, DIAMOND)),
         relative(_cells(rows, ANCHOR)),
     )
-
-
 
 
 def zones_of(
@@ -235,7 +237,9 @@ def reach(
     Every item gets an entry, so a caller never has to guess whether a missing
     key means no reach or an item it forgot about.
     """
-    standing = {uid: covered_by(shape, at, facing) for uid, shape, at, facing in placements}
+    standing = {
+        uid: covered_by(shape, at, facing) for uid, shape, at, facing in placements
+    }
 
     reached: Dict[str, Dict[str, List[str]]] = {}
     for uid, shape, at, facing in placements:

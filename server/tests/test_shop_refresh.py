@@ -87,7 +87,6 @@ class TestShopRefresh:
     def test_shop_refresh_deterministic_with_seed(self, auth_client):
         """Test that shop generation is deterministic with the same seed"""
         from fastapi.testclient import TestClient
-
         from main import app
 
         # Create two different guest accounts
@@ -222,7 +221,9 @@ class TestRefreshCountAcrossRounds:
 
         # Roll a few times so the count is definitely not zero
         for _ in range(3):
-            assert auth_client.post("/shop/refresh", json={"round": 1}).status_code == 200
+            assert (
+                auth_client.post("/shop/refresh", json={"round": 1}).status_code == 200
+            )
         assert auth_client.get("/session").json()["shop_refresh_count"] == 3
 
         # One cheap item, because a battle needs a non-empty grid, then lose

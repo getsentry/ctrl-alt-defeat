@@ -8,12 +8,11 @@ import random
 from datetime import timedelta
 from typing import List, Optional
 
-from sqlalchemy import delete, select, text
-
 from containers import starting_containers
 from database import db_manager  # noqa: F401
 from models import BattleHistory, GameSession, User
 from schemas import GameSession as GameSessionPydantic
+from sqlalchemy import delete, select, text
 from utils import dump_all, utc_now
 
 logger = logging.getLogger(__name__)

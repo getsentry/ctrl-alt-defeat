@@ -44,9 +44,8 @@ async def transactional_db():
     This creates a transaction at the start of each test and rolls it back
     at the end, which is MUCH faster than truncating tables.
     """
-    from sqlalchemy.orm import sessionmaker
-
     from database import Base, get_database_url
+    from sqlalchemy.orm import sessionmaker
 
     # Get test database URL
     db_url = get_database_url(
@@ -117,7 +116,6 @@ def clean_database():
     # This is slow but ensures complete cleanup
     if os.environ.get("FORCE_DB_RESET") == "true":
         from fastapi.testclient import TestClient
-
         from main import app
 
         client = TestClient(app)
@@ -153,7 +151,6 @@ SINGLE_SQUARE_SHOP_SEED = 4
 def auth_client():
     """Test client with authentication setup"""
     from fastapi.testclient import TestClient
-
     from main import app
 
     client = TestClient(app)

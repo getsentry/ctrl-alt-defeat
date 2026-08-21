@@ -6,7 +6,6 @@ Same seed + same items = same result every time
 from copy import deepcopy
 
 import pytest
-
 from battle_engine import BattleItem, BattleSimulator
 from grid_system import ItemShape
 from item_effects import (
@@ -195,13 +194,13 @@ class TestDeterministicBattles:
                 player_class="neutral",
                 triggers=[
                     OnAttackedTrigger(
-                            answers_to=frozenset({"melee"}),
-                            chance=0.5,
-                            effects=[
-                                PreventDamageEffect(5),
-                                CpuDrainEffect(0.0, target_type="attacker"),
-                            ],
-                        )
+                        answers_to=frozenset({"melee"}),
+                        chance=0.5,
+                        effects=[
+                            PreventDamageEffect(5),
+                            CpuDrainEffect(0.0, target_type="attacker"),
+                        ],
+                    )
                 ],
             ),
             position=(0, 0),
@@ -224,7 +223,12 @@ class TestDeterministicBattles:
                         cooldown=0.3,
                         cpu_cost=1,
                         effects=[
-                            AttackEffect(min_damage=3, max_damage=3, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=3,
+                                max_damage=3,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],
@@ -428,7 +432,12 @@ class TestDeterministicBattles:
                         cooldown=1.0,
                         cpu_cost=1,
                         effects=[
-                            AttackEffect(min_damage=5, max_damage=5, accuracy=1.0, crit_chance=0.0)
+                            AttackEffect(
+                                min_damage=5,
+                                max_damage=5,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
                         ],
                     )
                 ],

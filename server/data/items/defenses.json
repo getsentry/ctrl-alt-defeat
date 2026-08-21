@@ -140,7 +140,8 @@
                 ]
               },
               "cap": null,
-              "description": "Star Weapons deal +15% damage"
+              "description": "Star Weapons deal +15% damage",
+              "duration": -1
             }
           ]
         }
@@ -389,14 +390,31 @@
               "description": "Reduce damage taken by 25% for 3s"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "resist",
+              "count": 0,
+              "chance": 0.15,
+              "target": "self",
+              "description": "15% chance to resist critical hits",
+              "against": "critical"
+            },
+            {
+              "type": "resist",
+              "count": 0,
+              "chance": 0.15,
+              "target": "self",
+              "description": "15% chance to resist stuns",
+              "against": "stun"
+            }
+          ]
         }
       ],
       "slug": "cap_of_resilience",
       "in_shop": true,
-      "unbuilt": [
-        "15% chance to resist critical hits.",
-        "15% chance to resist stuns."
-      ],
       "sockets": 1,
       "icontype": "helmet"
     },
@@ -429,7 +447,8 @@
                 ]
               },
               "cap": null,
-              "description": "Star Weapons deal +20% damage"
+              "description": "Star Weapons deal +20% damage",
+              "duration": -1
             },
             {
               "type": "modify",
@@ -444,7 +463,8 @@
                 ]
               },
               "cap": null,
-              "description": "Star Weapons attack 10% slower"
+              "description": "Star Weapons attack 10% slower",
+              "duration": -1
             }
           ]
         },
@@ -632,7 +652,8 @@
                 ]
               },
               "cap": null,
-              "description": "Your Weapons attack 50% slower"
+              "description": "Your Weapons attack 50% slower",
+              "duration": -1
             }
           ]
         },
@@ -1094,14 +1115,31 @@
               "description": "Gain 35 Block"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "resist",
+              "count": 0,
+              "chance": 0.3,
+              "target": "self",
+              "description": "30% chance to resist critical hits",
+              "against": "critical"
+            },
+            {
+              "type": "resist",
+              "count": 0,
+              "chance": 0.4,
+              "target": "self",
+              "description": "40% chance to resist stuns",
+              "against": "stun"
+            }
+          ]
         }
       ],
       "slug": "stone_helm",
       "in_shop": false,
-      "unbuilt": [
-        "30% chance to resist critical hits.",
-        "40% chance to resist stuns."
-      ],
       "sockets": 1,
       "recipe": [
         {
@@ -1206,7 +1244,8 @@
               "target": "star",
               "counting": "any",
               "cap": null,
-              "description": "Star items trigger 35% faster"
+              "description": "Star items trigger 35% faster",
+              "duration": -1
             }
           ]
         }

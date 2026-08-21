@@ -13,14 +13,13 @@ from item_effects import (
     BlockEffect,
     BuffEffect,
     DamageDealtTrigger,
-    HealthThresholdTrigger,
     DebuffEffect,
     HealEffect,
+    HealthThresholdTrigger,
     ItemSpec,
     KillTrigger,
     OnHitTrigger,
     PassiveTrigger,
-    ReflectEffect,
     StatModEffect,
     StunEffect,
     TimerTrigger,
@@ -91,9 +90,7 @@ class TestEffects:
 
     def test_buff_effect(self):
         """Test buff effect properties"""
-        effect = BuffEffect(
-            buff_name="optimized", value=2, target_type="self"
-        )
+        effect = BuffEffect(buff_name="optimized", value=2, target_type="self")
         result = effect.apply(None, None, None)
 
         assert result["type"] == "buff"
@@ -119,7 +116,11 @@ class TestTriggers:
         trigger = TimerTrigger(
             cooldown=2.0,
             cpu_cost=3,
-            effects=[AttackEffect(min_damage=5, max_damage=10, accuracy=0.85, crit_chance=0.0)],
+            effects=[
+                AttackEffect(
+                    min_damage=5, max_damage=10, accuracy=0.85, crit_chance=0.0
+                )
+            ],
         )
 
         # Should activate when cooldown is 0
@@ -232,13 +233,17 @@ class TestItemSpecs:
             player_class="neutral",
             triggers=[
                 BattleStartTrigger(
-                    effects=[BuffEffect(buff_name="optimized", value=3, target_type="self")]
+                    effects=[
+                        BuffEffect(buff_name="optimized", value=3, target_type="self")
+                    ]
                 ),
                 TimerTrigger(
                     cooldown=2.0,
                     cpu_cost=3,
                     effects=[
-                        AttackEffect(min_damage=5, max_damage=10, accuracy=0.85, crit_chance=0.0),
+                        AttackEffect(
+                            min_damage=5, max_damage=10, accuracy=0.85, crit_chance=0.0
+                        ),
                         DebuffEffect(debuff_name="throttled", value=2),
                     ],
                 ),

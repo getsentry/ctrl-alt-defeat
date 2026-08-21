@@ -328,7 +328,8 @@
               "target": "star",
               "counting": "any",
               "cap": 0.5,
-              "description": "Star items trigger 5% faster (up to 50%)"
+              "description": "Star items trigger 5% faster (up to 50%)",
+              "duration": -1
             },
             {
               "type": "cleanse",
@@ -439,12 +440,27 @@
       "source": "Lil Chestnut",
       "rarity": "unique",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 6.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "random_status",
+              "kind": "buff",
+              "count": 3,
+              "target": "self",
+              "description": "Gain 3 buffs of the type you have most of",
+              "pick": "most"
+            }
+          ]
+        }
+      ],
       "slug": "lil_chestnut",
       "in_shop": true,
       "unbuilt": [
         "Shop refreshes: 40% chance for a Trade offer.",
-        "Every 6s: Gain 3 buffs of the type you have most of.",
         "Triggers 1% faster for each Gold the Star items are worth."
       ],
       "icontype": "treasure, pet"
@@ -738,7 +754,8 @@
               "target": "star",
               "counting": "any",
               "cap": null,
-              "description": "Star items trigger 30% slower"
+              "description": "Star items trigger 30% slower",
+              "duration": -1
             }
           ]
         },
@@ -968,12 +985,33 @@
       "source": "Unsettling Presence",
       "rarity": "unique",
       "cost": 10,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "cost",
+              "costs": {},
+              "effects": [
+                {
+                  "type": "heal",
+                  "min_heal": 12,
+                  "max_heal": 12,
+                  "description": "heal for 12"
+                }
+              ],
+              "description": "Use a random buff",
+              "from_pool": "one"
+            }
+          ]
+        }
+      ],
       "slug": "unsettling_presence",
       "in_shop": true,
       "unbuilt": [
-        "Deal +30% of your healing as Effect-damage.",
-        "Every 3s: Use a random buff to heal for 12."
+        "Deal +30% of your healing as Effect-damage."
       ],
       "icontype": "treasure, dark, pet"
     },
@@ -1009,13 +1047,27 @@
               "description": "Triggers 15% faster for each Star Pet"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 5.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "random_status",
+              "kind": "buff",
+              "count": 3,
+              "target": "self",
+              "description": "Gain 3 of the buff you have least of",
+              "pick": "least"
+            }
+          ]
         }
       ],
       "slug": "wolpertinger",
       "in_shop": true,
       "unbuilt": [
-        "Increase base stamina regeneration by 0.7% for each buff you have.",
-        "Every 5s: Gain 3 of the buff you have least of."
+        "Increase base stamina regeneration by 0.7% for each buff you have."
       ],
       "icontype": "nature, pet"
     },

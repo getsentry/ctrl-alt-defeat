@@ -10,21 +10,13 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
-from battle_engine import (
-    ITEM_CATALOG,
-    MEMORY_LEAKED,
-    BattleItem,
-    BattleSimulator,
-)
-from config_loader import CatalogueError, ConfigLoader, config_loader
 import config_loader as config_loader_module
+import pytest
+from battle_engine import ITEM_CATALOG, MEMORY_LEAKED, BattleItem, BattleSimulator
+from config_loader import CatalogueError, ConfigLoader, config_loader
 from containers import Container
-from main import generate_shop_items
 from grid_system import parse_map
 from item_effects import (
-    ModifyPerEffect,
     BUFFS,
     DEBUFFS,
     AttackEffect,
@@ -32,14 +24,15 @@ from item_effects import (
     ConsumeEffect,
     CpuDrainEffect,
     DebuffEffect,
-    HealEffect,
     HealthThresholdTrigger,
+    ItemSpec,
+    ModifyPerEffect,
     OnAttackedTrigger,
     OnHitTrigger,
     PreventDamageEffect,
-    ItemSpec,
     TimerTrigger,
 )
+from main import generate_shop_items
 
 
 def test_json_config():
@@ -133,8 +126,8 @@ if __name__ == "__main__":
 
 class TestShopVisibility:
     """An item can exist without the shop offering it"""
-    def test_items_are_offered_unless_told_otherwise(self):
 
+    def test_items_are_offered_unless_told_otherwise(self):
         spec = config_loader.items["null_blade"]
         assert spec.in_shop is True
 
@@ -145,9 +138,10 @@ class TestShopVisibility:
 
         hidden = "null_blade"
         original = ITEM_CATALOG[hidden]
-        with patch.dict(ITEM_CATALOG, {hidden: original.__class__(
-            **{**original.__dict__, "in_shop": False}
-        )}):
+        with patch.dict(
+            ITEM_CATALOG,
+            {hidden: original.__class__(**{**original.__dict__, "in_shop": False})},
+        ):
             offered = set()
             for seed in range(120):
                 offered |= {i.item_type for i in generate_shop_items(1, seed) if i}
@@ -166,7 +160,6 @@ class TestItemsSetAside:
 
     @staticmethod
     def _set_aside() -> dict:
-
         path = Path(__file__).parent.parent / "data" / "unavailable_items.json"
         return json.loads(path.read_text())
 
@@ -189,13 +182,11 @@ class TestItemsSetAside:
             assert len(why) > 20, f"{item_id} is set aside but does not say why"
 
     def test_none_of_them_is_in_the_catalogue(self):
-
         loaded = set(config_loader.items) | set(config_loader.containers)
         clashes = sorted(set(self._set_aside()["items"]) & loaded)
         assert not clashes, f"{clashes} are set aside and loaded anyway"
 
     def test_the_shop_never_offers_one(self):
-
         set_aside = set(self._set_aside()["items"])
         offered = {
             offer.item_type
@@ -205,8 +196,10 @@ class TestItemsSetAside:
         }
         assert not (offered & set_aside), f"the shop offered {offered & set_aside}"
 
+
 class TestOnHitLoading:
     """An on_hit trigger and a debuff effect have to survive the load"""
+
     def test_virus_injector_matches_belladonnas_shade(self):
         """Its numbers come from the source item, so they are worth pinning"""
         spec = config_loader.items["virus_injector"]
@@ -251,8 +244,8 @@ class TestOnHitLoading:
 
 class TestCatalogueStrictness:
     """A wrong item should fail loudly, not quietly do nothing"""
-    def loader(self):
 
+    def loader(self):
         return ConfigLoader()
 
     def test_an_on_hit_trigger_has_to_state_its_chance(self):
@@ -261,12 +254,9 @@ class TestCatalogueStrictness:
         be told apart from an import that lost one."""
 
         with pytest.raises(ValueError, match="chance"):
-            self.loader()._parse_trigger(
-                {"type": "on_hit", "effects": []}, "some_item"
-            )
+            self.loader()._parse_trigger({"type": "on_hit", "effects": []}, "some_item")
 
     def test_an_always_on_effect_writes_one(self):
-
         trigger = self.loader()._parse_trigger(
             {"type": "on_hit", "chance": 1.0, "effects": []}, "some_item"
         )
@@ -334,7 +324,6 @@ class TestShieldsMatchTheirSources:
     }
 
     def shield(self, item_id):
-
         (trigger,) = [
             t
             for t in config_loader.items[item_id].triggers
@@ -343,7 +332,6 @@ class TestShieldsMatchTheirSources:
         return trigger
 
     def test_each_shield_has_its_own_numbers(self):
-
         for item_id, (_, chance, prevent, drain) in self.SOURCES.items():
             trigger = self.shield(item_id)
             assert trigger.chance == chance, item_id
@@ -367,7 +355,6 @@ class TestShieldsMatchTheirSources:
             assert not any(hasattr(e, "chance") for e in trigger.effects), item_id
 
     def test_an_on_attacked_trigger_has_to_state_its_chance(self):
-
         with pytest.raises(ValueError, match="chance"):
             ConfigLoader()._parse_trigger(
                 {"type": "on_attacked", "effects": []}, "some_shield"
@@ -392,27 +379,32 @@ class TestPreventDamageStaysWhereItWorks:
     """
 
     def test_the_loader_refuses_it_in_another_trigger(self):
-
         block = {"type": "prevent_damage", "value": 7}
         for trigger in ["timer", "battle_start", "passive", "damage_taken"]:
             with pytest.raises(ValueError, match="on_attacked"):
                 ConfigLoader()._parse_trigger(
-                    {"type": trigger, "chance": 1.0, "cooldown": 1.0,
-                     "effects": [block]},
+                    {
+                        "type": trigger,
+                        "chance": 1.0,
+                        "cooldown": 1.0,
+                        "effects": [block],
+                    },
                     "some_item",
                 )
 
     def test_it_is_allowed_in_on_attacked(self):
-
         trigger = ConfigLoader()._parse_trigger(
-            {"type": "on_attacked", "chance": 0.3, "answers_to": ["melee"],
-             "effects": [{"type": "prevent_damage", "value": 7}]},
+            {
+                "type": "on_attacked",
+                "chance": 0.3,
+                "answers_to": ["melee"],
+                "effects": [{"type": "prevent_damage", "value": 7}],
+            },
             "some_shield",
         )
         assert isinstance(trigger.effects[0], PreventDamageEffect)
 
     def test_the_catalogue_only_uses_it_there(self):
-
         for item_id, spec in config_loader.items.items():
             for trigger in spec.triggers or []:
                 for effect in getattr(trigger, "effects", []) or []:
@@ -425,10 +417,18 @@ class TestPreventDamageStaysWhereItWorks:
         cleanly and do less than it says."""
 
         item = BattleItem(
-            spec=ItemSpec(id="odd", name="Odd", category="defense", cost=1,
-                          player_class="neutral", shape=parse_map(["#"], "o"),
-                          slug="odd", triggers=[]),
-            position=(0, 0), uid="odd",
+            spec=ItemSpec(
+                id="odd",
+                name="Odd",
+                category="defense",
+                cost=1,
+                player_class="neutral",
+                shape=parse_map(["#"], "o"),
+                slug="odd",
+                triggers=[],
+            ),
+            position=(0, 0),
+            uid="odd",
         )
         sim = BattleSimulator(seed=1)
         with pytest.raises(TypeError, match="PreventDamageEffect"):
@@ -452,7 +452,6 @@ class TestABadCatalogueStopsTheServer:
         return str(tmp)
 
     def test_a_bad_item_stops_the_load(self):
-
         def break_one_debuff(items_dir, json):
             path = items_dir / "problems.json"
             d = json.loads(path.read_text())
@@ -489,6 +488,7 @@ class TestABadCatalogueStopsTheServer:
 
     def test_nothing_is_half_loaded(self):
         """The old failure kept whatever it had read before the bad item"""
+
         def break_one_debuff(items_dir, json):
             path = items_dir / "problems.json"
             d = json.loads(path.read_text())
@@ -505,8 +505,8 @@ class TestABadCatalogueStopsTheServer:
 
 class TestTheCatalogueIsFoundFromAnywhere:
     """It used to resolve `data` against the working directory"""
-    def test_it_does_not_depend_on_where_the_process_is_running(self):
 
+    def test_it_does_not_depend_on_where_the_process_is_running(self):
         here = os.getcwd()
         try:
             os.chdir(tempfile.mkdtemp())
@@ -517,8 +517,11 @@ class TestTheCatalogueIsFoundFromAnywhere:
             os.chdir(here)
 
     def test_the_default_sits_next_to_the_module(self):
+        assert (
+            ConfigLoader.DATA_DIR == Path(config_loader_module.__file__).parent / "data"
+        )
 
-        assert ConfigLoader.DATA_DIR == Path(config_loader_module.__file__).parent / "data"
+
 class TestTheCatalogueIsOneCatalogue:
     """Every item in every file, read together.
 
@@ -547,9 +550,9 @@ class TestTheCatalogueIsOneCatalogue:
         means one of the two is unreachable and nothing says which."""
         seen = {}
         for item_id, _, filename in self._every_entry():
-            assert item_id not in seen, (
-                f"{item_id} is in both {seen[item_id]} and {filename}"
-            )
+            assert (
+                item_id not in seen
+            ), f"{item_id} is in both {seen[item_id]} and {filename}"
             seen[item_id] = filename
 
     def test_no_two_items_share_a_name(self):
@@ -564,9 +567,9 @@ class TestTheCatalogueIsOneCatalogue:
         """item_visual.gd builds res://assets/items/<slug>.png, so a slug that
         disagrees with the id points at a file that cannot be there."""
         for item_id, config, filename in self._every_entry():
-            assert config["slug"] == item_id, (
-                f"{item_id} in {filename} calls itself {config['slug']}"
-            )
+            assert (
+                config["slug"] == item_id
+            ), f"{item_id} in {filename} calls itself {config['slug']}"
 
     def test_every_item_names_the_item_it_came_from(self):
         """Our numbers are the wiki's. With no source there is nothing to check
@@ -575,7 +578,6 @@ class TestTheCatalogueIsOneCatalogue:
             assert config.get("source"), f"{item_id} in {filename} has no source"
 
     def test_every_map_parses(self):
-
         for item_id, config, _ in self._every_entry():
             parse_map(config["map"], item_id)
 
@@ -606,7 +608,9 @@ class TestEveryItemIsOneASentaurCanReach:
             / "all_item_grids.json"
         )
         if not scrape.exists():
-            pytest.skip("research/item_grids/all_item_grids.json is not in this checkout")
+            pytest.skip(
+                "research/item_grids/all_item_grids.json is not in this checkout"
+            )
         return json.loads(scrape.read_text())
 
     def test_no_item_comes_from_a_class_we_do_not_have(self):
@@ -638,14 +642,14 @@ class TestEveryItemIsOneASentaurCanReach:
                 f"and the shop offers it anyway"
             )
 
+
 class TestCleanseLoading:
     """A cleanse states its count, and names something real or nothing"""
-    def loader(self):
 
+    def loader(self):
         return ConfigLoader()
 
     def test_a_cleanse_has_to_state_its_count(self):
-
         with pytest.raises(ValueError, match="count"):
             self.loader()._parse_effect({"type": "cleanse"}, "some_item")
 
@@ -664,7 +668,6 @@ class TestCleanseLoading:
             self.loader()._parse_effect({"type": "cleanse", "count": 3}, "some_item")
 
     def test_taking_any_of_a_kind_is_written_out(self):
-
         effect = self.loader()._parse_effect(
             {"type": "cleanse", "count": 3, "removes": "debuff", "target": "self"},
             "some_item",
@@ -675,7 +678,6 @@ class TestCleanseLoading:
         assert effect.kind() == "debuff"
 
     def test_a_named_cleanse_knows_its_own_kind(self):
-
         effect = self.loader()._parse_effect(
             {"type": "cleanse", "count": 4, "removes": MEMORY_LEAKED, "target": "self"},
             "some_item",
@@ -684,7 +686,6 @@ class TestCleanseLoading:
         assert effect.kind() == "debuff", "the name says which pool, unaided"
 
     def test_the_catalogue_only_cleanses_things_that_exist(self):
-
         found = [
             effect
             for spec in config_loader.items.values()
@@ -696,12 +697,12 @@ class TestCleanseLoading:
         for effect in found:
             assert effect.count > 0
             if effect.named():
-                assert effect.removes in BUFFS | DEBUFFS, (
-                    "a name says which pool it draws from, so it has to be one"
-                )
+                assert (
+                    effect.removes in BUFFS | DEBUFFS
+                ), "a name says which pool it draws from, so it has to be one"
 
     def test_health_potion_matches_its_source(self):
-        """"Health drops below 50%: Consume this and heal for 12 and cleanse
+        """ "Health drops below 50%: Consume this and heal for 12 and cleanse
         4 Poison." All four parts, in one item."""
 
         (trigger,) = config_loader.items["health_potion"].triggers
@@ -735,8 +736,7 @@ class TestABuffIsNotAStat:
     def test_a_buff_nothing_stacks_is_refused(self):
         with pytest.raises(ValueError, match="not a buff"):
             self.loader()._parse_effect(
-                {"type": "buff", "buff_name": "immunity", "value": 1,
-                 "target": "self"},
+                {"type": "buff", "buff_name": "immunity", "value": 1, "target": "self"},
                 "some_item",
             )
 
@@ -749,8 +749,12 @@ class TestABuffIsNotAStat:
 
     def test_a_modifier_says_what_it_reaches(self):
         for missing in ["value", "target"]:
-            config = {"type": "modify", "stat": "trigger_speed",
-                      "value": 0.1, "target": "own"}
+            config = {
+                "type": "modify",
+                "stat": "trigger_speed",
+                "value": 0.1,
+                "target": "own",
+            }
             del config[missing]
             with pytest.raises(ValueError, match=missing):
                 self.loader()._parse_effect(config, "some_item")
@@ -778,13 +782,20 @@ class TestABuffIsNotAStat:
         for bad in ["adjacent", "neighbours", "everything"]:
             with pytest.raises(ValueError, match="not somewhere a modifier"):
                 self.loader()._parse_effect(
-                    {"type": "modify", "stat": "trigger_speed", "value": 0.1,
-                     "target": bad, "counting": "any", "cap": None},
+                    {
+                        "type": "modify",
+                        "stat": "trigger_speed",
+                        "value": 0.1,
+                        "target": bad,
+                        "counting": "any",
+                        "cap": None,
+                        "duration": -1,
+                    },
                     "some_item",
                 )
 
     def test_gloves_of_haste_reaches_its_star(self):
-        """"Start of battle: Star items trigger 20% faster." The aura is drawn
+        """ "Start of battle: Star items trigger 20% faster." The aura is drawn
         on the map as `*`, so the effect names that zone rather than guessing
         at what sits nearby."""
         from item_effects import BattleStartTrigger, ModifyEffect
@@ -807,22 +818,24 @@ class TestABuffIsNotAStat:
             for trigger in spec.triggers or []:
                 for effect in getattr(trigger, "effects", []) or []:
                     if isinstance(effect, ModifyPerEffect):
-                        zones = (spec.shape.star if effect.zone == "star"
-                                 else spec.shape.diamond)
-                        assert zones, (
-                            f"{item_id} counts a {effect.zone} it never draws"
+                        zones = (
+                            spec.shape.star
+                            if effect.zone == "star"
+                            else spec.shape.diamond
                         )
+                        assert zones, f"{item_id} counts a {effect.zone} it never draws"
                     if isinstance(effect, ModifyEffect) and effect.target_type in (
-                        "star", "diamond"
+                        "star",
+                        "diamond",
                     ):
                         zones = (
                             spec.shape.star
                             if effect.target_type == "star"
                             else spec.shape.diamond
                         )
-                        assert zones, (
-                            f"{item_id} reaches a {effect.target_type} it never draws"
-                        )
+                        assert (
+                            zones
+                        ), f"{item_id} reaches a {effect.target_type} it never draws"
 
 
 class TestWhatTheShopMayOffer:
@@ -857,7 +870,8 @@ class TestWhatTheShopMayOffer:
         from main import generate_shop_items
 
         craft_only = {
-            item_id for item_id, config in self._catalogue()
+            item_id
+            for item_id, config in self._catalogue()
             if config.get("recipe_only")
         }
         assert craft_only, "no item is recipe_only, so this checks nothing"
@@ -876,7 +890,9 @@ class TestWhatTheShopMayOffer:
             f"round 8 never offered a {rarities - offered_rarities} item, so this "
             f"says nothing about whether a craft-only one would be"
         )
-        assert not (everything & craft_only), f"the shop offered {everything & craft_only}"
+        assert not (
+            everything & craft_only
+        ), f"the shop offered {everything & craft_only}"
 
     def test_recipe_only_beats_in_shop(self):
         """The two could disagree in the JSON, and one of them has to win."""
@@ -884,7 +900,10 @@ class TestWhatTheShopMayOffer:
 
         for item_id, config in self._catalogue():
             if config.get("recipe_only"):
-                spec = config_loader.items.get(item_id) or config_loader.containers[item_id]
+                spec = (
+                    config_loader.items.get(item_id)
+                    or config_loader.containers[item_id]
+                )
                 assert not spec.in_shop, f"{item_id} is craft-only and offered anyway"
 
     def test_an_item_waiting_on_another_is_offered_only_once_it_is_held(self):
@@ -902,9 +921,7 @@ class TestWhatTheShopMayOffer:
 
         waits_on = "crypto_mining_rig"
         original = ITEM_CATALOG["null_blade"]
-        gated = original.__class__(
-            **{**original.__dict__, "shop_needs": waits_on}
-        )
+        gated = original.__class__(**{**original.__dict__, "shop_needs": waits_on})
 
         with patch.dict(ITEM_CATALOG, {"null_blade": gated}):
             without = set()
@@ -950,7 +967,9 @@ class TestWhatTheShopMayOffer:
         for item_id, config in self._catalogue():
             needed = config.get("shop_needs")
             if needed:
-                assert needed in known, f"{item_id} waits on {needed}, which does not exist"
+                assert (
+                    needed in known
+                ), f"{item_id} waits on {needed}, which does not exist"
 
 
 class TestEveryRecipeCouldBeFollowed:
@@ -1070,17 +1089,31 @@ class TestTheCatalogueStillSaysWhatTheWikiSays:
                     for trigger in item.get("triggers") or []:
                         for effect in trigger.get("effects") or []:
                             if effect.get("type") == "attack":
-                                same("min_damage", effect.get("min_damage"),
-                                     page.get("mindamage"))
-                                same("max_damage", effect.get("max_damage"),
-                                     page.get("maxdamage"))
-                                same("accuracy", effect.get("accuracy"),
-                                     page.get("accuracy"), 0.01)
+                                same(
+                                    "min_damage",
+                                    effect.get("min_damage"),
+                                    page.get("mindamage"),
+                                )
+                                same(
+                                    "max_damage",
+                                    effect.get("max_damage"),
+                                    page.get("maxdamage"),
+                                )
+                                same(
+                                    "accuracy",
+                                    effect.get("accuracy"),
+                                    page.get("accuracy"),
+                                    0.01,
+                                )
                         if trigger.get("type") == "timer":
-                            same("cooldown", trigger.get("cooldown"),
-                                 page.get("cooldown"))
-                            same("cpu_cost", trigger.get("cpu_cost"),
-                                 page.get("stamina"))
+                            same(
+                                "cooldown",
+                                trigger.get("cooldown"),
+                                page.get("cooldown"),
+                            )
+                            same(
+                                "cpu_cost", trigger.get("cpu_cost"), page.get("stamina")
+                            )
 
         assert checked > 200, f"only {checked} items could be checked"
         assert not wrong, "\n".join(wrong)
@@ -1185,8 +1218,9 @@ class TestTheShopOffersWhatTheSourceGameSells:
             # A gated item is sold once the player holds what opens it, so one
             # whose opener we never imported cannot be offered at all.
             openable = page["shop"] != "gated" or page.get("shop_needs") in have
-            sold = (page["shop"] in self.SOLD and openable
-                    and not item.get("recipe_only"))
+            sold = (
+                page["shop"] in self.SOLD and openable and not item.get("recipe_only")
+            )
             if bool(item.get("in_shop", True)) != sold:
                 wrong.append(
                     f"{item_id}: ours says {item.get('in_shop')}, the wiki "
@@ -1223,9 +1257,11 @@ class TestTheShopOffersWhatTheSourceGameSells:
         """
         wiki = self._pages()
         loose = [
-            item_id for item_id, item in self._catalogue().items()
+            item_id
+            for item_id, item in self._catalogue().items()
             if (wiki.get(item.get("source")) or {}).get("shop") == "gated"
-            and item.get("in_shop") and not item.get("shop_needs")
+            and item.get("in_shop")
+            and not item.get("shop_needs")
         ]
         assert not loose, loose
 
@@ -1244,19 +1280,63 @@ class TestTheShopOffersWhatTheSourceGameSells:
         """Three of the ten containers are Unique and one is crafted. A player
         who cannot buy a bag has nowhere to put anything."""
         catalogue = self._catalogue()
-        bags = [k for k, v in catalogue.items()
-                if v.get("map") and v.get("cost") and v.get("in_shop")
-                and k in _containers()]
+        bags = [
+            k
+            for k, v in catalogue.items()
+            if v.get("map")
+            and v.get("cost")
+            and v.get("in_shop")
+            and k in _containers()
+        ]
         assert bags, "no container is offered at all"
-        assert any(catalogue[k].get("rarity") == "common" for k in bags), (
-            "the cheapest bag has to be one an early shop can show"
-        )
+        assert any(
+            catalogue[k].get("rarity") == "common" for k in bags
+        ), "the cheapest bag has to be one an early shop can show"
 
 
 def _containers():
     import json
     from pathlib import Path
 
-    path = (Path(__file__).resolve().parents[1] / "data" / "items"
-            / "containers.json")
+    path = Path(__file__).resolve().parents[1] / "data" / "items" / "containers.json"
     return set(json.loads(path.read_text()).get("containers", {}))
+
+
+class TestAModifierCannotBeBothCappedAndLent:
+    """A cap and a clock together would go quietly wrong.
+
+    The tally of what one item has given another is kept against the receiver,
+    and taking a lent modifier back does not know which grant it undid — so a
+    capped, timed modifier would leave the tally saying the cap was spent when
+    it was not. No clause wants both.
+    """
+
+    def test_the_pair_is_refused(self):
+        with pytest.raises(ValueError, match="both a `cap` and a `duration`"):
+            ConfigLoader()._parse_effect(
+                {
+                    "type": "modify",
+                    "stat": "trigger_speed",
+                    "value": 0.1,
+                    "target": "star",
+                    "counting": "any",
+                    "cap": 0.5,
+                    "duration": 2.0,
+                },
+                "some_item",
+            )
+
+    def test_either_alone_is_fine(self):
+        for extra in ({"cap": 0.5, "duration": -1}, {"cap": None, "duration": 2.0}):
+            effect = ConfigLoader()._parse_effect(
+                {
+                    "type": "modify",
+                    "stat": "trigger_speed",
+                    "value": 0.1,
+                    "target": "star",
+                    "counting": "any",
+                    **extra,
+                },
+                "some_item",
+            )
+            assert effect is not None

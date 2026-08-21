@@ -5,11 +5,10 @@ Pydantic schemas for API request/response models
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
-
 from containers import Container
 from grid_system import Rotation
 from items import Item, PlacedItem
+from pydantic import BaseModel, Field
 from utils import Position
 
 
@@ -68,6 +67,7 @@ class PurchaseRequest(BaseModel):
         description="Which way the item faces when it lands. An item can be "
         "turned while it is being carried out of the shop.",
     )
+
 
 class SellRequest(BaseModel):
     """Request to sell an item"""

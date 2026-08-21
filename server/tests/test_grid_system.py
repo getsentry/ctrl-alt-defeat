@@ -6,18 +6,19 @@ each character means.
 """
 
 import pytest
-
 from grid_system import BadMap, Rotation, parse_map, reach, zones_of
-
-
-
 
 
 class TestParsingAMap:
     """Reading the squares an item covers out of its text map"""
 
     def test_a_rectangle(self):
-        assert sorted(parse_map(["##", "##"], "square").squares) == [(0, 0), (0, 1), (1, 0), (1, 1)]
+        assert sorted(parse_map(["##", "##"], "square").squares) == [
+            (0, 0),
+            (0, 1),
+            (1, 0),
+            (1, 1),
+        ]
 
     def test_a_plus(self):
         # The shape a 2x2 could never say. Four arms and a middle, five squares
@@ -27,7 +28,10 @@ class TestParsingAMap:
 
     def test_an_l(self):
         assert sorted(parse_map(["#.", "#.", "##"], "L").squares) == [
-            (0, 0), (0, 1), (0, 2), (1, 2)
+            (0, 0),
+            (0, 1),
+            (0, 2),
+            (1, 2),
         ]
 
     def test_a_shape_with_a_hole(self):
@@ -111,7 +115,6 @@ class TestTheCatalogueLoads:
             if len(squares) != width * height:
                 irregular.append(item_id)
         assert len(irregular) > 3, f"Only {irregular} are not rectangles"
-
 
 
 class TestTheZonesAnItemReachesInto:
@@ -276,14 +279,14 @@ class TestTheAnswersBothSidesAreHeldTo:
         written = {shape["name"]: shape for shape in self._written_down()}
 
         spear = written["spear"]["turns"]
-        assert min(x for x, _ in spear["90"]["star"]) > 3, (
-            "a reach long enough that a turn the wrong way is unmissable"
-        )
+        assert (
+            min(x for x, _ in spear["90"]["star"]) > 3
+        ), "a reach long enough that a turn the wrong way is unmissable"
         assert written["anchored potion"]["anchors"], "an anchor to hold up"
         assert written["two zones"]["turns"]["0"]["diamond"], "both zones at once"
-        assert len(written["an L"]["turns"]["0"]["squares"]) == 3, (
-            "a footprint whose corner moves when it turns"
-        )
+        assert (
+            len(written["an L"]["turns"]["0"]["squares"]) == 3
+        ), "a footprint whose corner moves when it turns"
 
 
 class TestEveryAnchoredItemInTheCatalogue:
@@ -358,13 +361,17 @@ class TestWhatAnAuraReaches:
     def test_a_zone_landing_on_an_item_reaches_it(self):
         amulet = parse_map(["***", "*#*", "***"], "amulet")
         blade = parse_map(["#", "#"], "blade")
-        reached = reach(self._placed((self.AMULET, amulet, (2, 2)), (self.BLADE, blade, (3, 1))))
+        reached = reach(
+            self._placed((self.AMULET, amulet, (2, 2)), (self.BLADE, blade, (3, 1)))
+        )
         assert reached[self.AMULET]["star"] == [self.BLADE]
 
     def test_a_zone_landing_on_nothing_reaches_nothing(self):
         amulet = parse_map(["***", "*#*", "***"], "amulet")
         blade = parse_map(["#", "#"], "blade")
-        reached = reach(self._placed((self.AMULET, amulet, (2, 2)), (self.BLADE, blade, (9, 9))))
+        reached = reach(
+            self._placed((self.AMULET, amulet, (2, 2)), (self.BLADE, blade, (9, 9)))
+        )
         assert reached[self.AMULET]["star"] == []
 
     def test_an_item_never_reaches_itself(self):
@@ -376,17 +383,26 @@ class TestWhatAnAuraReaches:
         """An item is one thing. A zone clipping its corner has it."""
         amulet = parse_map(["***", "*#*", "***"], "amulet")
         long_item = parse_map(["####"], "long")
-        reached = reach(self._placed((self.AMULET, amulet, (2, 2)), (self.LONG, long_item, (3, 1))))
+        reached = reach(
+            self._placed((self.AMULET, amulet, (2, 2)), (self.LONG, long_item, (3, 1)))
+        )
         assert reached[self.AMULET]["star"] == [self.LONG]
 
     def test_the_two_zones_are_answered_separately(self):
         arrow = parse_map([".*+.", "+##*", ".*+."], "arrow")
         one = parse_map(["#"], "one")
         # (2, 0) of the arrow's star, and (-1, 0) of its diamond.
-        reached = reach(self._placed(
-            (self.ARROW, arrow, (4, 4)), (self.IN_STAR, one, (6, 4)), (self.IN_DIAMOND, one, (3, 4))
-        ))
-        assert reached[self.ARROW] == {"star": [self.IN_STAR], "diamond": [self.IN_DIAMOND]}
+        reached = reach(
+            self._placed(
+                (self.ARROW, arrow, (4, 4)),
+                (self.IN_STAR, one, (6, 4)),
+                (self.IN_DIAMOND, one, (3, 4)),
+            )
+        )
+        assert reached[self.ARROW] == {
+            "star": [self.IN_STAR],
+            "diamond": [self.IN_DIAMOND],
+        }
 
     def test_two_zones_crossing_is_not_a_reach(self):
         """A zone reaches the squares an item stands on, never its zone.
@@ -396,7 +412,9 @@ class TestWhatAnAuraReaches:
         every aura item on a board would reach every other one.
         """
         amulet = parse_map(["***", "*#*", "***"], "amulet")
-        placements = self._placed((self.LEFT, amulet, (2, 5)), (self.RIGHT, amulet, (4, 5)))
+        placements = self._placed(
+            (self.LEFT, amulet, (2, 5)), (self.RIGHT, amulet, (4, 5))
+        )
         overlap = zones_of(amulet, (2, 5))["star"] & zones_of(amulet, (4, 5))["star"]
         assert overlap, "the fixture is wrong if the zones do not cross"
 
@@ -407,7 +425,9 @@ class TestWhatAnAuraReaches:
     def test_and_one_square_closer_they_do_reach(self):
         """The control. Without it the test above passes if reach never fires."""
         amulet = parse_map(["***", "*#*", "***"], "amulet")
-        reached = reach(self._placed((self.LEFT, amulet, (2, 5)), (self.RIGHT, amulet, (3, 5))))
+        reached = reach(
+            self._placed((self.LEFT, amulet, (2, 5)), (self.RIGHT, amulet, (3, 5)))
+        )
         assert reached[self.LEFT]["star"] == [self.RIGHT]
         assert reached[self.RIGHT]["star"] == [self.LEFT]
 
@@ -423,11 +443,16 @@ class TestWhatAnAuraReaches:
         long_item = parse_map(["####"], "long")
 
         landing_on_it = zones_of(cross, (4, 4))["star"] & {
-            (2, 3), (3, 3), (4, 3), (5, 3)
+            (2, 3),
+            (3, 3),
+            (4, 3),
+            (5, 3),
         }
         assert len(landing_on_it) == 3, "the fixture wants several squares to land"
 
-        reached = reach(self._placed((self.ARROW, cross, (4, 4)), (self.LONG, long_item, (2, 3))))
+        reached = reach(
+            self._placed((self.ARROW, cross, (4, 4)), (self.LONG, long_item, (2, 3)))
+        )
         assert reached[self.ARROW]["star"] == [self.LONG]
 
     def test_two_of_the_same_item_are_told_apart(self):
@@ -441,9 +466,11 @@ class TestWhatAnAuraReaches:
         one = parse_map(["#"], "one")
         near, far = "aa11near", "bb22far0"
 
-        reached = reach(self._placed(
-            (self.AMULET, amulet, (2, 2)), (near, one, (3, 2)), (far, one, (9, 9))
-        ))
+        reached = reach(
+            self._placed(
+                (self.AMULET, amulet, (2, 2)), (near, one, (3, 2)), (far, one, (9, 9))
+            )
+        )
         assert reached[self.AMULET]["star"] == [near], "the same shape, told apart"
         assert far in reached, "and the far copy still gets its own answer"
 
@@ -460,12 +487,14 @@ class TestWhatAnAuraReaches:
         # Three of the eight ring squares around (2, 2).
         north, east, corner = "aa11north", "bb22east0", "cc33corner"
 
-        reached = reach(self._placed(
-            (self.AMULET, amulet, (2, 2)),
-            (north, one, (2, 1)),
-            (east, one, (3, 2)),
-            (corner, one, (1, 3)),
-        ))
+        reached = reach(
+            self._placed(
+                (self.AMULET, amulet, (2, 2)),
+                (north, one, (2, 1)),
+                (east, one, (3, 2)),
+                (corner, one, (1, 3)),
+            )
+        )
         assert reached[self.AMULET]["star"] == sorted([north, east, corner])
 
     def test_each_zone_lists_everything_in_it_separately(self):
@@ -481,13 +510,15 @@ class TestWhatAnAuraReaches:
         star_a, star_b = "aa11star0", "bb22star0"
         diamond_a, diamond_b = "cc33diam0", "dd44diam0"
 
-        reached = reach(self._placed(
-            (self.ARROW, arrow, (4, 4)),
-            (star_a, one, (4, 3)),
-            (star_b, one, (6, 4)),
-            (diamond_a, one, (3, 4)),
-            (diamond_b, one, (5, 5)),
-        ))
+        reached = reach(
+            self._placed(
+                (self.ARROW, arrow, (4, 4)),
+                (star_a, one, (4, 3)),
+                (star_b, one, (6, 4)),
+                (diamond_a, one, (3, 4)),
+                (diamond_b, one, (5, 5)),
+            )
+        )
         assert reached[self.ARROW] == {
             "star": sorted([star_a, star_b]),
             "diamond": sorted([diamond_a, diamond_b]),
@@ -505,11 +536,13 @@ class TestWhatAnAuraReaches:
         long_item = parse_map(["###"], "long")
         small, big = "aa11small", "bb22big00"
 
-        reached = reach(self._placed(
-            (self.AMULET, amulet, (2, 2)),
-            (small, one, (2, 1)),
-            (big, long_item, (1, 3)),
-        ))
+        reached = reach(
+            self._placed(
+                (self.AMULET, amulet, (2, 2)),
+                (small, one, (2, 1)),
+                (big, long_item, (1, 3)),
+            )
+        )
         assert reached[self.AMULET]["star"] == sorted([small, big])
 
     def test_every_item_gets_an_answer(self):
@@ -524,12 +557,19 @@ class TestWhatAnAuraReaches:
         one = parse_map(["#"], "one")
         above = [(self.POTION, potion, (4, 4), Rotation.NONE), (self.ONE, one, (4, 3))]
         # Upright the star is above the anchor at (4, 3).
-        assert reach([above[0], (*above[1], Rotation.NONE)])[self.POTION]["star"] == [self.ONE]
+        assert reach([above[0], (*above[1], Rotation.NONE)])[self.POTION]["star"] == [
+            self.ONE
+        ]
         # Turned upside down it has no aura at all, so it reaches nothing.
-        assert reach([
-            (self.POTION, potion, (4, 4), Rotation.CLOCKWISE_180),
-            (self.ONE, one, (4, 3), Rotation.NONE),
-        ])[self.POTION]["star"] == []
+        assert (
+            reach(
+                [
+                    (self.POTION, potion, (4, 4), Rotation.CLOCKWISE_180),
+                    (self.ONE, one, (4, 3), Rotation.NONE),
+                ]
+            )[self.POTION]["star"]
+            == []
+        )
 
 
 class TestTheCatalogueAgreesWithTheDesign:
@@ -543,9 +583,9 @@ class TestTheCatalogueAgreesWithTheDesign:
 
     def test_the_number_of_items_projecting_an_aura(self):
         projecting = [s for s in self._shapes().values() if s.star or s.diamond]
-        assert len(projecting) == 117, (
-            f"{len(projecting)} items project an aura; GDD 4.3 says 117"
-        )
+        assert (
+            len(projecting) == 117
+        ), f"{len(projecting)} items project an aura; GDD 4.3 says 117"
 
     def test_the_number_reaching_past_their_own_neighbours(self):
         """The figure the design uses to say adjacency is not a substitute."""
@@ -587,9 +627,9 @@ class TestAnAnchorIsStillPartOfTheItem:
             if not spec.shape.anchors:
                 continue
             checked += 1
-            assert set(spec.shape.anchors) <= set(spec.shape.squares), (
-                f"{slug} anchors a square it does not stand on"
-            )
+            assert set(spec.shape.anchors) <= set(
+                spec.shape.squares
+            ), f"{slug} anchors a square it does not stand on"
         assert checked >= 12, f"only {checked} anchored items found"
 
     def test_an_anchor_stays_in_the_footprint_through_a_turn(self):
