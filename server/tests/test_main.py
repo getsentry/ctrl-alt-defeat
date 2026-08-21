@@ -2,6 +2,7 @@
 Tests for AI opponent generation with containers
 """
 
+import pytest
 from battle_engine import BattleSimulator
 from containers import Container
 from items import sale_price
@@ -17,7 +18,7 @@ class TestAIOpponentGeneration:
     def test_generate_ai_opponent_returns_items_and_containers(self):
         """Test that generate_ai_opponent returns both items and containers"""
         # Generate AI opponent for round 3
-        items, containers = generate_ai_opponent(round_number=3)
+        items, containers, name = generate_ai_opponent(round_number=3)
 
         # Should return items
         assert items is not None
@@ -31,11 +32,44 @@ class TestAIOpponentGeneration:
         for container in containers:
             assert isinstance(container, Container)
 
+        # And it is named like a player, not like a machine. "AI Opponent
+        # (Round 3)" told the player the two things they did not need.
+        assert name
+        assert "AI Opponent" not in name
+
+    def test_the_same_opponent_always_has_the_same_name(self):
+        """A player who meets a rack twice should meet the same handle.
+
+        The name is hashed from the build rather than drawn at random, so it
+        survives a reshuffle of the export and never needs storing.
+        """
+        import bot_names
+        import bot_opponents
+
+        build = bot_opponents.pick(5)
+        if build is None:
+            pytest.skip("no exported opponents to name")
+        assert bot_names.name_for(build) == bot_names.name_for(build)
+
+    def test_a_stale_export_is_refused_rather_than_served(self, tmp_path):
+        """A build names its items, so a renamed one turns into a rack with a
+        hole -- and the battle path drops unknown item types silently. The
+        version check is what stops that being invisible."""
+        import json
+
+        import bot_opponents
+
+        stale = tmp_path / "bot_opponents.json"
+        stale.write_text(json.dumps({"version": "0.0.1-old", "builds": []}))
+        with pytest.raises(ValueError, match="game version"):
+            bot_opponents.load(stale)
+        bot_opponents.load()  # put the real one back for the other tests
+
     def test_ai_opponent_passes_validation(self):
         """Test that AI opponent items and containers pass battle validation"""
         # Generate AI opponent for various rounds
         for round_num in range(1, 11):
-            items, containers = generate_ai_opponent(round_number=round_num)
+            items, containers, _ = generate_ai_opponent(round_number=round_num)
 
             # Create a battle simulator
             simulator = BattleSimulator(seed=42)
@@ -49,7 +83,7 @@ class TestAIOpponentGeneration:
     def test_ai_containers_cover_item_positions(self):
         """Test that generated containers cover all AI item positions"""
         # Generate AI opponent
-        items, containers = generate_ai_opponent(round_number=5)
+        items, containers, _ = generate_ai_opponent(round_number=5)
 
         # Get all container squares
         container_squares = set()

@@ -71,6 +71,8 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 from session_manager import SessionManager
+import bot_names
+import bot_opponents
 from shop_phase import entering_the_shop, sale_chance_from
 from utils import Position, to_position, utc_now
 
@@ -726,8 +728,8 @@ async def simulate_battle(
             for container_data in opponent_data["containers"]
         ]
     else:
-        # Fall back to AI opponent
-        opponent_items, p2_containers = generate_ai_opponent(
+        # No real player to fight. Use a rack a bot built instead.
+        opponent_items, p2_containers, opponent_name = generate_ai_opponent(
             current_round, request.test_ai_difficulty
         )
         opponent_type = "ai"
@@ -1157,20 +1159,28 @@ def get_test_ai_items(difficulty: int, round_number: int) -> List[BattleItem]:
 
 def generate_ai_opponent(
     round_number: int, test_difficulty: Optional[int] = None
-) -> Tuple[List[BattleItem], List[Container]]:
-    """
-    Generate AI opponent items and containers based on round
-    Returns: (items, containers) tuple
+) -> Tuple[List[BattleItem], List[Container], str]:
+    """The opponent for a round: (items, containers, name).
+
+    Prefers a rack a bot actually built and fought with, drawn from
+    bot_opponents. Those are 2,500 varied builds; the built-in lists below are
+    ten fixed ones, the same nine items in the same order for every player on
+    every run, so they are the fallback rather than the default.
+
+    A test difficulty still wins, because tests pin an exact opponent.
     """
     if TEST_MODE and test_difficulty:
-        items = get_test_ai_items(test_difficulty, round_number)
-        containers = generate_ai_containers()
-    else:
-        items, containers = get_ghost_player_items(round_number)
+        return (get_test_ai_items(test_difficulty, round_number),
+                generate_ai_containers(),
+                f"AI Level {test_difficulty}")
 
-    # Generate containers for AI based on item positions
+    build = bot_opponents.pick(round_number)
+    if build is not None:
+        items, containers = bot_opponents.as_battle_items(build, ITEM_CATALOG)
+        return items, containers, bot_names.name_for(build)
 
-    return items, containers
+    items, containers = get_ghost_player_items(round_number)
+    return items, containers, f"Ghost of Round {round_number}"
 
 
 def generate_ai_containers() -> List[Container]:
