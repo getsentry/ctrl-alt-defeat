@@ -11,7 +11,7 @@ from typing import List, Optional
 from containers import starting_containers
 from database import db_manager  # noqa: F401
 from models import BattleHistory, GameSession, User
-from payout import Payout, for_abandoned_run, for_finished_run, run_is_over
+from payout import Payout, for_abandoned_run, for_finished_run, run_is_over, run_was_won
 from schemas import GameSession as GameSessionPydantic
 from sqlalchemy import delete, select, text
 from utils import dump_all, utc_now
@@ -224,6 +224,10 @@ class SessionManager:
                 user.total_games_played += 1
                 user.total_wins += db_session.wins
                 user.total_losses += db_session.losses
+                # Whether this run was won has to be counted as it ends: the
+                # row that knows is written over by the next run.
+                if run_was_won(db_session.wins):
+                    user.total_runs_won += 1
 
             db_session.finished_at = utc_now()
             await db.commit()

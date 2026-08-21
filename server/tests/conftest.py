@@ -3,6 +3,7 @@ Pytest configuration file - automatically loaded by pytest
 """
 
 import os
+from contextlib import asynccontextmanager
 import sys
 from pathlib import Path
 
@@ -34,24 +35,34 @@ TEST_DB_PREFIX = "cad_tests_"
 SHARED_DB = "ctrl_alt_defeat_server_tests"
 
 
-def _admin_url() -> str:
-    """The same server, asked about `postgres` rather than about our database"""
-    from database import get_database_url
+def _server() -> dict:
+    """Which Postgres to ask, read from the environment and nothing else.
 
-    url = get_database_url(db_host=os.environ.get("DB_HOST"), db_name="postgres")
-    return url.replace("postgresql://", "postgresql+asyncpg://")
+    Not through `database.get_database_url`, which is the mistake this used to
+    make: `database.py` works out the URL it will use *as it is imported*, so
+    importing it here -- before DB_NAME is set two lines below -- bound every
+    test in the run to the default database. Which is the developer's own, and
+    is where a suite that believed it had a database of its own quietly wrote
+    two hundred users.
+    """
+    from urllib.parse import urlparse
+
+    url = os.environ.get(
+        "DATABASE_URL", "postgresql://postgres:@localhost:5432/autobattler")
+    parsed = urlparse(url)
+    host, port = parsed.hostname or "localhost", parsed.port or 5432
+    if os.environ.get("DB_HOST"):
+        host, _, given = os.environ["DB_HOST"].partition(":")
+        port = int(given or 5432)
+    return {"host": host, "port": port,
+            "user": parsed.username or "postgres", "password": parsed.password}
 
 
 async def _make_database(name: str) -> None:
     """Make this run its own database, and sweep up after the runs before it"""
     import asyncpg
-    from urllib.parse import urlparse
 
-    parsed = urlparse(_admin_url().replace("postgresql+asyncpg://", "postgresql://"))
-    connection = await asyncpg.connect(
-        host=parsed.hostname, port=parsed.port or 5432,
-        user=parsed.username or "postgres", password=parsed.password,
-        database="postgres")
+    connection = await asyncpg.connect(database="postgres", **_server())
     try:
         # A run that was killed leaves its database behind. Nothing else is
         # named like this, so anything still here is ours and is finished with.
@@ -68,13 +79,8 @@ async def _make_database(name: str) -> None:
 
 async def _drop_database(name: str) -> None:
     import asyncpg
-    from urllib.parse import urlparse
 
-    parsed = urlparse(_admin_url().replace("postgresql+asyncpg://", "postgresql://"))
-    connection = await asyncpg.connect(
-        host=parsed.hostname, port=parsed.port or 5432,
-        user=parsed.username or "postgres", password=parsed.password,
-        database="postgres")
+    connection = await asyncpg.connect(database="postgres", **_server())
     try:
         await connection.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
     finally:
@@ -172,6 +178,13 @@ async def transactional_db():
 
         original_get_session = session_manager.db_manager.get_session
 
+        # As a context manager, because that is how every caller uses it:
+        # `async with db_manager.get_session() as db`. Swapped in as a bare
+        # async generator, the first thing to reach for it raised
+        # "'async_generator' object does not support the asynchronous context
+        # manager protocol" -- which nothing found, because nothing used this
+        # fixture until now.
+        @asynccontextmanager
         async def get_test_session():
             async with async_session_maker() as session:
                 yield session

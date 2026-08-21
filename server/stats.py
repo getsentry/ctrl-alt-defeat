@@ -53,12 +53,32 @@ class Player:
     """
 
     name: str
+
+    #: The run they are in: where it has got to, and its record so far.
     round: int
     wins: int
     losses: int
+
+    #: And the account behind it. `runs` counts runs played to the end -- a
+    #: run walked away from pays out but is not counted as one played -- and
+    #: `runs_won` how many of those went the distance.
+    #:
+    #: The battle record is a different question and a different number: it is
+    #: added up over every run that has been paid out, walked away from or
+    #: not, so it does not yet include the run above.
+    runs: int
+    runs_won: int
+    battles_won: int
+    battles_lost: int
+
     started: str
     last_seen: str
     finished: bool
+
+    @property
+    def win_rate(self) -> int:
+        fought = self.battles_won + self.battles_lost
+        return 0 if fought == 0 else int(self.battles_won / fought * 100)
 
 
 @dataclass
@@ -98,7 +118,10 @@ async def recent(db, limit: int = 50) -> List[Player]:
     rows = await db.execute(
         select(GameSession.player_name, GameSession.round, GameSession.wins,
                GameSession.losses, GameSession.created_at,
-               GameSession.last_activity, GameSession.finished_at)
+               GameSession.last_activity, GameSession.finished_at,
+               User.total_games_played, User.total_wins, User.total_losses,
+               User.total_runs_won)
+        .join(User, User.id == GameSession.user_id)
         .order_by(GameSession.last_activity.desc())
         .limit(max(1, min(limit, 200)))
     )
@@ -108,6 +131,10 @@ async def recent(db, limit: int = 50) -> List[Player]:
             round=int(row[1]),
             wins=int(row[2]),
             losses=int(row[3]),
+            runs=int(row[7]),
+            runs_won=int(row[10]),
+            battles_won=int(row[8]),
+            battles_lost=int(row[9]),
             started=row[4].isoformat(),
             last_seen=row[5].isoformat(),
             finished=row[6] is not None,

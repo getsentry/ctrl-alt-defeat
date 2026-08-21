@@ -22,7 +22,7 @@ async def _a_player(db, made_at=None) -> User:
 
 
 async def _a_run(db, user, started=None, active=None, round_reached=1,
-                 wins=0, finished=False) -> GameSession:
+                 wins=0, losses=0, finished=False) -> GameSession:
     when = started or utc_now()
     run = GameSession(
         player_id=f"run_{user.id}_{when.timestamp()}",
@@ -31,6 +31,7 @@ async def _a_run(db, user, started=None, active=None, round_reached=1,
         game_seed=1,
         round=round_reached,
         wins=wins,
+        losses=losses,
         created_at=when,
         last_activity=active or when,
         finished_at=utc_now() if finished else None,
@@ -266,6 +267,34 @@ class TestWhoHasBeenPlaying:
             await _a_run(db, await _a_player(db))
 
             assert len(await stats.recent(db, limit=1000)) >= 1
+
+    @pytest.mark.asyncio
+    async def test_it_says_what_the_account_has_done_as_well_as_this_run(
+            self, transactional_db):
+        async with transactional_db() as db:
+            player = await _a_player(db)
+            player.total_games_played = 3
+            player.total_runs_won = 1
+            player.total_wins = 17
+            player.total_losses = 8
+            await _a_run(db, player, round_reached=2, wins=1, losses=1)
+
+            latest = (await stats.recent(db, limit=1))[0]
+
+        assert latest.round == 2 and latest.wins == 1, "the run they are in"
+        assert latest.runs == 3, "the runs they have played to the end"
+        assert latest.runs_won == 1, "and how many of those they won"
+        assert latest.battles_won == 17 and latest.battles_lost == 8, \
+            "which is a different number: battles, over every paid-out run"
+        assert latest.win_rate == 68, "17 of 25"
+
+    def test_a_player_who_has_fought_nothing_does_not_divide_by_zero(self):
+        empty = stats.Player(
+            name="New", round=1, wins=0, losses=0, runs=0, runs_won=0,
+            battles_won=0, battles_lost=0, started="", last_seen="",
+            finished=False)
+
+        assert empty.win_rate == 0
 
     @pytest.mark.asyncio
     async def test_it_says_how_a_run_ended_as_well_as_where_it_got_to(

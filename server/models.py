@@ -154,8 +154,14 @@ class User(Base):
     # off this and abandoning is not finishing. Its wins and losses do count:
     # those battles happened.
     total_games_played = Column(Integer, default=0, nullable=False)
+
+    # Battles, not runs: each finished run adds the battles it won and lost.
+    # How many runs were *won* is a different question, and the session row
+    # cannot answer it afterwards -- it is written over by the next run -- so
+    # it is counted here as it happens.
     total_wins = Column(Integer, default=0, nullable=False)
     total_losses = Column(Integer, default=0, nullable=False)
+    total_runs_won = Column(Integer, default=0, nullable=False, server_default="0")
     current_rank = Column(Integer, default=1000, nullable=False)  # ELO-style rating
 
     # SnubaCoin, the account's own currency (Section 5.5). Gold is spent

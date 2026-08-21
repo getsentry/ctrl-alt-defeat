@@ -97,10 +97,14 @@ def render_players(players: List[Player], token: str = "") -> str:
     if players:
         rows = "".join(
             f'<tr><td class="who">{escape(player.name)}</td>'
-            f'<td>{player.round}</td>'
-            f'<td>{player.wins}&ndash;{player.losses}</td>'
+            f'<td>{player.round} &middot; {player.wins}&ndash;{player.losses}'
+            f'<span class="note">{"paid out" if player.finished else "playing"}'
+            "</span></td>"
+            f"<td>{player.runs_won} of {player.runs}"
+            f'<span class="note">runs won</span></td>' 
+            f'<td>{player.battles_won}&ndash;{player.battles_lost}'
+            f'<span class="note">{player.win_rate}% won</span></td>'
             f'<td class="when">{escape(_ago(player.last_seen))}</td>'
-            f'<td class="when">{"paid out" if player.finished else "playing"}</td>'
             "</tr>"
             for player in players
         )
@@ -120,9 +124,10 @@ def render_players(players: List[Player], token: str = "") -> str:
     margin: 0; padding: 40px 28px 64px; background: {GROUND}; color: {INK};
     font: 16px/1.5 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   }}
-  .wrap {{ max-width: 780px; margin: 0 auto; }}
+  .wrap {{ max-width: 880px; margin: 0 auto; }}
   h1 {{ font-size: 30px; margin: 0 0 4px; letter-spacing: -.01em; }}
   .asked {{ color: {MUTED}; margin: 0 0 20px; font-size: 13px; }}
+  .note {{ color: {MUTED}; font-size: 12px; display: block; }}
   table {{ width: 100%; border-collapse: collapse; }}
   th {{
     text-align: left; font-size: 11px; text-transform: uppercase;
@@ -144,13 +149,16 @@ def render_players(players: List[Player], token: str = "") -> str:
   <p class="asked">Most recent first &middot; refreshes every {REFRESH}s
      &middot; <a href="/stats/page{query}">the counts</a></p>
   <table>
-    <thead><tr><th>Name</th><th>Round</th><th>W&ndash;L</th>
-      <th>Last seen</th><th>Run</th></tr></thead>
+    <thead><tr><th>Name</th><th>This run</th><th>Runs</th>
+      <th>Battles, all runs</th><th>Last seen</th></tr></thead>
     <tbody>{rows}</tbody>
   </table>
   <footer>A name is whatever the player typed on the menu, and one row is one
-  player: they have a single run, reset when they start again. Nothing else
-  about them is read or shown.</footer>
+  player: they have a single run, reset when they start again. Runs counts runs
+  played to the end, and how many of those went the distance &mdash; a run
+  walked away from is paid for but not counted as played. The battle record is
+  a different number: it adds up every battle of every run that has been paid
+  out, so it does not yet include the run beside it.</footer>
 </div></body></html>"""
 
 
