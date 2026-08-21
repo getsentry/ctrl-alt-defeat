@@ -93,18 +93,18 @@ max_length = 20
 custom_minimum_size = Vector2(450, 80)
 layout_mode = 0
 offset_left = 110.0
-offset_top = 560.0
+offset_top = 530.0
 offset_right = 560.0
-offset_bottom = 640.0
+offset_bottom = 610.0
 text = "NEW GAME"
 
 [node name="MenuPanel_ButtonContainer#ContinueButton" type="Button" parent="."]
 custom_minimum_size = Vector2(450, 80)
 layout_mode = 0
 offset_left = 110.0
-offset_top = 664.0
+offset_top = 634.0
 offset_right = 560.0
-offset_bottom = 744.0
+offset_bottom = 714.0
 disabled = true
 text = "CONTINUE"
 
@@ -112,18 +112,27 @@ text = "CONTINUE"
 custom_minimum_size = Vector2(450, 80)
 layout_mode = 0
 offset_left = 110.0
-offset_top = 768.0
+offset_top = 738.0
 offset_right = 560.0
-offset_bottom = 848.0
+offset_bottom = 818.0
 text = "SENTAUR"
+
+[node name="MenuPanel_ButtonContainer#HowToPlayButton" type="Button" parent="."]
+custom_minimum_size = Vector2(450, 80)
+layout_mode = 0
+offset_left = 110.0
+offset_top = 842.0
+offset_right = 560.0
+offset_bottom = 922.0
+text = "HOW TO PLAY"
 
 [node name="MenuPanel_ButtonContainer#QuitButton" type="Button" parent="."]
 custom_minimum_size = Vector2(450, 80)
 layout_mode = 0
 offset_left = 110.0
-offset_top = 872.0
+offset_top = 946.0
 offset_right = 560.0
-offset_bottom = 952.0
+offset_bottom = 1026.0
 text = "EXIT"
 
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]

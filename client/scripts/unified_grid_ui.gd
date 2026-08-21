@@ -1192,6 +1192,16 @@ func _dress_buttons() -> void:
 	# it wants nothing from here at all -- a plate behind it would be a second
 	# button drawn around the first.
 
+	# Above the battle key, where a player looking at the rack and wondering
+	# what "for each sentinel star item" means will find it. The same page the
+	# menu opens; it is wanted here more, since here they have items in front
+	# of them to ask about.
+	var guide := get_node_or_null("HowToPlayButton")
+	if guide:
+		_dress_button(guide, PRICE_TAG_COLOR, 18, 0, true)
+		if not guide.pressed.is_connected(_open_how_to_play):
+			guide.pressed.connect(_open_how_to_play)
+
 	var refresh_button := get_node_or_null("RefreshButton")
 	if refresh_button:
 		# The wall used to have REROLL and its price painted on it, and the
@@ -1200,6 +1210,13 @@ func _dress_buttons() -> void:
 		# it is a button nobody can see. It stands on the top shelf now and
 		# says what it is.
 		_dress_button(refresh_button, PRICE_TAG_COLOR, 20, 0, true)
+
+
+func _open_how_to_play() -> void:
+	"""What every word in the game means, over the shop rather than instead
+	of it: the rack stays behind the page, and closing it puts everything
+	back where it was."""
+	add_child((load("res://scripts/how_to_play.gd") as GDScript).new())
 
 
 func _dress_button(

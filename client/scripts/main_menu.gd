@@ -7,6 +7,7 @@ const Presentation = preload("res://scripts/presentation.gd")
 @onready var continue_button = $"MenuPanel_ButtonContainer#ContinueButton"
 @onready var quit_button = $"MenuPanel_ButtonContainer#QuitButton"
 @onready var skin_button = $"MenuPanel_ButtonContainer#SkinButton"
+@onready var how_to_play_button = $"MenuPanel_ButtonContainer#HowToPlayButton"
 @onready var music_player = $BackgroundMusic
 @onready var name_input = $NameInputContainer/NameInput
 
@@ -31,13 +32,15 @@ func _setup_ui():
 	# Every button is the same keycap, lit magenta under the pointer. The
 	# magenta key is the other half of the logo, so it reads as the same
 	# keyboard rather than as a second style.
-	for button in [new_game_button, continue_button, skin_button, quit_button]:
+	for button in [new_game_button, continue_button, skin_button,
+			how_to_play_button, quit_button]:
 		Keycap.dress(button)
 
 	_dress_name_field()
 
 	new_game_button.pressed.connect(_on_start_game)
 	skin_button.pressed.connect(_open_skin_picker)
+	how_to_play_button.pressed.connect(_open_how_to_play)
 	quit_button.pressed.connect(_on_exit)
 
 
@@ -164,6 +167,13 @@ func _load_saved_name():
 
 func _wear_skin() -> void:
 	Skins.wear(get_node_or_null("PlayerCharacter"), "shop")
+
+
+func _open_how_to_play() -> void:
+	"""What every word in the game means, before the first run rather than
+	during it. Here for the same reason the picker is: there is a column of
+	keys, and the shop screen has no corner left."""
+	add_child((load("res://scripts/how_to_play.gd") as GDScript).new())
 
 
 func _open_skin_picker() -> void:

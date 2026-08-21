@@ -257,6 +257,14 @@ offset_bottom = 332.0
 tooltip_text = "Reroll the shop for 1 gold"
 text = "REROLL 1g"
 
+[node name="HowToPlayButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 600.0
+offset_top = 14.0
+offset_right = 920.0
+offset_bottom = 66.0
+text = "HOW TO PLAY"
+
 [node name="ReadyButton" type="TextureButton" parent="."]
 layout_mode = 0
 offset_left = 600.0

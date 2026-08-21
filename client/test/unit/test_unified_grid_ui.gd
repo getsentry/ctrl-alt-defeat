@@ -29,6 +29,19 @@ func after_each():
 		ui.queue_free()
 		ui = null
 
+func test_the_shop_offers_the_how_to_play_page():
+	# A player wondering what "for each sentinel star item" means is looking
+	# at the rack, not at the menu.
+	var guide = ui.get_node_or_null("HowToPlayButton")
+	assert_not_null(guide, "The shop should offer the page")
+	assert_true(guide.pressed.is_connected(ui._open_how_to_play),
+		"and the button should open it")
+
+	ui._open_how_to_play()
+	await get_tree().process_frame
+	assert_not_null(ui.find_child("Panel", true, false),
+		"which should put a page over the shop")
+
 func test_ui_loads_without_errors():
 	assert_not_null(ui, "UnifiedGridUI should load")
 	assert_true(ui.visible, "UI should be visible")
