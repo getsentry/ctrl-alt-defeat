@@ -18,6 +18,11 @@ signal item_activated(item_id: String, player: int, action: String)
 ## actions rather than stacks showed one of them.
 signal buff_applied(player: int, shown: String, status: String, stacks: int)
 signal debuff_applied(player: int, shown: String, status: String, stacks: int)
+## Stacks a fighter no longer has: `gone` is what the engine calls each status
+## and how many of it went. Two things take a status away -- an item that pays
+## a price in buffs, and one that cleanses -- and both leave the fighter with
+## fewer than they had, which is the only part the screen is interested in.
+signal statuses_lost(player: int, gone: Dictionary)
 signal cpu_changed(player: int, cpu: float, max_cpu: float)
 ## How much Block a fighter is standing behind. Every action carries it, the
 ## same as the health and the CPU: it is spent a point at a time by every blow
@@ -314,8 +319,10 @@ func _process_event(event: APITypes.BattleAction):
 			pass
 
 		"cleanse":
-			# Nothing to show yet: the debuff icons are not driven from the log
-			pass
+			# details.removed is {status: how many}, and a cleanse can take
+			# several at once. Whose they were is the action's own player: a
+			# cleanse aimed at the enemy records the enemy.
+			statuses_lost.emit(player, event.details.get("removed", {}))
 
 		"gain_damage":
 			# Nothing to show yet: an item's damage is not drawn during a battle
@@ -332,8 +339,9 @@ func _process_event(event: APITypes.BattleAction):
 				source, "convert_health")
 
 		"spend":
-			# Nothing to show yet: the buff icons are not driven from the log
-			pass
+			# details.costs is {status: how many}, the price an item paid out
+			# of its owner's own buffs.
+			statuses_lost.emit(player, event.details.get("costs", {}))
 
 		"stun":
 			# Nothing to show yet: cooldown rings are not driven from the log

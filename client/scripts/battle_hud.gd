@@ -45,6 +45,12 @@ const ENEMY_AT := Vector2(0.915, 0.70)
 ## holds the number, and the server's own NIGHTFALL must agree with it.
 const NIGHTFALL := 17.0
 
+## How big a status is drawn beside a fighter, and where its picture lives.
+## Small: a status is something to notice out of the corner of the eye, and the
+## card under the pointer is where the reading happens.
+const ICON := 30.0
+const ICON_PATH := "res://assets/icons/statuses/%s.png"
+
 ## The clock carries the time and nothing else. Its buttons used to sit inside
 ## it, which made the plate wide enough to hold three things in a row -- and
 ## the racks either side could only be as wide as what that plate left them.
@@ -123,6 +129,9 @@ var _effects: Dictionary = {}
 var _block: Dictionary = {}
 ## The card explaining whichever chip the pointer is on, or null.
 var _explaining: Control = null
+## The picture for each status, looked up once. A null in here means there is
+## no picture for that status, which is worth remembering too.
+var _pictures: Dictionary = {}
 var _log_open: bool = false
 
 
@@ -486,7 +495,7 @@ func set_block(player: int, amount: int) -> void:
 
 
 func _build_effects(side: String, title: String, tint: Color, left: float,
-		top: float) -> HBoxContainer:
+		top: float) -> HFlowContainer:
 	var caption := Label.new()
 	caption.text = title
 	caption.position = Vector2(left + 4, top)
@@ -496,11 +505,17 @@ func _build_effects(side: String, title: String, tint: Color, left: float,
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stats_plate.add_child(caption)
 
-	var row := HBoxContainer.new()
+	# It wraps. An HBoxContainer neither wraps nor clips: a fighter with more
+	# statuses than the plate is wide ran its chips straight across into the
+	# other fighter's column. There is room under this row for a second line --
+	# the rows are 84 apart and a line is 34 -- and no build can reach a third,
+	# there being ten statuses in the game and two rows to put them in.
+	var row := HFlowContainer.new()
 	row.name = side.capitalize() + title.capitalize()
 	row.position = Vector2(left + 4, top + 28)
 	row.size = Vector2(ROW_LABEL + BAR_WIDTH, 44)
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("h_separation", 6)
+	row.add_theme_constant_override("v_separation", 4)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stats_plate.add_child(row)
 	return row
@@ -513,7 +528,7 @@ func _build_effects(side: String, title: String, tint: Color, left: float,
 func add_effect(player: int, effect_name: String, good: bool,
 		status: String = "", stacks: int = 1) -> void:
 	var key := ("player" if player == 1 else "enemy") + ("_buff" if good else "_debuff")
-	var row: HBoxContainer = _effects.get(key)
+	var row: HFlowContainer = _effects.get(key)
 	if row == null:
 		return
 
@@ -523,7 +538,7 @@ func add_effect(player: int, effect_name: String, good: bool,
 	for chip in row.get_children():
 		if chip.get_meta("effect") == effect_name:
 			chip.set_meta("count", chip.get_meta("count") + stacks)
-			chip.text = "%s x%d" % [effect_name, chip.get_meta("count")]
+			_write_on(chip, effect_name, chip.get_meta("count"))
 			# A stack landing while the card for it is up: the card is about
 			# how many there are, so it is drawn again saying the new number.
 			if is_instance_valid(_explaining):
@@ -531,18 +546,99 @@ func add_effect(player: int, effect_name: String, good: bool,
 			return
 
 	var tint := Color(0.4, 1.0, 0.6) if good else Color(1.0, 0.45, 0.5)
-	var chip := Label.new()
-	chip.text = effect_name if stacks <= 1 else "%s x%d" % [effect_name, stacks]
+	var chip := Button.new()
+	chip.flat = true
+	chip.focus_mode = Control.FOCUS_NONE
 	chip.set_meta("effect", effect_name)
 	chip.set_meta("status", status)
 	chip.set_meta("count", stacks)
 	chip.add_theme_font_size_override("font_size", 17)
 	chip.add_theme_color_override("font_color", tint)
+	chip.add_theme_color_override("font_hover_color", tint)
+	chip.add_theme_color_override("font_pressed_color", tint)
+	chip.icon = _picture_of(status)
+	if chip.icon != null:
+		# icon_max_width scales the picture down to this and leaves the chip to
+		# size itself around it and the number. A minimum size on the chip does
+		# not work: the number shares it, and the picture came out half the
+		# size asked for. expand_icon does not work either -- it fills the room
+		# left over, which is none, and the picture disappeared altogether.
+		chip.add_theme_constant_override("icon_max_width", int(ICON))
+		chip.add_theme_constant_override("h_separation", 2)
+	_write_on(chip, effect_name, stacks)
 	# It answers the pointer, because it has something to say when asked.
 	chip.mouse_filter = Control.MOUSE_FILTER_STOP
 	chip.mouse_entered.connect(_explain.bind(chip))
 	chip.mouse_exited.connect(_stop_explaining)
 	row.add_child(chip)
+
+
+## What goes on a chip: how many, where there is a picture saying which; the
+## word and how many, where there is not.
+##
+## The word is worth the room only while it is the only thing identifying the
+## status. Beside a picture it is a caption nobody reads twice, and ten of them
+## are what filled the middle of the screen. The card under the pointer is
+## where the word went.
+func _write_on(chip: Button, effect_name: String, count: int) -> void:
+	if chip.icon != null:
+		chip.text = "" if count <= 1 else str(count)
+		chip.tooltip_text = ""
+		return
+	chip.text = effect_name if count <= 1 else "%s x%d" % [effect_name, count]
+
+
+## The picture for a status, or nothing where none has been drawn.
+##
+## Nothing is the honest answer rather than a stand-in: a status with no
+## picture keeps the word it always had, so one added to the engine tomorrow
+## shows up on the plate instead of showing up as a blank square.
+func _picture_of(status: String) -> Texture2D:
+	if status == "":
+		return null
+	if _pictures.has(status):
+		return _pictures[status]
+	var path := ICON_PATH % status
+	var found: Texture2D = load(path) if ResourceLoader.exists(path) else null
+	_pictures[status] = found
+	return found
+
+
+## Take stacks of a status away from a fighter, however they lost them.
+##
+## Found by what the engine calls the status rather than by the word on the
+## chip: a `spend` or a `cleanse` names it the engine's way, and the two lists
+## are not the same one. Both rows are searched because a cleanse takes
+## debuffs off as readily as buffs, and what it took is all it says.
+##
+## A chip with nothing left on it goes, rather than standing there saying x0.
+func drop_effect(player: int, status: String, stacks: int = 1) -> void:
+	if status == "" or stacks <= 0:
+		return
+	var side := "player" if player == 1 else "enemy"
+	for kind in ["_buff", "_debuff"]:
+		var row: HFlowContainer = _effects.get(side + kind)
+		if row == null:
+			continue
+		for chip in row.get_children():
+			if chip.get_meta("status", "") != status:
+				continue
+			var left: int = chip.get_meta("count") - stacks
+			if left <= 0:
+				# The card is about a chip that is going, so it goes too --
+				# and it is freed here rather than left to tree_exiting,
+				# which fires a frame later with the pointer still on it.
+				if is_instance_valid(_explaining):
+					_stop_explaining()
+				row.remove_child(chip)
+				chip.queue_free()
+				return
+			chip.set_meta("count", left)
+			_write_on(chip, str(chip.get_meta("effect")), left)
+			# The card says how many there are, so it says the new number.
+			if is_instance_valid(_explaining):
+				_explain(chip)
+			return
 
 
 ## Put up the card for this chip, at once.
@@ -551,7 +647,7 @@ func add_effect(player: int, effect_name: String, good: bool,
 ## it waits half a second, it is one run of plain text, and it is drawn in a
 ## style that belongs to nothing else here. This is the card the shop draws for
 ## an item, and it arrives with the pointer.
-func _explain(chip: Label) -> void:
+func _explain(chip: Control) -> void:
 	_stop_explaining()
 	var rule: Dictionary = GameStateManager.about_a_status(
 		chip.get_meta("status", ""))

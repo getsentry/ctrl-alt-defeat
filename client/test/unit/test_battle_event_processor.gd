@@ -809,3 +809,67 @@ func _action_names_the_server_declares() -> Array:
 	for found in member.search_all(source.substr(start, end - start)):
 		names.append(found.get_string(1))
 	return names
+
+
+# ============ Stacks a fighter no longer has ============
+#
+# Two things take a status away: an item that pays a price out of its owner's
+# buffs, and one that cleanses. Both were logged and nothing else -- the
+# `cleanse` arm said so in as many words -- so the chips beside a fighter only
+# ever counted up. Bloodthorne spends 1 Regenerating on every hit, and the
+# chip climbed while the stack behind it drained away.
+
+func test_paying_a_price_in_buffs_says_they_are_gone():
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "spend", "player": 1,
+			"source": "bloodthorne",
+			"details": _standing([QUOTA, QUOTA], {"costs": {"regenerating": 1}})})
+	]))
+	watch_signals(processor)
+
+	processor.skip_to_end()
+
+	assert_signal_emitted_with_parameters(
+		processor, "statuses_lost", [1, {"regenerating": 1}])
+
+
+func test_a_price_paid_in_two_kinds_at_once_names_both():
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "spend", "player": 2,
+			"details": _standing([QUOTA, QUOTA],
+				{"costs": {"credits": 10, "spiked": 2}})})
+	]))
+	watch_signals(processor)
+
+	processor.skip_to_end()
+
+	assert_signal_emitted_with_parameters(
+		processor, "statuses_lost", [2, {"credits": 10, "spiked": 2}])
+
+
+func test_a_cleanse_says_what_it_took_off():
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "cleanse", "player": 1, "damage": 3,
+			"details": _standing([QUOTA, QUOTA],
+				{"removed": {"memory_leaked": 2, "throttled": 1}})})
+	]))
+	watch_signals(processor)
+
+	processor.skip_to_end()
+
+	assert_signal_emitted_with_parameters(
+		processor, "statuses_lost", [1, {"memory_leaked": 2, "throttled": 1}])
+
+
+func test_a_cleanse_aimed_at_the_enemy_is_the_enemy_losing_them():
+	# The action's player is whose statuses went, not whose item did it.
+	processor.load_battle_events(_battle([
+		_action({"timestamp": 0, "action": "cleanse", "player": 2, "damage": 1,
+			"details": _standing([QUOTA, QUOTA], {"removed": {"optimized": 1}})})
+	]))
+	watch_signals(processor)
+
+	processor.skip_to_end()
+
+	assert_signal_emitted_with_parameters(
+		processor, "statuses_lost", [2, {"optimized": 1}])

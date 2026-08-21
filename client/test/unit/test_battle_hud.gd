@@ -149,7 +149,7 @@ func _optimised_is_known() -> void:
 	}])
 
 
-func _chip(index: int = 0) -> Label:
+func _chip(index: int = 0) -> Button:
 	return hud._effects["player_buff"].get_child(index)
 
 
@@ -262,7 +262,7 @@ func test_a_chip_counts_stacks_rather_than_actions():
 
 	hud.add_effect(1, "optimised", true, "optimized", 2)
 
-	assert_true(_chip().text.contains("x2"), "reads %s" % _chip().text)
+	assert_eq(_chip().text, "2", "reads %s" % _chip().text)
 	assert_eq(_chip().get_meta("count"), 2)
 
 
@@ -273,7 +273,7 @@ func test_stacks_arriving_later_are_added_to_what_is_there():
 	hud.add_effect(1, "optimised", true, "optimized", 3)
 
 	assert_eq(_chip().get_meta("count"), 5)
-	assert_true(_chip().text.contains("x5"), "reads %s" % _chip().text)
+	assert_eq(_chip().text, "5", "reads %s" % _chip().text)
 
 
 func test_the_card_counts_them_the_same_way():
@@ -677,3 +677,169 @@ func test_a_battle_rack_draws_no_empty_squares():
 		"A battle rack should not draw the grid behind it")
 	assert_false(battle_screen.enemy_inventory.show_base_grid,
 		"An opponent's rack should not draw it either")
+
+
+# ============ Stacks a fighter no longer has ============
+#
+# The chips only ever counted up. An item that pays its price in Regenerating
+# went on showing the stack it had just eaten, and a cleansed debuff sat there
+# for the rest of the battle.
+
+func _chips_on(side: String, kind: String) -> Array:
+	return hud._effects[side + kind].get_children()
+
+
+func _only_chip(side: String, kind: String) -> Button:
+	var chips := _chips_on(side, kind)
+	return chips[0] if chips.size() > 0 else null
+
+
+func test_spending_a_buff_takes_it_off_the_count():
+	hud.add_effect(1, "regenerating", true, "regenerating", 6)
+
+	hud.drop_effect(1, "regenerating", 1)
+
+	assert_eq(_only_chip("player", "_buff").text, "5",
+		"Six less one is five, and the chip says so")
+
+
+func test_a_status_spent_to_nothing_leaves_no_chip():
+	hud.add_effect(1, "regenerating", true, "regenerating", 2)
+
+	hud.drop_effect(1, "regenerating", 2)
+
+	assert_eq(_chips_on("player", "_buff").size(), 0,
+		"A chip with nothing left on it goes, rather than saying x0")
+
+
+func test_a_status_spent_past_nothing_still_only_goes_once():
+	# A cleanse may have taken some already, so the engine floors it. The
+	# screen has to be as forgiving.
+	hud.add_effect(1, "regenerating", true, "regenerating", 1)
+
+	hud.drop_effect(1, "regenerating", 5)
+
+	assert_eq(_chips_on("player", "_buff").size(), 0)
+
+
+func test_the_last_stack_leaves_the_chip_saying_the_name_alone():
+	hud.add_effect(2, "spiked", true, "spiked", 2)
+
+	hud.drop_effect(2, "spiked", 1)
+
+	assert_eq(_only_chip("enemy", "_buff").text, "",
+		"One of something is the picture on its own, with no number on it")
+
+
+func test_a_cleansed_debuff_comes_off_too():
+	# A cleanse says what it took and not which row it came off, so both are
+	# searched. Only the debuff rows hold this one.
+	hud.add_effect(1, "memory leak", false, "memory_leaked", 3)
+
+	hud.drop_effect(1, "memory_leaked", 3)
+
+	assert_eq(_chips_on("player", "_debuff").size(), 0,
+		"A debuff that was cleansed is not still on the fighter")
+
+
+func test_a_status_is_found_by_what_the_engine_calls_it():
+	# The chip reads "memory leak" and the engine says "memory_leaked". A
+	# cleanse names it the engine's way, which is why the chip carries both.
+	hud.add_effect(1, "memory leak", false, "memory_leaked", 2)
+
+	hud.drop_effect(1, "memory leak", 2)
+
+	assert_eq(_chips_on("player", "_debuff").size(), 1,
+		"The word a player reads is not what a cleanse names")
+
+
+func test_losing_a_status_a_fighter_never_had_does_nothing():
+	hud.add_effect(1, "regenerating", true, "regenerating", 2)
+
+	hud.drop_effect(1, "optimized", 1)
+	hud.drop_effect(2, "regenerating", 1)
+
+	assert_eq(_only_chip("player", "_buff").text, "2",
+		"Neither the wrong status nor the wrong fighter touches this one")
+
+
+func test_nothing_lost_is_nothing_done():
+	hud.add_effect(1, "regenerating", true, "regenerating", 2)
+
+	hud.drop_effect(1, "regenerating", 0)
+	hud.drop_effect(1, "", 1)
+
+	assert_eq(_only_chip("player", "_buff").text, "2")
+
+
+# ============ A status as a picture ============
+#
+# Ten chips reading "regenerating x6" filled the middle of the screen, which is
+# a screen about two fighters hitting each other. The word moved to the card
+# under the pointer and the chip became the picture and the number.
+
+func test_a_status_with_a_picture_is_drawn_as_one():
+	hud.add_effect(1, "regenerating", true, "regenerating", 3)
+
+	assert_not_null(_chip().icon, "There is a picture for this one")
+	assert_eq(_chip().text, "3", "so the chip is the picture and how many")
+
+
+func test_one_of_something_carries_no_number():
+	hud.add_effect(1, "regenerating", true, "regenerating")
+
+	assert_eq(_chip().text, "", "A lone stack is the picture on its own")
+
+
+func test_a_status_with_no_picture_keeps_its_word():
+	"""A status added to the engine tomorrow has no picture drawn for it. It
+	shows up on the plate as the word it always was, rather than as a blank."""
+	hud.add_effect(1, "overclock", true, "overclock", 2)
+
+	assert_null(_chip().icon)
+	assert_eq(_chip().text, "overclock x2")
+
+
+func test_every_status_the_server_knows_about_has_a_picture():
+	"""The ten the engine grants. One without a picture falls back to its word,
+	which is correct but is not what this screen is meant to look like."""
+	var missing: Array[String] = []
+	for status in _statuses_the_server_declares():
+		if hud._picture_of(status) == null:
+			missing.append(status)
+
+	assert_eq(missing, [] as Array[String],
+		"Statuses with no picture in assets/icons/statuses: %s" % [missing])
+
+
+func _statuses_the_server_declares() -> Array[String]:
+	"""The names the engine keeps, read off describe.py rather than guessed."""
+	var path := ProjectSettings.globalize_path("res://").path_join(
+		"../server/describe.py")
+	var file := FileAccess.open(path, FileAccess.READ)
+	assert_not_null(file, "Should be able to read %s" % path)
+	if file == null:
+		return []
+	var source := file.get_as_text()
+	file.close()
+
+	var start := source.find("STATUS_RULES")
+	assert_true(start != -1, "describe.py should declare STATUS_RULES")
+	if start == -1:
+		return []
+	var block := source.substr(start, source.find("\n}", start) - start)
+	var names: Array[String] = []
+	for hit in RegEx.create_from_string('\\n    "([a-z_]+)":').search_all(block):
+		names.append(hit.get_string(1))
+	assert_gt(names.size(), 5, "and it should hold the statuses")
+	return names
+
+
+func test_a_picture_is_only_looked_up_once():
+	hud.add_effect(1, "regenerating", true, "regenerating")
+	hud.add_effect(2, "regenerating", true, "regenerating")
+
+	assert_true(hud._pictures.has("regenerating"),
+		"The answer is kept, whatever it was")
+	assert_true(hud._pictures.has("overclock") == false,
+		"and nothing is looked up that was never asked for")

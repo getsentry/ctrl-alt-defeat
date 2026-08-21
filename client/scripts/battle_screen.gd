@@ -478,6 +478,7 @@ func _connect_event_signals():
 	event_processor.block_changed.connect(_on_block_changed)
 	event_processor.buff_applied.connect(_on_buff_applied)
 	event_processor.debuff_applied.connect(_on_debuff_applied)
+	event_processor.statuses_lost.connect(_on_statuses_lost)
 	event_processor.item_activated.connect(_on_item_activated)
 	event_processor.player_died.connect(_on_player_died)
 	event_processor.nightfall_began.connect(_on_nightfall)
@@ -724,6 +725,13 @@ func _on_buff_applied(player: int, shown: String, status: String, stacks: int):
 
 func _on_debuff_applied(player: int, shown: String, status: String, stacks: int):
 	hud.add_effect(player, shown, false, status, stacks)
+
+func _on_statuses_lost(player: int, gone: Dictionary):
+	# Spent or cleansed, it comes to the same thing on the plate: the fighter
+	# has fewer than they had. The chips only ever counted up, so an item that
+	# paid its price in Regenerating went on showing the stack it had eaten.
+	for status in gone:
+		hud.drop_effect(player, str(status), int(gone[status]))
 
 func _on_item_activated(item_id: String, player: int, action: String):
 	# Log is handled by BattleEventProcessor
