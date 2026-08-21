@@ -4,6 +4,7 @@ Sync script for autobattler development environment.
 This script ensures all dependencies are properly installed.
 """
 
+import configparser
 import os
 import subprocess
 import sys
@@ -11,22 +12,76 @@ from pathlib import Path
 
 
 def run_command(cmd, cwd=None, check=True):
-    """Run a shell command and return the result."""
+    """Run a shell command and return the result.
+
+    The output is printed before anything is raised. `check=True` raises from
+    inside subprocess.run, so a version of this that printed afterwards showed
+    a bare CalledProcessError and threw away the reason pip had failed.
+    """
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=check)
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
     if result.stdout:
         print(result.stdout)
     if result.stderr and result.returncode != 0:
         print(result.stderr, file=sys.stderr)
+    if check and result.returncode != 0:
+        raise subprocess.CalledProcessError(
+            result.returncode, cmd, output=result.stdout, stderr=result.stderr
+        )
     return result
 
 
+def required_python_version():
+    """The Python devenv/config.ini asks for, as a string like "3.11"."""
+    config = configparser.ConfigParser()
+    config.read(Path(__file__).parent / "config.ini")
+    return config.get("python", "version", fallback=None)
+
+
+def venv_python_version(venv_path):
+    """The version of the Python in `venv_path`, or None if unreadable."""
+    bin_dir = "Scripts" if sys.platform == "win32" else "bin"
+    python = venv_path / bin_dir / "python"
+    if not python.exists():
+        return None
+    say_version = "import sys; print('%d.%d' % sys.version_info[:2])"
+    result = subprocess.run(
+        [str(python), "-c", say_version],
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip() or None
+
+
 def ensure_venv():
-    """Ensure Python virtual environment exists."""
+    """Ensure Python virtual environment exists, on the right Python.
+
+    A venv built on the wrong version is worse than no venv at all: pip then
+    tries to build every pinned dependency from source, and the ones with no
+    wheel for that version (pydantic-core, greenlet) fail deep inside a Rust
+    build. Nothing in that output says "wrong Python", so this checks first
+    and says it plainly.
+
+    It refuses rather than rebuilding. Deleting somebody's environment is a
+    bigger surprise than a message, and the fix is one line to paste.
+    """
     venv_path = Path(".venv")
     if not venv_path.exists():
         print("Creating Python virtual environment...")
         run_command([sys.executable, "-m", "venv", ".venv"])
+        return venv_path
+
+    wanted = required_python_version()
+    found = venv_python_version(venv_path)
+    if wanted and found and found != wanted:
+        raise SystemExit(
+            f"\n.venv is Python {found}, but this project needs"
+            f" Python {wanted} (devenv/config.ini).\n"
+            f"Installing into it fails while building pydantic-core.\n\n"
+            f"Rebuild it:\n"
+            f"    rm -rf .venv && python{wanted} -m venv .venv"
+            f" && devenv sync\n"
+        )
     return venv_path
 
 
