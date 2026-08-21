@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
@@ -20,12 +21,99 @@ os.environ["TEST_MODE"] = "true"
 # Skip migration checks in tests for performance
 os.environ["SKIP_MIGRATION_CHECK"] = "true"
 
-# Configure test database if not already set
-# Use a separate database specifically for server tests
-if "DB_NAME" not in os.environ:
-    os.environ["DB_NAME"] = "ctrl_alt_defeat_server_tests"
 if "DB_HOST" not in os.environ:
     os.environ["DB_HOST"] = "localhost:5432"
+
+#: Every database this harness has ever made is named for it, so the ones a
+#: killed run left behind can be recognised and dropped.
+TEST_DB_PREFIX = "cad_tests_"
+
+#: What to fall back to where a database cannot be made -- no permission, or
+#: no server to ask. A shared one that is never emptied, which is what this
+#: replaces.
+SHARED_DB = "ctrl_alt_defeat_server_tests"
+
+
+def _admin_url() -> str:
+    """The same server, asked about `postgres` rather than about our database"""
+    from database import get_database_url
+
+    url = get_database_url(db_host=os.environ.get("DB_HOST"), db_name="postgres")
+    return url.replace("postgresql://", "postgresql+asyncpg://")
+
+
+async def _make_database(name: str) -> None:
+    """Make this run its own database, and sweep up after the runs before it"""
+    import asyncpg
+    from urllib.parse import urlparse
+
+    parsed = urlparse(_admin_url().replace("postgresql+asyncpg://", "postgresql://"))
+    connection = await asyncpg.connect(
+        host=parsed.hostname, port=parsed.port or 5432,
+        user=parsed.username or "postgres", password=parsed.password,
+        database="postgres")
+    try:
+        # A run that was killed leaves its database behind. Nothing else is
+        # named like this, so anything still here is ours and is finished with.
+        left = await connection.fetch(
+            "SELECT datname FROM pg_database WHERE datname LIKE $1",
+            TEST_DB_PREFIX + "%")
+        for row in left:
+            await connection.execute(
+                f'DROP DATABASE IF EXISTS "{row["datname"]}" WITH (FORCE)')
+        await connection.execute(f'CREATE DATABASE "{name}"')
+    finally:
+        await connection.close()
+
+
+async def _drop_database(name: str) -> None:
+    import asyncpg
+    from urllib.parse import urlparse
+
+    parsed = urlparse(_admin_url().replace("postgresql+asyncpg://", "postgresql://"))
+    connection = await asyncpg.connect(
+        host=parsed.hostname, port=parsed.port or 5432,
+        user=parsed.username or "postgres", password=parsed.password,
+        database="postgres")
+    try:
+        await connection.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
+    finally:
+        await connection.close()
+
+
+# A database of this run's own, made here rather than in a fixture because
+# `database.py` reads DB_NAME as it is imported, and a fixture runs too late.
+#
+# The tests shared one database that nothing ever emptied, so a run started on
+# top of every run before it -- fourteen hundred users, a thousand sessions --
+# and anything that counted rows had to count around them. Making a fresh one
+# costs about a third of a second against a suite that takes forty seconds.
+_OWN_DB = ""
+if "DB_NAME" not in os.environ:
+    import asyncio
+    import uuid
+
+    _OWN_DB = TEST_DB_PREFIX + uuid.uuid4().hex[:12]
+    try:
+        asyncio.run(_make_database(_OWN_DB))
+        os.environ["DB_NAME"] = _OWN_DB
+    except Exception as why:  # no server, or no permission to make one
+        print(f"Could not make a database for this run ({why}). "
+              f"Falling back to {SHARED_DB}, which nothing empties.")
+        _OWN_DB = ""
+        os.environ["DB_NAME"] = SHARED_DB
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Throw this run's database away, whatever the run did"""
+    if not _OWN_DB:
+        return
+    import asyncio
+
+    try:
+        asyncio.run(_drop_database(_OWN_DB))
+    except Exception as why:
+        print(f"Could not drop {_OWN_DB} ({why}). It will be swept up next run.")
 
 
 @pytest.fixture(autouse=True)
@@ -37,7 +125,10 @@ def setup_test_mode():
     # Keep TEST_MODE set after test
 
 
-@pytest.fixture(scope="function")
+# An async fixture needs pytest_asyncio's decorator under strict mode, which
+# this never had -- so every test that asked for it errored out at setup, and
+# no test asked for it until now.
+@pytest_asyncio.fixture(scope="function")
 async def transactional_db():
     """Fast transaction-based test isolation using SQLAlchemy
 

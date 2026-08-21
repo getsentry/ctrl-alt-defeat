@@ -261,6 +261,13 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
+        # The client asks this on every launch to check its saved token, which
+        # makes it the one moment a returning guest is known to be here. It was
+        # only ever stamped on a password login, so the column said nothing at
+        # all about the people who actually play this game.
+        user.last_login_at = utc_now()
+        await db.commit()
+
         return {
             "user_id": user.id,
             "username": user.username,

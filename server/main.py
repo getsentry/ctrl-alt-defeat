@@ -16,6 +16,8 @@ import auth_endpoints
 import bot_names
 import bot_opponents
 import describe
+import stats as stats_module
+import stats_page
 import sentry_sdk
 from auth import TokenData, get_current_user
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
@@ -26,6 +28,7 @@ from containers import Container, PlacementValidator, starting_containers
 from database import db_manager
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from grid_system import Rotation
 from inventory_manager import (
     InvalidPlacementError,
@@ -1632,6 +1635,40 @@ async def _move_container(
         inventory_storage=session.inventory_storage,
         server_containers=session.server_containers,
     )
+
+
+#: What a caller has to know to read the stats, if anything. Unset -- which is
+#: how a developer's own server runs -- and they are open; set in the
+#: deployment, and they are not. Player counts are nobody else's business, and
+#: a page that answers "is this game being played" answers it for everyone.
+STATS_TOKEN = os.environ.get("STATS_TOKEN", "")
+
+
+def _may_read_stats(token: str) -> bool:
+    """Whether this caller may see the counts"""
+    return STATS_TOKEN == "" or token == STATS_TOKEN
+
+
+@app.get("/stats")
+async def get_stats(token: str = "") -> dict:
+    """How much the game is being played. Counts only -- see stats.py."""
+    if not _may_read_stats(token):
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED,
+                            detail="The stats are not open on this server")
+
+    async with db_manager.get_session() as db:
+        return (await stats_module.gather(db)).as_dict()
+
+
+@app.get("/stats/page", response_class=HTMLResponse)
+async def get_stats_page(token: str = "") -> str:
+    """The same numbers, as a page to leave open on a second screen"""
+    if not _may_read_stats(token):
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED,
+                            detail="The stats are not open on this server")
+
+    async with db_manager.get_session() as db:
+        return stats_page.render(await stats_module.gather(db), token)
 
 
 @app.get("/leaderboard", response_model=LeaderboardResponse)
