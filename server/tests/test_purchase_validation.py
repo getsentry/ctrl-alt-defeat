@@ -3,7 +3,7 @@ Tests for purchase validation and placement
 """
 
 import pytest
-from tests.conftest import SHOP_SEED
+from tests.conftest import SALE_SHOP_SEED, UNAFFORDABLE_SHOP_SEED
 
 
 class TestPurchaseValidation:
@@ -12,9 +12,7 @@ class TestPurchaseValidation:
     def test_purchase_to_storage(self, auth_client):
         """Test purchasing an item to storage"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 42}
-        )
+        response = auth_client.post("/session/start", json={"seed": 42})
         data = response.json()
 
         # Get shop
@@ -58,9 +56,7 @@ class TestPurchaseValidation:
     def test_purchase_to_grid(self, auth_client):
         """Test purchasing an item to grid coordinates"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 42}
-        )
+        response = auth_client.post("/session/start", json={"seed": 42})
         data = response.json()
 
         # Get shop
@@ -96,9 +92,7 @@ class TestPurchaseValidation:
     def test_purchase_invalid_coordinates(self, auth_client):
         """Test that invalid grid coordinates are rejected"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 42}
-        )
+        response = auth_client.post("/session/start", json={"seed": 42})
         data = response.json()
 
         # Get shop
@@ -132,9 +126,7 @@ class TestPurchaseValidation:
     def test_purchase_overlapping_item(self, auth_client):
         """Test that overlapping items are rejected"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 42}
-        )
+        response = auth_client.post("/session/start", json={"seed": 42})
         data = response.json()
 
         # Get shop
@@ -170,9 +162,7 @@ class TestPurchaseValidation:
     def test_purchase_nonexistent_item(self, auth_client):
         """Test purchasing an item not in the shop"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 42}
-        )
+        response = auth_client.post("/session/start", json={"seed": 42})
 
         # Try to purchase non-existent item
         response = auth_client.post(
@@ -189,10 +179,10 @@ class TestPurchaseValidation:
 
     def test_purchase_insufficient_gold(self, auth_client):
         """Test purchasing when player doesn't have enough gold"""
-        # Start session with a seed whose shop is all non-container items, so
-        # every one of them can go to storage and gold is what runs out.
+        # A seed whose shop is all non-container items and cannot all be
+        # afforded, so every one can go to storage and gold is what runs out.
         response = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
+            "/session/start", json={"seed": UNAFFORDABLE_SHOP_SEED}
         )
         data = response.json()
 
@@ -238,14 +228,17 @@ class TestPurchaseValidation:
                 return
 
         # This should never happen - we should always run out of gold
-        pytest.fail("Could not create insufficient gold scenario")
+        left = auth_client.get("/session").json()
+        pytest.fail(
+            f"Bought every offer and still had {left['gold']} gold. The seed is "
+            f"chosen for a shop nobody can afford, so either the shop or the "
+            f"gold is not what conftest measured."
+        )
 
     def test_purchase_removes_from_shop(self, auth_client):
         """Test that purchased items are removed from shop"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 42}
-        )
+        response = auth_client.post("/session/start", json={"seed": 42})
         data = response.json()
 
         # Get shop
@@ -286,18 +279,11 @@ class TestPurchaseValidation:
                 assert item["id"] != shop_item["id"]
 
 
-# A seed whose round-one shop has a non-container item on sale, costing less today.
-# (Reseeded when the catalogue correction changed what shops offer.)
-SALE_SEED = 15
-
-
 class TestBuyingOnSale:
     """A sale is the shop's, and ends when the item changes hands"""
 
     def _sale_item(self, auth_client):
-        response = auth_client.post(
-            "/session/start", json={"seed": SALE_SEED}
-        )
+        response = auth_client.post("/session/start", json={"seed": SALE_SHOP_SEED})
         assert response.status_code == 200
         shop = response.json()["session"]["current_shop"]
         item = next(i for i in shop if i and i["on_sale"] and i["cost"] > i["price"])

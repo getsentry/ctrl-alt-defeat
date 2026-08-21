@@ -1078,6 +1078,21 @@ Eighteen rounds is the whole game, so there is no nineteenth figure.
 - **Selling Items**: half the purchase price, rounded up
 
 ### 5.2 Shop System
+
+**The shop offers nothing that does nothing.** Three questions are asked of an
+item, and the first two are the catalogue's: does the source game sell it, and
+is it gated behind something the player must hold first. The third is ours — an
+item whose clauses are not built yet does nothing whatever, and selling one
+takes a player's gold for a blank card. A third of what the shop could offer
+was in that state, most of it modules, which cannot work until sockets exist.
+
+It is asked at the shop rather than written into the catalogue, because it is a
+fact about us rather than about the game: the day a clause is built the item
+comes back, with nobody remembering to edit anything.
+
+A bag with no clauses is not this. Its slots are its effect and it owes
+nothing.
+
 - **Slots**: 5 items per refresh
 - **Reroll Cost**: 1 gold for the first four rolls of a round, 2 gold after
 - **Sales**: each item offered has a 10% chance of being half price, rounded

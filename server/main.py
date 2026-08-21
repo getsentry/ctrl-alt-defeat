@@ -13,6 +13,8 @@ from http import HTTPStatus
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import auth_endpoints
+import bot_names
+import bot_opponents
 import describe
 import sentry_sdk
 from auth import TokenData, get_current_user
@@ -31,6 +33,7 @@ from inventory_manager import (
     ItemNotFoundError,
     combining_partners,
 )
+from item_effects import ItemSpec
 from items import SALE_CHANCE, Item, PlacedItem
 from matchmaking import MatchmakingService
 from payout import run_is_over, run_was_lost, run_was_won
@@ -71,8 +74,6 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 from session_manager import SessionManager
-import bot_names
-import bot_opponents
 from shop_phase import entering_the_shop, sale_chance_from
 from utils import Position, to_position, utc_now
 
@@ -499,6 +500,32 @@ def held_item_types(session: GameSession) -> Set[str]:
     }
 
 
+def sellable(spec: ItemSpec, held: Set[str]) -> bool:
+    """Whether the shop may offer this item at all.
+
+    Three questions, and the first two are the catalogue's own: does the source
+    game sell it, and is it gated behind something the player has to hold
+    first.
+
+    The third is ours. An item with nothing built and a clause still owed does
+    nothing whatever, and selling one takes a player's gold for a blank card.
+    A third of what the shop could offer was in that state, most of it modules,
+    which cannot work until sockets exist.
+
+    It is asked here rather than written into the catalogue because it is a
+    fact about us and not about the game: the day a clause is built the item
+    comes back, with nobody remembering to edit anything.
+
+    A bag with no clauses is not this. Its slots are its effect, and it owes
+    nothing.
+    """
+    if not spec.in_shop:
+        return False
+    if spec.shop_needs and spec.shop_needs not in held:
+        return False
+    return bool(spec.triggers) or not spec.unbuilt
+
+
 def generate_shop_items(
     round_number: int,
     seed: Optional[int] = None,
@@ -535,9 +562,7 @@ def generate_shop_items(
         "godly": [],
     }
     for item_type, item_spec in ITEM_CATALOG.items():
-        if not item_spec.in_shop:
-            continue
-        if item_spec.shop_needs and item_spec.shop_needs not in held:
+        if not sellable(item_spec, held):
             continue
         rarity = item_spec.rarity.lower()
         # Map uncommon to rare for our table
@@ -1170,9 +1195,11 @@ def generate_ai_opponent(
     A test difficulty still wins, because tests pin an exact opponent.
     """
     if TEST_MODE and test_difficulty:
-        return (get_test_ai_items(test_difficulty, round_number),
-                generate_ai_containers(),
-                f"AI Level {test_difficulty}")
+        return (
+            get_test_ai_items(test_difficulty, round_number),
+            generate_ai_containers(),
+            f"AI Level {test_difficulty}",
+        )
 
     build = bot_opponents.pick(round_number)
     if build is not None:

@@ -1817,3 +1817,9 @@ class ItemSpec:
 
     # Offered only while the player holds this item. Empty means always.
     shop_needs: str = ""
+
+    #: The clauses on this item's wiki page that nothing here builds yet, in
+    #: the catalogue's own words. It is the work queue, and the shop reads it
+    #: too: an item with nothing built and something owed does nothing at all,
+    #: and selling one takes a player's gold for a blank card.
+    unbuilt: Tuple[str, ...] = ()

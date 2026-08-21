@@ -1,3 +1,30 @@
+### A third of the shop was items that do nothing
+
+Modules kept appearing, and so did ordinary items with blank cards. Both were
+one problem: `in_shop` records what the source game sells, and nothing asked
+whether we could honour it yet. 43 of the 126 sellable item types had no
+built trigger and a clause still owed -- 29 modules, which cannot work until
+sockets exist, and 14 others whose clauses are shop-phase or otherwise unbuilt.
+
+The rule is read rather than written down, so an item returns to the shop the
+day its clause is built. `sellable()` is the one place it is asked.
+
+### Seeds in tests are searched for now, not written down
+
+Six tests pinned a shop by seed, and the shop's pool changes whenever an item's
+availability is corrected or a clause is built -- which is now most weeks. Each
+change broke a handful of tests somewhere else, for reasons they were not
+about, and the fix was always to pick another number. One of the failure
+messages had been reduced to telling the next person to go and pick one.
+
+`conftest` states the property instead and looks the number up: five fitting
+items, one two squares across, a shop nobody can afford, one with a sale.
+
+It also stopped writing down the starting gold. It was 12 here, from a stale
+default and comment in `schemas.py`; the real figure is `ROUND_GOLD[0]`, which
+is 13. A shop chosen for being unaffordable at 12 was affordable at 13, and
+every one of its five offers got bought.
+
 ### "(once)" stopped the gaining and not the paying
 
 Four items wrote it the same way -- a `use` trigger with the price on it and a

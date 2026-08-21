@@ -8,7 +8,12 @@ from containers import Container
 from items import sale_price
 from main import generate_ai_opponent
 from pydantic import BaseModel
-from tests.conftest import MULTI_SQUARE_SHOP_SEED, SHOP_SEED, SINGLE_SQUARE_SHOP_SEED
+from tests.conftest import (
+    MULTI_SQUARE_SHOP_SEED,
+    SHOP_SEED,
+    SINGLE_SQUARE_SHOP_SEED,
+    TWO_SINGLE_SQUARES_SHOP_SEED,
+)
 from tests.test_utils import find_bad_positions
 
 
@@ -316,7 +321,9 @@ class TestBattleAPIResponse:
     def test_battle_response_preserves_item_metadata(self, auth_client):
         """Test that item metadata is preserved in response"""
         # Start session
-        response = auth_client.post("/session/start", json={"seed": 123})
+        response = auth_client.post(
+            "/session/start", json={"seed": TWO_SINGLE_SQUARES_SHOP_SEED}
+        )
         data = response.json()
 
         # Purchase specific items
@@ -2713,3 +2720,110 @@ class TestARunThatWasAbandoned:
         auth_client.post("/session/start", json={"seed": SHOP_SEED})
 
         assert auth_client.get("/auth/me").json()["snuba_coin"] == earned
+
+
+class TestTheShopOffersNothingThatDoesNothing:
+    """A card with no lines on it takes a player's gold and gives them a blank.
+
+    Two different questions are being asked of an item, and they were not being
+    told apart. `in_shop` says what the source game sells, which is what the
+    wiki decides. Whether we can honour that yet is ours, and it changes every
+    time a clause is built -- so it is asked at the shop rather than written
+    into the catalogue, where it would have to be unwritten again.
+
+    A third of what the shop could offer was in this state: 43 of 126 item
+    types, most of them modules, which do nothing at all until sockets exist.
+    """
+
+    @staticmethod
+    def _offered(shops=200):
+        from main import generate_shop_items
+
+        seen = set()
+        for seed in range(shops):
+            for round_number in (1, 5, 10, 15):
+                for offer in generate_shop_items(round_number, seed=seed, held=set()):
+                    if offer:
+                        seen.add(offer.item_type)
+        return seen
+
+    def test_nothing_offered_is_a_blank_card(self):
+        from battle_engine import ITEM_CATALOG
+
+        blank = [
+            key
+            for key in self._offered()
+            if not ITEM_CATALOG[key].triggers and ITEM_CATALOG[key].unbuilt
+        ]
+        assert blank == [], f"bought and does nothing: {sorted(blank)}"
+
+    def test_no_module_is_offered(self):
+        """A module's effect depends on the socket it sits in, and there are
+        no sockets. Every one of the thirty has its clauses unbuilt for that
+        reason, so the rule above already covers them -- this says so out
+        loud, because they are what a player noticed."""
+        from battle_engine import ITEM_CATALOG
+
+        modules = [k for k in self._offered() if ITEM_CATALOG[k].category == "module"]
+        assert modules == [], f"offered a module: {sorted(modules)}"
+
+    def test_a_bag_with_no_clauses_is_still_offered(self):
+        """Its slots are its effect. It does nothing in a battle and owes
+        nothing either, which is not the same as an unfinished item."""
+        assert "standard_vm" in self._offered()
+
+    def test_the_rule_is_read_and_not_written_down(self):
+        """An item comes back the day its clause is built, with nobody
+        editing the catalogue to let it.
+        """
+        from copy import deepcopy
+
+        import main
+        from battle_engine import ITEM_CATALOG
+        from item_effects import BattleStartTrigger, BlockEffect
+
+        dud = next(
+            k
+            for k, s in ITEM_CATALOG.items()
+            if s.in_shop and not s.shop_needs and not s.triggers and s.unbuilt
+        )
+        assert dud not in self._offered(shops=60)
+
+        spare = deepcopy(ITEM_CATALOG[dud])
+        try:
+            ITEM_CATALOG[dud].triggers = [
+                BattleStartTrigger(effects=[BlockEffect(block_amount=1)])
+            ]
+            assert dud in self._offered(
+                shops=400
+            ), f"{dud} does something now and is still not sold"
+        finally:
+            ITEM_CATALOG[dud] = spare
+        assert main  # the shop reads the catalogue live, which is the point
+
+    def test_the_rule_covers_the_whole_catalogue_not_just_a_sample(self):
+        """A sample can only show what it drew. This asks the rule itself
+        about every item there is, so one added tomorrow is covered without
+        anyone remembering this test.
+        """
+        from battle_engine import ITEM_CATALOG
+        from main import sellable
+
+        blank = [
+            key
+            for key, spec in ITEM_CATALOG.items()
+            if sellable(spec, set()) and not spec.triggers and spec.unbuilt
+        ]
+        assert blank == [], f"would be sold and does nothing: {sorted(blank)}"
+
+    def test_a_gate_is_still_a_gate(self):
+        """The new question is asked as well as the old two, not instead."""
+        from battle_engine import ITEM_CATALOG
+        from main import sellable
+
+        gated = next(k for k, s in ITEM_CATALOG.items() if s.shop_needs)
+        spec = ITEM_CATALOG[gated]
+        assert not sellable(spec, set())
+        assert sellable(spec, {spec.shop_needs}) == (
+            bool(spec.triggers) or not spec.unbuilt
+        )

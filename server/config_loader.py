@@ -208,6 +208,7 @@ class ConfigLoader:
             recipe=self._parse_recipes(config.get("recipe", []), container_id),
             recipe_only=bool(config.get("recipe_only", False)),
             shop_needs=config.get("shop_needs", ""),
+            unbuilt=tuple(config.get("unbuilt", ())),
             # Read the same way an item's is. It was not read at all, so every
             # container was offered in the shop whatever its own file said --
             # three Unique bags the source game gives out as treasure among
@@ -253,6 +254,7 @@ class ConfigLoader:
             recipe=self._parse_recipes(config.get("recipe", []), item_id),
             recipe_only=bool(config.get("recipe_only", False)),
             shop_needs=config.get("shop_needs", ""),
+            unbuilt=tuple(config.get("unbuilt", ())),
         )
 
     def _parse_recipes(self, configs: List[Dict[str, Any]], item_id: str) -> tuple:
