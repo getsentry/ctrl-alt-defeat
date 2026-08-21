@@ -137,6 +137,14 @@ signal container_dropped(container_data: APITypes.PlacedItem, grid_pos: Vector2i
 # grid draws only the grid, so it passes the rest on rather than keeping it.
 signal inventory_returned(response)
 
+## An item was put down on squares other items already hold. What becomes of
+## them is more than a grid can arrange -- one goes into the player's hand and
+## the rest into the chest -- so the screen answers this.
+##
+## Each entry of `displaced` is the item and where on screen it was, which is
+## where it is thrown into the chest from.
+signal items_displaced(item_data: APITypes.Item, grid_pos: Vector2i, displaced: Array)
+
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	_initialize_grids()
@@ -644,8 +652,14 @@ func _end_drag(dropped_at := Vector2.INF):
 			_place_item_at(temp_object, original_grid_pos, original_facing)
 
 	else:
-		# Can't place at target position, return to original
+		var in_the_way := displaced_by(item_data, grid_pos)
+		# Back where it came from, facing the way it was: either there is
+		# nothing to make way, or it waits there until the server has agreed
+		# to the swap. An item hanging in the air while the answer comes back
+		# reads as a game that has stopped listening.
 		_place_item_at(temp_object, original_grid_pos, original_facing)
+		if not in_the_way.is_empty():
+			items_displaced.emit(item_data, grid_pos, in_the_way)
 
 func drop_changes_nothing(grid_pos: Vector2i, item_data: APITypes.Item) -> bool:
 	"""Whether putting the held item down here leaves the board as it was.
@@ -690,6 +704,51 @@ func _place_item_at(item_visual: Control, grid_pos: Vector2i, facing := -1):
 func can_place_item(item_data, grid_pos: Vector2i) -> bool:
 	"""Public method to check if item can be placed at position"""
 	return _can_place_item(item_data, grid_pos)
+
+
+func displaced_by(item_data, grid_pos: Vector2i) -> Array:
+	"""The items whose squares this one wants, the biggest of them first.
+
+	Nothing at all where it could not be put down there whatever moved -- off
+	the board, or on a square no server covers -- because sweeping items aside
+	does not make room that was never there. Nothing either where the squares
+	are free, which is an ordinary placement and not a swap.
+
+	Biggest first because that is the one the screen puts in the player's
+	hand: the hardest of them to find a new home for, and the one they are
+	most likely to want to place next. Ties keep the order the grid holds
+	them in, so the same drop always gives the same answer.
+	"""
+	if not _on_the_board(grid_pos):
+		return []
+
+	var in_the_way: Array[Control] = []
+	for offset in item_data.turned_shape():
+		var cell := Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1]))
+		if not _on_the_board(cell) or not active_grid[cell.y][cell.x]:
+			return []
+		var sitting: Control = item_grid[cell.y][cell.x]
+		if sitting == null or sitting == dragging_object:
+			continue
+		if not in_the_way.has(sitting):
+			in_the_way.append(sitting)
+
+	in_the_way.sort_custom(func(one, other):
+		return _squares_under(one) > _squares_under(other))
+
+	var found: Array = []
+	for visual in in_the_way:
+		found.append({
+			"item": visual.get_meta("item_data"),
+			# Where it is now, because that is where it is thrown from.
+			"at": visual.get_global_rect().get_center(),
+		})
+	return found
+
+
+func _squares_under(item_visual: Control) -> int:
+	"""How much of the board an item covers"""
+	return item_visual.get_meta("item_data").turned_shape().size()
 
 func _can_place_item(item_data, grid_pos: Vector2i) -> bool:
 	"""Check if item can be placed at position"""

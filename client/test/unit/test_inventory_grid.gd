@@ -386,6 +386,92 @@ func test_a_grid_with_no_chest_still_drops():
 	assert_eq(grid.items.size(), 1, "It should still be on the grid, not lost")
 
 
+# ============ Putting an item down where another one is ============
+
+func test_nothing_is_displaced_where_the_squares_are_free():
+	_load_default_containers()
+
+	assert_eq(grid.displaced_by(_item({"id": "held"}), Vector2i(2, 3)), [],
+		"An empty square is an ordinary placement, not a swap")
+
+
+func test_the_item_already_there_is_what_a_drop_would_displace():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "sitting"}), Vector2i(2, 3))
+
+	var displaced: Array = grid.displaced_by(_item({"id": "held"}), Vector2i(2, 3))
+
+	assert_eq(displaced.size(), 1, "The one already there should make way")
+	assert_eq(displaced[0]["item"].id, "sitting", "and it should be named")
+
+
+func test_the_biggest_of_them_comes_first():
+	# The screen puts that one in the player's hand: the hardest to find a new
+	# home for, and the likeliest thing they want to place next.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "small", "shape": [[0, 0]]}), Vector2i(2, 3))
+	grid.place_shop_item(
+		_item({"id": "big", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 4))
+
+	var wide = _item({"id": "held", "shape": [[0, 0], [0, 1]]})
+	var displaced: Array = grid.displaced_by(wide, Vector2i(2, 3))
+
+	assert_eq(displaced.size(), 2, "Both are in the way")
+	assert_eq(displaced[0]["item"].id, "big", "The biggest should come first")
+
+
+func test_an_item_is_named_once_however_many_squares_it_blocks():
+	_load_default_containers()
+	grid.place_shop_item(
+		_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+
+	var displaced: Array = grid.displaced_by(
+		_item({"id": "held", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+
+	assert_eq(displaced.size(), 1, "One item, one entry")
+
+
+func test_nothing_is_displaced_off_the_board():
+	# Sweeping items aside does not make room that was never there.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "sitting"}), Vector2i(6, 3))
+
+	var long = _item({"id": "held", "shape": [[0, 0], [1, 0], [2, 0], [3, 0]]})
+	assert_eq(grid.displaced_by(long, Vector2i(6, 3)), [],
+		"Half of it would hang off the end of the grid")
+
+
+func test_nothing_is_displaced_where_no_server_covers_the_square():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "sitting"}), Vector2i(2, 3))
+
+	var wide = _item({"id": "held", "shape": [[0, 0], [1, 0], [2, 0]]})
+	# The containers cover x 2-7 of rows 3 and 4, so this reaches back over
+	# two squares of bare floor to the one the item is standing on.
+	assert_eq(grid.displaced_by(wide, Vector2i(0, 3)), [],
+		"Bare floor is bare floor, and no swap puts a server there")
+
+
+func test_dropping_on_an_item_asks_the_screen_to_make_way():
+	# What becomes of them -- one into the hand, the rest into the chest -- is
+	# more than a grid can arrange.
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "sitting"}), Vector2i(2, 3))
+	grid.place_shop_item(_item({"id": "held"}), Vector2i(4, 3))
+	grid.saves_positions = true
+
+	watch_signals(grid)
+	grid._start_drag(grid.item_visual("held"))
+	grid._end_drag(grid.get_global_transform()
+		* (grid.grid_to_pixel(Vector2i(2, 3)) + Vector2(4, 4)))
+	await get_tree().process_frame
+
+	assert_signal_emitted(grid, "items_displaced",
+		"The screen should be asked to make way")
+	assert_not_null(grid.item_visual("held"),
+		"and the held item waits where it was until the server agrees")
+
+
 # ============ Dragging out of the chest ============
 
 func _grid_under_the_drop() -> InventoryGrid:

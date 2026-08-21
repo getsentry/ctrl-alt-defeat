@@ -121,7 +121,13 @@ func _on_item_stored(item_data: APITypes.PlacedItem):
 func put_on_grid(item: APITypes.Item, grid_pos: Vector2i) -> bool:
 	"""Move an item out of the chest onto a square of the grid."""
 	if not inventory_grid.can_place_item(item, grid_pos):
-		return false
+		# Something is already there. If it can be moved out of the way, the
+		# drop is a swap rather than a refusal -- the same as one square of
+		# the grid to another.
+		var in_the_way := inventory_grid.displaced_by(item, grid_pos)
+		if in_the_way.is_empty():
+			return false
+		return await make_way_for(item, grid_pos, in_the_way)
 
 	var response = await BattleServerAPI.move_item(
 		item.id, [grid_pos.x, grid_pos.y], item.facing())
@@ -136,6 +142,96 @@ func put_on_grid(item: APITypes.Item, grid_pos: Vector2i) -> bool:
 	if aura_overlay != null:
 		aura_overlay.swell()
 	return true
+
+
+func _on_items_displaced(
+	item_data: APITypes.Item, grid_pos: Vector2i, displaced: Array
+) -> void:
+	"""An item was put down on the grid where others already stood"""
+	await make_way_for(item_data, grid_pos, displaced)
+
+
+func make_way_for(
+	item_data: APITypes.Item, grid_pos: Vector2i, displaced: Array,
+	buying: bool = false
+) -> bool:
+	"""Clear the squares an item was put down on, and put it there.
+
+	The biggest of what stood there goes into the player's hand, since it is
+	the hardest to find a new home for and the likeliest thing to be placed
+	next. The rest are thrown in the chest, from where they were standing.
+
+	Every step is the server's to agree to, and every answer carries the whole
+	board back, so what is drawn afterwards is what the server holds rather
+	than what this hoped for.
+	"""
+	var pointer := get_global_mouse_position()
+
+	# They leave the board first. Asked the other way round, the square the
+	# held item wants is still taken and the server rightly refuses.
+	var answer = null
+	for one in displaced:
+		var moved = await BattleServerAPI.move_item(one["item"].id, "storage")
+		if moved == null:
+			print("The server would not clear the way for %s" % item_data.name)
+			_draw_whole_board(answer)
+			return false
+		answer = moved
+
+	# Buying names the same square by a different call, and answers with what
+	# was bought rather than with the whole board.
+	var landed = null
+	if buying:
+		landed = await BattleServerAPI.purchase_item(
+			item_data.id, [grid_pos.x, grid_pos.y], item_data.facing())
+	else:
+		landed = await BattleServerAPI.move_item(
+			item_data.id, [grid_pos.x, grid_pos.y], item_data.facing())
+	if landed == null:
+		print("The server refused to put %s down" % item_data.name)
+		# Whatever made way is in the chest now, and that is the truth to draw.
+		_draw_whole_board(answer)
+		return false
+
+	# The board as the server now has it -- but not the chest, which is drawn
+	# below by the items falling into it. Drawn from the answer as well, they
+	# would be lying in the tray before they had been thrown there.
+	if buying:
+		# The board the last move answered with, which is the one they left,
+		# and then the bought item on top of it.
+		if answer != null:
+			inventory_grid.load_inventory_state(answer.as_inventory_state())
+			GameStateManager.inventory_storage = answer.inventory_storage
+		GameStateManager.gold = landed.gold
+		inventory_grid.place_shop_item(item_data, grid_pos, item_data.facing())
+		_update_stats()
+	else:
+		inventory_grid.load_inventory_state(landed.as_inventory_state())
+		GameStateManager.inventory_storage = landed.inventory_storage
+	_save_current_state()
+
+	for one in displaced.slice(1):
+		storage_bin.catch(one["item"], one["at"])
+	# The biggest is in the hand rather than the chest, so it never reaches the
+	# tray to be drawn there.
+	storage_bin.pick_up(displaced[0]["item"], pointer)
+
+	if aura_overlay != null:
+		aura_overlay.swell()
+	return true
+
+
+func _draw_whole_board(inventory) -> void:
+	"""Draw the board and the chest as the server last described them"""
+	if inventory == null:
+		# Nothing moved, so nothing on screen is out of date except the chest,
+		# which a refused move may still have been drawn against.
+		load_storage()
+		return
+	inventory_grid.load_inventory_state(inventory.as_inventory_state())
+	GameStateManager.inventory_storage = inventory.inventory_storage
+	load_storage()
+	_save_current_state()
 
 
 func _on_item_unstored(item_data: APITypes.Item, global_pos: Vector2):
@@ -815,6 +911,7 @@ func _create_server_room():
 	inventory_grid.item_sold.connect(_on_item_sold)
 	inventory_grid.inventory_returned.connect(_on_inventory_returned)
 	inventory_grid.item_stored.connect(_on_item_stored)
+	inventory_grid.items_displaced.connect(_on_items_displaced)
 	inventory_grid.container_dropped.connect(_on_container_dropped)
 	inventory_grid.item_moved.connect(_on_item_moved)
 	inventory_grid.drag_started.connect(_on_drag_started)
@@ -1404,7 +1501,22 @@ func _end_shop_drag(drop_position: Vector2):
 			else:
 				print("Failed to place item at position")
 		else:
-			print("Cannot place item at this position")
+			# Something is already there. If it can be moved out of the way,
+			# buying it is a swap rather than a refusal, the same as moving
+			# one square of the grid to another.
+			var in_the_way := inventory_grid.displaced_by(
+				dragging_shop_data, grid_pos)
+			if in_the_way.is_empty():
+				print("Cannot place item at this position")
+			else:
+				var slot := dragging_shop_item
+				var buying := dragging_shop_data
+				# The drag is over either way, and what follows waits on the
+				# server, which is no reason to keep carrying the item.
+				_finish_shop_drag()
+				if await make_way_for(buying, grid_pos, in_the_way, true):
+					_mark_shop_item_sold(slot)
+				return
 
 	_finish_shop_drag()
 
