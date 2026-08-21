@@ -13,9 +13,12 @@ extends Control
 signal picked(id: String)
 
 const CARD := Vector2(196, 236)
-const CREAM := Color(0.949, 0.890, 0.769)
-const MAGENTA := Color(1.0, 0.239, 0.745)
-const MUTED := Color(0.541, 0.471, 0.620)
+
+## The panel, the dim behind it and the lettering are Slab's -- this screen had
+## them first, and the game-over screen wanted the same ones.
+const CREAM := Slab.CREAM
+const MAGENTA := Slab.MAGENTA
+const MUTED := Slab.MUTED
 
 var _chosen := ""
 var _cards: Array[Button] = []
@@ -29,14 +32,11 @@ func _ready() -> void:
 	z_index = 100
 	_chosen = Skins.chosen()
 
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.055, 0.039, 0.078, 0.88)
-	add_child(dim)
+	add_child(Slab.over_everything())
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.add_theme_stylebox_override("panel", _slab(Color(0.110, 0.078, 0.157)))
+	panel.add_theme_stylebox_override("panel", _slab(Slab.FILL))
 	add_child(panel)
 
 	var margin := MarginContainer.new()
@@ -131,22 +131,11 @@ func _show_chosen() -> void:
 
 
 func _heading(text: String, size: int, colour: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", size)
-	label.add_theme_color_override("font_color", colour)
-	return label
+	return Slab.heading(text, size, colour)
 
 
-func _slab(fill: Color, edge: Color = Color(0.275, 0.220, 0.361), width: int = 2) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = fill
-	box.border_color = edge
-	box.set_border_width_all(width)
-	box.set_corner_radius_all(12)
-	box.set_content_margin_all(8)
-	return box
+func _slab(fill: Color, edge: Color = Slab.EDGE, width: int = 2) -> StyleBoxFlat:
+	return Slab.slab(fill, edge, width)
 
 
 func _unhandled_input(event: InputEvent) -> void:
