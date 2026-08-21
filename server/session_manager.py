@@ -53,14 +53,15 @@ class SessionManager:
         self,
         player_id: str,
         game_seed: Optional[int] = None,
-        player_name: Optional[str] = None,
     ) -> GameSessionPydantic:
         """Create a new game session
 
         Args:
             player_id: The user ID (as string) for this session, or a temporary ID for guest users
             game_seed: Optional seed for deterministic gameplay
-            player_name: Optional player name to use for this session
+
+        The player's name is not an argument. It belongs to the account, and
+        the session reads it from there.
         """
         # Generate seed if not provided
         if game_seed is None:
@@ -69,44 +70,23 @@ class SessionManager:
         # Try to get the user by ID first
         user = await self._get_user(player_id)
 
-        # If no user found, create a guest user
+        # If no user found, create a guest user. This is the path a token that
+        # outlived its account takes.
         if not user:
+            from auth_endpoints import insert_generated_guest
+
             async with db_manager.get_session() as db:
-                import uuid
-
-                display_name = player_name if player_name else f"Player_{player_id[:8]}"
-
-                username = f"Guest_{uuid.uuid4().hex[:8]}_{random.randint(1000, 9999)}"
-                user = User(
-                    username=username,
-                    display_name=display_name,
-                    account_type="guest",
-                    account_status="active",
-                    total_games_played=0,
-                    total_wins=0,
-                    total_losses=0,
-                    current_rank=1000,
-                )
-                db.add(user)
-                await db.commit()
-                await db.refresh(user)
+                user = await insert_generated_guest(db)
 
             # Update player_id to be the actual user ID
             player_id = str(user.id)
-        else:
-            if player_name and user.display_name != player_name:
-                user.display_name = player_name
-                async with db_manager.get_session() as db:
-                    db.add(user)
-                    await db.commit()
-                    await db.refresh(user)
 
         # Create session with starting values
         from main import ROUND_GOLD, generate_shop_items
 
         session = GameSessionPydantic(
             player_id=player_id,  # This is now the actual user.id
-            player_name=user.display_name or user.username,
+            player_name=user.username,
             round=1,
             gold=ROUND_GOLD[0],  # Round one's gold, per Backpack Battles
             lives=5,

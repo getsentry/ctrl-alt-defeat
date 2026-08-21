@@ -48,7 +48,7 @@ class TestShopShape:
         """Test that refreshed shop also includes shape data"""
         # Create a test session
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
 
@@ -66,7 +66,7 @@ class TestShopShape:
     def test_session_start_shop_has_shapes(self, auth_client):
         """Test that initial shop from session start has shapes"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
 

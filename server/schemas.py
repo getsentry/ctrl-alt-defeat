@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from containers import Container
 from grid_system import Rotation
 from items import Item, PlacedItem
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from utils import Position
 
 
@@ -37,9 +37,18 @@ class GameSession(BaseModel):
 
 
 class StartSessionRequest(BaseModel):
-    """Request to start a new game session"""
+    """Request to start a new game session
 
-    player_name: Optional[str] = None
+    The player's name is not sent. It belongs to the account, and the server
+    reads it from the token.
+
+    An unknown field is refused rather than dropped. Pydantic ignores extras by
+    default, so a client still sending `player_name` would be answered 200 and
+    the name would go nowhere. A 422 says what happened.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
     seed: Optional[int] = None
 
 

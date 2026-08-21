@@ -12,7 +12,7 @@ class TestBattleWithSession:
         """Test that battling with empty inventory fails"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
 
         # Try to battle with empty inventory
@@ -29,7 +29,7 @@ class TestBattleWithSession:
         """Test battle after purchasing items"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -86,7 +86,7 @@ class TestBattleWithSession:
         """Test that battle uses the items placed on grid, not storage"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 

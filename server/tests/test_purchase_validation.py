@@ -13,7 +13,7 @@ class TestPurchaseValidation:
         """Test purchasing an item to storage"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -59,7 +59,7 @@ class TestPurchaseValidation:
         """Test purchasing an item to grid coordinates"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -97,7 +97,7 @@ class TestPurchaseValidation:
         """Test that invalid grid coordinates are rejected"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -133,7 +133,7 @@ class TestPurchaseValidation:
         """Test that overlapping items are rejected"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -171,7 +171,7 @@ class TestPurchaseValidation:
         """Test purchasing an item not in the shop"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
 
         # Try to purchase non-existent item
@@ -192,7 +192,7 @@ class TestPurchaseValidation:
         # Start session with a seed whose shop is all non-container items, so
         # every one of them can go to storage and gold is what runs out.
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         data = response.json()
 
@@ -244,7 +244,7 @@ class TestPurchaseValidation:
         """Test that purchased items are removed from shop"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -296,7 +296,7 @@ class TestBuyingOnSale:
 
     def _sale_item(self, auth_client):
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": SALE_SEED}
+            "/session/start", json={"seed": SALE_SEED}
         )
         assert response.status_code == 200
         shop = response.json()["session"]["current_shop"]

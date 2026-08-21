@@ -31,7 +31,7 @@ class TestAPISlugResponses:
     def test_session_start_includes_slugs(self, auth_client):
         """Test that /session/start returns items with slugs"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
         data = response.json()
@@ -75,7 +75,7 @@ class TestAPISlugResponses:
         """Test that /shop/refresh returns items with slugs"""
         # Start session first
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
 
@@ -99,7 +99,7 @@ class TestAPISlugResponses:
         """Test that /shop/purchase returns purchased item with slug"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         data = response.json()
         session = data["session"]
@@ -128,7 +128,7 @@ class TestAPISlugResponses:
     def test_sell_item_response_includes_slug(self, auth_client):
         """Test that /sell/item returns the sold item with its slug"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         assert response.status_code == 200
         data = response.json()
@@ -165,7 +165,7 @@ class TestAPISlugResponses:
 
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
         data = response.json()
@@ -211,7 +211,7 @@ class TestAPISlugResponses:
     def test_battle_response_new_shop_has_slugs(self, auth_client):
         """Test that battle response includes new shop with slugs"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         assert response.status_code == 200
         data = response.json()
@@ -245,7 +245,7 @@ class TestAPISlugResponses:
         """Test that session updates include inventory items with slugs"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
         data = response.json()
@@ -352,7 +352,7 @@ class TestAPISlugResponses:
         """Test that battle responses include player and enemy inventories with slugs"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
         data = response.json()
@@ -411,7 +411,7 @@ class TestAPISlugResponses:
         """Test that server_containers in responses include slugs"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
         data = response.json()
@@ -466,7 +466,7 @@ class TestAPISlugResponses:
         """Test that battle response includes server containers with proper slugs"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "TestPlayer"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
         data = response.json()

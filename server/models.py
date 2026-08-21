@@ -12,6 +12,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    func,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from utils import utc_now
@@ -123,10 +124,11 @@ class User(Base):
 
     # Identity
     id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(
-        String(32), unique=True, nullable=False, index=True
-    )  # Generated for guests
-    display_name = Column(String(64), nullable=True)
+    # The account's only name. It is generated when the account is made, the
+    # player may change it, and a leaderboard shows it, so it is unique. The
+    # unique index below ignores letter case, so `Dan` and `dan` cannot both
+    # exist.
+    username = Column(String(32), unique=True, nullable=False, index=True)
 
     # Account type and status
     account_type = Column(
@@ -149,12 +151,18 @@ class User(Base):
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     last_login_at = Column(DateTime, nullable=True)
 
+    __table_args__ = (
+        # The plain unique constraint on `username` still lets `Dan` and `dan`
+        # both exist, and on a leaderboard those read as one player. This is
+        # what actually keeps names apart.
+        Index("ix_users_username_lower", func.lower(username), unique=True),
+    )
+
     def to_dict(self) -> dict:
         """Convert to dictionary for API responses"""
         return {
             "id": self.id,
             "username": self.username,
-            "display_name": self.display_name or self.username,
             "account_type": self.account_type,
             "account_status": self.account_status,
             "email": self.email,

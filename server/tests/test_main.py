@@ -102,7 +102,7 @@ class TestBattleAPIResponse:
         # Start a new session
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": MULTI_SQUARE_SHOP_SEED},
+            json={"seed": MULTI_SQUARE_SHOP_SEED},
         )
         assert response.status_code == 200
         data = response.json()
@@ -228,7 +228,7 @@ class TestBattleAPIResponse:
         """Test that item shapes are properly serialized"""
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": SHOP_SEED},
+            json={"seed": SHOP_SEED},
         )
         data = response.json()
 
@@ -268,7 +268,7 @@ class TestBattleAPIResponse:
         """Test battle response when player has only containers, no items"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": None}
+            "/session/start", json={"seed": None}
         )
 
         # Don't purchase any items, just battle
@@ -285,7 +285,7 @@ class TestBattleAPIResponse:
         """Test that item metadata is preserved in response"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 123}
+            "/session/start", json={"seed": 123}
         )
         data = response.json()
 
@@ -334,7 +334,7 @@ class TestBattleAPIResponse:
         """Test that enemy inventory is different for different rounds"""
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": SHOP_SEED},
+            json={"seed": SHOP_SEED},
         )
         data = response.json()
 
@@ -376,7 +376,7 @@ class TestBattleAPIResponse:
         """Test that items in storage are not included in battle inventory"""
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": SHOP_SEED},
+            json={"seed": SHOP_SEED},
         )
         data = response.json()
 
@@ -448,7 +448,7 @@ class TestContainerPurchase:
 
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "Tester", "seed": seed},
+            json={"seed": seed},
         )
         assert response.status_code == 200
         data = response.json()
@@ -613,7 +613,7 @@ class TestOnePlayerCannotActAsAnother:
         token = client.post("/auth/guest").json()["access_token"]
         client.headers["Authorization"] = f"Bearer {token}"
         started = client.post(
-            "/session/start", json={"player_name": name, "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         ).json()
         return client, started["player_id"]
 
@@ -709,7 +709,7 @@ class TestSellItemAPI:
     def _buy_one(self, auth_client):
         """Start a session and put one item on the grid. Returns the details."""
         start = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         ).json()
         player_id = start["player_id"]
         item = next(
@@ -778,7 +778,7 @@ class TestATurnIsKept:
     def _start(self, auth_client):
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "turner", "seed": MULTI_SQUARE_SHOP_SEED},
+            json={"seed": MULTI_SQUARE_SHOP_SEED},
         )
         assert response.status_code == 200
         return response.json()["session"]
@@ -901,7 +901,7 @@ class TestMoveContainerAPI:
     def _start(self, auth_client):
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "mover", "seed": SINGLE_SQUARE_SHOP_SEED},
+            json={"seed": SINGLE_SQUARE_SHOP_SEED},
         )
         assert response.status_code == 200
         return response.json()["session"]
@@ -945,7 +945,7 @@ class TestMoveContainerAPI:
         """
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "mover", "seed": MULTI_SQUARE_SHOP_SEED},
+            json={"seed": MULTI_SQUARE_SHOP_SEED},
         )
         session = response.json()["session"]
         wide = [
@@ -1032,7 +1032,7 @@ class TestMoveItemAPI:
         """Test moving an item from one grid position to another"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -1078,7 +1078,7 @@ class TestMoveItemAPI:
         """Test moving an item from grid to storage"""
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": SHOP_SEED},
+            json={"seed": SHOP_SEED},
         )
         data = response.json()
 
@@ -1116,7 +1116,7 @@ class TestMoveItemAPI:
         """Test moving an item from storage to grid"""
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": SHOP_SEED},
+            json={"seed": SHOP_SEED},
         )
         data = response.json()
 
@@ -1154,7 +1154,7 @@ class TestMoveItemAPI:
         """Test that moving from storage to storage is a no-op"""
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": SHOP_SEED},
+            json={"seed": SHOP_SEED},
         )
         data = response.json()
 
@@ -1190,7 +1190,7 @@ class TestMoveItemAPI:
         """Test moving an item to a position not on a container"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         data = response.json()
 
@@ -1226,7 +1226,7 @@ class TestMoveItemAPI:
         """Test moving an item to an occupied position"""
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": SHOP_SEED},
+            json={"seed": SHOP_SEED},
         )
         data = response.json()
 
@@ -1272,7 +1272,7 @@ class TestMoveItemAPI:
         """Test moving an item that doesn't exist"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={}
         )
 
         # Try to move non-existent item
@@ -1290,7 +1290,7 @@ class TestMoveItemAPI:
         """Test moving an item to the same position (no-op)"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         data = response.json()
 
@@ -1326,7 +1326,7 @@ class TestMoveItemAPI:
         """Test that moving an item preserves all its metadata"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 123}
+            "/session/start", json={"seed": 123}
         )
         data = response.json()
 
@@ -1379,7 +1379,7 @@ class TestMoveItemAPI:
         """
         response = auth_client.post(
             "/session/start",
-            json={"player_name": "test_player", "seed": MULTI_SQUARE_SHOP_SEED},
+            json={"seed": MULTI_SQUARE_SHOP_SEED},
         )
         data = response.json()
 
@@ -1487,7 +1487,7 @@ class TestPositionContractOverHttp:
 
     def test_session_start_positions_are_canonical(self, auth_client):
         response = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         assert response.status_code == 200
         assert_positions_are_canonical(response.json(), "POST /session/start")
@@ -1495,7 +1495,7 @@ class TestPositionContractOverHttp:
     def test_session_start_containers_use_lists(self, auth_client):
         """Starting containers report their position as a list"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         containers = response.json()["session"]["server_containers"]
         assert len(containers) == 3
@@ -1509,7 +1509,7 @@ class TestPositionContractOverHttp:
         shows what was actually stored.
         """
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
 
         response = auth_client.get("/session")
@@ -1518,7 +1518,7 @@ class TestPositionContractOverHttp:
 
     def test_purchase_positions_are_canonical(self, auth_client):
         start = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         session = start.json()["session"]
 
@@ -1528,7 +1528,7 @@ class TestPositionContractOverHttp:
 
     def test_move_positions_are_canonical(self, auth_client):
         start = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         session = start.json()["session"]
 
@@ -1552,7 +1552,7 @@ class TestPositionContractOverHttp:
     def test_an_item_in_the_chest_carries_no_position(self, auth_client):
         """An item in the chest carries no position; only a placed one has one."""
         start = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         session = start.json()["session"]
 
@@ -1573,7 +1573,7 @@ class TestPositionContractOverHttp:
     def test_battle_positions_are_canonical(self, auth_client):
         """The battle response holds both inventories, so it carries the most positions"""
         start = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         session = start.json()["session"]
 
@@ -1598,7 +1598,7 @@ class TestPositionContractOverHttp:
         responses = []
 
         start = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         assert start.status_code == 200
         session = start.json()["session"]
@@ -1640,7 +1640,7 @@ class TestPositionContractRejectsBadInput:
 
     def test_purchase_rejects_a_dictionary_position(self, auth_client):
         start = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         session = start.json()["session"]
         shop_item = next(
@@ -1660,7 +1660,7 @@ class TestPositionContractRejectsBadInput:
 
     def test_purchase_rejects_a_three_item_position(self, auth_client):
         start = auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         session = start.json()["session"]
         shop_item = next(
@@ -1680,7 +1680,7 @@ class TestPositionContractRejectsBadInput:
 
     def test_move_rejects_a_dictionary_position(self, auth_client):
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
 
         response = auth_client.post(
@@ -1755,7 +1755,7 @@ class TestItemsCombineAfterTheBattle:
 
     def test_a_rack_that_can_craft_does_so_when_the_battle_ends(self, auth_client):
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         rack_holding(
             auth_client.user_id,
@@ -1782,7 +1782,7 @@ class TestItemsCombineAfterTheBattle:
 
     def test_the_client_is_told_where_to_play_the_animation(self, auth_client):
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         rack_holding(
             auth_client.user_id,
@@ -1805,7 +1805,7 @@ class TestItemsCombineAfterTheBattle:
         battle_result.player_inventory is no help: that is the rack that fought.
         """
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         rack_holding(
             auth_client.user_id,
@@ -1832,7 +1832,7 @@ class TestItemsCombineAfterTheBattle:
         `position` being null, and finds it there under the id it was given.
         """
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         rack_holding(
             auth_client.user_id,
@@ -1856,7 +1856,7 @@ class TestItemsCombineAfterTheBattle:
 
     def test_a_rack_that_cannot_craft_reports_nothing(self, auth_client):
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         rack_holding(auth_client.user_id, ("null_blade", [2, 3]))
         result = auth_client.post(
@@ -1877,7 +1877,7 @@ class TestTheClientIsWarnedBeforeItemsCombine:
 
     def _started(self, auth_client):
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         return auth_client
 
@@ -2032,7 +2032,7 @@ class TestTheClientIsWarnedBeforeItemsCombine:
         progress until the player moved something.
         """
         auth_client.post(
-            "/session/start", json={"player_name": "Tester", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         rack_holding(
             auth_client.user_id,
@@ -2063,7 +2063,7 @@ class TestStandingItemsOnTheRackForATest:
     """
 
     def test_it_stands_the_items_where_it_is_told(self, auth_client):
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
 
         answered = auth_client.post(
             "/test/rack",
@@ -2085,7 +2085,7 @@ class TestStandingItemsOnTheRackForATest:
         assert [item["position"] for item in rack] == [[2, 3], [3, 3]]
 
     def test_the_rack_it_sets_is_the_rack_the_session_has(self, auth_client):
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
         auth_client.post(
             "/test/rack",
             json={
@@ -2102,7 +2102,7 @@ class TestStandingItemsOnTheRackForATest:
 
     def test_it_says_what_that_rack_is_on_the_way_to(self, auth_client):
         """So a client can set a board up and draw the glow without a move."""
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
 
         answered = auth_client.post(
             "/test/rack",
@@ -2120,7 +2120,7 @@ class TestStandingItemsOnTheRackForATest:
         ]
 
     def test_it_replaces_the_rack_rather_than_adding_to_it(self, auth_client):
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
         auth_client.post(
             "/test/rack",
             json={
@@ -2146,7 +2146,7 @@ class TestStandingItemsOnTheRackForATest:
         ], "a test setting the board up wants the board it asked for"
 
     def test_an_item_that_does_not_exist_is_refused(self, auth_client):
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
 
         answered = auth_client.post(
             "/test/rack",
@@ -2245,7 +2245,7 @@ class TestStockingTheShopForATest:
     """
 
     def test_it_offers_what_it_is_told_to(self, auth_client):
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
 
         answered = auth_client.post(
             "/test/shop",
@@ -2264,7 +2264,7 @@ class TestStockingTheShopForATest:
     def test_it_offers_items_no_shop_would(self, auth_client):
         """Which is the whole point: Cube Garbo draws both zones and is not
         for sale anywhere."""
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
 
         auth_client.post(
             "/test/shop",
@@ -2276,7 +2276,7 @@ class TestStockingTheShopForATest:
         assert held["current_shop"][0]["aura"], "and it really does draw a zone"
 
     def test_the_shelf_is_replaced_rather_than_added_to(self, auth_client):
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
         auth_client.post(
             "/test/shop",
             json={"player_id": str(auth_client.user_id), "items": ["cubert"]},
@@ -2292,7 +2292,7 @@ class TestStockingTheShopForATest:
         ]
 
     def test_an_item_that_does_not_exist_is_refused(self, auth_client):
-        auth_client.post("/session/start", json={"player_name": "Tester"})
+        auth_client.post("/session/start", json={})
 
         answered = auth_client.post(
             "/test/shop",
@@ -2307,3 +2307,38 @@ class TestStockingTheShopForATest:
         )
 
         assert answered.status_code == 404
+class TestSessionTakesItsNameFromTheAccount:
+    """The name belongs to the account, not to the session.
+
+    It used to arrive in the body of /session/start, which is how two players
+    ended up able to hold the same name.
+    """
+
+    def test_the_session_is_named_after_the_account(self, auth_client):
+        me = auth_client.get("/auth/me").json()
+        response = auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        body = response.json()
+        assert body["player_name"] == me["username"]
+        assert body["session"]["player_name"] == me["username"]
+
+    def test_a_renamed_account_names_the_next_session(self, auth_client):
+        import uuid
+
+        wanted = f"Named{uuid.uuid4().hex[:8]}"
+        assert auth_client.post("/auth/name", json={"name": wanted}).status_code == 200
+
+        response = auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        assert response.json()["player_name"] == wanted
+
+    def test_a_name_in_the_request_body_is_refused_loudly(self, auth_client):
+        """The field is gone, and sending one is an error, not a no-op.
+
+        Pydantic drops an unknown field without a word by default. A client
+        still sending `player_name` would then be told 200 while the name it
+        sent went nowhere, which is the failure that is hardest to notice.
+        """
+        response = auth_client.post(
+            "/session/start", json={"player_name": "Impostor", "seed": SHOP_SEED}
+        )
+        assert response.status_code == 422, response.text

@@ -274,10 +274,8 @@ async def start_session(
     inventory_manager = InventoryManager()
     inventory_state = inventory_manager.get_state()
 
-    # Create session using SessionManager with player name from request
-    session = await session_manager.create_session(
-        player_id, game_seed, request.player_name
-    )
+    # Create session using SessionManager. The name comes from the account.
+    session = await session_manager.create_session(player_id, game_seed)
 
     # Update session with shop and inventory. A new player holds nothing, so
     # the shop is told nothing: the items that wait on another item cannot be

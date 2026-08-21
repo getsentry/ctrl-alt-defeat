@@ -13,7 +13,7 @@ class TestGameSessionInventory:
     def test_session_creation_with_inventory(self, auth_client):
         """Test that new sessions include inventory state"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         assert response.status_code == 200
 
@@ -39,7 +39,7 @@ class TestGameSessionInventory:
         """Test that inventory persists across requests"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -85,7 +85,7 @@ class TestGameSessionInventory:
     def test_inventory_grid_initialization(self, auth_client):
         """Test that inventory grid is properly initialized"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 

@@ -100,7 +100,7 @@ class TestGameLifecycle:
         """Test a player can win battles and advance rounds"""
         # Start new session with deterministic seed
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 2}
+            "/session/start", json={"seed": 2}
         )
         assert response.status_code == 200
         data = response.json()
@@ -172,7 +172,7 @@ class TestGameLifecycle:
         """Test a player losing 5 times in a row and getting game over"""
         # Start new session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player"}
+            "/session/start", json={}
         )
         assert response.status_code == 200
         data = response.json()
@@ -258,7 +258,7 @@ class TestGameLifecycle:
         """Test that losing reduces lives and winning advances rounds"""
         # Start new session with deterministic seed
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 50}
+            "/session/start", json={"seed": 50}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -332,7 +332,7 @@ class TestGameLifecycle:
         # We'll directly test the victory condition by mocking a session at round 10
         # Start new session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 2}
+            "/session/start", json={"seed": 2}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -377,7 +377,7 @@ class TestGameLifecycle:
     def test_gold_economy_through_rounds(self, auth_client):
         """Test that gold rewards match specification through all rounds"""
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 2}
+            "/session/start", json={"seed": 2}
         )
         data = response.json()
         player_id = data["player_id"]
@@ -436,7 +436,7 @@ class TestGameLifecycle:
         """Test that shop items follow rarity table through rounds"""
         # Start new session with deterministic game seed
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 2}
+            "/session/start", json={"seed": 2}
         )
         data = response.json()
         player_id = data["player_id"]

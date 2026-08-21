@@ -125,8 +125,8 @@ class TestTheGoldReachesThePlayer:
     gold on the floor went unnoticed because of that.
     """
 
-    def _session(self, auth_client, name="shopper"):
-        response = auth_client.post("/session/start", json={"player_name": name})
+    def _session(self, auth_client):
+        response = auth_client.post("/session/start", json={})
         assert response.status_code == 200
         return response.json()["session"]
 
@@ -146,7 +146,7 @@ class TestTheGoldReachesThePlayer:
         # Both sides need something to fight with, so they differ only in
         # whether the armour is there.
         def gold_after(items):
-            session = self._session(auth_client, name=f"p{len(items)}")
+            session = self._session(auth_client)
             got = auth_client.post(
                 "/test/rack",
                 json={
@@ -175,8 +175,8 @@ class TestItOnlyPaysOnceARound:
     and nothing else fires it.
     """
 
-    def _start(self, auth_client, name):
-        r = auth_client.post("/session/start", json={"player_name": name})
+    def _start(self, auth_client):
+        r = auth_client.post("/session/start", json={})
         assert r.status_code == 200
         session = r.json()["session"]
         got = auth_client.post(
@@ -202,7 +202,7 @@ class TestItOnlyPaysOnceARound:
         gold, so an item paying one on every roll would come out even, and a
         test asking only that the player is no richer would see nothing wrong.
         """
-        self._start(auth_client, "roller")
+        self._start(auth_client)
         auth_client.post("/battle/simulate", json={})
         after_battle = self._gold(auth_client)
         rolls = 3
@@ -214,7 +214,7 @@ class TestItOnlyPaysOnceARound:
 
     def test_looking_at_the_session_again_pays_nothing(self, auth_client):
         """Reading the session is what a client does on every screen."""
-        self._start(auth_client, "looker")
+        self._start(auth_client)
         auth_client.post("/battle/simulate", json={})
         first = self._gold(auth_client)
         for _ in range(4):
@@ -223,7 +223,7 @@ class TestItOnlyPaysOnceARound:
 
     def test_a_second_round_pays_a_second_time(self, auth_client):
         """It is once a round, not once a game."""
-        self._start(auth_client, "twice")
+        self._start(auth_client)
         before = self._gold(auth_client)
         auth_client.post("/battle/simulate", json={})
         one = self._gold(auth_client) - before

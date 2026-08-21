@@ -15,7 +15,7 @@ class TestShopRefresh:
         """Test that shop always generates exactly 5 items"""
         # Start session with deterministic seed
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 42}
+            "/session/start", json={"seed": 42}
         )
         data = response.json()
 
@@ -44,7 +44,7 @@ class TestShopRefresh:
         """Test that refreshing the shop produces different items"""
         # Start session with deterministic seed
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 100}
+            "/session/start", json={"seed": 100}
         )
         data = response.json()
 
@@ -72,7 +72,7 @@ class TestShopRefresh:
         """Test that refreshing the shop costs 1 gold"""
         # Start session
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": None}
+            "/session/start", json={"seed": None}
         )
         data = response.json()
         initial_gold = data["session"]["gold"]
@@ -102,12 +102,12 @@ class TestShopRefresh:
 
         # Start two sessions with the same seed
         response1 = client1.post(
-            "/session/start", json={"player_name": "test_player", "seed": 999}
+            "/session/start", json={"seed": 999}
         )
         shop1_initial = response1.json()["session"]["current_shop"]
 
         response2 = client2.post(
-            "/session/start", json={"player_name": "test_player", "seed": 999}
+            "/session/start", json={"seed": 999}
         )
         shop2_initial = response2.json()["session"]["current_shop"]
 
@@ -141,7 +141,7 @@ class TestShopRefresh:
         """Test that shop refresh counter resets when advancing to a new round"""
         # Start session with seed
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": 500}
+            "/session/start", json={"seed": 500}
         )
 
         # Refresh shop a few times in round 1
@@ -215,7 +215,7 @@ class TestRefreshCountAcrossRounds:
         on top of the life the player had just lost.
         """
         response = auth_client.post(
-            "/session/start", json={"player_name": "test_player", "seed": SHOP_SEED}
+            "/session/start", json={"seed": SHOP_SEED}
         )
         assert response.status_code == 200
 
