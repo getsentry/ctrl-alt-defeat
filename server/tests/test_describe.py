@@ -720,8 +720,8 @@ class TestTheWholeCatalogue:
         assert describe.lines(spec) == []
 
 
-class TestTheSixNewestWays:
-    """The words the six mechanics of this batch put on a card.
+class TestWordsForContainersConversionsAndProtection:
+    """The words for what a bag holds, what a price buys, and what is kept.
 
     Each is a shape a player has not read before, and each one had a first
     draft that came out as English nobody would write: "Star items get +30%
@@ -793,4 +793,55 @@ class TestTheSixNewestWays:
         assert (
             "Your opponent's maximum quota from items is reduced by 15%"
             in self._said("snowball")
+        )
+
+
+class TestWordsThatWereMissingOrWrong:
+    """Lines that said the wrong thing, or nothing at all.
+
+    An aura said "activation" for all four of the moments it can watch. A
+    tag excluded from a zone lost its number. And setting off another item had
+    no line whatever: every Potion carries a spillover clause and it has been
+    describing as nothing since the day it was built.
+    """
+
+    def _said(self, item_id):
+        return describe.lines(ITEM_CATALOG[item_id])
+
+    def test_an_aura_says_which_moment_it_watches(self):
+        # All four read as "activation" before, and a weapon that missed
+        # activated without hitting.
+        assert self._said("spike_launcher")[-1].startswith(
+            "When a weapon [star]star[/star] item hits:"
+        )
+
+    def test_setting_off_another_item_is_no_longer_silent(self):
+        assert (
+            "• Set off every potion [star]star[/star] item, without using them up"
+            in self._said("emergency_hotfix")
+        ), "every Potion has carried this clause and said nothing about it"
+
+    def test_a_chance_that_grows_is_said_the_way_the_source_game_says_it(self):
+        assert self._said("blue_sage_collar") == [
+            "When a weapon [star]star[/star] item hits: 7% chance for each "
+            "[buff]calibrated[/buff] to gain 3 [buff]credits[/buff]"
+        ]
+
+    def test_an_excluded_tag_reads_as_a_prefix(self):
+        # "a star item that are not sentinel" loses its number the moment the
+        # noun is singular, which it is here.
+        assert (
+            "When a non-sentinel [star]star[/star] item activates: 10% chance "
+            "to gain 1 [buff]regenerating[/buff]" in self._said("amulet_of_light")
+        )
+
+    def test_the_spikes_limits_fit_the_sentence_they_sit_in(self):
+        said = self._said("thorn_elemental")
+        assert (
+            "Your [buff]spiked[/buff] return against Ranged blows is increased by 50%"
+            in said
+        )
+        assert (
+            "Your [buff]spiked[/buff] critical chance is increased by 10% for "
+            "each feral [star]star[/star] item" in said
         )

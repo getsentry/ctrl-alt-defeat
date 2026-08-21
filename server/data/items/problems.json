@@ -787,7 +787,7 @@
               "counting": {
                 "any": [
                   "pet",
-                  "script"
+                  "food"
                 ]
               },
               "description": "Triggers 15% faster for each Star Pet or Food"
@@ -862,15 +862,40 @@
               "crit_chance": 0
             }
           ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "any": [
+              "weapon"
+            ]
+          },
+          "after": 1,
+          "on": "hits",
+          "effects": [
+            {
+              "type": "cost",
+              "costs": {
+                "spiked": 1
+              },
+              "effects": [
+                {
+                  "type": "next_attack",
+                  "damage": 9,
+                  "ignores_block": false,
+                  "description": "Deal +9 damage on the next attack"
+                }
+              ],
+              "description": "Use 1 Spikes"
+            }
+          ]
         }
       ],
       "slug": "spike_launcher",
       "sockets": 1,
       "icontype": "nature, ranged, weapon",
       "in_shop": false,
-      "unbuilt": [
-        "Star Weapon hits: Use 1 Spikes to deal +9 damage on the next attack."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -2931,7 +2956,7 @@
           "zone": "star",
           "counting": {
             "any": [
-              "script"
+              "food"
             ]
           },
           "after": 1,
@@ -3625,7 +3650,7 @@
               "zone": "star",
               "counting": {
                 "any": [
-                  "script"
+                  "food"
                 ]
               },
               "description": "Attacks 12% faster for each Star Food"

@@ -209,16 +209,16 @@ class TestWhatAnItemIsWorthASecond:
         item = Item.of(self._named("Buffer Overflow"), "x")
 
         assert item.accuracy == 0.85
-        assert item.damage_per_second == 3.1, (
-            "A rate that ignored the misses would say 3.7"
-        )
+        assert (
+            item.damage_per_second == 3.1
+        ), "A rate that ignored the misses would say 3.7"
 
     def test_the_cpu_rate_is_the_cost_spread_over_the_cooldown(self):
         item = Item.of(self._named("Buffer Overflow"), "x")
 
-        assert item.cpu_per_second == round(item.cpu_cost / item.cooldown, 1), (
-            "One decimal, the same as every other number on the card"
-        )
+        assert item.cpu_per_second == round(
+            item.cpu_cost / item.cooldown, 1
+        ), "One decimal, the same as every other number on the card"
 
     def test_an_item_that_deals_nothing_has_no_rate(self):
         """A row of zeroes on a card is a row a player has to read to find out
@@ -259,10 +259,11 @@ class TestWhatAnAuraActsOn:
         )
 
     def test_a_narrowed_zone_says_what_it_wants(self):
-        # Script Kitty: "Star Pets and Star Scripts trigger faster".
+        # Script Kitty: "Star Pets and Star Food trigger faster". It wanted
+        # `script` while Food had no tag of its own, and Food has one now.
         item = Item.of(self._named("Script Kitty"), "x")
 
-        assert item.aura["star"][0].any_of == ["pet", "script"]
+        assert item.aura["star"][0].any_of == ["pet", "food"]
         assert item.aura["star"][0].all_of == []
 
     def test_a_zone_that_reaches_everything_is_present_and_empty(self):
@@ -315,8 +316,8 @@ class TestWhatAnAuraActsOn:
         # CI Cauldron counts Star Potions and Diamond Foods separately.
         item = Item.of(self._named("CI Cauldron"), "x")
 
-        assert item.aura["star"][0].any_of == ["patch"]
-        assert item.aura["diamond"][0].any_of == ["script"]
+        assert item.aura["star"][0].any_of == ["potion"]
+        assert item.aura["diamond"][0].any_of == ["food"]
 
     def test_an_item_carries_its_kinds_lowered(self):
         """A tag is a kind or a category, so the client needs the kinds to

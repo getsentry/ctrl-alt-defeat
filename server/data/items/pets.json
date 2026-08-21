@@ -228,7 +228,7 @@
               "counting": {
                 "any": [
                   "pet",
-                  "script"
+                  "food"
                 ]
               },
               "description": "Triggers 15% faster for each Star Pet or Food"
@@ -559,7 +559,7 @@
               "counting": {
                 "any": [
                   "pet",
-                  "script"
+                  "food"
                 ]
               },
               "description": "Triggers 15% faster for each Star Pet or Food"
@@ -686,7 +686,7 @@
               "zone": "star",
               "counting": {
                 "any": [
-                  "patch"
+                  "potion"
                 ]
               },
               "description": "Triggers 20% faster for each Star Potion"
@@ -981,14 +981,51 @@
               "description": "Gain 3 Spiked"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "spikes_limit_ranged",
+              "value": 0.5,
+              "target": "self",
+              "duration": -1,
+              "description": "Return damage limit of Spikes against Ranged-attacks +50%"
+            },
+            {
+              "type": "player_modify",
+              "stat": "spikes_limit_effect",
+              "value": 0.5,
+              "target": "self",
+              "duration": -1,
+              "description": "Return damage limit of Spikes against Effect-attacks +50%"
+            },
+            {
+              "type": "per_count",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "nature"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "player_modify",
+                  "stat": "spikes_critical_chance",
+                  "value": 0.1,
+                  "target": "self",
+                  "duration": -1,
+                  "description": "Spikes have 10% critical hit chance"
+                }
+              ],
+              "description": "per Star Nature-item"
+            }
+          ]
         }
       ],
       "slug": "thorn_elemental",
       "in_shop": true,
-      "unbuilt": [
-        "Return damage limit of Spikes against Ranged- and Effect-attacks +50%.",
-        "Spikes have 10% critical hit chance per Star Nature-item."
-      ],
       "sockets": 2,
       "icontype": "treasure, nature, pet"
     },
@@ -1169,7 +1206,7 @@
               "counting": {
                 "any": [
                   "pet",
-                  "script"
+                  "food"
                 ]
               },
               "description": "Triggers 15% faster for each Star Pet or Food"
@@ -1248,7 +1285,7 @@
               "counting": {
                 "any": [
                   "pet",
-                  "script"
+                  "food"
                 ]
               },
               "description": "Triggers 15% faster for each Star Pet or Food"
@@ -1329,7 +1366,7 @@
               "counting": {
                 "any": [
                   "pet",
-                  "script"
+                  "food"
                 ]
               },
               "description": "Triggers 15% faster for each Star Pet or Food"

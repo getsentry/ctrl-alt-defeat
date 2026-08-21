@@ -1,3 +1,11 @@
+### Two clauses stood in `patch` and `script` for Potion and Food, and ten did
+
+The import gave Potion and Food no tag of its own, so ten clauses counted the
+`patch` and `script` categories instead -- close enough to work and not the
+same thing. Both kinds exist now and all ten are corrected: Script Kitty
+counts Food rather than scripts, CI Cauldron counts Potions rather than
+patches, and Shelly, Rat Chef, Pandamonium and the rest with them.
+
 ### A container's clauses now run, and two dormant bugs woke with them
 
 Making containers act was the batch's structural change and it made two
@@ -84,19 +92,6 @@ the player, and `PLAYER_MODIFIERS` has no way to scale by what is held.
 
 One clause, so it waits. Worth doing with the next player-modifier work rather
 than alone.
-
-### Two clauses stand in `patch` and `script` for Potion and Food
-
-CI Cauldron counts "Star Potions and Diamond Foods", and the catalogue says
-`patch` and `script`. Those were the nearest categories at the time, because
-the import had scattered Potions across `consumable` and `patch` and Foods
-across `consumable` and `script`, and neither had a tag of its own.
-
-They do now: the wiki's `type` field is imported as a kind, so `potion` and
-`food` mean what they say. The two clauses can be corrected, and anything else
-reaching for a category because a kind was missing is worth the same look --
-"Star Weapons" is currently written as the three ways of attacking, where
-`weapon` would say it directly.
 
 ### On buy needs more than a trigger, so there is no trigger
 
@@ -1270,3 +1265,9 @@ as severe as the one above.)*
   ranked in the session notes (Ludo.ai's idle preset looked most fit). Fallback:
   gpt-image keyframes + Godot tweens. The CRT face is a screen, so expression
   swaps (blink, damage, victory) are cheap stills whenever wanted.
+### "Star Weapons" is written as the three ways of attacking
+
+`weapon` is a kind now and would say it directly, where the catalogue reaches
+for `{"any": ["melee", "ranged", "magic"]}` and `counted()` has a special case
+that turns the three back into the word. The stand-ins for Potion and Food are
+corrected; this one is the same shape and nobody has done it.

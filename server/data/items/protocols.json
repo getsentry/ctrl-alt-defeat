@@ -422,13 +422,57 @@
       "source": "Amulet of the Wild",
       "rarity": "rare",
       "cost": 6,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "player_modify",
+              "stat": "spikes_limit_melee",
+              "value": 0.5,
+              "target": "self",
+              "duration": -1,
+              "description": "Return damage limit of Spikes against Melee attacks +50%"
+            },
+            {
+              "type": "player_modify",
+              "stat": "spikes_limit_ranged",
+              "value": 0.5,
+              "target": "self",
+              "duration": -1,
+              "description": "Return damage limit of Spikes against Ranged attacks +50%"
+            }
+          ]
+        },
+        {
+          "type": "after",
+          "delay": 5.0,
+          "effects": [
+            {
+              "type": "trigger_item",
+              "where": "star",
+              "counting": {
+                "any": [
+                  "pet"
+                ]
+              },
+              "how_many": 1,
+              "pick": "all",
+              "description": "Trigger the Star Pet"
+            },
+            {
+              "type": "buff",
+              "buff_name": "spiked",
+              "value": 4,
+              "target": "self",
+              "description": "Gain 4 Spikes"
+            }
+          ]
+        }
+      ],
       "slug": "machine_learning_core",
       "icontype": "nature, accessory",
       "in_shop": false,
-      "unbuilt": [
-        "After 5s: Trigger the Star Pet and gain 4 Spikes. Return damage limit of Spikes against Melee and Ranged attacks +50%."
-      ],
       "recipe": [
         {
           "ingredients": [
@@ -599,13 +643,64 @@
               "description": "Gain 3 maximum health"
             }
           ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "any": [
+              "holy"
+            ]
+          },
+          "after": 1,
+          "on": "activates",
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.3,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "regenerating",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Regeneration"
+                }
+              ],
+              "description": "30% chance"
+            }
+          ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "none": [
+              "holy"
+            ]
+          },
+          "after": 1,
+          "on": "activates",
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0.1,
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "regenerating",
+                  "value": 1,
+                  "target": "self",
+                  "description": "Gain 1 Regeneration"
+                }
+              ],
+              "description": "10% chance"
+            }
+          ]
         }
       ],
       "slug": "amulet_of_light",
       "in_shop": false,
-      "unbuilt": [
-        "Star item activates: 10% chance to gain 1 Regeneration, 30% if the item is Holy."
-      ],
       "icontype": "holy, accessory",
       "recipe": [
         {
@@ -745,12 +840,40 @@
       "source": "Blue Sage Collar",
       "rarity": "legendary",
       "cost": 8,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "any": [
+              "weapon"
+            ]
+          },
+          "after": 1,
+          "on": "hits",
+          "effects": [
+            {
+              "type": "chance",
+              "chance": 0,
+              "per_status": {
+                "calibrated": 0.07
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "buff_name": "credits",
+                  "value": 3,
+                  "target": "self",
+                  "description": "Gain 3 Mana"
+                }
+              ],
+              "description": "7% chance for each Luck"
+            }
+          ]
+        }
+      ],
       "slug": "blue_sage_collar",
       "in_shop": false,
-      "unbuilt": [
-        "Star Weapon hits: 7% chance for each Luck to gain 3 Mana."
-      ],
       "icontype": "magic, nature, accessory",
       "recipe": [
         {
@@ -799,7 +922,7 @@
               "zone": "star",
               "counting": {
                 "any": [
-                  "patch"
+                  "potion"
                 ]
               },
               "description": "Triggers 50% faster for each Star Potion"
@@ -811,7 +934,7 @@
               "zone": "diamond",
               "counting": {
                 "any": [
-                  "script"
+                  "food"
                 ]
               },
               "description": "and each Diamond Food"
@@ -837,13 +960,47 @@
               "description": "Gain 6 Regeneration"
             }
           ]
+        },
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": {
+            "any": [
+              "potion"
+            ]
+          },
+          "after": 1,
+          "on": "activates",
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 10,
+              "max_heal": 10,
+              "description": "Heal for 10"
+            },
+            {
+              "type": "per_count",
+              "where": "diamond",
+              "counting": {
+                "any": [
+                  "food"
+                ]
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "min_heal": 2,
+                  "max_heal": 2,
+                  "description": "Heal for 2"
+                }
+              ],
+              "description": "per Diamond Food"
+            }
+          ]
         }
       ],
       "slug": "boiling_pot",
       "in_shop": false,
-      "unbuilt": [
-        "Star Potion triggered: Heal for 10 + 2 per Diamond Food."
-      ],
       "sockets": 1,
       "recipe": [
         {

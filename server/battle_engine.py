@@ -1449,6 +1449,26 @@ class BattleSimulator:
         )
         return gained
 
+    def _fire(self, trigger, item: BattleItem, owner: Player, enemy: Player) -> None:
+        """Make an item do what one of its triggers says, and say that it did.
+
+        Every trigger comes through here, because "Star item activates" is
+        about the item and not about which of its triggers went off: a Potion
+        drunk by its own condition activated, and so did a shield answering a
+        blow. Only the timer announced, so an aura watching a zone saw the
+        items on cooldowns and nothing else at all.
+
+        A standing trigger says nothing. A passive is on throughout rather
+        than happening at a moment, and a start-of-battle one is settled
+        before the battle has a first moment to happen in.
+        """
+        self._apply_effects(trigger.effects, item, owner, enemy)
+        if isinstance(trigger, self.STANDING_TRIGGERS):
+            return
+        self.event_manager.emit(
+            Event(EventType.ITEM_ACTIVATED, owner, None, EventData(item_id=item.uid))
+        )
+
     def _trigger(
         self, item: BattleItem, owner: Player, enemy: Player, by: BattleItem
     ) -> None:
@@ -1479,6 +1499,12 @@ class BattleSimulator:
                 player=owner.id,
                 details={"triggered": item.uid},
             )
+        )
+        # It acted, however it was made to. "Trigger the Star Pet" is the pet
+        # activating, and an aura watching that square has as much reason to
+        # answer it as it does a pet that came round on its own clock.
+        self.event_manager.emit(
+            Event(EventType.ITEM_ACTIVATED, owner, None, EventData(item_id=item.uid))
         )
 
     def _spend_from_pool(self, owner: Player, effect, source: str):
@@ -1568,7 +1594,7 @@ class BattleSimulator:
                 if not trigger.affordable(owner.buffs):
                     continue
                 self._pay(owner, trigger.costs, item.uid)
-                self._apply_effects(trigger.effects, item, owner, enemy)
+                self._fire(trigger, item, owner, enemy)
 
             elif isinstance(trigger, CounterTrigger):
                 # Crossing is the trigger, not being over, so it goes off on
@@ -1578,7 +1604,7 @@ class BattleSimulator:
                 if self._total(trigger, owner, enemy, item) < trigger.amount:
                     continue
                 trigger.crossed = True
-                self._apply_effects(trigger.effects, item, owner, enemy)
+                self._fire(trigger, item, owner, enemy)
 
     def _total(
         self,
@@ -1685,7 +1711,7 @@ class BattleSimulator:
                     def handle_battle_start(
                         event, trigger=trigger, item=item, owner=owner
                     ):
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(
                         EventType.BATTLE_START, handle_battle_start
@@ -1699,7 +1725,7 @@ class BattleSimulator:
                     ):
                         if item.uid in self.consumed_items:
                             return
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(
                         EventType.FATIGUE_STARTED, handle_nightfall
@@ -1732,7 +1758,7 @@ class BattleSimulator:
                         # moves somebody's health cannot re-enter and fire it
                         # a second time.
                         trigger.fired = True
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(
                         EventType.HEALTH_FELL, handle_health_fell
@@ -1750,7 +1776,7 @@ class BattleSimulator:
                         # The chance roll lives here, after accuracy passed.
                         if not trigger.should_activate("on_hit", item, enemy, self):
                             return
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(EventType.ON_HIT, handle_on_hit)
 
@@ -1760,7 +1786,7 @@ class BattleSimulator:
                     def once(trigger=trigger, item=item, owner=owner):
                         if item.uid in self.consumed_items:
                             return
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.schedule_timer(
                         trigger.delay, f"{item.uid}_after", once, owner.id
@@ -1777,7 +1803,7 @@ class BattleSimulator:
                             return
                         if not trigger.should_activate("on_attack", item, enemy, self):
                             return
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(EventType.ON_ATTACK, handle_on_attack)
 
@@ -1789,22 +1815,35 @@ class BattleSimulator:
                     ):
                         if item.uid in self.consumed_items:
                             return
-                        stood = self._who_activated(event, items)
+                        # Whose moment it was, before whose item it was. Every
+                        # one of the four events an aura can watch names the
+                        # acting player, and matching on uid alone let the
+                        # other player's item answer this zone if the two
+                        # sessions ever handed out the same uid.
+                        if event.source is not owner:
+                            return
+                        # The owner's items, not the list this handler was set
+                        # up with: a container's handlers are set up with the
+                        # rack, and a rack is not where items stand.
+                        stood = self._who_activated(event, self.loadout[owner.id])
                         if stood is None or stood.uid == item.uid:
                             return
-                        zone = set(item.aura_squares(trigger.zone))
+                        zone = set(self._zone_squares(item, trigger.zone))
                         if not zone & set(stood.get_occupied_squares()):
                             return
-                        tags = {k.lower() for k in stood.spec.kinds} | {
-                            stood.spec.category.lower()
-                        }
-                        if not trigger.matches(tags):
+                        if not trigger.matches(self._tags(stood)):
                             return
                         trigger.seen += 1
                         if trigger.seen < trigger.after:
                             return
                         trigger.seen = 0
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        # The same guard a status trigger has, and now for the
+                        # same reason: every trigger announces its activation,
+                        # so an aura whose effects set off what it is watching
+                        # would answer itself.
+                        with self._firing(trigger) as allowed:
+                            if allowed:
+                                self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(
                         EventType(trigger.WATCHES[trigger.on]), handle_activation
@@ -1822,7 +1861,7 @@ class BattleSimulator:
                             return
                         with self._firing(trigger) as allowed:
                             if allowed:
-                                self._apply_effects(trigger.effects, item, owner, enemy)
+                                self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(EventType.STATUS_GAINED, handle_status)
 
@@ -1838,7 +1877,7 @@ class BattleSimulator:
                             return
                         with self._firing(trigger) as allowed:
                             if allowed:
-                                self._apply_effects(trigger.effects, item, owner, enemy)
+                                self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(EventType.STUN_LANDED, handle_stun)
 
@@ -1854,7 +1893,7 @@ class BattleSimulator:
                                 return
                         elif event.data.player_id == owner.id:
                             return  # "Opponent misses attack" is theirs
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(EventType.ON_MISS, handle_miss)
 
@@ -1867,7 +1906,7 @@ class BattleSimulator:
                             return
                         if event.data.player_id != owner.id:
                             return
-                        self._apply_effects(trigger.effects, item, owner, enemy)
+                        self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(
                         EventType.CPU_EXHAUSTED, handle_exhausted
@@ -1882,7 +1921,7 @@ class BattleSimulator:
 
                 elif isinstance(trigger, PassiveTrigger):
                     # Apply passive effects immediately
-                    self._apply_effects(trigger.effects, item, owner, enemy)
+                    self._fire(trigger, item, owner, enemy)
 
                 elif isinstance(trigger, OnAttackedTrigger):
 
@@ -1913,6 +1952,18 @@ class BattleSimulator:
                                 remaining -= stopped
                             else:
                                 self._apply_effects([effect], item, owner, enemy)
+
+                        # It answered, so it acted. This one cannot go through
+                        # `_fire` -- prevent_damage has to be handled one
+                        # effect at a time, above -- so it says so itself.
+                        self.event_manager.emit(
+                            Event(
+                                EventType.ITEM_ACTIVATED,
+                                owner,
+                                None,
+                                EventData(item_id=item.uid),
+                            )
+                        )
 
                         if prevented:
                             self._record(
@@ -1956,18 +2007,9 @@ class BattleSimulator:
 
             if owner.cpu >= cpu_cost:
                 # Have enough CPU - apply the effects
-                self._apply_effects(trigger.effects, item, owner, enemy)
+                self._fire(trigger, item, owner, enemy)
                 owner.cpu -= cpu_cost
                 trigger.current_cooldown = trigger.cooldown
-                # Anything watching this item's square can act on it now.
-                self.event_manager.emit(
-                    Event(
-                        EventType.ITEM_ACTIVATED,
-                        owner,
-                        None,
-                        EventData(item_id=item.uid),
-                    )
-                )
             else:
                 # Not enough CPU - log throttle but don't activate
                 self._record(
@@ -2206,6 +2248,7 @@ class BattleSimulator:
                         details={"kind": "effect"},
                     )
                     owner.effect_damage_dealt += landed
+                    self._spikes_answer(landed, owner, enemy, "effect")
                     self._heal(
                         owner,
                         int(landed * result["lifesteal"]),
@@ -2321,8 +2364,10 @@ class BattleSimulator:
                 continue
             elif isinstance(effect, ChanceEffect):
                 # One roll for everything behind it, so a clause cannot
-                # half-happen.
-                if effect.happens(self):
+                # half-happen. The odds can grow with what the owner holds --
+                # "7% chance for each Luck" -- so they are read here rather
+                # than settled when the item was built.
+                if effect.happens(self, owner.buffs):
                     self._apply_effects(effect.effects, item, owner, enemy)
             elif isinstance(effect, ModifyPerEffect):
                 # Settled by _apply_auras before the battle began. It only
@@ -2733,12 +2778,18 @@ class BattleSimulator:
             blockable=not past_block,
         )
 
-        # Section 3.1: Spiked and Draining answer to a melee weapon and to
-        # nothing else. Poison and fatigue never reach here, so they cannot
-        # set either off -- which is the reason this sits in the attack rather
-        # than in the damage.
-        if item.spec.is_melee and damage > 0:
-            self._melee_aftermath(damage, owner, enemy, item)
+        # Section 3.1: Draining answers a melee weapon and nothing else.
+        # Spikes answer any blow, at a limit set by what threw it. Poison and
+        # fatigue never reach here, so neither can set either off -- which is
+        # the reason this sits in the attack rather than in the damage.
+        if damage > 0:
+            # Melee or not: the wiki names melee and ranged and gives ranged a
+            # limit of nothing, so a magic weapon lands on the same answer as
+            # a bow and nothing comes back from either until an item says so.
+            thrown = "melee" if item.spec.is_melee else "ranged"
+            self._spikes_answer(damage, owner, enemy, thrown)
+            if item.spec.is_melee:
+                self._melee_aftermath(damage, owner, enemy, item)
 
         # The attack landed, so this item's on-hit triggers may now run.
         # Emitted after the damage, so the log reads in the
@@ -2752,25 +2803,79 @@ class BattleSimulator:
             )
         )
 
+    #: How much of a blow's damage Spikes may send back, by what threw it.
+    #: Backpack Battles' Amulet of the Wild page: "Normally the limit for
+    #: melee weapons is 100% of the damage, and for ranged weapons 0% of the
+    #: damage." Effect-damage reads the same as ranged: nothing comes back
+    #: until an item says it does.
+    SPIKE_LIMIT = {"melee": 1.0, "ranged": 0.0, "effect": 0.0}
+
+    def _spikes_answer(
+        self, landed: int, owner: Player, enemy: Player, thrown: str
+    ) -> None:
+        """Send a blow back, as far as the limit for that kind of blow allows.
+
+        `owner` threw it and `enemy` holds the Spikes. Two numbers bound what
+        comes back and the smaller wins: the stacks held, and a share of the
+        damage that landed. The share is 100% for a melee blow and 0% for
+        anything else, which is why this used to sit inside the melee half and
+        look like a melee rule -- 0% and "does not happen" are the same
+        answer until an item raises the limit.
+
+        "Return damage limit of Spikes against Ranged- and Effect-attacks
+        +50%" raises it, so the same page's worked example holds: ten Spikes
+        against a four damage blow at 150% sends back six, and against a nine
+        damage blow sends back ten, because the stacks run out first.
+        """
+        held = enemy.buffs.get(SPIKED, 0)
+        if held <= 0:
+            return
+        limit = self.SPIKE_LIMIT[thrown] + enemy.modifier(
+            f"spikes_limit_{thrown}", self.current_time
+        )
+        back = min(held, int(landed * max(0.0, limit)))
+        if back <= 0:
+            return
+
+        # "Spikes have 10% critical hit chance per Star Nature-item." Nothing
+        # gives them a chance of their own, so this is the whole of it.
+        details = {"buff_name": SPIKED}
+        crit = enemy.modifier("spikes_critical_chance", self.current_time)
+        # Asked before it is rolled. Nothing gives Spikes a crit chance unless
+        # an item says so, and drawing anyway would move the seeded sequence
+        # of every battle that has ever had a Spike in it.
+        if crit > 0 and self.rng.random() < crit:
+            back *= 2
+            details["kind"] = "critical"
+            self._record(
+                BattleAction(
+                    timestamp=self._time_ms(),
+                    source="system",
+                    action="critical_hit",
+                    target=None,
+                    damage=back,
+                    player=enemy.id,
+                    details={"kind": "spikes"},
+                )
+            )
+
+        self._take_damage(
+            owner,
+            back,
+            source="system",
+            action="damage",
+            attacker=enemy,
+            details=details,
+        )
+
     def _melee_aftermath(
         self, landed: int, owner: Player, enemy: Player, item: BattleItem
     ):
         """What a melee hit sets off once it has landed (Section 3.1).
 
-        Both are capped at the damage: "up to 100% of the damage" in the
-        source game, so five Spiked against a three damage hit returns three.
+        Vampirism only. Spikes answer every kind of blow now, each with its
+        own limit, so they are asked wherever damage lands rather than here.
         """
-        spikes = min(enemy.buffs.get(SPIKED, 0), landed)
-        if spikes > 0:
-            self._take_damage(
-                owner,
-                spikes,
-                source="system",
-                action="damage",
-                attacker=enemy,
-                details={"buff_name": SPIKED},
-            )
-
         drain = min(owner.buffs.get(DRAINING, 0), landed)
         if drain > 0:
             # Through _heal, so the shares reach it. Vampirism is healing, and

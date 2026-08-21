@@ -181,9 +181,15 @@ class Counting:
 
     `"any"` means every item: the zone or the loadout as it stands. A dict
     narrows it -- `{"any": [...]}` for an item carrying one of the tags,
-    `{"all": [...]}` for one carrying all of them. A tag is a kind an item
-    carries or the category it belongs to, so "nature" and "pet" both work.
-    An item matches once however many tags it matches.
+    `{"all": [...]}` for one carrying all of them, `{"none": [...]}` for one
+    carrying none. A tag is a kind an item carries, the category it belongs to
+    or the class it belongs to, so "nature", "pet" and "neutral" all work. An
+    item matches once however many tags it matches.
+
+    `none` is for a clause that says a thing twice with different numbers:
+    "10% chance to gain 1 Regeneration, 30% if the item is Holy" is two
+    clauses, one for Holy items and one for everything else, and without a way
+    to say "not Holy" the two would both fire on a Holy item.
 
     Three effects narrow this way and they narrow identically, so the rule
     lives here rather than three times over.
@@ -197,8 +203,13 @@ class Counting:
         """Whether an item carrying `tags` is one of the ones meant."""
         if self.counting == "any":
             return True
-        wanted = {t.lower() for t in next(iter(self.counting.values()))}
-        return bool(wanted & tags) if "any" in self.counting else wanted <= tags
+        how = next(iter(self.counting))
+        wanted = {t.lower() for t in self.counting[how]}
+        if how == "any":
+            return bool(wanted & tags)
+        if how == "none":
+            return not (wanted & tags)
+        return wanted <= tags
 
 
 @dataclass
@@ -559,6 +570,18 @@ PLAYER_MODIFIERS = frozenset(
         # Every attack this player makes: "for the next 1.5s, all your attacks are
         # Critical hits" is this at 1.0.
         "critical_chance",
+        # How much of a blow Spikes may send back, over the base for that kind
+        # of blow: 100% for melee and 0% for the other two. "Return damage
+        # limit of Spikes against Ranged- and Effect-attacks +50%" raises two
+        # of the three, so each kind is its own number rather than one that
+        # would raise all three at once.
+        "spikes_limit_melee",
+        "spikes_limit_ranged",
+        "spikes_limit_effect",
+        # "Spikes have 10% critical hit chance per Star Nature-item". Nothing
+        # else gives what Spikes send back a chance of critting, so this is
+        # the whole of it.
+        "spikes_critical_chance",
     }
 )
 
@@ -633,10 +656,24 @@ class ChanceEffect(Effect):
     """
 
     chance: float
+
+    #: A share added for each stack of a status the owner holds: "7% chance
+    #: for each Luck to gain 3 Mana". {status: share per stack}, the same
+    #: shape a resist's growing chance uses, and read at the moment of the
+    #: roll rather than settled beforehand.
+    per_status: Dict[str, float] = field(default_factory=dict)
+
     effects: List[Effect] = field(default_factory=list)
 
-    def happens(self, battle_state: "BattleSimulator") -> bool:
-        return self.chance >= 1.0 or battle_state.rng.random() < self.chance
+    def odds(self, held: Dict[str, float]) -> float:
+        """The chance as it stands, given what the owner holds"""
+        return self.chance + sum(
+            rate * held.get(status, 0) for status, rate in self.per_status.items()
+        )
+
+    def happens(self, battle_state: "BattleSimulator", held=None) -> bool:
+        odds = self.odds(held or {})
+        return odds >= 1.0 or battle_state.rng.random() < odds
 
     def apply(self, source, target, battle_state: "BattleSimulator"):
         return {"type": "chance", "chance": self.chance}

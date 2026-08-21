@@ -1389,6 +1389,38 @@ class TestACounterNarrowedToAZoneCannotSayTheRest:
         assert (trigger.whose, trigger.counts) == ("enemy", "held")
 
 
+class TestAnAuraWaitsOnAnItem:
+    """It shares `_counting` with everything else now, which also knows
+    `free` -- the squares no item stands on. An aura waits on an item doing
+    something, and an empty square never does anything."""
+
+    def _aura(self, counting):
+        return ConfigLoader()._parse_trigger(
+            {
+                "type": "aura",
+                "zone": "star",
+                "counting": counting,
+                "after": 1,
+                "on": "activates",
+                "effects": [],
+            },
+            "some_item",
+        )
+
+    def test_it_cannot_wait_on_an_empty_square(self):
+        with pytest.raises(ValueError, match="never does anything"):
+            self._aura("free")
+
+    def test_it_knows_the_three_narrowings(self):
+        for counting in (
+            "any",
+            {"any": ["holy"]},
+            {"all": ["holy", "melee"]},
+            {"none": ["holy"]},
+        ):
+            assert self._aura(counting).counting == counting
+
+
 class TestAClassIsWhatTheWikiSaysItIs:
     """`player_class` is read now, so it has to be right.
 

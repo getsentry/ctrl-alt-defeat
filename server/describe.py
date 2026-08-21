@@ -78,6 +78,7 @@ from item_effects import (
     StunEffect,
     TimerTrigger,
     Trigger,
+    TriggerItemEffect,
     WhenAffordableTrigger,
 )
 
@@ -152,6 +153,10 @@ STAT_SHOWN = {
     "cpu_regen": "CPU regeneration",
     "max_health": "maximum quota",
     "max_health_from_items": "maximum quota from items",
+    "spikes_limit_melee": "[buff]spiked[/buff] return against Melee blows",
+    "spikes_limit_ranged": "[buff]spiked[/buff] return against Ranged blows",
+    "spikes_limit_effect": "[buff]spiked[/buff] return against Effect-damage",
+    "spikes_critical_chance": "[buff]spiked[/buff] critical chance",
     "block_given": "Block",
     "vampirism_given": "Vampirism",
 }
@@ -341,6 +346,12 @@ def counted(counting: object, noun: str = "items") -> str:
     tags = [trait(tag).lower() for tag in sorted(wanted)]
     if "all" in counting:
         return f"{noun} that are {joined(tags)}"
+    if "none" in counting:
+        # A prefix rather than "that are not", which loses its number the
+        # moment the noun is singular: "a star item that are not holy".
+        if len(tags) == 1:
+            return f"non-{tags[0]} {noun}"
+        return f"{noun} carrying none of {joined(tags)}"
     # `any` means an item carrying one of them, so the tags are alternatives.
     # Joined with "and" it reads as a single item that is somehow both.
     return f"{either(tags)} {noun}"
@@ -778,8 +789,39 @@ def _(effect: PerCountEffect) -> str:
 
 
 @of_effect.register
+def _(effect: TriggerItemEffect) -> str:
+    """Making other items act, which nothing had written a line for.
+
+    Every Potion carries one of these -- spillover, "apply the effect of the
+    Potion above it" -- so every Potion has been describing that clause as
+    nothing since it was built.
+    """
+    what = counted_in(effect.counting, effect.where)
+    if effect.how_many == 1:
+        one = what[:-1] if what.endswith("s") else what
+        pick = "a random" if effect.pick == "random" else "the"
+        return f"set off {pick} {one}, without using it up"
+    if effect.how_many:
+        return f"set off {number(effect.how_many)} {what}, without using them up"
+    return f"set off every {what}, without using them up"
+
+
+@of_effect.register
 def _(effect: ChanceEffect) -> str:
     inner = joined(gathered(effect.effects))
+    if effect.per_status and not effect.chance and len(effect.per_status) == 1:
+        # The way the source game writes it: "7% chance for each Luck to gain
+        # 3 Mana". Every clause with a growing chance is this shape.
+        ((status, rate),) = effect.per_status.items()
+        return f"{percent(rate)} chance for each {marked(status)} to {inner}"
+    if effect.per_status:
+        grows = joined(
+            [
+                f"{percent(rate)} for each {marked(status)}"
+                for status, rate in sorted(effect.per_status.items())
+            ]
+        )
+        return f"{percent(effect.chance)} chance, plus {grows}, to {inner}"
     return f"{percent(effect.chance)} chance to {inner}"
 
 
@@ -958,12 +1000,24 @@ def _(trigger: CounterTrigger) -> str:
     return f"once {who} {has} {number(trigger.amount)} {what}"
 
 
+#: What each moment an aura can watch is called, as one of them and as
+#: several. "Star Weapon hits" and "Star item activates" are different
+#: moments, and the line said "activation" for all four of them.
+MOMENTS = {
+    "activates": ("activates", "activations"),
+    "hits": ("hits", "hits"),
+    "crits": ("lands a critical hit", "critical hits"),
+    "consumed": ("is used up", "uses"),
+}
+
+
 @of_trigger.register
 def _(trigger: AuraTrigger) -> str:
     what = counted(trigger.counting, f"{zone(trigger.zone)} item")
+    one, many = MOMENTS[trigger.on]
     if trigger.after > 1:
-        return f"every {number(trigger.after)} {what} activations"
-    return f"on {what} activation"
+        return f"every {number(trigger.after)} {what} {many}"
+    return f"when a {what} {one}"
 
 
 @of_trigger.register

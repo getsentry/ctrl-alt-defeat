@@ -458,16 +458,14 @@ class ConfigLoader:
                     f"{item_id}: an aura watches a `star` or a `diamond`, "
                     f"not `{config['zone']}`."
                 )
-            counting = config["counting"]
-            if counting != "any" and (
-                not isinstance(counting, dict)
-                or len(counting) != 1
-                or set(counting) - {"any", "all"}
-                or not next(iter(counting.values()))
-            ):
+            # Read the same way it is read everywhere else. It was a second
+            # copy of the rule here, which is how it came to know two of the
+            # three narrowings and not the third.
+            counting = self._counting(config, item_id)
+            if counting == "free":
                 raise ValueError(
-                    f'{item_id}: `counting` is "any" for every item, or one '
-                    f'of {{"any": [...]}} and {{"all": [...]}}.'
+                    f"{item_id}: an aura waits on an item doing something, "
+                    f"and an empty square never does anything."
                 )
             if config["after"] < 1:
                 raise ValueError(
@@ -574,11 +572,11 @@ class ConfigLoader:
         if (
             not isinstance(counting, dict)
             or len(counting) != 1
-            or (set(counting) - {"any", "all"})
+            or (set(counting) - {"any", "all", "none"})
         ):
             raise ValueError(
-                f'{item_id}: `counting` is "any" for every item, or '
-                f'one of {{"any": [...]}} and {{"all": [...]}}.'
+                f'{item_id}: `counting` is "any" for every item, or one of '
+                f'{{"any": [...]}}, {{"all": [...]}} and {{"none": [...]}}.'
             )
         if not next(iter(counting.values())):
             raise ValueError(
@@ -769,10 +767,20 @@ class ConfigLoader:
                 cap=config.get("cap"),
             )
         elif effect_type == "chance":
-            if "chance" not in config:
-                raise ValueError(f"{item_id}: a chance effect needs a `chance`")
+            if "chance" not in config and "per_status" not in config:
+                raise ValueError(
+                    f"{item_id}: a chance effect needs a `chance`, a "
+                    f"`per_status` that grows one, or both."
+                )
+            per_status = config.get("per_status", {})
+            unknown = set(per_status) - (BUFFS | DEBUFFS)
+            if unknown:
+                raise ValueError(
+                    f"{item_id}: {sorted(unknown)} is not a status to count."
+                )
             return ChanceEffect(
-                chance=config["chance"],
+                chance=config.get("chance", 0.0),
+                per_status=per_status,
                 effects=self._behind(config, item_id, "a chance effect"),
             )
         elif effect_type == "gain_damage":

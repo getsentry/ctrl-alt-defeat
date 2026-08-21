@@ -26,10 +26,13 @@ from item_effects import (
     BUFFS,
     DEBUFFS,
     MODIFIERS,
+    AfterTrigger,
     AttackEffect,
+    AuraTrigger,
     BattleStartTrigger,
     BlockEffect,
     BuffEffect,
+    ChanceEffect,
     ChoiceEffect,
     CleanseEffect,
     ConditionEffect,
@@ -51,6 +54,7 @@ from item_effects import (
     LimitEffect,
     MaxHealthEffect,
     ModifyEffect,
+    ModifyPerEffect,
     ModifyPerStatusEffect,
     NextAttackEffect,
     OnAttackedTrigger,
@@ -2694,8 +2698,8 @@ class TestCountingAnyAndAll:
             for e in getattr(t, "effects", [])
             if isinstance(e, ModifyPerEffect)
         ]
-        assert per and per[0].counting == {"any": ["pet", "script"]}
-        assert per[0].matches({"pet"}) and per[0].matches({"script"})
+        assert per and per[0].counting == {"any": ["pet", "food"]}
+        assert per[0].matches({"pet"}) and per[0].matches({"food"})
         assert not per[0].matches({"defense"})
 
 
@@ -4965,17 +4969,23 @@ class TestAnAmountThatGrowsWithWhatYouHold(_WithOneItem):
         assert 350 - result["player2_quota"] == 15, "10 + 2 + 3"
 
 
-class TestWhatTheSevenMechanicsLetTheCatalogueDo(_WithOneItem):
-    """The items the seven mechanics were built for, run as they stand.
+class TestTheCatalogueItemsThatReflectReduceAndScale(_WithOneItem):
+    """Real items that turn something back, take something off, or grow with
+    what their owner holds.
+
+    Reflecting a debuff, softening the first seconds, making everything cost
+    more, damage that rises with Spikes, an effect that reads a debuff it did
+    not cause, a zone that gives one thing per kind standing in it.
 
     A mechanic tested on an item made for the purpose proves the mechanic. It
     does not prove the translation, and the translation is where a clause
     turns into the wrong thing quietly.
 
-    Named for its own batch. It shared a name with the class for the ten that
-    came later, and a second class of the same name replaces the first
-    silently: these tests had stopped running and nothing said so. flake8's
-    F811 is what noticed.
+    Named for its own batch once, and it shared that name with a later batch's
+    class: a second class of the same name replaces the first silently, so
+    these tests had stopped running and nothing said so. flake8's F811 is what
+    noticed, which is the reason none of these classes is named for a batch
+    any more -- a name that says what it holds cannot collide by accident.
     """
 
     @staticmethod
@@ -7154,8 +7164,13 @@ class TestAMiss(_WithOneItem):
         assert "spiked" not in sim.player1.buffs
 
 
-class TestWhatTheNewTriggersLetTheCatalogueDo(TestTheSweptClauses):
-    """The items the seven trigger families were built for, run as they stand.
+class TestTheCatalogueItemsThatWaitForAMoment(TestTheSweptClauses):
+    """Real items whose clauses hang on *when* they fire.
+
+    A price that can now be met, a status arriving, a running total crossing a
+    line, a stun, a swing that missed, a pool that ran dry. Run as they stand
+    rather than on an item made for the purpose, because a catalogue entry can
+    be wrong on its own.
 
     Inherits the bigger room and the placement helper: these are real items
     with real shapes, and a star drawn above one has to have somewhere to land.
@@ -8789,8 +8804,12 @@ class TestCountingEmptySquares(_WithOneItem):
         assert sim.player1.buffs["spiked"] == 1
 
 
-class TestWhatTheseTenLetTheCatalogueDo(TestTheSweptClauses):
-    """The items these ten mechanics were built for, run as they stand.
+class TestTheCatalogueItemsThatSpendAndRefuse(TestTheSweptClauses):
+    """Real items that spend a pool or refuse what is sent at them.
+
+    Resisting a critical hit, destroying Block, counting empty squares, giving
+    what you hold most or least of, buying a way past Block, being paid for a
+    miss.
 
     Everything above tests a mechanic on an item made for the purpose, which
     proves the mechanic and not the translation. Twelve mutations of the
@@ -9741,8 +9760,12 @@ class TestAShareOfMaximumHealth(_WithOneItem):
         assert sim.player1.max_quota == sim.player1.opening_quota + 100
 
 
-class TestWhatTheseSixLetTheCatalogueDo(TestTheSweptClauses):
-    """The items these six mechanics were built for, run as they stand.
+class TestTheCatalogueItemsThatTradeHealthAndBlock(TestTheSweptClauses):
+    """Real items that trade health for Block, or scale what they give.
+
+    Converting health into Block, Block from the health you are short,
+    protecting a status from removal, a share on the Block or Vampirism an item
+    hands over, a share of maximum health.
 
     Everything above tests a mechanic on an item made for the purpose, which
     proves the mechanic and not the translation. A catalogue entry is a
@@ -10027,8 +10050,8 @@ class TestWhatTheseSixLetTheCatalogueDo(TestTheSweptClauses):
         assert [s for s in sim.player2.resists if s.against == "removal"] == []
 
 
-class TestWhatTheseSixLetTheContainersDo(_WithOneItem):
-    """The three bags these mechanics were built for, run as they stand.
+class TestTheCatalogueBagsThatReadWhatIsInside(_WithOneItem):
+    """Real bags that reach, count or scale what stands on them.
 
     Their own class because a container is the thing under test rather than
     the room the test happens in, so each one brings the rack it is about.
@@ -10173,3 +10196,782 @@ class TestAFullPoolMeansThePoolTheItemsLeft(_WithOneItem):
         opened = self._open_on("standard_vm")
         assert opened.max_cpu == 3.0
         assert opened.cpu == pytest.approx(opened.max_cpu, abs=0.11)
+
+
+class TestEveryTriggerSaysItActivated(_WithOneItem):
+    """ "Star item activates" is about the item, not about which of its
+    triggers went off.
+
+    Only the timer announced, so an aura watching a zone saw the items on
+    cooldowns and nothing else: a Potion drunk by its own condition, a shield
+    answering a blow, a counter crossing its line -- none of them announced,
+    and every clause written "Star item activates" quietly counted a fraction
+    of what it should have.
+    """
+
+    def _watcher(self, uid="watcher", position=(1, 1), on="activates"):
+        return self._starred(
+            [
+                AuraTrigger(
+                    zone="star",
+                    counting="any",
+                    after=1,
+                    on=on,
+                    effects=[
+                        BuffEffect(buff_name="credits", value=1, target_type="self")
+                    ],
+                )
+            ],
+            uid,
+            position,
+        )
+
+    def _beside(self, triggers, uid="stood"):
+        return self._item(triggers, uid=uid, position=(0, 0))
+
+    def _saw(self, triggers, seconds=2.0, hurt=None, against=()):
+        sim, _ = self._run(
+            [self._watcher(), self._beside(triggers)],
+            seconds=seconds,
+            hurt=hurt,
+            against=list(against),
+        )
+        return sim.player1.buffs.get("credits", 0)
+
+    def test_a_timer_still_announces(self):
+        assert self._saw(
+            [TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[HealEffect(1, 1)])]
+        )
+
+    def test_a_health_threshold_announces(self):
+        seen = self._saw(
+            [HealthThresholdTrigger(threshold=0.5, effects=[HealEffect(1, 1)])],
+            hurt=100,
+            against=[
+                self._item(
+                    [
+                        TimerTrigger(
+                            cooldown=0.2,
+                            cpu_cost=0,
+                            effects=[
+                                EffectDamageEffect(
+                                    amount=200,
+                                    lifesteal=0.0,
+                                    per_status={},
+                                    whose="self",
+                                )
+                            ],
+                        )
+                    ],
+                    uid="hard",
+                    position=(6, 0),
+                )
+            ],
+        )
+        assert seen == 1, "a Potion drunk by its own condition activated"
+
+    def test_an_after_trigger_announces(self):
+        assert self._saw([AfterTrigger(delay=0.5, effects=[HealEffect(1, 1)])]) == 1
+
+    def test_a_shield_answering_a_blow_announces(self):
+        """It rolled, it answered, it acted. This one cannot go through
+        `_fire` -- prevent_damage has to be handled an effect at a time -- so
+        it is the one path that has to say so itself."""
+        shield = self._item(
+            [
+                OnAttackedTrigger(
+                    chance=1.0,
+                    answers_to=frozenset({"melee"}),
+                    effects=[PreventDamageEffect(amount=3)],
+                )
+            ],
+            uid="stood",
+            position=(0, 0),
+        )
+        hitter = BattleItem(
+            spec=ItemSpec(
+                id="hitter",
+                name="hitter",
+                category="problem",
+                cost=1,
+                player_class="neutral",
+                shape=parse_map(["#"], "h"),
+                slug="hitter",
+                kinds=frozenset({"melee", "weapon"}),
+                triggers=[
+                    TimerTrigger(
+                        cooldown=0.5,
+                        cpu_cost=0,
+                        effects=[
+                            AttackEffect(
+                                min_damage=6,
+                                max_damage=6,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
+                        ],
+                    )
+                ],
+            ),
+            position=(4, 0),
+            uid="hitter",
+        )
+        sim, _ = self._run([self._watcher(), shield], seconds=2.0, against=[hitter])
+        assert [a for a in sim.actions if a.action == "block"], "it answered"
+        assert sim.player1.buffs.get("credits"), "and the watcher saw it act"
+
+    def test_a_container_with_an_aura_watches_the_items_on_it(self):
+        """A container's handlers are set up with the rack, and a rack is not
+        where items stand. Nothing in the catalogue carries this yet, so the
+        only way to reach it is to give a bag one.
+        """
+        spare = deepcopy(ITEM_CATALOG["standard_vm"])
+        try:
+            ITEM_CATALOG["standard_vm"].triggers = [
+                AuraTrigger(
+                    zone="contained",
+                    counting="any",
+                    after=1,
+                    on="activates",
+                    effects=[
+                        BuffEffect(buff_name="credits", value=1, target_type="self")
+                    ],
+                )
+            ]
+            stood = self._item(
+                [TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[HealEffect(1, 1)])],
+                uid="stood",
+                position=(0, 0),
+            )
+            sim, _ = self._run([stood], seconds=2.0, hurt=100)
+            assert sim.player1.buffs.get("credits"), "the shelf saw what stands on it"
+        finally:
+            ITEM_CATALOG["standard_vm"] = spare
+
+    def test_a_passive_announces_nothing(self):
+        """A passive is on throughout rather than happening at a moment"""
+        assert (
+            self._saw(
+                [
+                    PassiveTrigger(
+                        effects=[
+                            PlayerModifyEffect(
+                                stat="healing",
+                                value=0.1,
+                                target_type="self",
+                                duration=-1,
+                            )
+                        ]
+                    )
+                ]
+            )
+            == 0
+        )
+
+    def test_a_start_of_battle_trigger_announces_nothing(self):
+        """Settled before the battle has a first moment to happen in"""
+        assert self._saw([BattleStartTrigger(effects=[HealEffect(1, 1)])]) == 0
+
+    def test_an_aura_cannot_answer_its_own_activation(self):
+        """Every trigger announces now, so an aura whose effects set off what
+        it watches would otherwise answer itself until the stack gave out."""
+        loop = self._starred(
+            [
+                AuraTrigger(
+                    zone="star",
+                    counting="any",
+                    after=1,
+                    on="activates",
+                    effects=[
+                        TriggerItemEffect(
+                            where="star", counting="any", how_many=0, pick="all"
+                        )
+                    ],
+                )
+            ],
+            "loop",
+            (1, 1),
+        )
+        stood = self._beside(
+            [TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[HealEffect(1, 1)])]
+        )
+        sim, _ = self._run([loop, stood], seconds=2.0, hurt=100)
+        set_off = [a for a in sim.actions if a.action == "trigger_item"]
+        assert set_off, "it still fires"
+        assert (
+            len(set_off) <= 8
+        ), f"once per activation and not a chain of them: {len(set_off)}"
+
+    def test_an_item_set_off_by_another_announces_that_it_acted(self):
+        """ "Trigger the Star Pet" is the pet activating. An aura watching that
+        square has as much reason to answer it as a pet that came round on its
+        own clock."""
+        # `stood` has nothing of its own to go off, so an announcement can
+        # only have come from being set off by the item beside it.
+        stood = self._item([], uid="stood", position=(1, 0))
+        setter = self._starred(
+            [
+                AfterTrigger(
+                    delay=0.3,
+                    effects=[
+                        TriggerItemEffect(
+                            where="star", counting="any", how_many=0, pick="all"
+                        )
+                    ],
+                )
+            ],
+            "setter",
+            (1, 1),
+        )
+        watcher = self._watcher(uid="watcher", position=(2, 1))
+        sim, _ = self._run([watcher, setter, stood], seconds=1.0, hurt=100)
+        assert [a for a in sim.actions if a.action == "trigger_item"], "it was set off"
+        assert sim.player1.buffs.get("credits") == 1, "and the watcher saw it act"
+
+
+class TestAChanceCanGrowWithWhatYouHold(_WithOneItem):
+    """ "7% chance for each Luck to gain 3 Mana"."""
+
+    def _roller(self, chance=0.0, per_status=None):
+        return self._item(
+            [
+                TimerTrigger(
+                    cooldown=0.5,
+                    cpu_cost=0,
+                    effects=[
+                        ChanceEffect(
+                            chance=chance,
+                            per_status=per_status or {},
+                            effects=[
+                                BuffEffect(
+                                    buff_name="credits", value=1, target_type="self"
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ]
+        )
+
+    def test_nothing_held_is_no_chance_at_all(self):
+        sim, _ = self._run([self._roller(per_status={"calibrated": 0.5})], seconds=3.0)
+        assert "credits" not in sim.player1.buffs
+
+    def test_enough_held_makes_it_certain(self):
+        sim, _ = self._run(
+            [self._roller(per_status={"calibrated": 0.5})],
+            seconds=3.0,
+            buffs={"calibrated": 2},
+        )
+        assert sim.player1.buffs["credits"] == 5, "every roll landed"
+
+    def test_it_is_read_at_the_roll_and_not_before(self):
+        """The count changes as the battle goes on, so a chance settled at
+        setup would be the chance the player started with."""
+        grower = self._item(
+            [
+                TimerTrigger(
+                    cooldown=0.4,
+                    cpu_cost=0,
+                    effects=[
+                        BuffEffect(buff_name="calibrated", value=1, target_type="self")
+                    ],
+                )
+            ],
+            uid="grower",
+            position=(1, 0),
+        )
+        sim, _ = self._run(
+            [self._roller(per_status={"calibrated": 0.34}), grower], seconds=3.0
+        )
+        assert sim.player1.buffs.get("credits"), "the pool grew into a chance"
+
+    def test_a_flat_chance_still_works(self):
+        sim, _ = self._run([self._roller(chance=1.0)], seconds=3.0)
+        assert sim.player1.buffs["credits"] == 5
+
+
+class TestCountingCanExclude(_WithOneItem):
+    """ "10% chance to gain 1 Regeneration, 30% if the item is Holy" is two
+    clauses, and without a way to say "not Holy" both would fire on a Holy
+    item."""
+
+    @staticmethod
+    def _effect(counting):
+        return ModifyPerEffect(
+            stat="trigger_speed", value=1.0, zone="star", counting=counting
+        )
+
+    def test_none_matches_an_item_carrying_none_of_the_tags(self):
+        assert self._effect({"none": ["holy"]}).matches({"melee", "weapon"})
+
+    def test_none_refuses_an_item_carrying_one_of_them(self):
+        assert not self._effect({"none": ["holy"]}).matches({"holy", "melee"})
+
+    def test_none_refuses_an_item_carrying_any_of_several(self):
+        counting = {"none": ["holy", "dark"]}
+        assert not self._effect(counting).matches({"dark"})
+        assert self._effect(counting).matches({"nature"})
+
+    def test_the_other_two_are_unchanged(self):
+        assert self._effect({"any": ["holy"]}).matches({"holy", "melee"})
+        assert self._effect({"all": ["holy", "melee"]}).matches({"holy", "melee"})
+        assert not self._effect({"all": ["holy", "melee"]}).matches({"holy"})
+
+
+class TestWhatSpikesSendBack(_WithOneItem):
+    """Backpack Battles' Amulet of the Wild page, which is the only place the
+    rule is written down:
+
+        "The return damage limit refers to how much of the opponent's weapon
+        damage can be returned provided you have enough Spikes. Normally the
+        limit for melee weapons is 100% of the damage, and for ranged weapons
+        0% of the damage."
+
+    So Spikes were never a melee rule. 0% and "does not happen" are the same
+    answer until an item raises the limit, which is why they could sit inside
+    the melee half and look right.
+    """
+
+    def _swinger(self, kinds, damage=4, uid="them", position=(6, 0)):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid,
+                name=uid,
+                category="problem",
+                cost=1,
+                player_class="neutral",
+                shape=parse_map(["#"], uid),
+                slug=uid,
+                kinds=frozenset(kinds),
+                triggers=[
+                    TimerTrigger(
+                        cooldown=0.5,
+                        cpu_cost=0,
+                        effects=[
+                            AttackEffect(
+                                min_damage=damage,
+                                max_damage=damage,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
+                        ],
+                    )
+                ],
+            ),
+            position=position,
+            uid=uid,
+        )
+
+    def _raise_limit(self, which, by=0.5, uid="amulet"):
+        return self._item(
+            [
+                PassiveTrigger(
+                    effects=[
+                        PlayerModifyEffect(
+                            stat=f"spikes_limit_{which}",
+                            value=by,
+                            target_type="self",
+                            duration=-1,
+                        )
+                    ]
+                )
+            ],
+            uid=uid,
+            position=(1, 0),
+        )
+
+    def _sent_back(self, sim):
+        return sum(
+            a.damage
+            for a in sim.actions
+            if a.action == "damage" and (a.details or {}).get("buff_name") == "spiked"
+        )
+
+    def test_a_melee_blow_comes_back_in_full(self):
+        sim, _ = self._run(
+            [self._item([])],
+            seconds=0.6,
+            buffs={"spiked": 10},
+            against=[self._swinger({"melee", "weapon"})],
+        )
+        assert self._sent_back(sim) == 4, "100% of a four damage blow"
+
+    def test_a_ranged_blow_comes_back_not_at_all(self):
+        sim, _ = self._run(
+            [self._item([])],
+            seconds=0.6,
+            buffs={"spiked": 10},
+            against=[self._swinger({"ranged", "weapon"})],
+        )
+        assert self._sent_back(sim) == 0, "0% is the base for a ranged blow"
+
+    def test_raising_the_ranged_limit_sends_some_back(self):
+        sim, _ = self._run(
+            [self._raise_limit("ranged")],
+            seconds=0.6,
+            buffs={"spiked": 10},
+            against=[self._swinger({"ranged", "weapon"})],
+        )
+        assert self._sent_back(sim) == 2, "50% of four"
+
+    def test_the_wikis_worked_example_holds(self):
+        """Ten Spikes at 150%: four damage sends back six, nine sends back ten"""
+        for damage, expected in ((4, 6), (9, 10)):
+            sim, _ = self._run(
+                [self._raise_limit("melee")],
+                seconds=0.6,
+                buffs={"spiked": 10},
+                against=[self._swinger({"melee", "weapon"}, damage=damage)],
+            )
+            assert self._sent_back(sim) == expected, f"{damage} damage"
+
+    def test_the_stacks_held_are_the_other_bound(self):
+        sim, _ = self._run(
+            [self._item([])],
+            seconds=0.6,
+            buffs={"spiked": 2},
+            against=[self._swinger({"melee", "weapon"}, damage=9)],
+        )
+        assert self._sent_back(sim) == 2, "two Spikes cannot send back nine"
+
+    def test_effect_damage_sends_nothing_back_until_it_is_raised(self):
+        caster = self._item(
+            [
+                TimerTrigger(
+                    cooldown=0.5,
+                    cpu_cost=0,
+                    effects=[
+                        EffectDamageEffect(
+                            amount=8, lifesteal=0.0, per_status={}, whose="self"
+                        )
+                    ],
+                )
+            ],
+            uid="caster",
+            position=(6, 0),
+        )
+        bare, _ = self._run(
+            [self._item([])], seconds=0.6, buffs={"spiked": 10}, against=[caster]
+        )
+        assert self._sent_back(bare) == 0
+
+        raised, _ = self._run(
+            [self._raise_limit("effect")],
+            seconds=0.6,
+            buffs={"spiked": 10},
+            against=[caster],
+        )
+        assert self._sent_back(raised) == 4, "50% of eight"
+
+    def test_what_comes_back_can_crit(self):
+        sim, _ = self._run(
+            [
+                self._item(
+                    [
+                        PassiveTrigger(
+                            effects=[
+                                PlayerModifyEffect(
+                                    stat="spikes_critical_chance",
+                                    value=1.0,
+                                    target_type="self",
+                                    duration=-1,
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ],
+            seconds=0.6,
+            buffs={"spiked": 10},
+            against=[self._swinger({"melee", "weapon"})],
+        )
+        assert self._sent_back(sim) == 8, "four doubled"
+        assert [
+            a
+            for a in sim.actions
+            if a.action == "critical_hit" and (a.details or {}).get("kind") == "spikes"
+        ]
+
+    def test_no_roll_is_spent_on_a_crit_chance_nobody_has(self):
+        """`random() < 0` never lands, so rolling anyway changes nothing --
+        except which numbers every later draw receives. Nothing gives Spikes a
+        crit chance unless an item says so, and a wasted draw here would move
+        the seeded sequence of every battle that has ever had a Spike in it.
+
+        Asked of the road itself, because nothing downstream can tell a
+        sequence that shifted from one that did not.
+        """
+
+        class Counting:
+            def __init__(self, real):
+                self.real, self.draws = real, 0
+
+            def random(self):
+                self.draws += 1
+                return self.real.random()
+
+            def __getattr__(self, name):
+                return getattr(self.real, name)
+
+        def draws_for(crit):
+            sim = BattleSimulator(seed=TEST_SEED)
+            sim.player1 = Player(id=1, quota=100, max_quota=100, cpu=3.0)
+            sim.player2 = Player(id=2, quota=100, max_quota=100, cpu=3.0)
+            sim.player2.buffs["spiked"] = 10
+            if crit:
+                sim.player2.mods.append(
+                    Timed(
+                        kind="modifier",
+                        name="spikes_critical_chance",
+                        amount=crit,
+                        until=None,
+                    )
+                )
+            sim.rng = Counting(sim.rng)
+            sim._spikes_answer(4, sim.player1, sim.player2, "melee")
+            return sim.rng.draws, sim.player1.quota
+
+        none_held, hurt_plainly = draws_for(0.0)
+        rolled, hurt_worse = draws_for(1.0)
+        assert hurt_plainly == 96, "four came back"
+        assert hurt_worse == 92, "and eight when it crits, so the road ran both times"
+        assert none_held == 0, "no chance, no roll"
+        assert rolled == 1, "a chance is rolled for exactly once"
+
+    def test_nothing_comes_back_from_poison_or_fatigue(self):
+        """Spikes answer a blow. Poison arrives on its own clock from an item
+        that struck some time ago, and fatigue comes from nobody at all."""
+        sim, _ = self._run(
+            [self._item([])],
+            seconds=4.0,
+            buffs={"spiked": 10},
+            against=[
+                self._item(
+                    [
+                        BattleStartTrigger(
+                            effects=[
+                                DebuffEffect(
+                                    debuff_name=MEMORY_LEAKED, value=5, duration=-1
+                                )
+                            ]
+                        )
+                    ],
+                    uid="poisoner",
+                    position=(6, 0),
+                )
+            ],
+        )
+        assert [a for a in sim.actions if a.action == "dot"], "the poison landed"
+        assert self._sent_back(sim) == 0
+
+
+class TestTheCatalogueItemsThatWatchAMomentOrUseSpikes(TestTheSweptClauses):
+    """Real items that watch a moment in their zone, or answer with Spikes.
+
+    A weapon in the zone hitting, a Potion in it going off, a Holy item in it
+    activating and a plain one not; and, on the other side, what Spikes send
+    back and how often it crits.
+
+    Everything above tests a mechanic on an item made for the purpose, which
+    proves the mechanic and not the translation.
+    """
+
+    def _hitter(self, kinds=("melee", "weapon"), at=(0, 0), damage=6, uid="hitter"):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid,
+                name=uid,
+                category="problem",
+                cost=1,
+                player_class="neutral",
+                shape=parse_map(["#"], uid),
+                slug=uid,
+                kinds=frozenset(kinds),
+                triggers=[
+                    TimerTrigger(
+                        cooldown=0.5,
+                        cpu_cost=0,
+                        effects=[
+                            AttackEffect(
+                                min_damage=damage,
+                                max_damage=damage,
+                                accuracy=1.0,
+                                crit_chance=0.0,
+                            )
+                        ],
+                    )
+                ],
+            ),
+            position=at,
+            uid=uid,
+        )
+
+    def test_spike_launcher_spends_a_spike_on_its_next_swing(self):
+        """ "Star Weapon hits: Use 1 Spikes to deal +9 damage on the next attack"."""
+        where, star = self._place("spike_launcher", how_many_star=1)
+        sim, _ = self._fight(
+            [self._real("spike_launcher", where), self._hitter(at=star[0])],
+            seconds=4.0,
+            against=[self._tagged("wall", set(), (6, 0))],
+        )
+        spent = [a for a in sim.actions if a.action == "spend"]
+        assert spent, "the Spikes it starts with paid for it"
+        assert all(a.details["costs"] == {"spiked": 1} for a in spent)
+
+    def test_spike_launcher_with_no_weapon_beside_it_spends_nothing(self):
+        where, _ = self._place("spike_launcher")
+        sim, _ = self._fight(
+            [self._real("spike_launcher", where)],
+            seconds=4.0,
+            against=[self._tagged("wall", set(), (6, 0))],
+        )
+        assert not [a for a in sim.actions if a.action == "spend"]
+
+    def test_blue_sage_collar_pays_out_more_the_more_luck_you_hold(self):
+        """ "Star Weapon hits: 7% chance for each Luck to gain 3 Mana"."""
+        where, star = self._place("blue_sage_collar", how_many_star=1)
+        held = []
+        for luck in (0, 15):
+            sim, _ = self._fight(
+                [self._real("blue_sage_collar", where), self._hitter(at=star[0])],
+                seconds=8.0,
+                buffs={"calibrated": luck} if luck else None,
+                against=[self._tagged("wall", set(), (6, 0))],
+            )
+            held.append(sim.player1.buffs.get("credits", 0))
+        assert held[0] == 0, "no Luck is no chance at all"
+        assert held[1] > 0, "fifteen Luck is a certainty every hit"
+
+    def test_blue_sage_collar_answers_a_hit_and_not_a_swing(self):
+        """A weapon that misses activated and did not hit, which is the whole
+        difference between the moment this watches and the commoner one."""
+        where, star = self._place("blue_sage_collar", how_many_star=1)
+        misser = self._hitter(at=star[0], uid="misser")
+        # Far below zero, not at it: the fifteen Luck this test needs for the
+        # chance would otherwise carry a zero-accuracy weapon into landing.
+        misser.spec.triggers[0].effects = [
+            AttackEffect(min_damage=6, max_damage=6, accuracy=-10.0, crit_chance=0.0)
+        ]
+        sim, _ = self._fight(
+            [self._real("blue_sage_collar", where), misser],
+            seconds=8.0,
+            buffs={"calibrated": 15},
+            against=[self._tagged("wall", set(), (6, 0))],
+        )
+        assert [a for a in sim.actions if a.action == "miss"], "it swung and missed"
+        assert "credits" not in sim.player1.buffs
+
+    def test_amulet_of_light_tells_a_holy_item_from_the_rest(self):
+        """ "10% chance to gain 1 Regeneration, 30% if the item is Holy" is two
+        clauses, and a Holy item must answer one of them and not both."""
+        spec = ITEM_CATALOG["amulet_of_light"]
+        auras = [t for t in spec.triggers if isinstance(t, AuraTrigger)]
+        assert len(auras) == 2
+        by_chance = {}
+        for aura in auras:
+            (chance,) = [e for e in aura.effects if isinstance(e, ChanceEffect)]
+            by_chance[chance.chance] = aura.counting
+        assert by_chance == {0.3: {"any": ["holy"]}, 0.1: {"none": ["holy"]}}
+
+    def test_barb_daemon_sends_a_ranged_blow_back(self):
+        """ "Return damage limit of Spikes against Ranged- and Effect-attacks
+        +50%". Nothing came back from a ranged blow before it."""
+        where, _ = self._place("thorn_elemental")
+        shooter = self._swinger(damage=8, uid="shooter", position=(6, 0))
+        shooter.spec.kinds = frozenset({"ranged", "weapon"})
+        sim, _ = self._fight(
+            [self._real("thorn_elemental", where)], seconds=6.0, against=[shooter]
+        )
+        back = [
+            a
+            for a in sim.actions
+            if a.action == "damage" and (a.details or {}).get("buff_name") == "spiked"
+        ]
+        assert back, "half of a ranged blow now comes back"
+
+    def test_barb_daemon_gives_spikes_a_crit_chance_per_nature_item(self):
+        """ "Spikes have 10% critical hit chance per Star Nature-item"."""
+        where, star = self._place("thorn_elemental", how_many_star=2)
+        beside = [self._tagged(f"n{i}", {"nature"}, at) for i, at in enumerate(star)]
+        sim, _ = self._fight(
+            [self._real("thorn_elemental", where)] + beside, seconds=0.3
+        )
+        assert sim.player1.modifier("spikes_critical_chance", 0.0) == pytest.approx(0.2)
+
+    def test_echo_chamber_sets_off_the_pet_beside_it(self):
+        """ "After 5s: Trigger the Star Pet and gain 4 Spikes"."""
+        where, star = self._place("machine_learning_core", how_many_star=1)
+        pet = self._tagged("pet", {"pet"}, star[0], category="pet")
+        pet.spec.triggers = [
+            TimerTrigger(cooldown=99.0, cpu_cost=0, effects=[HealEffect(7, 7)])
+        ]
+        sim, _ = self._fight(
+            [self._real("machine_learning_core", where), pet], seconds=6.0, hurt=100
+        )
+        assert [a for a in sim.actions if a.action == "trigger_item"]
+        assert sim.player1.buffs["spiked"] == 4
+
+    def test_echo_chamber_raises_the_melee_and_ranged_limits_only(self):
+        where, _ = self._place("machine_learning_core")
+        sim, _ = self._fight([self._real("machine_learning_core", where)], seconds=0.3)
+        assert sim.player1.modifier("spikes_limit_melee", 0.0) == 0.5
+        assert sim.player1.modifier("spikes_limit_ranged", 0.0) == 0.5
+        assert sim.player1.modifier("spikes_limit_effect", 0.0) == 0.0
+
+    def test_ci_cauldron_heals_when_a_potion_beside_it_goes_off(self):
+        """ "Star Potion triggered: Heal for 10 + 2 per Diamond Food"."""
+        where, star = self._place("boiling_pot", how_many_star=1)
+        potion = self._item(
+            [TimerTrigger(cooldown=1.0, cpu_cost=0, effects=[HealEffect(1, 1)])],
+            uid="potion",
+            position=star[0],
+        )
+        potion.spec.kinds = frozenset({"potion"})
+        sim, _ = self._fight(
+            [self._real("boiling_pot", where), potion], seconds=3.0, hurt=100
+        )
+        pot = [
+            a for a in sim.actions if a.action == "heal" and a.source == "boiling_pot"
+        ]
+        assert pot and all(a.damage == 10 for a in pot), "ten, with no Food beside it"
+
+
+class TestAnAuraWatchesItsOwnSideOnly(_WithOneItem):
+    """Whose moment it was, before whose item it was.
+
+    Every event an aura can watch names the acting player. Matching on uid
+    alone let the other player's item answer this zone if two sessions ever
+    handed out the same uid, which nothing prevents: an opponent's loadout
+    comes from another session entirely.
+    """
+
+    def test_the_other_players_item_does_not_answer_this_zone(self):
+        watcher = self._starred(
+            [
+                AuraTrigger(
+                    zone="star",
+                    counting="any",
+                    after=1,
+                    on="activates",
+                    effects=[
+                        BuffEffect(buff_name="credits", value=1, target_type="self")
+                    ],
+                )
+            ],
+            "watcher",
+            (1, 1),
+        )
+        # The same uid on both sides. Theirs stands on their own rack and
+        # nowhere near this zone; the uid is the whole of the resemblance,
+        # and matching on it alone was enough to make the zone answer.
+        mine = self._item([], uid="twin", position=(0, 0))
+        theirs = self._item(
+            [TimerTrigger(cooldown=0.5, cpu_cost=0, effects=[HealEffect(1, 1)])],
+            uid="twin",
+            position=(4, 0),
+        )
+        sim, _ = self._run([watcher, mine], seconds=2.0, against=[theirs])
+        assert (
+            "credits" not in sim.player1.buffs
+        ), "their item activating is not a moment in this player's zone"

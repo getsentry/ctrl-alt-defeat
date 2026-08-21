@@ -504,9 +504,46 @@ battle.
 | **Monitored** | Empower | +1 damage per stack |
 | **Compute** | Luck | +5% accuracy per stack (internal id stays `calibrated`) |
 | **Regenerating** | Regeneration | Heal 1 HP per stack every 2 seconds |
-| **Spiked** | Spikes | 1 damage per stack when hit by a melee weapon |
+| **Spiked** | Spikes | Sends a blow back, up to a stack a point — see below |
 | **Draining** | Vampirism | Heal 1 per stack when hitting with a melee weapon |
 | **Credits** | Mana | Spent by items that need it |
+
+#### What Spikes send back
+
+Two numbers bound it and the smaller wins: **the stacks held**, and **a share
+of the damage that landed**. Backpack Battles' Amulet of the Wild page is the
+only place the share is written down:
+
+> The "return damage limit" refers to how much of the opponent's weapon damage
+> can be returned provided you have enough Spikes. Normally the limit for melee
+> weapons is 100% of the damage, and for ranged weapons 0% of the damage.
+
+So Spikes are not a melee rule, though they look like one: 0% and "does not
+happen" are the same answer until an item raises the limit. Effect-damage reads
+as ranged does — nothing comes back until something says it does.
+
+| Thrown by | Base limit |
+|---|---|
+| Melee | 100% of the damage |
+| Ranged | 0% |
+| Effect-damage | 0% |
+
+A magic weapon reads as a ranged one. The wiki names melee and ranged and
+gives ranged nothing, so the two ways of not being melee land on the same
+answer and nothing comes back from either until an item says so.
+
+"Return damage limit of Spikes against Ranged- and Effect-attacks +50%" raises
+two of the three, so each kind is its own number rather than one that would
+raise all three at once. The page's worked example holds: ten Spikes at 150%
+against a four damage blow send back six, and against a nine damage blow send
+back ten, because the stacks run out first.
+
+**What comes back can crit**, doubling it. Nothing else gives it a chance, so
+"Spikes have 10% critical hit chance per Star Nature-item" is the whole of it.
+
+**Only a blow sets them off.** Poison arrives on its own clock from an item
+that struck some time ago, and fatigue comes from no item at all; neither is
+something to send back.
 
 #### How fast an item triggers
 
@@ -916,6 +953,21 @@ common one, but the source game also writes "Star Weapon hits", "Star Weapon
 crits" and "Star Potion consumed", and those are different moments: a weapon
 that missed activated and did not hit.
 
+**Every trigger is an activation, not only a timer.** A Potion drunk by its own
+condition activated; so did a shield that rolled and answered a blow, and a pet
+another item set off. Only a standing trigger is not one: a passive is on
+throughout rather than happening at a moment, and a start-of-battle one is
+settled before the battle has a first moment to happen in.
+
+**A zone watches its own side.** Every moment an aura can watch names the
+player it happened to, and that is asked before whose item it was: two players'
+loadouts come from two sessions, and nothing stops them handing out the same
+identifier.
+
+**A zone can be narrowed by what an item is *not*.** "10% chance to gain 1
+Regeneration, 30% if the item is Holy" is two clauses, and without a way to say
+"not Holy" a Holy item would answer both.
+
 **A zone can count its empty squares.** "Destroy 4 Block for each free Star
 slot" counts the squares of the zone that no item stands on — the only thing
 an aura counts that is not an item.
@@ -944,6 +996,11 @@ counts what the items in the zone have handed over and no other Block, so a
 shield gaining 30 on its own does not answer it. A zone answers for itself —
 what it gave is the owner's, and it only ever goes up — so a total narrowed
 this way cannot also name whose it is or ask for what is held.
+
+**A chance can grow with what its owner holds.** "7% chance for each Luck to
+gain 3 Mana" is read at the moment of the roll and not settled beforehand, so
+Luck gained during a battle counts. The same shape a resist's growing chance
+uses.
 
 There are no synergies that count how many of a category sit beside each other.
 An earlier version of this document described six, of which two were built
