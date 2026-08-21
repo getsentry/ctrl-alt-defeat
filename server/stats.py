@@ -21,8 +21,9 @@ So a run is counted where a finished one is actually banked, on the player:
 stands, and `battle_history` is the one table that really does keep a row per
 thing that happened.
 
-Counts only. No names, no identifiers -- what is being asked is whether
-anybody is out there, not who.
+Mostly counts: what is being asked is whether anybody is out there. `recent()`
+is the one thing here that reads a name, and a name is the handle somebody
+typed on a menu -- no account id, no token, no address.
 """
 
 from dataclasses import asdict, dataclass, field
@@ -40,6 +41,24 @@ WINDOWS = {"hour": timedelta(hours=1), "day": timedelta(days=1),
 
 #: A run is ten rounds. Anything past that is a run that won.
 ROUNDS = 10
+
+
+@dataclass
+class Player:
+    """One person's latest run, as a page would list it.
+
+    A name is whatever they typed on the menu -- most of them are "Player" --
+    and it is the only thing here that is theirs. No account id, no token, no
+    address: enough to see that somebody was here and how they got on.
+    """
+
+    name: str
+    round: int
+    wins: int
+    losses: int
+    started: str
+    last_seen: str
+    finished: bool
 
 
 @dataclass
@@ -67,6 +86,34 @@ async def _count(db, table, column, since=None) -> int:
     if since is not None:
         query = query.where(column >= since)
     return int((await db.execute(query)).scalar() or 0)
+
+
+async def recent(db, limit: int = 50) -> List[Player]:
+    """The people who played most recently, latest first.
+
+    One row each, because that is all the schema keeps: a player has one
+    session, reset when they start again, so this is where each of them got
+    to rather than everything they have ever done.
+    """
+    rows = await db.execute(
+        select(GameSession.player_name, GameSession.round, GameSession.wins,
+               GameSession.losses, GameSession.created_at,
+               GameSession.last_activity, GameSession.finished_at)
+        .order_by(GameSession.last_activity.desc())
+        .limit(max(1, min(limit, 200)))
+    )
+    return [
+        Player(
+            name=row[0] or "Player",
+            round=int(row[1]),
+            wins=int(row[2]),
+            losses=int(row[3]),
+            started=row[4].isoformat(),
+            last_seen=row[5].isoformat(),
+            finished=row[6] is not None,
+        )
+        for row in rows.all()
+    ]
 
 
 async def gather(db) -> Stats:

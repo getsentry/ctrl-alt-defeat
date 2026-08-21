@@ -1671,6 +1671,22 @@ async def get_stats_page(token: str = "") -> str:
         return stats_page.render(await stats_module.gather(db), token)
 
 
+@app.get("/stats/players", response_class=HTMLResponse)
+async def get_stats_players(token: str = "", limit: int = 50) -> str:
+    """Who has been playing, most recent first.
+
+    Behind the same door as the counts, no more: a name here is a handle
+    somebody typed on a menu, not an address.
+    """
+    if not _may_read_stats(token):
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED,
+                            detail="The stats are not open on this server")
+
+    async with db_manager.get_session() as db:
+        return stats_page.render_players(
+            await stats_module.recent(db, limit), token)
+
+
 @app.get("/leaderboard", response_model=LeaderboardResponse)
 async def get_leaderboard(limit: int = 10) -> LeaderboardResponse:
     """Get top players"""

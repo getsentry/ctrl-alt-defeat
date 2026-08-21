@@ -168,6 +168,32 @@ class TestThePage:
         assert "Who is playing" in page
         assert "<html" in page and "</html>" in page
 
+    @pytest.mark.asyncio
+    async def test_each_page_leads_to_the_other(self, transactional_db):
+        # The counts say how many, the players page says who, and either one
+        # is a dead end without the other.
+        import stats_page
+
+        async with transactional_db() as db:
+            counts = stats_page.render(await stats.gather(db))
+            players = stats_page.render_players(await stats.recent(db))
+
+        assert '"/stats/players"' in counts, "the counts should lead to the names"
+        assert '"/stats/page"' in players, "and the names back to the counts"
+
+    @pytest.mark.asyncio
+    async def test_a_token_is_carried_between_them(self, transactional_db):
+        # Or following the link on a server that wants one lands on a 401.
+        import stats_page
+
+        async with transactional_db() as db:
+            counts = stats_page.render(await stats.gather(db), token="letmein")
+            players = stats_page.render_players(
+                await stats.recent(db), token="letmein")
+
+        assert '"/stats/players?token=letmein"' in counts
+        assert '"/stats/page?token=letmein"' in players
+
     def test_a_round_nobody_reached_is_still_drawn(self):
         import stats_page
 
@@ -207,3 +233,82 @@ class TestWhoMayRead:
         assert main._may_read_stats("letmein")
         assert not main._may_read_stats("")
         assert not main._may_read_stats("letmeout")
+
+
+class TestWhoHasBeenPlaying:
+    @pytest.mark.asyncio
+    async def test_the_latest_players_come_first(self, transactional_db):
+        async with transactional_db() as db:
+            older = utc_now() - timedelta(hours=2)
+            await _a_run(db, await _a_player(db), active=older)
+            await _a_run(db, await _a_player(db))
+
+            listed = await stats.recent(db, limit=2)
+
+        assert len(listed) == 2
+        assert listed[0].last_seen > listed[1].last_seen
+
+    @pytest.mark.asyncio
+    async def test_a_player_is_shown_by_the_name_they_typed(self, transactional_db):
+        async with transactional_db() as db:
+            run = await _a_run(db, await _a_player(db))
+            run.player_name = "Dan"
+            await db.flush()
+
+            listed = await stats.recent(db, limit=1)
+
+        assert listed[0].name == "Dan"
+
+    @pytest.mark.asyncio
+    async def test_asking_for_more_than_there_is_gives_what_there_is(
+            self, transactional_db):
+        async with transactional_db() as db:
+            await _a_run(db, await _a_player(db))
+
+            assert len(await stats.recent(db, limit=1000)) >= 1
+
+    @pytest.mark.asyncio
+    async def test_it_says_how_a_run_ended_as_well_as_where_it_got_to(
+            self, transactional_db):
+        async with transactional_db() as db:
+            await _a_run(db, await _a_player(db), round_reached=7, wins=4,
+                         finished=True)
+
+            latest = (await stats.recent(db, limit=1))[0]
+
+        assert latest.round == 7 and latest.wins == 4
+        assert latest.finished, "a paid-out run should say so"
+
+
+class TestHowLongAgo:
+    def test_a_naive_stamp_is_not_compared_against_an_aware_one(self):
+        import stats_page
+
+        # The database keeps its times without a zone, and mixing the two
+        # raises -- at the moment somebody opens the page, which is how this
+        # was found.
+        said = stats_page._ago((utc_now() - timedelta(hours=3)).isoformat())
+
+        assert "ago" in said
+
+    def test_a_moment_ago_is_said_as_now(self):
+        import stats_page
+
+        assert stats_page._ago(utc_now().isoformat()) == "just now"
+
+    def test_something_that_is_not_a_time_is_left_as_it_is(self):
+        import stats_page
+
+        assert stats_page._ago("whenever") == "whenever"
+
+
+class TestWhoMaySeeNames:
+    """The same door as the counts: a name here is a handle off a menu."""
+
+    def test_names_are_behind_the_same_token_as_the_counts(self, monkeypatch):
+        import main
+
+        monkeypatch.setattr(main, "STATS_TOKEN", "letmein")
+
+        assert main._may_read_stats("letmein")
+        assert not main._may_read_stats("")
