@@ -12,15 +12,9 @@ import uuid
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-import sentry_sdk
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-from sentry_sdk.integrations.starlette import StarletteIntegration
-
 import auth_endpoints
+import describe
+import sentry_sdk
 from auth import TokenData, get_current_user
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
 from config_loader import config_loader
@@ -28,6 +22,8 @@ from containers import Container, PlacementValidator, starting_containers
 
 # Import session management and schemas
 from database import db_manager
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from grid_system import Rotation
 from inventory_manager import (
     InvalidPlacementError,
@@ -35,43 +31,47 @@ from inventory_manager import (
     ItemNotFoundError,
     combining_partners,
 )
-import describe
 from items import SALE_CHANCE, Item, PlacedItem
-from shop_phase import entering_the_shop, sale_chance_from
 from matchmaking import MatchmakingService
+from payout import run_is_over, run_was_lost, run_was_won
 from schemas import (
     BattleHistoryEntry,
-    Combination,
-    CombiningPartners,
-    InventoryAfterBattle,
-    Pending,
-    RackRequest,
-    ShopRequest,
-    StatusRule,
-    StatusRules,
-    refresh_price,
     BattleHistoryResponse,
     BattleResponse,
     BattleResult,
+    Combination,
+    CombiningPartners,
     GameSession,
     HealthResponse,
+    InventoryAfterBattle,
     InventoryData,
     LeaderboardEntry,
     LeaderboardResponse,
     MoveItemRequest,
     MoveItemResponse,
+    Pending,
     PurchaseRequest,
     PurchaseResponse,
+    RackRequest,
     SellRequest,
     SellResponse,
     SessionUpdate,
     ShopRefreshRequest,
     ShopRefreshResponse,
+    ShopRequest,
     SimpleBattleRequest,
     StartSessionRequest,
     StartSessionResponse,
+    StatusRule,
+    StatusRules,
+    refresh_price,
 )
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 from session_manager import SessionManager
+from shop_phase import entering_the_shop, sale_chance_from
 from utils import Position, to_position, utc_now
 
 # Test mode allows seeds and special AI configurations for testing
@@ -278,6 +278,13 @@ async def start_session(
     inventory_manager = InventoryManager()
     inventory_state = inventory_manager.get_state()
 
+    # Settle the last run before this one writes over its row. A run the
+    # player walked away from is still owed its wins (Section 5.5), and this is
+    # the moment it is paid -- so the answer has to carry it, or the coins
+    # arrive with nothing on screen to say why. A run that ended properly was
+    # already paid and says so, so this passes it by.
+    settled = await session_manager.pay_for_abandoned_run(player_id)
+
     # Create session using SessionManager. The name comes from the account.
     session = await session_manager.create_session(player_id, game_seed)
 
@@ -296,6 +303,8 @@ async def start_session(
         player_id=player_id,
         player_name=session.player_name,
         session=session,
+        snuba_coin=await session_manager.snuba_coin_for(player_id),
+        settled=settled,
     )
 
 
@@ -619,6 +628,16 @@ async def simulate_battle(
                 detail="AI difficulty override only allowed in test mode",
             )
 
+    # A finished run does not fight again. Without this the run has no end at
+    # all: the last try is spent, the ending is shown, and the next battle is
+    # simulated anyway -- `lives` goes to -1 and `losses` to 6. It also keeps
+    # the payout honest, because a won run left playing would bank an 11th win
+    # and change what the run it already paid for was worth.
+    if run_is_over(session.wins, session.lives):
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT, detail="This run is over. Start a new one."
+        )
+
     # Use inventory from session
     if len(session.inventory_grid) == 0:
         raise HTTPException(
@@ -649,9 +668,8 @@ async def simulate_battle(
             # Get the database session and user_id
             async with db_manager.get_session() as db:
                 # Get the actual database GameSession model
-                from sqlalchemy import select
-
                 from models import GameSession as DBGameSession
+                from sqlalchemy import select
 
                 db_session_result = await db.execute(
                     select(DBGameSession).where(DBGameSession.player_id == player_id)
@@ -791,9 +809,9 @@ async def simulate_battle(
 
     # What the player's items do as the shop opens. Held on the grid or in the
     # chest alike: an item works the shop the same either way.
-    opening = entering_the_shop([
-        ITEM_CATALOG[t] for t in held_item_types(session) if t in ITEM_CATALOG
-    ])
+    opening = entering_the_shop(
+        [ITEM_CATALOG[t] for t in held_item_types(session) if t in ITEM_CATALOG]
+    )
     if opening.gold:
         session.gold += opening.gold
         gold_reward += opening.gold
@@ -817,9 +835,8 @@ async def simulate_battle(
     if not TEST_MODE:
         try:
             async with db_manager.get_session() as db:
-                from sqlalchemy import select
-
                 from models import GameSession as DBGameSession
+                from sqlalchemy import select
 
                 db_session_result = await db.execute(
                     select(DBGameSession).where(DBGameSession.player_id == player_id)
@@ -882,9 +899,19 @@ async def simulate_battle(
 
     battle_id = str(uuid.uuid4())
 
-    # Check win/loss conditions
-    game_over = session.lives <= 0
-    victory = session.wins >= 10  # Won round 10
+    # The two endings, each asked for by name. `run_over` is not a third one:
+    # SessionUpdate works it out from these.
+    game_over = run_was_lost(session.lives)
+    victory = run_was_won(session.wins)
+    run_over = game_over or victory
+
+    # A run that just ended is paid for and counted, here and once. What comes
+    # back is what the run paid, whether or not this call is the one that paid
+    # it: two battles sent at the same moment both get this far, and the one
+    # that loses the race should still be told the ending rather than a payout
+    # of nothing. `finish_run` is where paying twice is prevented.
+    payout = await session_manager.finish_run(player_id) if run_over else None
+    snuba_coin = await session_manager.snuba_coin_for(player_id)
 
     # Serialize player and enemy inventories for client display
     def to_placed(item: BattleItem) -> PlacedItem:
@@ -955,6 +982,8 @@ async def simulate_battle(
         lives=session.lives,
         game_over=game_over,
         victory=victory,
+        snuba_coin=snuba_coin,
+        payout=payout,
         shop_refresh_cost=refresh_price(session.shop_refresh_count),
         combinations=[
             Combination(
@@ -1001,20 +1030,59 @@ def get_ghost_player_items(round_number: int) -> List[BattleItem]:
         2: ["null_blade", "firewall"],
         3: ["null_blade", "stack_smasher", "firewall"],
         4: ["null_blade", "stack_smasher", "firewall", "healing_nanobots"],
-        5: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
-            "error_monitoring"],
-        6: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
-            "error_monitoring", "auto_scaler"],
-        7: ["null_blade", "stack_smasher", "firewall", "error_monitoring",
-            "auto_scaler", "healing_nanobots"],
-        8: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
-            "error_monitoring", "auto_scaler", "quantum_processor"],
-        9: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
-            "error_monitoring", "auto_scaler", "quantum_processor",
-            "load_balancer_module"],
-        10: ["null_blade", "stack_smasher", "deadlock_twins", "firewall",
-             "error_monitoring", "auto_scaler", "quantum_processor",
-             "load_balancer_module", "healing_nanobots"],
+        5: [
+            "null_blade",
+            "stack_smasher",
+            "deadlock_twins",
+            "firewall",
+            "error_monitoring",
+        ],
+        6: [
+            "null_blade",
+            "stack_smasher",
+            "deadlock_twins",
+            "firewall",
+            "error_monitoring",
+            "auto_scaler",
+        ],
+        7: [
+            "null_blade",
+            "stack_smasher",
+            "firewall",
+            "error_monitoring",
+            "auto_scaler",
+            "healing_nanobots",
+        ],
+        8: [
+            "null_blade",
+            "stack_smasher",
+            "deadlock_twins",
+            "firewall",
+            "error_monitoring",
+            "auto_scaler",
+            "quantum_processor",
+        ],
+        9: [
+            "null_blade",
+            "stack_smasher",
+            "deadlock_twins",
+            "firewall",
+            "error_monitoring",
+            "auto_scaler",
+            "quantum_processor",
+            "load_balancer_module",
+        ],
+        10: [
+            "null_blade",
+            "stack_smasher",
+            "deadlock_twins",
+            "firewall",
+            "error_monitoring",
+            "auto_scaler",
+            "quantum_processor",
+            "load_balancer_module",
+            "healing_nanobots",
+        ],
     }
 
     wanted = ghost_inventories.get(min(round_number, 10), ghost_inventories[1])
@@ -1331,14 +1399,12 @@ async def sell_item(
 
     # Find and remove item
     item_found = None
-    item_cost = 3  # Default cost for gold calculation
 
     # Search in both storage and grid for the item
     # First try storage
     for item in session.inventory_storage:
         if item.id == request.item_id:
             item_found = item
-            item_cost = item.cost
             # Remove from storage using item_id
             removed = manager.remove_item(item_id=request.item_id)
             if not removed:
@@ -1353,8 +1419,8 @@ async def sell_item(
         for item in session.inventory_grid:
             if item.id == request.item_id:
                 item_found = item
-                item_cost = item.cost
-                # Remove from grid using item_id (remove_item handles both storage and grid)
+                # Remove from grid using item_id (remove_item handles both
+                # storage and grid)
                 removed = manager.remove_item(item_id=request.item_id)
                 if not removed:
                     raise HTTPException(

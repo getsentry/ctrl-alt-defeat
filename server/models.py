@@ -64,6 +64,14 @@ class GameSession(Base):
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     last_activity = Column(DateTime, default=utc_now, nullable=False)
 
+    # When the run ended, or null while it is still being played. A run's
+    # ending used to be worked out from `lives` and `wins` every time it was
+    # asked for and never written down, which answers "is it over" but not
+    # "has it been paid for" -- and /battle/simulate recomputes on every call,
+    # so a repeated request would have paid twice. Setting this is what pays
+    # the run, so it can only happen once.
+    finished_at = Column(DateTime, nullable=True)
+
     def to_dict(self) -> dict:
         """Convert database model to dictionary for API responses"""
         return {
@@ -141,10 +149,18 @@ class User(Base):
     password_hash = Column(String(255), nullable=True)
 
     # Stats
+    # `total_games_played` counts runs that reached an end. A run the player
+    # walked away from does not count, because the register prompt is timed
+    # off this and abandoning is not finishing. Its wins and losses do count:
+    # those battles happened.
     total_games_played = Column(Integer, default=0, nullable=False)
     total_wins = Column(Integer, default=0, nullable=False)
     total_losses = Column(Integer, default=0, nullable=False)
     current_rank = Column(Integer, default=1000, nullable=False)  # ELO-style rating
+
+    # SnubaCoin, the account's own currency (Section 5.5). Gold is spent
+    # inside a run and gone with it; this is paid for a run and kept.
+    snuba_coin = Column(Integer, default=0, nullable=False)
 
     # Metadata
     created_at = Column(DateTime, default=utc_now, nullable=False)
@@ -170,6 +186,7 @@ class User(Base):
             "total_wins": self.total_wins,
             "total_losses": self.total_losses,
             "current_rank": self.current_rank,
+            "snuba_coin": self.snuba_coin,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_login_at": (
                 self.last_login_at.isoformat() if self.last_login_at else None

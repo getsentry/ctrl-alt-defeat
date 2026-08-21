@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from containers import Container
 from grid_system import Rotation
 from items import Item, PlacedItem
+from payout import Payout
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 from utils import Position
 
@@ -168,6 +169,19 @@ class StartSessionResponse(BaseModel):
     player_id: str = Field(description="Unique player/session identifier")
     player_name: str = Field(description="Player's display name")
     session: GameSession = Field(description="Complete game session state")
+    snuba_coin: int = Field(
+        default=0, description="The account's SnubaCoin balance, after any payout"
+    )
+    settled: Optional[Payout] = Field(
+        default=None,
+        description=(
+            "What the run the player walked away from paid, or null if there "
+            "was none to settle. Section 5.5 pays an abandoned run here "
+            "because it is the first moment the server can know the run is "
+            "over and a moment the player is present for -- so the answer has "
+            "to carry it, or the coins arrive with nothing to show for them."
+        ),
+    )
 
 
 class PurchaseResponse(BaseModel):
@@ -351,6 +365,35 @@ class SessionUpdate(BaseModel):
     lives: int = Field(description="Remaining lives")
     game_over: bool = Field(description="Whether game has ended")
     victory: bool = Field(description="Whether player achieved victory")
+
+    @computed_field
+    @property
+    def run_over(self) -> bool:
+        """Whether the run has ended, either way.
+
+        Worked out here rather than sent, because it is not a third fact: it
+        is the other two, and a field that can disagree with what it is made
+        of will eventually be set wrong by somebody.
+
+        It is sent at all because the two it is made of are easy to read
+        wrongly. `game_over` is only the last try being spent; a run won on
+        its 10th win ends with lives to spare and leaves `game_over` false. A
+        client that read that one alone walked the winner back into the shop
+        for round 11.
+        """
+        return self.game_over or self.victory
+
+    snuba_coin: int = Field(
+        default=0, description="The account's SnubaCoin balance, after any payout"
+    )
+    payout: Optional[Payout] = Field(
+        default=None,
+        description=(
+            "What the run just paid, and what for, or null while the run is "
+            "still being played. One line per banner, in the order they are "
+            "shown."
+        ),
+    )
     shop_refresh_cost: int = Field(
         default=1,
         description=(

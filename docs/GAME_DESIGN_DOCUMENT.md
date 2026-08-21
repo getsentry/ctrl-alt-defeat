@@ -1433,6 +1433,11 @@ A run ends two ways, and both take the same exit:
 Winning is not a special case that skips the ending. It is the better of the
 two endings, and it uses the same one.
 
+A finished run does not fight again. The server refuses the next battle rather
+than simulating it, because a run whose ending has been shown and paid for is
+over — and one that carried on would spend a sixth try it does not have, or
+bank an 11th win and change what it had already been paid for.
+
 #### It is not a screen
 
 The end of a run is the **second beat of the round result**, drawn in the same

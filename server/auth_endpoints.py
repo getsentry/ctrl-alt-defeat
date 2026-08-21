@@ -247,6 +247,7 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
             "wins": user.total_wins,
             "losses": user.total_losses,
             "rank": user.current_rank,
+            "snuba_coin": user.snuba_coin,
         }
 
 

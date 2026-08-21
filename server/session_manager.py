@@ -11,6 +11,7 @@ from typing import List, Optional
 from containers import starting_containers
 from database import db_manager  # noqa: F401
 from models import BattleHistory, GameSession, User
+from payout import Payout, for_abandoned_run, for_finished_run, run_is_over
 from schemas import GameSession as GameSessionPydantic
 from sqlalchemy import delete, select, text
 from utils import dump_all, utc_now
@@ -62,6 +63,11 @@ class SessionManager:
 
         The player's name is not an argument. It belongs to the account, and
         the session reads it from there.
+
+        This writes over the row the last run lived in. Anything owed for that
+        run has to be settled first -- see `pay_for_abandoned_run`, which
+        /session/start calls before this, because it is the answer to
+        /session/start that has to carry what was paid.
         """
         # Generate seed if not provided
         if game_seed is None:
@@ -128,6 +134,8 @@ class SessionManager:
                 existing_session.game_seed = game_seed
                 existing_session.shop_refresh_count = session.shop_refresh_count
                 existing_session.last_activity = utc_now()
+                # A fresh run, so it has not finished and has not been paid.
+                existing_session.finished_at = None
                 print(f"Updated existing session for player {player_id}")
             else:
                 # Create new session
@@ -170,6 +178,108 @@ class SessionManager:
                 return GameSessionPydantic.model_validate(db_session.to_dict())
 
             return None
+
+    async def finish_run(self, player_id: str) -> Optional[Payout]:
+        """End the player's run, pay it out, and count it. Once.
+
+        Returns what the run paid, whether or not this call is the one that
+        paid it. /battle/simulate works out that the run is over on every call,
+        so a client whose answer went missing asks again -- and it should see
+        the same ending, with the same banners, rather than a payout of
+        nothing. The numbers cannot drift: a finished run's wins and tries
+        never change again.
+
+        `finished_at` is what makes the second call pay nothing, and the row is
+        locked while it is read so that two calls at once cannot both find it
+        unset. Without the lock both would read the same balance, add to it,
+        and one increment would be lost -- or worse, both would land and the
+        run would pay twice.
+        """
+        async with db_manager.get_session() as db:
+            result = await db.execute(
+                select(GameSession)
+                .where(GameSession.player_id == player_id)
+                .with_for_update()
+            )
+            db_session = result.scalar_one_or_none()
+            if db_session is None:
+                return None
+
+            # The row is read again here, under the lock. What the caller
+            # decided was over came from an earlier transaction that has since
+            # committed and let go, and a /session/start landing in that gap
+            # settles the old run and resets the row to a fresh one. Paying
+            # then would pay 8 coin for a run nobody has played and stamp the
+            # new run as finished, so it would pay nothing when it really ends.
+            if not run_is_over(db_session.wins, db_session.lives):
+                return None
+
+            paid = for_finished_run(db_session.wins, max(0, db_session.lives))
+            if db_session.finished_at is not None:
+                return paid
+
+            user = await db.get(User, db_session.user_id)
+            if user is not None:
+                user.snuba_coin += paid.total
+                user.total_games_played += 1
+                user.total_wins += db_session.wins
+                user.total_losses += db_session.losses
+
+            db_session.finished_at = utc_now()
+            await db.commit()
+
+        return paid
+
+    async def pay_for_abandoned_run(self, player_id: str) -> Optional[Payout]:
+        """Pay for the run the player walked away from, before it is replaced.
+
+        There is no quit signal: the window closes and the session is never
+        touched again. So the moment the player asks for a new run is both the
+        first time the server can know the last one is over and a moment the
+        player is there to see it -- and it is the last moment the old run
+        still exists, because starting a new one writes over the same row.
+
+        Wins only, and it does not count as a game played. Section 5.5 has the
+        arithmetic that makes paying for anything else worse than playing.
+
+        The row is locked while it is read, for the same reason as
+        `finish_run`: two starts at once would otherwise both see an unpaid run
+        and pay for it.
+        """
+        async with db_manager.get_session() as db:
+            result = await db.execute(
+                select(GameSession)
+                .where(GameSession.player_id == player_id)
+                .with_for_update()
+            )
+            db_session = result.scalar_one_or_none()
+            if db_session is None or db_session.finished_at is not None:
+                return None
+            if db_session.wins <= 0:
+                return None
+
+            paid = for_abandoned_run(db_session.wins)
+
+            user = await db.get(User, db_session.user_id)
+            if user is not None:
+                user.snuba_coin += paid.total
+                user.total_wins += db_session.wins
+                user.total_losses += db_session.losses
+
+            db_session.finished_at = utc_now()
+            await db.commit()
+
+        return paid
+
+    async def snuba_coin_for(self, player_id: str) -> int:
+        """The account's SnubaCoin balance, for the player of `player_id`."""
+        async with db_manager.get_session() as db:
+            result = await db.execute(
+                select(User.snuba_coin)
+                .join(GameSession, GameSession.user_id == User.id)
+                .where(GameSession.player_id == player_id)
+            )
+            return result.scalar_one_or_none() or 0
 
     async def update_session(self, session: GameSessionPydantic) -> bool:
         """Update an existing session"""

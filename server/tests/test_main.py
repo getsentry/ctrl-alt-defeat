@@ -2,12 +2,11 @@
 Tests for AI opponent generation with containers
 """
 
-
 from battle_engine import BattleSimulator
-from pydantic import BaseModel
 from containers import Container
 from items import sale_price
 from main import generate_ai_opponent
+from pydantic import BaseModel
 from tests.conftest import MULTI_SQUARE_SHOP_SEED, SHOP_SEED, SINGLE_SQUARE_SHOP_SEED
 from tests.test_utils import find_bad_positions
 
@@ -268,9 +267,7 @@ class TestBattleAPIResponse:
     def test_battle_response_with_no_items(self, auth_client):
         """Test battle response when player has only containers, no items"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": None}
-        )
+        response = auth_client.post("/session/start", json={"seed": None})
 
         # Don't purchase any items, just battle
         response = auth_client.post(
@@ -285,9 +282,7 @@ class TestBattleAPIResponse:
     def test_battle_response_preserves_item_metadata(self, auth_client):
         """Test that item metadata is preserved in response"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 123}
-        )
+        response = auth_client.post("/session/start", json={"seed": 123})
         data = response.json()
 
         # Purchase specific items
@@ -613,9 +608,7 @@ class TestOnePlayerCannotActAsAnother:
         client = TestClient(app)
         token = client.post("/auth/guest").json()["access_token"]
         client.headers["Authorization"] = f"Bearer {token}"
-        started = client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        ).json()
+        started = client.post("/session/start", json={"seed": SHOP_SEED}).json()
         return client, started["player_id"]
 
     def test_the_player_is_taken_from_the_token(self):
@@ -709,9 +702,7 @@ class TestSellItemAPI:
 
     def _buy_one(self, auth_client):
         """Start a session and put one item on the grid. Returns the details."""
-        start = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        ).json()
+        start = auth_client.post("/session/start", json={"seed": SHOP_SEED}).json()
         player_id = start["player_id"]
         item = next(
             i for i in start["session"]["current_shop"] if i and not i["is_container"]
@@ -929,9 +920,9 @@ class TestAMoveAlwaysAnswersWithTheWholeBoard:
         )
 
         assert response.status_code == 200, response.text
-        assert response.json()["server_containers"], (
-            "A move that changes nothing still has to say what the board holds"
-        )
+        assert response.json()[
+            "server_containers"
+        ], "A move that changes nothing still has to say what the board holds"
 
     def test_every_answer_that_names_the_containers_names_them(self, auth_client):
         """The net for the whole class of it.
@@ -1054,7 +1045,6 @@ class TestTheStatusCatalogue:
         """The same for every player and it never changes, like the combining
         catalogue beside it."""
         from fastapi.testclient import TestClient
-
         from main import app
 
         assert TestClient(app).get("/catalogue/statuses").status_code == 200
@@ -1200,9 +1190,7 @@ class TestMoveItemAPI:
     def test_move_item_grid_to_grid(self, auth_client):
         """Test moving an item from one grid position to another"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 42}
-        )
+        response = auth_client.post("/session/start", json={"seed": 42})
         data = response.json()
 
         # Purchase an item
@@ -1358,9 +1346,7 @@ class TestMoveItemAPI:
     def test_move_item_to_invalid_position(self, auth_client):
         """Test moving an item to a position not on a container"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        response = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         data = response.json()
 
         # Purchase item
@@ -1440,9 +1426,7 @@ class TestMoveItemAPI:
     def test_move_nonexistent_item(self, auth_client):
         """Test moving an item that doesn't exist"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={}
-        )
+        response = auth_client.post("/session/start", json={})
 
         # Try to move non-existent item
         response = auth_client.post(
@@ -1458,9 +1442,7 @@ class TestMoveItemAPI:
     def test_move_item_same_position_noop(self, auth_client):
         """Test moving an item to the same position (no-op)"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        response = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         data = response.json()
 
         # Purchase item
@@ -1494,9 +1476,7 @@ class TestMoveItemAPI:
     def test_move_item_preserves_metadata(self, auth_client):
         """Test that moving an item preserves all its metadata"""
         # Start session
-        response = auth_client.post(
-            "/session/start", json={"seed": 123}
-        )
+        response = auth_client.post("/session/start", json={"seed": 123})
         data = response.json()
 
         # Purchase item
@@ -1655,17 +1635,13 @@ class TestPositionContractOverHttp:
     """Every endpoint must return positions as [x, y]"""
 
     def test_session_start_positions_are_canonical(self, auth_client):
-        response = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        response = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         assert response.status_code == 200
         assert_positions_are_canonical(response.json(), "POST /session/start")
 
     def test_session_start_containers_use_lists(self, auth_client):
         """Starting containers report their position as a list"""
-        response = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        response = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         containers = response.json()["session"]["server_containers"]
         assert len(containers) == 3
         for container in containers:
@@ -1677,18 +1653,14 @@ class TestPositionContractOverHttp:
         GET /session/{player_id} reads state straight from the database, so it
         shows what was actually stored.
         """
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
 
         response = auth_client.get("/session")
         assert response.status_code == 200
         assert_positions_are_canonical(response.json(), "GET /session/{player_id}")
 
     def test_purchase_positions_are_canonical(self, auth_client):
-        start = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        start = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         session = start.json()["session"]
 
         response = buy_an_item(auth_client, session, FREE_SQUARE)
@@ -1696,9 +1668,7 @@ class TestPositionContractOverHttp:
         assert_positions_are_canonical(response.json(), "POST /purchase/item")
 
     def test_move_positions_are_canonical(self, auth_client):
-        start = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        start = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         session = start.json()["session"]
 
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
@@ -1720,9 +1690,7 @@ class TestPositionContractOverHttp:
 
     def test_an_item_in_the_chest_carries_no_position(self, auth_client):
         """An item in the chest carries no position; only a placed one has one."""
-        start = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        start = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         session = start.json()["session"]
 
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
@@ -1741,9 +1709,7 @@ class TestPositionContractOverHttp:
 
     def test_battle_positions_are_canonical(self, auth_client):
         """The battle response holds both inventories, so it carries the most positions"""
-        start = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        start = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         session = start.json()["session"]
 
         bought = buy_an_item(auth_client, session, FREE_SQUARE)
@@ -1766,9 +1732,7 @@ class TestPositionContractOverHttp:
         """
         responses = []
 
-        start = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        start = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         assert start.status_code == 200
         session = start.json()["session"]
         responses.append(("POST /session/start", start.json()))
@@ -1808,9 +1772,7 @@ class TestPositionContractRejectsBadInput:
     """A bad position must fail at the boundary with a 422, not corrupt state"""
 
     def test_purchase_rejects_a_dictionary_position(self, auth_client):
-        start = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        start = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         session = start.json()["session"]
         shop_item = next(
             item
@@ -1828,9 +1790,7 @@ class TestPositionContractRejectsBadInput:
         assert response.status_code == 422, response.text
 
     def test_purchase_rejects_a_three_item_position(self, auth_client):
-        start = auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        start = auth_client.post("/session/start", json={"seed": SHOP_SEED})
         session = start.json()["session"]
         shop_item = next(
             item
@@ -1848,9 +1808,7 @@ class TestPositionContractRejectsBadInput:
         assert response.status_code == 422, response.text
 
     def test_move_rejects_a_dictionary_position(self, auth_client):
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
 
         response = auth_client.post(
             "/move/item",
@@ -1923,9 +1881,7 @@ class TestItemsCombineAfterTheBattle:
     """
 
     def test_a_rack_that_can_craft_does_so_when_the_battle_ends(self, auth_client):
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
         rack_holding(
             auth_client.user_id,
             ("neural_link_collar", [2, 3]),
@@ -1950,9 +1906,7 @@ class TestItemsCombineAfterTheBattle:
         assert [i["item_type"] for i in after["inventory_grid"]] == ["blue_sage_collar"]
 
     def test_the_client_is_told_where_to_play_the_animation(self, auth_client):
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
         rack_holding(
             auth_client.user_id,
             ("neural_link_collar", [2, 3]),
@@ -1973,9 +1927,7 @@ class TestItemsCombineAfterTheBattle:
         its own cache, so without this the crafted item would never appear.
         battle_result.player_inventory is no help: that is the rack that fought.
         """
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
         rack_holding(
             auth_client.user_id,
             ("neural_link_collar", [2, 3]),
@@ -2000,9 +1952,7 @@ class TestItemsCombineAfterTheBattle:
         so it has nowhere to stand. The client is told it went to the chest by
         `position` being null, and finds it there under the id it was given.
         """
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
         rack_holding(
             auth_client.user_id,
             ("hero_sword", [2, 3]),
@@ -2024,9 +1974,7 @@ class TestItemsCombineAfterTheBattle:
         ], "and it is in the chest under the id the client was told"
 
     def test_a_rack_that_cannot_craft_reports_nothing(self, auth_client):
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
         rack_holding(auth_client.user_id, ("null_blade", [2, 3]))
         result = auth_client.post(
             "/battle/simulate", json={"test_ai_difficulty": 1, "seed": 7}
@@ -2045,9 +1993,7 @@ class TestTheClientIsWarnedBeforeItemsCombine:
     """
 
     def _started(self, auth_client):
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
         return auth_client
 
     def test_a_rack_that_will_combine_says_so_before_the_battle(self, auth_client):
@@ -2200,9 +2146,7 @@ class TestTheClientIsWarnedBeforeItemsCombine:
         rack is the shop screen. Without this it would show no glow and no
         progress until the player moved something.
         """
-        auth_client.post(
-            "/session/start", json={"seed": SHOP_SEED}
-        )
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
         rack_holding(
             auth_client.user_id,
             # These two combine.
@@ -2476,6 +2420,8 @@ class TestStockingTheShopForATest:
         )
 
         assert answered.status_code == 404
+
+
 class TestSessionTakesItsNameFromTheAccount:
     """The name belongs to the account, not to the session.
 
@@ -2511,3 +2457,225 @@ class TestSessionTakesItsNameFromTheAccount:
             "/session/start", json={"player_name": "Impostor", "seed": SHOP_SEED}
         )
         assert response.status_code == 422, response.text
+
+
+def stand_one_item(client):
+    """Put a single cheap item on the rack, if there is nothing there.
+
+    A battle needs something to fight with -- an empty rack is refused rather
+    than lost. One weak item is enough to be allowed in and not enough to win.
+    """
+    session = client.get("/session").json()
+    if session.get("inventory_grid"):
+        return
+    for item in session["current_shop"]:
+        if item and not item.get("is_container", False):
+            bought = client.post(
+                "/purchase/item",
+                json={"item_id": item["id"], "target_position": [2, 3]},
+            )
+            if bought.status_code == 200:
+                return
+    raise AssertionError("nothing on the shelf could be bought")
+
+
+def play_until_the_run_ends(client, max_battles=25):
+    """Battle with one weak item until the run is over; return the last answer.
+
+    One item loses to what the rounds put in front of it, so this spends the
+    five tries without needing to steer the opponent. It returns the whole
+    battle response, because what the end of a run says is spread across
+    `session_update`.
+    """
+    last = None
+    for _ in range(max_battles):
+        stand_one_item(client)
+        response = client.post("/battle/simulate", json={"seed": 1})
+        assert response.status_code == 200, response.text
+        last = response.json()
+        if last["session_update"]["run_over"]:
+            return last
+    raise AssertionError("the run never ended")
+
+
+class TestTheEndOfARun:
+    """What finishing a run pays, and that it only pays once. Section 5.5."""
+
+    def test_a_run_still_being_played_pays_nothing(self, auth_client):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        stand_one_item(auth_client)
+        first = auth_client.post("/battle/simulate", json={"seed": 1}).json()
+        update = first["session_update"]
+
+        assert update["run_over"] is False
+        assert update["payout"] is None
+        assert update["snuba_coin"] == 0
+
+    def test_a_finished_run_says_so_and_pays(self, auth_client):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        update = play_until_the_run_ends(auth_client)["session_update"]
+
+        assert update["run_over"] is True
+        assert update["payout"] is not None
+        assert update["snuba_coin"] > 0
+
+    def test_what_it_pays_is_the_table_in_the_document(self, auth_client):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        update = play_until_the_run_ends(auth_client)["session_update"]
+
+        expected = 3 + update["wins"] + max(0, update["lives"])
+        if update["wins"] >= 10:
+            expected += 5
+        assert update["payout"]["total"] == expected
+        assert update["snuba_coin"] == expected
+
+    def test_the_lines_say_what_each_part_was_for(self, auth_client):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        update = play_until_the_run_ends(auth_client)["session_update"]
+        lines = update["payout"]["lines"]
+
+        assert [line["reason"] for line in lines][0] == "run_complete"
+        assert sum(line["coin"] for line in lines) == update["payout"]["total"]
+        assert all(line["coin"] > 0 for line in lines)
+
+    def test_a_run_is_paid_once_however_often_it_is_asked(self, auth_client):
+        """/battle/simulate works out whether the run is over on every call.
+
+        So a client whose answer went missing sends the last battle again. It
+        must be told the same ending -- the same banners, the same total -- and
+        the balance must not move. `finished_at` is what remembers.
+        """
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        first = play_until_the_run_ends(auth_client)["session_update"]
+
+        me = auth_client.get("/auth/me").json()
+        assert me["snuba_coin"] == first["snuba_coin"]
+        assert me["total_games"] == 1, "counted once"
+
+    def test_a_finished_run_does_not_fight_again(self, auth_client):
+        """Recording that a run ended is worth nothing if the next battle
+        ignores it. Without this the last try is spent, the ending is shown,
+        and the next battle takes `lives` to -1.
+        """
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        ended = play_until_the_run_ends(auth_client)["session_update"]
+
+        refused = auth_client.post("/battle/simulate", json={"seed": 1})
+        assert refused.status_code == 409, refused.text
+
+        session = auth_client.get("/session").json()
+        assert session["lives"] == ended["lives"], "no further try was spent"
+        assert session["losses"] == ended["losses"]
+
+    def test_finishing_counts_as_a_game_played(self, auth_client):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        assert auth_client.get("/auth/me").json()["total_games"] == 0
+
+        play_until_the_run_ends(auth_client)
+
+        me = auth_client.get("/auth/me").json()
+        assert me["total_games"] == 1
+        assert me["losses"] == 5
+
+    def test_the_balance_is_on_the_account_not_the_run(self, auth_client):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        earned = play_until_the_run_ends(auth_client)["session_update"]["snuba_coin"]
+
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        assert auth_client.get("/auth/me").json()["snuba_coin"] == earned
+
+
+class TestARunThatWasAbandoned:
+    """Walking away still pays for the wins, and for nothing else."""
+
+    def test_walking_away_with_nothing_pays_nothing(self, auth_client):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        me = auth_client.get("/auth/me").json()
+        assert me["snuba_coin"] == 0
+        assert me["total_games"] == 0
+
+    def test_it_does_not_count_as_a_game_played(self, auth_client):
+        """Abandoning is not finishing, and the register prompt is timed off
+        `total_games_played`."""
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        stand_one_item(auth_client)
+        played = auth_client.post("/battle/simulate", json={"seed": 1})
+        assert played.status_code == 200, played.text
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        assert auth_client.get("/auth/me").json()["total_games"] == 0
+
+    def test_it_pays_for_the_wins_it_did_bank(self, auth_client):
+        """The whole point of the rule: leaving does not forfeit the wins."""
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        wins = 0
+        for _ in range(12):
+            stand_one_item(auth_client)
+            fought = auth_client.post(
+                "/battle/simulate", json={"seed": 1, "test_ai_difficulty": 1}
+            )
+            assert fought.status_code == 200, fought.text
+            update = fought.json()["session_update"]
+            wins = update["wins"]
+            if wins >= 1 or update["run_over"]:
+                break
+        assert wins >= 1, "could not bank a win to walk away from"
+        assert auth_client.get("/auth/me").json()["snuba_coin"] == 0
+
+        # Walk away: the next run is what settles the last one.
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        me = auth_client.get("/auth/me").json()
+        assert me["snuba_coin"] == wins, "wins pay, and nothing else does"
+        assert me["total_games"] == 0, "abandoning is not finishing"
+
+    def test_the_answer_says_what_it_settled(self, auth_client):
+        """Paying at this moment is the point, so this answer has to show it.
+
+        Section 5.5 pays an abandoned run when the next one starts because the
+        player is there to see it. Credited silently, they would only find out
+        by asking /auth/me.
+        """
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        wins = 0
+        for _ in range(12):
+            stand_one_item(auth_client)
+            fought = auth_client.post(
+                "/battle/simulate", json={"seed": 1, "test_ai_difficulty": 1}
+            )
+            assert fought.status_code == 200, fought.text
+            update = fought.json()["session_update"]
+            wins = update["wins"]
+            if wins >= 1 or update["run_over"]:
+                break
+        assert wins >= 1
+
+        started = auth_client.post("/session/start", json={"seed": SHOP_SEED}).json()
+
+        assert started["settled"] is not None, "the payout has to reach the player"
+        assert started["settled"]["total"] == wins
+        assert [line["reason"] for line in started["settled"]["lines"]] == ["wins"]
+        assert started["snuba_coin"] == wins
+
+    def test_with_nothing_to_settle_it_says_so(self, auth_client):
+        started = auth_client.post("/session/start", json={"seed": SHOP_SEED}).json()
+
+        assert started["settled"] is None
+        assert started["snuba_coin"] == 0
+
+    def test_a_finished_run_is_not_paid_again_by_the_next_one(self, auth_client):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        earned = play_until_the_run_ends(auth_client)["session_update"]["snuba_coin"]
+
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+
+        assert auth_client.get("/auth/me").json()["snuba_coin"] == earned
