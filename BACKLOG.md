@@ -1,3 +1,19 @@
+### "(once)" stopped the gaining and not the paying
+
+Four items wrote it the same way -- a `use` trigger with the price on it and a
+`limit` inside the effects -- and the trigger paid whenever the price could be
+met, reading the limit only afterwards. Glowing Crown spent 10 Mana ten times
+over for one invulnerability; Heart Container spent 98 Regeneration for one
+payout. The test named `test_heart_container_pays_once_and_no_more` checked
+that the *effects* happened once and never looked at the payment.
+
+Fixed by asking, before paying, whether the clause has a go left -- the rule a
+cost already kept ("nothing is spent when the price cannot be met in full, so
+a clause cannot leave the owner poorer for nothing") and the trigger was not.
+
+Worth remembering as a shape: a test whose name promises more than its
+assertions check is worse than no test, because it also stops anyone looking.
+
 ### Three items said "Gain 20 maximum health" and none of them did it
 
 Amulet of Life, Blood Amulet and Gingerbread Jerry wrote it as a `stat_mod`,

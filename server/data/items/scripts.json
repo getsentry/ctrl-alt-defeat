@@ -352,14 +352,44 @@
               "description": "Inflict 1 Throttled"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 3.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "condition",
+              "subject": "status",
+              "whose": "enemy",
+              "status": "throttled",
+              "test": "at_least",
+              "amount": 10,
+              "effects": [
+                {
+                  "type": "player_modify",
+                  "stat": "effect_damage",
+                  "value": 0.1,
+                  "target": "self",
+                  "duration": -1,
+                  "description": "increase Effect-damage by 10%"
+                },
+                {
+                  "type": "effect_damage",
+                  "value": 10,
+                  "lifesteal": 0,
+                  "per_status": {},
+                  "description": "and deal 10 Effect-damage"
+                }
+              ],
+              "description": "If your opponent has at least 10 Cold"
+            }
+          ]
         }
       ],
       "slug": "cryogenic_cooling_system",
       "icontype": "treasure, ice, food",
-      "in_shop": true,
-      "unbuilt": [
-        "Every 3s: If your opponent has at least 10 Cold, increase Effect-damage by 10% and deal 10 Effect-damage."
-      ]
+      "in_shop": true
     },
     "cupcake": {
       "name": "Cron Cake",

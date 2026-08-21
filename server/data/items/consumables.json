@@ -92,14 +92,34 @@
             }
           ],
           "on": "activates"
+        },
+        {
+          "type": "use",
+          "costs": {
+            "credits": 35
+          },
+          "effects": [
+            {
+              "type": "limit",
+              "times": 1,
+              "effects": [
+                {
+                  "type": "random_status",
+                  "kind": "buff",
+                  "count": 20,
+                  "target": "self",
+                  "pick": "random",
+                  "description": "Gain 20 random other buffs"
+                }
+              ],
+              "description": "(once)"
+            }
+          ]
         }
       ],
       "slug": "cpu_booster",
       "icontype": "magic, accessory",
-      "in_shop": true,
-      "unbuilt": [
-        "Use 35 Mana: Gain 20 random other buffs (once)."
-      ]
+      "in_shop": true
     },
     "emergency_patch": {
       "name": "Duct Tape Fix",

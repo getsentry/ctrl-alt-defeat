@@ -1087,12 +1087,17 @@ class BattleSimulator:
         to, so "nature" and "food" both work. Empty counts anything standing
         there.
         """
-        zone = set(self._zone_squares(source, effect.zone))
-        standing = [
-            other
-            for other in items
-            if other.uid != source.uid and zone & set(other.get_occupied_squares())
-        ]
+        if effect.zone == "own":
+            # Not a shape on the grid: "Triggers 10% faster for each Ice item"
+            # counts what the player has out, wherever it stands.
+            standing = [other for other in items if other.uid != source.uid]
+        else:
+            zone = set(self._zone_squares(source, effect.zone))
+            standing = [
+                other
+                for other in items
+                if other.uid != source.uid and zone & set(other.get_occupied_squares())
+            ]
         return sum(1 for other in standing if effect.matches(self._tags(other)))
 
     def _enemy_of(self, player: Player) -> Player:
@@ -1601,6 +1606,14 @@ class BattleSimulator:
             if isinstance(trigger, WhenAffordableTrigger):
                 if not trigger.affordable(owner.buffs):
                     continue
+                if self._spent_out(trigger.effects):
+                    # "(once)" has to stop the paying too. The limit sat
+                    # inside the effects and the trigger paid whenever the
+                    # price could be met, so Glowing Crown spent 10 Mana ten
+                    # times over for one invulnerability -- the same rule a
+                    # cost already keeps, that nothing is spent on a clause
+                    # that will not happen.
+                    continue
                 self._pay(owner, trigger.costs, item.uid)
                 self._fire(trigger, item, owner, enemy)
 
@@ -1613,6 +1626,17 @@ class BattleSimulator:
                     continue
                 trigger.crossed = True
                 self._fire(trigger, item, owner, enemy)
+
+    def _spent_out(self, effects) -> bool:
+        """Whether a clause has used up every go it was given.
+
+        True only when there is a limit and all of it is gone: a clause with
+        no limit is never spent out, however many times it has run.
+        """
+        limits = [e for e in effects if isinstance(e, LimitEffect)]
+        if len(limits) != len(effects) or not limits:
+            return False
+        return all(self.allowance.get(id(e), (e, 0))[1] >= e.times for e in limits)
 
     def _total(
         self,
@@ -1784,6 +1808,8 @@ class BattleSimulator:
                         # The chance roll lives here, after accuracy passed.
                         if not trigger.should_activate("on_hit", item, enemy, self):
                             return
+                        if not trigger.due():
+                            return
                         self._fire(trigger, item, owner, enemy)
 
                     self.event_manager.subscribe(EventType.ON_HIT, handle_on_hit)
@@ -1810,6 +1836,8 @@ class BattleSimulator:
                         if item.uid in self.consumed_items:
                             return
                         if not trigger.should_activate("on_attack", item, enemy, self):
+                            return
+                        if not trigger.due():
                             return
                         self._fire(trigger, item, owner, enemy)
 
@@ -1949,6 +1977,8 @@ class BattleSimulator:
                         if not trigger.should_activate(
                             "on_attacked", item, owner, self
                         ):
+                            return
+                        if not trigger.due():
                             return
 
                         prevented = 0
@@ -2239,6 +2269,12 @@ class BattleSimulator:
                         status,
                     )
                     for status, rate in result["per_status"].items()
+                )
+                # "If your opponent has at least 10 Cold, increase
+                # Effect-damage by 10%". A share on the player, like every
+                # other share here, and read at the moment it is dealt.
+                amount *= max(
+                    0.0, 1.0 + owner.modifier("effect_damage", self.current_time)
                 )
                 # The Critical hits page says these very effects can crit,
                 # "also doubling the healing to match the damage dealt".

@@ -1637,13 +1637,24 @@
               "description": "Attacks 5% faster for every Spikes"
             }
           ]
+        },
+        {
+          "type": "on_hit",
+          "chance": 1.0,
+          "after": 4,
+          "effects": [
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 1,
+              "target": "self",
+              "description": "After 4 hits, gain 1 Empower"
+            }
+          ]
         }
       ],
       "slug": "claws_of_attack",
       "in_shop": false,
-      "unbuilt": [
-        "After 4 hits, gain 1 Empower."
-      ],
       "sockets": 1,
       "icontype": "melee, weapon",
       "recipe": [

@@ -976,6 +976,16 @@ identifier.
 Regeneration, 30% if the item is Holy" is two clauses, and without a way to say
 "not Holy" a Holy item would answer both.
 
+**A trigger can wait for several of its moment.** "After 4 hits, gain 1
+Empower" fires on every fourth, and it is the item's *own* four: the Claws of
+Attack page settles it -- "one every four hits, meaning only one empower every
+6.4s" against its own 1.6s cooldown -- so it is counted on the trigger and not
+on the player. A roll that failed is not one of the four.
+
+**Not everything counted is a zone.** "Triggers 10% faster for each Ice item"
+counts what the player has out, wherever it stands, which is `own` rather than
+a shape on the grid.
+
 **A zone can count its empty squares.** "Destroy 4 Block for each free Star
 slot" counts the squares of the zone that no item stands on — the only thing
 an aura counts that is not an item.

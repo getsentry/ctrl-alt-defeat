@@ -156,6 +156,7 @@ STAT_SHOWN = {
     "cpu_regen": "CPU regeneration",
     "max_health": "maximum quota",
     "max_health_from_items": "maximum quota from items",
+    "effect_damage": "direct damage",
     "spikes_limit_melee": "[buff]spiked[/buff] return against Melee blows",
     "spikes_limit_ranged": "[buff]spiked[/buff] return against Ranged blows",
     "spikes_limit_effect": "[buff]spiked[/buff] return against Effect-damage",
@@ -462,6 +463,8 @@ def counted_in(counting: object, where: str) -> str:
     """
     if where == "contained":
         return f"{counted(counting, 'item')} inside"
+    if where == "own":
+        return counted(counting, "item you have out")
     return counted(counting, f"{zone(where)} item")
 
 
@@ -539,7 +542,12 @@ def gathered(effects: List[Effect]) -> List[str]:
 def _taking(effect: CleanseEffect) -> tuple:
     """A cleanse as three parts, so a run of them can be said as one"""
     whom = "your opponent" if theirs(effect.target_type) else "yourself"
-    verb = "remove" if theirs(effect.target_type) else "cleanse"
+    if theirs(effect.target_type):
+        # `keep` is the whole difference between taking a buff off somebody
+        # and taking it for yourself, and the line said "remove" for both.
+        verb = "steal" if effect.keep else "remove"
+    else:
+        verb = "cleanse"
     if effect.named():
         what = f"{number(effect.count)} {marked(effect.removes)}"
     else:
@@ -547,6 +555,17 @@ def _taking(effect: CleanseEffect) -> tuple:
         if effect.count != 1:
             what += "s"
     return (verb, whom, what)
+
+
+def every(trigger, moment: str, once: str) -> str:
+    """A trigger that waits for several of its moment, said as the count.
+
+    "After 4 hits, gain 1 Empower" is one of these with `after` at four, and
+    the line read "on hit" until it said so.
+    """
+    if getattr(trigger, "after", 1) > 1:
+        return f"after every {number(trigger.after)} {moment}s"
+    return once
 
 
 # ============ What an effect does ============
@@ -1007,12 +1026,12 @@ def _(trigger: HealthThresholdTrigger) -> str:
 
 @of_trigger.register
 def _(trigger: OnHitTrigger) -> str:
-    return "on hit"
+    return every(trigger, "hit", "on hit")
 
 
 @of_trigger.register
 def _(trigger: OnAttackTrigger) -> str:
-    return "on attack"
+    return every(trigger, "attack", "on attack")
 
 
 @of_trigger.register

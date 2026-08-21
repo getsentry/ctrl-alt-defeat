@@ -514,12 +514,61 @@
       "source": "Rainbow Goobert Megasludge Alphapuddle",
       "rarity": "godly",
       "cost": 54,
-      "triggers": [],
+      "triggers": [
+        {
+          "type": "aura",
+          "zone": "star",
+          "counting": "any",
+          "after": 9,
+          "on": "activates",
+          "effects": [
+            {
+              "type": "heal",
+              "min_heal": 40,
+              "max_heal": 40,
+              "description": "Heal for 40"
+            },
+            {
+              "type": "block",
+              "value": 20,
+              "description": "gain 20 Block"
+            },
+            {
+              "type": "buff",
+              "buff_name": "draining",
+              "value": 2,
+              "target": "self",
+              "description": "2 Vampirism"
+            },
+            {
+              "type": "buff",
+              "buff_name": "monitored",
+              "value": 2,
+              "target": "self",
+              "description": "and 2 Empower"
+            },
+            {
+              "type": "debuff",
+              "debuff_name": "rate_limited",
+              "value": 3,
+              "description": "inflict 3 Blind"
+            },
+            {
+              "type": "gain_damage",
+              "amount": 4,
+              "target": "star",
+              "counting": {
+                "any": [
+                  "weapon"
+                ]
+              },
+              "description": "and Star Weapons gain 4 damage"
+            }
+          ]
+        }
+      ],
       "slug": "rainbow_goobert_megasludge_alphapuddle",
       "in_shop": false,
-      "unbuilt": [
-        "9 Star item activations: Heal for 40, gain 20 Block, 2 Vampirism and 2 Empower, inflict 3 Blind, and Star Weapons gain 4 damage."
-      ],
       "icontype": "vampiric, holy, nature, pet",
       "recipe": [
         {
@@ -904,13 +953,27 @@
               "description": "Cleanse 1 debuff"
             }
           ]
+        },
+        {
+          "type": "passive",
+          "effects": [
+            {
+              "type": "modify_per",
+              "stat": "trigger_speed",
+              "value": 0.1,
+              "zone": "own",
+              "counting": {
+                "any": [
+                  "ice"
+                ]
+              },
+              "description": "Triggers 10% faster for each Ice item"
+            }
+          ]
         }
       ],
       "slug": "snowmaster",
       "in_shop": false,
-      "unbuilt": [
-        "Triggers 10% faster for each Ice item."
-      ],
       "icontype": "ice, pet",
       "recipe": [
         {
@@ -1395,14 +1458,26 @@
               "description": "Triggers 15% faster for each Star Pet or Food"
             }
           ]
+        },
+        {
+          "type": "timer",
+          "cooldown": 4.0,
+          "cpu_cost": 0,
+          "effects": [
+            {
+              "type": "cleanse",
+              "count": 1,
+              "removes": "buff",
+              "target": "enemy",
+              "keep": true,
+              "description": "Steal a random buff"
+            }
+          ]
         }
       ],
       "slug": "cache_spider",
       "icontype": "nature, pet",
-      "in_shop": false,
-      "unbuilt": [
-        "Every 4s: Steal a random buff. Triggers 15% faster for each Star Pet or Food."
-      ]
+      "in_shop": false
     },
     "backup_system": {
       "name": "Cold Storage",

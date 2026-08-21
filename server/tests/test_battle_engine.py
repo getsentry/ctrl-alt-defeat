@@ -7290,11 +7290,25 @@ class TestTheCatalogueItemsThatWaitForAMoment(TestTheSweptClauses):
 
     def test_heart_container_pays_once_and_no_more(self):
         """ "Use 7 Regeneration: Gain 100 maximum health, 2 Empower and your
-        healing is increased by 15% (once).\" """
+        healing is increased by 15% (once)."
+
+        The paying as well as the gaining. This test checked only the second
+        for a long time, and the first was happening on every tick the price
+        could be met: "(once)" sat inside the effects, and the trigger paid
+        before it read them.
+        """
         where, _ = self._place("heart_container")
-        sim, result = self._fight([self._real("heart_container", where)], seconds=30.0)
-        assert result["player1_quota"] == 450, "350 and the 100 it gained"
+        sim, result = self._fight(
+            [self._real("heart_container", where)],
+            seconds=30.0,
+            buffs={"regenerating": 100},
+        )
+        assert result["player1_quota"] > 350, "the 100 it gained"
         assert sim.player1.buffs["monitored"] == 2, "once, not once a payment"
+        assert (
+            len([a for a in sim.actions if a.action == "spend"]) == 1
+        ), "and it was bought once"
+        assert sim.player1.buffs["regenerating"] >= 93, "seven went, not seventy"
 
     def test_gloves_of_power_answer_a_hit_in_their_star(self):
         """ "Star Weapon hits: gain 7 Block." A hit, so a miss is not one."""
@@ -11210,3 +11224,302 @@ class TestTheCatalogueItemsThatNeededNoNewMechanic(TestTheSweptClauses):
             [self._real("steel_goobert", where), ticker], seconds=3.0, hurt=100
         )
         assert sim2.player1.block == 16
+
+
+class TestATriggerCanWaitForSeveralOfItsMoment(_WithOneItem):
+    """ "After 4 hits, gain 1 Empower" is the item's own four.
+
+    The Claws of Attack page settles which four: "one every four hits, meaning
+    only one empower every 6.4s", against its own 1.6s cooldown. A total kept
+    on the player would have counted every weapon's.
+    """
+
+    def _swinger(self, after, uid="w", position=(0, 0), accuracy=1.0):
+        return BattleItem(
+            spec=ItemSpec(
+                id=uid,
+                name=uid,
+                category="problem",
+                cost=1,
+                player_class="neutral",
+                shape=parse_map(["#"], uid),
+                slug=uid,
+                kinds=frozenset({"melee", "weapon"}),
+                triggers=[
+                    TimerTrigger(
+                        cooldown=0.5,
+                        cpu_cost=0,
+                        effects=[
+                            AttackEffect(
+                                min_damage=1,
+                                max_damage=1,
+                                accuracy=accuracy,
+                                crit_chance=0.0,
+                            )
+                        ],
+                    ),
+                    OnHitTrigger(
+                        chance=1.0,
+                        after=after,
+                        effects=[
+                            BuffEffect(
+                                buff_name="monitored", value=1, target_type="self"
+                            )
+                        ],
+                    ),
+                ],
+            ),
+            position=position,
+            uid=uid,
+        )
+
+    def test_it_fires_on_every_fourth(self):
+        sim, _ = self._run(
+            [self._swinger(after=4)],
+            seconds=4.2,
+            against=[self._tagged_wall()],
+        )
+        hits = len([a for a in sim.actions if a.action == "damage"])
+        assert hits == 8, "eight swings at half a second"
+        assert sim.player1.buffs["monitored"] == 2, "and two fours in eight"
+
+    def test_one_is_every_time_and_is_the_default(self):
+        sim, _ = self._run(
+            [self._swinger(after=1)], seconds=2.2, against=[self._tagged_wall()]
+        )
+        hits = len([a for a in sim.actions if a.action == "damage"])
+        assert sim.player1.buffs["monitored"] == hits
+
+    def test_only_this_item_s_own_hits_count(self):
+        """Another weapon swinging beside it must not pay for its fourth."""
+        other = self._swinger(after=1, uid="other", position=(1, 0))
+        other.spec.triggers = [other.spec.triggers[0]]
+        sim, _ = self._run(
+            [self._swinger(after=4), other],
+            seconds=2.2,
+            against=[self._tagged_wall()],
+        )
+        assert sim.player1.buffs["monitored"] == 1, "four of its own, not eight of both"
+
+    def test_a_swing_that_misses_is_not_one_of_the_four(self):
+        sim, _ = self._run(
+            [self._swinger(after=4, accuracy=-10.0)],
+            seconds=4.2,
+            against=[self._tagged_wall()],
+        )
+        assert [a for a in sim.actions if a.action == "miss"]
+        assert "monitored" not in sim.player1.buffs
+
+    @staticmethod
+    def _tagged_wall():
+        return BattleItem(
+            spec=ItemSpec(
+                id="wall",
+                name="wall",
+                category="defense",
+                cost=1,
+                player_class="neutral",
+                shape=parse_map(["#"], "wall"),
+                slug="wall",
+                kinds=frozenset(),
+                triggers=[],
+            ),
+            position=(6, 0),
+            uid="wall",
+        )
+
+
+class TestTheCatalogueItemsWrittenInTheSecondPass(TestTheSweptClauses):
+    """Six more real items whose clauses were unwritten rather than blocked,
+    and the three small stats the last of them wanted.
+
+    Nothing structural was built for any of these. That makes them the ones
+    most worth running: a clause written straight into the catalogue is
+    exercised by no test of the mechanic it uses.
+    """
+
+    def test_mana_orb_spends_its_pool_once_and_no_more(self):
+        """ "Use 35 Mana: Gain 20 random other buffs (once)"."""
+        where, _ = self._place("cpu_booster")
+        sim, _ = self._fight(
+            [self._real("cpu_booster", where)], seconds=6.0, buffs={"credits": 100}
+        )
+        spent = [a for a in sim.actions if a.action == "spend"]
+        assert len(spent) == 1, "once, however much Mana is left"
+        assert spent[0].details["costs"] == {"credits": 35}
+        assert sum(sim.player1.buffs.values()) > 20, "twenty stacks arrived"
+
+    def test_mana_orb_waits_when_the_pool_is_short(self):
+        where, _ = self._place("cpu_booster")
+        sim, _ = self._fight(
+            [self._real("cpu_booster", where)], seconds=6.0, buffs={"credits": 5}
+        )
+        assert not [a for a in sim.actions if a.action == "spend"]
+
+    def test_the_squirrel_takes_a_buff_and_keeps_it(self):
+        """ "Every 4s: Steal a random buff." Taking it and having it are two
+        different clauses, and `keep` is the whole difference."""
+        where, _ = self._place("cache_spider")
+        theirs = self._item(
+            [
+                BattleStartTrigger(
+                    effects=[
+                        BuffEffect(buff_name="spiked", value=6, target_type="self")
+                    ]
+                )
+            ],
+            uid="theirs",
+            position=(6, 0),
+        )
+        sim, _ = self._fight(
+            [self._real("cache_spider", where)], seconds=5.0, against=[theirs]
+        )
+        assert sim.player2.buffs.get("spiked") == 5, "one went"
+        assert sim.player1.buffs.get("spiked") == 1, "and it went here"
+
+    def test_snowmaster_counts_what_you_have_out_not_a_zone(self):
+        """ "Triggers 10% faster for each Ice item" -- wherever it stands."""
+        where, _ = self._place("snowmaster")
+        ice = [
+            self._tagged(f"i{i}", {"ice"}, at) for i, at in enumerate(((5, 5), (4, 5)))
+        ]
+        sim, _ = self._fight([self._real("snowmaster", where)] + ice, seconds=0.3)
+        master = next(i for i in sim.loadout[1] if i.uid == "snowmaster")
+        assert master.speed_mult == pytest.approx(1.2), "two of them, nowhere near it"
+
+    def test_snowmaster_counts_only_the_ice(self):
+        where, _ = self._place("snowmaster")
+        warm = self._tagged("warm", {"fire"}, (5, 5))
+        sim, _ = self._fight([self._real("snowmaster", where), warm], seconds=0.3)
+        master = next(i for i in sim.loadout[1] if i.uid == "snowmaster")
+        assert master.speed_mult == 1.0
+
+    def test_claws_of_attack_pay_out_on_their_own_fourth_hit(self):
+        where, _ = self._place("claws_of_attack")
+        sim, _ = self._fight(
+            [self._real("claws_of_attack", where)],
+            seconds=7.0,
+            against=[self._tagged("wall", set(), (6, 0))],
+        )
+        hits = len([a for a in sim.actions if a.action == "damage"])
+        assert sim.player1.buffs.get("monitored") == hits // 4
+
+    def test_snowcake_waits_for_ten_cold_before_it_bites(self):
+        """ "If your opponent has at least 10 Cold, increase Effect-damage by
+        10% and deal 10 Effect-damage"."""
+        where, _ = self._place("cryogenic_cooling_system")
+        cold, _ = self._fight(
+            [self._real("cryogenic_cooling_system", where)], seconds=13.0
+        )
+        piled = cold.player2.debuffs.get("throttled", 0)
+        assert 2 < piled < 10, f"deep enough to tell ten from two, and short: {piled}"
+        assert not [
+            a
+            for a in cold.actions
+            if a.action == "damage" and (a.details or {}).get("kind") == "effect"
+        ], "one Cold every 3s does not reach ten"
+
+    def test_snowcake_bites_once_the_cold_is_deep(self):
+        where, _ = self._place("cryogenic_cooling_system")
+        piler = self._item(
+            [
+                BattleStartTrigger(
+                    effects=[
+                        DebuffEffect(debuff_name="throttled", value=12, duration=-1)
+                    ]
+                )
+            ],
+            uid="piler",
+            position=(3, 3),
+        )
+        sim, _ = self._fight(
+            [self._real("cryogenic_cooling_system", where), piler], seconds=4.0
+        )
+        bites = [
+            a
+            for a in sim.actions
+            if a.action == "damage" and (a.details or {}).get("kind") == "effect"
+        ]
+        assert bites, "twelve Cold is at least ten"
+        assert sim.player1.modifier("effect_damage", 99.0) > 0, "and it grew"
+        assert bites[-1].damage > 10, "the later bite is bigger than the first"
+
+    def test_the_alphapuddle_waits_for_nine_activations(self):
+        where, star = self._place(
+            "rainbow_goobert_megasludge_alphapuddle", how_many_star=1
+        )
+        ticker = self._item(
+            [TimerTrigger(cooldown=0.3, cpu_cost=0, effects=[HealEffect(1, 1)])],
+            uid="ticker",
+            position=star[0],
+        )
+        early, _ = self._fight(
+            [self._real("rainbow_goobert_megasludge_alphapuddle", where), ticker],
+            seconds=1.5,
+            hurt=100,
+        )
+        assert early.player1.block == 0, "five is not nine"
+
+        late, _ = self._fight(
+            [self._real("rainbow_goobert_megasludge_alphapuddle", where), ticker],
+            seconds=3.5,
+            hurt=100,
+        )
+        assert late.player1.block == 20
+        assert late.player1.buffs.get("draining") == 2
+        assert late.player1.buffs.get("monitored") == 2
+        assert late.player2.debuffs.get("rate_limited") == 3
+
+
+class TestNothingIsPaidForAClauseThatWillNotHappen(_WithOneItem):
+    """ "(once)" has to stop the paying, not only the gaining.
+
+    The limit sat inside the effects and the trigger paid whenever the price
+    could be met, so Glowing Crown spent 10 Mana ten times over for one
+    invulnerability. It is the rule a cost already keeps -- "Nothing is spent
+    when the price cannot be met in full, so a clause cannot leave the owner
+    poorer for nothing" -- and the trigger was not keeping it.
+    """
+
+    def _orb(self, times=1, limited=True):
+        gain = BuffEffect(buff_name="monitored", value=1, target_type="self")
+        return self._item(
+            [
+                WhenAffordableTrigger(
+                    costs={"credits": 5},
+                    effects=(
+                        [LimitEffect(times=times, effects=[gain])]
+                        if limited
+                        else [gain]
+                    ),
+                )
+            ]
+        )
+
+    def _spends(self, item, seconds=4.0):
+        sim, _ = self._run([item], seconds=seconds, buffs={"credits": 100})
+        return sim, len([a for a in sim.actions if a.action == "spend"])
+
+    def test_a_limit_of_one_is_paid_for_once(self):
+        sim, paid = self._spends(self._orb())
+        assert paid == 1
+        assert sim.player1.buffs["credits"] == 95
+        assert sim.player1.buffs["monitored"] == 1
+
+    def test_a_limit_of_three_is_paid_for_three_times(self):
+        sim, paid = self._spends(self._orb(times=3))
+        assert paid == 3
+        assert sim.player1.buffs["credits"] == 85
+        assert sim.player1.buffs["monitored"] == 3
+
+    def test_a_clause_with_no_limit_keeps_paying(self):
+        """Only a spent-out limit stops it. A clause without one is meant to
+        run for as long as the pool holds."""
+        sim, paid = self._spends(self._orb(limited=False))
+        assert paid > 3
+        assert sim.player1.buffs["monitored"] == paid
+
+    def test_a_price_that_cannot_be_met_is_not_paid(self):
+        sim, _ = self._run([self._orb()], seconds=4.0, buffs={"credits": 2})
+        assert not [a for a in sim.actions if a.action == "spend"]
+        assert sim.player1.buffs["credits"] == 2

@@ -410,6 +410,11 @@ class CostEffect(Effect):
     Empower". All of it or none of it, like a chance: paying part of a price
     for part of a clause is not something any item does.
 
+    Nothing is spent on a clause that will not happen. A trigger that pays a
+    price up front asks first whether its effects have any go left: "(once)"
+    stops the paying as well as the gaining, and Glowing Crown spent 10 Mana
+    ten times over for one invulnerability until it did.
+
     What the trigger already did stands either way. "On attack: Use 3 Mana to
     deal +7 damage" swings whether or not the Mana is there -- the attack is
     the trigger and only the bonus is bought. The wiki does not spell this
@@ -570,6 +575,10 @@ PLAYER_MODIFIERS = frozenset(
         # Every attack this player makes: "for the next 1.5s, all your attacks are
         # Critical hits" is this at 1.0.
         "critical_chance",
+        # Effect-damage this player deals: "increase Effect-damage by 10%".
+        # Not `damage`, which is a modifier on one item's swing; this is every
+        # source of Effect-damage the player has.
+        "effect_damage",
         # How much of a blow Spikes may send back, over the base for that kind
         # of blow: 100% for melee and 0% for the other two. "Return damage
         # limit of Spikes against Ranged- and Effect-attacks +50%" raises two
@@ -1336,6 +1345,16 @@ class ChanceTrigger(Trigger):
     chance: float
     effects: List[Effect] = field(default_factory=list)
 
+    #: How many of the moment it waits for, so 1 fires on every one and 4
+    #: fires on every fourth: "After 4 hits, gain 1 Empower". This item's own
+    #: moments -- the Claws of Attack page settles it, "one every four hits,
+    #: meaning only one empower every 6.4s", against its own 1.6s cooldown --
+    #: which is why it is counted here and not on the player.
+    after: int = 1
+
+    # Runtime state: how many have happened since it last fired.
+    seen: int = 0
+
     # The event this trigger answers to. Subclasses name it.
     event_name: ClassVar[str] = ""
 
@@ -1347,6 +1366,19 @@ class ChanceTrigger(Trigger):
         if self.chance >= 1.0:
             return True
         return battle_state.rng.random() < self.chance
+
+    def due(self) -> bool:
+        """Whether this is the one it was waiting for, counting it either way.
+
+        Asked after the chance, because a roll that failed is not one of the
+        four. Every handler asks, so `after` cannot be a field that one road
+        honours and three ignore.
+        """
+        self.seen += 1
+        if self.seen < self.after:
+            return False
+        self.seen = 0
+        return True
 
     def get_cpu_cost(self) -> float:
         return 0  # Whatever caused the event has already paid

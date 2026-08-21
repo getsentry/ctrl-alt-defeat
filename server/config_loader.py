@@ -321,7 +321,11 @@ class ConfigLoader:
                     f"{item_id}: an on_hit trigger has to state its `chance`. "
                     f"Write 1.0 if the effect always happens."
                 )
-            return OnHitTrigger(chance=config["chance"], effects=effects)
+            return OnHitTrigger(
+                chance=config["chance"],
+                after=self._after(config, item_id),
+                effects=effects,
+            )
         elif trigger_type == "on_attacked":
             if "chance" not in config:
                 raise ValueError(
@@ -343,7 +347,10 @@ class ConfigLoader:
                     f"{', '.join(sorted(WEAPON_KINDS))}."
                 )
             return OnAttackedTrigger(
-                chance=config["chance"], effects=effects, answers_to=answers_to
+                after=self._after(config, item_id),
+                chance=config["chance"],
+                effects=effects,
+                answers_to=answers_to,
             )
         elif trigger_type == "use":
             costs = config.get("costs")
@@ -497,7 +504,11 @@ class ConfigLoader:
                     f"{item_id}: an on_attack trigger has to state its "
                     f"`chance`. Write 1.0 if it always happens."
                 )
-            return OnAttackTrigger(chance=config["chance"], effects=effects)
+            return OnAttackTrigger(
+                chance=config["chance"],
+                after=self._after(config, item_id),
+                effects=effects,
+            )
         elif trigger_type == "passive":
             return PassiveTrigger(effects=effects)
         elif trigger_type == "fatigue_start":
@@ -551,6 +562,17 @@ class ConfigLoader:
         if not behind:
             raise ValueError(f"{item_id}: {what} needs something behind it.")
         return behind
+
+    @staticmethod
+    def _after(config, item_id: str) -> int:
+        """How many of its moment a trigger waits for. 1 unless it says."""
+        after = config.get("after", 1)
+        if not isinstance(after, int) or after < 1:
+            raise ValueError(
+                f"{item_id}: a trigger waits for at least one of its moment, "
+                f"not `{after}`."
+            )
+        return after
 
     @staticmethod
     def _counting(config, item_id: str):
@@ -710,10 +732,10 @@ class ConfigLoader:
             for needed in ("value", "zone"):
                 if needed not in config:
                     raise ValueError(f"{item_id}: a modify_per needs a `{needed}`")
-            if config["zone"] not in ("star", "diamond"):
+            if config["zone"] not in ("star", "diamond", "own"):
                 raise ValueError(
-                    f"{item_id}: a modify_per counts a `star` or a `diamond`, "
-                    f"not `{config['zone']}`."
+                    f"{item_id}: a modify_per counts a `star`, a `diamond` or "
+                    f"`own` for everything you have out, not `{config['zone']}`."
                 )
             counting = self._counting(config, item_id)
             return ModifyPerEffect(

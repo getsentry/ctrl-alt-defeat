@@ -819,6 +819,10 @@ class TestABuffIsNotAStat:
             for trigger in spec.triggers or []:
                 for effect in getattr(trigger, "effects", []) or []:
                     if isinstance(effect, ModifyPerEffect):
+                        if effect.zone == "own":
+                            # Not a shape on the grid: "for each Ice item"
+                            # counts what the player has out, wherever it is.
+                            continue
                         zones = (
                             spec.shape.star
                             if effect.zone == "star"
