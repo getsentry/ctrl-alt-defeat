@@ -6,6 +6,7 @@ import pytest
 from battle_engine import BattleSimulator
 from containers import Container
 from items import sale_price
+from payout import WINS_TO_WIN_RUN
 from main import generate_ai_opponent
 from pydantic import BaseModel
 from tests.conftest import (
@@ -2827,3 +2828,106 @@ class TestTheShopOffersNothingThatDoesNothing:
         assert sellable(spec, {spec.shop_needs}) == (
             bool(spec.triggers) or not spec.unbuilt
         )
+
+
+def _asked_of_the_database(sql: str, *args):
+    """One question, straight to this run's database.
+
+    Round the app rather than through it: what is being checked is whether a
+    request left anything behind, and asking the same code that wrote it
+    would only prove it agrees with itself.
+    """
+    import asyncio
+    import os
+
+    import asyncpg
+    from tests.conftest import _server
+
+    async def ask():
+        connection = await asyncpg.connect(
+            database=os.environ["DB_NAME"], **_server())
+        try:
+            return await connection.fetchval(sql, *args)
+        finally:
+            await connection.close()
+
+    return asyncio.run(ask())
+
+
+class TestAWonRunIsCountedOnTheAccount:
+    """The route, not the counter under it.
+
+    `finish_run` raises `total_runs_won` and has its own test, which passes
+    whether or not anything ever calls it. This drives /battle/simulate the
+    way the client does, on a run standing at ten wins, and then asks the
+    users table -- so what it covers is the path between the two: the route
+    noticing the run is over, paying it out, and the count reaching the row.
+    """
+
+    def _a_run_with_something_on_the_rack(self, client) -> None:
+        started = client.post(
+            "/session/start", json={"seed": TWO_SINGLE_SQUARES_SHOP_SEED})
+        assert started.status_code == 200
+        for offer in started.json()["session"]["current_shop"]:
+            if offer and not offer["is_container"]:
+                bought = client.post("/purchase/item", json={
+                    "item_id": offer["id"], "target_position": [2, 3]})
+                if bought.status_code == 200:
+                    return
+        raise AssertionError("nothing in the shop could be bought")
+
+    def test_the_account_counts_the_run_the_battle_ended(self, auth_client):
+        self._a_run_with_something_on_the_rack(auth_client)
+
+        # One win short of the end, with tries to spare. The tenth win has to
+        # be won inside a battle: the route turns away a run that is already
+        # over, so a row set straight to ten is a state no client reaches.
+        _asked_of_the_database(
+            "UPDATE game_sessions SET wins = $1, losses = 0, lives = 99, "
+            "round = $2 WHERE player_id = $3",
+            WINS_TO_WIN_RUN - 1, WINS_TO_WIN_RUN, str(auth_client.user_id))
+
+        # Fought until one is won. Which battle that is depends on the rack
+        # and the roll, and neither is what this test is about.
+        for seed in range(40):
+            fought = auth_client.post(
+                "/battle/simulate",
+                json={"seed": seed, "test_ai_difficulty": 1})
+            assert fought.status_code == 200, fought.text
+            if fought.json()["session_update"]["wins"] >= WINS_TO_WIN_RUN:
+                break
+        else:
+            pytest.skip("no battle was won in forty tries")
+
+        counted = _asked_of_the_database(
+            "SELECT total_runs_won FROM users WHERE id = $1", auth_client.user_id)
+        played = _asked_of_the_database(
+            "SELECT total_games_played FROM users WHERE id = $1",
+            auth_client.user_id)
+        assert (counted, played) == (1, 1), "won, and counted as won"
+
+    def test_a_run_that_ran_out_of_tries_is_not_counted_as_won(self, auth_client):
+        self._a_run_with_something_on_the_rack(auth_client)
+
+        # The other ending, down the same route: the last try is spent and the
+        # run is paid out, having won nothing. Wins are put back to none before
+        # each battle so that a lucky streak cannot end this run by winning it.
+        for seed in range(30):
+            _asked_of_the_database(
+                "UPDATE game_sessions SET wins = 0, lives = 1, round = 3 "
+                "WHERE player_id = $1", str(auth_client.user_id))
+            fought = auth_client.post(
+                "/battle/simulate",
+                json={"seed": seed, "test_ai_difficulty": 2})
+            assert fought.status_code == 200, fought.text
+            if fought.json()["session_update"]["lives"] <= 0:
+                break
+        else:
+            pytest.skip("no battle was lost in thirty tries")
+
+        counted = _asked_of_the_database(
+            "SELECT total_runs_won FROM users WHERE id = $1", auth_client.user_id)
+        played = _asked_of_the_database(
+            "SELECT total_games_played FROM users WHERE id = $1",
+            auth_client.user_id)
+        assert (counted, played) == (0, 1), "played, and not counted as won"
