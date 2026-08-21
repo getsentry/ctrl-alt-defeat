@@ -31,7 +31,6 @@ const KEYCAP_INK := Color("#2d2034")
 @onready var new_game_button = $"MenuPanel_ButtonContainer#NewGameButton"
 @onready var continue_button = $"MenuPanel_ButtonContainer#ContinueButton"
 @onready var quit_button = $"MenuPanel_ButtonContainer#QuitButton"
-@onready var version_label = $VersionLabel
 @onready var music_player = $BackgroundMusic
 @onready var name_input = $NameInputContainer/NameInput
 
@@ -72,8 +71,6 @@ func _setup_ui():
 
 	_dress_name_field()
 
-	version_label.add_theme_font_size_override("font_size", 14)
-	version_label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.5, 0.8))
 	new_game_button.pressed.connect(_on_start_game)
 	quit_button.pressed.connect(_on_exit)
 

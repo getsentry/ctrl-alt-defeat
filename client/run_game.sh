@@ -101,6 +101,17 @@ echo "==============================="
 export BATTLE_SERVER_URL="http://localhost:$DEV_SERVER_PORT"
 echo "Game will connect to: $BATTLE_SERVER_URL"
 
+# Bring the imported assets up to date first. Only the editor re-imports, and
+# this runs the game, so a replaced picture is silently ignored: four item
+# pictures were re-cut, committed, and went on being drawn with the backdrop
+# they had been cut off, for a day, because .godot/imported still held the old
+# texture. This takes a second or two when nothing has changed.
+echo ""
+echo "Importing any changed assets..."
+if ! godot --headless --import >/dev/null 2>&1; then
+    echo -e "${YELLOW}Import reported a problem; the game may draw stale art${NC}"
+fi
+
 # Run Godot
 echo ""
 echo "Starting Godot..."

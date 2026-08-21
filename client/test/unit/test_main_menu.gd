@@ -91,10 +91,11 @@ func test_quit_button_functionality():
 	)
 
 
-func test_version_label_exists():
-	var version_label = main_menu.version_label
-	assert_not_null(version_label, "Version label should exist")
-	assert_ne(version_label.text, "", "Version label should have text")
+func test_the_menu_says_nothing_about_a_version():
+	"""It read "v0.1.0 - Alpha" in the corner. A version number is for
+	somebody filing a bug, and there is nobody to file one to."""
+	assert_null(main_menu.get_node_or_null("VersionLabel"),
+		"Nothing on the menu should be about the build")
 
 
 func test_title_displayed():
