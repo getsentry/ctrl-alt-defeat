@@ -194,6 +194,10 @@ class Item extends Resource:
 	# What this item can be narrowed by, with its category: "Star Pets" and
 	# "Star nature-items" are matched from these. See aura.gd.
 	var kinds: Array[String] = []
+	## The same kinds as a player reads them, which is the server's business:
+	## it is the one that knows what a trait is called. `kinds` is what an
+	## aura matches on and is never shown.
+	var traits: Array[String] = []
 	# What each of its zones acts on, keyed "star" and "diamond". A zone the
 	# item draws but nothing acts through is absent, which is not the same as
 	# one that acts on everything: that is present and empty.
@@ -232,6 +236,7 @@ class Item extends Resource:
 		diamond = APITypes.squares(data.get("diamond", []))
 		anchors = APITypes.squares(data.get("anchors", []))
 		kinds = APITypes.strings(data["kinds"])
+		traits = APITypes.strings(data["traits"])
 		aura = data["aura"]
 		color = data["color"]
 		pattern = data["pattern"]
@@ -264,6 +269,7 @@ class Item extends Resource:
 			"diamond": APITypes.offsets(diamond),
 			"anchors": APITypes.offsets(anchors),
 			"kinds": kinds,
+			"traits": traits,
 			"aura": aura,
 			"effects": effects,
 			"color": color,

@@ -220,6 +220,13 @@ class Item(BaseModel):
     kinds: List[str] = Field(
         default_factory=list, description="The kinds this item carries"
     )
+    traits: List[str] = Field(
+        default_factory=list,
+        description=(
+            "The same kinds as a player reads them. Shown, never matched: "
+            "`kinds` is what a zone asks for."
+        ),
+    )
     # What this item's zones act on, by zone. Sent so a client can show which
     # items an aura would actually reach rather than which squares it covers:
     # a zone narrowed to pets lands on a weapon and does nothing.
@@ -281,6 +288,8 @@ class Item(BaseModel):
             diamond=[(x, y) for x, y in spec.shape.diamond],
             anchors=[(x, y) for x, y in spec.shape.anchors],
             kinds=sorted(kind.lower() for kind in spec.kinds),
+            traits=[describe.trait(kind)
+                    for kind in sorted(kind.lower() for kind in spec.kinds)],
             aura=aura_of(spec),
             effects=describe.lines(
                 spec, skipping=lambda trigger: already_shown(trigger, stats)),

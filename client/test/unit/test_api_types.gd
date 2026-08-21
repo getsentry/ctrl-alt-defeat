@@ -32,6 +32,7 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 		"rotation": 0,
 		"shape": [[0, 0], [1, 0]],
 		"kinds": ["melee"],
+		"traits": ["Melee"],
 		"aura": {},
 		"rarity": "rare",
 		"cost": 8,
@@ -717,7 +718,8 @@ func test_a_zone_with_no_anchor_turns_with_the_item():
 	# Rows count downwards, so a quarter clockwise sends the square on the
 	# right to the square below.
 	var reaching_right = _item({
-		"shape": [[0, 0]], "star": [[1, 0]], "diamond": [], "anchors": [], "kinds": [], "aura": {},
+		"shape": [[0, 0]], "star": [[1, 0]], "diamond": [], "anchors": [], "kinds": [],
+		"traits": [], "aura": {},
 	})
 	reaching_right["position"] = [0, 0]
 	reaching_right["rotation"] = 90

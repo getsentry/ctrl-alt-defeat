@@ -126,13 +126,34 @@ func _process(_delta: float) -> void:
 const BUFF_COLOUR := "8fe0a0"
 const DEBUFF_COLOUR := "ff9a9a"
 
+## And the two zones, which are drawn on the board as well as named in the
+## words. The colours are the overlay's own, so a line saying "for each star
+## item" is the colour of the squares the player is looking at, and the shape
+## in front of it is the shape drawn in them.
+const AuraOverlay = preload("res://scripts/aura_overlay.gd")
+const STAR_MARK := "★"
+const DIAMOND_MARK := "◆"
+
 
 func _coloured(said: Array) -> String:
-	"""Everything the item does, with the statuses in it picked out"""
+	"""Everything the item does, with what it names picked out.
+
+	A status by the kind of status it is, and a zone by the shape and colour
+	the board draws it in. The marks come from the server, which knows what a
+	name is; what they are drawn as is the card's business.
+	"""
 	var text: String = "\n".join(said)
-	text = text.replace("[buff]", "[color=#%s]" % BUFF_COLOUR)
-	text = text.replace("[debuff]", "[color=#%s]" % DEBUFF_COLOUR)
-	return text.replace("[/buff]", "[/color]").replace("[/debuff]", "[/color]")
+	var marks := {
+		"buff": "[color=#%s]" % BUFF_COLOUR,
+		"debuff": "[color=#%s]" % DEBUFF_COLOUR,
+		"star": "[color=#%s]%s " % [AuraOverlay.STAR.to_html(false), STAR_MARK],
+		"diamond": "[color=#%s]%s " % [
+			AuraOverlay.DIAMOND.to_html(false), DIAMOND_MARK],
+	}
+	for mark in marks:
+		text = text.replace("[%s]" % mark, marks[mark])
+		text = text.replace("[/%s]" % mark, "[/color]")
+	return text
 
 
 func _has_body() -> bool:
@@ -177,16 +198,24 @@ func _tidy(number: float) -> String:
 
 
 func _identity(item_data: APITypes.Item) -> String:
-	"""What the item is: its rarity and its kind, as the footer reads it.
+	"""What the item is: its rarity, its kind, and the traits it carries.
 
 	Common is what most things are, so naming it says nothing. Anything rarer
 	is worth the words.
+
+	The traits are here because half the catalogue asks for them -- "gain 3
+	regenerating for each holy star item" is a line the player cannot act on
+	without knowing which of their items are holy. The category is one of the
+	things an aura can ask for as well, so the footer is the whole list of
+	what this item answers to.
 	"""
 	var parts: Array[String] = []
 	if item_data.category:
 		parts.append(item_data.category.capitalize())
 	if item_data.rarity and item_data.rarity != "common":
 		parts.append(item_data.rarity.capitalize())
+	for trait_name in item_data.traits:
+		parts.append(trait_name)
 	return " • ".join(parts)
 
 

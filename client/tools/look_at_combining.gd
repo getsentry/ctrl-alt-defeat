@@ -246,7 +246,7 @@ func _item(id: String, item_type: String, slug: String, at: Array) -> Dictionary
 		"slug": slug, "category": "problem", "rarity": "common",
 		"cost": 4, "price": 4, "sell_value": 2, "on_sale": false,
 		"is_container": false, "shape": [[0, 0]], "star": [], "diamond": [],
-		"anchors": [], "kinds": [], "aura": {},
+		"anchors": [], "kinds": [], "traits": [], "aura": {},
 		"effects": [], "color": "#BE0032", "pattern": "solid",
 		"min_damage": 0, "max_damage": 0, "min_heal": 0, "max_heal": 0,
 		"block_amount": 0, "cooldown": 0.0, "cpu_cost": 0.0,

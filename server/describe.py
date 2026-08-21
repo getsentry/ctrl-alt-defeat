@@ -98,6 +98,31 @@ SHOWN = {
     "memory_leaked": "memory leak",
 }
 
+#: What the traits an item carries are called where a player can see them.
+#: The catalogue keeps the source game's words -- it is imported from the
+#: wiki, and an import that renamed them would have to rename them back --
+#: so the words are changed here, where they are read, and nothing that
+#: matches a trait against a zone has to know about it.
+#:
+#: A trait nobody has renamed is shown as it is written, which is how the
+#: four that already fit stay as they are.
+TRAIT_SHOWN = {
+    "holy": "Sentinel",
+    "magic": "Glitch",
+    "nature": "Feral",
+    "dark": "Malware",
+    "vampiric": "Leeching",
+    "ice": "Cryo",
+    "fire": "Thermal",
+    "musical": "Audio",
+}
+
+
+def trait(kind: str) -> str:
+    """A trait as a player reads it, in the case a card shows it in"""
+    return TRAIT_SHOWN.get(kind, kind.replace("_", " ").capitalize())
+
+
 #: What a modifier changes, as a player would say it. The catalogue names are
 #: the engine's own fields.
 #: The ones that add rather than scale. A flat bonus written as a percentage
@@ -124,12 +149,24 @@ STAT_SHOWN = {
     "max_health": "maximum quota",
 }
 
+#: The two zones an item draws on its own map. Marked, so the card can show
+#: them the way the board does -- the shape beside the word, in the colour the
+#: squares are drawn in -- and a player reading "for each star item" can see
+#: which of the two shapes on their grid that means.
+ZONES = ("star", "diamond")
+
+
+def zone(name: str) -> str:
+    """A zone as it is read, marked as the one of the two it is"""
+    return f"[{name}]{name}[/{name}]" if name in ZONES else name
+
+
 #: Where an effect reaches. `own` is everything the player has out; the two
 #: zones are the shapes an item draws on its own map.
 REACH = {
     "self": "it",
-    "star": "star items",
-    "diamond": "diamond items",
+    "star": f"{zone('star')} items",
+    "diamond": f"{zone('diamond')} items",
     "contained": "the items it holds",
     "own": "all your items",
     "enemy": "your opponent",
@@ -276,7 +313,10 @@ def counted(counting: object, noun: str = "items") -> str:
     # "melee, ranged or magic star items" is a long way of saying so.
     if wanted == set(WEAPON_KINDS):
         return noun.replace("item", "weapon")
-    tags = [tag.replace("_", " ") for tag in sorted(wanted)]
+    # Lower case, because these sit in the middle of a line rather than on a
+    # card: "for each Malware star item" is a sentence shouting one of its
+    # words, which is the same reason a status is not capitalised either.
+    tags = [trait(tag).lower() for tag in sorted(wanted)]
     if "all" in counting:
         return f"{noun} that are {joined(tags)}"
     # `any` means an item carrying one of them, so the tags are alternatives.
@@ -582,7 +622,7 @@ def _(effect: ModifyEffect) -> str:
 def _(effect: ModifyPerEffect) -> str:
     return (
         f"{by_how_much(effect.stat, effect.value)} for each "
-        f"{counted(effect.counting, f'{effect.zone} item')}"
+        f"{counted(effect.counting, f'{zone(effect.zone)} item')}"
     )
 
 
@@ -605,7 +645,7 @@ def _(effect: GainDamageEffect) -> str:
 @of_effect.register
 def _(effect: PerCountEffect) -> str:
     inner = joined(gathered(effect.effects))
-    return f"{inner} for each {counted(effect.counting, f'{effect.where} item')}"
+    return f"{inner} for each {counted(effect.counting, f'{zone(effect.where)} item')}"
 
 
 @of_effect.register
@@ -782,7 +822,7 @@ def _(trigger: CounterTrigger) -> str:
 
 @of_trigger.register
 def _(trigger: AuraTrigger) -> str:
-    what = counted(trigger.counting, f"{trigger.zone} item")
+    what = counted(trigger.counting, f"{zone(trigger.zone)} item")
     if trigger.after > 1:
         return f"every {number(trigger.after)} {what} activations"
     return f"on {what} activation"

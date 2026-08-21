@@ -32,7 +32,7 @@ from item_effects import (
 #: What the server marks a status with, so the client can pick it out in a
 #: colour. Taken back out where a test is about the words rather than the
 #: marks; there is a test of its own for those.
-MARK = re.compile(r"\[/?(buff|debuff)\]")
+MARK = re.compile(r"\[/?(buff|debuff|star|diamond)\]")
 
 
 def plain(text: str) -> str:
@@ -411,8 +411,19 @@ class TestTheWholeCatalogue:
     def test_no_line_is_left_holding_half_a_mark(self):
         for key, spec in ITEM_CATALOG.items():
             for said in describe.lines(spec):
-                assert said.count("[buff]") == said.count("[/buff]"), said
-                assert said.count("[debuff]") == said.count("[/debuff]"), said
+                for mark in ("buff", "debuff", "star", "diamond"):
+                    assert said.count(f"[{mark}]") == said.count(f"[/{mark}]"), said
+
+    def test_a_zone_is_marked_as_the_one_of_the_two_it_is(self):
+        # The board draws a star zone and a diamond zone differently, and a
+        # line naming one has to say which, or a player cannot tell which of
+        # the shapes on their own grid the words are about.
+        for key, spec in ITEM_CATALOG.items():
+            for said in describe.lines(spec):
+                for one in describe.ZONES:
+                    plain_said = plain(said)
+                    if f" {one} item" in plain_said or plain_said.startswith(one):
+                        assert f"[{one}]" in said, f"{key}: {said}"
 
     def test_no_line_starts_mid_sentence(self):
         # Not every line starts with a letter -- a modifier opens with its

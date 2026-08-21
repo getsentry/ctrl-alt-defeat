@@ -5,6 +5,7 @@ extends GutTest
 # appear when the item has that stat and stay hidden when it does not.
 
 const APITypes = preload("res://scripts/api_types.gd")
+const AuraOverlay = preload("res://scripts/aura_overlay.gd")
 
 var tooltip_scene = preload("res://scenes/ItemTooltip.tscn")
 var tooltip
@@ -64,6 +65,24 @@ func test_shows_category_and_rarity():
 	assert_eq(tooltip.info_label.text, "Problem • Legendary", "Should show category and rarity")
 
 
+func test_the_traits_an_item_carries_are_named():
+	# Half the catalogue asks for them -- "gain 3 regenerating for each holy
+	# star item" -- and there was nowhere to read which of your items is holy.
+	tooltip.setup_tooltip(_item({"category": "problem", "rarity": "rare",
+		"traits": ["Holy", "Melee"]}))
+
+	assert_true("Holy" in tooltip.info_label.text, "A trait should be named")
+	assert_true("Melee" in tooltip.info_label.text, "and so should the rest")
+
+
+func test_an_item_with_no_traits_says_only_what_it_is():
+	tooltip.setup_tooltip(_item({"category": "problem", "rarity": "rare",
+		"traits": []}))
+
+	assert_eq(tooltip.info_label.text, "Problem • Rare",
+		"Nothing should be left hanging off the end")
+
+
 func test_common_rarity_is_not_named():
 	tooltip.setup_tooltip(_item({"category": "problem", "rarity": "common"}))
 	assert_eq(tooltip.info_label.text, "Problem", "Common is the default, so it is not spelled out")
@@ -121,6 +140,23 @@ func test_shows_everything_the_item_does():
 		"including the parts no row has a number for")
 	assert_true("\n" in tooltip.description_label.get_parsed_text(),
 		"a line for each, rather than one run-on sentence")
+
+
+func test_a_zone_is_drawn_the_way_the_board_draws_it():
+	# A line saying "for each star item" and the squares lit up on the grid
+	# are the same thing, so they are the same colour and carry the same shape.
+	tooltip.setup_tooltip(_item({"effects": [
+		"+10% trigger speed for each [star]star[/star] item",
+		"On [diamond]diamond[/diamond] item activation: heal 4"]}))
+
+	var text: String = tooltip.description_label.text
+	assert_false("[star]" in text, "The mark itself should never reach the player")
+	assert_true(AuraOverlay.STAR.to_html(false) in text,
+		"A star zone should be the colour the board draws it in")
+	assert_true(AuraOverlay.DIAMOND.to_html(false) in text,
+		"and a diamond zone its own")
+	assert_true(ItemTooltip.STAR_MARK in tooltip.description_label.get_parsed_text(),
+		"with the shape beside the word")
 
 
 func test_a_status_is_picked_out_in_colour():
