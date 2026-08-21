@@ -25,11 +25,11 @@ environment points at, and the environment usually points at production.
 
 import argparse
 import asyncio
+import os
 import sys
 from urllib.parse import urlparse
 
 import asyncpg
-
 from database import get_database_url, parse_asyncpg_url
 
 
@@ -69,7 +69,16 @@ def main(argv: list) -> int:
     )
     args = parser.parse_args(argv)
 
-    url = get_database_url()
+    # DB_HOST and DB_NAME are how every other part of the server is pointed at
+    # a database -- `database.py` reads them, `alembic/env.py` reads them, and
+    # the test suite sets them. Called with no arguments, `get_database_url`
+    # ignores them and returns the default, which is the developer's main
+    # database. So the one file whose whole job is to empty a database was the
+    # one that could not be aimed at a different one, and
+    # `DB_NAME=something_else python reset_db.py --yes` emptied `autobattler`.
+    url = get_database_url(
+        db_host=os.environ.get("DB_HOST"), db_name=os.environ.get("DB_NAME")
+    )
     print(f"Database: {where_it_points(url)}")
 
     if not args.yes:

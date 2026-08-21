@@ -92,14 +92,25 @@ def get_database_url(
 
     # Override host if provided
     if db_host:
+        # `urlparse` gives password None when the userinfo has no colon in it,
+        # and an f-string turns that into the literal password "None". A URL
+        # like postgresql://appuser@db:5432/app would then try to log in with a
+        # four-letter password and fail on authentication, while every message
+        # about it named a host and database that looked right.
+        credentials = parsed.username or ""
+        if parsed.password:
+            credentials = f"{credentials}:{parsed.password}"
+        elif parsed.username is not None:
+            # An empty password is not the same as no password: the default URL
+            # carries one, and dropping the colon changes who connects.
+            credentials = f"{credentials}:"
+
         # Handle both 'localhost:5432' and 'localhost' formats
         if ":" in db_host:
             host, port = db_host.split(":", 1)
-            netloc = f"{parsed.username}:{parsed.password}@{host}:{port}"
+            netloc = f"{credentials}@{host}:{port}"
         else:
-            netloc = (
-                f"{parsed.username}:{parsed.password}@{db_host}:{parsed.port or 5432}"
-            )
+            netloc = f"{credentials}@{db_host}:{parsed.port or 5432}"
     else:
         netloc = parsed.netloc
 
