@@ -1238,6 +1238,87 @@ lives on the item itself in `server/data/items/*.json`:
 An earlier version of this section listed invented recipes over invented
 items. The catalogue is the record; regenerate any listing from it.
 
+### 5.5 SnubaCoin
+
+Gold is spent inside a run and gone when the run ends. **SnubaCoin** is the
+other one: it is paid out *for* a run, it survives the run, and it belongs to
+the account rather than the session.
+
+The name is not ours — Snuba is a real query layer with a real silly name, and
+the game only reports it. The coin is a thick teal token with a magenta rim
+and a **snorkel** struck into its face, made slightly badly on purpose.
+
+#### One coin, everywhere
+
+There is **one picture of the coin**, and it is used at every size and in
+every place: the main menu balance, the crate, and the coins that fly during
+the payout. There is no flat version for small sizes and no second drawing
+for the animation. A currency that looks like two things is two currencies to
+the player.
+
+This is why the coin is **not** a mask, and does not belong to the
+`trophy.svg` / `heart.svg` family. Those two are flat one-colour masks for one
+reason: they toggle. Each trophy is lit or spent, each heart is lit or spent,
+and the screen tints them. A balance never toggles, so the coin stays painted
+art at every size.
+
+At small sizes the snorkel on its face stops being legible, and that is fine.
+The teal disc and the magenta rim are what has to read, and they do. The
+player has to know it is a coin, not what is stamped on it.
+
+Nothing spends SnubaCoin yet. It is shown, banked and counted, and character
+skins are the intended first thing to buy. A balance the player cannot spend
+is still worth paying, because it makes a finished run leave a mark; a run
+that leaves nothing behind is a run the player has no reason to finish.
+
+#### What a run pays
+
+A run pays out once, when it ends, whichever way it ends:
+
+| Reason | SnubaCoin |
+|--------|-----------|
+| Finishing the run at all | 3 |
+| Each win banked | 1 each |
+| Each try still unspent | 1 each |
+| Winning the run (10 wins) | 5 |
+
+A lost run on 2 wins and no tries pays **5**. A won run with 2 tries left pays
+**20**. The spread is four times over, which is enough to make the better run
+worth wanting without making a loss worth nothing.
+
+#### A run that is abandoned
+
+A player can also simply leave — close the window at 3 wins and never come
+back. That run still pays, but it pays **1 per win and nothing else**: no
+completion bonus, and nothing for the tries.
+
+The reason is arithmetic. Give an abandoned run the whole table and quitting
+at round 1 with 5 tries unspent pays 3 + 0 + 5 = **8**, while genuinely losing
+on 2 wins pays 3 + 2 + 0 = **5**. Quitting would beat playing. Wins are the
+only line on the table a player cannot collect by giving up early, so wins are
+the only line an abandoned run gets.
+
+It is paid **when the player starts their next run**. There is no quit signal
+— the window closes and the session is never touched again — so the next
+session start is both the first moment the server can know the last run is
+over and a moment the player is there to see it.
+
+Every part of that table is a thing the player already watched themselves
+earn. Nothing is a number the game invented after the fact, and this is the
+whole point of the payout: Section 6.4 pays the counters out one at a time,
+so the player is paid in the same objects the run was counted in.
+
+#### Where it lives
+
+SnubaCoin is per account, not per session. It sits beside the totals the
+`users` table already keeps (`total_games_played`, `total_wins`,
+`total_losses`, `current_rank`), and the server is what adds to it. The
+client never computes a balance; it shows what it is told, exactly as it does
+for gold.
+
+The main menu shows the balance. A guest account banks it the same as a
+registered one, so a player who never signs up still keeps a total.
+
 ## 6. Battle Phases
 
 ### 6.1 Preparation Phase (60 seconds)
@@ -1279,7 +1360,92 @@ the player reads the run against the battle that changed it. It shows:
 
 The counters open on the totals from *before* the round and then move the one
 icon the round changed, so the player sees the trophy light up or the heart go
-out. The player clicks to move on to the post-battle screen.
+out. The player clicks to move on to the shop.
+
+If the round was the run's last — the 10th win banked, or the last try spent —
+the click leads nowhere yet. The overlay stays where it is and carries on into
+Section 6.4.
+
+### 6.4 End of the Run
+
+A run ends two ways, and both take the same exit:
+
+- **Won**: the 10th win is banked.
+- **Over**: the last try is spent.
+
+Winning is not a special case that skips the ending. It is the better of the
+two endings, and it uses the same one.
+
+#### It is not a screen
+
+The end of a run is the **second beat of the round result**, drawn in the same
+place, over the same finished battle. Section 6.3 has already put the Wins bar
+and the Tries bar on screen and moved the one icon the round changed. Those
+bars stay exactly where they are. Nothing is torn down and rebuilt.
+
+This matters for one reason: the player is paid in the counters they are
+already looking at. Move them to a screen of their own and the payout stops
+being made out of the run and starts being a report about it.
+
+The finished battle stays visible underneath. An eye marked **Hide** at the top
+pulls the whole overlay away so the player can read the battle that ended the
+run, and puts it back.
+
+#### The beats
+
+1. The round result settles (Section 6.3).
+2. The title changes. **"Round won"** becomes **"Run won"**. **"Round lost"**
+   becomes **"Run over"**. The ribbon flies off and the new title grows in its
+   place, so the player sees the run take over from the round.
+3. A **cold storage crate** slides in from the right, marked with its snorkel
+   and the SnubaCoin balance the account already had.
+4. The run pays out, one part at a time, in the order of Section 5.5's table.
+   Each part is a banner that names it, and each banner is paid at the moment
+   its coins fly.
+
+   **Nothing flies as itself.** A counter pops off its bar, **turns into a
+   SnubaCoin in the air**, and the coin is what travels to the crate. That
+   turn is the payout in one gesture: the thing the run was counted in
+   becomes the thing the run paid.
+
+   - `RUN COMPLETE` — the flat 3. These coins have no counter to come from, so
+     they come off the banner itself.
+   - `10 WINS` (or `4 WINS`) — every lit trophy pops, turns and flies. Its
+     slot goes dark behind it.
+   - `2 TRIES LEFT` — every heart still lit does the same.
+   - `RUN WON` — the 5 for winning, on a win only, off the banner.
+5. The crate's number counts up as each part lands. It closes when the last
+   one is in.
+6. The player clicks. Every panel leaves the way it came in, and the game goes
+   to the main menu.
+
+**Click to continue is live from the first beat.** A player who has seen it
+before can leave at any point, and the payout is banked in full whether they
+watched it or not. The show is worth watching once and skippable forever
+after.
+
+#### Winning has to look different
+
+The beats are identical for both endings. Only the dressing changes, and the
+dressing is the whole reward:
+
+| | Run over | Run won |
+|---|---|---|
+| Ribbon | Red | Blue |
+| Title | "Run over" | "Run won" |
+| Racks | Nothing | Both racks throw sparks |
+| Wins bar | The few lit trophies fly | **All ten** fly together, in beams |
+| Banners | Wins, tries left | Wins, tries left, and the run bonus |
+
+A loss still pays, still gets a crate, and still gets its counters flown out
+one at a time. A player who loses is not shown a smaller version of the win —
+they are shown the same ceremony over a worse number.
+
+#### What we are not building
+
+Backpack Battles offers a third thing at 10 wins: a choice between taking the
+win and carrying on into a survival mode. **We are not building that.** The
+run ends at 10 wins.
 
 ## 7. Special Mechanics
 
