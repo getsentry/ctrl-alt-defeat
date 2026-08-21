@@ -145,7 +145,7 @@ func _on_start_game():
 	GameStateManager.player_name = player_name
 
 	# Start new session with server
-	var session_response = await BattleServerAPI.start_session(player_name)
+	var session_response = await BattleServerAPI.start_session()
 
 	# Check if server connection failed
 	if session_response == null:

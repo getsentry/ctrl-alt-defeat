@@ -41,7 +41,12 @@ func reset_for_test():
 	_auth_token = ""  # Force re-authentication
 	_user_id = 0
 
-func start_session(player_name: String = "", game_seed: int = -1) -> APITypes.SessionStartResponse:
+## Start a run.
+##
+## The player's name is not sent. It belongs to the account, and the server
+## reads it from the token. `StartSessionRequest` forbids extra fields, so a
+## name in the body is a 422 rather than a field quietly ignored.
+func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
 	# BATTLE_TEST_SEED fixes the game seed, which makes the shop deterministic.
 	# The server only accepts a seed in TEST_MODE.
 	if game_seed < 0:
@@ -56,10 +61,6 @@ func start_session(player_name: String = "", game_seed: int = -1) -> APITypes.Se
 			push_error("Failed to authenticate with server")
 			return null
 
-	# Use provided name or get from GameStateManager or default
-	if player_name == "":
-		player_name = GameStateManager.player_name if GameStateManager.player_name != "" else "Player"
-
 	# Start a new game session
 	var url = BASE_URL + "/session/start"
 	var headers = [
@@ -67,9 +68,7 @@ func start_session(player_name: String = "", game_seed: int = -1) -> APITypes.Se
 		"Authorization: Bearer " + _auth_token
 	]
 
-	var body_dict = {
-		"player_name": player_name
-	}
+	var body_dict = {}
 
 	# Use seed if provided (for testing)
 	if game_seed >= 0:
