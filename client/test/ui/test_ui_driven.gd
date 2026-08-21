@@ -109,51 +109,11 @@ func test_full_user_journey_through_ui():
 	# Simulate purchase through UI - we need to trigger the shop item's input handler
 	print("   - Simulating purchase through UI...")
 
-	# Get UI references
-	var server_room_container = game_ui.server_room_container
-	var cell_size = game_ui.inventory_grid.cell_size
-	var cell_spacing = game_ui.inventory_grid.cell_spacing
-	var grid_global_pos = server_room_container.global_position
-	# Aimed at the square the item is carried by, so its corner lands on the
-	# square that was chosen. An item off the shelf hangs from its middle
-	# square, and for anything bigger than one square that is not its corner.
-	var aim = Vector2(target_grid_pos) \
-		+ Vector2(APITypes.middle_square(item_data.turned_shape()))
-	var drag_end = grid_global_pos + aim * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
-
-	# Get shop item center position
-	var shop_item_center = shop_item.global_position + shop_item.size / 2
-
-	# Start drag from shop item
-	var mouse_down = InputEventMouseButton.new()
-	mouse_down.button_index = MOUSE_BUTTON_LEFT
-	mouse_down.pressed = true
-	mouse_down.position = shop_item.size / 2  # Local position within shop item
-	mouse_down.global_position = shop_item_center
-
-	# Send to shop item's input handler
-	shop_item.gui_input.emit(mouse_down)
-	await get_tree().process_frame
-
-	# Drag to target position
-	var mouse_move = InputEventMouseMotion.new()
-	mouse_move.global_position = drag_end
-	mouse_move.position = drag_end
-	mouse_move.relative = drag_end - shop_item_center
-	mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
-
-	game_ui._input(mouse_move)
-	await get_tree().process_frame
-
-	# Drop at target
-	var mouse_up = InputEventMouseButton.new()
-	mouse_up.button_index = MOUSE_BUTTON_LEFT
-	mouse_up.pressed = false
-	mouse_up.global_position = drag_end
-	mouse_up.position = drag_end
-
-	game_ui._input(mouse_up)
-	await _wait_until(func(): return GameStateManager.gold < initial_gold)
+	var landed: bool = await _carry_from_the_shelf(
+		game_ui, shop_item, Vector2i(target_grid_pos))
+	assert_true(landed, "The item should be on the rack after the drop")
+	await _wait_until(func(): return GameStateManager.gold < initial_gold,
+		DEFAULT_TIMEOUT, "the purchase to be paid for")
 
 	assert_lt(GameStateManager.gold, initial_gold, "Gold should decrease after purchase")
 
@@ -176,6 +136,8 @@ func test_full_user_journey_through_ui():
 		battle_btn = get_tree().current_scene.find_child("BattleButton", true, false)
 
 	if battle_btn:
+		assert_gt(items_before_battle, 0,
+			"A battle needs something on the rack")
 		battle_btn.pressed.emit()
 		await _wait_for_scene_change("UnifiedGridUI")
 	else:
@@ -308,56 +270,12 @@ func test_shop_purchase_and_item_placement():
 	for placed in game_ui.inventory_grid.containers:
 		print("     Container at pos %s" % placed.position())
 
-	# Get the server room container directly - it's a property of UnifiedGridUI
-	var server_room_container = game_ui.server_room_container
-	assert_not_null(server_room_container, "Server room container should exist")
+	assert_not_null(game_ui.server_room_container,
+		"Server room container should exist")
 
-	# Get cell size and spacing from UI constants
-	var cell_size = game_ui.inventory_grid.cell_size
-	var cell_spacing = game_ui.inventory_grid.cell_spacing
-	var grid_global_pos = server_room_container.global_position
-	# Aimed at the square the item is carried by, so its corner lands on the
-	# square that was chosen. See the note on the other purchase above.
-	var aim = Vector2(target_grid_pos) \
-		+ Vector2(APITypes.middle_square(item_data.turned_shape()))
-	var drag_end = grid_global_pos + aim * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
-
-	print("   - Grid container at: %s" % grid_global_pos)
-	print("   - Cell size: %d, spacing: %d" % [cell_size, cell_spacing])
-	print("   - Target drop position: %s" % drag_end)
-
-	# Simulate drag and drop from shop to inventory
-	print("   - Simulating shop drag and drop...")
-
-	# Start drag by pressing mouse on shop item
-	var mouse_down = InputEventMouseButton.new()
-	mouse_down.button_index = MOUSE_BUTTON_LEFT
-	mouse_down.pressed = true
-	mouse_down.position = shop_item.size / 2  # Local position within shop item
-	mouse_down.global_position = shop_item.global_position + shop_item.size / 2
-
-	# Send mouse down to shop item to start drag
-	shop_item.gui_input.emit(mouse_down)
-	await get_tree().process_frame
-
-	# Simulate drag motion to target position
-	await get_tree().create_timer(0.1).timeout
-
-	# End drag by releasing mouse at target position
-	var mouse_up = InputEventMouseButton.new()
-	mouse_up.button_index = MOUSE_BUTTON_LEFT
-	mouse_up.pressed = false
-	# Convert target grid position to pixel position
-	var target_pixel_pos = game_ui.inventory_grid.grid_to_pixel(Vector2i(target_grid_pos.x, target_grid_pos.y))
-	mouse_up.position = target_pixel_pos + Vector2(cell_size/2, cell_size/2)
-	mouse_up.global_position = game_ui.inventory_grid.global_position + mouse_up.position
-
-	# Send mouse up to the UI to trigger drop
-	game_ui._input(mouse_up)
-	await get_tree().process_frame
-
-	# Wait for potential server response
-	await _wait_for_server()
+	var landed: bool = await _carry_from_the_shelf(
+		game_ui, shop_item, Vector2i(target_grid_pos))
+	assert_true(landed, "The item should be on the rack after the drop")
 
 	# Verify purchase
 	assert_lt(GameStateManager.gold, initial_gold, "Gold should decrease after purchase")
@@ -414,9 +332,13 @@ func test_selling_an_item_pays_the_player():
 	game_ui.dragging_shop_data = item_data
 	game_ui.drag_preview = ItemVisual.new()
 	game_ui.add_child(game_ui.drag_preview)
+	# Aimed at the square the item is carried by rather than at its corner: an
+	# item off the shelf hangs from its middle square, and a Stack Smasher is
+	# an L whose middle square is not its corner.
+	var aim := Vector2i(target) + APITypes.middle_square(item_data.turned_shape())
 	game_ui._end_shop_drag(
 		game_ui.inventory_grid.global_position
-		+ game_ui.inventory_grid.grid_to_pixel(Vector2i(target.x, target.y))
+		+ game_ui.inventory_grid.grid_to_pixel(aim)
 		+ Vector2(game_ui.inventory_grid.cell_size / 2, game_ui.inventory_grid.cell_size / 2)
 	)
 	await _wait_for_server()
@@ -471,42 +393,9 @@ func test_battle_button_and_full_battle():
 		# any change to the catalogue, and this loop is about playing the
 		# rounds rather than about buying in every one of them.
 		if shop_item != null and target_grid_pos != Vector2(-1, -1):
-			# Quick purchase simulation
-			var server_room_container = game_ui.server_room_container
-			var cell_size = game_ui.inventory_grid.cell_size
-			var cell_spacing = game_ui.inventory_grid.cell_spacing
-			var grid_global_pos = server_room_container.global_position
-			var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
-
-			var shop_item_center = shop_item.global_position + shop_item.size / 2
-
-			# Start drag
-			var mouse_down = InputEventMouseButton.new()
-			mouse_down.button_index = MOUSE_BUTTON_LEFT
-			mouse_down.pressed = true
-			mouse_down.position = shop_item.size / 2
-			mouse_down.global_position = shop_item_center
-			shop_item.gui_input.emit(mouse_down)
-			await get_tree().process_frame
-
-			# Move to grid
-			var mouse_move = InputEventMouseMotion.new()
-			mouse_move.global_position = drag_end
-			mouse_move.position = drag_end
-			mouse_move.relative = drag_end - shop_item_center
-			mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
-			game_ui._input(mouse_move)
-			await get_tree().process_frame
-
-			# Release
-			var mouse_up = InputEventMouseButton.new()
-			mouse_up.button_index = MOUSE_BUTTON_LEFT
-			mouse_up.pressed = false
-			mouse_up.global_position = drag_end
-			mouse_up.position = drag_end
-			game_ui._input(mouse_up)
-			await _wait_for_server()
-			print("   - Purchase completed")
+			var landed: bool = await _carry_from_the_shelf(
+				game_ui, shop_item, Vector2i(target_grid_pos))
+			assert_true(landed, "An item the rack has room for should land on it")
 		else:
 			print("   - No empty cells for placement")
 	else:
@@ -518,7 +407,10 @@ func test_battle_button_and_full_battle():
 
 	assert_not_null(battle_btn, "Battle button must exist")
 
-	# Click battle button
+	# Click battle button. The rack has to hold something first: the client
+	# refuses a battle with an empty one, and a refusal is silent from here.
+	assert_gt(game_ui.inventory_grid.items.size(), 0,
+		"A battle needs something on the rack")
 	battle_btn.pressed.emit()
 	await _wait_for_server()  # Wait for server battle simulation
 
@@ -584,49 +476,20 @@ func test_complete_round_cycle():
 		# any change to the catalogue, and this loop is about playing the
 		# rounds rather than about buying in every one of them.
 		if shop_item != null and target_grid_pos != Vector2(-1, -1):
-			# Quick purchase simulation
-			var server_room_container = game_ui.server_room_container
-			var cell_size = game_ui.inventory_grid.cell_size
-			var cell_spacing = game_ui.inventory_grid.cell_spacing
-			var grid_global_pos = server_room_container.global_position
-			var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
-
-			var shop_item_center = shop_item.global_position + shop_item.size / 2
-
-			# Start drag
-			var mouse_down = InputEventMouseButton.new()
-			mouse_down.button_index = MOUSE_BUTTON_LEFT
-			mouse_down.pressed = true
-			mouse_down.position = shop_item.size / 2
-			mouse_down.global_position = shop_item_center
-			shop_item.gui_input.emit(mouse_down)
-			await get_tree().process_frame
-
-			# Move to grid
-			var mouse_move = InputEventMouseMotion.new()
-			mouse_move.global_position = drag_end
-			mouse_move.position = drag_end
-			mouse_move.relative = drag_end - shop_item_center
-			mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
-			game_ui._input(mouse_move)
-			await get_tree().process_frame
-
-			# Release
-			var mouse_up = InputEventMouseButton.new()
-			mouse_up.button_index = MOUSE_BUTTON_LEFT
-			mouse_up.pressed = false
-			mouse_up.global_position = drag_end
-			mouse_up.position = drag_end
-			game_ui._input(mouse_up)
-			await _wait_for_server()
-			print("   - Item purchased")
+			var landed: bool = await _carry_from_the_shelf(
+				game_ui, shop_item, Vector2i(target_grid_pos))
+			assert_true(landed, "An item the rack has room for should land on it")
 
 	# Start battle
 	var battle_btn = game_ui.find_child("ReadyButton", true, false)
 
 	if battle_btn:
+		# The rack has to hold something: the client refuses a battle with an
+		# empty one, which is what a silently refused purchase looked like from
+		# here -- twenty seconds of waiting for a screen that was not coming.
+		assert_gt(game_ui.inventory_grid.items.size(), 0,
+			"A battle needs something on the rack")
 		battle_btn.pressed.emit()
-		print("   - Started battle")
 		await _wait_for_scene_change("UnifiedGridUI", 20.0)
 
 		# Handle battle screen
@@ -883,42 +746,16 @@ func test_item_drag_and_move_persistence():
 	print("   - Initial placement at: %s" % initial_pos)
 
 	# Purchase item via drag and drop
-	var server_room_container = game_ui.server_room_container
 	var inventory_grid = game_ui.inventory_grid
-	var cell_size = game_ui.inventory_grid.cell_size
-	var cell_spacing = game_ui.inventory_grid.cell_spacing
-
-	# Simulate shop purchase drag
-	var shop_item_center = shop_item.global_position + shop_item.size / 2
-	var target_pixel_pos = inventory_grid.grid_to_pixel(Vector2i(initial_pos.x, initial_pos.y))
-	var drop_pos = inventory_grid.global_position + target_pixel_pos + Vector2(cell_size/2, cell_size/2)
-
-	# Start drag on shop item
-	var mouse_down = InputEventMouseButton.new()
-	mouse_down.button_index = MOUSE_BUTTON_LEFT
-	mouse_down.pressed = true
-	mouse_down.position = shop_item.size / 2
-	mouse_down.global_position = shop_item_center
-	shop_item.gui_input.emit(mouse_down)
-	await get_tree().process_frame
-
-	# Drag to initial position
-	var mouse_move = InputEventMouseMotion.new()
-	mouse_move.global_position = drop_pos
-	mouse_move.position = drop_pos
-	mouse_move.relative = drop_pos - shop_item_center
-	mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
-	game_ui._input(mouse_move)
-	await get_tree().process_frame
-
-	# Drop item
-	var mouse_up = InputEventMouseButton.new()
-	mouse_up.button_index = MOUSE_BUTTON_LEFT
-	mouse_up.pressed = false
-	mouse_up.global_position = drop_pos
-	mouse_up.position = drop_pos
-	game_ui._input(mouse_up)
-	await _wait_for_server()
+	var cell_size = inventory_grid.cell_size
+	var cell_spacing = inventory_grid.cell_spacing
+	# The move below is a drag on the grid rather than a purchase, so it builds
+	# its own events.
+	var mouse_down: InputEventMouseButton
+	var mouse_move: InputEventMouseMotion
+	var landed: bool = await _carry_from_the_shelf(
+		game_ui, shop_item, Vector2i(initial_pos))
+	assert_true(landed, "The item should be on the rack after the drop")
 
 	# Verify item was placed
 	assert_gt(inventory_grid.items.size(), 0, "Should have item in inventory")
@@ -1037,41 +874,10 @@ func test_multiple_rounds():
 			# any change to the catalogue, and this loop is about playing the
 			# rounds rather than about buying in every one of them.
 			if shop_item != null and target_grid_pos != Vector2(-1, -1):
-				# Quick purchase simulation
-				var server_room_container = game_ui.server_room_container
-				var cell_size = game_ui.inventory_grid.cell_size
-				var cell_spacing = game_ui.inventory_grid.cell_spacing
-				var grid_global_pos = server_room_container.global_position
-				var drag_end = grid_global_pos + target_grid_pos * (cell_size + cell_spacing) + Vector2(cell_size/2, cell_size/2)
-
-				var shop_item_center = shop_item.global_position + shop_item.size / 2
-
-				# Start drag
-				var mouse_down = InputEventMouseButton.new()
-				mouse_down.button_index = MOUSE_BUTTON_LEFT
-				mouse_down.pressed = true
-				mouse_down.position = shop_item.size / 2
-				mouse_down.global_position = shop_item_center
-				shop_item.gui_input.emit(mouse_down)
-				await get_tree().process_frame
-
-				# Move to grid
-				var mouse_move = InputEventMouseMotion.new()
-				mouse_move.global_position = drag_end
-				mouse_move.position = drag_end
-				mouse_move.relative = drag_end - shop_item_center
-				mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
-				game_ui._input(mouse_move)
-				await get_tree().process_frame
-
-				# Release
-				var mouse_up = InputEventMouseButton.new()
-				mouse_up.button_index = MOUSE_BUTTON_LEFT
-				mouse_up.pressed = false
-				mouse_up.global_position = drag_end
-				mouse_up.position = drag_end
-				game_ui._input(mouse_up)
-				await _wait_for_server()
+				var landed: bool = await _carry_from_the_shelf(
+					game_ui, shop_item, Vector2i(target_grid_pos))
+				assert_true(landed,
+					"An item the rack has room for should land on it")
 
 		# Find and click battle button
 		var battle_btn = game_ui.find_child("ReadyButton", true, false)
@@ -1080,6 +886,11 @@ func test_multiple_rounds():
 			assert_not_null(battle_btn, "Battle button should exist for round %d" % current_round)
 			break
 
+		# Round two onwards keeps whatever was bought in round one, so the rack
+		# is only ever empty here if a purchase was refused -- which the client
+		# answers by refusing the battle, silently, from this side.
+		assert_gt(game_ui.inventory_grid.items.size(), 0,
+			"Round %d needs something on the rack to fight with" % current_round)
 		battle_btn.pressed.emit()
 		await _wait_for_scene_change("UnifiedGridUI", 20.0)
 
@@ -1127,13 +938,24 @@ func test_multiple_rounds():
 const DEFAULT_TIMEOUT := 10.0
 
 
-func _wait_until(condition: Callable, timeout: float = DEFAULT_TIMEOUT) -> bool:
-	"""Poll condition each frame. Return true when it holds, false on timeout."""
+func _wait_until(condition: Callable, timeout: float = DEFAULT_TIMEOUT,
+		what: String = "") -> bool:
+	"""Poll condition each frame, and say so if it never holds.
+
+	Every one of these was awaited for its side effect and its answer thrown
+	away, so a wait that ran out said nothing at all: the test walked on and
+	failed at whatever assertion came next, about gold, or a round, or which
+	screen was up. Three different faces on one fault, and none of them named
+	the thing that had not happened.
+	"""
 	var deadline := Time.get_ticks_msec() + int(timeout * 1000)
 	while Time.get_ticks_msec() < deadline:
 		if condition.call():
 			return true
 		await get_tree().process_frame
+	if what != "":
+		assert_true(false,
+			"Timed out after %.0fs waiting for %s" % [timeout, what])
 	return false
 
 
@@ -1143,8 +965,14 @@ func _wait_for_scene(scene_name: String, timeout: float = DEFAULT_TIMEOUT) -> bo
 		func():
 			var scene = get_tree().current_scene
 			return scene != null and scene.name == scene_name,
-		timeout
+		timeout, "the %s screen (%s is up)" % [scene_name, _what_is_up()]
 	)
+
+
+func _what_is_up() -> String:
+	"""Whichever screen is current, for a message about one that is not."""
+	var scene = get_tree().current_scene
+	return "nothing" if scene == null else str(scene.name)
 
 
 func _wait_for_server(timeout: float = DEFAULT_TIMEOUT) -> bool:
@@ -1158,7 +986,7 @@ func _wait_for_server(timeout: float = DEFAULT_TIMEOUT) -> bool:
 		func():
 			var req = BattleServerAPI.http_request
 			return req == null or req.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED,
-		timeout
+		timeout, "the server to answer the request in flight"
 	)
 
 
@@ -1176,7 +1004,8 @@ func _wait_for_shop_ready(timeout: float = DEFAULT_TIMEOUT) -> bool:
 			if scene.inventory_grid == null:
 				return false
 			return scene.inventory_grid.containers.size() > 0 and scene.shop_items.size() > 0,
-		timeout
+		timeout, "the shop to open with its racks and its items (%s is up)"
+			% _what_is_up()
 	)
 
 
@@ -1186,8 +1015,60 @@ func _wait_for_scene_change(from_name: String, timeout: float = DEFAULT_TIMEOUT)
 		func():
 			var scene = get_tree().current_scene
 			return scene != null and scene.name != from_name,
-		timeout
+		timeout, "any screen but %s (it is still up)" % from_name
 	)
+
+
+func _carry_from_the_shelf(game_ui, shop_item, corner: Vector2i) -> bool:
+	"""Buy this shop item off the shelf and put its corner on this square.
+
+	Says whether anything landed. Five copies of this drag were written out
+	along this file and two of them drifted, which is what made three tests
+	fail one screen later about gold and about rounds.
+
+	Aimed at the square the item is carried by rather than at its corner: an
+	item off the shelf hangs from its middle square, and a Stack Smasher is an
+	L whose middle square is not its corner. Aimed at the corner it landed a
+	column short, was refused, and the rack stayed empty -- so the client
+	rightly would not start a battle, and the test waited twenty seconds for a
+	screen that was never coming.
+	"""
+	var item = shop_item.get_meta("item_data")
+	var grid = game_ui.inventory_grid
+	var step: float = grid.cell_size + grid.cell_spacing
+	var aim := Vector2(corner + APITypes.middle_square(item.turned_shape()))
+	var drop: Vector2 = game_ui.server_room_container.global_position \
+		+ aim * step + Vector2(grid.cell_size, grid.cell_size) / 2.0
+	var from: Vector2 = shop_item.global_position + shop_item.size / 2
+	var before: int = grid.items.size()
+
+	var down := InputEventMouseButton.new()
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+	down.position = shop_item.size / 2
+	down.global_position = from
+	shop_item.gui_input.emit(down)
+	await get_tree().process_frame
+
+	var moved := InputEventMouseMotion.new()
+	moved.global_position = drop
+	moved.position = drop
+	moved.relative = drop - from
+	moved.button_mask = MOUSE_BUTTON_MASK_LEFT
+	game_ui._input(moved)
+	await get_tree().process_frame
+
+	var up := InputEventMouseButton.new()
+	up.button_index = MOUSE_BUTTON_LEFT
+	up.pressed = false
+	up.global_position = drop
+	up.position = drop
+	game_ui._input(up)
+	await _wait_for_server()
+
+	# Counted rather than read off the square: an L does not stand on its own
+	# corner, so the square aimed at is not one the item covers.
+	return grid.items.size() > before
 
 
 func _first_non_container_shop_item(game_ui, fitting_at := Vector2i(-1, -1)):

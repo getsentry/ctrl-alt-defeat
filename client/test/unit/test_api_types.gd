@@ -964,3 +964,28 @@ func test_an_empty_shape_is_carried_by_nothing_in_particular():
 	var nothing: Array[Vector2i] = []
 	assert_eq(APITypes.middle_square(nothing), Vector2i.ZERO)
 	assert_eq(APITypes.turn_within(nothing, 90, Vector2i.ZERO), Vector2i.ZERO)
+
+
+func test_an_l_is_carried_by_a_square_it_actually_has():
+	"""Stack Smasher's footprint, out of the catalogue: three squares of a two
+	by two, with the top left corner missing. Its middle is that missing
+	corner, so a shape carried by the middle of its box is carried by nothing
+	-- and a test that aimed a drop at the corner put it a column short of the
+	rack, was refused, and failed a screen later about rounds and about gold."""
+	var l := _at([[1, 0], [0, 1], [1, 1]])
+
+	var held := APITypes.middle_square(l)
+
+	assert_true(l.has(held), "%s is one of its own squares" % held)
+	assert_ne(held, Vector2i.ZERO, "and it is not the corner, which it lacks")
+
+
+func test_the_square_a_shape_is_carried_by_survives_a_turn():
+	"""Carried by a square and then turned, it is still carried by a square."""
+	var l := _at([[1, 0], [0, 1], [1, 1]])
+	for rotation in [90, 180, 270]:
+		var turned := APITypes.turn(l, rotation)
+		var moved := APITypes.turn_within(l, rotation, APITypes.middle_square(l))
+
+		assert_true(turned.has(moved),
+			"Turned %d, the square in hand is still one of the shape's own" % rotation)

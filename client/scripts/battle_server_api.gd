@@ -197,7 +197,15 @@ func _authenticate_guest() -> bool:
 	var url = BASE_URL + "/auth/guest"
 	var headers = ["Content-Type: application/json"]
 
-	http_request.request(url, headers, HTTPClient.METHOD_POST, "")
+	# Whether the request went out at all. One HTTPRequest serves the whole
+	# API, so a call made while another is still in flight is refused here and
+	# never sent -- and the await below would then take the other call's
+	# answer for this one's.
+	var sent := http_request.request(url, headers, HTTPClient.METHOD_POST, "")
+	if sent != OK:
+		push_error("Could not ask for a guest account: error %d" % sent)
+		return false
+
 	var result = await http_request.request_completed
 
 	if result[1] == 200:
@@ -211,7 +219,11 @@ func _authenticate_guest() -> bool:
 			print("Authenticated as guest user: ", data["username"])
 			return true
 
-	push_error("Failed to authenticate as guest")
+	# Saying which code and what came back, because this one is rare and the
+	# message it used to carry -- the bare fact of it -- named nothing that
+	# would help find it again.
+	push_error("Failed to authenticate as guest: code %d, said %s" % [
+		result[1], result[3].get_string_from_utf8().substr(0, 200)])
 	return false
 
 func submit_battle(inventory_state: Dictionary) -> APITypes.BattleResponse:
