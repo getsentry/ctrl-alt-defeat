@@ -621,6 +621,10 @@ var _gold_shown: int = -1
 func _ready():
 	print("UnifiedGridUI starting...")
 
+	# The player wears their own Sentaur here. Choosing it happens on the main
+	# menu -- this screen has no room for another control (GDD 11).
+	_wear_skin()
+
 	# Connect to API signals for typed responses
 	BattleServerAPI.purchase_completed.connect(_on_purchase_completed)
 
@@ -2572,3 +2576,9 @@ func _pop(item_id: String) -> void:
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(visual, "scale", Vector2.ONE, POP_BACK) \
 		.set_trans(Tween.TRANS_QUAD)
+
+
+# ---------------------------------------------------------------- skins
+
+func _wear_skin() -> void:
+	Skins.wear(get_node_or_null("PlayerCharacter"), "shop")

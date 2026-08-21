@@ -75,6 +75,15 @@ var opponent_name_label: Label
 func _ready():
 	print("BattleScreen starting...")
 
+	# Before anything lays the screen out. A fighter is drawn to the shape of
+	# its own picture, read off the texture at the moment it is placed, so a
+	# skin put on afterwards leaves the fighter stretched to the shape of the
+	# one it replaced.
+	#
+	# Player 1 is us. Player 2 keeps the default Sentaur -- an opponent in our
+	# skin reads as a mirror match that is not happening (GDD 11).
+	Skins.wear(get_node_or_null("Player1Container/CharacterDisplay"), "battle")
+
 	# Create event processor
 	event_processor = BattleEventProcessor.new()
 	add_child(event_processor)

@@ -112,7 +112,7 @@ func test_title_displayed():
 func test_the_buttons_are_cut_from_the_keycap_artwork():
 	# The logo is a broken keyboard, so the menu is the keys that still work.
 	for button in [main_menu.new_game_button, main_menu.continue_button,
-			main_menu.quit_button]:
+			main_menu.skin_button, main_menu.quit_button]:
 		var normal = button.get_theme_stylebox("normal")
 		assert_true(normal is StyleBoxTexture,
 			"%s should be drawn from artwork, not a flat slab" % button.name)
@@ -131,10 +131,36 @@ func test_a_button_lights_up_under_the_pointer():
 
 
 func test_the_menu_shows_the_sentaur():
+	# Whichever one the player chose. This used to look for "sentaur" in the
+	# path and broke the day skins arrived, because a skin is a different file
+	# with a different name (GDD 11).
 	var who = main_menu.find_child("PlayerCharacter", true, false)
 	assert_not_null(who, "The menu should show a character")
-	assert_true("sentaur" in who.texture.resource_path,
-		"and it should be the Sentaur, got: %s" % who.texture.resource_path)
+	var theirs: Array = []
+	for skin in Skins.ALL:
+		theirs.append(skin["shop"])
+	assert_has(theirs, who.texture.resource_path,
+		"and it should be one of the Sentaurs, got: %s" % who.texture.resource_path)
+
+
+func test_the_menu_shows_the_chosen_sentaur():
+	# The point of the picker: what you chose is what greets you.
+	var existed := FileAccess.file_exists(Skins.SETTINGS)
+	var kept := FileAccess.get_file_as_string(Skins.SETTINGS) if existed else ""
+
+	Skins.choose("neko")
+	var menu = main_menu_scene.instantiate()
+	add_child_autofree(menu)
+	await get_tree().process_frame
+	var who = menu.find_child("PlayerCharacter", true, false)
+	assert_eq(who.texture.resource_path, Skins.by_id("neko")["shop"])
+
+	if existed:
+		var file := FileAccess.open(Skins.SETTINGS, FileAccess.WRITE)
+		file.store_string(kept)
+		file.close()
+	elif FileAccess.file_exists(Skins.SETTINGS):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(Skins.SETTINGS))
 
 
 func test_the_sentaur_stands_on_a_shadow():
@@ -205,3 +231,24 @@ func test_responsive_layout():
 	assert_true(new_game_btn.visible, "Buttons should remain visible at larger size")
 
 	DisplayServer.window_set_size(original_size)
+
+
+func test_the_menu_offers_to_change_the_sentaur():
+	# The picker lives here rather than in the shop: that screen is full, and
+	# every empty-looking corner of it turned out to have something in it.
+	assert_not_null(main_menu.skin_button, "There should be a key for the skins")
+	assert_false(main_menu.skin_button.disabled)
+	assert_true(
+		main_menu.skin_button.pressed.is_connected(main_menu._open_skin_picker),
+		"and it should open the picker")
+
+
+func test_the_picker_opens_over_the_menu():
+	main_menu.skin_button.pressed.emit()
+	await get_tree().process_frame
+	var opened := false
+	for child in main_menu.get_children():
+		if child is Control and child.get_script() != null \
+				and child.get_script().resource_path.ends_with("skin_picker.gd"):
+			opened = true
+	assert_true(opened, "Pressing the key should put a picker on the screen")

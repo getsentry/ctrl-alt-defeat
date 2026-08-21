@@ -1693,3 +1693,41 @@ gives no order. See BACKLOG.md.
 - Rare "Sentry Logo" item that provides team-wide benefits
 - "Getsentry" mode where all items are Sentry products
 - Special animations for Sentry employee accounts
+
+## 11. Skins
+
+The player chooses which Sentaur they look like. **A skin changes nothing but
+the picture.** It never touches health, stamina, items, auras or any number the
+battle engine reads, and a skin that did would be a bug, not a feature. The
+picker says so on the screen so nobody has to wonder.
+
+The picker is reached from the shop, where the player is already looking at
+their Sentaur and already between decisions.
+
+The choice belongs to the player, not to the run. It survives leaving the game
+and starting a new one, and it is kept on the player's own machine and nowhere
+else - the server is never told. There is nothing here worth a round trip, and
+nothing another player is entitled to see.
+
+**Only the player wears it.** The opponent in a battle is always the default
+Sentaur. Two reasons: an opponent wearing your skin reads as a mirror match
+that is not happening, and telling the two sides apart at a glance matters more
+than dressing both of them.
+
+Every skin appears everywhere the Sentaur does - the main menu, the shop and
+the battle screen - so a player who picks one is never shown somebody else's
+Sentaur in their own game. That means each skin needs both poses, calm and
+fighting, and a skin missing one is not finished.
+
+### The skins
+
+| Name | What it is |
+|------|-----------|
+| CLASSIC | The default. Purple hoodie, beige CRT, green face. |
+| OG | Matte black. The one that shipped first. |
+| NEKO | Black rounded screen with a pink cat face, ears on the hood. |
+| DOT MATRIX | Amber dot-matrix face, hood up over the CRT. |
+| NIGHT SHIFT | Hood low over a dark visor with amber slit eyes. |
+
+There is no currency, no unlocking and no rarity. All of them are simply
+available. If that ever changes, it changes here first.

@@ -3,34 +3,10 @@ extends Control
 const APITypes = preload("res://scripts/api_types.gd")
 const Presentation = preload("res://scripts/presentation.gd")
 
-## The keycap a menu button is cut from, and the one it lights up as. The logo
-## is a broken keyboard, so the menu is the keys that still work.
-const KEYCAP := preload("res://assets/ui/menu_button.png")
-const KEYCAP_LIT := preload("res://assets/ui/menu_button_magenta.png")
-## How much of each end of the keycap is drawn at its own size rather than
-## stretched with the rest of it.
-##
-## None of it, which wants saying. Slicing the ends off is what lets one
-## picture of a key serve buttons of different widths, and these buttons are
-## all one width -- so the only thing it does here is draw the ends at three
-## times the detail of the stretched middle, which reads as two chunky blocks
-## bolted to a thin key. The whole picture is squashed instead, near enough
-## evenly: a menu button is about a third of the artwork either way.
-##
-## Give it 60 or so if the menu ever holds buttons of different widths.
-const KEYCAP_END := 0.0
-## How much of the bottom of a button is the lit lip, as a share of its height.
-## Nothing is sliced off the top or the bottom: a menu button is drawn about a
-## third of the height of the artwork, and slices of the size the lip is drawn
-## at would not fit inside it. So the key is squashed whole, and this only says
-## how far up the lettering has to sit to stay on the face of it.
-const KEYCAP_LIP := 0.3
-## The lettering. The same dark the logo's keycaps are lettered in.
-const KEYCAP_INK := Color("#2d2034")
-
 @onready var new_game_button = $"MenuPanel_ButtonContainer#NewGameButton"
 @onready var continue_button = $"MenuPanel_ButtonContainer#ContinueButton"
 @onready var quit_button = $"MenuPanel_ButtonContainer#QuitButton"
+@onready var skin_button = $"MenuPanel_ButtonContainer#SkinButton"
 @onready var music_player = $BackgroundMusic
 @onready var name_input = $NameInputContainer/NameInput
 
@@ -43,6 +19,10 @@ func _ready():
 	# Load saved player name if it exists
 	_load_saved_name()
 
+	# Only the player's own Sentaur wears the skin. RobotCharacter is the
+	# opponent and always stays the default one (GDD 11).
+	_wear_skin()
+
 	# Start playing background music
 	if music_player and not music_player.playing:
 		music_player.play()
@@ -51,27 +31,13 @@ func _setup_ui():
 	# Every button is the same keycap, lit magenta under the pointer. The
 	# magenta key is the other half of the logo, so it reads as the same
 	# keyboard rather than as a second style.
-	for button in [new_game_button, continue_button, quit_button]:
-		var tall: float = max(button.custom_minimum_size.y, button.size.y)
-		button.add_theme_stylebox_override("normal", _keycap(KEYCAP, tall))
-		button.add_theme_stylebox_override("hover", _keycap(KEYCAP_LIT, tall))
-		button.add_theme_stylebox_override(
-			"pressed", _keycap(KEYCAP_LIT, tall, Color(0.82, 0.82, 0.82)))
-		button.add_theme_stylebox_override(
-			"focus", _keycap(KEYCAP_LIT, tall))
-		button.add_theme_stylebox_override(
-			"disabled", _keycap(KEYCAP, tall, Color(0.62, 0.6, 0.66)))
-
-		button.add_theme_font_size_override("font_size", 30)
-		button.add_theme_color_override("font_color", KEYCAP_INK)
-		button.add_theme_color_override("font_hover_color", KEYCAP_INK)
-		button.add_theme_color_override("font_pressed_color", KEYCAP_INK)
-		button.add_theme_color_override("font_focus_color", KEYCAP_INK)
-		button.add_theme_color_override("font_disabled_color", Color(0.35, 0.3, 0.38, 0.7))
+	for button in [new_game_button, continue_button, skin_button, quit_button]:
+		Keycap.dress(button)
 
 	_dress_name_field()
 
 	new_game_button.pressed.connect(_on_start_game)
+	skin_button.pressed.connect(_open_skin_picker)
 	quit_button.pressed.connect(_on_exit)
 
 
@@ -99,29 +65,6 @@ func _dress_name_field() -> void:
 	name_input.add_theme_color_override(
 		"font_placeholder_color", Color(0.94, 0.89, 0.8, 0.45))
 	name_input.add_theme_color_override("caret_color", Color(1.0, 0.45, 0.85))
-
-
-func _keycap(art: Texture2D, tall: float, tint := Color.WHITE) -> StyleBoxTexture:
-	"""One menu button, cut from the keycap artwork.
-
-	Only the ends are kept at their own size. Everything between them stretches
-	to whatever width the button is, which is what lets one picture of a key
-	serve buttons with different words on them.
-	"""
-	var cap := StyleBoxTexture.new()
-	cap.texture = art
-	cap.texture_margin_left = KEYCAP_END
-	cap.texture_margin_right = KEYCAP_END
-	cap.modulate_color = tint
-
-	# The lettering sits on the face of the key rather than in the middle of
-	# the picture, because the bottom of the picture is the lip the key glows
-	# through and a word across that is a word nobody can read.
-	cap.content_margin_left = 24.0
-	cap.content_margin_right = 24.0
-	cap.content_margin_top = 0.0
-	cap.content_margin_bottom = tall * KEYCAP_LIP
-	return cap
 
 
 func _on_start_game():
@@ -192,7 +135,10 @@ func _show_error_message(message: String):
 
 func _save_player_name(player_name: String):
 	"""Save player name to user settings (works in browser localStorage too)"""
+	# Load before setting: the skin lives in this same file, and saving a
+	# fresh ConfigFile would take it with the old name.
 	var config = ConfigFile.new()
+	config.load("user://player_settings.cfg")
 	config.set_value("player", "name", player_name)
 	var save_result = config.save("user://player_settings.cfg")
 	if save_result == OK:
@@ -212,3 +158,22 @@ func _load_saved_name():
 			print("Loaded saved player name: ", saved_name)
 	else:
 		print("No saved player name found")
+
+
+# ---------------------------------------------------------------- skins
+
+func _wear_skin() -> void:
+	Skins.wear(get_node_or_null("PlayerCharacter"), "shop")
+
+
+func _open_skin_picker() -> void:
+	"""The picker belongs here rather than in the shop.
+
+	The shop screen is full -- a rack, a store, a sell bay, a stats plate and
+	the character -- and every empty-looking corner of it turned out to have
+	something in it. Here there is already a column of keys, and choosing who
+	you are sits naturally beside starting a game as them.
+	"""
+	var picker: Control = (load("res://scripts/skin_picker.gd") as GDScript).new()
+	picker.picked.connect(func(_id: String) -> void: _wear_skin())
+	add_child(picker)

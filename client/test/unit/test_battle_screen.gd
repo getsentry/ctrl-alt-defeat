@@ -640,3 +640,72 @@ func test_fading_music_that_is_not_playing_is_harmless():
 	battle_screen._fade_out_music()
 	await get_tree().process_frame
 	assert_false(music.playing, "nothing to fade, and nothing broken by asking")
+
+
+# ------------------------------------------------------------------ skins
+#
+# The player's Sentaur wears their chosen skin here, and only theirs (GDD 11).
+# These pin the choice down rather than trusting whatever this machine happens
+# to have saved: the ordering bug below shipped once and was only caught
+# because the settings file on hand held a skin of a different shape.
+
+const SETTINGS := "user://player_settings.cfg"
+
+var _kept := ""
+var _existed := false
+
+
+func _keep_settings() -> void:
+	_existed = FileAccess.file_exists(SETTINGS)
+	if _existed:
+		_kept = FileAccess.get_file_as_string(SETTINGS)
+
+
+func _put_settings_back() -> void:
+	if _existed:
+		var file := FileAccess.open(SETTINGS, FileAccess.WRITE)
+		file.store_string(_kept)
+		file.close()
+	elif FileAccess.file_exists(SETTINGS):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS))
+	_kept = ""
+
+
+func _screen_wearing(id: String) -> Node:
+	"""A fresh battle screen, built with `id` already chosen."""
+	Skins.choose(id)
+	var screen = battle_scene.instantiate()
+	add_child_autofree(screen)
+	await get_tree().process_frame
+	return screen
+
+
+func test_the_player_wears_the_chosen_skin() -> void:
+	_keep_settings()
+	var screen = await _screen_wearing("neko")
+	var player: TextureRect = screen.get_node("Player1Container/CharacterDisplay")
+	assert_eq(player.texture.resource_path, Skins.by_id("neko")["battle"])
+	_put_settings_back()
+
+
+func test_the_opponent_does_not() -> void:
+	# An opponent in our own skin reads as a mirror match that is not happening.
+	_keep_settings()
+	var screen = await _screen_wearing("neko")
+	var enemy: TextureRect = screen.get_node("Player2Container/CharacterDisplay")
+	assert_eq(enemy.texture.resource_path, Skins.by_id("classic")["battle"])
+	_put_settings_back()
+
+
+func test_a_skinned_fighter_keeps_its_own_shape() -> void:
+	# The skin has to be on before anything lays the screen out. A fighter is
+	# drawn to the shape of its picture, read at the moment it is placed, so a
+	# skin put on afterwards leaves it stretched to the shape of the one it
+	# replaced. That is exactly what happened.
+	_keep_settings()
+	var screen = await _screen_wearing("nightshift")
+	var player: TextureRect = screen.get_node("Player1Container/CharacterDisplay")
+	var art: Vector2 = player.texture.get_size()
+	assert_almost_eq(player.size.y / player.size.x, art.y / art.x, 0.01,
+		"a skinned fighter should keep the shape of its own artwork")
+	_put_settings_back()
