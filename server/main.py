@@ -24,7 +24,7 @@ import auth_endpoints
 from auth import TokenData, get_current_user
 from battle_engine import ITEM_CATALOG, BattleItem, BattleSimulator
 from config_loader import config_loader
-from containers import Container, starting_containers
+from containers import Container, PlacementValidator, starting_containers
 
 # Import session management and schemas
 from database import db_manager
@@ -1201,13 +1201,21 @@ async def purchase_item(
             item.item_type, request.target_position, container_id=item.id
         )
 
-        # Check if the container overlaps any the player already owns
-        new_squares = set(new_container.covered_squares())
+        # Ask the validator the battle engine uses, rather than checking here.
+        # This used to test for overlap and nothing else, so a container bought
+        # hanging off the edge was sold happily and then refused by the engine
+        # at every battle after -- as a ValueError, which is not an
+        # HTTPException, so it left the session with a 500 it could not be
+        # talked out of. A second opinion about what fits is what allowed the
+        # two to disagree, so there is only the one now.
+        board = PlacementValidator()
         for existing in session.server_containers:
-            if new_squares & set(existing.covered_squares()):
-                raise HTTPException(
-                    status_code=400, detail="Container overlaps with existing container"
-                )
+            board.add_container(existing)
+        if not board.add_container(new_container):
+            raise HTTPException(
+                status_code=400,
+                detail="A container has to sit on the grid, clear of the others",
+            )
 
         # Add the container
         session.server_containers.append(new_container)

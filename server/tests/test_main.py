@@ -483,6 +483,131 @@ class TestContainerPurchase:
         )
 
 
+class TestAContainerHasToSitOnTheGrid:
+    """A container bought hanging off the edge used to kill the run.
+
+    The purchase checked for overlap and nothing else, while the battle engine
+    asked PlacementValidator, which bounds-checks. So the shop sold a
+    placement the engine then refused, once per battle, as a ValueError -- and
+    a ValueError is not an HTTPException, so it left as a 500. There is no
+    endpoint that removes a container, so the session could not be recovered
+    and the player was never told why.
+    """
+
+    @staticmethod
+    def _seed_offering_a_wide_container():
+        """A seed whose round one shop holds a container more than one square
+        wide. Searched rather than written down, for the reason above."""
+        from main import generate_shop_items
+
+        for seed in range(500):
+            for offer in generate_shop_items(1, seed):
+                if not offer or not offer.is_container:
+                    continue
+                width = max(x for x, _ in offer.shape) + 1
+                if width > 1:
+                    return seed, offer.item_type, width
+        raise AssertionError("No seed in 500 offers a container wider than one")
+
+    def _shop_with_a_wide_container(self, auth_client):
+        seed, container_type, width = self._seed_offering_a_wide_container()
+        response = auth_client.post("/session/start", json={"seed": seed})
+        assert response.status_code == 200
+        self.shop = response.json()["session"]["current_shop"]
+        container = next(
+            item
+            for item in self.shop
+            if item and item["is_container"] and item["item_type"] == container_type
+        )
+        return container, width
+
+    def _buy_something_to_fight_with(self, auth_client):
+        """A battle needs an item, and a starting container is two squares by
+        two, so it has to be an item that fits in one."""
+        small = next(
+            (
+                item
+                for item in self.shop
+                if item
+                and not item["is_container"]
+                and max(x for x, _ in item["shape"]) < 2
+                and max(y for _, y in item["shape"]) < 2
+            ),
+            None,
+        )
+        assert small is not None, "setup: this seed offers nothing that fits"
+        response = auth_client.post(
+            "/purchase/item",
+            json={"item_id": small["id"], "target_position": [2, 3]},
+        )
+        assert response.status_code == 200, response.text
+
+    def test_a_container_that_runs_off_the_edge_is_refused(self, auth_client):
+        from containers import GRID_SIZE
+
+        container, width = self._shop_with_a_wide_container(auth_client)
+        # One square in from the right edge, so a container two or more wide
+        # has its far end past it.
+        hanging_off = [GRID_SIZE[0] - 1, 0]
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={"item_id": container["id"], "target_position": hanging_off},
+        )
+
+        assert response.status_code == 400, (
+            f"A {width}-wide container at x={hanging_off[0]} on a "
+            f"{GRID_SIZE[0]}-wide grid has nowhere to put its far end"
+        )
+
+    def test_a_refused_container_leaves_the_session_able_to_fight(self, auth_client):
+        """The reason it matters. The 400 is the polite half; this is the half
+        the player would have noticed."""
+        from containers import GRID_SIZE
+
+        container, _ = self._shop_with_a_wide_container(auth_client)
+        self._buy_something_to_fight_with(auth_client)
+        auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": container["id"],
+                "target_position": [GRID_SIZE[0] - 1, 0],
+            },
+        )
+
+        session = auth_client.get("/session").json()
+        assert not [
+            c for c in session["server_containers"] if c["id"] == container["id"]
+        ], "A refused container must not be kept"
+
+        battle = auth_client.post("/battle/simulate", json={})
+        assert (
+            battle.status_code == 200
+        ), f"The run should still be playable: {battle.text}"
+
+    def test_the_same_container_still_fits_where_there_is_room(self, auth_client):
+        """The check has to refuse the placement, not the container."""
+        container, _ = self._shop_with_a_wide_container(auth_client)
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={"item_id": container["id"], "target_position": [0, 0]},
+        )
+
+        assert response.status_code == 200, response.text
+
+    def test_a_container_on_top_of_another_is_still_refused(self, auth_client):
+        """The check this replaced. A starting container stands at (2, 3)."""
+        container, _ = self._shop_with_a_wide_container(auth_client)
+
+        response = auth_client.post(
+            "/purchase/item",
+            json={"item_id": container["id"], "target_position": [2, 3]},
+        )
+
+        assert response.status_code == 400
+
+
 class TestOnePlayerCannotActAsAnother:
     def _player(self, name):
         from fastapi.testclient import TestClient
