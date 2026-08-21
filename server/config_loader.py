@@ -626,9 +626,21 @@ class ConfigLoader:
                 raise ValueError(f"{item_id}: cpu_drain needs a `target`")
             return CpuDrainEffect(amount=config["value"], target_type=config["target"])
         elif effect_type == "stat_mod":
-            return StatModEffect(
-                stat_name=config.get("stat", "max_cpu"), value=config.get("value", 1)
-            )
+            for needed in ("stat", "value"):
+                if needed not in config:
+                    raise ValueError(f"{item_id}: a stat_mod needs a `{needed}`")
+            # Two, and only two. "Gain 20 maximum health" was written as one of
+            # these by three items, and the engine answers for neither of the
+            # words it used -- so all three said it and none of them did it.
+            # `max_health` is an effect of its own, because gaining a ceiling
+            # gives you the health with it.
+            if config["stat"] not in ("max_cpu", "cpu_regen"):
+                raise ValueError(
+                    f"{item_id}: a stat_mod changes `max_cpu` or `cpu_regen`, "
+                    f"not `{config['stat']}`. Maximum health is its own "
+                    f"effect: `max_health`."
+                )
+            return StatModEffect(stat_name=config["stat"], value=config["value"])
         elif effect_type == "buff":
             name = config.get("buff_name") or config.get("stat")
             if name in MODIFIERS:

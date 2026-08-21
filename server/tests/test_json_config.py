@@ -30,6 +30,7 @@ from item_effects import (
     OnAttackedTrigger,
     OnHitTrigger,
     PreventDamageEffect,
+    StatModEffect,
     TimerTrigger,
 )
 from main import generate_shop_items
@@ -1445,3 +1446,47 @@ class TestAClassIsWhatTheWikiSaysItIs:
             "neutral",
             "sentaur",
         }
+
+
+class TestAStatModChangesSomethingTheEngineKnows:
+    """A stat_mod that names a stat nothing answers for loads and then does
+    nothing at all.
+
+    "Start of battle: Gain 20 maximum health" was written as one by three
+    items -- Amulet of Life, Blood Amulet, Gingerbread Jerry -- and the engine
+    answers for `max_cpu` and `cpu_regen`. All three said it and none of them
+    did it, for as long as the catalogue has had them.
+    """
+
+    def _stat_mod(self, **extra):
+        return ConfigLoader()._parse_effect(
+            {"type": "stat_mod", "stat": "max_cpu", "value": 1, **extra}, "some_item"
+        )
+
+    def test_the_two_it_knows_load(self):
+        for stat in ("max_cpu", "cpu_regen"):
+            assert self._stat_mod(stat=stat).stat_name == stat
+
+    def test_maximum_health_is_refused_and_named(self):
+        with pytest.raises(ValueError, match="Maximum health is its own"):
+            self._stat_mod(stat="max_health")
+
+    def test_a_stat_nobody_answers_for_is_refused(self):
+        with pytest.raises(ValueError, match="not `wingspan`"):
+            self._stat_mod(stat="wingspan")
+
+    def test_it_states_its_own_values(self):
+        for missing in ("stat", "value"):
+            config = {"type": "stat_mod", "stat": "max_cpu", "value": 1}
+            del config[missing]
+            with pytest.raises(ValueError, match=f"needs a `{missing}`"):
+                ConfigLoader()._parse_effect(config, "some_item")
+
+    def test_no_item_in_the_catalogue_asks_for_one_that_does_nothing(self):
+        loader = ConfigLoader()
+        loader.load_all()
+        for key, spec in loader.items.items():
+            for trigger in spec.triggers or []:
+                for effect in getattr(trigger, "effects", []) or []:
+                    if isinstance(effect, StatModEffect):
+                        assert effect.stat_name in ("max_cpu", "cpu_regen"), key
