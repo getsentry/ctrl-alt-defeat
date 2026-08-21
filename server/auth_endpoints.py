@@ -18,7 +18,7 @@ from database import db_manager
 from fastapi import APIRouter, Depends, HTTPException, status
 from models import User
 from name_generator import name_error, name_with_suffix, random_name
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from utils import utc_now
@@ -51,6 +51,19 @@ class ChangeNameRequest(BaseModel):
     """Change the name on the signed-in account"""
 
     name: str
+
+
+class NameAvailability(BaseModel):
+    """Whether a name can be claimed, and why not when it cannot."""
+
+    available: bool
+    detail: Optional[str] = Field(
+        default=None,
+        description=(
+            "Why the name cannot be used, written for the player to read as "
+            "it is. Null when it can."
+        ),
+    )
 
 
 class GuestLoginResponse(BaseModel):
@@ -152,7 +165,7 @@ async def register(request: RegisterRequest):
         # Check if username already exists
         if await name_is_taken(db, request.username):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="That name is taken.",
             )
 
@@ -179,7 +192,16 @@ async def register(request: RegisterRequest):
         )
 
         db.add(user)
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            # Somebody claimed the name between the check above and this write.
+            # The check is a courtesy; the index is what decides.
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="That name is taken.",
+            )
         await db.refresh(user)
 
         return Token(access_token=_token_for(user))
@@ -293,6 +315,36 @@ async def change_name(
         return {"username": user.username, "access_token": _token_for(user)}
 
 
+@router.get("/name/available", response_model=NameAvailability)
+async def name_available(
+    name: str, current_user: TokenData = Depends(get_current_user)
+) -> NameAvailability:
+    """Whether `name` can be claimed, for a field that checks while it is typed.
+
+    The rules are checked first, so a name that is too short is answered
+    without asking the database. `detail` is written for the player to read as
+    it is, the same as everywhere else here.
+
+    It is answered for a signed-in account so that the caller's own name does
+    not come back taken -- a player renaming themselves to what they are
+    already called should not be told no.
+
+    This is not a reservation. The name can be gone by the time it is
+    submitted, which is why the endpoints that claim one answer 409 and catch
+    the race at the index.
+    """
+    name = name.strip()
+    problem = name_error(name)
+    if problem:
+        return NameAvailability(available=False, detail=problem)
+
+    async with db_manager.get_session() as db:
+        if await name_is_taken(db, name, except_user_id=current_user.user_id):
+            return NameAvailability(available=False, detail="That name is taken.")
+
+    return NameAvailability(available=True)
+
+
 @router.post("/upgrade-guest")
 async def upgrade_guest_account(
     request: RegisterRequest, current_user: TokenData = Depends(get_current_user)
@@ -323,7 +375,7 @@ async def upgrade_guest_account(
         # Check if new username is available
         if await name_is_taken(db, request.username, except_user_id=user.id):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="That name is taken.",
             )
 
@@ -333,7 +385,15 @@ async def upgrade_guest_account(
         user.password_hash = get_password_hash(request.password)
         user.account_type = "registered"
 
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            # Somebody claimed the name between the check above and this write.
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="That name is taken.",
+            )
         await db.refresh(user)
 
         return Token(access_token=_token_for(user))

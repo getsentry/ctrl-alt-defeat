@@ -171,7 +171,10 @@ class TestLogin:
                 json={"username": wanted.lower(), "password": "secret"},
                 headers=second,
             )
-            assert response.status_code == 400
+            # 409, the same as /auth/name gives. A taken name is a conflict
+            # wherever it is met; this endpoint used to be the odd one out.
+            assert response.status_code == 409, response.text
+            assert response.json()["detail"] == "That name is taken."
 
 
 class TestPasswords:
@@ -224,3 +227,84 @@ class TestPasswords:
                 headers=headers,
             )
             assert response.status_code == 400
+
+
+class TestCheckingAName:
+    """`GET /auth/name/available`, for a field that checks while it is typed."""
+
+    def test_a_free_name_is_free(self):
+        with TestClient(app) as client:
+            headers, _ = as_guest(client)
+            answer = client.get(
+                "/auth/name/available", params={"name": fresh_name()}, headers=headers
+            )
+            assert answer.status_code == 200, answer.text
+            assert answer.json() == {"available": True, "detail": None}
+
+    def test_a_taken_name_is_not(self):
+        with TestClient(app) as client:
+            taken = fresh_name("Taken")
+            first, _ = as_guest(client)
+            client.post("/auth/name", json={"name": taken}, headers=first)
+
+            second, _ = as_guest(client)
+            answer = client.get(
+                "/auth/name/available", params={"name": taken}, headers=second
+            ).json()
+
+            assert answer["available"] is False
+            assert answer["detail"] == "That name is taken."
+
+    def test_letter_case_does_not_free_a_name(self):
+        with TestClient(app) as client:
+            taken = fresh_name("Case")
+            first, _ = as_guest(client)
+            client.post("/auth/name", json={"name": taken}, headers=first)
+
+            second, _ = as_guest(client)
+            answer = client.get(
+                "/auth/name/available", params={"name": taken.lower()}, headers=second
+            ).json()
+
+            assert answer["available"] is False
+
+    def test_your_own_name_is_not_taken_from_you(self):
+        """Renaming yourself to what you are already called is not a conflict."""
+        with TestClient(app) as client:
+            headers, mine = as_guest(client)
+
+            answer = client.get(
+                "/auth/name/available", params={"name": mine}, headers=headers
+            ).json()
+
+            assert answer["available"] is True
+
+    def test_a_name_that_breaks_the_rules_says_which_rule(self):
+        with TestClient(app) as client:
+            headers, _ = as_guest(client)
+
+            answer = client.get(
+                "/auth/name/available",
+                params={"name": "no spaces here"},
+                headers=headers,
+            ).json()
+
+            assert answer["available"] is False
+            assert answer["detail"] == name_error("no spaces here")
+
+    def test_the_rules_are_checked_before_the_database(self):
+        """Too short is answered without asking whether anyone holds it."""
+        with TestClient(app) as client:
+            headers, _ = as_guest(client)
+
+            answer = client.get(
+                "/auth/name/available", params={"name": "ab"}, headers=headers
+            ).json()
+
+            assert answer["available"] is False
+            assert answer["detail"] != "That name is taken."
+
+    def test_it_needs_an_account_to_ask_from(self):
+        with TestClient(app) as client:
+            answer = client.get("/auth/name/available", params={"name": "Whoever"})
+            assert answer.status_code == 403
