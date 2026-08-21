@@ -214,6 +214,14 @@ class Item extends Resource:
 	var block_amount: int = 0
 	var cooldown: float = 0.0
 	var cpu_cost: float = 0.0
+	## How often the attack behind the damage lands. 1.0 for an item that does
+	## not attack, since there was no attack to read it off.
+	var accuracy: float = 1.0
+	## What the item deals and what it eats in a second of battle, worked out
+	## by the server. Not worked out here: a rate needs how often the attack
+	## lands, and nothing else on the card says that.
+	var damage_per_second: float = 0.0
+	var cpu_per_second: float = 0.0
 	## What the item does, a line per trigger, worked out by the server from
 	## the item's own effects. The client shows them and knows nothing about
 	## what any of it means.
@@ -247,6 +255,9 @@ class Item extends Resource:
 		block_amount = int(data["block_amount"])
 		cooldown = float(data["cooldown"])
 		cpu_cost = float(data["cpu_cost"])
+		accuracy = float(data["accuracy"])
+		damage_per_second = float(data["damage_per_second"])
+		cpu_per_second = float(data["cpu_per_second"])
 		effects = []
 		for line in data["effects"]:
 			effects.append(str(line))
@@ -281,6 +292,9 @@ class Item extends Resource:
 			"block_amount": block_amount,
 			"cooldown": cooldown,
 			"cpu_cost": cpu_cost,
+			"accuracy": accuracy,
+			"damage_per_second": damage_per_second,
+			"cpu_per_second": cpu_per_second,
 		}
 
 	# The offsets this item covers. An item that is not on the grid is not

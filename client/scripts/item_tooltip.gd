@@ -14,6 +14,7 @@ class_name ItemTooltip
 @onready var damage_label = $MarginContainer/VBoxContainer/Stats/DamageRow/DamageLabel
 @onready var heal_label = $MarginContainer/VBoxContainer/Stats/HealRow/HealLabel
 @onready var block_label = $MarginContainer/VBoxContainer/Stats/BlockRow/BlockLabel
+@onready var accuracy_label = $MarginContainer/VBoxContainer/Stats/AccuracyRow/AccuracyLabel
 @onready var cooldown_label = $MarginContainer/VBoxContainer/Stats/CooldownRow/CooldownLabel
 @onready var cpu_label = $MarginContainer/VBoxContainer/Stats/CpuRow/CpuLabel
 @onready var price_label = $MarginContainer/VBoxContainer/Stats/PriceRow/PriceLabel
@@ -65,6 +66,23 @@ func _set_row(value_label: Label, text: String, shown: bool) -> void:
 		value_label.text = text
 
 
+func _a_second(value: String, rate: float) -> String:
+	"""A number with what it comes to in a second beside it: "3-8 (3.1/s)".
+
+	Beside the number rather than on a row of its own, because it is the same
+	number said another way and a row apart from it reads as another stat. It
+	is what a player compares two weapons by: damage alone says nothing until
+	the cooldown is held in the head with it.
+
+	The rate is the server's. The card is not told how often an attack lands,
+	and a rate worked out from the numbers on it overstates every weapon that
+	can miss -- 3-8 every 1.5s looks like 3.7 a second and is 3.1.
+	"""
+	if rate <= 0.0:
+		return value
+	return "%s (%s/s)" % [value, _tidy(rate)]
+
+
 func _setup_tooltip_internal(item_data: APITypes.Item):
 	"""Internal function to actually set up the tooltip"""
 	var rarity = item_data.rarity
@@ -74,7 +92,9 @@ func _setup_tooltip_internal(item_data: APITypes.Item):
 	name_label.add_theme_color_override("font_color", accent)
 	_wear_rarity(accent)
 
-	_set_row(damage_label, _range(item_data.min_damage, item_data.max_damage),
+	_set_row(damage_label, _a_second(
+			_range(item_data.min_damage, item_data.max_damage),
+			item_data.damage_per_second),
 		item_data.min_damage > 0 or item_data.max_damage > 0)
 	_set_row(heal_label, _range(item_data.min_heal, item_data.max_heal) + " HP",
 		item_data.min_heal > 0 or item_data.max_heal > 0)
@@ -83,8 +103,14 @@ func _setup_tooltip_internal(item_data: APITypes.Item):
 	# A cooldown on an item that does nothing is not a stat the player can use,
 	# so it only shows next to the thing it paces.
 	var acts: bool = damage_label.visible or heal_label.visible or block_label.visible
+	# Only where it can miss. "Accuracy 100%" on every other weapon is a row
+	# that says nothing, and it would say it on the ones that never attack at
+	# all -- their accuracy is 1 because no attack was there to set it.
+	_set_row(accuracy_label, "%d%%" % roundi(item_data.accuracy * 100),
+		damage_label.visible and item_data.accuracy < 1.0)
 	_set_row(cooldown_label, "%.1fs" % item_data.cooldown, acts and item_data.cooldown > 0)
-	_set_row(cpu_label, _tidy(item_data.cpu_cost), item_data.cpu_cost > 0)
+	_set_row(cpu_label, _a_second(_tidy(item_data.cpu_cost),
+		item_data.cpu_per_second), item_data.cpu_cost > 0)
 	_set_row(price_label, _asking_price(item_data), show_price)
 
 	# Everything the item does, a line at a time, as the server worked it out

@@ -191,6 +191,61 @@ class TestTheLookIsCheckedOnTheWayOut:
             assert self._rebuilt(pattern=name).pattern == name
 
 
+class TestWhatAnItemIsWorthASecond:
+    """Two numbers a player reads a weapon by, and neither can be worked out
+    from what the client is told: the rate depends on how often the attack
+    lands, and nothing else on the card says that.
+    """
+
+    @staticmethod
+    def _named(name: str) -> str:
+        return next(
+            slug for slug, spec in config_loader.items.items() if spec.name == name
+        )
+
+    def test_the_rate_counts_the_misses(self):
+        """Buffer Overflow: 3-8 every 1.5s, landing 85% of the time. The
+        average roll is 5.5, so 5.5 x 0.85 / 1.5."""
+        item = Item.of(self._named("Buffer Overflow"), "x")
+
+        assert item.accuracy == 0.85
+        assert item.damage_per_second == 3.1, (
+            "A rate that ignored the misses would say 3.7"
+        )
+
+    def test_the_cpu_rate_is_the_cost_spread_over_the_cooldown(self):
+        item = Item.of(self._named("Buffer Overflow"), "x")
+
+        assert item.cpu_per_second == round(item.cpu_cost / item.cooldown, 1), (
+            "One decimal, the same as every other number on the card"
+        )
+
+    def test_an_item_that_deals_nothing_has_no_rate(self):
+        """A row of zeroes on a card is a row a player has to read to find out
+        it says nothing."""
+        item = Item.of(self._named("API Token"), "x")
+
+        assert item.damage_per_second == 0.0
+        assert item.cpu_per_second == 0.0
+
+    def test_nothing_in_the_catalogue_divides_by_a_cooldown_of_nothing(self):
+        for slug in config_loader.items:
+            item = Item.of(slug, "x")
+            assert item.damage_per_second >= 0.0, slug
+            assert item.cpu_per_second >= 0.0, slug
+
+    def test_every_weapon_that_deals_damage_says_what_that_is_a_second(self):
+        rated = [
+            slug
+            for slug in config_loader.items
+            if Item.of(slug, "x").damage_per_second > 0
+        ]
+        assert len(rated) > 20, (
+            f"only {len(rated)} items have a damage rate, which is too few to "
+            f"be right"
+        )
+
+
 class TestWhatAnAuraActsOn:
     """GDD 4.4: a zone reaches everything standing in it, or only the items
     carrying a tag. The client is sent both, so it can show a player which

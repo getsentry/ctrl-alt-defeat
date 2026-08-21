@@ -34,7 +34,9 @@ func _plain_item(overrides: Dictionary = {}) -> Resource:
 	# An item that does nothing, so the effect rows have nothing to show.
 	var data = {
 		"min_damage": 0, "max_damage": 0, "min_heal": 0, "max_heal": 0,
-		"block_amount": 0, "effects": []
+		"block_amount": 0, "accuracy": 1.0,
+		"damage_per_second": 0.0,
+		"cpu_per_second": 0.0, "effects": []
 	}
 	data.merge(overrides, true)
 	return _item(data)
@@ -108,7 +110,78 @@ func test_cooldown_and_cpu_get_rows_of_their_own():
 	assert_true(tooltip.cooldown_label.visible, "Cooldown should be shown")
 	assert_true("1.5" in tooltip.cooldown_label.text, "Should show the cooldown")
 	assert_true(tooltip.cpu_label.visible, "CPU cost should be shown")
-	assert_eq(tooltip.cpu_label.text, "3", "Should show the CPU cost")
+	assert_true(tooltip.cpu_label.text.begins_with("3"),
+		"Should show the CPU cost, reads %s" % tooltip.cpu_label.text)
+
+
+func test_what_the_item_is_worth_a_second_stands_beside_the_number():
+	"""Damage and a cooldown are two numbers a player has to hold in their
+	head to compare two weapons. The rate is that comparison, said beside the
+	number rather than on a row of its own -- it is the same number another
+	way, and a row apart from it reads as another stat."""
+	tooltip.setup_tooltip(_item({
+		"min_damage": 3, "max_damage": 8, "cooldown": 1.5, "cpu_cost": 1,
+		"damage_per_second": 3.1, "cpu_per_second": 0.7,
+	}))
+
+	assert_eq(tooltip.damage_label.text, "3-8 (3.1/s)")
+	assert_eq(tooltip.cpu_label.text, "1 (0.7/s)")
+
+
+func test_an_item_that_deals_nothing_says_nothing_a_second():
+	"""(0.0/s) beside a number is a thing to read that says nothing."""
+	tooltip.setup_tooltip(_item({
+		"min_damage": 2, "max_damage": 4, "cooldown": 0.0, "cpu_cost": 2,
+		"damage_per_second": 0.0, "cpu_per_second": 0.0,
+	}))
+
+	assert_eq(tooltip.damage_label.text, "2-4", "no rate, nothing in brackets")
+	assert_eq(tooltip.cpu_label.text, "2")
+
+
+func test_a_weapon_that_can_miss_says_how_often_it_lands():
+	"""Ping of Death lands seven swings in ten, and nothing on the card said
+	so -- while the damage rate it is worked into did."""
+	tooltip.setup_tooltip(_item({
+		"min_damage": 2, "max_damage": 4, "cooldown": 2.5, "accuracy": 0.7,
+		"damage_per_second": 0.8,
+	}))
+
+	assert_true(tooltip.accuracy_label.visible, "It can miss, so it says so")
+	assert_eq(tooltip.accuracy_label.text, "70%")
+
+
+func test_a_weapon_that_never_misses_says_nothing_about_it():
+	""""Accuracy 100%" is a row to read that says nothing."""
+	tooltip.setup_tooltip(_item({
+		"min_damage": 2, "max_damage": 4, "cooldown": 2.0, "accuracy": 1.0,
+	}))
+
+	assert_false(tooltip.accuracy_label.visible)
+
+
+func test_an_item_that_does_not_attack_says_nothing_about_accuracy():
+	"""Its accuracy is 1 because no attack was there to read it off, and a row
+	saying so would be about an attack the item does not have."""
+	tooltip.setup_tooltip(_plain_item({"cooldown": 3.0, "accuracy": 1.0}))
+
+	assert_false(tooltip.accuracy_label.visible)
+
+
+func test_the_rate_is_the_one_the_server_worked_out():
+	"""Not worked out here. The client is not told how often an attack lands,
+	and a rate that ignores the misses overstates every weapon that can miss.
+	"""
+	tooltip.setup_tooltip(_item({
+		"min_damage": 3, "max_damage": 8, "cooldown": 1.5,
+		"damage_per_second": 3.1, "cpu_per_second": 0.0,
+	}))
+
+	var from_the_card := (3 + 8) / 2.0 / 1.5
+	assert_false(tooltip.damage_label.text.contains("%.1f" % from_the_card),
+		"3.7 is what the numbers on the card come to; 3.1 is the truth")
+	assert_true(tooltip.damage_label.text.contains("3.1"),
+		"reads %s" % tooltip.damage_label.text)
 
 
 func test_a_cooldown_on_an_item_that_does_nothing_is_not_shown():

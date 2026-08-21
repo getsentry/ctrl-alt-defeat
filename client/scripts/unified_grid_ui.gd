@@ -1083,10 +1083,22 @@ const SLOT_SIZE := Vector2(200, 180)
 ## The grid works its own size out from the room it is given, and there is no
 ## grid at all while a screen is only being read from.
 const SHELF_CELL := 45.0
-## The most room an item's artwork may take on a shelf. An alcove is a box
-## with a ceiling, so anything that would not fit under it is drawn smaller
-## rather than standing up through the shelf above.
-const SHELF_ART := Vector2(190, 150)
+## The most room an item's artwork may take on a shelf.
+##
+## Not the painted alcove, which is about 190 by 162: an item three squares
+## tall wants 182 and a shelf is 220 from its floor to the floor of the one
+## above, so it fits in the room a shelf has without reaching the next one --
+## it simply stands taller than the opening it is in, the way something too
+## big for a shelf actually does. Held to the alcove instead, a three-square
+## item was drawn at 49 pixels a square beside a one-square item at 60, which
+## is what a player notices.
+##
+## Four squares tall wants 243 and there is no honest way to fit that, so
+## those are still drawn smaller -- but at 52 rather than 36.
+##
+## Across, it is the space between one slot and the next: only one item in the
+## catalogue is four squares wide, and it has the room.
+const SHELF_ROOM := Vector2(284, 212)
 ## The line every item stands on, whatever its height.
 const ART_FLOOR := 150.0
 ## Far enough below the line to clear the light along the front of the shelf,
@@ -1262,11 +1274,12 @@ func _shelf_cell(data: APITypes.Item) -> float:
 	moment it is bought -- it used to be drawn a quarter smaller on the shelf
 	than it would be on the board.
 
-	The shelves are alcoves, not open ledges: each has a ceiling a little over
-	three squares above the floor. An item nine squares tall drawn at the size
-	the inventory uses stands straight up through the shelf above it, so it is
-	drawn smaller instead. Whichever way runs out first decides, so the item
-	keeps its shape.
+	A shelf has room between its own floor and the floor of the one above, and
+	that is what an item is fitted to -- not the painted alcove, which is
+	shorter. An item that stands taller than its opening reads as too big for
+	the shelf, which is true and is what a shop looks like; one drawn smaller
+	than the same item on the board reads as a different item. Whichever way
+	runs out first decides, so the item keeps its shape.
 	"""
 	var across := 0
 	var down := 0
@@ -1278,8 +1291,8 @@ func _shelf_cell(data: APITypes.Item) -> float:
 		return grid_cell
 	return min(
 		grid_cell,
-		floor((SHELF_ART.x - (across - 1) * CELL_SPACING) / across),
-		floor((SHELF_ART.y - (down - 1) * CELL_SPACING) / down)
+		floor((SHELF_ROOM.x - (across - 1) * CELL_SPACING) / across),
+		floor((SHELF_ROOM.y - (down - 1) * CELL_SPACING) / down)
 	)
 
 

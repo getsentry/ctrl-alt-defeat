@@ -58,6 +58,11 @@ class ItemStats(BaseModel):
     cooldown: float = 0.0
     cpu_cost: float = 0.0
 
+    #: How often the attack behind those damage numbers lands. Kept because a
+    #: rate worked out from the damage alone overstates a weapon that misses:
+    #: 3-8 every 1.5s at 85% accuracy is 3.1 a second, not 3.7.
+    accuracy: float = 1.0
+
 
 def stats_of(spec: ItemSpec) -> ItemStats:
     """Summarise a spec's triggers and effects as numbers"""
@@ -68,6 +73,10 @@ def stats_of(spec: ItemSpec) -> ItemStats:
 
         for effect in getattr(trigger, "effects", []) or []:
             if hasattr(effect, "min_damage"):
+                if effect.max_damage > stats.max_damage:
+                    # The accuracy of the attack these numbers came from, not
+                    # of whichever attack was read last.
+                    stats.accuracy = getattr(effect, "accuracy", 1.0)
                 stats.min_damage = max(stats.min_damage, effect.min_damage)
                 stats.max_damage = max(stats.max_damage, effect.max_damage)
             if hasattr(effect, "min_heal"):
@@ -245,6 +254,9 @@ class Item(BaseModel):
     block_amount: int = Field(description="Damage blocked")
     cooldown: float = Field(description="Activation cooldown in seconds")
     cpu_cost: float = Field(description="CPU cost to activate")
+    accuracy: float = Field(
+        default=1.0, description="How often the attack behind the damage lands"
+    )
     on_sale: bool = Field(
         default=False, description="Whether the shop is offering this at half price"
     )
@@ -303,6 +315,44 @@ class Item(BaseModel):
             pattern=spec.pattern,
             **stats.model_dump(),
         )
+
+    @computed_field
+    @property
+    def damage_per_second(self) -> float:
+        """What this deals in a second, left to itself.
+
+        Worked out here rather than on the client, because the client is not
+        told how often an attack lands and a rate that ignores that overstates
+        every weapon that can miss: 3-8 every 1.5s at 85% accuracy is 3.1 a
+        second, not 3.7.
+
+        The average roll, since neither end of the range is what a player gets
+        over a battle. Crit is left out: every attack in the catalogue starts
+        at no crit chance, so there is none to count until something grants it.
+        Nothing at all for an item that deals no damage, or one with no
+        cooldown to spread it over.
+        """
+        if self.cooldown <= 0 or self.max_damage <= 0:
+            return 0.0
+        average = (self.min_damage + self.max_damage) / 2.0
+        return round(average * self.accuracy / self.cooldown, 1)
+
+    @computed_field
+    @property
+    def cpu_per_second(self) -> float:
+        """What holding this running costs a second.
+
+        The other half of reading a weapon: two items that deal the same in a
+        second are not the same item if one of them eats twice the CPU doing
+        it, and the cooldown is what turns a cost per swing into a cost to
+        keep it swinging.
+        """
+        if self.cooldown <= 0 or self.cpu_cost <= 0:
+            return 0.0
+        # One decimal, the same as every other number on the card. Sent at a
+        # precision the card cannot show, the two would disagree about what
+        # the item costs.
+        return round(self.cpu_cost / self.cooldown, 1)
 
     @computed_field
     @property

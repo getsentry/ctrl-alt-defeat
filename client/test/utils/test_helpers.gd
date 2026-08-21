@@ -30,6 +30,9 @@ static func item_data(overrides: Dictionary = {}) -> Dictionary:
 		"block_amount": 0,
 		"cooldown": 1.5,
 		"cpu_cost": 3,
+		"accuracy": 1.0,
+		"damage_per_second": 2.5,
+		"cpu_per_second": 1.5,
 	}
 	data.merge(overrides, true)
 	return data
@@ -68,6 +71,8 @@ static func container_data(overrides: Dictionary = {}) -> Dictionary:
 		"max_damage": 0,
 		"cooldown": 0.0,
 		"cpu_cost": 0,
+		"damage_per_second": 0.0,
+		"cpu_per_second": 0.0,
 		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]],
 	})
 	data.merge(overrides, true)

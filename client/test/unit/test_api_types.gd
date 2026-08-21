@@ -46,6 +46,8 @@ func _item(overrides: Dictionary = {}) -> Dictionary:
 		"cooldown": 1.5,
 		"cpu_cost": 3,
 		"block_amount": 0,
+		"accuracy": 1.0,
+		"damage_per_second": 0.0, "cpu_per_second": 0.0,
 		"effects": ["Every 1.5s: deal 2-5 damage.", "On hit: apply 2 Memory Leak."],
 		"color": "#BE0032",
 		"pattern": "solid"

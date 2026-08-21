@@ -1002,22 +1002,22 @@ func _art_for(shape: Array) -> Control:
 	return art
 
 
-func test_a_tall_item_is_drawn_small_enough_for_its_alcove():
+func test_a_tall_item_is_drawn_small_enough_for_the_room_a_shelf_has():
 	# Items run to nine squares tall. At the size the grid draws them that is
-	# over four hundred pixels, in an alcove a hundred and sixty tall.
+	# over five hundred pixels, and a shelf has 212 before the next one.
 	var tall := []
 	for y in range(9):
 		tall.append([0, y])
 	var art = _art_for(tall)
-	assert_lte(art.size.y, ui.SHELF_ART.y,
-		"Nine squares came out %d tall, and an alcove has %d"
-		% [art.size.y, ui.SHELF_ART.y])
+	assert_lte(art.size.y, ui.SHELF_ROOM.y,
+		"Nine squares came out %d tall, and a shelf has %d"
+		% [art.size.y, ui.SHELF_ROOM.y])
 
 	var wide := []
 	for x in range(9):
 		wide.append([x, 0])
 	art = _art_for(wide)
-	assert_lte(art.size.x, ui.SHELF_ART.x,
+	assert_lte(art.size.x, ui.SHELF_ROOM.x,
 		"and the same across, or it is drawn into the slot beside it")
 
 
@@ -1027,7 +1027,7 @@ func test_an_ordinary_item_is_drawn_at_the_size_the_grid_uses():
 	# which it did, by a quarter, until the shelf was told what a square is.
 	var art = _art_for([[0, 0], [1, 0]])
 	assert_almost_eq(art.size.y, ui.inventory_grid.cell_size, 0.01,
-		"A two-square item fits an alcove with room to spare")
+		"A two-square item fits a shelf with room to spare")
 
 
 func test_no_price_tag_hangs_below_the_shelving():
@@ -1435,6 +1435,57 @@ func _square(at: Vector2i) -> Vector2:
 	return ui.inventory_grid.global_position \
 		+ ui.inventory_grid.grid_to_pixel(at) \
 		+ Vector2.ONE * ui.inventory_grid.cell_size / 2.0
+
+
+# ============ How big an item is drawn on the shelf ============
+#
+# The same size it will be once it is bought. An item drawn smaller on the
+# shelf than on the board reads as a different item, and the player is choosing
+# between them.
+
+func _shelf_cell_for(shape: Array) -> float:
+	return ui._shelf_cell(TestHelpers.item({"shape": shape}))
+
+
+func test_an_item_is_the_same_size_on_the_shelf_as_on_the_board():
+	var board: float = ui.inventory_grid.cell_size
+
+	for shape in [
+		[[0, 0]],                                    # one square
+		[[0, 0], [0, 1]],                            # two tall
+		[[0, 0], [0, 1], [0, 2]],                    # three tall
+		[[0, 0], [1, 0], [0, 1], [1, 1]],            # two by two
+		[[0, 0], [1, 0], [2, 0], [3, 0]],            # four across
+	]:
+		assert_almost_eq(_shelf_cell_for(shape), board, 0.1,
+			"%d squares should be drawn at the board's size" % shape.size())
+
+
+func test_an_item_too_tall_for_any_shelf_is_drawn_smaller_but_not_much():
+	"""Four squares wants 243 pixels and a shelf has 212 from its floor to the
+	floor above. There is no honest way to fit that, so it is fitted -- but to
+	the room the shelf has rather than to the painted alcove, which took it
+	down to 36."""
+	var board: float = ui.inventory_grid.cell_size
+	var four_tall := _shelf_cell_for([[0, 0], [0, 1], [0, 2], [0, 3]])
+
+	assert_lt(four_tall, board, "It cannot be the board's size")
+	assert_gt(four_tall, board * 0.8, "but it should be close to it")
+
+
+func test_no_item_on_a_shelf_reaches_the_shelf_above():
+	"""What the fitting is for. A shelf is 220 from its own floor to the floor
+	of the one above."""
+	var pitch := 220.0
+
+	for tall in range(1, 5):
+		var shape := []
+		for square in range(tall):
+			shape.append([0, square])
+		var drawn: float = _shelf_cell_for(shape) * tall + (tall - 1) * ui.CELL_SPACING
+		assert_lt(drawn, pitch,
+			"%d squares are drawn %.0f tall, and the shelf above is at %.0f"
+				% [tall, drawn, pitch])
 
 
 # ============ The sign on the reroll button ============
