@@ -1,6 +1,8 @@
 # Multi-stage build for Godot web export and hosting
 # Stage 1: Build the Godot web export
-FROM barichello/godot-ci:4.3 as builder
+# The editor has to be the project's own version: an older one exports a 4.4
+# project as far as an error message and no further.
+FROM barichello/godot-ci:4.4.1 as builder
 
 # Set working directory
 WORKDIR /app
@@ -12,10 +14,21 @@ COPY . .
 ARG API_URL="https://ctrl-alt-defeat-backend.sentry.gg"
 ENV API_URL=${API_URL}
 
-# Replace the API URL directly in the source code before export
-RUN sed -i "s|var BASE_URL = \"http://localhost:8000\"|var BASE_URL = \"${API_URL}\"|g" /app/scripts/BattleServerAPI.gd && \
-    echo "Updated BattleServerAPI.gd with API URL:" && \
-    grep "var BASE_URL" /app/scripts/BattleServerAPI.gd
+# Point the client at the deployed server. A page cannot be handed an
+# environment variable the way a desktop build can, so the URL is written into
+# the source before the export.
+#
+# Found by what the line says rather than by which file says it. This named a
+# file, that file was renamed, and the build has been failing ever since --
+# quietly, because a failed build leaves the last good image being served and
+# nothing on the site says how old it is. Whatever holds the line is patched,
+# and a substitution that does not take stops the build here.
+RUN set -eux; \
+    holds="$(grep -rl 'var BASE_URL = "http://localhost:8000"' /app/scripts)"; \
+    test -n "$holds"; \
+    sed -i "s|var BASE_URL = \"http://localhost:8000\"|var BASE_URL = \"${API_URL}\"|g" $holds; \
+    grep -q "var BASE_URL = \"${API_URL}\"" $holds; \
+    echo "Pointed $holds at ${API_URL}"
 
 # Create export directory
 RUN mkdir -p /app/web-build
