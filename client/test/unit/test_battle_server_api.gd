@@ -142,3 +142,79 @@ func test_a_purchase_into_the_chest_names_the_chest():
 
 	assert_true(body["to_storage"], "It should ask for the chest")
 	assert_false(body.has("target_position"), "and name no square")
+
+
+# ============ Keeping the account between launches ============
+#
+# Every launch used to call /auth/guest and become a different person, so
+# nothing an account holds -- its name, its SnubaCoin, the runs it has finished
+# -- survived the window closing.
+
+func _saved_account() -> ConfigFile:
+	var config = ConfigFile.new()
+	var loaded = config.load(BattleServerAPI.ACCOUNT_PATH)
+	return config if loaded == OK else null
+
+
+func test_it_writes_the_account_where_a_launch_will_look():
+	BattleServerAPI._save_account("a-token", 42)
+
+	var saved = _saved_account()
+	assert_not_null(saved, "The account should be on disk")
+	assert_eq(saved.get_value("account", "token", ""), "a-token")
+	assert_eq(int(saved.get_value("account", "user_id", 0)), 42)
+
+	BattleServerAPI.forget_account()
+
+
+func test_it_reads_the_account_back():
+	BattleServerAPI._save_account("a-token", 42)
+	BattleServerAPI._auth_token = ""
+	BattleServerAPI._user_id = 0
+
+	assert_true(BattleServerAPI._load_account(), "A saved account should load")
+	assert_eq(BattleServerAPI._auth_token, "a-token")
+	assert_eq(BattleServerAPI._user_id, 42)
+
+	BattleServerAPI.forget_account()
+
+
+func test_forgetting_leaves_nothing_to_load():
+	BattleServerAPI._save_account("a-token", 42)
+
+	BattleServerAPI.forget_account()
+
+	assert_eq(BattleServerAPI._auth_token, "", "Forgetting should drop the token")
+	assert_null(_saved_account(), "and take the file with it")
+	assert_false(BattleServerAPI._load_account(), "so there is nothing to load")
+
+
+func test_an_account_file_with_no_token_in_it_is_not_an_account():
+	# A half-written file should send the player down the new-guest path rather
+	# than be trusted and fail on the next call.
+	var config = ConfigFile.new()
+	config.set_value("account", "user_id", 42)
+	config.save(BattleServerAPI.ACCOUNT_PATH)
+	BattleServerAPI._auth_token = ""
+
+	assert_false(BattleServerAPI._load_account(), "No token means no account")
+
+	BattleServerAPI.forget_account()
+
+
+func test_it_does_not_live_in_the_settings_file():
+	# ConfigFile writes whole. main_menu.gd saves the player name without
+	# loading first, so an account kept in that file would be erased by it.
+	assert_ne(
+		BattleServerAPI.ACCOUNT_PATH,
+		"user://player_settings.cfg",
+		"The account needs its own file"
+	)
+
+
+func test_resetting_for_a_test_forgets_the_saved_account_too():
+	BattleServerAPI._save_account("a-token", 42)
+
+	BattleServerAPI.reset_for_test()
+
+	assert_null(_saved_account(), "A test should not inherit the last one's account")

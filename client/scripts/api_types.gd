@@ -728,6 +728,37 @@ class GameSession extends Resource:
 
 
 # Session start response - matches server StartSessionResponse
+## The account behind the token, from GET /auth/me.
+##
+## The account outlives a run, so this is what the main menu reads: the name to
+## show, the balance, and how many runs have been finished -- which is what
+## decides whether a guest is asked to keep what they did.
+class Account extends Resource:
+	var user_id: int = 0
+	var username: String = ""
+	## "guest" or "registered".
+	var account_type: String = ""
+	var total_games: int = 0
+	var wins: int = 0
+	var losses: int = 0
+	var rank: int = 0
+	var snuba_coin: int = 0
+
+	func _init(data: Dictionary):
+		user_id = int(data["user_id"])
+		username = data["username"]
+		account_type = data["account_type"]
+		total_games = int(data["total_games"])
+		wins = int(data["wins"])
+		losses = int(data["losses"])
+		rank = int(data["rank"])
+		snuba_coin = int(data["snuba_coin"])
+
+	## Whether this account has no password and can still be lost.
+	func is_guest() -> bool:
+		return account_type == "guest"
+
+
 class SessionStartResponse extends Resource:
 	var player_id: String = ""
 	var session: GameSession

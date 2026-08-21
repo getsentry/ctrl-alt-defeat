@@ -21,6 +21,15 @@ var last_response_body: PackedByteArray
 var _auth_token: String = ""
 var _user_id: int = 0
 
+## Where the account is kept between launches.
+##
+## Its own file, not `player_settings.cfg`. A ConfigFile is written whole, so
+## anything that saves a setting without loading first would take the token
+## with it -- and `main_menu.gd` does exactly that.
+##
+## Godot maps `user://` to localStorage in a web build, so one path covers both.
+const ACCOUNT_PATH := "user://account.cfg"
+
 # Testing support - using real server for tests
 
 func _ready():
@@ -40,6 +49,83 @@ func reset_for_test():
 	player_id = ""
 	_auth_token = ""  # Force re-authentication
 	_user_id = 0
+	# The saved account too, or a test would sign back in as whoever the last
+	# run left behind.
+	forget_account()
+
+
+## Sign in, reusing the account from last time if there is one.
+##
+## A launch used to call /auth/guest every time, so every launch was a different
+## person and nothing an account holds -- its name, its SnubaCoin, how many runs
+## it has finished -- could outlive the window being closed.
+##
+## The saved token is checked before it is trusted. It can be refused: the
+## account may have been deleted, or the token may have expired (they last 90
+## days). Either way the answer is a new guest, and the old one is forgotten
+## rather than left to fail on the next call.
+func _ensure_signed_in() -> bool:
+	if _auth_token != "":
+		return true
+
+	if _load_account():
+		if await fetch_account() != null:
+			return true
+		print("The saved account was refused. Starting a new one.")
+		forget_account()
+
+	return await _authenticate_guest()
+
+
+## The account behind the current token, or null if there is no usable one.
+func fetch_account() -> APITypes.Account:
+	if _auth_token == "":
+		return null
+
+	http_request.request(
+		BASE_URL + "/auth/me",
+		["Authorization: Bearer " + _auth_token],
+		HTTPClient.METHOD_GET
+	)
+	var result = await http_request.request_completed
+
+	last_response_code = result[1]
+	last_response_body = result[3]
+	if last_response_code != 200:
+		return null
+
+	var json = JSON.new()
+	if json.parse(last_response_body.get_string_from_utf8()) != OK:
+		push_error("Could not read the account")
+		return null
+	return APITypes.Account.new(json.data)
+
+
+func _load_account() -> bool:
+	var config = ConfigFile.new()
+	if config.load(ACCOUNT_PATH) != OK:
+		return false
+	var token = config.get_value("account", "token", "")
+	if token == "":
+		return false
+	_auth_token = token
+	_user_id = int(config.get_value("account", "user_id", 0))
+	return true
+
+
+func _save_account(token: String, user_id: int) -> void:
+	var config = ConfigFile.new()
+	config.set_value("account", "token", token)
+	config.set_value("account", "user_id", user_id)
+	if config.save(ACCOUNT_PATH) != OK:
+		push_error("Could not keep the account. The next launch will start a new one.")
+
+
+## Drop the saved account. The next sign-in makes a new guest.
+func forget_account() -> void:
+	_auth_token = ""
+	_user_id = 0
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(ACCOUNT_PATH))
 
 ## Start a run.
 ##
@@ -54,12 +140,9 @@ func start_session(game_seed: int = -1) -> APITypes.SessionStartResponse:
 		if seed_override != "" and seed_override.is_valid_int():
 			game_seed = int(seed_override)
 
-	# First authenticate as guest if we don't have a token
-	if _auth_token == "":
-		var auth_success = await _authenticate_guest()
-		if not auth_success:
-			push_error("Failed to authenticate with server")
-			return null
+	if not await _ensure_signed_in():
+		push_error("Failed to authenticate with server")
+		return null
 
 	# Start a new game session
 	var url = BASE_URL + "/session/start"
@@ -122,9 +205,10 @@ func _authenticate_guest() -> bool:
 		var parse_result = json.parse(result[3].get_string_from_utf8())
 		if parse_result == OK:
 			var data = json.data
-			_auth_token = data.get("access_token", "")
-			_user_id = data.get("user_id", 0)
-			print("Authenticated as guest user: ", data.get("username", ""))
+			_auth_token = data["access_token"]
+			_user_id = int(data["user_id"])
+			_save_account(_auth_token, _user_id)
+			print("Authenticated as guest user: ", data["username"])
 			return true
 
 	push_error("Failed to authenticate as guest")
