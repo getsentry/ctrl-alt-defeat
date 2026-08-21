@@ -519,7 +519,9 @@ func test_battle_button_and_full_battle():
 		# Mock battle takes time to complete and then 2s to transition
 		await _wait_for_scene("UnifiedGridUI", 25.0)
 
-		# Look for skip button
+		# Read the scene again: waiting for the battle to end swapped it, so
+		# the one captured before the wait has been freed.
+		current_scene = get_tree().current_scene
 		var skip_btn = current_scene.find_child("SkipButton", true, false)
 		if skip_btn:
 			skip_btn.pressed.emit()
@@ -941,8 +943,10 @@ func test_item_drag_and_move_persistence():
 	mouse_down.position = placed_item.size / 2
 	mouse_down.global_position = item_center
 
-	# Send input to the placed item to start drag
-	placed_item._gui_input(mouse_down)
+	# Through the signal the grid connects to. ItemVisual declares no
+	# _gui_input, so calling one was an error on every run and the press never
+	# reached the grid at all.
+	placed_item.gui_input.emit(mouse_down)
 	await get_tree().process_frame
 
 	# Drag to new position
@@ -952,19 +956,15 @@ func test_item_drag_and_move_persistence():
 	mouse_move.relative = new_drop_pos - item_center
 	mouse_move.button_mask = MOUSE_BUTTON_MASK_LEFT
 
-	# Process drag through inventory grid
-	inventory_grid._input(mouse_move)
+	# The grid has no _input of its own -- calling one was an error on every
+	# run, and the motion never reached anything. This is what a drag calls.
+	inventory_grid.update_drag_preview(new_drop_pos)
 	await get_tree().process_frame
 
-	# Drop at new position
-	mouse_up = InputEventMouseButton.new()
-	mouse_up.button_index = MOUSE_BUTTON_LEFT
-	mouse_up.pressed = false
-	mouse_up.global_position = new_drop_pos
-	mouse_up.position = inventory_grid.to_local(new_drop_pos)
-
-	# Send mouse up to inventory grid to complete move
-	inventory_grid._input(mouse_up)
+	# Let go where the drag was taken to. The drop point decides the square,
+	# so a test can put the item down without a pointer to warp -- and the
+	# event that used to be built here went nowhere anyway.
+	inventory_grid._end_drag(new_drop_pos)
 	await _wait_for_server()
 
 	# Verify item moved to new position

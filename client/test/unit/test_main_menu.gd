@@ -182,11 +182,10 @@ func test_keyboard_navigation():
 
 	assert_true(new_game_btn.has_focus(), "Button should have focus")
 
-	# Simulate Enter key press
-	var enter_event = InputEventKey.new()
-	enter_event.keycode = KEY_ENTER
-	enter_event.pressed = true
-	new_game_btn._gui_input(enter_event)
+	# Press it the way the focus ring says it would be pressed. Button has no
+	# _gui_input of its own to call -- calling one was an error printed on
+	# every run -- and its own handler is what turns the key into this.
+	new_game_btn.pressed.emit()
 
 
 func test_responsive_layout():

@@ -165,7 +165,13 @@ func test_a_container_in_the_shop_is_drawn_as_a_container():
 	# In the shop a container is an ordinary Item with the flag set, because
 	# that is what the player buys. It carries no colour of its own, so it has
 	# to be drawn as a container wherever it is.
-	_make(_item({"slug": "standard_vm", "is_container": true, "color": "", "pattern": ""}))
+	#
+	# A slug with no artwork, because the colour is what is being asked about
+	# and artwork is drawn instead of it. This named standard_vm, which has a
+	# picture, so it read fill_color off a TextureRect: an error every run, and
+	# a test that asserted nothing at all.
+	_make(_item({"slug": "no_such_item_anywhere", "is_container": true,
+		"color": "", "pattern": ""}))
 	assert_lt(visual.get_child(0).fill_color.a, 1.0,
 		"A container for sale is still a container")
 

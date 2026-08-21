@@ -50,8 +50,12 @@ func test_can_load_game_ui():
 
 func test_can_load_battle_screen():
 	"""Critical: Battle screen must load without errors"""
-	# Set up minimal battle data
+	# Set up minimal battle data. The screen plays the events rather than the
+	# result, and asserts when it is handed none -- so a result on its own is
+	# not a battle it can be given, and this printed an error every run.
 	GameStateManager.last_battle_result = TestHelpers.create_test_battle_result()
+	GameStateManager.last_battle_events = \
+		GameStateManager.last_battle_result.actions
 
 	var battle_screen = load("res://scenes/BattleScreen.tscn").instantiate()
 	add_child(battle_screen)

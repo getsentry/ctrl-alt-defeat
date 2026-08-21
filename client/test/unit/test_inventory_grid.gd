@@ -651,9 +651,14 @@ func test_dropping_a_container_somewhere_it_fits_asks_for_the_move():
 	grid.drop_container_at(grid.global_position + grid.grid_to_pixel(Vector2i(0, 0)))
 	await get_tree().process_frame
 
+	# Every parameter, and no message: the fourth argument of this assertion is
+	# which emission to look at, not a note. A string there was read as an
+	# index, the lookup came back null, and the comparison passed against it --
+	# so this test was green and asking nothing. The signal carries three
+	# things: the container, the square it was dropped on, and what rode along.
+	var empty: Array[String] = []
 	assert_signal_emitted_with_parameters(grid, "container_dropped",
-		[grid.containers[0].container, Vector2i(0, 0)],
-		"It should ask for the square it was dropped on")
+		[grid.containers[0].container, Vector2i(0, 0), empty])
 
 
 func test_dropping_a_container_back_where_it_started_asks_for_nothing():

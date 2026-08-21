@@ -572,11 +572,17 @@ func _end_drag(dropped_at := Vector2.INF):
 	if grid_zone:
 		grid_zone.hide_hover_preview()
 
-	var grid_pos = pixel_to_grid(get_local_mouse_position())
+	# The square comes from where the drop landed, not from the pointer. They
+	# are the same thing in a real drag, and only the first can be placed by a
+	# test -- which is what the drop point is for.
+	var grid_pos = pixel_to_grid(get_global_transform().affine_inverse() * dropped_at)
 	var item_data = dragging_object.get_meta("item_data")
 	var temp_object = dragging_object
 	dragging_object = null
-	hover_preview.visible = false
+	# Through the guarded one: a drag can outlive the preview -- teardown frees
+	# it while the drag is still on -- and assigning to a freed object is an
+	# error printed on every run, which is how a run nobody reads is made.
+	hide_hover_preview()
 	drag_ended.emit()
 
 	# Dropped on the chest, so sell it rather than place it. The cells were
