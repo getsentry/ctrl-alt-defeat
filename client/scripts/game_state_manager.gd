@@ -25,6 +25,9 @@ var wins: int = 0
 var losses: int = 0
 var game_over: bool = false
 var victory: bool = false
+## Whether the run has ended, either way. The server decides this; see
+## is_game_over().
+var run_over: bool = false
 
 # Inventory state
 var current_inventory: Dictionary = {}  # Stores placed items and servers
@@ -77,6 +80,7 @@ func start_new_game():
 	losses = 0
 	game_over = false
 	victory = false
+	run_over = false
 	current_inventory.clear()
 	server_containers.clear()
 	inventory_storage.clear()
@@ -217,6 +221,7 @@ func update_after_battle(response: APITypes.BattleResponse):
 	player_lives = update.lives
 	game_over = update.game_over
 	victory = update.victory
+	run_over = update.run_over
 
 	# Store gold earned separately for PostBattleScreen
 	last_gold_earned = update.gold_earned
@@ -225,7 +230,14 @@ func update_after_battle(response: APITypes.BattleResponse):
 	last_battle_events = response.battle_result.actions
 
 func is_game_over() -> bool:
-	return game_over or player_lives <= 0
+	"""Whether the run has ended, either way.
+
+	The server says so directly. Working it out from `game_over` alone missed
+	the run that was won: the 10th win banked ends a run with lives to spare,
+	and a client that read only `game_over` walked the winner back into the
+	shop for round 11.
+	"""
+	return run_over
 
 func is_victory() -> bool:
 	return victory

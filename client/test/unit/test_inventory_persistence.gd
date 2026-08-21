@@ -57,7 +57,7 @@ func test_the_rack_after_a_battle_is_the_one_the_server_answered_with():
 			"wins": 1,
 			"losses": 0,
 			"lives": 5,
-			"game_over": false,
+			"game_over": false, "run_over": false,
 			"victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},

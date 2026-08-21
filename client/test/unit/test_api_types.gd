@@ -283,7 +283,7 @@ func test_battle_response_resolves_to_leaf_values():
 		}),
 		"session_update": {
 			"round": 3, "gold": 21, "gold_earned": 9, "wins": 2,
-			"losses": 0, "lives": 5, "game_over": false, "victory": false, "shop_refresh_cost": 1,
+			"losses": 0, "lives": 5, "game_over": false, "run_over": false, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
 		"new_shop": [],
@@ -302,7 +302,7 @@ func test_battle_response_resolves_to_leaf_values():
 func test_session_update_carries_the_whole_session():
 	var update = APITypes.SessionUpdate.new({
 		"round": 4, "gold": 30, "gold_earned": 12, "wins": 3,
-		"losses": 1, "lives": 4, "game_over": false, "victory": false, "shop_refresh_cost": 1,
+		"losses": 1, "lives": 4, "game_over": false, "run_over": false, "victory": false, "shop_refresh_cost": 1,
 		"combinations": [], "pending": []
 	})
 
@@ -854,7 +854,7 @@ func test_the_battle_answer_carries_the_rack_the_combining_left():
 		}),
 		"session_update": {
 			"round": 3, "gold": 21, "gold_earned": 9, "wins": 2,
-			"losses": 0, "lives": 5, "game_over": false, "victory": false, "shop_refresh_cost": 1,
+			"losses": 0, "lives": 5, "game_over": false, "run_over": false, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [{
 				"made": "blue_sage_collar", "made_id": "new_1",
 				"consumed": [_item({"id": "fought_with"})], "kept": [],

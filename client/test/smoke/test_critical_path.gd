@@ -98,7 +98,7 @@ func test_api_types_can_parse_server_data():
 		"wins": 1,
 		"losses": 0,
 		"lives": 5,
-		"game_over": false,
+		"game_over": false, "run_over": false,
 		"victory": false, "shop_refresh_cost": 1,
 		"combinations": [], "pending": []
 	}

@@ -649,6 +649,11 @@ class SessionUpdate extends Resource:
 	var shop_refresh_cost: int = 1
 	var game_over: bool
 	var victory: bool
+	## Whether the run has ended, either way. `game_over` is the last try spent
+	## and `victory` is the 10th win banked, so a client reading only the first
+	## sends a won run back to the shop for round 11 -- where the server now
+	## refuses the next battle and the player is stuck. Read this one.
+	var run_over: bool
 	# What combined as this shop phase began, in the order it happened.
 	var combinations: Array[Combination] = []
 	# What the rack is on the way to now, after that combining.
@@ -664,6 +669,7 @@ class SessionUpdate extends Resource:
 		lives = data["lives"]
 		game_over = data["game_over"]
 		victory = data["victory"]
+		run_over = data["run_over"]
 		shop_refresh_cost = int(data["shop_refresh_cost"])
 		for made in data["combinations"]:
 			combinations.append(Combination.new(made))
