@@ -66,18 +66,22 @@ func groups_about_to_combine() -> Array:
 	return groups
 
 
-## The recipe to label this item with while it is being collected, or null.
+## The recipe to label this item with, or null.
 ##
 ## The one it is furthest along, because an item can be a step towards several
 ## things at once and the nearest to done is the one the player is most likely
-## working on. A finished one is never offered: the item is going to combine,
-## and naming something else it could have been would only confuse.
+## working on. A finished one wins outright, however far along the others are:
+## it is what is going to happen to this item, and naming something it could
+## have been instead would be telling the player the wrong thing at the one
+## moment they can still break the pair up.
 func progress_for(item_id: String) -> APITypes.Pending:
 	var best: APITypes.Pending = null
 	for waiting in pending:
-		if waiting.complete() or not waiting.names(item_id):
+		if not waiting.names(item_id):
 			continue
-		if best == null or waiting.have > best.have:
+		if best != null and best.complete() and not waiting.complete():
+			continue
+		if best == null or waiting.complete() or waiting.have > best.have:
 			best = waiting
 	return best
 

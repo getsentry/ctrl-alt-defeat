@@ -135,14 +135,27 @@ func test_an_item_on_the_way_to_nothing_is_labelled_with_nothing():
 	assert_eq(combining.progress_label("somebody_else"), "")
 
 
-func test_an_item_that_is_about_to_combine_is_not_labelled_with_progress():
-	"""It is going to combine. Naming something else it could have been
-	instead would only be confusing."""
+func test_an_item_that_is_about_to_combine_is_named_with_what_it_will_be():
+	"""The glow says that two items are joining. Only the label says what
+	into, and that is what a player deciding whether to break them up needs."""
 	var combining := _knowing([
 		_pending({"have": 2, "need": 2, "ingredients": ["a", "b"], "missing": []}),
 	], {}, {"hero_longsword": "Long Poll"})
 
-	assert_eq(combining.progress_label("a"), "")
+	assert_eq(combining.progress_label("a"), "Long Poll 2/2")
+
+
+func test_a_finished_recipe_beats_one_still_being_collected():
+	"""Even a nearly-done other one: the finished rack is what is going to
+	happen to this item, and the other is what it could have been instead."""
+	var combining := _knowing([
+		_pending({"makes": "crossblades", "have": 4, "need": 5,
+			"ingredients": ["sword"], "missing": ["falcon_blade"]}),
+		_pending({"have": 2, "need": 2, "ingredients": ["sword", "stone"],
+			"missing": []}),
+	], {}, {"hero_longsword": "Long Poll", "crossblades": "Cross-Site Blades"})
+
+	assert_eq(combining.progress_label("sword"), "Long Poll 2/2")
 
 
 func test_an_item_in_two_recipes_is_labelled_with_the_nearest_one():

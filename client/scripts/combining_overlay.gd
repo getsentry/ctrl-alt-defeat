@@ -36,6 +36,12 @@ const TOUCHING := 26.0
 
 ## How big to write the name of something just made.
 const SAID_SIZE := 26
+## How long "Long Poll 2/3" stays up after the player stops reaching, and how
+## much of that is spent fading. It used to go the instant the pointer moved,
+## which is the same instant the player put the item down -- so the one moment
+## they most wanted to read it was the moment it was taken away.
+const LINGER := 1.8
+const LINGER_FADE := 0.5
 ## How near two names have to be before one is moved off the other.
 const CROWDED := Vector2(220.0, 34.0)
 
@@ -63,6 +69,13 @@ var _whiteout: Dictionary = {}
 
 var _label: Label = null
 var _label_over: Control = null
+## When the player stopped reaching, or -1 while they still are. The label
+## stays up for LINGER after that. See no_progress().
+var _label_let_go_at := -1.0
+## Where the label was standing when they let go, because the item it was
+## about is often gone by then -- a held item's visual is freed the moment it
+## is put down, and the label has to finish saying its piece somewhere.
+var _label_resting_at := Vector2.ZERO
 
 var _time := 0.0
 
@@ -81,6 +94,7 @@ func _process(delta: float) -> void:
 	# several times a second, a glow breathes, a bloom fades; nothing else
 	# here moves.
 	_time += delta
+	_fade_the_label()
 	_flashes = _still_alight(_flashes)
 	_bursts = _still_alight(_bursts)
 	_said = _still_alight(_said)
@@ -89,8 +103,23 @@ func _process(delta: float) -> void:
 		_whiteout = {}
 	if _from != null or not _groups.is_empty() or not _flashes.is_empty() \
 			or not _bursts.is_empty() or not _said.is_empty() \
-			or not _whiteout.is_empty():
+			or _label_let_go_at >= 0.0 or not _whiteout.is_empty():
 		queue_redraw()
+
+
+func _fade_the_label() -> void:
+	"""Take the lingering label down, over the last of its time."""
+	if _label == null or _label_let_go_at < 0.0:
+		return
+	var since := _time - _label_let_go_at
+	if since >= LINGER:
+		hide_progress_now()
+		return
+	# It holds still and full for most of it, and fades over the last stretch.
+	_label.position = _label_resting_at
+	var fading := since - (LINGER - LINGER_FADE)
+	if fading > 0.0:
+		_label.modulate.a = 1.0 - fading / LINGER_FADE
 
 
 func _still_alight(lit: Array) -> Array:
@@ -243,19 +272,47 @@ func progress(text: String, over: Control) -> void:
 	the player asked about that item by reaching for it, and the answer stays
 	up for as long as they are still reaching.
 	"""
+	# Asked about an item that is on the way to nothing, the answer is nothing
+	# and it is wanted now: the player has moved on to another item, and the
+	# last one's label lingering over it would be answering the wrong
+	# question. Only letting go entirely leaves a label to finish -- see
+	# no_progress().
 	if text == "" or over == null:
-		no_progress()
+		hide_progress_now()
 		return
 	_label.text = text
 	_label_over = over
 	_label.visible = true
+	_label_let_go_at = -1.0
+	_label.modulate.a = 1.0
 	_place_label()
 
 
 func no_progress() -> void:
+	"""The player has stopped reaching. Finish the sentence and then go.
+
+	Not at once: letting go of an item is how it is put down, so hiding this
+	the moment the pointer leaves takes the answer away at the moment it was
+	asked for. It stays where it was standing -- the item it is about may
+	already have been freed and redrawn somewhere else.
+	"""
+	if _label == null or not _label.visible:
+		_label_over = null
+		return
+	if _label_let_go_at < 0.0:
+		_label_let_go_at = _time
+		_label_resting_at = _label.position
 	_label_over = null
+
+
+func hide_progress_now() -> void:
+	"""Take the label away without the parting look, for a rack that has
+	stopped being the rack the label was about."""
+	_label_over = null
+	_label_let_go_at = -1.0
 	if _label != null:
 		_label.visible = false
+		_label.modulate.a = 1.0
 
 
 # ============= What is being drawn =============

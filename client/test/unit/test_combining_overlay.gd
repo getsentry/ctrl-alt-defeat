@@ -159,6 +159,72 @@ func test_saying_nothing_takes_the_label_away():
 	assert_eq(overlay.label_text(), "")
 
 
+func test_the_label_stays_up_after_the_player_lets_go():
+	"""Letting go of an item is how it is put down, so the pointer leaves at
+	the moment the answer is wanted. It used to go with it."""
+	var part := _item(Vector2(100, 200))
+	overlay.progress("Long Poll 2/3", part)
+
+	overlay.no_progress()
+	overlay._process(0.1)
+
+	assert_eq(overlay.label_text(), "Long Poll 2/3",
+		"It should still be readable a moment later")
+
+
+func test_the_label_goes_once_it_has_had_its_moment():
+	var part := _item(Vector2(100, 200))
+	overlay.progress("Long Poll 2/3", part)
+
+	overlay.no_progress()
+	overlay._process(Overlay.LINGER + 0.05)
+
+	assert_eq(overlay.label_text(), "", "and then it is gone")
+
+
+func test_the_label_fades_rather_than_blinking_out():
+	var part := _item(Vector2(100, 200))
+	overlay.progress("Long Poll 2/3", part)
+	var label: Label = overlay.get_node("Progress")
+
+	overlay.no_progress()
+	overlay._process(Overlay.LINGER - Overlay.LINGER_FADE / 2.0)
+
+	assert_lt(label.modulate.a, 1.0, "on its way out")
+	assert_gt(label.modulate.a, 0.0, "but still there")
+
+
+func test_reaching_again_brings_the_label_back_to_full():
+	var part := _item(Vector2(100, 200))
+	overlay.progress("Long Poll 2/3", part)
+	overlay.no_progress()
+	overlay._process(Overlay.LINGER - 0.05)
+	var label: Label = overlay.get_node("Progress")
+
+	overlay.progress("Long Poll 2/3", part)
+	overlay._process(0.05)
+
+	assert_eq(label.modulate.a, 1.0, "A label asked for again is not fading")
+	assert_eq(overlay.label_text(), "Long Poll 2/3")
+
+
+func test_the_label_stays_where_it_was_when_its_item_is_taken_away():
+	"""A held item's visual is freed the moment it is put down, so the label
+	cannot go on following it."""
+	var part := _item(Vector2(100, 200))
+	overlay.progress("Long Poll 2/3", part)
+	var label: Label = overlay.get_node("Progress")
+	var stood_at := label.position
+
+	overlay.no_progress()
+	part.queue_free()
+	await get_tree().process_frame
+	overlay._process(0.1)
+
+	assert_eq(label.position, stood_at, "It finishes speaking where it stood")
+	assert_eq(overlay.label_text(), "Long Poll 2/3")
+
+
 func test_a_label_asked_for_over_nothing_is_not_shown():
 	overlay.progress("Long Poll 2/3", null)
 

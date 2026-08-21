@@ -3,6 +3,7 @@ extends GutTest
 
 const APITypes = preload("res://scripts/api_types.gd")
 const Presentation = preload("res://scripts/presentation.gd")
+const CombiningOverlay = preload("res://scripts/combining_overlay.gd")
 var ui_scene = preload("res://scenes/UnifiedGridUI.tscn")
 var ui
 
@@ -1352,7 +1353,9 @@ func test_hovering_a_part_says_how_far_along_it_is():
 	assert_eq(ui.combining_overlay.label_text(), "Long Poll 2/3")
 
 
-func test_the_label_goes_when_the_pointer_does():
+func test_the_label_finishes_speaking_after_the_pointer_goes():
+	"""Letting go of an item is how it is put down, so the pointer leaves at
+	the moment the answer is wanted. The label stays for a beat, then goes."""
 	_knows_that({}, {"hero_longsword": "Long Poll"})
 	_rack_holding([TestHelpers.placed_item_data({
 		"id": "sword", "item_type": "hero_sword", "position": [2, 3]})])
@@ -1362,8 +1365,14 @@ func test_the_label_goes_when_the_pointer_does():
 	ui.refresh_combining(_where(ui.inventory_grid.items[0]))
 
 	ui.refresh_combining(Vector2(-500, -500))
+	ui.combining_overlay._process(0.1)
 
-	assert_eq(ui.combining_overlay.label_text(), "")
+	assert_eq(ui.combining_overlay.label_text(), "Long Poll 2/3",
+		"still readable a moment after the pointer left")
+
+	ui.combining_overlay._process(CombiningOverlay.LINGER)
+
+	assert_eq(ui.combining_overlay.label_text(), "", "and then gone")
 
 
 func test_a_rack_being_watched_draws_none_of_it():
@@ -1375,6 +1384,183 @@ func test_a_rack_being_watched_draws_none_of_it():
 	await get_tree().process_frame
 
 	assert_null(watched.combining_overlay, "no overlay at all")
+	assert_null(watched.rotate_hint, "and nothing to say about turning one")
+
+
+# ============ The chest asking for what is in hand ============
+#
+# The chest never moves and never lights up, so it read as scenery next to the
+# shop it stands beside. With something in hand it is the second place that
+# item can go, and none of what it does about that is load-bearing: the price
+# is written on it either way.
+
+func _pick_up_something_worth(sell_value: int) -> void:
+	ui._on_drag_started(TestHelpers.item({"sell_value": sell_value}))
+
+
+func test_the_chest_names_the_price_of_what_is_in_hand():
+	_pick_up_something_worth(7)
+
+	var prompt: Label = ui.sell_chest.get_node("Prompt")
+	assert_true(prompt.visible, "The offer is only made while there is one")
+	assert_true(prompt.text.contains("7"), "and it names the price: %s" % prompt.text)
+
+
+func test_the_chest_says_nothing_with_empty_hands():
+	_pick_up_something_worth(7)
+
+	ui._on_drag_ended()
+
+	assert_false(ui.sell_chest.get_node("Prompt").visible,
+		"Asking the whole time reads as an instruction, not an offer")
+
+
+func test_the_chest_asks_to_shudder_when_it_is_offered_something():
+	Presentation.clear_requests()
+
+	_pick_up_something_worth(7)
+
+	assert_eq(Presentation.request_count("sell_chest_wakes"), 1,
+		"It notices, and asks before moving")
+
+
+func test_the_rock_dies_down_to_a_sway():
+	"""What it would draw, since a headless run draws nothing."""
+	var lure = ui.sell_lure
+
+	var noticed: float = absf(lure.tilt_for(0.05, 0.05))
+	var swaying: float = absf(lure.tilt_for(lure.WAKE_TIME, lure.WAKE_TIME))
+
+	assert_lt(swaying, noticed, "A shudder that never stops is a fault")
+	assert_lte(swaying, lure.SWAY_LEAN + 0.0001,
+		"and what is left is the sway, no more")
+
+
+func test_the_sway_stays_small_however_long_it_is_held():
+	var lure = ui.sell_lure
+
+	for held in [1.0, 3.5, 9.0, 30.0]:
+		assert_lte(absf(lure.tilt_for(held, held)), lure.SWAY_LEAN + 0.0001,
+			"barely there after %.1f seconds" % held)
+
+
+func test_the_chest_rocks_rather_than_sliding():
+	"""A sideways shudder read as the picture being mirrored back and forth:
+	the chest is lit from one side, and sliding it quickly makes the lit side
+	look as though it is swapping ends. A lean cannot be read that way."""
+	var lure = ui.sell_lure
+	var stood_at: Vector2 = ui.sell_chest.position
+
+	assert_ne(lure.tilt_for(0.05, 0.05), 0.0, "It leans")
+	assert_eq(ui.sell_chest.position, stood_at, "and never slides")
+
+
+func test_the_chest_turns_about_its_own_middle():
+	"""From the corner, a lean throws the chest across the screen."""
+	assert_eq(ui.sell_chest.pivot_offset, ui.sell_chest.size / 2.0)
+
+
+func test_the_chest_stands_still_again_once_the_item_is_gone():
+	_pick_up_something_worth(7)
+	ui.sell_lure._process(0.05)
+
+	ui._on_drag_ended()
+	ui.sell_lure._process(0.05)
+
+	assert_eq(ui.sell_lure.tilt_now(), 0.0, "back upright")
+	assert_eq(ui.sell_chest.scale, Vector2.ONE, "and back to its own size")
+	assert_eq(ui.sell_chest.modulate, Color.WHITE, "and its own colour")
+
+
+func test_the_chest_answers_the_pointer_coming_over_it():
+	""""Will this drop land?" is the question, and the chest is the answer.
+
+	The light is the half that is not decoration, so it is there in a run with
+	animations off as well; the swell is asked for and can be skipped.
+	"""
+	_pick_up_something_worth(7)
+	var away: Color = ui.sell_chest.modulate
+	Presentation.clear_requests()
+
+	ui.sell_lure.pointing_at_it(ui.sell_chest.get_global_rect().get_center())
+
+	assert_ne(ui.sell_chest.modulate, away, "It lights up under the pointer")
+	assert_eq(Presentation.request_count("sell_chest_leans"), 1,
+		"and asks to swell towards it")
+
+
+func test_the_chest_holds_still_where_animations_are_off():
+	"""The words and the light stay; the movement is decoration and goes."""
+	_pick_up_something_worth(7)
+	ui.sell_lure._process(0.05)
+
+	assert_true(ui.sell_chest.get_node("Prompt").visible,
+		"The price is not decoration")
+	assert_eq(ui.sell_lure.tilt_now(), 0.0, "but the rocking is")
+
+
+# ============ Saying how to turn what is in hand ============
+#
+# Turning is the only thing on this screen a player has to be told: drag, drop
+# and click explain themselves, and two keys and a wheel do not. It is said
+# only while there is something in hand, because that is the only time the
+# question is asked.
+
+func test_nothing_is_said_about_turning_with_empty_hands():
+	await get_tree().process_frame
+
+	assert_false(ui.carrying_something(), "setup: hands are empty")
+	assert_false(ui.rotate_hint.showing(), "so there is nothing to answer")
+
+
+func test_it_says_how_to_turn_what_is_in_hand():
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "held", "item_type": "null_blade", "position": [2, 3]})])
+
+	ui.inventory_grid._start_drag(ui.inventory_grid.items[0])
+	ui._process(0.0)
+
+	assert_true(ui.carrying_something(), "setup: an item is being dragged")
+	assert_true(ui.rotate_hint.showing(), "and it says how to turn it")
+
+
+func test_it_stops_saying_it_once_the_item_is_put_down():
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "held", "item_type": "null_blade", "position": [2, 3]})])
+	ui.inventory_grid._start_drag(ui.inventory_grid.items[0])
+	ui._process(0.0)
+
+	ui.inventory_grid._end_drag()
+	await get_tree().process_frame
+	ui._process(0.0)
+
+	assert_false(ui.rotate_hint.showing(), "the question is over")
+
+
+func test_what_counts_as_carrying_is_what_a_turn_acts_on():
+	"""The hint and the turn read the same list, so the screen cannot offer a
+	turn that does nothing, or stay silent while one would work."""
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "held", "item_type": "null_blade", "position": [2, 3]})])
+
+	assert_eq(ui.carrying_something(), ui.turn(0),
+		"with empty hands, neither of them thinks there is anything to turn")
+
+	ui.inventory_grid._start_drag(ui.inventory_grid.items[0])
+
+	assert_eq(ui.carrying_something(), ui.turn(0),
+		"and with something in hand, both of them do")
+
+
+func test_the_hint_stands_in_the_top_right_of_the_window():
+	var window: Vector2 = ui.get_viewport_rect().size
+
+	var hint: Control = ui.rotate_hint
+
+	assert_gt(hint.position.x, window.x * 0.6, "over on the right")
+	assert_lt(hint.position.y, window.y * 0.2, "and up at the top")
+	assert_lt(hint.position.x + hint.size.x, window.x,
+		"with the whole of it on the screen")
 
 
 # ============ Playing back what combined (GDD 5.3) ============

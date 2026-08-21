@@ -1032,9 +1032,21 @@ places to an item in another.
   `pending` entries where `have == need`, and drawn whatever the pointer is
   doing: it is a warning, not an answer.
 - A **progress label** above the item the arcs come from -- "Long Poll 2/3" --
-  from the `pending` entry where `have < need` that the item is furthest along.
-  The name comes from the catalogue's `names`, because what it will make does
-  not exist yet and the client has nothing else to look it up in.
+  from the `pending` entry the item is furthest along. The name comes from the
+  catalogue's `names`, because what it will make does not exist yet and the
+  client has nothing else to look it up in.
+
+  A finished rack is named too, and named first: "Long Poll 3/3" over two items
+  about to become a Long Poll. The glow already says *that* they are joining;
+  only the label says *what into*, and a player deciding whether to break the
+  pair up needs the second more than the first. Where an item is part of both a
+  finished rack and an unfinished one, the finished one wins -- it is what is
+  going to happen.
+
+  It stays up for a moment and fades after the player stops reaching, because
+  letting go of an item is how it is put down: the pointer leaves at the
+  instant the answer is wanted. It stays where it was standing rather than
+  following the item, which by then has been drawn again somewhere else.
 - A **merge animation**, in four beats over about a second and three quarters.
   The items rattle where they stand, each on its own path, so it reads as
   something happening to them rather than to the screen. They fly into the

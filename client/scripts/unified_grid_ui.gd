@@ -8,6 +8,8 @@ const Presentation = preload("res://scripts/presentation.gd")
 const PriceTag = preload("res://scripts/price_tag.gd")
 const CombiningOverlay = preload("res://scripts/combining_overlay.gd")
 const AuraOverlay = preload("res://scripts/aura_overlay.gd")
+const RotateHint = preload("res://scripts/rotate_hint.gd")
+const SellLure = preload("res://scripts/sell_lure.gd")
 const Aura = preload("res://scripts/aura.gd")
 
 # Game state is pulled from GameStateManager - no local copies
@@ -79,19 +81,15 @@ func _on_drag_started(item_data: APITypes.Item):
 	The chest only offers to buy while there is something to sell it. Standing
 	there asking the whole time reads as an instruction rather than an offer,
 	and there is nothing the player can do about it until they pick something
-	up.
+	up. What the chest does about being offered something is sell_lure.gd.
 	"""
-	var prompt: Label = sell_chest.get_node("Prompt")
-	prompt.text = "Drop here to sell for %d" % item_data.sell_value
-	prompt.visible = true
-	sell_chest.modulate = Color(1.15, 1.15, 1.15)
+	if sell_lure != null:
+		sell_lure.offer(item_data.sell_value)
 
 
 func _on_drag_ended():
-	var prompt: Label = sell_chest.get_node("Prompt")
-	prompt.text = "Drop here to sell"
-	prompt.visible = false
-	sell_chest.modulate = Color.WHITE
+	if sell_lure != null:
+		sell_lure.rest()
 
 
 func _on_item_stored(item_data: APITypes.PlacedItem):
@@ -369,6 +367,19 @@ func follow_pointer(pointer: Vector2) -> void:
 		inventory_grid.can_place_item(held_item, grid_pos))
 
 
+func carrying_something() -> bool:
+	"""Whether an item is in hand, however it came to be there.
+
+	The same four ways turn() knows about, asked as a question rather than
+	acted on, so the hint that says a turn is possible and the turn itself
+	cannot disagree about when it is.
+	"""
+	return held_item != null \
+		or dragging_shop_data != null \
+		or (inventory_grid != null and inventory_grid.dragging_object != null) \
+		or (storage_bin != null and storage_bin.dragged() != null)
+
+
 func turn(quarters: int) -> bool:
 	"""Turn whatever is held, however it came to be held.
 
@@ -376,7 +387,8 @@ func turn(quarters: int) -> bool:
 	out of the chest, carried off the shop shelf, or picked up after a
 	container move set it down -- and all four are holding it. Says whether
 	anything was, so the caller knows whether the input was used, and there is
-	only one list of what counts as holding something.
+	only one list of what counts as holding something. carrying_something()
+	asks that same list.
 	"""
 	if held_item:
 		held_item = held_item.turned(quarters)
@@ -573,6 +585,10 @@ var combining_overlay: Control
 # The zone an item reaches into (GDD 4.3). A child of the grid, because every
 # square it draws is a grid square.
 var aura_overlay: Control
+## Says how to turn an item, while one is in hand. See rotate_hint.gd.
+var rotate_hint: Control
+## What the sell chest does about an item being carried. See sell_lure.gd.
+var sell_lure: Node
 ## The box the five numbers are written in, one row each.
 var stats_panel: Control
 ## The value label of each row, by the caption beside it.
@@ -1881,6 +1897,16 @@ func _build_the_hints() -> void:
 	# time the board is redrawn.
 	add_child(aura_overlay)
 
+	rotate_hint = RotateHint.new()
+	rotate_hint.name = "RotateHint"
+	add_child(rotate_hint)
+
+	if sell_chest != null:
+		sell_lure = SellLure.new()
+		sell_lure.name = "SellLure"
+		add_child(sell_lure)
+		sell_lure.watch(sell_chest)
+
 	_build_merge_sounds()
 
 
@@ -1916,6 +1942,10 @@ func _merge_sound(beat: String) -> void:
 func _process(_delta: float) -> void:
 	refresh_combining()
 	refresh_aura()
+	if rotate_hint != null:
+		rotate_hint.carrying(carrying_something())
+	if sell_lure != null:
+		sell_lure.pointing_at_it(get_global_mouse_position())
 
 
 func refresh_combining(pointer := Vector2.INF) -> void:
