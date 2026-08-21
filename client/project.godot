@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 GameStateManager="*res://scripts/game_state_manager.gd"
 BattleServerAPI="*res://scripts/battle_server_api.gd"
 WindowSize="*res://scripts/window_size.gd"
+Symbols="*res://scripts/symbols.gd"
 
 [display]
 
