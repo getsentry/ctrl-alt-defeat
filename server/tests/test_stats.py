@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import pytest
 import stats
+import stats_page
 from models import BattleHistory, GameSession, User
 from utils import utc_now
 
@@ -166,6 +167,82 @@ class TestWhatTheCountsSay:
             "fought_this_week"] + 1, "nor this week"
 
 
+class TestHowFarRunsGet:
+    """The shape of the whole game, over every run that is over."""
+
+    def test_it_says_the_share_that_got_at_least_this_far(self):
+        how = stats.how_far([
+            {"rounds": 1, "wins": 0},
+            {"rounds": 5, "wins": 2},
+            {"rounds": 5, "wins": 4},
+            {"rounds": 12, "wins": 10},
+        ])
+
+        share = {step["step"]: step["share"] for step in how["rounds"]}
+        assert share[1] == 100, "every run fought a first round"
+        assert share[5] == 75, "three of the four got that far"
+        assert share[12] == 25
+        assert how["runs"] == 4
+
+    def test_the_two_lines_are_drawn_on_the_same_scale(self):
+        how = stats.how_far([{"rounds": 4, "wins": 1},
+                             {"rounds": 4, "wins": 3}])
+
+        wins = {step["step"]: step["share"] for step in how["wins"]}
+        assert wins[1] == 100 and wins[3] == 50
+        assert max(step["step"] for step in how["wins"]) == stats.ROUNDS, \
+            "wins are drawn out to the end of a run whether or not anybody got there"
+
+    def test_the_rounds_reach_as_far_as_the_furthest_run(self):
+        how = stats.how_far([{"rounds": 14, "wins": 4}])
+
+        assert max(step["step"] for step in how["rounds"]) == 14
+
+    def test_nothing_to_say_is_said_rather_than_divided_by(self):
+        assert stats.how_far([])["runs"] == 0
+
+    @pytest.mark.asyncio
+    async def test_a_run_still_being_played_is_not_a_run_that_stopped(
+            self, transactional_db):
+        """The one thing that would bend the whole shape.
+
+        A run at round three that is still going is not a run that stopped at
+        round three. Counting it as one would say the game is harder than it
+        is, and the more people playing right now, the worse it would say it.
+        """
+        async with transactional_db() as db:
+            player = await _a_player(db)
+            run = await _a_run(db, player)          # not paid out
+            before = await stats._runs_that_ended(db)
+
+            await _battles(db, run, won=8, lost=2)
+            in_hand = await stats._runs_that_ended(db)
+
+            await _battles(db, run, won=1, lost=0)  # they started another
+            once_they_moved_on = await stats._runs_that_ended(db)
+
+        assert in_hand == before, "the run they are in has not stopped anywhere"
+        assert len(once_they_moved_on) == len(before) + 1, \
+            "starting another is what ends the first, and only the first"
+        assert {"rounds": 10, "wins": 8} in once_they_moved_on
+
+    @pytest.mark.asyncio
+    async def test_a_run_that_was_paid_out_has_stopped(self, transactional_db):
+        """The other half of the same rule: a session that is finished is a
+        run that ended, whether or not another has begun.
+        """
+        async with transactional_db() as db:
+            player = await _a_player(db)
+            run = await _a_run(db, player, finished=True)
+            before = await stats._runs_that_ended(db)
+            await _battles(db, run, won=10, lost=3)
+
+            ended = await stats._runs_that_ended(db)
+
+        assert len(ended) == len(before) + 1
+        assert {"rounds": 13, "wins": 10} in ended
+
+
 class TestThePage:
     @pytest.mark.asyncio
     async def test_it_says_the_numbers_it_was_given(self, transactional_db):
@@ -178,6 +255,22 @@ class TestThePage:
 
         assert "Who is playing" in page
         assert "<html" in page and "</html>" in page
+
+    @pytest.mark.asyncio
+    def test_the_shape_of_the_runs_is_drawn_not_listed(self):
+        drawn = stats_page.render(stats.Stats(
+            taken_at="now",
+            how_far=stats.how_far([{"rounds": 3, "wins": 1},
+                                   {"rounds": 11, "wins": 10}])))
+
+        assert "<polyline" in drawn and "How far runs get" in drawn
+        assert "2 runs that are over" in drawn
+
+    def test_a_page_with_no_finished_runs_says_so(self):
+        drawn = stats_page.render(stats.Stats(taken_at="now"))
+
+        assert "No run has ended yet" in drawn
+        assert "<polyline" not in drawn
 
     @pytest.mark.asyncio
     async def test_each_page_leads_to_the_other(self, transactional_db):
@@ -279,33 +372,54 @@ class TestWhoHasBeenPlaying:
             assert len(await stats.recent(db, limit=1000)) >= 1
 
     @pytest.mark.asyncio
-    async def test_it_says_what_the_account_has_done_as_well_as_this_run(
+    async def test_it_says_what_they_have_played_as_well_as_this_run(
             self, transactional_db):
+        """Two runs behind them, one of which went the distance."""
         async with transactional_db() as db:
             player = await _a_player(db)
-            player.total_games_played = 3
-            player.total_runs_won = 1
             run = await _a_run(db, player, round_reached=2, wins=1, losses=1)
-            await _battles(db, run, won=17, lost=8)
+            await _battles(db, run, won=10, lost=4)   # a run that was won
+            await _battles(db, run, won=7, lost=4)    # and one that was not
 
             latest = (await stats.recent(db, limit=1))[0]
 
         assert latest.round == 2 and latest.wins == 1, "the run they are in"
-        assert latest.runs == 3, "the runs they have played to the end"
-        assert latest.runs_won == 1, "and how many of those they won"
+        assert latest.runs == 2, "the runs the history remembers"
+        assert latest.runs_won == 1, "and the one that reached ten wins"
         assert latest.battles_won == 17 and latest.battles_lost == 8, \
             "which is a different number: battles, over every run"
         assert latest.win_rate == 68, "17 of 25"
 
     @pytest.mark.asyncio
-    async def test_the_run_being_played_is_in_the_battle_record(
+    async def test_runs_are_told_apart_by_the_round_starting_again(
+            self, transactional_db):
+        """What makes one run two.
+
+        Nothing writes down which run a battle belonged to. Rounds climb
+        through a run and start again at one, so that is what is read.
+        """
+        async with transactional_db() as db:
+            player = await _a_player(db)
+            run = await _a_run(db, player)
+            await _battles(db, run, won=3, lost=0)
+            await _battles(db, run, won=1, lost=1)
+            await _battles(db, run, won=0, lost=1)
+
+            latest = (await stats.recent(db, limit=1))[0]
+
+        assert latest.runs == 3
+        assert latest.runs_won == 0, "none of them got near ten wins"
+        assert (latest.battles_won, latest.battles_lost) == (4, 2)
+
+    @pytest.mark.asyncio
+    async def test_the_run_being_played_is_counted_while_it_is_played(
             self, transactional_db):
         """The complaint this was changed for.
 
-        The record used to be added up from the account, and the account is
-        only added to as a run is paid out. So somebody in the middle of a run
-        -- four battles won, four lost, round nine -- was shown 0-0, which
-        reads as somebody who has never fought anything.
+        Runs and battles were both added up from the account, and the account
+        is only added to as a run is paid out. So somebody in the middle of a
+        run -- four battles won, four lost, round nine -- was shown 0-0 and no
+        runs at all, which reads as somebody who has never played.
         """
         async with transactional_db() as db:
             player = await _a_player(db)
@@ -315,7 +429,17 @@ class TestWhoHasBeenPlaying:
             latest = (await stats.recent(db, limit=1))[0]
 
         assert (latest.battles_won, latest.battles_lost) == (4, 4)
-        assert latest.runs == 0, "and none of it is banked yet"
+        assert latest.runs == 1, "the one they are in the middle of"
+
+    @pytest.mark.asyncio
+    async def test_somebody_who_has_fought_nothing_has_played_nothing(
+            self, transactional_db):
+        async with transactional_db() as db:
+            await _a_run(db, await _a_player(db))
+            latest = (await stats.recent(db, limit=1))[0]
+
+        assert (latest.runs, latest.runs_won) == (0, 0)
+        assert (latest.battles_won, latest.battles_lost) == (0, 0)
 
     def test_a_player_who_has_fought_nothing_does_not_divide_by_zero(self):
         empty = stats.Player(

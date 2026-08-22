@@ -61,6 +61,76 @@ def _tile(caption: str, value, note: str = "", colour: str = INK) -> str:
     )
 
 
+def _how_far(how: dict) -> str:
+    """How far runs get, as two lines on one scale.
+
+    Drawn rather than listed: the question is a shape -- where do runs fall
+    away -- and a column of percentages is the one form that shape cannot be
+    read from. Inline SVG, because the page carries no assets and cannot ask
+    the network for a charting library.
+
+    Both lines are read the same way: of the runs that are over, the share
+    that got at least this far. Rounds and wins share the scale, so the gap
+    between the lines at any point is how much of a run is spent losing.
+    """
+    if not how.get("runs"):
+        return '<p class="none">No run has ended yet.</p>'
+
+    rounds, wins = how["rounds"], how["wins"]
+    steps = max(len(rounds), len(wins))
+    if steps < 2:
+        return '<p class="none">Not enough runs yet to say.</p>'
+
+    wide, tall = 640, 250
+    left, right, top, floor = 40, 14, 14, 30
+
+    def x(step: int) -> float:
+        return left + (step - 1) * (wide - left - right) / (steps - 1)
+
+    def y(share: int) -> float:
+        return top + (100 - share) / 100 * (tall - top - floor)
+
+    def line(points: list, colour: str) -> str:
+        drawn = " ".join(f"{x(p['step']):.1f},{y(p['share']):.1f}" for p in points)
+        dots = "".join(
+            f'<circle cx="{x(p["step"]):.1f}" cy="{y(p["share"]):.1f}" r="3" '
+            f'fill="{colour}"/>' for p in points)
+        return (f'<polyline points="{drawn}" fill="none" stroke="{colour}" '
+                f'stroke-width="2.5" stroke-linejoin="round"/>{dots}')
+
+    grid = "".join(
+        f'<line x1="{left}" y1="{y(at):.1f}" x2="{wide - right}" '
+        f'y2="{y(at):.1f}" stroke="{EDGE}" stroke-width="1"/>'
+        f'<text x="{left - 8}" y="{y(at) + 4:.1f}" text-anchor="end">{at}%</text>'
+        for at in (0, 25, 50, 75, 100))
+
+    # Every step where they fit, every other where they do not.
+    each = 1 if steps <= 16 else 2
+    along = "".join(
+        f'<text x="{x(step):.1f}" y="{tall - floor + 18}" '
+        f'text-anchor="middle">{step}</text>'
+        for step in range(1, steps + 1) if step % each == 0 or step == 1)
+
+    middle = how["middle"]
+    return f"""
+  <div class="chart">
+    <svg viewBox="0 0 {wide} {tall}" role="img"
+         aria-label="Share of runs reaching each round and each number of wins">
+      {grid}{along}
+      {line(rounds, MAGENTA)}
+      {line(wins, MINT)}
+    </svg>
+    <p class="key">
+      <span class="dot" style="background:{MAGENTA}"></span>reached this round
+      <span class="dot" style="background:{MINT}"></span>won this many battles
+    </p>
+    <p class="asked">{how["runs"]} runs that are over. Half of them reach round
+      {middle["rounds"]} and win {middle["wins"]}; one in ten gets to round
+      {middle["rounds_top"]} and {middle["wins_top"]} wins. The run somebody is
+      in the middle of is left out &mdash; it has not stopped anywhere yet.</p>
+  </div>"""
+
+
 def _bars(reached: list) -> str:
     """How far runs got, as a row per round.
 
@@ -154,11 +224,12 @@ def render_players(players: List[Player], token: str = "") -> str:
     <tbody>{rows}</tbody>
   </table>
   <footer>A name is whatever the player typed on the menu, and one row is one
-  player: they have a single run, reset when they start again. Runs counts runs
-  played to the end, and how many of those went the distance &mdash; a run
-  walked away from is paid for but not counted as played. The battle record is
-  counted a battle at a time, over every run, so the run beside it is already
-  in it.</footer>
+  player: they have a single run, reset when they start again. What is behind
+  that run is read from the battle history, which keeps a row per battle.
+  Nothing there says which run a battle belonged to, so runs are counted where
+  the round starts again at one, and a run with ten wins in it is one that went
+  the distance. The run beside it counts while it is still being played, and a
+  run nobody fought a battle in is not counted at all.</footer>
 </div></body></html>"""
 
 
@@ -223,6 +294,15 @@ def render(stats: Stats, token: str = "") -> str:
     color: {MUTED};
   }}
   .none {{ color: {MUTED}; }}
+  .chart svg {{ width: 100%; height: auto; overflow: visible; }}
+  .chart text {{ fill: {MUTED}; font-size: 11px;
+    font-variant-numeric: tabular-nums; }}
+  .key {{ color: {MUTED}; font-size: 13px; margin: 6px 0 0; }}
+  .dot {{
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    margin: 0 6px 0 18px; vertical-align: -1px;
+  }}
+  .key .dot:first-child {{ margin-left: 0; }}
   footer {{ margin-top: 40px; color: {MUTED}; font-size: 12px; }}
   a {{ color: {MAGENTA}; }}
 </style>
@@ -254,6 +334,9 @@ def render(stats: Stats, token: str = "") -> str:
            f"{ROUNDS} wins banked", MINT)}
     {_tile("Battles today", battles.get("fought_this_day", 0))}
   </div>
+
+  <h2>How far runs get</h2>
+  {_how_far(stats.how_far)}
 
   <h2>Where each player's latest run stands</h2>
   {_bars(stats.reached)}

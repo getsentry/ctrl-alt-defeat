@@ -28,9 +28,9 @@ typed on a menu -- no account id, no token, no address.
 
 from dataclasses import asdict, dataclass, field
 from datetime import timedelta
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, or_, select
 
 from models import BattleHistory, GameSession, User
 from utils import utc_now
@@ -98,6 +98,10 @@ class Stats:
     #: this is the question "does anybody get to the end", answered.
     reached: List[Dict[str, int]] = field(default_factory=list)
 
+    #: And how far runs get in general, over every run that is over: the share
+    #: that reached each round, and the share that won that many battles.
+    how_far: Dict[str, object] = field(default_factory=dict)
+
     def as_dict(self) -> dict:
         return asdict(self)
 
@@ -131,38 +135,179 @@ async def _battles_fought(db, players: List[str]) -> Dict[str, Dict[str, int]]:
             for row in rows.all()}
 
 
+def _run_by_run(players: Optional[List[str]] = None):
+    """One row per run, worked out from the order of the battles.
+
+    Nothing keeps a run. `game_sessions` is written over when somebody starts
+    again, and `battle_history` has no run of its own to point at -- but it
+    has the round each battle was fought in, and rounds climb through a run
+    and start again at one. So a battle whose round is no higher than the one
+    before it is the first battle of a new run.
+
+    What comes back is the player, which of their runs it was, how many
+    battles it fought and how many it won, and when it last did anything.
+    Worked out rather than recorded, so it says what it can: a run nobody
+    fought a battle in is not here, and neither is anything from before the
+    database was last emptied.
+    """
+    within = {"partition_by": BattleHistory.player1_id,
+              "order_by": (BattleHistory.created_at, BattleHistory.id)}
+    battles = select(
+        BattleHistory.player1_id.label("player"),
+        BattleHistory.created_at.label("at"),
+        BattleHistory.id.label("row"),
+        BattleHistory.winner.label("winner"),
+        BattleHistory.round_number.label("round"),
+        func.lag(BattleHistory.round_number).over(**within).label("before"),
+    )
+    if players is not None:
+        battles = battles.where(BattleHistory.player1_id.in_(players))
+    battles = battles.subquery()
+
+    starts_a_run = case(
+        (or_(battles.c.before.is_(None), battles.c.round <= battles.c.before), 1),
+        else_=0)
+    numbered = select(
+        battles.c.player,
+        battles.c.winner,
+        battles.c.at,
+        func.sum(starts_a_run).over(
+            partition_by=battles.c.player,
+            order_by=(battles.c.at, battles.c.row)).label("run"),
+    ).subquery()
+
+    return select(
+        numbered.c.player,
+        numbered.c.run,
+        func.count().label("rounds"),
+        func.count().filter(numbered.c.winner == 1).label("wins"),
+    ).group_by(numbered.c.player, numbered.c.run).subquery()
+
+
+async def _runs_fought(db, players: List[str]) -> Dict[str, Dict[str, int]]:
+    """How many runs each of these players has had, and how many they won.
+
+    A run with ten wins in it is a run that went the distance.
+    """
+    if not players:
+        return {}
+
+    each_run = _run_by_run(players)
+    rows = await db.execute(
+        select(each_run.c.player, func.count(),
+               func.count().filter(each_run.c.wins >= ROUNDS))
+        .group_by(each_run.c.player))
+    return {row[0]: {"runs": int(row[1]), "won": int(row[2])}
+            for row in rows.all()}
+
+
+async def _runs_that_ended(db) -> List[Dict[str, int]]:
+    """Every run that is over, as how far it got.
+
+    The run somebody is in the middle of is left out. A run at round three
+    that is still being played is not a run that stopped at round three, and
+    counting it as one is what would make the shape of the whole page say the
+    game is harder than it is. Which run that is: the last one of a player
+    whose session has not been paid out.
+    """
+    each_run = _run_by_run()
+    rows = (await db.execute(
+        select(each_run.c.player, each_run.c.run, each_run.c.rounds,
+               each_run.c.wins))).all()
+
+    still_going = {
+        row[0] for row in (await db.execute(
+            select(GameSession.player_id)
+            .where(GameSession.finished_at.is_(None)))).all()
+    }
+    latest: Dict[str, int] = {}
+    for player, run, _, _ in rows:
+        latest[player] = max(run, latest.get(player, 0))
+
+    return [
+        {"rounds": int(rounds), "wins": int(wins)}
+        for player, run, rounds, wins in rows
+        if not (player in still_going and run == latest[player])
+    ]
+
+
+def how_far(runs: List[Dict[str, int]]) -> Dict[str, object]:
+    """How far runs get, as a page would draw it.
+
+    Two questions of the same runs, so they are answered on one scale: of the
+    runs that are over, the share that fought at least N rounds, and the share
+    that won at least N battles. Read across, the gap between the two lines is
+    how much of a run is spent losing.
+
+    A share of runs that got at least this far, rather than a count that
+    stopped exactly here, because that is the question somebody asks of a
+    chart like this -- how far do runs get -- and because it is the one shape
+    that cannot be read as a spike where a round happens to be popular.
+    """
+    if not runs:
+        return {"runs": 0, "rounds": [], "wins": [], "middle": {}}
+
+    rounds = sorted(run["rounds"] for run in runs)
+    wins = sorted(run["wins"] for run in runs)
+    total = len(runs)
+    furthest = max(max(rounds), ROUNDS)
+
+    def share(counted: List[int], step: int) -> int:
+        return round(sum(1 for one in counted if one >= step) / total * 100)
+
+    def middle(counted: List[int], part: float) -> int:
+        """The value the run this far along the order got to"""
+        return counted[min(len(counted) - 1, int(len(counted) * part))]
+
+    return {
+        "runs": total,
+        "rounds": [{"step": step, "share": share(rounds, step)}
+                   for step in range(1, furthest + 1)],
+        "wins": [{"step": step, "share": share(wins, step)}
+                 for step in range(1, ROUNDS + 1)],
+        "middle": {
+            "rounds": middle(rounds, 0.5), "wins": middle(wins, 0.5),
+            "rounds_top": middle(rounds, 0.9), "wins_top": middle(wins, 0.9),
+        },
+    }
+
+
 async def recent(db, limit: int = 50) -> List[Player]:
     """The people who played most recently, latest first.
 
     One row each, because that is all the schema keeps: a player has one
-    session, reset when they start again, so this is where each of them got
-    to rather than everything they have ever done. What they have ever done
-    is asked of the two tables that do remember -- the account, for runs, and
-    the battle history, for battles.
+    session, reset when they start again, so the run on the row is where they
+    are now, not where they have been. Everything behind it -- how many runs,
+    how many battles -- is asked of `battle_history`, the one table that keeps
+    a row per thing that happened. The account carries totals of its own, but
+    they are only added to as a run is paid out, so a run being played counts
+    for nothing until it ends.
     """
     rows = (await db.execute(
         select(GameSession.player_name, GameSession.round, GameSession.wins,
                GameSession.losses, GameSession.created_at,
                GameSession.last_activity, GameSession.finished_at,
-               User.total_games_played, User.total_runs_won,
                GameSession.player_id)
         .join(User, User.id == GameSession.user_id)
         .order_by(GameSession.last_activity.desc())
         .limit(max(1, min(limit, 200)))
     )).all()
 
-    fought = await _battles_fought(db, [row[9] for row in rows])
-    none_yet = {"won": 0, "lost": 0}
+    played = [row[7] for row in rows]
+    fought = await _battles_fought(db, played)
+    had = await _runs_fought(db, played)
+    no_battles = {"won": 0, "lost": 0}
+    no_runs = {"runs": 0, "won": 0}
     return [
         Player(
             name=row[0] or "Player",
             round=int(row[1]),
             wins=int(row[2]),
             losses=int(row[3]),
-            runs=int(row[7]),
-            runs_won=int(row[8]),
-            battles_won=fought.get(row[9], none_yet)["won"],
-            battles_lost=fought.get(row[9], none_yet)["lost"],
+            runs=had.get(row[7], no_runs)["runs"],
+            runs_won=had.get(row[7], no_runs)["won"],
+            battles_won=fought.get(row[7], no_battles)["won"],
+            battles_lost=fought.get(row[7], no_battles)["lost"],
             started=row[4].isoformat(),
             last_seen=row[5].isoformat(),
             finished=row[6] is not None,
@@ -233,5 +378,9 @@ async def gather(db) -> Stats:
         {"round": int(row[0]), "runs": int(row[1])}
         for row in (await db.execute(rounds)).all()
     ]
+
+    # And the same question of every run there has been, rather than of the
+    # one each player is in now.
+    stats.how_far = how_far(await _runs_that_ended(db))
 
     return stats
