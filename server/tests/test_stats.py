@@ -202,45 +202,50 @@ class TestHowFarRunsGet:
         assert stats.how_far([])["runs"] == 0
 
     @pytest.mark.asyncio
-    async def test_a_run_still_being_played_is_not_a_run_that_stopped(
+    async def test_a_run_being_played_is_counted_where_it_stands(
             self, transactional_db):
-        """The one thing that would bend the whole shape.
+        """Including the run in hand, deliberately.
 
-        A run at round three that is still going is not a run that stopped at
-        round three. Counting it as one would say the game is harder than it
-        is, and the more people playing right now, the worse it would say it.
+        Most runs that stop being played are not finished, they are walked
+        away from, and a chart that waited for a payout would never show one.
+        So a run at round three counts as a run at round three, and is counted
+        again further along if it gets further.
         """
         async with transactional_db() as db:
             player = await _a_player(db)
             run = await _a_run(db, player)          # not paid out
-            before = await stats._runs_that_ended(db)
+            before = await stats._every_run(db)
 
             await _battles(db, run, won=8, lost=2)
-            in_hand = await stats._runs_that_ended(db)
+            in_hand = await stats._every_run(db)
 
             await _battles(db, run, won=1, lost=0)  # they started another
-            once_they_moved_on = await stats._runs_that_ended(db)
+            once_they_moved_on = await stats._every_run(db)
 
-        assert in_hand == before, "the run they are in has not stopped anywhere"
-        assert len(once_they_moved_on) == len(before) + 1, \
-            "starting another is what ends the first, and only the first"
-        assert {"rounds": 10, "wins": 8} in once_they_moved_on
+        assert len(in_hand) == len(before) + 1, "counted while it is played"
+        assert {"rounds": 10, "wins": 8} in in_hand
+        assert len(once_they_moved_on) == len(before) + 2, "and so is the next"
 
     @pytest.mark.asyncio
-    async def test_a_run_that_was_paid_out_has_stopped(self, transactional_db):
-        """The other half of the same rule: a session that is finished is a
-        run that ended, whether or not another has begun.
+    async def test_the_furthest_a_player_ever_got_is_their_best_run(
+            self, transactional_db):
+        """People, not runs.
+
+        The furthest round and the most wins are asked separately, so a long
+        run that went badly and a short one that went well each say what they
+        are good for.
         """
         async with transactional_db() as db:
             player = await _a_player(db)
-            run = await _a_run(db, player, finished=True)
-            before = await stats._runs_that_ended(db)
-            await _battles(db, run, won=10, lost=3)
+            run = await _a_run(db, player)
+            await _battles(db, run, won=2, lost=9)   # eleven rounds, two wins
+            await _battles(db, run, won=6, lost=1)   # seven rounds, six wins
 
-            ended = await stats._runs_that_ended(db)
+            best = await stats._the_best_each_player_managed(db)
 
-        assert len(ended) == len(before) + 1
-        assert {"rounds": 13, "wins": 10} in ended
+        assert {"rounds": 11, "wins": 6} in best, "the best of each, apart"
+        assert len([one for one in best if one["rounds"] == 11]) == 1, \
+            "and one row for the player, not one per run"
 
 
 class TestThePage:
@@ -258,18 +263,29 @@ class TestThePage:
 
     @pytest.mark.asyncio
     def test_the_shape_of_the_runs_is_drawn_not_listed(self):
+        made = [{"rounds": 3, "wins": 1}, {"rounds": 11, "wins": 10}]
         drawn = stats_page.render(stats.Stats(
-            taken_at="now",
-            how_far=stats.how_far([{"rounds": 3, "wins": 1},
-                                   {"rounds": 11, "wins": 10}])))
+            taken_at="now", how_far=stats.how_far(made),
+            best=stats.how_far(made[:1])))
 
         assert "<polyline" in drawn and "How far runs get" in drawn
-        assert "2 runs that are over" in drawn
+        assert "2 runs." in drawn
 
-    def test_a_page_with_no_finished_runs_says_so(self):
+    def test_it_asks_the_same_shape_of_people_as_of_runs(self):
+        drawn = stats_page.render(stats.Stats(
+            taken_at="now",
+            how_far=stats.how_far([{"rounds": 3, "wins": 1}]),
+            best=stats.how_far([{"rounds": 3, "wins": 1},
+                                {"rounds": 9, "wins": 5}])))
+
+        assert "How far a player has ever got" in drawn
+        assert "2 players who have fought a battle." in drawn
+        assert drawn.count("<svg") == 2, "one chart each, not one for both"
+
+    def test_a_page_with_nothing_to_draw_says_so(self):
         drawn = stats_page.render(stats.Stats(taken_at="now"))
 
-        assert "No run has ended yet" in drawn
+        assert "Nobody has fought a battle yet" in drawn
         assert "<polyline" not in drawn
 
     @pytest.mark.asyncio

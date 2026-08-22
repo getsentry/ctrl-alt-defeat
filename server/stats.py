@@ -102,6 +102,11 @@ class Stats:
     #: that reached each round, and the share that won that many battles.
     how_far: Dict[str, object] = field(default_factory=dict)
 
+    #: The same shape asked of people rather than runs: the furthest each
+    #: player has ever got, so a run that went badly is not held against
+    #: somebody who has had a good one.
+    best: Dict[str, object] = field(default_factory=dict)
+
     def as_dict(self) -> dict:
         return asdict(self)
 
@@ -201,34 +206,38 @@ async def _runs_fought(db, players: List[str]) -> Dict[str, Dict[str, int]]:
             for row in rows.all()}
 
 
-async def _runs_that_ended(db) -> List[Dict[str, int]]:
-    """Every run that is over, as how far it got.
+async def _every_run(db) -> List[Dict[str, int]]:
+    """Every run the history remembers, as how far it got.
 
-    The run somebody is in the middle of is left out. A run at round three
-    that is still being played is not a run that stopped at round three, and
-    counting it as one is what would make the shape of the whole page say the
-    game is harder than it is. Which run that is: the last one of a player
-    whose session has not been paid out.
+    The run somebody is in the middle of is in here too, counted where it
+    stands. It drags the lines down while it is being played, which is the
+    point: most runs that stop being played are never finished, they are
+    walked away from, and a chart that waited for a payout would never show
+    those at all.
     """
     each_run = _run_by_run()
     rows = (await db.execute(
-        select(each_run.c.player, each_run.c.run, each_run.c.rounds,
-               each_run.c.wins))).all()
+        select(each_run.c.rounds, each_run.c.wins))).all()
+    return [{"rounds": int(row[0]), "wins": int(row[1])} for row in rows]
 
-    still_going = {
-        row[0] for row in (await db.execute(
-            select(GameSession.player_id)
-            .where(GameSession.finished_at.is_(None)))).all()
-    }
-    latest: Dict[str, int] = {}
-    for player, run, _, _ in rows:
-        latest[player] = max(run, latest.get(player, 0))
 
-    return [
-        {"rounds": int(rounds), "wins": int(wins)}
-        for player, run, rounds, wins in rows
-        if not (player in still_going and run == latest[player])
-    ]
+async def _the_best_each_player_managed(db) -> List[Dict[str, int]]:
+    """The furthest each player has ever got, one row each.
+
+    A different question from how far runs get, and the answer to a kinder
+    one: not what happens to a run, but what a person has managed. The run
+    they are in the middle of counts, as it does everywhere on this page --
+    somebody standing at round nine right now has got to round nine.
+
+    The furthest round and the most wins are asked separately, because they
+    are separate questions and need not have happened in the same run.
+    """
+    each_run = _run_by_run()
+    rows = (await db.execute(
+        select(each_run.c.player,
+               func.max(each_run.c.rounds), func.max(each_run.c.wins))
+        .group_by(each_run.c.player))).all()
+    return [{"rounds": int(row[1]), "wins": int(row[2])} for row in rows]
 
 
 def how_far(runs: List[Dict[str, int]]) -> Dict[str, object]:
@@ -381,6 +390,7 @@ async def gather(db) -> Stats:
 
     # And the same question of every run there has been, rather than of the
     # one each player is in now.
-    stats.how_far = how_far(await _runs_that_ended(db))
+    stats.how_far = how_far(await _every_run(db))
+    stats.best = how_far(await _the_best_each_player_managed(db))
 
     return stats

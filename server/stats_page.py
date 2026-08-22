@@ -61,7 +61,7 @@ def _tile(caption: str, value, note: str = "", colour: str = INK) -> str:
     )
 
 
-def _how_far(how: dict) -> str:
+def _how_far(how: dict, says: str) -> str:
     """How far runs get, as two lines on one scale.
 
     Drawn rather than listed: the question is a shape -- where do runs fall
@@ -69,17 +69,20 @@ def _how_far(how: dict) -> str:
     read from. Inline SVG, because the page carries no assets and cannot ask
     the network for a charting library.
 
-    Both lines are read the same way: of the runs that are over, the share
+    Both lines are read the same way: the share of whatever is being counted
     that got at least this far. Rounds and wins share the scale, so the gap
     between the lines at any point is how much of a run is spent losing.
+
+    Drawn twice on the page, of runs and then of people, so what it is saying
+    each time is the caller's to say -- `says` goes under it.
     """
     if not how.get("runs"):
-        return '<p class="none">No run has ended yet.</p>'
+        return '<p class="none">Nobody has fought a battle yet.</p>'
 
     rounds, wins = how["rounds"], how["wins"]
     steps = max(len(rounds), len(wins))
     if steps < 2:
-        return '<p class="none">Not enough runs yet to say.</p>'
+        return '<p class="none">Not enough yet to say.</p>'
 
     wide, tall = 640, 250
     left, right, top, floor = 40, 14, 14, 30
@@ -111,7 +114,6 @@ def _how_far(how: dict) -> str:
         f'text-anchor="middle">{step}</text>'
         for step in range(1, steps + 1) if step % each == 0 or step == 1)
 
-    middle = how["middle"]
     return f"""
   <div class="chart">
     <svg viewBox="0 0 {wide} {tall}" role="img"
@@ -124,10 +126,7 @@ def _how_far(how: dict) -> str:
       <span class="dot" style="background:{MAGENTA}"></span>reached this round
       <span class="dot" style="background:{MINT}"></span>won this many battles
     </p>
-    <p class="asked">{how["runs"]} runs that are over. Half of them reach round
-      {middle["rounds"]} and win {middle["wins"]}; one in ten gets to round
-      {middle["rounds_top"]} and {middle["wins_top"]} wins. The run somebody is
-      in the middle of is left out &mdash; it has not stopped anywhere yet.</p>
+    <p class="asked">{says}</p>
   </div>"""
 
 
@@ -233,6 +232,18 @@ def render_players(players: List[Player], token: str = "") -> str:
 </div></body></html>"""
 
 
+def _says(how: dict, about: str, ending: str, got: str = "reach") -> str:
+    """The sentence under a chart: the middle of it, and the far end"""
+    if not how.get("runs"):
+        return ""
+    middle = how["middle"]
+    return (
+        f'{how["runs"]} {about}. Half of them {got} round {middle["rounds"]} '
+        f'and {middle["wins"]} wins; one in ten {got} round '
+        f'{middle["rounds_top"]} and {middle["wins_top"]} wins. {ending}'
+    )
+
+
 def render(stats: Stats, token: str = "") -> str:
     """The whole page, with the numbers already in it.
 
@@ -336,7 +347,16 @@ def render(stats: Stats, token: str = "") -> str:
   </div>
 
   <h2>How far runs get</h2>
-  {_how_far(stats.how_far)}
+  {_how_far(stats.how_far, _says(
+      stats.how_far, "runs",
+      "A run being played now is counted where it stands, because most runs "
+      "that stop are walked away from rather than finished."))}
+
+  <h2>How far a player has ever got</h2>
+  {_how_far(stats.best, _says(
+      stats.best, "players who have fought a battle",
+      "Their best run, which need not be the same run for rounds as for "
+      "wins, and counts while they are still in it.", "have got to"))}
 
   <h2>Where each player's latest run stands</h2>
   {_bars(stats.reached)}
