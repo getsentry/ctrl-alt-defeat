@@ -100,7 +100,6 @@ class SessionManager:
             losses=0,
             inventory_grid=[],
             current_shop=generate_shop_items(1, game_seed),
-            last_battle_result=None,
             game_seed=game_seed,
             shop_refresh_count=0,
             inventory_storage=[],
@@ -130,7 +129,6 @@ class SessionManager:
                 existing_session.inventory_storage = dump_all(session.inventory_storage)
                 existing_session.server_containers = dump_all(session.server_containers)
                 existing_session.current_shop = dump_all(session.current_shop)
-                existing_session.last_battle_result = session.last_battle_result
                 existing_session.game_seed = game_seed
                 existing_session.shop_refresh_count = session.shop_refresh_count
                 existing_session.last_activity = utc_now()
@@ -152,7 +150,6 @@ class SessionManager:
                     inventory_storage=dump_all(session.inventory_storage),
                     server_containers=dump_all(session.server_containers),
                     current_shop=dump_all(session.current_shop),
-                    last_battle_result=session.last_battle_result,
                     game_seed=game_seed,
                     shop_refresh_count=session.shop_refresh_count,
                 )
@@ -304,7 +301,6 @@ class SessionManager:
                 db_session.inventory_storage = dump_all(session.inventory_storage)
                 db_session.server_containers = dump_all(session.server_containers)
                 db_session.current_shop = dump_all(session.current_shop)
-                db_session.last_battle_result = session.last_battle_result
                 db_session.shop_refresh_count = session.shop_refresh_count
                 db_session.last_activity = utc_now()
 

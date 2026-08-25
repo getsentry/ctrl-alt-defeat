@@ -32,7 +32,7 @@ class TestShopRefresh:
         for i in range(8):
             response = auth_client.post("/shop/refresh", json={"round": 1})
             assert response.status_code == 200
-            shop = response.json()["shop"]
+            shop = response.json()["current_shop"]
 
             assert len(shop) == 5, f"Refresh {i}: Shop should have exactly 5 slots"
             item_count = sum(1 for item in shop if item is not None)
@@ -56,7 +56,7 @@ class TestShopRefresh:
         response = auth_client.post("/shop/refresh", json={"round": 1})
         assert response.status_code == 200
 
-        refreshed_shop = response.json()["shop"]
+        refreshed_shop = response.json()["current_shop"]
         refreshed_names = [item["name"] if item else None for item in refreshed_shop]
 
         # Shops should be different
@@ -185,10 +185,10 @@ class TestShopRefresh:
 
         # Refresh both shops
         response1 = client1.post("/shop/refresh", json={"round": 1})
-        shop1_refresh = response1.json()["shop"]
+        shop1_refresh = response1.json()["current_shop"]
 
         response2 = client2.post("/shop/refresh", json={"round": 1})
-        shop2_refresh = response2.json()["shop"]
+        shop2_refresh = response2.json()["current_shop"]
 
         # Refreshed shops should also be identical
         for i in range(5):
@@ -216,7 +216,7 @@ class TestShopRefresh:
 
         # Get the third refresh shop
         response = auth_client.post("/shop/refresh", json={"round": 1})
-        round1_shop = response.json()["shop"]
+        round1_shop = response.json()["current_shop"]
 
         # Purchase some items and battle to advance round
         session = auth_client.get("/session").json()
@@ -245,7 +245,7 @@ class TestShopRefresh:
         # If we won, we should be on round 2 with reset counter
         if result["battle_result"]["winner"] == 1:
             # Get new round's shop
-            new_shop = result["new_shop"]
+            new_shop = result["current_shop"]
 
             # This should be different from the heavily refreshed round 1 shop
             same_count = sum(

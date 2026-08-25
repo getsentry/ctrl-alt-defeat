@@ -31,6 +31,17 @@ func after_each():
 	await get_tree().process_frame
 
 
+func _held_at(visual: Control) -> Vector2:
+	"""Where the pointer is, taking an item by the middle of its corner square.
+
+	The drag calls want telling where the hand is rather than reading it, so a
+	test has to say. This is the plain answer for a test that does not care
+	which square: the one the item stands on.
+	"""
+	return grid.get_global_transform() * (visual.position
+		+ Vector2(grid.cell_size, grid.cell_size) / 2.0)
+
+
 func _item(overrides: Dictionary = {}) -> Resource:
 	return TestHelpers.placed_item(overrides)
 
@@ -48,7 +59,7 @@ func _state(items: Array, containers: Array) -> APITypes.InventoryState:
 	for container in containers:
 		container_data.append(container.to_dict())
 	return APITypes.InventoryState.new(
-		{"items": item_data, "servers": container_data})
+		{"inventory_grid": item_data, "server_containers": container_data})
 
 
 func _load_default_containers() -> void:
@@ -219,8 +230,8 @@ func test_state_read_back_matches_what_was_loaded():
 
 	var state = grid.get_inventory_state()
 
-	assert_eq(state["items"].size(), 2, "Both items should come back")
-	assert_eq(state["servers"].size(), 2, "Both containers should come back")
+	assert_eq(state["inventory_grid"].size(), 2, "Both items should come back")
+	assert_eq(state["server_containers"].size(), 2, "Both containers should come back")
 
 
 func test_state_survives_a_save_and_reload():
@@ -234,8 +245,8 @@ func test_state_survives_a_save_and_reload():
 	grid.load_inventory_state(APITypes.InventoryState.new(saved))
 	var reloaded = grid.get_inventory_state()
 
-	assert_eq(reloaded["items"].size(), 1, "The item should survive a save and reload")
-	assert_eq(reloaded["servers"].size(), 1, "The container should survive a save and reload")
+	assert_eq(reloaded["inventory_grid"].size(), 1, "The item should survive a save and reload")
+	assert_eq(reloaded["server_containers"].size(), 1, "The container should survive a save and reload")
 
 
 func test_clear_all_empties_the_grid():
@@ -285,7 +296,7 @@ func test_dragging_an_item_keeps_it_above_the_containers():
 	_load_default_containers()
 	grid.place_shop_item(_item(), Vector2i(2, 3))
 
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
 	var container_order = grid.get_children().find(grid.containers[0].visual)
 	var item_order = grid.get_children().find(grid.items[0])
@@ -345,7 +356,7 @@ func test_dropping_on_the_chest_takes_the_item_off_the_grid():
 	grid.storage_zone = zone
 
 	watch_signals(grid)
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -365,7 +376,7 @@ func test_a_drop_away_from_the_chest_is_an_ordinary_move():
 	grid.storage_zone = zone
 
 	watch_signals(grid)
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -379,7 +390,7 @@ func test_a_grid_with_no_chest_still_drops():
 	grid.place_shop_item(_item({"id": "no_chest"}), Vector2i(2, 3))
 	assert_null(grid.storage_zone, "Setup: no chest on this grid")
 
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -461,7 +472,8 @@ func test_dropping_on_an_item_asks_the_screen_to_make_way():
 	grid.saves_positions = true
 
 	watch_signals(grid)
-	grid._start_drag(grid.item_visual("held"))
+	var held_visual: Control = grid.item_visual("held")
+	grid._start_drag(held_visual, _held_at(held_visual))
 	grid._end_drag(grid.get_global_transform()
 		* (grid.grid_to_pixel(Vector2i(2, 3)) + Vector2(4, 4)))
 	await get_tree().process_frame
@@ -488,7 +500,7 @@ func test_dropping_on_the_main_grid_hands_the_item_over():
 	grid.grid_zone = _grid_under_the_drop()
 
 	watch_signals(grid)
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -512,7 +524,7 @@ func test_shuffling_inside_a_chest_is_not_sent_anywhere():
 	grid.place_shop_item(_item({"id": "shuffled"}), Vector2i(0, 0))
 
 	watch_signals(grid)
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -579,8 +591,8 @@ func test_a_refused_drop_puts_the_turn_back_as_well_as_the_item():
 	_load_default_containers()
 	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
 
-	grid._start_drag(grid.items[0])
-	assert_true(grid.turn_dragged(1), "setup: the drag turned it")
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
+	assert_true(grid.turn_dragged(1, _held_at(grid.dragging_object)), "setup: the drag turned it")
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -596,8 +608,8 @@ func test_a_refused_drop_leaves_the_squares_it_really_covers_taken():
 	_load_default_containers()
 	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
 
-	grid._start_drag(grid.items[0])
-	grid.turn_dragged(1)
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
+	grid.turn_dragged(1, _held_at(grid.dragging_object))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -610,8 +622,8 @@ func test_a_refused_drop_draws_the_item_the_way_it_put_it_back():
 	_load_default_containers()
 	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
 
-	grid._start_drag(grid.items[0])
-	grid.turn_dragged(1)
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
+	grid.turn_dragged(1, _held_at(grid.dragging_object))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -642,7 +654,7 @@ func _other_grid(at: Vector2 = Vector2(1000, 0)) -> InventoryGrid:
 func test_the_grid_marks_where_a_held_item_would_land():
 	_load_default_containers()
 	grid.place_shop_item(_item(), Vector2i(2, 3))
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
 	grid.update_drag_preview(grid.global_position + grid.grid_to_pixel(Vector2i(4, 3)))
 
@@ -654,7 +666,7 @@ func test_the_grid_marks_where_a_held_item_would_land():
 func test_a_pointer_off_the_containers_is_marked_refused():
 	_load_default_containers()
 	grid.place_shop_item(_item(), Vector2i(2, 3))
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
 	grid.update_drag_preview(grid.global_position + grid.grid_to_pixel(Vector2i(0, 0)))
 
@@ -670,7 +682,7 @@ func test_the_other_grid_marks_the_square_when_the_pointer_is_over_it():
 	_load_default_containers()
 	grid.place_shop_item(_item(), Vector2i(2, 3))
 	grid.grid_zone = other
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
 	grid.update_drag_preview(other.global_position + other.grid_to_pixel(Vector2i(2, 3)))
 
@@ -686,7 +698,7 @@ func test_bringing_the_pointer_back_clears_the_other_grid():
 	_load_default_containers()
 	grid.place_shop_item(_item(), Vector2i(2, 3))
 	grid.grid_zone = other
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
 	grid.update_drag_preview(other.global_position + other.grid_to_pixel(Vector2i(2, 3)))
 	grid.update_drag_preview(grid.global_position + grid.grid_to_pixel(Vector2i(4, 3)))
@@ -700,7 +712,7 @@ func test_letting_go_clears_the_other_grid():
 	_load_default_containers()
 	grid.place_shop_item(_item(), Vector2i(2, 3))
 	grid.grid_zone = other
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 	grid.update_drag_preview(other.global_position + other.grid_to_pixel(Vector2i(2, 3)))
 
 	grid._end_drag()
@@ -762,7 +774,7 @@ func test_picking_a_container_up_takes_its_items_with_it():
 	grid.place_shop_item(_item({"id": "riding"}), Vector2i(2, 3))
 	grid.place_shop_item(_item({"id": "elsewhere"}), Vector2i(4, 3))
 
-	grid._start_container_drag(grid.containers[0])
+	grid._start_container_drag(grid.containers[0], _held_at(grid.containers[0].visual))
 
 	var riding = grid.container_riders.map(func(r): return r.id())
 	assert_eq(riding, ["riding"], "Only what stands on it comes with it")
@@ -772,7 +784,7 @@ func test_dropping_a_container_somewhere_it_fits_asks_for_the_move():
 	_load_default_containers()
 	watch_signals(grid)
 
-	grid._start_container_drag(grid.containers[0])
+	grid._start_container_drag(grid.containers[0], _held_at(grid.containers[0].visual))
 	grid.drop_container_at(grid.global_position + grid.grid_to_pixel(Vector2i(0, 0)))
 	await get_tree().process_frame
 
@@ -790,7 +802,7 @@ func test_dropping_a_container_back_where_it_started_asks_for_nothing():
 	_load_default_containers()
 	watch_signals(grid)
 
-	grid._start_container_drag(grid.containers[0])
+	grid._start_container_drag(grid.containers[0], _held_at(grid.containers[0].visual))
 	grid.drop_container_at(grid.global_position + grid.grid_to_pixel(Vector2i(2, 3)))
 	await get_tree().process_frame
 
@@ -805,7 +817,7 @@ func test_a_container_dropped_where_it_cannot_stand_goes_back():
 	var was_at = placed.visual.position
 	var rider_was_at = grid.items[0].position
 
-	grid._start_container_drag(placed)
+	grid._start_container_drag(placed, _held_at(placed.visual))
 	placed.visual.position = Vector2(-500, -500)  # dragged off the board
 	grid.drop_container_at(grid.global_position + Vector2(-500, -500))
 	await get_tree().process_frame
@@ -819,7 +831,7 @@ func test_a_read_only_grid_does_not_pick_containers_up():
 	grid.read_only = true
 	grid.load_inventory_state(_state([], [_container({"position": [2, 3]})]))
 
-	grid._start_container_drag(grid.containers[0])
+	grid._start_container_drag(grid.containers[0], _held_at(grid.containers[0].visual))
 
 	assert_null(grid.dragging_container, "A read-only board holds still")
 
@@ -845,7 +857,7 @@ func test_a_container_does_not_carry_an_item_that_has_moved_away():
 	grid.place_shop_item(_item({"id": "moved_away"}), Vector2i(2, 3))
 	grid._place_item_at(grid.items[0], Vector2i(4, 3))
 
-	grid._start_container_drag(grid.containers[0])
+	grid._start_container_drag(grid.containers[0], _held_at(grid.containers[0].visual))
 
 	assert_eq(grid.container_riders.size(), 0,
 		"Container A carries nothing: the item is on B now")
@@ -860,9 +872,9 @@ func test_a_container_does_not_carry_an_item_that_has_moved_away():
 func test_turning_a_dragged_item_changes_the_squares_it_covers():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
-	grid.turn_dragged(1)
+	grid.turn_dragged(1, _held_at(grid.dragging_object))
 
 	var item_data = grid.items[0].get_meta("item_data")
 	assert_eq(item_data.facing(), 90, "A quarter turn clockwise")
@@ -874,9 +886,9 @@ func test_turning_a_dragged_item_changes_the_squares_it_covers():
 func test_turning_the_other_way_goes_the_other_way():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
-	grid.turn_dragged(-1)
+	grid.turn_dragged(-1, _held_at(grid.dragging_object))
 
 	assert_eq(grid.items[0].get_meta("item_data").facing(), 270,
 		"Anticlockwise from square on is three quarters round")
@@ -885,18 +897,19 @@ func test_turning_the_other_way_goes_the_other_way():
 func test_four_turns_bring_a_dragged_item_back():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
 	for i in 4:
-		grid.turn_dragged(1)
+		grid.turn_dragged(1, _held_at(grid.dragging_object))
 
 	assert_eq(grid.items[0].get_meta("item_data").facing(), 0, "Back where it started")
 
 
 func test_turning_nothing_is_harmless():
-	# Nothing is being dragged, so there is nothing to turn.
+	# Nothing is being dragged, so there is no artwork to take a pointer from
+	# and nothing for the pointer to turn.
 	_load_default_containers()
-	grid.turn_dragged(1)
+	grid.turn_dragged(1, grid.global_position + Vector2(10, 10))
 	assert_null(grid.dragging_object, "Still nothing in hand")
 
 
@@ -952,13 +965,13 @@ func test_saving_the_board_keeps_which_way_an_item_faces():
 
 	var saved = grid.get_inventory_state()
 
-	assert_eq(saved["items"][0]["rotation"], 90, "It should still be facing that way")
+	assert_eq(saved["inventory_grid"][0]["rotation"], 90, "It should still be facing that way")
 
 
 func test_putting_an_item_back_unchanged_tells_the_server_nothing():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "unmoved", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 	var item_data = grid.items[0].get_meta("item_data")
 
 	assert_true(grid.drop_changes_nothing(Vector2i(2, 3), item_data),
@@ -971,9 +984,9 @@ func test_turning_an_item_in_place_is_a_change():
 	# the server has to hear about it -- its board is the one the battle uses.
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "turned", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
-	grid.turn_dragged(1)
+	grid.turn_dragged(1, _held_at(grid.dragging_object))
 
 	var item_data = grid.items[0].get_meta("item_data")
 	assert_false(grid.drop_changes_nothing(Vector2i(2, 3), item_data),
@@ -983,7 +996,7 @@ func test_turning_an_item_in_place_is_a_change():
 func test_moving_an_item_without_turning_it_is_a_change():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "moved", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
-	grid._start_drag(grid.items[0])
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 	var item_data = grid.items[0].get_meta("item_data")
 
 	assert_false(grid.drop_changes_nothing(Vector2i(4, 3), item_data),
@@ -1008,7 +1021,7 @@ func test_the_mark_is_drawn_above_the_containers():
 func test_the_mark_is_drawn_above_a_container_in_hand():
 	# The worst case: what hides the mark is the very thing being placed.
 	_load_default_containers()
-	grid._start_container_drag(grid.containers[0])
+	grid._start_container_drag(grid.containers[0], _held_at(grid.containers[0].visual))
 
 	assert_gt(grid.hover_preview.z_index, grid.containers[0].visual.z_index,
 		"The container being carried should not cover its own mark")
@@ -1018,7 +1031,7 @@ func test_the_mark_is_drawn_above_a_container_in_hand():
 func test_carrying_a_container_marks_where_it_would_stand():
 	_load_default_containers()
 	var held = grid.containers[0]
-	grid._start_container_drag(held)
+	grid._start_container_drag(held, _held_at(held.visual))
 
 	grid.update_container_preview(
 		grid.get_global_transform() * grid.grid_to_pixel(Vector2i(5, 1)))
@@ -1047,14 +1060,15 @@ func test_redrawing_the_board_lets_go_of_whatever_was_being_dragged():
 	merge that plays as the shop opens. A drag that outlived the redraw would
 	ask a freed item where it landed on the next mouse-up."""
 	grid.load_inventory_state(APITypes.InventoryState.new({
-		"items": [TestHelpers.placed_item_data({"id": "held", "position": [2, 3]})],
-		"servers": [TestHelpers.container_data({"id": "srv", "position": [2, 3]})]
+		"inventory_grid": [TestHelpers.placed_item_data({"id": "held", "position": [2, 3]})],
+		"server_containers": [TestHelpers.container_data({"id": "srv", "position": [2, 3]})]
 	}))
-	grid._start_drag(grid.item_visual("held"))
+	var held_visual: Control = grid.item_visual("held")
+	grid._start_drag(held_visual, _held_at(held_visual))
 	assert_not_null(grid.dragging_object, "Setup: something is being dragged")
 
 	grid.load_inventory_state(APITypes.InventoryState.new(
-		{"items": [], "servers": []}))
+		{"inventory_grid": [], "server_containers": []}))
 
 	assert_null(grid.dragging_object, "the drag is over, because the item is gone")
 
@@ -1169,7 +1183,7 @@ func test_a_turn_keeps_hold_of_the_square_in_hand():
 	var spear := _put_down(_spear())
 	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
 
-	grid.turn_dragged(1)
+	grid.turn_dragged(1, _held_at(grid.dragging_object))
 
 	assert_eq(grid.grab_cell, Vector2i(0, 0),
 		"The tip of a spear turned clockwise is its left end, and the hand "
@@ -1181,7 +1195,7 @@ func test_a_turn_swings_the_item_about_the_hand_and_not_about_its_corner():
 	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
 	var was: Vector2 = spear.position
 
-	grid.turn_dragged(1)
+	grid.turn_dragged(1, _held_at(grid.dragging_object))
 
 	assert_eq(spear.position, was + Vector2(0, 3 * (grid.cell_size + grid.cell_spacing)),
 		"Held by its fourth square and turned so that square is its first, "
@@ -1195,7 +1209,7 @@ func test_a_turn_moves_the_artwork_and_the_hold_together():
 	var pointer := _pointer_over(Vector2i(2, 3))
 	grid._start_drag(spear, pointer)
 
-	grid.turn_dragged(1)
+	grid.turn_dragged(1, _held_at(grid.dragging_object))
 
 	var local: Vector2 = grid.get_global_transform().affine_inverse() * pointer
 	assert_eq(spear.position, local + grid.drag_offset,
@@ -1226,7 +1240,7 @@ func test_four_turns_bring_the_item_back_where_it_started():
 	var held: Vector2i = grid.grab_cell
 
 	for quarter in range(4):
-		grid.turn_dragged(1)
+		grid.turn_dragged(1, _held_at(grid.dragging_object))
 
 	assert_eq(grid.grab_cell, held, "Still held by the same square")
 	assert_eq(spear.position, was, "and back where it was drawn")

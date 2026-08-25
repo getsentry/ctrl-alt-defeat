@@ -82,8 +82,8 @@ func test_api_types_can_parse_server_data():
 		"actions": [],
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
-		"player_inventory": {"items": [], "servers": []},
-		"enemy_inventory": {"items": [], "servers": []}
+		"player_inventory": {"inventory_grid": [], "server_containers": []},
+		"enemy_inventory": {"inventory_grid": [], "server_containers": []}
 	}
 
 	var battle_result = APITypes.BattleResult.new(battle_data)

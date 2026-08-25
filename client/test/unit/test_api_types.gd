@@ -84,8 +84,8 @@ func _battle_result(overrides: Dictionary = {}) -> Dictionary:
 		"actions": [],
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
-		"player_inventory": {"items": [], "servers": []},
-		"enemy_inventory": {"items": [], "servers": []}
+		"player_inventory": {"inventory_grid": [], "server_containers": []},
+		"enemy_inventory": {"inventory_grid": [], "server_containers": []}
 	}
 	data.merge(overrides, true)
 	return data
@@ -181,8 +181,8 @@ func test_round_trip_is_stable_over_repeats():
 
 func test_inventory_state_loads_items_and_containers():
 	var state = APITypes.InventoryState.new({
-		"items": [_item({"id": "a"}), _item({"id": "b"})],
-		"servers": [_container({"id": "c1"}), _container({"id": "c2"}), _container({"id": "c3"})]
+		"inventory_grid": [_item({"id": "a"}), _item({"id": "b"})],
+		"server_containers": [_container({"id": "c1"}), _container({"id": "c2"}), _container({"id": "c3"})]
 	})
 
 	assert_eq(state.items.size(), 2, "Should load every item")
@@ -191,8 +191,8 @@ func test_inventory_state_loads_items_and_containers():
 
 func test_inventory_state_keeps_item_order():
 	var state = APITypes.InventoryState.new({
-		"items": [_item({"id": "first"}), _item({"id": "second"}), _item({"id": "third"})],
-		"servers": []
+		"inventory_grid": [_item({"id": "first"}), _item({"id": "second"}), _item({"id": "third"})],
+		"server_containers": []
 	})
 
 	var ids = state.items.map(func(i): return i.id)
@@ -200,7 +200,7 @@ func test_inventory_state_keeps_item_order():
 
 
 func test_inventory_state_handles_an_empty_inventory():
-	var state = APITypes.InventoryState.new({"items": [], "servers": []})
+	var state = APITypes.InventoryState.new({"inventory_grid": [], "server_containers": []})
 
 	assert_eq(state.items.size(), 0, "An empty inventory should load as empty")
 	assert_eq(state.containers.size(), 0, "An empty inventory should have no containers")
@@ -212,7 +212,7 @@ func test_inventory_state_survives_a_round_trip():
 	var container = APITypes.PlacedItem.new(_container())
 
 	var state = APITypes.InventoryState.new({
-		"items": [item.to_dict()], "servers": [container.to_dict()]
+		"inventory_grid": [item.to_dict()], "server_containers": [container.to_dict()]
 	})
 
 	assert_eq(state.items.size(), 1, "The item should come back")
@@ -260,8 +260,8 @@ func test_battle_result_carries_both_inventories():
 	var result = APITypes.BattleResult.new(_battle_result({
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
-		"player_inventory": {"items": [_item({"id": "mine"})], "servers": [_container()]},
-		"enemy_inventory": {"items": [_item({"id": "theirs"}), _item({"id": "theirs2"})], "servers": []}
+		"player_inventory": {"inventory_grid": [_item({"id": "mine"})], "server_containers": [_container()]},
+		"enemy_inventory": {"inventory_grid": [_item({"id": "theirs"}), _item({"id": "theirs2"})], "server_containers": []}
 	}))
 
 	assert_eq(result.player_inventory.items.size(), 1, "The player inventory should be parsed")
@@ -279,14 +279,14 @@ func test_battle_response_resolves_to_leaf_values():
 			"actions": [_action({"timestamp": 250, "action": "damage", "damage": 4, "player": 2})],
 			"opponent_name": "AI Opponent",
 			"opponent_type": "ai",
-			"player_inventory": {"items": [_item({"id": "deep"})], "servers": []}
+			"player_inventory": {"inventory_grid": [_item({"id": "deep"})], "server_containers": []}
 		}),
 		"session_update": {
 			"round": 3, "gold": 21, "gold_earned": 9, "wins": 2,
 			"losses": 0, "lives": 5, "game_over": false, "run_over": false, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
-		"new_shop": [],
+		"current_shop": [],
 		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "battle-123"
 	})
@@ -850,7 +850,7 @@ func test_the_combining_catalogue_names_both_sides_and_the_items():
 func test_the_battle_answer_carries_the_rack_the_combining_left():
 	var response = APITypes.BattleResponse.new({
 		"battle_result": _battle_result({
-			"player_inventory": {"items": [_item({"id": "fought_with"})], "servers": []}
+			"player_inventory": {"inventory_grid": [_item({"id": "fought_with"})], "server_containers": []}
 		}),
 		"session_update": {
 			"round": 3, "gold": 21, "gold_earned": 9, "wins": 2,
@@ -862,7 +862,7 @@ func test_the_battle_answer_carries_the_rack_the_combining_left():
 			}],
 			"pending": [],
 		},
-		"new_shop": [],
+		"current_shop": [],
 		"inventory": {
 			"inventory_grid": [_item({"id": "new_1"})],
 			"inventory_storage": [],

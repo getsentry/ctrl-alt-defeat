@@ -154,3 +154,17 @@ Worth trying, in the order they get cheaper:
 
 `battle_hud.gd` builds the rows in `_build_effects`/`add_effect`, at the two
 offsets the block plate left them (196 and 280).
+
+## A battle's history is saved as an untyped dict
+
+`main.py` builds `clean_battle_result` by hand -- six keys picked out of the
+engine's result -- and hands it to `save_battle_history(battle_data=...)`,
+where `BattleHistoryEntry.battle_data` is `Dict[str, Any]`.
+
+So the one record of what happened in a battle has no shape anyone can check.
+A key renamed at one end is a key silently missing at the other, and nothing
+fails until something reads it back.
+
+It is six of `BattleResult`'s eleven fields, which is a real thing worth
+naming: the racks that fought, the opponent and what kind of opponent they
+were are not kept. Give it a model and the hand-built dict goes with it.

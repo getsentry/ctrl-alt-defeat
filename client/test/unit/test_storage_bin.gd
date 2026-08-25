@@ -441,7 +441,8 @@ func test_turning_what_was_picked_out_of_the_chest():
 	bin.pick_up(bin.item_at(bin.global_position + _in_the_tray("turning")),
 		bin.global_position + Vector2(50, 50))
 
-	assert_true(bin.turn_dragged(1), "It says it turned something")
+	assert_true(bin.turn_dragged(1, bin.global_position + Vector2(50, 50)),
+		"It says it turned something")
 	assert_eq(bin.dragged().facing(), 90, "and it is facing a quarter turn round")
 
 
@@ -502,7 +503,8 @@ func test_letting_the_button_go_puts_it_down():
 
 
 func test_turning_with_nothing_in_hand_does_nothing():
-	assert_false(bin.turn_dragged(1), "Nothing was turned, so the input is not used")
+	assert_false(bin.turn_dragged(1, bin.global_position + Vector2(50, 50)),
+		"Nothing was turned, so the input is not used")
 
 
 func test_an_item_put_back_in_the_chest_loses_the_turn():
@@ -511,7 +513,7 @@ func test_an_item_put_back_in_the_chest_loses_the_turn():
 	bin.show_items(_chest(["turned"]))
 	bin.pick_up(bin.item_at(bin.global_position + _in_the_tray("turned")),
 		bin.global_position + Vector2(50, 50))
-	bin.turn_dragged(1)
+	bin.turn_dragged(1, bin.global_position + Vector2(50, 50))
 
 	bin.release_at(bin.global_position + Vector2(60, 60))
 

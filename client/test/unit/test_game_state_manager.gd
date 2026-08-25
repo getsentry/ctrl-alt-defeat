@@ -60,8 +60,8 @@ func test_inventory_persistence():
 
 	# Retrieve and verify
 	var saved = GameStateManager.get_inventory_state()
-	assert_eq(saved.items.size(), 1, "Should have 1 item saved")
-	assert_eq(saved.servers.size(), 1, "Should have 1 server saved")
+	assert_eq(saved.inventory_grid.size(), 1, "Should have 1 item saved")
+	assert_eq(saved.server_containers.size(), 1, "Should have 1 server saved")
 
 func test_battle_result_updates_state():
 	GameStateManager.start_new_game()
@@ -78,8 +78,8 @@ func test_battle_result_updates_state():
 			"seed": 12345,
 			"opponent_name": "AI Opponent",
 			"opponent_type": "ai",
-			"player_inventory": {"items": [], "servers": []},
-			"enemy_inventory": {"items": [], "servers": []}
+			"player_inventory": {"inventory_grid": [], "server_containers": []},
+			"enemy_inventory": {"inventory_grid": [], "server_containers": []}
 		},
 		"session_update": {
 			"round": 2,
@@ -92,7 +92,7 @@ func test_battle_result_updates_state():
 			"victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
-		"new_shop": [TestHelpers.item_data({"id": "shop_item_1", "cost": 3})],
+		"current_shop": [TestHelpers.item_data({"id": "shop_item_1", "cost": 3})],
 		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-123"
 	})
@@ -126,15 +126,15 @@ func test_a_battle_brings_back_what_the_new_round_charges_to_reroll():
 			"winner": 1, "duration": 10.0, "player1_quota": 100,
 			"player2_quota": 0, "actions": [], "seed": 1,
 			"opponent_name": "AI", "opponent_type": "ai",
-			"player_inventory": {"items": [], "servers": []},
-			"enemy_inventory": {"items": [], "servers": []},
+			"player_inventory": {"inventory_grid": [], "server_containers": []},
+			"enemy_inventory": {"inventory_grid": [], "server_containers": []},
 		},
 		"session_update": {
 			"round": 2, "gold": 12, "gold_earned": 10, "wins": 1, "losses": 0,
 			"lives": 5, "game_over": false, "run_over": false, "victory": false,
 			"shop_refresh_cost": 1, "combinations": [], "pending": []
 		},
-		"new_shop": [],
+		"current_shop": [],
 		"inventory": {
 			"inventory_grid": [], "inventory_storage": [],
 			"server_containers": []
@@ -164,15 +164,15 @@ func test_battle_result_stores_events_for_playback():
 			],
 			"opponent_name": "AI Opponent",
 			"opponent_type": "ai",
-			"player_inventory": {"items": [], "servers": []},
-			"enemy_inventory": {"items": [], "servers": []}
+			"player_inventory": {"inventory_grid": [], "server_containers": []},
+			"enemy_inventory": {"inventory_grid": [], "server_containers": []}
 		},
 		"session_update": {
 			"round": 2, "gold": 20, "gold_earned": 10, "wins": 1, "losses": 0,
 			"lives": 5, "game_over": false, "run_over": false, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
-		"new_shop": [],
+		"current_shop": [],
 		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-123"
 	})
@@ -193,15 +193,15 @@ func test_defeat_updates_losses_and_lives():
 			"actions": [], "seed": 1,
 			"opponent_name": "AI Opponent",
 			"opponent_type": "ai",
-			"player_inventory": {"items": [], "servers": []},
-			"enemy_inventory": {"items": [], "servers": []}
+			"player_inventory": {"inventory_grid": [], "server_containers": []},
+			"enemy_inventory": {"inventory_grid": [], "server_containers": []}
 		},
 		"session_update": {
 			"round": 1, "gold": 12, "gold_earned": 0, "wins": 0, "losses": 1,
 			"lives": 4, "game_over": false, "run_over": false, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
-		"new_shop": [],
+		"current_shop": [],
 		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-456"
 	})
@@ -222,15 +222,15 @@ func test_game_over_comes_from_the_session_update():
 			"actions": [], "seed": 1,
 			"opponent_name": "AI Opponent",
 			"opponent_type": "ai",
-			"player_inventory": {"items": [], "servers": []},
-			"enemy_inventory": {"items": [], "servers": []}
+			"player_inventory": {"inventory_grid": [], "server_containers": []},
+			"enemy_inventory": {"inventory_grid": [], "server_containers": []}
 		},
 		"session_update": {
 			"round": 5, "gold": 0, "gold_earned": 0, "wins": 2, "losses": 5,
 			"lives": 0, "game_over": true, "run_over": true, "victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
-		"new_shop": [],
+		"current_shop": [],
 		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-789"
 	})
@@ -275,15 +275,15 @@ func test_a_won_run_is_over_even_with_lives_left():
 			"winner": 1, "duration": 1.0, "player1_quota": 10, "player2_quota": 0,
 			"actions": [], "seed": 1,
 			"opponent_name": "AI", "opponent_type": "ai",
-			"player_inventory": {"items": [], "servers": []},
-			"enemy_inventory": {"items": [], "servers": []}
+			"player_inventory": {"inventory_grid": [], "server_containers": []},
+			"enemy_inventory": {"inventory_grid": [], "server_containers": []}
 		},
 		"session_update": {
 			"round": 11, "gold": 0, "gold_earned": 0, "wins": 10, "losses": 2,
 			"lives": 3, "game_over": false, "run_over": true, "victory": true,
 			"shop_refresh_cost": 1, "combinations": [], "pending": []
 		},
-		"new_shop": [],
+		"current_shop": [],
 		"inventory": {"inventory_grid": [], "inventory_storage": [], "server_containers": []},
 		"battle_id": "test-battle-won"
 	})

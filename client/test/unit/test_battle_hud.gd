@@ -32,9 +32,9 @@ func before_each():
 		],
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
-		"player_inventory": {"items": [], "servers": [
+		"player_inventory": {"inventory_grid": [], "server_containers": [
 			TestHelpers.container_data({"id": "srv1", "position": [1, 2]})]},
-		"enemy_inventory": {"items": [], "servers": [
+		"enemy_inventory": {"inventory_grid": [], "server_containers": [
 			TestHelpers.container_data({"id": "srv2", "position": [1, 2]})]}
 	}
 	GameStateManager.last_battle_result = APITypes.BattleResult.new(battle_data)

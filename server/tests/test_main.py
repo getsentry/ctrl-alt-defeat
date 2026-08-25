@@ -185,7 +185,7 @@ class TestBattleAPIResponse:
         # Verify top-level structure
         assert "battle_result" in result
         assert "session_update" in result
-        assert "new_shop" in result
+        assert "current_shop" in result
         assert "battle_id" in result
 
         battle_result = result["battle_result"]
@@ -202,16 +202,16 @@ class TestBattleAPIResponse:
         assert "player_inventory" in battle_result
         player_inv = battle_result["player_inventory"]
 
-        assert "items" in player_inv
-        assert "servers" in player_inv
-        assert isinstance(player_inv["items"], list)
-        assert isinstance(player_inv["servers"], list)
+        assert "inventory_grid" in player_inv
+        assert "server_containers" in player_inv
+        assert isinstance(player_inv["inventory_grid"], list)
+        assert isinstance(player_inv["server_containers"], list)
 
         # Verify we have the items we purchased
-        assert len(player_inv["items"]) == len(purchased_items)
+        assert len(player_inv["inventory_grid"]) == len(purchased_items)
 
         # Verify player item structure and positions
-        for idx, item_data in enumerate(player_inv["items"]):
+        for idx, item_data in enumerate(player_inv["inventory_grid"]):
             assert "id" in item_data
             assert "item_type" in item_data
             assert "name" in item_data
@@ -224,8 +224,8 @@ class TestBattleAPIResponse:
             assert item_data["position"] == expected_pos
 
         # Verify player containers
-        assert len(player_inv["servers"]) >= 3  # Should have default containers
-        for container in player_inv["servers"]:
+        assert len(player_inv["server_containers"]) >= 3  # Should have default containers
+        for container in player_inv["server_containers"]:
             assert "id" in container
             assert "item_type" in container
             assert "position" in container
@@ -235,17 +235,17 @@ class TestBattleAPIResponse:
         assert "enemy_inventory" in battle_result
         enemy_inv = battle_result["enemy_inventory"]
 
-        assert "items" in enemy_inv
-        assert "servers" in enemy_inv
-        assert isinstance(enemy_inv["items"], list)
-        assert isinstance(enemy_inv["servers"], list)
+        assert "inventory_grid" in enemy_inv
+        assert "server_containers" in enemy_inv
+        assert isinstance(enemy_inv["inventory_grid"], list)
+        assert isinstance(enemy_inv["server_containers"], list)
 
         # AI should have at least one item and container
-        assert len(enemy_inv["items"]) >= 1
-        assert len(enemy_inv["servers"]) >= 1
+        assert len(enemy_inv["inventory_grid"]) >= 1
+        assert len(enemy_inv["server_containers"]) >= 1
 
         # Verify enemy item structure
-        for item_data in enemy_inv["items"]:
+        for item_data in enemy_inv["inventory_grid"]:
             assert "id" in item_data
             assert "item_type" in item_data
             assert "name" in item_data
@@ -256,7 +256,7 @@ class TestBattleAPIResponse:
             assert len(item_data["position"]) == 2
 
         # Verify enemy containers
-        for container in enemy_inv["servers"]:
+        for container in enemy_inv["server_containers"]:
             assert "id" in container
             assert "item_type" in container
             assert "position" in container
@@ -294,7 +294,7 @@ class TestBattleAPIResponse:
         player_inv = result["battle_result"]["player_inventory"]
 
         # Check shape data
-        for item in player_inv["items"]:
+        for item in player_inv["inventory_grid"]:
             assert "shape" in item
             assert isinstance(item["shape"], list)
             # Each shape should be a list of [x, y] coordinates
@@ -356,7 +356,7 @@ class TestBattleAPIResponse:
         )
 
         result = response.json()
-        player_items = result["battle_result"]["player_inventory"]["items"]
+        player_items = result["battle_result"]["player_inventory"]["inventory_grid"]
 
         # Verify items have expected metadata
         assert len(player_items) == len(purchased)
@@ -403,11 +403,11 @@ class TestBattleAPIResponse:
         enemy_inv5 = response5.json()["battle_result"]["enemy_inventory"]
 
         # Round 5 should have more items than round 1
-        assert len(enemy_inv5["items"]) > len(enemy_inv1["items"])
+        assert len(enemy_inv5["inventory_grid"]) > len(enemy_inv1["inventory_grid"])
 
         # Items should be different (not just more of the same)
-        round1_types = {item["item_type"] for item in enemy_inv1["items"]}
-        round5_types = {item["item_type"] for item in enemy_inv5["items"]}
+        round1_types = {item["item_type"] for item in enemy_inv1["inventory_grid"]}
+        round5_types = {item["item_type"] for item in enemy_inv5["inventory_grid"]}
         assert round5_types != round1_types  # Should have different item types
 
     def test_battle_does_not_include_storage_items(self, auth_client):
@@ -451,7 +451,7 @@ class TestBattleAPIResponse:
         )
 
         result = response.json()
-        player_items = result["battle_result"]["player_inventory"]["items"]
+        player_items = result["battle_result"]["player_inventory"]["inventory_grid"]
 
         # Should only have the grid item, not the storage item
         assert len(player_items) == 1
@@ -894,7 +894,7 @@ class TestATurnIsKept:
         response = auth_client.post("/battle/simulate", json={})
 
         assert response.status_code == 200, response.json()
-        items = response.json()["battle_result"]["player_inventory"]["items"]
+        items = response.json()["battle_result"]["player_inventory"]["inventory_grid"]
         assert [i["rotation"] for i in items] == [90], (
             "The battle should be fought with the item facing the way the "
             "player left it"
@@ -989,6 +989,7 @@ class TestAMoveAlwaysAnswersWithTheWholeBoard:
         assert carries == [
             "GameSession",
             "InventoryAfterBattle",
+            "InventoryData",
             "MoveItemResponse",
             "PurchaseResponse",
         ], f"a response carrying the containers is not covered here: {carries}"
@@ -1764,7 +1765,7 @@ class TestPositionContractOverHttp:
 
         # Both inventories must actually be present, or the walk proves nothing
         battle = payload["battle_result"]
-        assert battle["player_inventory"]["items"], "No player items to check"
+        assert battle["player_inventory"]["inventory_grid"], "No player items to check"
 
     def test_a_full_turn_keeps_every_position_canonical(self, auth_client):
         """
@@ -1980,7 +1981,7 @@ class TestItemsCombineAfterTheBattle:
         ).json()
 
         fought_with = [
-            i["item_type"] for i in body["battle_result"]["player_inventory"]["items"]
+            i["item_type"] for i in body["battle_result"]["player_inventory"]["inventory_grid"]
         ]
         holds_now = [i["item_type"] for i in body["inventory"]["inventory_grid"]]
         assert fought_with == ["neural_link_collar", "cpu_booster"], "the rack before"

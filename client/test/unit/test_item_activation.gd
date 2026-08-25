@@ -44,8 +44,8 @@ func _battle(actions: Array) -> APITypes.BattleResult:
 	return APITypes.BattleResult.new({
 		"winner": 1, "duration": 1.0, "player1_quota": 25, "player2_quota": 0,
 		"seed": 1, "actions": actions, "opponent_name": "AI", "opponent_type": "ai",
-		"player_inventory": {"items": [], "servers": []},
-		"enemy_inventory": {"items": [], "servers": []},
+		"player_inventory": {"inventory_grid": [], "server_containers": []},
+		"enemy_inventory": {"inventory_grid": [], "server_containers": []},
 	})
 
 
@@ -62,8 +62,8 @@ func _action(overrides: Dictionary) -> Dictionary:
 
 func _load(items: Array) -> void:
 	grid.load_inventory_state(APITypes.InventoryState.new({
-		"items": items,
-		"servers": [TestHelpers.container_data({"id": "srv", "position": [0, 0]})],
+		"inventory_grid": items,
+		"server_containers": [TestHelpers.container_data({"id": "srv", "position": [0, 0]})],
 	}))
 	await get_tree().process_frame
 

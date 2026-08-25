@@ -443,11 +443,10 @@ func dragged() -> APITypes.Item:
 	return _dragged
 
 
-func turn_dragged(quarters: int, pointer := Vector2.INF) -> bool:
+func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	"""Turn what was picked out of the chest, and say whether there was one.
 
-	Takes the pointer rather than reading it, so what the turn draws can be
-	asked about without a mouse.
+	The pointer is told, not read, the same as for one on the grid.
 
 	Worth turning even though the chest keeps no facing: an item is often
 	picked out of the chest to be put on the grid, and turning it on the way is
@@ -456,7 +455,7 @@ func turn_dragged(quarters: int, pointer := Vector2.INF) -> bool:
 	if not _dragged:
 		return false
 	_dragged = _dragged.turned(quarters)
-	var at := get_global_mouse_position() if pointer == Vector2.INF else pointer
+	var at := pointer
 	if is_instance_valid(_dragged_visual):
 		_dragged_visual.redraw_as(_dragged)
 		# Turned, it hangs from a different square of itself, so it is hung

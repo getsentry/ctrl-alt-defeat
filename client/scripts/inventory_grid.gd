@@ -334,7 +334,7 @@ func square_for_corner(local_corner: Vector2) -> Vector2i:
 		roundi((local_corner.y - cell_spacing) / step))
 
 
-func square_held_over(pointer: Vector2, held_by := Vector2i.ZERO) -> Vector2i:
+func square_held_over(pointer: Vector2, held_by: Vector2i) -> Vector2i:
 	"""The square the corner of a held item is over, for a pointer here.
 
 	The pointer's own square, less the square the item is held by. Held by its
@@ -461,11 +461,12 @@ func _add_item(item: APITypes.PlacedItem):
 	add_child(item_visual)
 	items.append(item_visual)
 
-func turn_dragged(quarters: int, pointer := Vector2.INF) -> bool:
+func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	"""Turn the item being dragged, and say whether there was one.
 
-	Takes the pointer rather than reading it, so what the turn draws can be
-	asked about without a mouse.
+	The pointer is told, not read. A turn that does not know where the hand is
+	cannot say where the item went, and a drag nobody could place is how the
+	mark came to be drawn a spear's length from the spear.
 
 	A container is not turned. Turning one would have to turn everything
 	standing on it about its anchor, which is a different thing from turning
@@ -499,8 +500,7 @@ func turn_dragged(quarters: int, pointer := Vector2.INF) -> bool:
 	# And the mark, which is a different set of squares now and in a different
 	# place. Left to the next frame, a turn showed the shape the item had
 	# before it until the pointer moved.
-	update_drag_preview(
-		get_global_mouse_position() if pointer == Vector2.INF else pointer)
+	update_drag_preview(pointer)
 	return true
 
 
@@ -547,20 +547,18 @@ func can_place_container(container: APITypes.Item, grid_pos: Vector2i) -> bool:
 	return true
 
 
-func _start_container_drag(placed: PlacedContainer,
-		taken_at := Vector2.INF) -> void:
+func _start_container_drag(placed: PlacedContainer, taken_at: Vector2) -> void:
 	"""Pick a container up, and everything standing on it with it.
 
-	Takes where it was taken hold of, the same as an item is, so which square
-	is in hand can be placed by a test.
+	Where it was taken hold of is told, not read, the same as for an item:
+	which of its own squares is in hand decides where the mark goes.
 	"""
 	if read_only or dragging_object:
 		return
 
 	dragging_container = placed
 	original_grid_pos = placed.position()
-	var taken := get_local_mouse_position() if taken_at == Vector2.INF \
-		else get_global_transform().affine_inverse() * taken_at
+	var taken := get_global_transform().affine_inverse() * taken_at
 	drag_offset = placed.visual.position - taken
 	# By one of its own squares, the same as an item. Marked at the pointer's
 	# square instead, a rack grabbed by any square but its corner was drawn in
@@ -651,11 +649,12 @@ func _on_item_input(event: InputEvent, item_visual: Control):
 				# End dragging
 				_end_drag()
 
-func _start_drag(item_visual: Control, taken_at := Vector2.INF):
-	"""Start dragging an item, from the pointer unless told somewhere else.
+func _start_drag(item_visual: Control, taken_at: Vector2):
+	"""Start dragging an item, taken hold of at this point.
 
-	Takes where it was taken hold of, so which square is in hand can be placed
-	by a test: headless has no pointer to put on an item.
+	Where the hand is decides which of the item's own squares is in hand, and
+	that decides where the mark goes. Told, not read: headless has no pointer
+	to put on an item, so a drag that read one could not be placed by a test.
 	"""
 	# Don't allow dragging in read-only mode
 	if read_only:
@@ -666,8 +665,7 @@ func _start_drag(item_visual: Control, taken_at := Vector2.INF):
 	original_position = item_visual.position
 	original_grid_pos = item_visual.get_meta("grid_pos")
 	original_facing = item_visual.get_meta("item_data").facing()
-	var taken := get_local_mouse_position() if taken_at == Vector2.INF \
-		else get_global_transform().affine_inverse() * taken_at
+	var taken := get_global_transform().affine_inverse() * taken_at
 	drag_offset = item_visual.position - taken
 	grab_cell = square_grabbed(item_visual.position,
 		item_visual.get_meta("item_data").turned_shape(), taken)
@@ -1135,8 +1133,8 @@ func clear_all():
 func get_inventory_state() -> Dictionary:
 	"""Get current inventory state for saving"""
 	var state = {
-		"items": [],
-		"servers": []
+		"inventory_grid": [],
+		"server_containers": []
 	}
 
 	# Save items - convert to dictionaries for persistence
@@ -1147,10 +1145,10 @@ func get_inventory_state() -> Dictionary:
 		# Items go back to the server as plain data. An item knows where it
 		# sits, so nothing overrides its position here any more: two answers to
 		# where an item is meant one of them was wrong wherever it was read.
-		state.items.append(item_data.to_dict())
+		state.inventory_grid.append(item_data.to_dict())
 
 	for placed in containers:
-		state.servers.append(placed.container.to_dict())
+		state.server_containers.append(placed.container.to_dict())
 
 	return state
 
@@ -1165,7 +1163,5 @@ func set_colors(new_grid_color: Color, new_border_color: Color, new_item_color: 
 	if get_child_count() > 0:
 		_setup_visual()
 		# Reload current state to apply new colors
-		var current_state = get_inventory_state()
-		if current_state.servers.size() > 0 or current_state.items.size() > 0:
-			var typed_state = APITypes.InventoryState.new(current_state)
-			load_inventory_state(typed_state)
+		load_inventory_state(
+			APITypes.InventoryState.new(get_inventory_state()))

@@ -84,7 +84,7 @@ class TestAPISlugResponses:
 
         assert response.status_code == 200
         data = response.json()
-        shop = data["shop"]
+        shop = data["current_shop"]
 
         for item in shop:
             if item:
@@ -208,7 +208,7 @@ class TestAPISlugResponses:
                         item["slug"] != ""
                     ), f"Storage item {item.get('name')} has empty slug"
 
-    def test_battle_response_new_shop_has_slugs(self, auth_client):
+    def test_battle_response_shop_has_slugs(self, auth_client):
         """Test that battle response includes new shop with slugs"""
         response = auth_client.post(
             "/session/start", json={"seed": SHOP_SEED}
@@ -231,7 +231,7 @@ class TestAPISlugResponses:
         response = auth_client.post("/battle/simulate", json={})
         assert response.status_code == 200, f"Battle failed: {response.json()}"
 
-        new_shop = response.json()["new_shop"]
+        new_shop = response.json()["current_shop"]
         assert new_shop, "A battle should refill the shop"
         for item in new_shop:
             if item is None:

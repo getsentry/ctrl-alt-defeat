@@ -122,11 +122,11 @@ func test_full_user_journey_through_ui():
 
 	# Get current inventory state for debugging
 	var inventory_state = game_ui.get_inventory_state() if game_ui.has_method("get_inventory_state") else {}
-	assert_gt(inventory_state["items"].size(), 0, "Inventory state should contain items")
-	print("   - Inventory items: %d" % inventory_state["items"].size())
+	assert_gt(inventory_state["inventory_grid"].size(), 0, "Inventory state should contain items")
+	print("   - Inventory items: %d" % inventory_state["inventory_grid"].size())
 
 	# Store inventory count before battle for verification later
-	var items_before_battle = inventory_state["items"].size()
+	var items_before_battle = inventory_state["inventory_grid"].size()
 	print("   - Items before battle: %d" % items_before_battle)
 
 	# 6. Start a battle
@@ -170,7 +170,7 @@ func test_full_user_journey_through_ui():
 		# Verify inventory was preserved across battle
 		var post_battle_inventory = current_scene.get_inventory_state() if current_scene.has_method("get_inventory_state") else {}
 		if post_battle_inventory.has("items"):
-			var items_after_battle = post_battle_inventory["items"].size()
+			var items_after_battle = post_battle_inventory["inventory_grid"].size()
 			print("   - Items after battle: %d (was %d before battle)" % [items_after_battle, items_before_battle])
 			assert_eq(items_after_battle, items_before_battle, "Inventory items should be preserved across battle")
 
@@ -348,7 +348,9 @@ func test_selling_an_item_pays_the_player():
 	# Pick the item up and drop it on the chest, which is what selling is.
 	var grid = game_ui.inventory_grid
 	assert_not_null(grid.sell_zone, "Setup: the shop should give the grid a chest")
-	grid._start_drag(placed_visual)
+	grid._start_drag(placed_visual, grid.get_global_transform()
+		* (placed_visual.position
+			+ Vector2(grid.cell_size, grid.cell_size) / 2.0))
 	grid._end_drag(grid.sell_zone.get_global_rect().get_center())
 	await _wait_for_server()
 
@@ -647,13 +649,13 @@ func test_inventory_persistence_across_battle():
 
 	# Get inventory state before battle
 	var pre_battle_inventory = game_ui.inventory_grid.get_inventory_state()
-	var items_before = pre_battle_inventory.items.size()
+	var items_before = pre_battle_inventory.inventory_grid.size()
 	print("   - Total items before battle: %d" % items_before)
 	assert_gt(items_before, 0, "Should have items before battle")
 
 	# Record item details for verification
 	var item_details_before = []
-	for item in pre_battle_inventory.items:
+	for item in pre_battle_inventory.inventory_grid:
 		if item is Dictionary:
 			item_details_before.append({
 				"name": item["name"],
@@ -686,16 +688,16 @@ func test_inventory_persistence_across_battle():
 	# Verify inventory was preserved
 	print("   - Checking inventory after battle...")
 	var post_battle_inventory = current_scene.inventory_grid.get_inventory_state()
-	var items_after = post_battle_inventory.items.size()
+	var items_after = post_battle_inventory.inventory_grid.size()
 
 	print("   - Items after battle: %d (was %d before)" % [items_after, items_before])
 	assert_eq(items_after, items_before, "All items should be preserved across battle")
 
 	# Verify item details match
 	var items_match = true
-	for i in range(min(item_details_before.size(), post_battle_inventory.items.size())):
+	for i in range(min(item_details_before.size(), post_battle_inventory.inventory_grid.size())):
 		var before = item_details_before[i]
-		var after = post_battle_inventory.items[i]
+		var after = post_battle_inventory.inventory_grid[i]
 		if after["name"] != before.name:
 			items_match = false
 			print("   - Item mismatch: %s != %s" % [after["name"], before.name])

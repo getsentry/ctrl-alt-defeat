@@ -69,18 +69,18 @@ class TestBattleWithSession:
         # Check player inventory
         assert "player_inventory" in battle_result
         player_inv = battle_result["player_inventory"]
-        assert isinstance(player_inv["items"], list)
-        assert isinstance(player_inv["servers"], list)
-        assert len(player_inv["items"]) == 1  # We purchased one item
-        assert player_inv["items"][0]["position"] == [2, 3]
+        assert isinstance(player_inv["inventory_grid"], list)
+        assert isinstance(player_inv["server_containers"], list)
+        assert len(player_inv["inventory_grid"]) == 1  # We purchased one item
+        assert player_inv["inventory_grid"][0]["position"] == [2, 3]
 
         # Check enemy inventory
         assert "enemy_inventory" in battle_result
         enemy_inv = battle_result["enemy_inventory"]
-        assert isinstance(enemy_inv["items"], list)
-        assert isinstance(enemy_inv["servers"], list)
-        assert len(enemy_inv["items"]) >= 1  # AI has items
-        assert len(enemy_inv["servers"]) >= 1  # AI has containers
+        assert isinstance(enemy_inv["inventory_grid"], list)
+        assert isinstance(enemy_inv["server_containers"], list)
+        assert len(enemy_inv["inventory_grid"]) >= 1  # AI has items
+        assert len(enemy_inv["server_containers"]) >= 1  # AI has containers
 
     def test_battle_uses_correct_inventory(self, auth_client):
         """Test that battle uses the items placed on grid, not storage"""
@@ -135,13 +135,13 @@ class TestBattleWithSession:
         # Validate that player inventory is included
         assert "player_inventory" in battle_result
         player_inv = battle_result["player_inventory"]
-        assert "items" in player_inv
-        assert "servers" in player_inv
-        assert len(player_inv["items"]) == 1  # Only the grid item (not storage)
-        assert len(player_inv["servers"]) >= 3  # Player should have containers
+        assert "inventory_grid" in player_inv
+        assert "server_containers" in player_inv
+        assert len(player_inv["inventory_grid"]) == 1  # Only the grid item (not storage)
+        assert len(player_inv["server_containers"]) >= 3  # Player should have containers
 
         # Validate item structure
-        item = player_inv["items"][0]
+        item = player_inv["inventory_grid"][0]
         assert "id" in item
         assert "item_type" in item
         assert "name" in item
@@ -151,13 +151,13 @@ class TestBattleWithSession:
         # Validate that enemy inventory is included
         assert "enemy_inventory" in battle_result
         enemy_inv = battle_result["enemy_inventory"]
-        assert "items" in enemy_inv
-        assert "servers" in enemy_inv
-        assert len(enemy_inv["items"]) >= 1  # AI should have at least 1 item
-        assert len(enemy_inv["servers"]) >= 1  # AI should have containers
+        assert "inventory_grid" in enemy_inv
+        assert "server_containers" in enemy_inv
+        assert len(enemy_inv["inventory_grid"]) >= 1  # AI should have at least 1 item
+        assert len(enemy_inv["server_containers"]) >= 1  # AI should have containers
 
         # Validate enemy item structure
-        enemy_item = enemy_inv["items"][0]
+        enemy_item = enemy_inv["inventory_grid"][0]
         assert "id" in enemy_item
         assert "item_type" in enemy_item
         assert "name" in enemy_item

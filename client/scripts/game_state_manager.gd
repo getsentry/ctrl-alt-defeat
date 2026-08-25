@@ -30,7 +30,9 @@ var victory: bool = false
 var run_over: bool = false
 
 # Inventory state
-var current_inventory: Dictionary = {}  # Stores placed items and servers
+## The board, as plain data. Always holds both names, so nothing reading it has
+## to check whether they are there.
+var current_inventory: Dictionary = _an_empty_board()
 var server_containers: Array = []  # Array[Dictionary]: containers as plain data
 # The chest. Items here are off the grid, so they have no position and the
 # chest decides where to draw them.
@@ -81,7 +83,7 @@ func start_new_game():
 	game_over = false
 	victory = false
 	run_over = false
-	current_inventory.clear()
+	current_inventory = _an_empty_board()
 	server_containers.clear()
 	inventory_storage.clear()
 	current_shop.clear()
@@ -97,8 +99,8 @@ func save_inventory_state(items: Array, servers: Array):
 	# Save the current inventory configuration
 	print("DEBUG GameStateManager: Saving inventory with %d items and %d servers" % [items.size(), servers.size()])
 	current_inventory = {
-		"items": items.duplicate(true),
-		"servers": servers.duplicate(true)
+		"inventory_grid": items.duplicate(true),
+		"server_containers": servers.duplicate(true)
 	}
 	server_containers = servers.duplicate(true)
 
@@ -117,11 +119,7 @@ func update_from_session(session: APITypes.GameSession):
 	for container in session.server_containers:
 		server_containers.append(container.to_dict())
 
-	# Update current_inventory to include the server containers
-	current_inventory["servers"] = server_containers.duplicate()
-	# Items start empty for new session
-	if not current_inventory.has("items"):
-		current_inventory["items"] = []
+	current_inventory["server_containers"] = server_containers.duplicate()
 
 
 func note_pending(waiting: Array) -> void:
@@ -176,18 +174,25 @@ func about_a_status(status: String) -> Dictionary:
 	return status_rules.about(status)
 
 
+func _an_empty_board() -> Dictionary:
+	"""A board with nothing on it. Both names, both empty.
+
+	Kept this way from the start rather than patched up on the way out: this
+	was a getter that filled the two names in if they were missing, which meant
+	reading the board could change it, and that two things held the containers
+	-- this dictionary and `server_containers` -- with the getter reconciling
+	them whenever somebody happened to ask.
+	"""
+	return {"inventory_grid": [], "server_containers": []}
+
+
 func get_inventory_state() -> Dictionary:
-	# Ensure we always return both items and servers
-	if not current_inventory.has("servers") and server_containers.size() > 0:
-		current_inventory["servers"] = server_containers.duplicate()
-	if not current_inventory.has("items"):
-		current_inventory["items"] = []
 	return current_inventory
 
 func update_after_battle(response: APITypes.BattleResponse):
 	# Store the COMPLETE battle response for PostBattle screen
 	last_battle_result = response.battle_result
-	current_shop = response.new_shop
+	current_shop = response.current_shop
 
 	# The rack changed without the player touching it: items combine as the
 	# shop phase begins (GDD 5.3). What is held here is what the shop screen

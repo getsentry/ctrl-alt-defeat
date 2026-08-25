@@ -56,7 +56,7 @@ class TestShopShape:
         response = auth_client.post("/shop/refresh", json={})
         assert response.status_code == 200
 
-        shop = response.json()["shop"]
+        shop = response.json()["current_shop"]
         for item in shop:
             if item:
                 assert (

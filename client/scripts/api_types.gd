@@ -417,12 +417,11 @@ class InventoryState extends Resource:
 
 	func _init(data: Dictionary):
 		items.clear()
-		for item_data in data["items"]:
+		for item_data in data["inventory_grid"]:
 			items.append(PlacedItem.new(item_data))
 
-		# The server calls the containers "servers" in InventoryData
 		containers.clear()
-		for container_data in data["servers"]:
+		for container_data in data["server_containers"]:
 			containers.append(PlacedItem.new(container_data))
 
 # Everything the player holds: the rack, the chest and the containers.
@@ -451,7 +450,8 @@ class WholeInventory extends Resource:
 		var servers: Array[Dictionary] = []
 		for container in server_containers:
 			servers.append(container.to_dict())
-		return InventoryState.new({"items": items, "servers": servers})
+		return InventoryState.new(
+			{"inventory_grid": items, "server_containers": servers})
 
 
 # A recipe the rack is part or all of the way towards (GDD 5.3).
@@ -787,14 +787,14 @@ class SessionStartResponse extends Resource:
 
 # Shop refresh response
 class ShopRefreshResponse extends Resource:
-	var shop: Array[Item] = []  # null in a slot whose item was bought
+	var current_shop: Array[Item] = []  # null in a slot whose item was bought
 	var gold: int = 0
 	## What the roll after this one costs, so the button can say so without
 	## asking the server again.
 	var next_refresh_cost: int = 1
 
 	func _init(data: Dictionary):
-		shop = APITypes.parse_shop(data["shop"])
+		current_shop = APITypes.parse_shop(data["current_shop"])
 		gold = data["gold"]
 		next_refresh_cost = int(data["next_refresh_cost"])
 
@@ -817,7 +817,7 @@ class PurchaseResponse extends Resource:
 class BattleResponse extends Resource:
 	var battle_result: BattleResult
 	var session_update: SessionUpdate  # Typed SessionUpdate
-	var new_shop: Array[Item] = []  # null in a slot whose item was bought
+	var current_shop: Array[Item] = []  # null in a slot whose item was bought
 	var battle_id: String = ""
 	# What the player holds now, after the combining that began this shop
 	# phase. Not the same as battle_result.player_inventory, which is the rack
@@ -827,7 +827,7 @@ class BattleResponse extends Resource:
 	func _init(data: Dictionary):
 		battle_result = BattleResult.new(data["battle_result"])
 		session_update = SessionUpdate.new(data["session_update"])
-		new_shop = APITypes.parse_shop(data["new_shop"])
+		current_shop = APITypes.parse_shop(data["current_shop"])
 		battle_id = data["battle_id"]
 		inventory = WholeInventory.new(data["inventory"])
 

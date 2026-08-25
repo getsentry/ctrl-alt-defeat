@@ -35,14 +35,14 @@ func before_each():
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
 		"player_inventory": {
-			"items": [],
-			"servers": [
+			"inventory_grid": [],
+			"server_containers": [
 				TestHelpers.container_data({"id": "srv1", "position": [2, 3]})
 			]
 		},
 		"enemy_inventory": {
-			"items": [],
-			"servers": [
+			"inventory_grid": [],
+			"server_containers": [
 				TestHelpers.container_data({"id": "srv2", "position": [2, 3]})
 			]
 		}
@@ -426,8 +426,8 @@ func test_health_spent_on_block_is_not_written_as_a_wound():
 func _with_an_item_to_throw() -> void:
 	"""The fixture's racks are empty, and a blow throws the item that made it"""
 	battle_screen.player_inventory.load_inventory_state(APITypes.InventoryState.new({
-		"servers": [TestHelpers.container_data({"id": "srv1", "position": [2, 3]})],
-		"items": [TestHelpers.placed_item_data({"id": "blade", "position": [2, 3]})],
+		"server_containers": [TestHelpers.container_data({"id": "srv1", "position": [2, 3]})],
+		"inventory_grid": [TestHelpers.placed_item_data({"id": "blade", "position": [2, 3]})],
 	}))
 
 

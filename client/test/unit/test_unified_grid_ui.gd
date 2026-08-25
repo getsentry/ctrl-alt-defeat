@@ -278,17 +278,17 @@ func test_read_only_mode():
 func test_inventory_state_save_and_load():
 	# load_inventory_state() takes an APITypes.InventoryState.
 	var test_state = APITypes.InventoryState.new({
-		"items": [TestHelpers.placed_item_data({"id": "item1", "name": "Test Item"})],
-		"servers": [TestHelpers.container_data({"id": "container_a"})]
+		"inventory_grid": [TestHelpers.placed_item_data({"id": "item1", "name": "Test Item"})],
+		"server_containers": [TestHelpers.container_data({"id": "container_a"})]
 	})
 
 	ui.load_inventory_state(test_state)
 	await get_tree().process_frame
 
 	var saved_state = ui.get_inventory_state()
-	assert_eq(saved_state["items"].size(), 1, "Should save correct number of items")
-	assert_eq(saved_state["servers"].size(), 1, "Should save correct number of servers")
-	assert_eq(saved_state["items"][0]["id"], "item1", "Should keep the item that was loaded")
+	assert_eq(saved_state["inventory_grid"].size(), 1, "Should save correct number of items")
+	assert_eq(saved_state["server_containers"].size(), 1, "Should save correct number of servers")
+	assert_eq(saved_state["inventory_grid"][0]["id"], "item1", "Should keep the item that was loaded")
 
 func test_grid_coordinate_validation():
 	# Placement is validated by _can_place_container().
@@ -915,7 +915,7 @@ func test_turning_reaches_an_item_being_dragged_on_the_grid():
 		GameStateManager.get_inventory_state()))
 	ui.inventory_grid.place_shop_item(
 		TestHelpers.item({"id": "dragged", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
-	ui.inventory_grid._start_drag(ui.inventory_grid.items[0])
+	ui.inventory_grid._start_drag(ui.inventory_grid.items[0], _held_at(ui.inventory_grid.items[0]))
 
 	ui.turn(1)
 
@@ -1207,10 +1207,20 @@ func _knows_that(partners: Dictionary, names := {}) -> void:
 		{"partners": partners, "names": names})
 
 
+func _held_at(visual: Control) -> Vector2:
+	"""Where the pointer is, taking an item by the middle of its corner square.
+
+	The drag calls want telling where the hand is rather than reading it.
+	"""
+	var grid = ui.inventory_grid
+	return grid.get_global_transform() * (visual.position
+		+ Vector2(grid.cell_size, grid.cell_size) / 2.0)
+
+
 func _rack_holding(items: Array) -> void:
 	ui.inventory_grid.load_inventory_state(APITypes.InventoryState.new({
-		"items": items,
-		"servers": [
+		"inventory_grid": items,
+		"server_containers": [
 			TestHelpers.container_data({"id": "container_a", "position": [2, 3]}),
 			TestHelpers.container_data({"id": "container_b", "position": [4, 3]}),
 			TestHelpers.container_data({"id": "container_c", "position": [6, 3]}),
@@ -1660,7 +1670,7 @@ func test_it_says_how_to_turn_what_is_in_hand():
 	_rack_holding([TestHelpers.placed_item_data({
 		"id": "held", "item_type": "null_blade", "position": [2, 3]})])
 
-	ui.inventory_grid._start_drag(ui.inventory_grid.items[0])
+	ui.inventory_grid._start_drag(ui.inventory_grid.items[0], _held_at(ui.inventory_grid.items[0]))
 	ui._process(0.0)
 
 	assert_true(ui.carrying_something(), "setup: an item is being dragged")
@@ -1670,7 +1680,7 @@ func test_it_says_how_to_turn_what_is_in_hand():
 func test_it_stops_saying_it_once_the_item_is_put_down():
 	_rack_holding([TestHelpers.placed_item_data({
 		"id": "held", "item_type": "null_blade", "position": [2, 3]})])
-	ui.inventory_grid._start_drag(ui.inventory_grid.items[0])
+	ui.inventory_grid._start_drag(ui.inventory_grid.items[0], _held_at(ui.inventory_grid.items[0]))
 	ui._process(0.0)
 
 	ui.inventory_grid._end_drag()
@@ -1689,7 +1699,7 @@ func test_what_counts_as_carrying_is_what_a_turn_acts_on():
 	assert_eq(ui.carrying_something(), ui.turn(0),
 		"with empty hands, neither of them thinks there is anything to turn")
 
-	ui.inventory_grid._start_drag(ui.inventory_grid.items[0])
+	ui.inventory_grid._start_drag(ui.inventory_grid.items[0], _held_at(ui.inventory_grid.items[0]))
 
 	assert_eq(ui.carrying_something(), ui.turn(0),
 		"and with something in hand, both of them do")
@@ -1726,11 +1736,11 @@ func _a_combining(overrides := {}) -> APITypes.Combination:
 
 func test_it_plays_what_the_battle_answered_with():
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new({
-		"items": [
+		"inventory_grid": [
 			TestHelpers.placed_item_data({"id": "eaten_a", "position": [2, 3]}),
 			TestHelpers.placed_item_data({"id": "eaten_b", "position": [3, 3]}),
 		],
-		"servers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
+		"server_containers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
 	})
 	GameStateManager.combinations_to_play = [_a_combining()]
 	Presentation.clear_requests()
@@ -1748,11 +1758,11 @@ func test_it_ends_on_the_rack_the_server_sent():
 		[TestHelpers.placed_item_data({"id": "made_1", "position": [2, 3]})],
 		[TestHelpers.container_data({"id": "container_a", "position": [2, 3]})])
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new({
-		"items": [
+		"inventory_grid": [
 			TestHelpers.placed_item_data({"id": "eaten_a", "position": [2, 3]}),
 			TestHelpers.placed_item_data({"id": "eaten_b", "position": [3, 3]}),
 		],
-		"servers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
+		"server_containers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
 	})
 	GameStateManager.combinations_to_play = [_a_combining()]
 
@@ -1766,7 +1776,7 @@ func test_it_ends_on_the_rack_the_server_sent():
 
 func test_it_is_played_once():
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
-		{"items": [], "servers": []})
+		{"inventory_grid": [], "server_containers": []})
 	GameStateManager.combinations_to_play = [_a_combining()]
 	await ui.play_combining()
 	Presentation.clear_requests()
@@ -1790,7 +1800,7 @@ func test_every_merge_of_the_round_is_played():
 	"""They run at once: no ingredient is eaten twice and no result feeds
 	another, so none of them waits on another."""
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
-		{"items": [], "servers": []})
+		{"inventory_grid": [], "server_containers": []})
 	GameStateManager.combinations_to_play = [
 		_a_combining(),
 		_a_combining({"made": "serverless_function", "made_id": "made_2",
@@ -1828,7 +1838,7 @@ func test_dragging_an_item_on_the_rack_draws_its_arcs():
 			"id": "stone", "item_type": "whetstone", "position": [3, 3]}),
 	])
 
-	ui.inventory_grid._start_drag(ui.inventory_grid.item_visual("sword"))
+	ui.inventory_grid._start_drag(ui.inventory_grid.item_visual("sword"), _held_at(ui.inventory_grid.item_visual("sword")))
 	ui.refresh_combining(Vector2(-500, -500))
 
 	assert_eq(ui.combining_overlay.arcs().size(), 1,
@@ -1843,8 +1853,8 @@ func test_a_merge_left_partway_through_draws_no_more():
 		[TestHelpers.placed_item_data({"id": "made_1", "position": [2, 3]})],
 		[TestHelpers.container_data({"id": "container_a", "position": [2, 3]})])
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new({
-		"items": [TestHelpers.placed_item_data({"id": "eaten_a", "position": [2, 3]})],
-		"servers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
+		"inventory_grid": [TestHelpers.placed_item_data({"id": "eaten_a", "position": [2, 3]})],
+		"server_containers": [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})]
 	})
 	GameStateManager.combinations_to_play = [_a_combining()]
 
@@ -1875,7 +1885,7 @@ func test_the_result_is_welcomed_when_it_arrives():
 		[TestHelpers.placed_item_data({"id": "made_1", "position": [2, 3]})],
 		[TestHelpers.container_data({"id": "container_a", "position": [2, 3]})])
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
-		{"items": [], "servers": []})
+		{"inventory_grid": [], "server_containers": []})
 	GameStateManager.combinations_to_play = [_a_combining()]
 	Presentation.clear_requests()
 
@@ -1913,7 +1923,7 @@ func test_the_merge_names_what_it_made():
 		[TestHelpers.placed_item_data({"id": "made_1", "position": [2, 3]})],
 		[TestHelpers.container_data({"id": "container_a", "position": [2, 3]})])
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
-		{"items": [], "servers": []})
+		{"inventory_grid": [], "server_containers": []})
 	GameStateManager.combinations_to_play = [_a_combining()]
 
 	await ui.play_combining()
@@ -1925,7 +1935,7 @@ func test_two_merges_share_one_whiteout():
 	"""Several racks combining at once is one event to look at, and two
 	whiteouts over each other would only be a longer, brighter one."""
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
-		{"items": [], "servers": []})
+		{"inventory_grid": [], "server_containers": []})
 	GameStateManager.combinations_to_play = [
 		_a_combining(),
 		_a_combining({"made": "serverless_function", "made_id": "made_2",
@@ -1949,7 +1959,7 @@ func test_a_result_that_went_to_the_chest_is_still_played():
 	GameStateManager.save_inventory_state(
 		[], [TestHelpers.container_data({"id": "container_a", "position": [2, 3]})])
 	GameStateManager.rack_that_fought = APITypes.InventoryState.new(
-		{"items": [], "servers": []})
+		{"inventory_grid": [], "server_containers": []})
 	GameStateManager.combinations_to_play = [_a_combining({
 		"made": "stone_golem", "made_id": "too_big",
 		"freed": [[2, 3], [3, 3]], "position": null})]

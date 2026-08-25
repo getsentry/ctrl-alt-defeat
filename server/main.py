@@ -408,7 +408,7 @@ async def refresh_shop(
 
     # Shop already contains ShopItem models
     return ShopRefreshResponse(
-        shop=session.current_shop,
+        current_shop=session.current_shop,
         gold=session.gold,
         next_refresh_cost=refresh_price(session.shop_refresh_count),
     )
@@ -847,8 +847,6 @@ async def simulate_battle(
         gold_reward += opening.gold
         logger.info("shop opened: %s", "; ".join(opening.said))
 
-    # Store clean battle result for database (before adding non-serializable objects)
-    # Convert BattleAction objects to dicts for JSON serialization
     serializable_actions = [action.model_dump() for action in battle_result["actions"]]
 
     clean_battle_result = {
@@ -859,8 +857,6 @@ async def simulate_battle(
         "actions": serializable_actions,
         "seed": battle_result["seed"],
     }
-    session.last_battle_result = clean_battle_result
-
     # Save player build for future matchmaking and record match history
     if not TEST_MODE:
         try:
@@ -954,38 +950,15 @@ async def simulate_battle(
         """
         return Item.of(item.spec.id, item.uid).placed_at(item.position, item.rotation)
 
-    if "player1_items" in battle_result:
-        player_inventory = {
-            "items": [to_placed(item) for item in battle_result["player1_items"]],
-            "servers": battle_result.get("player1_containers", []),
-        }
-        battle_result["player_inventory"] = player_inventory
-
-    if "player2_items" in battle_result:
-        enemy_inventory = {
-            "items": [to_placed(item) for item in battle_result["player2_items"]],
-            "servers": battle_result.get("player2_containers", []),
-        }
-        battle_result["enemy_inventory"] = enemy_inventory
-
-    # Remove the raw objects from the result (they're not JSON serializable)
-    battle_result.pop("player1_items", None)
-    battle_result.pop("player2_items", None)
-    battle_result.pop("player1_containers", None)
-    battle_result.pop("player2_containers", None)
-
     battle_actions = battle_result["actions"]
 
-    # The items are already the client's type, so the inventories pass straight
-    # through.
     player_inventory = InventoryData(
-        items=battle_result.get("player_inventory", {}).get("items", []),
-        servers=battle_result.get("player_inventory", {}).get("servers", []),
+        inventory_grid=[to_placed(item) for item in battle_result["player1_items"]],
+        server_containers=battle_result["player1_containers"],
     )
-
     enemy_inventory = InventoryData(
-        items=battle_result.get("enemy_inventory", {}).get("items", []),
-        servers=battle_result.get("enemy_inventory", {}).get("servers", []),
+        inventory_grid=[to_placed(item) for item in battle_result["player2_items"]],
+        server_containers=battle_result["player2_containers"],
     )
 
     # Create BattleResult model
@@ -1041,7 +1014,7 @@ async def simulate_battle(
             inventory_storage=session.inventory_storage,
             server_containers=session.server_containers,
         ),
-        new_shop=session.current_shop,
+        current_shop=session.current_shop,
         battle_id=battle_id,
     )
 

@@ -21,10 +21,10 @@ func test_save_and_load_inventory():
 
 	# Load and verify
 	var loaded = GameStateManager.get_inventory_state()
-	assert_eq(loaded.items.size(), 2, "Should have 2 items")
-	assert_eq(loaded.servers.size(), 1, "Should have 1 server")
-	assert_eq(loaded.items[0].data.name, "CPU", "First item should be CPU")
-	assert_eq(loaded.servers[0].data.name, "Rack", "Server should be Rack")
+	assert_eq(loaded.inventory_grid.size(), 2, "Should have 2 items")
+	assert_eq(loaded.server_containers.size(), 1, "Should have 1 server")
+	assert_eq(loaded.inventory_grid[0].data.name, "CPU", "First item should be CPU")
+	assert_eq(loaded.server_containers[0].data.name, "Rack", "Server should be Rack")
 
 func test_the_rack_after_a_battle_is_the_one_the_server_answered_with():
 	"""Items combine as the shop phase begins (GDD 5.3).
@@ -47,8 +47,8 @@ func test_the_rack_after_a_battle_is_the_one_the_server_answered_with():
 			"seed": 12345,
 			"opponent_name": "AI Opponent",
 			"opponent_type": "ai",
-			"player_inventory": {"items": [], "servers": []},
-			"enemy_inventory": {"items": [], "servers": []}
+			"player_inventory": {"inventory_grid": [], "server_containers": []},
+			"enemy_inventory": {"inventory_grid": [], "server_containers": []}
 		},
 		"session_update": {
 			"round": 2,
@@ -61,7 +61,7 @@ func test_the_rack_after_a_battle_is_the_one_the_server_answered_with():
 			"victory": false, "shop_refresh_cost": 1,
 			"combinations": [], "pending": []
 		},
-		"new_shop": [],
+		"current_shop": [],
 		"inventory": {
 			"inventory_grid": [TestHelpers.placed_item_data({"id": "made"})],
 			"inventory_storage": [],
@@ -72,15 +72,15 @@ func test_the_rack_after_a_battle_is_the_one_the_server_answered_with():
 	GameStateManager.update_after_battle(mock_response)
 
 	var after = GameStateManager.get_inventory_state()
-	assert_eq(after.items.size(), 1, "The rack should hold what the server sent")
-	assert_eq(after.items[0].id, "made", "and it is the item the server named")
-	assert_eq(after.servers.size(), 1, "The containers come back with it")
+	assert_eq(after.inventory_grid.size(), 1, "The rack should hold what the server sent")
+	assert_eq(after.inventory_grid[0].id, "made", "and it is the item the server named")
+	assert_eq(after.server_containers.size(), 1, "The containers come back with it")
 
 func test_empty_inventory_is_valid():
 	GameStateManager.save_inventory_state([], [])
 	var loaded = GameStateManager.get_inventory_state()
-	assert_eq(loaded.items.size(), 0, "Empty items should be valid")
-	assert_eq(loaded.servers.size(), 0, "Empty servers should be valid")
+	assert_eq(loaded.inventory_grid.size(), 0, "Empty items should be valid")
+	assert_eq(loaded.server_containers.size(), 0, "Empty servers should be valid")
 
 func test_inventory_cleared_on_new_game():
 	# Setup inventory
@@ -89,13 +89,15 @@ func test_inventory_cleared_on_new_game():
 
 	# Verify it was saved
 	var before = GameStateManager.get_inventory_state()
-	assert_eq(before.items.size(), 1, "Should have 1 item before new game")
+	assert_eq(before.inventory_grid.size(), 1, "Should have 1 item before new game")
 
 	# Start new game
 	GameStateManager.start_new_game()
 
 	# Check inventory is cleared (current_inventory is now an empty dictionary)
 	var after = GameStateManager.get_inventory_state()
-	# After clear, it's just an empty dictionary, not a dictionary with items/servers keys
-	assert_true(after.is_empty() or (after.has("items") and after.items.size() == 0),
+	# After a clear it holds the two names and nothing under them.
+	assert_true(
+		after.is_empty()
+		or (after.has("inventory_grid") and after.inventory_grid.size() == 0),
 		"Inventory should be cleared after new game")

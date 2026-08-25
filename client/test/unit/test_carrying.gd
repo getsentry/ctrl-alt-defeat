@@ -156,7 +156,7 @@ func _a_bare_rack() -> void:
 		servers.append(TestHelpers.container_data(
 			{"id": "rack_%d_%d" % [at[0], at[1]], "position": at}))
 	ui.inventory_grid.load_inventory_state(
-		APITypes.InventoryState.new({"items": [], "servers": servers}))
+		APITypes.InventoryState.new({"inventory_grid": [], "server_containers": servers}))
 
 
 func _middle_of(square: Vector2i) -> Vector2:
@@ -279,8 +279,8 @@ func test_a_rack_dragged_on_the_grid_is_marked_where_it_is_drawn():
 	for shape in [[[0, 0]], [[0, 0], [1, 0]], [[0, 0], [0, 1]],
 			[[0, 0], [1, 0], [0, 1], [1, 1]], [[0, 0], [0, 1], [0, 2]]]:
 		grid.load_inventory_state(APITypes.InventoryState.new({
-			"items": [],
-			"servers": [TestHelpers.container_data(
+			"inventory_grid": [],
+			"server_containers": [TestHelpers.container_data(
 				{"id": "rack", "position": [0, 0], "shape": shape})],
 		}))
 		await get_tree().process_frame

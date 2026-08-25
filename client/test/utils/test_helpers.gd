@@ -113,14 +113,14 @@ static func create_test_battle_result(winner: int = 1, duration: float = 10.0) -
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
 		"player_inventory": {
-			"items": [],
-			"servers": [
+			"inventory_grid": [],
+			"server_containers": [
 				container_data({"id": "test_srv1"})
 			]
 		},
 		"enemy_inventory": {
-			"items": [],
-			"servers": [
+			"inventory_grid": [],
+			"server_containers": [
 				container_data({"id": "test_srv2"})
 			]
 		}
@@ -199,10 +199,10 @@ static func reset_game_state():
 # Helper to create test inventory
 static func create_test_inventory_state() -> Dictionary:
 	return {
-		"items": [
+		"inventory_grid": [
 			placed_item_data({"id": "item1", "name": "Test Item"})
 		],
-		"servers": [
+		"server_containers": [
 			container_data({"id": "srv1"})
 		]
 	}

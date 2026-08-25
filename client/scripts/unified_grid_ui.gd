@@ -519,7 +519,7 @@ func _on_item_moved(item_id: String, from_pos: Vector2i, to_pos: Vector2i):
 func _save_current_state():
 	"""Save the current inventory state to GameStateManager"""
 	var state = inventory_grid.get_inventory_state()
-	GameStateManager.save_inventory_state(state.items, state.servers)
+	GameStateManager.save_inventory_state(state.inventory_grid, state.server_containers)
 
 func _input(event):
 	# Turning works on anything held, dragged or in hand. R and the wheel
@@ -707,9 +707,9 @@ func _ready():
 	# Then load saved inventory if it exists
 	var saved_inventory = GameStateManager.get_inventory_state()
 	print("DEBUG: Loading saved inventory on UnifiedGridUI startup:")
-	print("  Items: %d" % saved_inventory.get("items", []).size())
-	print("  Servers: %d" % saved_inventory.get("servers", []).size())
-	for item in saved_inventory["items"]:
+	print("  Items: %d" % saved_inventory.get("inventory_grid", []).size())
+	print("  Racks: %d" % saved_inventory.get("server_containers", []).size())
+	for item in saved_inventory["inventory_grid"]:
 		print("    Item: %s at %s" % [item["name"], item["position"]])
 	_load_saved_inventory(saved_inventory)
 
@@ -731,10 +731,10 @@ func configure(settings: Dictionary):
 
 func _load_saved_inventory(saved_data: Dictionary):
 	# Wrapper to load saved inventory from GameStateManager
-	if saved_data.has("items") and saved_data.has("servers"):
-		print("Loading saved inventory with %d servers and %d items" % [
-			saved_data.servers.size(),
-			saved_data.items.size()
+	if saved_data.has("inventory_grid") and saved_data.has("server_containers"):
+		print("Loading saved inventory with %d racks and %d items" % [
+			saved_data.server_containers.size(),
+			saved_data.inventory_grid.size()
 		])
 		# Convert to typed InventoryState
 		var typed_inventory = APITypes.InventoryState.new(saved_data)
@@ -753,7 +753,7 @@ func get_inventory_state() -> Dictionary:
 	# Delegate to InventoryGrid
 	if inventory_grid:
 		return inventory_grid.get_inventory_state()
-	return {"servers": [], "items": []}
+	return {"server_containers": [], "inventory_grid": []}
 
 func _setup_ui():
 	# Check if nodes already exist in the scene
@@ -1744,8 +1744,8 @@ func _add_container_from_purchase(response: APITypes.PurchaseResponse, grid_pos:
 
 	var current_state = GameStateManager.get_inventory_state()
 	inventory_grid.load_inventory_state(APITypes.InventoryState.new({
-		"servers": as_data,
-		"items": current_state["items"]
+		"server_containers": as_data,
+		"inventory_grid": current_state["inventory_grid"]
 	}))
 
 func _show_container_preview(container_data: APITypes.Item, grid_pos: Vector2i):
@@ -1794,7 +1794,7 @@ func _on_ready_for_battle():
 	var grid_state = inventory_grid.get_inventory_state()
 
 	# Check if player has any items
-	if grid_state.items.size() == 0:
+	if grid_state.inventory_grid.size() == 0:
 		print("Cannot start battle without any items!")
 		_show_error_message("You need at least one item to start a battle!")
 		return
@@ -1803,12 +1803,12 @@ func _on_ready_for_battle():
 	var inventory_state = get_inventory_state()
 
 	print("DEBUG: Saving inventory before battle:")
-	print("  Items to save: %d" % grid_state.items.size())
-	for item in grid_state.items:
+	print("  Items to save: %d" % grid_state.inventory_grid.size())
+	for item in grid_state.inventory_grid:
 		print("    - %s at %s" % [item["name"], item["position"]])
 
 	# Save to GameStateManager so it persists across scene changes
-	GameStateManager.save_inventory_state(grid_state.items, grid_state.servers)
+	GameStateManager.save_inventory_state(grid_state.inventory_grid, grid_state.server_containers)
 
 	# Submit battle to server
 	var battle_response = await BattleServerAPI.submit_battle(inventory_state)
@@ -1953,14 +1953,14 @@ func _on_refresh_shop():
 		print("Refreshing shop from server...")
 		# Call the real server to refresh shop
 		var response = await BattleServerAPI.refresh_shop(GameStateManager.current_round)
-		if response != null and response.shop.size() > 0:
+		if response != null and response.current_shop.size() > 0:
 			GameStateManager.gold = response.gold  # Server manages gold deduction
 			# The next one costs what the server says it will, which is not
 			# what this one cost: the price climbs through the round.
 			GameStateManager.shop_refresh_cost = response.next_refresh_cost
 			_update_stats()
-			_display_shop_items(response.shop)
-			GameStateManager.current_shop = response.shop
+			_display_shop_items(response.current_shop)
+			GameStateManager.current_shop = response.current_shop
 		else:
 			print("Failed to refresh shop from server")
 

@@ -23,7 +23,6 @@ class GameSession(BaseModel):
     lives: int = 5  # Player has 5 lives/tries
     wins: int = 0
     losses: int = 0
-    last_battle_result: Optional[Dict]
     current_shop: List[Optional[Item]] = []  # Shop can have empty slots after purchases
     game_seed: int  # Master seed for all RNG in this game session (always set)
     shop_refresh_count: int = 0  # Track number of shop refreshes for seed variation
@@ -200,8 +199,8 @@ class PurchaseResponse(BaseModel):
 class InventoryData(BaseModel):
     """Player or enemy inventory during battle"""
 
-    items: List[PlacedItem] = Field(description="Items on the grid")
-    servers: List[Container] = Field(description="Server containers")
+    inventory_grid: List[PlacedItem] = Field(description="Items on the grid")
+    server_containers: List[Container] = Field(description="Containers on the grid")
 
 
 class BattleActionName(str, Enum):
@@ -429,7 +428,7 @@ class BattleResponse(BaseModel):
             "so is the rack as it was before combining."
         )
     )
-    new_shop: List[Optional[Item]] = Field(description="New shop items for next round")
+    current_shop: List[Optional[Item]] = Field(description="The current shop items")
     battle_id: str = Field(description="Unique battle identifier")
 
 
@@ -446,7 +445,7 @@ class HealthResponse(BaseModel):
 class ShopRefreshResponse(BaseModel):
     """Response after refreshing shop"""
 
-    shop: List[Optional[Item]] = Field(description="New shop items")
+    current_shop: List[Optional[Item]] = Field(description="The current shop items.")
     gold: int = Field(description="Remaining gold after refresh cost")
     next_refresh_cost: int = Field(
         default=1,

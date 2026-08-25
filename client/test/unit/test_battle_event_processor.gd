@@ -74,8 +74,8 @@ func _battle(actions: Array, player_items: Array = [], enemy_items: Array = []) 
 		"actions": actions,
 		"opponent_name": "AI Opponent",
 		"opponent_type": "ai",
-		"player_inventory": {"items": player_items, "servers": []},
-		"enemy_inventory": {"items": enemy_items, "servers": []}
+		"player_inventory": {"inventory_grid": player_items, "server_containers": []},
+		"enemy_inventory": {"inventory_grid": enemy_items, "server_containers": []}
 	})
 
 

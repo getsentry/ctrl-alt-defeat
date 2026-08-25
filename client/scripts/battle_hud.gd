@@ -612,7 +612,7 @@ func _picture_of(status: String) -> Texture2D:
 ## debuffs off as readily as buffs, and what it took is all it says.
 ##
 ## A chip with nothing left on it goes, rather than standing there saying x0.
-func drop_effect(player: int, status: String, stacks: int = 1) -> void:
+func drop_effect(player: int, status: String, stacks: int) -> void:
 	if status == "" or stacks <= 0:
 		return
 	var side := "player" if player == 1 else "enemy"
