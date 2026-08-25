@@ -592,29 +592,12 @@ func _follow(pointer: Vector2) -> void:
 	"""
 	if not is_instance_valid(_dragged_visual):
 		return
-	# Hung from the square it is held by rather than by the middle of its
-	# artwork, so that a long item covers the squares the mark says it will.
-	# The grid says how far that is, because the squares are the grid's.
-	var hang := Vector2.ZERO
-	if is_instance_valid(grid_zone):
-		hang = grid_zone.held_by_offset(_held_by())
-	else:
-		hang = -_dragged_visual.size / 2.0
+	# Under the middle of its own artwork, which is where a hand holds a thing
+	# nobody picked a square on.
+	var corner := pointer - _dragged_visual.size / 2.0
 	_dragged_visual.position = get_global_transform().affine_inverse() \
-		* on_the_screen(pointer + hang, _dragged_visual.size)
+		* on_the_screen(corner, _dragged_visual.size)
 	mark_where_it_would_land(pointer)
-
-
-func _held_by() -> Vector2i:
-	"""Which square of what is in hand the chest is holding it by.
-
-	The middle one. Nobody picked a square: an item comes out of the chest as
-	a whole, unlike one dragged off the grid, which is held wherever the
-	pointer went down on it.
-	"""
-	if not _dragged:
-		return Vector2i.ZERO
-	return APITypes.middle_square(_dragged.turned_shape())
 
 
 func mark_where_it_would_land(pointer: Vector2) -> void:
@@ -630,8 +613,12 @@ func mark_where_it_would_land(pointer: Vector2) -> void:
 		grid_zone.hide_hover_preview()
 		return
 
-	grid_zone.show_hover_preview_for_shop(
-		_dragged, grid_zone.square_held_over(pointer, _held_by()))
+	# Where the artwork is, rather than where the pointer is: those are the
+	# same square only for an item one square across.
+	var local: Vector2 = \
+		grid_zone.get_global_transform().affine_inverse() * pointer
+	grid_zone.show_hover_preview_for_shop(_dragged, grid_zone.square_for_corner(
+		grid_zone.carried_corner(local, _dragged.turned_shape())))
 
 
 func on_the_screen(corner: Vector2, item_size: Vector2) -> Vector2:

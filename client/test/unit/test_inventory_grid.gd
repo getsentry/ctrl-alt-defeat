@@ -1289,3 +1289,88 @@ func test_the_pointer_is_still_on_the_item_after_any_turn():
 
 		grid._end_drag(grid.get_global_transform() * Vector2(-900, -900))
 		await get_tree().process_frame
+
+
+# ============ A drag, played out ============
+#
+# The one thing no test could see. carry_to() is what moves a dragged item's
+# artwork, and while it read the mouse itself nothing could drive it: every
+# test could check where the mark went and none could check where the item
+# went. So the mark sat a spear's length from the spear for weeks, and the
+# same fault came back twice more in other clothes.
+#
+# These play a whole drag -- press, carry, carry, turn, drop -- and ask the
+# only question that matters at each step: is the mark drawn over the item?
+
+func _mark_covers_the_item() -> String:
+	"""Empty when the mark is drawn exactly over the artwork, or what is wrong"""
+	if not grid.hover_preview.visible:
+		return "the mark is not drawn at all"
+	var drawn := Rect2(grid.dragging_object.position, grid.dragging_object.size)
+	var marked := Rect2(grid.hover_preview.position, grid.hover_preview.size)
+	if not drawn.position.is_equal_approx(marked.position):
+		return "the item is at %s and the mark at %s" % [drawn.position, marked.position]
+	if not drawn.size.is_equal_approx(marked.size):
+		return "the item is %s and the mark %s" % [drawn.size, marked.size]
+	return ""
+
+
+func test_the_mark_follows_a_dragged_item_across_the_board():
+	# Held by its own corner, so wherever the pointer is, that is where the
+	# spear's corner is and the whole board is fair game.
+	_a_column_to_stand_a_spear_in()
+	var spear := _put_down(_spear())
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 0)))
+
+	for row in range(0, 4):
+		for column in range(0, 9):
+			grid.carry_to(_pointer_over(Vector2i(column, row)))
+			assert_eq(_mark_covers_the_item(), "",
+				"carried to %s" % Vector2i(column, row))
+
+
+func test_the_mark_follows_a_dragged_item_through_a_turn():
+	_a_column_to_stand_a_spear_in()
+	var spear := _put_down(_spear())
+	# Taken hold of by its tip, where the spear actually stands, and carried
+	# well inside the board so that it has room whichever way it swings.
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
+	var pointer := _pointer_over(Vector2i(4, 3))
+
+	for quarter in range(4):
+		grid.turn_dragged(1, pointer)
+		grid.carry_to(pointer)
+		assert_eq(_mark_covers_the_item(), "", "after %d turns" % [quarter + 1])
+
+
+func test_the_mark_follows_an_item_held_by_any_of_its_squares():
+	_a_column_to_stand_a_spear_in()
+	for held_by in range(4):
+		var spear := _put_down(_spear("held_%d" % held_by))
+		grid._start_drag(spear, _pointer_over(Vector2i(2, held_by)))
+
+		# Held by square N, the corner sits N squares above the pointer, so the
+		# pointer goes that far down to keep the whole spear on the board.
+		grid.carry_to(_pointer_over(Vector2i(3, held_by)))
+
+		assert_eq(_mark_covers_the_item(), "", "held by square %d" % held_by)
+		grid._end_drag(grid.get_global_transform() * Vector2(-900, -900))
+		await get_tree().process_frame
+
+
+func test_a_drag_that_is_carried_off_the_board_marks_nothing():
+	_a_column_to_stand_a_spear_in()
+	var spear := _put_down(_spear())
+	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
+
+	grid.carry_to(grid.get_global_transform() * Vector2(-500, -500))
+
+	assert_false(grid.hover_preview.visible,
+		"There is no square out there to answer about")
+
+
+func test_carrying_nothing_does_nothing():
+	_a_column_to_stand_a_spear_in()
+	grid.carry_to(_pointer_over(Vector2i(2, 3)))
+
+	assert_false(grid.hover_preview.visible, "Nothing is in hand to mark")

@@ -286,30 +286,52 @@ func grid_to_pixel(grid_pos: Vector2i) -> Vector2:
 		grid_pos.y * (cell_size + cell_spacing) + cell_spacing
 	)
 
-func square_grabbed(item_visual: Control, pointer: Vector2) -> Vector2i:
-	"""Which of the item's own squares this pointer is on.
+func square_grabbed(corner: Vector2, item_shape: Array[Vector2i],
+		pointer: Vector2) -> Vector2i:
+	"""Which of a body's own squares this pointer is on.
 
-	The corner square where the pointer is not on the item, so an item taken
+	Takes the corner and the shape rather than a node, so a container can ask
+	it as readily as an item: the two are drawn by different things and held
+	the same way.
+
+	The corner square where the pointer is not on the body, so something taken
 	hold of from nowhere in particular is held the way it always was.
 	"""
-	var within := pointer - item_visual.position
+	var within := pointer - corner
 	if within.x < 0 or within.y < 0:
 		return Vector2i.ZERO
 	var step := cell_size + cell_spacing
 	var square := Vector2i(int(within.x / step), int(within.y / step))
-	var shape: Array[Vector2i] = item_visual.get_meta("item_data").turned_shape()
-	return square if shape.has(square) else Vector2i.ZERO
+	return square if item_shape.has(square) else Vector2i.ZERO
 
 
-func held_by_offset(held_by: Vector2i) -> Vector2:
-	"""Where an item's corner goes, held by this square, for a pointer at zero.
+func carried_corner(pointer_local: Vector2, item_shape: Array[Vector2i]) -> Vector2:
+	"""Where the corner of a carried item goes, for a pointer at this place.
 
-	The middle of the held square lands under the pointer, which is what makes
-	the square the pointer is in the square the item is held by -- whatever
-	part of that square the pointer is on.
+	Under the middle of its own artwork, because nobody chose a square to hold
+	it by: it came off a shelf, out of the chest, or was handed back when a
+	container moved.
+
+	Held by its middle SQUARE instead -- which is what this did for a while --
+	the artwork sat off the pointer by up to a whole cell for 129 of the 222
+	items, every shape whose box is an even number of squares across. Turning
+	one then swung the picture about a point that was not under the hand.
+	"""
+	return pointer_local - _shape_extent(item_shape) / 2.0
+
+
+func square_for_corner(local_corner: Vector2) -> Vector2i:
+	"""The square an item drawn with its corner here would land on.
+
+	Rounded rather than floored: a carried item floats between squares, and
+	the one it lands on is the one it is nearest. This is the exact inverse of
+	grid_to_pixel, so the mark can never disagree with the artwork -- it is
+	worked out from where the artwork is.
 	"""
 	var step := cell_size + cell_spacing
-	return -Vector2(held_by) * step - Vector2(cell_size, cell_size) / 2.0
+	return Vector2i(
+		roundi((local_corner.x - cell_spacing) / step),
+		roundi((local_corner.y - cell_spacing) / step))
 
 
 func square_held_over(pointer: Vector2, held_by := Vector2i.ZERO) -> Vector2i:
@@ -489,12 +511,15 @@ func _on_container_input(event: InputEvent, placed: PlacedContainer):
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			_start_container_drag(placed)
+			# Taken hold of where the click landed, so a rack grabbed by its
+			# far corner is carried by that corner.
+			_start_container_drag(placed,
+				placed.visual.get_global_transform() * event.position)
 		else:
 			_end_container_drag()
 
 
-func can_place_container(container: APITypes.PlacedItem, grid_pos: Vector2i) -> bool:
+func can_place_container(container: APITypes.Item, grid_pos: Vector2i) -> bool:
 	"""Whether a container may stand with its anchor on this square.
 
 	A container needs squares that are free, where an item needs squares that a
@@ -522,14 +547,26 @@ func can_place_container(container: APITypes.PlacedItem, grid_pos: Vector2i) -> 
 	return true
 
 
-func _start_container_drag(placed: PlacedContainer) -> void:
-	"""Pick a container up, and everything standing on it with it"""
+func _start_container_drag(placed: PlacedContainer,
+		taken_at := Vector2.INF) -> void:
+	"""Pick a container up, and everything standing on it with it.
+
+	Takes where it was taken hold of, the same as an item is, so which square
+	is in hand can be placed by a test.
+	"""
 	if read_only or dragging_object:
 		return
 
 	dragging_container = placed
 	original_grid_pos = placed.position()
-	drag_offset = placed.visual.position - get_local_mouse_position()
+	var taken := get_local_mouse_position() if taken_at == Vector2.INF \
+		else get_global_transform().affine_inverse() * taken_at
+	drag_offset = placed.visual.position - taken
+	# By one of its own squares, the same as an item. Marked at the pointer's
+	# square instead, a rack grabbed by any square but its corner was drawn in
+	# one place and marked in another -- and dropped where the mark was.
+	grab_cell = square_grabbed(
+		placed.visual.position, placed.container.turned_shape(), taken)
 	move_child(placed.visual, get_child_count() - 1)
 	placed.visual.z_index = 10
 
@@ -570,7 +607,7 @@ func drop_container_at(pointer: Vector2) -> void:
 	for rider in container_riders:
 		rider.visual.z_index = 0
 
-	var grid_pos := pixel_to_grid(get_global_transform().affine_inverse() * pointer)
+	var grid_pos := square_held_over(pointer, grab_cell)
 	if grid_pos != original_grid_pos and can_place_container(placed.container, grid_pos):
 		# The riders go with it, so which of them the move could not find room
 		# for is answered by which of these is missing afterwards.
@@ -632,7 +669,8 @@ func _start_drag(item_visual: Control, taken_at := Vector2.INF):
 	var taken := get_local_mouse_position() if taken_at == Vector2.INF \
 		else get_global_transform().affine_inverse() * taken_at
 	drag_offset = item_visual.position - taken
-	grab_cell = square_grabbed(item_visual, taken)
+	grab_cell = square_grabbed(item_visual.position,
+		item_visual.get_meta("item_data").turned_shape(), taken)
 
 	# Ensure the item visual stays at its proper size while dragging
 	item_visual.z_index = 10  # Bring to front
@@ -927,16 +965,12 @@ func _on_the_board(grid_pos: Vector2i) -> bool:
 
 
 func _shape_extent(item_shape: Array[Vector2i]) -> Vector2:
-	"""How far a shape reaches from the square it starts on"""
-	var max_x := 0
-	var max_y := 0
-	for offset in item_shape:
-		max_x = max(max_x, int(offset[0]))
-		max_y = max(max_y, int(offset[1]))
-	return Vector2(
-		(max_x + 1) * (cell_size + cell_spacing) - cell_spacing,
-		(max_y + 1) * (cell_size + cell_spacing) - cell_spacing
-	)
+	"""How far a shape reaches from the square it starts on.
+
+	The visual's own measure, so the mark is always exactly the size of the
+	thing it marks rather than the same formula written out twice.
+	"""
+	return ItemVisual.extent_of(item_shape, cell_size, cell_spacing)
 
 
 func _draw_mark(squares: Array[Vector2i], allowed: bool) -> void:
@@ -1003,26 +1037,37 @@ func _remove_item(item_visual: Control):
 	item_removed.emit(item_data, grid_pos)
 
 func _process(_delta):
-	"""Update dragging and hover preview"""
+	"""Carry whatever is in hand to wherever the pointer has got to"""
+	carry_to(get_global_mouse_position())
+
+
+func carry_to(pointer: Vector2) -> void:
+	"""Move what is being dragged to this pointer, and mark where it would land.
+
+	Takes the pointer rather than reading it, so a whole drag can be played
+	out by a test -- press, carry, carry, drop -- and what is on screen at each
+	step can be asked about.
+
+	This is the only thing that moves a dragged item's artwork, and while it
+	read the mouse itself no test could drive it. That is how the mark came to
+	be drawn a spear's length from the spear and stay that way: every test
+	could see where the mark went, and none could see where the item went.
+	"""
+	var local: Vector2 = get_global_transform().affine_inverse() * pointer
+
 	if dragging_container:
 		var visual = dragging_container.visual
-		visual.position = get_local_mouse_position() + drag_offset
+		visual.position = local + drag_offset
 		for rider in container_riders:
 			rider.follow(visual.position)
-		update_container_preview(get_global_mouse_position())
+		update_container_preview(pointer)
 		return
 
 	if dragging_object:
-		# Update position smoothly
-		var target_pos = get_local_mouse_position() + drag_offset
-		dragging_object.position = target_pos
-
-		# Update hover preview - check if valid first
+		dragging_object.position = local + drag_offset
 		if not hover_preview or not is_instance_valid(hover_preview):
-			return  # Skip hover preview updates if it's invalid
-
-		update_drag_preview(get_global_mouse_position())
-		return
+			return
+		update_drag_preview(pointer)
 
 
 func update_container_preview(pointer: Vector2) -> void:
@@ -1030,7 +1075,7 @@ func update_container_preview(pointer: Vector2) -> void:
 	if not dragging_container:
 		return
 	var container := dragging_container.container
-	var grid_pos := pixel_to_grid(get_global_transform().affine_inverse() * pointer)
+	var grid_pos := square_held_over(pointer, grab_cell)
 	mark_square(container.turned_shape(), grid_pos, can_place_container(container, grid_pos))
 
 

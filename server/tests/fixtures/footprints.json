@@ -1,0 +1,122 @@
+[
+  {
+    "squares": [[0, 0]],
+    "example": "cpu_booster",
+    "items": 74
+  },
+  {
+    "squares": [[0, 0], [0, 1]],
+    "example": "emergency_patch",
+    "items": 47
+  },
+  {
+    "squares": [[0, 0], [1, 0]],
+    "example": "auto_rollback",
+    "items": 15
+  },
+  {
+    "squares": [[0, 0], [0, 1], [0, 2]],
+    "example": "memory_cache",
+    "items": 9
+  },
+  {
+    "squares": [[0, 0], [0, 1], [1, 1]],
+    "example": "cache_spider",
+    "items": 2
+  },
+  {
+    "squares": [[0, 0], [1, 0], [1, 1]],
+    "example": "winged_boots",
+    "items": 1
+  },
+  {
+    "squares": [[0, 0], [1, 0], [2, 0]],
+    "example": "pandamonium",
+    "items": 3
+  },
+  {
+    "squares": [[0, 1], [1, 0], [1, 1]],
+    "example": "jynx_torquilla",
+    "items": 3
+  },
+  {
+    "squares": [[0, 0], [0, 1], [0, 2], [0, 3]],
+    "example": "patch_registry",
+    "items": 15
+  },
+  {
+    "squares": [[0, 0], [0, 1], [1, 0], [1, 1]],
+    "example": "chaos_experiment",
+    "items": 32
+  },
+  {
+    "squares": [[0, 1], [0, 2], [1, 0], [1, 1]],
+    "example": "paradise_birb",
+    "items": 1
+  },
+  {
+    "squares": [[0, 1], [1, 0], [1, 1], [2, 0]],
+    "example": "eggscalibur",
+    "items": 1
+  },
+  {
+    "squares": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0]],
+    "example": "shepherds_crook",
+    "items": 1
+  },
+  {
+    "squares": [[0, 0], [1, 0], [1, 1], [1, 2], [2, 0]],
+    "example": "hammer",
+    "items": 1
+  },
+  {
+    "squares": [[0, 0], [1, 0], [1, 1], [1, 2], [2, 2]],
+    "example": "mobius_lash",
+    "items": 1
+  },
+  {
+    "squares": [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]],
+    "example": "crossblades",
+    "items": 5
+  },
+  {
+    "squares": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [2, 0]],
+    "example": "credential_harvester",
+    "items": 1
+  },
+  {
+    "squares": [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]],
+    "example": "network_cache",
+    "items": 13
+  },
+  {
+    "squares": [[0, 0], [0, 1], [1, 0], [1, 1], [1, 2], [2, 2]],
+    "example": "thornbloom",
+    "items": 1
+  },
+  {
+    "squares": [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]],
+    "example": "container_orchestrator",
+    "items": 2
+  },
+  {
+    "squares": [[0, 1], [1, 0], [1, 1], [2, 0], [2, 1], [3, 0]],
+    "example": "dancing_dragon",
+    "items": 1
+  },
+  {
+    "squares": [[0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1]],
+    "example": "querystorm",
+    "items": 1
+  },
+  {
+    "squares": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2]],
+    "example": "impractically_large_greatsword",
+    "items": 1
+  },
+  {
+    "squares": [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]],
+    "example": "mesh_network_hub",
+    "items": 1
+  }
+]

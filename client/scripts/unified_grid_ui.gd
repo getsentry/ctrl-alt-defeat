@@ -352,12 +352,11 @@ func follow_pointer(pointer: Vector2) -> void:
 	"""
 	if not held_item:
 		return
-	var holding := APITypes.middle_square(held_item.turned_shape())
+	var body := held_item.turned_shape()
 	if is_instance_valid(held_visual):
-		# Hung from the square being held, so the artwork and the mark under it
-		# cover the same squares. Hung from the middle of its artwork instead,
-		# a four-square spear was drawn two squares off the mark.
-		var corner := pointer + inventory_grid.held_by_offset(holding)
+		# Under the middle of its own artwork, which is where a hand holds a
+		# thing nobody picked a square on.
+		var corner := inventory_grid.carried_corner(pointer, body)
 		# And on the screen. The pointer can leave the window while an item is
 		# in hand, and an item that goes with it is being carried where the
 		# player cannot see it.
@@ -365,53 +364,53 @@ func follow_pointer(pointer: Vector2) -> void:
 		held_visual.global_position = corner.clamp(
 			view.position, (view.end - held_visual.size).max(view.position))
 
-	var grid_pos := inventory_grid.square_held_over(pointer, holding)
+	# The mark goes where the artwork is, worked out from the artwork's own
+	# corner rather than from a square the item is said to be held by. Two
+	# answers to where a carried item is meant one of them was wrong.
+	var grid_pos := square_carried_to(held_item, pointer)
 	inventory_grid.mark_square(
-		held_item.turned_shape(), grid_pos,
-		inventory_grid.can_place_item(held_item, grid_pos))
-
-
-func held_by() -> Vector2i:
-	"""Which square of the thing in hand the player has hold of.
-
-	The same four ways of holding something that carrying_something() lists.
-	Dragged off the grid, the square is the one the player put the pointer on.
-	The other three were never put down anywhere, so they are held by the
-	middle: an item carried off the shelf hangs from its middle square rather
-	than from its corner.
-
-	It matters because the mark that says where an item would land goes under
-	its corner. A spear held by the middle and marked under the pointer had the
-	mark two squares off, and the drop went where the mark was.
-	"""
-	if held_item:
-		return APITypes.middle_square(held_item.turned_shape())
-	if dragging_shop_data:
-		return APITypes.middle_square(dragging_shop_data.turned_shape())
-	if inventory_grid != null and inventory_grid.dragging_object != null:
-		return inventory_grid.grab_cell
-	if storage_bin != null and storage_bin.dragged() != null:
-		return APITypes.middle_square(storage_bin.dragged().turned_shape())
-	return Vector2i.ZERO
+		body, grid_pos, inventory_grid.can_place_item(held_item, grid_pos))
 
 
 func square_carried_to(item: APITypes.Item, pointer: Vector2) -> Vector2i:
-	"""The square this item's corner lands on, carried by its middle to here"""
-	return inventory_grid.square_held_over(
-		pointer, APITypes.middle_square(item.turned_shape()))
+	"""The square this item lands on, carried by the middle of it to here.
+
+	Asked of where the artwork is drawn, so the mark and the picture cannot
+	give different answers.
+	"""
+	var local: Vector2 = \
+		inventory_grid.get_global_transform().affine_inverse() * pointer
+	return inventory_grid.square_for_corner(
+		inventory_grid.carried_corner(local, item.turned_shape()))
 
 
 func carrying_something() -> bool:
-	"""Whether an item is in hand, however it came to be there.
+	"""Whether anything is in hand, however it came to be there.
 
-	The same four ways turn() knows about, asked as a question rather than
-	acted on, so the hint that says a turn is possible and the turn itself
-	cannot disagree about when it is.
+	A rack counts. It is an item that other items stand on, and that is the
+	only thing that separates the two: it is bought from the same shop, built
+	from the same catalogue, stands on the same board and is carried by one of
+	its own squares in exactly the same way. The server has said so all along
+	-- Container extends PlacedItem and adds nothing to it -- and every place
+	the client keeps a second answer for racks is a place the two can drift.
 	"""
 	return held_item != null \
 		or dragging_shop_data != null \
 		or (inventory_grid != null and inventory_grid.dragging_object != null) \
+		or (inventory_grid != null and inventory_grid.dragging_container != null) \
 		or (storage_bin != null and storage_bin.dragged() != null)
+
+
+func holding_something_turnable() -> bool:
+	"""Whether the thing in hand can be turned, which a rack cannot be yet.
+
+	The only line in this file that treats a rack differently on purpose.
+	Turning one has to turn everything standing on it, which is built on the
+	server and not here; when it is, this collapses into carrying_something()
+	and the difference goes with it. See docs/rotation_model.md.
+	"""
+	return carrying_something() \
+		and (inventory_grid == null or inventory_grid.dragging_container == null)
 
 
 func turn(quarters: int, pointer := Vector2.INF) -> bool:
@@ -575,8 +574,8 @@ func _hang_the_shop_drag(pointer: Vector2) -> void:
 	"""
 	if not is_instance_valid(drag_preview) or dragging_shop_data == null:
 		return
-	drag_preview.global_position = pointer + inventory_grid.held_by_offset(
-		APITypes.middle_square(dragging_shop_data.turned_shape()))
+	drag_preview.global_position = inventory_grid.carried_corner(
+		pointer, dragging_shop_data.turned_shape())
 
 
 func mark_where_the_shop_item_would_land(pointer := Vector2.INF) -> void:
@@ -1725,23 +1724,15 @@ func _container_squares(container_data: APITypes.Item, grid_pos: Vector2i) -> Ar
 	return squares
 
 func _can_place_container(container_data: APITypes.Item, grid_pos: Vector2i) -> bool:
-	"""Check if a container can be placed at the given position"""
-	var squares = _container_squares(container_data, grid_pos)
+	"""Whether a rack may stand here. The grid's own rule, not a second one.
 
-	# Check if it fits within the main grid bounds
-	for square in squares:
-		if square.x < 0 or square.y < 0:
-			return false
-		if square.x >= ROOM_WIDTH or square.y >= ROOM_HEIGHT:
-			return false
-
-	# Check for overlap with existing containers
-	for placed in inventory_grid.containers:
-		for square in placed.container.covered_squares():
-			if square in squares:
-				return false  # Overlapping
-
-	return true
+	This was the same walk written out again against ROOM_WIDTH and
+	ROOM_HEIGHT rather than against the grid's own size, and without the rule
+	that a rack is no obstacle to itself. Two opinions about what fits is the
+	shape that let a container be sold hanging off the edge of the board and
+	then refused by the engine at every battle after.
+	"""
+	return inventory_grid.can_place_container(container_data, grid_pos)
 
 func _add_container_from_purchase(response: APITypes.PurchaseResponse, grid_pos: Vector2i):
 	"""Add a purchased container to the inventory grid"""
@@ -2059,7 +2050,7 @@ func _process(_delta: float) -> void:
 	refresh_combining()
 	refresh_aura()
 	if rotate_hint != null:
-		rotate_hint.carrying(carrying_something())
+		rotate_hint.carrying(holding_something_turnable())
 	if sell_lure != null:
 		sell_lure.pointing_at_it(get_global_mouse_position())
 
@@ -2490,7 +2481,15 @@ func _aura_square(item: APITypes.Item, pointer: Vector2) -> Vector2i:
 	otherwise.
 	"""
 	if _something_is_being_moved():
-		return inventory_grid.square_held_over(pointer, held_by())
+		# The square the item itself would land on. A zone drawn around the
+		# pointer rather than around the item reaches out of the wrong place
+		# for anything more than one square across.
+		if inventory_grid.dragging_object != null:
+			# Dragged off the grid, so it is held by the square it was picked
+			# up on rather than by the middle of its artwork.
+			return inventory_grid.square_held_over(
+				pointer, inventory_grid.grab_cell)
+		return square_carried_to(item, pointer)
 
 	# Where the board says it is, not where the item says it is. An item put
 	# in the chest is still the object that was on the grid, remembering the
@@ -2504,10 +2503,13 @@ func _aura_square(item: APITypes.Item, pointer: Vector2) -> Vector2i:
 
 
 func _something_is_being_moved() -> bool:
-	return held_item != null \
-		or dragging_shop_data != null \
-		or (inventory_grid != null and inventory_grid.dragging_object != null) \
-		or (storage_bin != null and storage_bin.dragged() != null)
+	"""The same question carrying_something() answers, asked from the zone.
+
+	It was the same four conditions written out again, two thousand lines
+	away. Two lists that have to agree is what let the shop drag go unturnable
+	the first time round.
+	"""
+	return carrying_something()
 
 
 func _zone_at(offsets: Array[Vector2i], at: Vector2i) -> Array[Vector2i]:

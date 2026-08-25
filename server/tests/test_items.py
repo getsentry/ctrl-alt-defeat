@@ -405,3 +405,52 @@ class TestWhatAnAuraActsOn:
                 if zones:
                     found[item_id] = zones
         return found
+
+
+class TestTheFootprintsWrittenDown:
+    """`server/tests/fixtures/footprints.json` is every shape the catalogue
+    holds, and the client's drag tests sweep it: every shape, every rotation,
+    every way of carrying something.
+
+    Written down rather than listed in the tests, so an item with a shape
+    nobody thought of is covered the day it is added. This is what makes
+    forgetting to regenerate loud: run `python tools/dump_footprints.py`.
+    """
+
+    def _written_down(self):
+        import json
+        from pathlib import Path
+
+        path = Path(__file__).parent / "fixtures" / "footprints.json"
+        return json.loads(path.read_text())
+
+    def test_the_file_holds_every_shape_the_catalogue_has(self):
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+        from tools.dump_footprints import footprints
+
+        written = {
+            tuple(tuple(s) for s in entry["squares"]) for entry in self._written_down()
+        }
+        actual = {tuple(tuple(s) for s in entry["squares"]) for entry in footprints()}
+
+        missing = actual - written
+        gone = written - actual
+        assert not missing, (
+            f"{len(missing)} shapes are in the catalogue and not in the fixture. "
+            "Run `python tools/dump_footprints.py`."
+        )
+        assert not gone, (
+            f"{len(gone)} shapes are in the fixture and no longer in the catalogue. "
+            "Run `python tools/dump_footprints.py`."
+        )
+
+    def test_every_shape_is_a_shape(self):
+        for entry in self._written_down():
+            squares = [tuple(s) for s in entry["squares"]]
+            assert squares, f"{entry['example']} covers nothing"
+            assert len(set(squares)) == len(squares), f"{entry['example']} repeats a square"
+            assert min(x for x, _ in squares) == 0, f"{entry['example']} is off its own corner"
+            assert min(y for _, y in squares) == 0, f"{entry['example']} is off its own corner"

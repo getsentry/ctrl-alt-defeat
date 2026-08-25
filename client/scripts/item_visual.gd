@@ -81,6 +81,22 @@ func redraw_as(data) -> void:
 	setup(data, cell_size, cell_spacing)
 
 
+## How big a shape is drawn, in pixels.
+##
+## Static, and the only copy: the grid asks it to size the mark and the visual
+## asks it to size the artwork, and a mark that is not the size of the thing it
+## marks is the fault this whole corner of the code keeps producing.
+static func extent_of(item_shape: Array, cell: float, spacing: float) -> Vector2:
+	var max_x := 0
+	var max_y := 0
+	for offset in item_shape:
+		max_x = maxi(max_x, int(offset[0]))
+		max_y = maxi(max_y, int(offset[1]))
+	return Vector2(
+		(max_x + 1) * (cell + spacing) - spacing,
+		(max_y + 1) * (cell + spacing) - spacing)
+
+
 func covers_point(point: Vector2) -> bool:
 	"""Whether this point is on a square the item actually stands on.
 
@@ -127,19 +143,7 @@ func _create_visual():
 	_artwork = null
 	_cooldown = null
 
-	# Calculate size from shape
-	var max_x = 0
-	var max_y = 0
-	for offset in item_shape:
-		max_x = max(max_x, offset[0])
-		max_y = max(max_y, offset[1])
-
-	var width = max_x + 1
-	var height = max_y + 1
-	var calculated_size = Vector2(
-		width * (cell_size + cell_spacing) - cell_spacing,
-		height * (cell_size + cell_spacing) - cell_spacing
-	)
+	var calculated_size := extent_of(item_shape, cell_size, cell_spacing)
 	custom_minimum_size = calculated_size
 	size = calculated_size
 	# Ensure we clip children to our bounds so textures don't overflow

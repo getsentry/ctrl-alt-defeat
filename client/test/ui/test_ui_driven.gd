@@ -332,14 +332,12 @@ func test_selling_an_item_pays_the_player():
 	game_ui.dragging_shop_data = item_data
 	game_ui.drag_preview = ItemVisual.new()
 	game_ui.add_child(game_ui.drag_preview)
-	# Aimed at the square the item is carried by rather than at its corner: an
-	# item off the shelf hangs from its middle square, and a Stack Smasher is
-	# an L whose middle square is not its corner.
-	var aim := Vector2i(target) + APITypes.middle_square(item_data.turned_shape())
+	# Aimed at the middle of where the artwork will be: a carried item hangs
+	# from the middle of its own picture, so that is what the pointer holds.
 	game_ui._end_shop_drag(
 		game_ui.inventory_grid.global_position
-		+ game_ui.inventory_grid.grid_to_pixel(aim)
-		+ Vector2(game_ui.inventory_grid.cell_size / 2, game_ui.inventory_grid.cell_size / 2)
+		+ game_ui.inventory_grid.grid_to_pixel(Vector2i(target))
+		+ game_ui.inventory_grid._shape_extent(item_data.turned_shape()) / 2.0
 	)
 	await _wait_for_server()
 
@@ -624,35 +622,25 @@ func test_inventory_persistence_across_battle():
 		if GameStateManager.gold < 3:  # Most items cost at least 3
 			break
 
-		var shop_item = game_ui.shop_items[i]
-		var item_data = shop_item.get_meta("item_data")
 		var target_pos = _find_first_empty_grid_cell(game_ui)
 
 		if target_pos == Vector2(-1, -1):
 			print("   - No more empty cells, stopping purchases")
 			break
 
-		# Quick purchase via drag/drop
-		var inventory_grid = game_ui.inventory_grid
-		var target_pixel = inventory_grid.grid_to_pixel(Vector2i(target_pos.x, target_pos.y))
-		var drop_pos = inventory_grid.global_position + target_pixel + Vector2(game_ui.inventory_grid.cell_size/2, game_ui.inventory_grid.cell_size/2)
+		# This slot, if it can be bought and has somewhere to go. Each pass
+		# takes a different slot: the shop is unseeded, so any one of them may
+		# hold a container or something with nowhere to stand.
+		var shop_item = game_ui.shop_items[i]
+		var item_data = shop_item.get_meta("item_data")
+		if item_data.is_container or not game_ui.inventory_grid.can_place_item(
+				item_data, Vector2i(target_pos)):
+			print("   - Slot %d has nowhere to go, skipping" % i)
+			continue
 
-		# Simulate drag and drop
-		var mouse_down = InputEventMouseButton.new()
-		mouse_down.button_index = MOUSE_BUTTON_LEFT
-		mouse_down.pressed = true
-		mouse_down.position = shop_item.size / 2
-		mouse_down.global_position = shop_item.global_position + shop_item.size / 2
-		shop_item.gui_input.emit(mouse_down)
-		await get_tree().process_frame
-
-		var mouse_up = InputEventMouseButton.new()
-		mouse_up.button_index = MOUSE_BUTTON_LEFT
-		mouse_up.pressed = false
-		mouse_up.global_position = drop_pos
-		mouse_up.position = drop_pos
-		game_ui._input(mouse_up)
-		await _wait_for_server()
+		var landed: bool = await _carry_from_the_shelf(
+			game_ui, shop_item, Vector2i(target_pos))
+		assert_true(landed, "%s should land on the rack" % item_data.name)
 
 		purchased_items.append(item_data.name)
 		print("   - Purchased: %s" % item_data.name)
@@ -1035,10 +1023,12 @@ func _carry_from_the_shelf(game_ui, shop_item, corner: Vector2i) -> bool:
 	"""
 	var item = shop_item.get_meta("item_data")
 	var grid = game_ui.inventory_grid
-	var step: float = grid.cell_size + grid.cell_spacing
-	var aim := Vector2(corner + APITypes.middle_square(item.turned_shape()))
+	# Aimed at the middle of where the artwork will be, because that is where a
+	# carried item hangs from. Aimed at the corner square, an item more than
+	# one square across lands a square or two short of the rack.
 	var drop: Vector2 = game_ui.server_room_container.global_position \
-		+ aim * step + Vector2(grid.cell_size, grid.cell_size) / 2.0
+		+ grid.grid_to_pixel(corner) \
+		+ grid._shape_extent(item.turned_shape()) / 2.0
 	var from: Vector2 = shop_item.global_position + shop_item.size / 2
 	var before: int = grid.items.size()
 
