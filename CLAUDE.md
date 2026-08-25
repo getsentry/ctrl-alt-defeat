@@ -20,33 +20,49 @@
 - Start server: `cd server && python main.py`
 
 ### Client Tests
-Everything runs, and the whole lot takes about 17 seconds.
 
-The unit tests need nothing running, and are the ones to use while working:
+**Always run them through `run_tests.sh`.** A raw `godot ... gut_cmdln.gd`
+command skips the checks at the bottom of that script, and those catch the two
+ways a suite goes green having tested less than it says. See "What a green run
+does not tell you" below.
 
 ```
-cd client && godot --headless --path . -s addons/gut/gut_cmdln.gd \
-  -gdir=res://test/unit -ginclude_subdirs=false -gexit
+cd client && ./run_tests.sh --unit        # unit tests only, no server, ~20s
+cd client && ./run_tests.sh               # everything, starts a server, ~45s
+cd client && ./run_tests.sh test_api_types  # one test by name
 ```
 
-`-ginclude_subdirs=false` is what keeps it to `test/unit/`. Add
-`-gselect=test_api_types.gd` for a single file.
-
-`test/ui/` and `test/smoke/` drive the real UI against a real server, so run
-them through `client/run_tests.sh`, which starts one in TEST_MODE first. Run
-them before anything that touches a screen: they are the only tests that would
-notice a scene that no longer loads.
+`test/ui/` and `test/smoke/` drive the real UI against a real server, which
+`run_tests.sh` starts in TEST_MODE. Run the whole thing before anything that
+touches a screen: they are the only tests that would notice a scene that no
+longer loads.
 
 | Suite | Tests | Needs a server | Time |
 |-------|-------|----------------|------|
-| `test/unit/` | 646 | no | 18s |
-| `test/ui/` | 14 | yes | 100s |
+| `test/unit/` | 904 | no | 20s |
+| `test/ui/` | 18 | yes | 25s |
 | `test/smoke/` | 8 | yes | <1s |
 | `test/integration/` | 0 | - | - |
 
 `test/integration/` holds no tests. Both files in it are helper classes that
 extend RefCounted, and GUT skips them with a warning because they are named
 `test_*`. Either rename them or make them tests.
+
+### What a green run does not tell you
+
+GUT's exit code counts failed assertions and nothing else. Two things get past
+it, and `run_tests.sh` fails the run for both:
+
+**A test that errors part way through** is reported as "did not assert" and
+counted Risky, not Failed. Nine tests once sat in the suite doing nothing at
+all while it reported no failures.
+
+**A test file that will not parse** is not counted at all. The run simply has
+fewer tests in it: 862 instead of 904, and nothing said why. So the script
+count is checked against what is on disk.
+
+Risky is not always wrong -- seven tests call `pending()` on purpose, with a
+reason -- which is why the check is for the error, not for the count.
 
 ### Test Timeouts
 **No test may hang the run.** GUT on its own awaits each test method with no

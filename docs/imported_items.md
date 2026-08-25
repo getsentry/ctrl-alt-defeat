@@ -1,14 +1,11 @@
-# Imported items
+# What is left to build
 
-The 129 items whose numbers now come from a Backpack Battles item a Sentaur
-can reach: 128 that we did not have, plus Mobius Lash, which was re-pointed
-off a Berserker weapon. Each keeps its source's map, rarity, cost, sockets and
-combat stats. The category is ours, and so is the name for the 9 that `docs/`
-had already thought one up for; the rest still wear the source's name.
+Every item whose numbers come from a Backpack Battles item a Sentaur can reach.
+101 of them carry work that is not done, listed here by category.
 
-`server/data/items/*.json` is the record, not this file. Regenerate it with
-`research/item_grids/write_import_doc.py` rather than editing it, so the counts
-below cannot drift from the JSON.
+This file is generated. Run `research/item_grids/write_import_doc.py` rather
+than editing it, so the counts cannot drift from
+`server/data/items/*.json`, which is the record.
 
 ## How an unfinished item says so
 
@@ -25,12 +22,6 @@ a weapon. All of these are `"in_shop": false` on top of that, because offering a
 half-built item would change the balance of each shop roll while looking
 finished. Turn one on by deleting its `in_shop` line.
 
-**The original 96 items carry no `unbuilt`, and that does not mean they are
-finished.** They were never surveyed against the wiki's wording. 21 of the
-catalogue's 26 `buff` effects do nothing at all, because they name `contained`,
-`adjacent` and `all_sentaur` — sets of items — while being written into the
-player's buff dictionary, which is not where an item's numbers live.
-
 ## Set aside, not imported
 
 Six more were scraped and deliberately kept out of the catalogue. The whole point
@@ -42,6 +33,7 @@ work. They sit in `server/data/unavailable_items.json`, which nothing loads:
 |---|---|
 | Cog Badge (`cog_badge`) | Offers Engineer items, and there is no Engineer. |
 | Flame Badge (`flame_badge`) | Offers Pyromancer items, and there is no Pyromancer. |
+| Heartbeat Node (`health_check`) | Set aside 2026-08-19: Goobling is gated behind the It's Slime Time! skill, which this game does not have, has no recipe and no subclass, so it had no way to be obtained. Bring it back by giving it a path. |
 | Magic Badge (`magic_badge`) | Offers Mage items, and there is no Mage. |
 | Skull Badge (`skull_badge`) | Offers Reaper items, and there is no Reaper. |
 | Twine Badge (`twine_badge`) | Offers Adventurer items, and there is no Adventurer. |
@@ -74,7 +66,7 @@ back as unbuilt rather than marked unavailable.
 
 - **Skills** (39). Handed out at a level rather than bought.
 - **Subclass items** (4: Beastmaster, Grovekeeper, Pathfinder, Lifebinder).
-  Subclasses do not exist yet. **Packet Burst**, already in the catalogue, is a
+  Subclasses do not exist yet. **Data Packets**, already in the catalogue, is a
   fifth: its source Piercing Arrow is a Hunter item, so it is held back with a
   `needs` line rather than deleted, because subclasses are meant to arrive.
 
@@ -99,180 +91,145 @@ a player reads; it never changes how an item plays.
 `problem` and `protocol` hold 61 and 58 items against 36 patterns, so each borrows
 a second colour close to its first. See `server/item_looks.py`.
 
-## Problems (weapons) (44)
+## Problems (weapons) (16)
 
 | Item | From | Rarity | Cost | Map | Sockets | Unbuilt |
 |---|---|---|---:|---|---:|---:|
-| Bloodthorne |  | godly | 15 | 1x3 | 2 | 2 |
-| Bloody Dagger |  | legendary | 12 | 3x4 | 1 | 2 |
-| Broom |  | common | 4 | 1x4 | 1 | 2 |
-| Buffer Overflow | Spear | rare | 6 | 1x9 | 1 | 1 |
-| Burning Torch |  | epic | 5 | 1x2 | 1 | 2 |
-| Claws of Attack |  | epic | 8 | 2x1 | 1 | 2 |
-| Credential Harvester | Blood Harvester | unique | 7 | 3x4 | 3 | 2 |
-| Crossblades |  | godly | 30 | 4x4 | 3 | 2 |
-| Dancing Dragon |  | unique | 9 | 6x4 | 2 | 3 |
-| Darksaber |  | godly | 16 | 1x4 | 2 | 2 |
-| Data Miner | Shovel | rare | 8 | 1x4 | 1 | 2 |
-| Eggscalibur |  | legendary | 10 | 5x4 | 2 | 2 |
-| Falcon Blade |  | legendary | 15 | 5x5 | 2 | 2 |
-| Fancy Fencing Rapier |  | godly | 12 | 1x4 | 1 | 2 |
-| Frostbite |  | legendary | 11 | 1x3 | 2 | 3 |
-| Hammer |  | rare | 8 | 3x3 | 2 | 1 |
-| Hero Longsword |  | legendary | 19 | 3x5 | 2 | 1 |
-| Hero Sword |  | epic | 7 | 3x4 | 1 | 1 |
-| Holy Spear |  | godly | 18 | 3x9 | 2 | 2 |
-| Hungry Blade |  | epic | 7 | 1x3 | 1 | 3 |
-| Impractically Large Greatsword |  | godly | 14 | 2x4 | 4 | 1 |
-| Katana |  | godly | 11 | 1x4 | 3 | 1 |
-| Lightsaber |  | godly | 9 | 1x4 | 2 | 2 |
-| Magic Staff |  | epic | 10 | 1x4 | 1 | 1 |
-| Magic Torch |  | legendary | 11 | 3x2 | 1 | 1 |
-| Manathirst |  | legendary | 13 | 1x3 | 1 | 2 |
-| Mobius Lash | Thorn Whip | epic | 8 | 3x3 | 2 | 2 |
-| Pandamonium |  | legendary | 11 | 5x4 | 2 | 2 |
-| Ping of Death | Stone | common | 1 | 1x1 |  | 2 |
-| Poison Dagger |  | epic | 11 | 1x2 | 1 | 2 |
-| Poison Spear |  | legendary | 13 | 1x9 | 1 | 1 |
-| Pop |  | unique | 6 | 2x2 | 4 | 1 |
-| Prismatic Sword |  | godly | 17 | 3x5 | 2 | 5 |
-| Rage Click | Artifact Stone: Cold | unique | 10 | 1x3 |  | 3 |
-| Ripsaw Blade |  | legendary | 7 | 1x4 | 3 | 1 |
-| Serpent Staff |  | legendary | 17 | 1x4 | 1 | 2 |
-| Shell Totem |  | rare | 5 | 7x2 |  | 2 |
-| Snow Stick |  | legendary | 8 | 1x4 | 1 | 1 |
-| Spectral Dagger |  | legendary | 10 | 1x2 | 1 | 2 |
-| Stack Smasher | Pan | common | 4 | 4x4 | 1 | 1 |
-| Stankus' Toothpick |  | legendary | 9 | 5x6 | 1 | 2 |
-| Stone Golem |  | godly | 16 | 4x3 | 1 | 3 |
-| Thermal Throttle | Artifact Stone: Heat | unique | 9 | 1x3 |  | 3 |
-| Thornbloom |  | godly | 14 | 3x3 | 2 | 3 |
+| Blade Server | Impractically Large Greatsword | godly | 14 | 2x4 | 4 | 1 |
+| Build Golem | Stone Golem | godly | 16 | 4x3 | 1 | 2 |
+| Cert Lance | Holy Spear | godly | 18 | 3x9 | 2 | 2 |
+| Data Miner | Shovel | rare | 8 | 1x4 | 1 | 1 |
+| Day Zero | Artifact Stone: Death | unique | 8 | 1x3 |  | 2 |
+| Loaded Dice Rig | Fortuna's Grace | legendary | 10 | 4x3 | 1 | 1 |
+| Pandemic | Pandamonium | legendary | 11 | 5x4 | 2 | 1 |
+| Ping of Death | Stone | common | 1 | 1x1 |  | 1 |
+| Polyglot Blade | Prismatic Sword | godly | 17 | 3x5 | 2 | 5 |
+| Rage Click | Artifact Stone: Cold | unique | 10 | 1x3 |  | 1 |
+| Ripsaw | Ripsaw Blade | legendary | 7 | 1x4 | 3 | 1 |
+| Snake Case | Serpent Staff | legendary | 17 | 1x4 | 1 | 2 |
+| Spam Cannon | Belladonna's Whisper | legendary | 13 | 4x3 | 1 | 1 |
+| Thermal Throttle | Artifact Stone: Heat | unique | 9 | 1x3 |  | 1 |
+| Venom Lance | Poison Spear | legendary | 13 | 1x9 | 1 | 1 |
+| Vim Katana | Katana | godly | 11 | 1x4 | 3 | 1 |
 
-## Protocols (accessories) (38)
+## Protocols (accessories) (30)
 
 | Item | From | Rarity | Cost | Map | Sockets | Unbuilt |
 |---|---|---|---:|---|---:|---:|
-| Amulet of Fortune |  | rare | 6 | 3x3 |  | 2 |
-| Amulet of Light |  | rare | 6 | 7x7 |  | 2 |
-| Angel Crystal |  | unique | 6 | 7x4 |  | 3 |
-| Bag of Stones |  | rare | 3 | 1x3 |  | 1 |
-| Blue Sage Collar |  | legendary | 8 | 3x3 |  | 1 |
-| Boiling Pot |  | rare | 8 | 5x4 | 1 | 3 |
-| Djinn Lamp |  | godly | 11 | 3x1 |  | 2 |
-| Fanfare |  | godly | 7 | 6x5 |  | 2 |
-| Flute |  | epic | 6 | 6x5 |  | 2 |
-| Furcifer Prime Subscription |  | unique | 5 | 1x1 |  | 2 |
-| Happy Bomb |  | unique | 7 | 2x2 |  | 1 |
-| Heart Container |  | godly | 11 | 2x2 | 1 | 2 |
-| Heart of Darkness |  | godly | 19 | 4x4 | 1 | 3 |
-| Leaf Badge |  | unique | 5 | 3x3 |  | 3 |
-| Lucky Piggy |  | epic | 7 | 3x2 |  | 3 |
-| Maneki-neko |  | legendary | 10 | 3x4 |  | 5 |
-| Oil Lamp |  | epic | 7 | 2x2 |  | 2 |
-| Platinum Customer Card |  | epic | 8 | 3x3 |  | 4 |
-| Present |  | unique | 10 | 2x2 |  | 2 |
-| Puzzle Badge |  | unique | 5 | 4x4 |  | 3 |
-| Rainbow Badge |  | unique | 5 | 1x1 |  | 2 |
-| Red Orchid Collar |  | legendary | 8 | 3x3 |  | 1 |
-| Repeater |  | unique | 8 | 5x3 |  | 1 |
-| Rope |  | rare | 4 | 3x2 |  | 1 |
-| Shepherds Crook |  | rare | 8 | 2x5 |  | 3 |
-| Shiny Shell |  | common | 2 | 3x1 |  | 1 |
-| Sir Sand |  | epic | 5 | 1x2 |  | 1 |
-| Snowball |  | epic | 4 | 1x1 |  | 2 |
-| Stable Recombobulator |  | unique | 6 | 5x5 |  | 2 |
-| Star of Courage |  | unique | 1 | 1x1 |  | 3 |
-| Stone Badge |  | unique | 5 | 1x1 |  | 3 |
-| Time Dilator |  | unique | 8 | 1x1 |  | 2 |
-| Unidentified Amulet |  | rare | 6 | 1x1 |  | 1 |
-| Unstable Recombobulator |  | epic | 6 | 5x5 |  | 2 |
-| Walrus Tusk |  | common | 4 | 1x2 |  | 1 |
-| Whetstone |  | common | 4 | 1x3 |  | 1 |
-| White Lily Collar |  | legendary | 8 | 3x3 |  | 2 |
-| Wonky Snowman |  | epic | 8 | 1x2 |  | 1 |
+| Build Step | Amulet of Alchemy | rare | 6 | 3x9 |  | 1 |
+| Cold Wallet | Piggybank | common | 3 | 2x3 |  | 1 |
+| Crimson Collar | Red Orchid Collar | legendary | 8 | 3x3 |  | 1 |
+| Crypto Mining Rig | Box of Riches | rare | 5 | 2x1 |  | 1 |
+| Daemon Lamp | Djinn Lamp | godly | 11 | 3x1 |  | 1 |
+| Elastic Waistband | Amulet of Feasting | rare | 6 | 5x9 |  | 1 |
+| Entropy Piggy | Lucky Piggy | epic | 7 | 3x2 |  | 1 |
+| Fork Bomb | Wonky Snowman | epic | 8 | 1x2 |  | 1 |
+| Fortune Bot | Maneki-neko | legendary | 10 | 3x4 |  | 3 |
+| Founder's Star | Star of Courage | unique | 1 | 1x1 |  | 3 |
+| Free Trial | Customer Card | rare | 4 | 1x1 |  | 1 |
+| Logic Bomb | Happy Bomb | unique | 7 | 2x2 |  | 1 |
+| Lucky Bitflip | Amulet of Fortune | rare | 6 | 3x3 |  | 2 |
+| Null Heart | Heart of Darkness | godly | 19 | 4x4 | 1 | 1 |
+| Obfuscator | Sir Sand | epic | 5 | 1x2 |  | 1 |
+| Packet Bag | Bag of Stones | rare | 3 | 1x3 |  | 1 |
+| Patch Cable | Rope | rare | 4 | 3x2 |  | 1 |
+| Platinum Tier | Platinum Customer Card | epic | 8 | 3x3 |  | 4 |
+| Power Brick | Amulet of Energy | rare | 6 | 1x2 |  | 1 |
+| Prime Subscription | Furcifer Prime Subscription | unique | 5 | 1x1 |  | 2 |
+| Puzzle Badge | Puzzle Badge | unique | 5 | 4x4 |  | 3 |
+| Rainbow Badge | Rainbow Badge | unique | 5 | 1x1 |  | 1 |
+| Ranger Badge | Leaf Badge | unique | 5 | 3x3 |  | 2 |
+| Repeater | Repeater | unique | 8 | 5x3 |  | 1 |
+| Stable Refactor | Stable Recombobulator | unique | 6 | 5x5 |  | 1 |
+| Stone Badge | Stone Badge | unique | 5 | 1x1 |  | 2 |
+| Time Dilator | Time Dilator | unique | 8 | 1x1 |  | 2 |
+| Undocumented Feature | Unidentified Amulet | rare | 6 | 1x1 |  | 1 |
+| Unmarked Package | Present | unique | 10 | 2x2 |  | 1 |
+| Unstable Refactor | Unstable Recombobulator | epic | 6 | 5x5 |  | 1 |
 
-## Pets (19)
+## Pets (8)
 
 | Item | From | Rarity | Cost | Map | Sockets | Unbuilt |
 |---|---|---|---:|---|---:|---:|
-| Blood Goobert |  | legendary | 14 | 4x2 |  | 2 |
-| Cthulhu |  | unique | 8 | 5x4 |  | 3 |
-| Cubert |  | unique | 8 | 4x4 |  | 2 |
-| Hyper Hedgehog |  | godly | 12 | 2x4 |  | 3 |
-| Jynx torquilla |  | legendary | 6 | 6x7 |  | 1 |
-| King Goobert |  | godly | 23 | 4x3 | 2 | 2 |
-| Light Goobert |  | godly | 15 | 4x2 |  | 1 |
-| Lil Chestnut |  | unique | 6 | 8x2 |  | 3 |
-| Paradise Birb |  | godly | 20 | 6x7 |  | 1 |
-| Rainbow Goobert Megasludge Alphapuddle |  | godly | 54 | 4x4 |  | 1 |
-| Rat Chef |  | rare | 8 | 3x4 |  | 3 |
-| Ruby Egg |  | legendary | 10 | 2x2 |  | 2 |
-| Shelly |  | rare | 6 | 4x2 |  | 3 |
-| Sloth |  | unique | 5 | 4x3 |  | 3 |
-| Snowmaster |  | legendary | 9 | 3x3 |  | 2 |
-| Steel Goobert |  | legendary | 17 | 4x4 |  | 1 |
-| Thorn Elemental |  | unique | 6 | 4x3 | 2 | 3 |
-| Unsettling Presence |  | unique | 10 | 1x2 |  | 2 |
-| Wolpertinger |  | godly | 12 | 4x4 |  | 3 |
+| Bird of Paradigm | Paradise Birb | godly | 20 | 6x7 |  | 1 |
+| Legacy Code | Cthulhu | unique | 8 | 5x4 |  | 1 |
+| Lil Broker | Lil Chestnut | unique | 6 | 8x2 |  | 2 |
+| Random Seed | Ruby Egg | legendary | 10 | 2x2 |  | 1 |
+| Root Garbo | King Goobert | godly | 23 | 4x3 | 2 | 2 |
+| Shell Script | Shelly | rare | 6 | 4x2 |  | 1 |
+| The Kludge | Wolpertinger | godly | 12 | 4x4 |  | 1 |
+| Zombie Process | Unsettling Presence | unique | 10 | 1x2 |  | 1 |
 
-## Defenses (armour, shields, helmets, shoes, gloves) (17)
+## Defenses (armour, shields, helmets, shoes, gloves) (5)
 
 | Item | From | Rarity | Cost | Map | Sockets | Unbuilt |
 |---|---|---|---:|---|---:|---:|
-| Cap of Discomfort |  | legendary | 14 | 1x2 | 1 | 3 |
-| Cap of Resilience |  | epic | 7 | 1x2 | 1 | 3 |
-| Gloves of Power |  | legendary | 10 | 4x1 |  | 2 |
-| Glowing Crown |  | godly | 12 | 2x1 | 1 | 2 |
-| Gold Armor |  | godly | 22 | 4x5 | 3 | 4 |
-| King Crown |  | godly | 17 | 2x2 | 2 | 3 |
-| Leather Boots |  | epic | 6 | 1x2 | 1 | 1 |
-| Moon Armor |  | godly | 19 | 4x5 | 3 | 2 |
-| Moon Shield |  | godly | 18 | 4x5 | 2 | 3 |
-| Pine Protector |  | godly | 14 | 6x6 | 1 | 2 |
-| Shield of Valor |  | legendary | 11 | 4x5 | 2 | 2 |
-| Stone Armor |  | legendary | 13 | 2x3 | 2 | 4 |
-| Stone Helm |  | legendary | 13 | 1x2 | 1 | 3 |
-| Stone Shoes |  | legendary | 12 | 1x2 | 1 | 1 |
-| Vampiric Armor |  | legendary | 15 | 2x3 | 2 | 2 |
-| Vampiric Gloves |  | godly | 12 | 4x1 |  | 1 |
-| Winged Boots |  | godly | 13 | 2x2 | 1 | 1 |
+| Bare Metal Boots | Stone Shoes | legendary | 12 | 1x2 | 1 | 1 |
+| Hot Swap Boots | Winged Boots | godly | 13 | 2x2 | 1 | 1 |
+| Itchy Firmware | Cap of Discomfort | legendary | 14 | 1x2 | 1 | 1 |
+| Root Certificate | King Crown | godly | 17 | 2x2 | 2 | 1 |
+| Splinter Guard | Pine Protector | godly | 14 | 6x6 | 1 | 2 |
 
-## Modules (gemstones) (5)
+## Modules (gemstones) (30)
 
 | Item | From | Rarity | Cost | Map | Sockets | Unbuilt |
 |---|---|---|---:|---|---:|---:|
-| Burning Coal |  | rare | 2 | 1x1 |  | 7 |
-| Corrupted Crystal |  | epic | 7 | 1x1 |  | 6 |
-| Lump of Coal |  | common | 2 | 1x1 |  | 7 |
-| Tim |  | unique | 10 | 1x1 |  | 6 |
-| Wisp |  | godly | 8 | 1x1 |  | 6 |
+| Dead Cell | Lump of Coal | common | 2 | 1x1 |  | 7 |
+| Golden Sample Efficiency Module | Emerald | godly | 16 | 1x1 |  | 3 |
+| Golden Sample Memory Module | Sapphire | godly | 16 | 1x1 |  | 3 |
+| Golden Sample Performance Module | Ruby | godly | 16 | 1x1 |  | 3 |
+| Golden Sample Processing Module | Topaz | godly | 16 | 1x1 |  | 3 |
+| Golden Sample Security Module | Amethyst | godly | 16 | 1x1 |  | 3 |
+| Gremlin | Tim | unique | 10 | 1x1 |  | 6 |
+| Hot Cell | Burning Coal | rare | 2 | 1x1 |  | 7 |
+| Overclocked Efficiency Module | Emerald | legendary | 8 | 1x1 |  | 3 |
+| Overclocked Memory Module | Sapphire | legendary | 8 | 1x1 |  | 3 |
+| Overclocked Performance Module | Ruby | legendary | 8 | 1x1 |  | 3 |
+| Overclocked Processing Module | Topaz | legendary | 8 | 1x1 |  | 3 |
+| Overclocked Security Module | Amethyst | legendary | 8 | 1x1 |  | 3 |
+| Refurb Efficiency Module | Emerald | rare | 2 | 1x1 |  | 3 |
+| Refurb Memory Module | Sapphire | rare | 2 | 1x1 |  | 3 |
+| Refurb Performance Module | Ruby | rare | 2 | 1x1 |  | 3 |
+| Refurb Processing Module | Topaz | rare | 2 | 1x1 |  | 3 |
+| Refurb Security Module | Amethyst | rare | 2 | 1x1 |  | 3 |
+| Rotten Die | Corrupted Crystal | epic | 7 | 1x1 |  | 6 |
+| Salvaged Efficiency Module | Emerald | common | 1 | 1x1 |  | 3 |
+| Salvaged Memory Module | Sapphire | common | 1 | 1x1 |  | 3 |
+| Salvaged Performance Module | Ruby | common | 1 | 1x1 |  | 3 |
+| Salvaged Processing Module | Topaz | common | 1 | 1x1 |  | 3 |
+| Salvaged Security Module | Amethyst | common | 1 | 1x1 |  | 3 |
+| Stock Efficiency Module | Emerald | epic | 4 | 1x1 |  | 3 |
+| Stock Memory Module | Sapphire | epic | 4 | 1x1 |  | 3 |
+| Stock Performance Module | Ruby | epic | 4 | 1x1 |  | 3 |
+| Stock Processing Module | Topaz | epic | 4 | 1x1 |  | 3 |
+| Stock Security Module | Amethyst | epic | 4 | 1x1 |  | 3 |
+| Stray Voltage | Wisp | godly | 8 | 1x1 |  | 6 |
 
-## Patches (potions) (4)
+## Patches (potions) (6)
 
 | Item | From | Rarity | Cost | Map | Sockets | Unbuilt |
 |---|---|---|---:|---|---:|---:|
-| Lightning in a Bottle |  | unique | 7 | 3x6 | 1 | 1 |
-| Strong Heroic Potion |  | legendary | 9 | 1x3 |  | 1 |
-| Strong Stone Skin Potion |  | legendary | 9 | 1x3 |  | 1 |
-| Vampiric Potion |  | legendary | 8 | 1x3 |  | 1 |
+| Capacitor Flask | Lightning in a Bottle | unique | 7 | 3x6 | 1 | 2 |
+| Drain Vial | Vampiric Potion | legendary | 8 | 1x3 |  | 2 |
+| Hardening Serum | Stone Skin Potion | epic | 6 | 1x3 |  | 2 |
+| Payload Vial | Pestilence Flask | epic | 7 | 1x3 |  | 2 |
+| Read-Only Mode | Strong Stone Skin Potion | legendary | 9 | 1x3 |  | 2 |
+| Swap Shot | Mana Potion | epic | 6 | 1x3 |  | 2 |
 
-## Scripts (food) (1)
-
-| Item | From | Rarity | Cost | Map | Sockets | Unbuilt |
-|---|---|---|---:|---|---:|---:|
-| Cupcake |  | legendary | 5 | 3x3 |  | 1 |
-
-## Containers (bags) (1)
+## Containers (bags) (4)
 
 | Item | From | Rarity | Cost | Map | Sockets | Unbuilt |
 |---|---|---|---:|---|---:|---:|
-| Chaos Experiment | Sack of Surprises | unique | 10 | 2x2 |  | 1 |
+| Bandolier | Potion Belt | legendary | 5 | 1x4 |  | 2 |
+| Loot Box | Sack of Surprises | unique | 10 | 2x2 |  | 1 |
+| Motherboard | Vineweave Basket | unique | 20 | 3x3 |  | 1 |
+| The Cloud | Box of Prosperity | epic | 5 | 2x2 |  | 1 |
 
-**From** is filled in only where our name differs from the source's.
+**From** is the Backpack Battles item each one's numbers come from.
 
 ## What is left
 
-281 effect lines to build, each held in its item's `unbuilt`. A weapon's timer
+211 effect lines to build, each held in its item's `unbuilt`. A weapon's timer
 is already built, so its line is the extra on top; every other item does nothing
 at all until its line is built.
 

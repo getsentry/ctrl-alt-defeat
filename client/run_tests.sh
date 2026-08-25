@@ -3,6 +3,16 @@
 # Usage: ./run_tests.sh [test_name_pattern]
 # Example: ./run_tests.sh test_shop_purchase
 
+# --unit runs the unit tests only, which need no server. Everything goes
+# through this script so that the checks at the bottom -- a script that errored,
+# a script that never loaded -- are run whatever anyone typed. A raw godot
+# command skips them, and a run with a broken test file looks green.
+UNIT_ONLY=0
+if [ "${1:-}" = "--unit" ] || [ "${1:-}" = "-u" ]; then
+    UNIT_ONLY=1
+    shift
+fi
+
 # Get test filter from command line argument
 TEST_FILTER="${1:-}"
 
@@ -124,9 +134,14 @@ echo "--------------------"
 # seconds. It is so that a test's own wait, which gives up after 25 and says
 # what it was waiting for, gets to report before GUT cuts in with a generic
 # timeout.
+WHERE="-gdir=res://test"
+if [ "$UNIT_ONLY" = "1" ]; then
+    WHERE="-gdir=res://test/unit -ginclude_subdirs=false"
+fi
+
 (
     godot --headless --script addons/gut/gut_cmdln.gd \
-        -gdir=res://test \
+        $WHERE \
         -gexit \
         -glog=3 \
         -gtest_timeout=45 \
@@ -165,12 +180,43 @@ else
     fi
 fi
 
-# Also check for failures in output as backup
-if grep -q "\[Failed\]:\|SCRIPT ERROR:\|FAILED:" test_output.tmp; then
-    echo "Detected test failures or errors in output"
+# GUT's own exit code counts failed assertions and nothing else. A test that
+# errors part way through is reported as "did not assert" and counted Risky; a
+# whole file that will not parse is not counted at all, and the run simply has
+# fewer tests in it. Both of those are a green suite that tested less than it
+# says. So the output is read for them here.
+if grep -q "\[Failed\]:\|FAILED:" test_output.tmp; then
+    echo -e "${RED}Detected test failures in output${NC}"
     if [ $TEST_EXIT_CODE -eq 0 ]; then
         TEST_EXIT_CODE=1
     fi
+fi
+
+# A script error. Parse errors are printed under this banner too, so this is
+# also what catches a test file that never loaded.
+if grep -q "SCRIPT ERROR:" test_output.tmp; then
+    echo -e "${RED}A test script errored. GUT counts these as Risky, not"
+    echo -e "failed, so the run would otherwise pass having tested less:${NC}"
+    grep -A 1 "SCRIPT ERROR:" test_output.tmp | head -20
+    TEST_EXIT_CODE=1
+fi
+
+# And a file that was found but never ran. GUT says how many scripts it ran;
+# anything in a suite directory that is missing from that count did not load.
+#
+# The suites only. test/utils holds helper classes and test/integration two
+# more, all named test_* and none of them extending GutTest, so GUT ignores
+# them on purpose and says so.
+SUITES="test/unit test/ui test/smoke"
+if [ "$UNIT_ONLY" = "1" ]; then
+    SUITES="test/unit"
+fi
+FOUND=$(find $SUITES -maxdepth 1 -name 'test_*.gd' 2>/dev/null | wc -l | tr -d ' ')
+RAN=$(grep -oE "^Scripts +[0-9]+" test_output.tmp | grep -oE "[0-9]+" | head -1)
+if [ -n "$RAN" ] && [ -n "$FOUND" ] && [ "$RAN" -lt "$FOUND" ]; then
+    echo -e "${RED}$RAN test scripts ran and $FOUND are on disk."
+    echo -e "A script that does not load is a script that cannot fail.${NC}"
+    TEST_EXIT_CODE=1
 fi
 
 # Clean up temp file
