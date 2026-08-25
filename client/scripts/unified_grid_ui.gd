@@ -384,6 +384,24 @@ func square_carried_to(item: APITypes.Item, pointer: Vector2) -> Vector2i:
 		inventory_grid.carried_corner(local, item.turned_shape()))
 
 
+## Every way something can be in hand, one per way the artwork is put under the
+## pointer and the mark drawn for it. A rack dragged on the board is its own
+## way, because the mark for a rack asks a different question of the board --
+## free squares rather than squares a rack has made usable -- even though
+## picking one up and carrying it is the same in every other respect.
+##
+## test_carrying.gd sweeps each of these, and fails if the list grows without a
+## sweep to match. It is written down here rather than counted out of the code
+## because a way of carrying is a decision, not a branch.
+const WAYS_TO_CARRY := [
+	"in hand",
+	"off the shelf",
+	"out of the chest",
+	"dragged on the rack",
+	"a rack dragged on the board",
+]
+
+
 func carrying_something() -> bool:
 	"""Whether anything is in hand, however it came to be there.
 
@@ -396,8 +414,7 @@ func carrying_something() -> bool:
 	"""
 	return held_item != null \
 		or dragging_shop_data != null \
-		or (inventory_grid != null and inventory_grid.dragging_object != null) \
-		or (inventory_grid != null and inventory_grid.dragging_container != null) \
+		or (inventory_grid != null and inventory_grid.carrying() != null) \
 		or (storage_bin != null and storage_bin.dragged() != null)
 
 

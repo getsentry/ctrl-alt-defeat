@@ -2311,3 +2311,54 @@ func test_the_square_a_carried_item_lands_on_counts_back_from_its_middle():
 		"A spear lands in the pointer's column")
 	assert_lt(ui.square_carried_to(_a_spear(), pointer).y, 4,
 		"and reaches up above the pointer, because it is held in the middle")
+
+
+# ============ A rack is a thing in hand too ============
+#
+# It is an item that other items stand on, and that is the only difference
+# there should be. Everything that asks "is something being carried" -- the
+# zone that follows the hand, the hint that says a turn is possible -- has to
+# get the same answer for a rack as for anything else.
+
+func test_a_rack_being_dragged_counts_as_something_in_hand():
+	_rack_holding([])
+	var grid = ui.inventory_grid
+	var rack = grid.containers[0]
+
+	grid._start_container_drag(rack, _held_at(rack.visual))
+
+	assert_not_null(grid.carrying(), "The grid is carrying the rack")
+	assert_eq(grid.carrying(), rack.visual, "and it is the rack's own artwork")
+	assert_true(ui.carrying_something(), "so the screen says something is held")
+
+
+func test_a_rack_in_hand_is_not_offered_a_turn_yet():
+	"""The one thing that treats a rack differently on purpose. Turning one
+	has to turn everything standing on it, which is not built here, so the
+	hint would be telling the player to press a key that does nothing."""
+	_rack_holding([])
+	var grid = ui.inventory_grid
+	var rack = grid.containers[0]
+
+	grid._start_container_drag(rack, _held_at(rack.visual))
+
+	assert_true(ui.carrying_something(), "It is in hand")
+	assert_false(ui.holding_something_turnable(), "but it cannot be turned")
+
+
+func test_an_item_in_hand_is_offered_a_turn():
+	_rack_holding([TestHelpers.placed_item_data({
+		"id": "held", "item_type": "null_blade", "position": [2, 3]})])
+	var grid = ui.inventory_grid
+
+	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
+
+	assert_true(ui.holding_something_turnable(), "An item turns")
+
+
+func test_nothing_in_hand_is_nothing_carried():
+	_rack_holding([])
+
+	assert_null(ui.inventory_grid.carrying(), "Empty hands carry nothing")
+	assert_false(ui.carrying_something())
+	assert_false(ui.holding_something_turnable())

@@ -304,40 +304,16 @@ func test_a_rack_dragged_on_the_grid_is_marked_where_it_is_drawn():
 # ============ The sweep keeps up with the code ============
 
 func test_every_way_of_carrying_something_is_swept():
-	"""carrying_something() is the one list of what counts as holding a thing.
-	Add a fifth way to it and this fails until the sweep above has a test for
-	that way too -- which is the only thing keeping this file honest as the
-	game grows."""
-	var path := ProjectSettings.globalize_path("res://").path_join(UNIFIED_PATH)
-	var file := FileAccess.open(path, FileAccess.READ)
-	assert_not_null(file, "Should be able to read %s" % UNIFIED_PATH)
-	if file == null:
-		return
-	var source := file.get_as_text()
-	file.close()
-
-	var start := source.find("func carrying_something()")
-	assert_true(start != -1, "%s should declare carrying_something()" % UNIFIED_PATH)
-	if start == -1:
-		return
-	var body := source.substr(start, source.find("\nfunc ", start + 1) - start)
-
-	# One `or` per way beyond the first, so the ways are one more than the ors.
-	# A rack is one of them: it is an item that holds other items, and nothing
-	# else about it is different.
-	var ways := 1
-	for line in body.split("\n"):
-		if line.strip_edges().begins_with("or ") or line.ends_with(" \\"):
-			pass
-		if " or " in line or line.strip_edges().begins_with("or "):
-			ways += 1
-
+	"""UnifiedGridUI.WAYS_TO_CARRY is the list of them. Add a way to it and
+	this fails until the sweep above has a test for that way too, which is the
+	only thing keeping this file honest as the game grows."""
 	var swept := 0
 	for method in get_method_list():
 		if str(method["name"]).ends_with("_is_marked_where_it_is_drawn"):
 			swept += 1
 
-	assert_eq(swept, ways,
-		("carrying_something() knows %d ways to hold something and this file "
-		+ "sweeps %d of them. A way nobody sweeps is a way the mark can drift "
-		+ "away from the artwork without anything noticing.") % [ways, swept])
+	assert_eq(swept, ui.WAYS_TO_CARRY.size(),
+		("There are %d ways to carry something and this file sweeps %d of "
+		+ "them. A way nobody sweeps is a way the mark can drift away from "
+		+ "the artwork without anything noticing: %s")
+			% [ui.WAYS_TO_CARRY.size(), swept, ui.WAYS_TO_CARRY])

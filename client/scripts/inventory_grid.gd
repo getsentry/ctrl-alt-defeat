@@ -504,19 +504,27 @@ func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	return true
 
 
-func _on_container_input(event: InputEvent, placed: PlacedContainer):
-	"""Handle input on containers for dragging"""
-	if read_only:
-		return
+func _a_press_on(event: InputEvent, visual: Control) -> bool:
+	if read_only or not (event is InputEventMouseButton):
+		return false
+	if event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
+		return false
+	return visual.covers_point(event.position)
 
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			# Taken hold of where the click landed, so a rack grabbed by its
-			# far corner is carried by that corner.
-			_start_container_drag(placed,
-				placed.visual.get_global_transform() * event.position)
-		else:
-			_end_container_drag()
+
+func _a_release(event: InputEvent) -> bool:
+	"""The left button coming up, which is what puts a carried thing down"""
+	return event is InputEventMouseButton \
+		and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed
+
+
+func _on_container_input(event: InputEvent, placed: PlacedContainer):
+	"""Pick a rack up where it was clicked, and put it down again"""
+	if _a_press_on(event, placed.visual):
+		_start_container_drag(placed,
+			placed.visual.get_global_transform() * event.position)
+	elif _a_release(event):
+		_end_container_drag()
 
 
 func can_place_container(container: APITypes.Item, grid_pos: Vector2i) -> bool:
@@ -547,26 +555,23 @@ func can_place_container(container: APITypes.Item, grid_pos: Vector2i) -> bool:
 	return true
 
 
-func _start_container_drag(placed: PlacedContainer, taken_at: Vector2) -> void:
-	"""Pick a container up, and everything standing on it with it.
+func _take_hold_of(visual: Control, body: Array[Vector2i], taken_at: Vector2) -> void:
+	"""Pick a thing up: where the hand is, which of its squares, and to the front."""
+	var taken := get_global_transform().affine_inverse() * taken_at
+	drag_offset = visual.position - taken
+	grab_cell = square_grabbed(visual.position, body, taken)
+	move_child(visual, get_child_count() - 1)
+	visual.z_index = 10
 
-	Where it was taken hold of is told, not read, the same as for an item:
-	which of its own squares is in hand decides where the mark goes.
-	"""
+
+func _start_container_drag(placed: PlacedContainer, taken_at: Vector2) -> void:
+	"""Pick a container up, and everything standing on it with it."""
 	if read_only or dragging_object:
 		return
 
 	dragging_container = placed
 	original_grid_pos = placed.position()
-	var taken := get_global_transform().affine_inverse() * taken_at
-	drag_offset = placed.visual.position - taken
-	# By one of its own squares, the same as an item. Marked at the pointer's
-	# square instead, a rack grabbed by any square but its corner was drawn in
-	# one place and marked in another -- and dropped where the mark was.
-	grab_cell = square_grabbed(
-		placed.visual.position, placed.container.turned_shape(), taken)
-	move_child(placed.visual, get_child_count() - 1)
-	placed.visual.z_index = 10
+	_take_hold_of(placed.visual, placed.container.turned_shape(), taken_at)
 
 	# Whatever has a square on it travels with it, which is the same rule the
 	# server uses when it works out what the move carries.
@@ -629,25 +634,12 @@ func _return_container(placed: PlacedContainer) -> void:
 
 
 func _on_item_input(event: InputEvent, item_visual: Control):
-	"""Handle input on items for dragging"""
-	if read_only:
-		return
-
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
-				# On the item, not merely inside the box around it. The empty
-				# corner of an L is where its aura is drawn, and a player
-				# aiming at what the aura reaches was picking the item up.
-				if not item_visual.covers_point(event.position):
-					return
-				# Taken hold of where the click landed, so a spear grabbed by
-				# the tip is carried by the tip.
-				_start_drag(item_visual,
-					item_visual.get_global_transform() * event.position)
-			else:
-				# End dragging
-				_end_drag()
+	"""Pick an item up where it was clicked, and put it down again"""
+	if _a_press_on(event, item_visual):
+		_start_drag(item_visual,
+			item_visual.get_global_transform() * event.position)
+	elif _a_release(event):
+		_end_drag()
 
 func _start_drag(item_visual: Control, taken_at: Vector2):
 	"""Start dragging an item, taken hold of at this point.
@@ -660,29 +652,20 @@ func _start_drag(item_visual: Control, taken_at: Vector2):
 	if read_only:
 		return
 
+	var item_data: APITypes.PlacedItem = item_visual.get_meta("item_data")
 	dragging_object = item_visual
-	drag_started.emit(item_visual.get_meta("item_data"))
+	drag_started.emit(item_data)
 	original_position = item_visual.position
 	original_grid_pos = item_visual.get_meta("grid_pos")
-	original_facing = item_visual.get_meta("item_data").facing()
-	var taken := get_global_transform().affine_inverse() * taken_at
-	drag_offset = item_visual.position - taken
-	grab_cell = square_grabbed(item_visual.position,
-		item_visual.get_meta("item_data").turned_shape(), taken)
+	original_facing = item_data.facing()
+	_take_hold_of(item_visual, item_data.turned_shape(), taken_at)
 
-	# Ensure the item visual stays at its proper size while dragging
-	item_visual.z_index = 10  # Bring to front
-
-	# Clear item from grid
-	var item_data = item_visual.get_meta("item_data")
+	# The squares it stood on are free while it is in the air.
 	for offset in item_data.turned_shape():
 		var cell_x = original_grid_pos.x + offset[0]
 		var cell_y = original_grid_pos.y + offset[1]
 		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
 			item_grid[cell_y][cell_x] = null
-
-	# Move to top for dragging (visual hierarchy)
-	move_child(item_visual, get_child_count() - 1)
 
 func _pointer_is_over_grid_zone(pointer: Vector2) -> bool:
 	"""Whether the pointer is over the grid this item would move to"""
@@ -1037,6 +1020,15 @@ func _remove_item(item_visual: Control):
 func _process(_delta):
 	"""Carry whatever is in hand to wherever the pointer has got to"""
 	carry_to(get_global_mouse_position())
+
+
+func carrying() -> Control:
+	"""The artwork of whatever is in hand"""
+	if dragging_object != null:
+		return dragging_object
+	if dragging_container != null:
+		return dragging_container.visual
+	return null
 
 
 func carry_to(pointer: Vector2) -> void:
