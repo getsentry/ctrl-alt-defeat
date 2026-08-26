@@ -14,15 +14,34 @@ class_name APITypes
 # the same way, in grid_system._turn(), and the two have to agree or an item
 # draws on squares the server has it standing somewhere else.
 static func turn(shape: Array[Vector2i], rotation: int) -> Array[Vector2i]:
-	if rotation == 0 or shape.is_empty():
-		return shape.duplicate()
+	return Turned.new(shape, rotation).squares
 
-	var turned := _spin(shape, rotation)
-	var corner := _corner(turned)
-	var settled: Array[Vector2i] = []
-	for square in turned:
-		settled.append(square - corner)
-	return settled
+
+## A body after a turn: the squares it covers, and the corner they settled
+## against.
+class Turned extends RefCounted:
+	## The squares the body covers now, settled against its own corner.
+	var squares: Array[Vector2i] = []
+
+	var _rotation: int
+	var _corner: Vector2i
+	var _shape: Array[Vector2i]
+
+	func _init(shape: Array[Vector2i], rotation: int) -> void:
+		_shape = shape
+		_rotation = posmod(rotation, 360)
+		if _rotation == 0 or shape.is_empty():
+			squares = shape.duplicate()
+			return
+		var spun := APITypes._spin(shape, _rotation)
+		_corner = APITypes._corner(spun)
+		for square in spun:
+			squares.append(square - _corner)
+
+	func where(square: Vector2i) -> Vector2i:
+		if _rotation == 0 or _shape.is_empty():
+			return square
+		return APITypes._spin([square], _rotation)[0] - _corner
 
 
 # The top left of a set of squares, which is what everything is settled against.
@@ -47,9 +66,7 @@ static func _corner(squares: Array[Vector2i]) -> Vector2i:
 # its tip is still held by its tip once it lies the other way.
 static func turn_within(shape: Array[Vector2i], rotation: int,
 		square: Vector2i) -> Vector2i:
-	if rotation == 0 or shape.is_empty():
-		return square
-	return _spin([square], rotation)[0] - _corner(_spin(shape, rotation))
+	return Turned.new(shape, rotation).where(square)
 
 
 # Read the [x, y] pairs a server response carries as squares. The parameter is
@@ -97,14 +114,13 @@ static func turn_zone(
 	anchors: Array[Vector2i],
 	rotation: int,
 ) -> Array[Vector2i]:
-	var turned_shape := _spin(shape, rotation)
-	if turned_shape.is_empty():
+	var body := Turned.new(shape, rotation)
+	if body.squares.is_empty():
 		return []
 
-	var corner := _corner(turned_shape)
 	var covered := {}
-	for square in turned_shape:
-		covered[square - corner] = true
+	for square in body.squares:
+		covered[square] = true
 
 	# The square an anchor points into is drawn on the map, so it is in the zone
 	# already for the way the item faces now. Take it out before turning, or the
@@ -118,12 +134,12 @@ static func turn_zone(
 	var reached := {}
 	for square in zone:
 		if not was_projected.has(square):
-			reached[_spin([square], rotation)[0] - corner] = true
+			reached[body.where(square)] = true
 
 	# An anchor points up on the grid however the item is turned, so its square
 	# is worked out after the turn rather than turned with the rest.
-	for anchor in _spin(anchors, rotation):
-		reached[anchor - corner + Vector2i.UP] = true
+	for anchor in anchors:
+		reached[body.where(anchor) + Vector2i.UP] = true
 
 	var settled: Array[Vector2i] = []
 	for square in reached:
