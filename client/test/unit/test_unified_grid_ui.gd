@@ -919,7 +919,7 @@ func test_turning_reaches_an_item_being_dragged_on_the_grid():
 
 	ui.turn(1)
 
-	assert_eq(ui.inventory_grid.items[0].get_meta("item_data").facing(), 90,
+	assert_eq(ui.inventory_grid.items[0].item_data.facing(), 90,
 		"The dragged item turned, though nothing was in hand")
 
 

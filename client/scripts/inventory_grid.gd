@@ -33,7 +33,7 @@ class Rider extends RefCounted:
 		visual.position = container_at + offset
 
 	func id() -> String:
-		return visual.get_meta("item_data").id
+		return visual.item_data.id
 
 const APITypes = preload("res://scripts/api_types.gd")
 const ItemVisual = preload("res://scripts/item_visual.gd")
@@ -273,7 +273,7 @@ func item_visual(item_id: String) -> ItemVisual:
 	this is what turns "something happened" into "that one, there".
 	"""
 	for visual in items:
-		var data = visual.get_meta("item_data")
+		var data: APITypes.Item = visual.item_data
 		if data != null and data.id == item_id:
 			return visual
 	return null
@@ -438,8 +438,6 @@ func _add_item(item: APITypes.PlacedItem):
 	var item_visual = ItemVisual.new()
 	item_visual.position = grid_to_pixel(Vector2i(x, y))
 	item_visual.mouse_filter = Control.MOUSE_FILTER_PASS if not read_only else Control.MOUSE_FILTER_IGNORE
-	item_visual.set_meta("item_data", item)
-	item_visual.set_meta("grid_pos", Vector2i(x, y))
 
 	# Enable tooltips for all items (must be before setup)
 	item_visual.enable_tooltip = true
@@ -475,12 +473,10 @@ func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	if not dragging_object:
 		return false
 
-	var was: Array[Vector2i] = dragging_object.get_meta("item_data").turned_shape()
-	var turned = dragging_object.get_meta("item_data").turned(quarters)
-	dragging_object.set_meta("item_data", turned)
-
+	var was: Array[Vector2i] = dragging_object.item_data.turned_shape()
+	var turned: APITypes.PlacedItem = dragging_object.item_data.turned(quarters)
 	# Drawn again, because the squares it covers have changed.
-	dragging_object.redraw_as(turned)
+	dragging_object.now_holds(turned)
 
 	# It swings about the square in hand rather than about its corner. Turned
 	# about the corner, a spear held by its tip throws itself a length across
@@ -504,7 +500,7 @@ func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	return true
 
 
-func _a_press_on(event: InputEvent, visual: Control) -> bool:
+func _a_press_on(event: InputEvent, visual: ItemVisual) -> bool:
 	if read_only or not (event is InputEventMouseButton):
 		return false
 	if event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
@@ -555,7 +551,8 @@ func can_place_container(container: APITypes.Item, grid_pos: Vector2i) -> bool:
 	return true
 
 
-func _take_hold_of(visual: Control, body: Array[Vector2i], taken_at: Vector2) -> void:
+func _take_hold_of(visual: ItemVisual, body: Array[Vector2i],
+		taken_at: Vector2) -> void:
 	"""Pick a thing up: where the hand is, which of its squares, and to the front."""
 	var taken := get_global_transform().affine_inverse() * taken_at
 	drag_offset = visual.position - taken
@@ -581,7 +578,7 @@ func _start_container_drag(placed: PlacedContainer, taken_at: Vector2) -> void:
 
 	container_riders = []
 	for item_visual in items:
-		for square in item_visual.get_meta("item_data").covered_squares():
+		for square in item_visual.item_data.covered_squares():
 			if covered.has(square):
 				container_riders.append(Rider.new(item_visual, placed.visual.position))
 				move_child(item_visual, get_child_count() - 1)
@@ -633,7 +630,7 @@ func _return_container(placed: PlacedContainer) -> void:
 	container_riders = []
 
 
-func _on_item_input(event: InputEvent, item_visual: Control):
+func _on_item_input(event: InputEvent, item_visual: ItemVisual):
 	"""Pick an item up where it was clicked, and put it down again"""
 	if _a_press_on(event, item_visual):
 		_start_drag(item_visual,
@@ -641,7 +638,7 @@ func _on_item_input(event: InputEvent, item_visual: Control):
 	elif _a_release(event):
 		_end_drag()
 
-func _start_drag(item_visual: Control, taken_at: Vector2):
+func _start_drag(item_visual: ItemVisual, taken_at: Vector2):
 	"""Start dragging an item, taken hold of at this point.
 
 	Where the hand is decides which of the item's own squares is in hand, and
@@ -652,11 +649,11 @@ func _start_drag(item_visual: Control, taken_at: Vector2):
 	if read_only:
 		return
 
-	var item_data: APITypes.PlacedItem = item_visual.get_meta("item_data")
+	var item_data: APITypes.PlacedItem = item_visual.item_data
 	dragging_object = item_visual
 	drag_started.emit(item_data)
 	original_position = item_visual.position
-	original_grid_pos = item_visual.get_meta("grid_pos")
+	original_grid_pos = item_visual.where()
 	original_facing = item_data.facing()
 	_take_hold_of(item_visual, item_data.turned_shape(), taken_at)
 
@@ -698,7 +695,7 @@ func _end_drag(dropped_at := Vector2.INF):
 	# are the same thing in a real drag, and only the first can be placed by a
 	# test -- which is what the drop point is for.
 	var grid_pos = square_held_over(dropped_at, grab_cell)
-	var item_data = dragging_object.get_meta("item_data")
+	var item_data: APITypes.PlacedItem = dragging_object.item_data
 	var temp_object = dragging_object
 	dragging_object = null
 	# Through the guarded one: a drag can outlive the preview -- teardown frees
@@ -786,7 +783,7 @@ func drop_changes_nothing(grid_pos: Vector2i, item_data: APITypes.Item) -> bool:
 	return grid_pos == original_grid_pos and item_data.facing() == original_facing
 
 
-func _place_item_at(item_visual: Control, grid_pos: Vector2i, facing := -1):
+func _place_item_at(item_visual: ItemVisual, grid_pos: Vector2i, facing := -1):
 	"""Place item visual at grid position, facing the way it is asked to.
 
 	`facing` is for putting an item back. A turn during a drag is already on
@@ -797,18 +794,14 @@ func _place_item_at(item_visual: Control, grid_pos: Vector2i, facing := -1):
 	drawn hanging off the grid until the battle starts and puts it back.
 	"""
 	item_visual.position = grid_to_pixel(grid_pos)
-	item_visual.set_meta("grid_pos", grid_pos)
 	item_visual.z_index = 0  # Reset z-index after placing
 
 	# The item itself has to know where it now is. Anything asking which
 	# squares it covers -- what a container carries, above all -- reads it from
 	# here, and would otherwise be told where the item used to be.
-	var was_facing: int = item_visual.get_meta("item_data").facing()
-	var item_data = item_visual.get_meta("item_data").placed_at(grid_pos, facing)
-	item_visual.set_meta("item_data", item_data)
-	# A facing put back is a different set of squares, so it is drawn again.
-	if item_data.facing() != was_facing:
-		item_visual.redraw_as(item_data)
+	var item_data: APITypes.PlacedItem = item_visual.item_data.placed_at(
+		grid_pos, facing)
+	item_visual.now_holds(item_data)
 	for offset in item_data.turned_shape():
 		var cell_x = grid_pos.x + offset[0]
 		var cell_y = grid_pos.y + offset[1]
@@ -853,16 +846,16 @@ func displaced_by(item_data, grid_pos: Vector2i) -> Array:
 	var found: Array = []
 	for visual in in_the_way:
 		found.append({
-			"item": visual.get_meta("item_data"),
+			"item": visual.item_data,
 			# Where it is now, because that is where it is thrown from.
 			"at": visual.get_global_rect().get_center(),
 		})
 	return found
 
 
-func _squares_under(item_visual: Control) -> int:
+func _squares_under(item_visual: ItemVisual) -> int:
 	"""How much of the board an item covers"""
-	return item_visual.get_meta("item_data").turned_shape().size()
+	return item_visual.item_data.turned_shape().size()
 
 func _can_place_item(item_data, grid_pos: Vector2i) -> bool:
 	"""Check if item can be placed at position"""
@@ -1001,10 +994,10 @@ func hide_hover_preview():
 	if hover_preview and is_instance_valid(hover_preview):
 		hover_preview.visible = false
 
-func _remove_item(item_visual: Control):
+func _remove_item(item_visual: ItemVisual):
 	"""Remove an item from the grid"""
-	var grid_pos = item_visual.get_meta("grid_pos")
-	var item_data = item_visual.get_meta("item_data")
+	var grid_pos := item_visual.where()
+	var item_data: APITypes.PlacedItem = item_visual.item_data
 
 	# Clear from grid
 	for offset in item_data.turned_shape():
@@ -1022,7 +1015,7 @@ func _process(_delta):
 	carry_to(get_global_mouse_position())
 
 
-func carrying() -> Control:
+func carrying() -> ItemVisual:
 	"""The artwork of whatever is in hand"""
 	if dragging_object != null:
 		return dragging_object
@@ -1078,7 +1071,7 @@ func update_drag_preview(pointer: Vector2) -> void:
 	if not dragging_object or not hover_preview or not is_instance_valid(hover_preview):
 		return
 
-	var item_data = dragging_object.get_meta("item_data")
+	var item_data: APITypes.PlacedItem = dragging_object.item_data
 
 	# Held over the grid it would move to, so that grid shows where it would
 	# land. Ours would be marking a square of its own, which is not where the
@@ -1131,13 +1124,10 @@ func get_inventory_state() -> Dictionary:
 
 	# Save items - convert to dictionaries for persistence
 	for item_visual in items:
-		var item_data = item_visual.get_meta("item_data")
-		var grid_pos = item_visual.get_meta("grid_pos")
-
 		# Items go back to the server as plain data. An item knows where it
 		# sits, so nothing overrides its position here any more: two answers to
 		# where an item is meant one of them was wrong wherever it was read.
-		state.inventory_grid.append(item_data.to_dict())
+		state.inventory_grid.append(item_visual.item_data.to_dict())
 
 	for placed in containers:
 		state.server_containers.append(placed.container.to_dict())

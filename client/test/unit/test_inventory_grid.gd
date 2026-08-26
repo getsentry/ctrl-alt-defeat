@@ -596,9 +596,9 @@ func test_a_refused_drop_puts_the_turn_back_as_well_as_the_item():
 	grid._end_drag()
 	await get_tree().process_frame
 
-	var put_back = grid.items[0].get_meta("item_data")
+	var put_back = grid.items[0].item_data
 	assert_eq(put_back.facing(), 0, "A refused drop leaves the item as it was")
-	assert_eq(grid.items[0].get_meta("grid_pos"), Vector2i(2, 3), "and where it was")
+	assert_eq(grid.items[0].where(), Vector2i(2, 3), "and where it was")
 
 
 func test_a_refused_drop_leaves_the_squares_it_really_covers_taken():
@@ -845,7 +845,7 @@ func test_an_item_that_has_been_moved_knows_where_it_is():
 
 	grid._place_item_at(grid.items[0], Vector2i(4, 3))
 
-	var item_data = grid.items[0].get_meta("item_data")
+	var item_data = grid.items[0].item_data
 	assert_eq(item_data.position.to_array(), [4, 3], "It should know its new square")
 	assert_eq(item_data.covered_squares(), [Vector2i(4, 3)], "and cover it")
 
@@ -876,7 +876,7 @@ func test_turning_a_dragged_item_changes_the_squares_it_covers():
 
 	grid.turn_dragged(1, _held_at(grid.dragging_object))
 
-	var item_data = grid.items[0].get_meta("item_data")
+	var item_data = grid.items[0].item_data
 	assert_eq(item_data.facing(), 90, "A quarter turn clockwise")
 	assert_eq(item_data.turned_shape().size(), 2, "It still covers two squares")
 	var across = item_data.turned_shape().map(func(o): return o[0])
@@ -890,7 +890,7 @@ func test_turning_the_other_way_goes_the_other_way():
 
 	grid.turn_dragged(-1, _held_at(grid.dragging_object))
 
-	assert_eq(grid.items[0].get_meta("item_data").facing(), 270,
+	assert_eq(grid.items[0].item_data.facing(), 270,
 		"Anticlockwise from square on is three quarters round")
 
 
@@ -902,7 +902,7 @@ func test_four_turns_bring_a_dragged_item_back():
 	for i in 4:
 		grid.turn_dragged(1, _held_at(grid.dragging_object))
 
-	assert_eq(grid.items[0].get_meta("item_data").facing(), 0, "Back where it started")
+	assert_eq(grid.items[0].item_data.facing(), 0, "Back where it started")
 
 
 func test_turning_nothing_is_harmless():
@@ -972,7 +972,7 @@ func test_putting_an_item_back_unchanged_tells_the_server_nothing():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "unmoved", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
-	var item_data = grid.items[0].get_meta("item_data")
+	var item_data = grid.items[0].item_data
 
 	assert_true(grid.drop_changes_nothing(Vector2i(2, 3), item_data),
 		"Same square, same way round, nothing to tell")
@@ -988,7 +988,7 @@ func test_turning_an_item_in_place_is_a_change():
 
 	grid.turn_dragged(1, _held_at(grid.dragging_object))
 
-	var item_data = grid.items[0].get_meta("item_data")
+	var item_data = grid.items[0].item_data
 	assert_false(grid.drop_changes_nothing(Vector2i(2, 3), item_data),
 		"It has not moved, but it is not the same board")
 
@@ -997,7 +997,7 @@ func test_moving_an_item_without_turning_it_is_a_change():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "moved", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
-	var item_data = grid.items[0].get_meta("item_data")
+	var item_data = grid.items[0].item_data
 
 	assert_false(grid.drop_changes_nothing(Vector2i(4, 3), item_data),
 		"A different square is a change, turned or not")
@@ -1154,7 +1154,7 @@ func test_a_spear_lands_where_the_mark_said_it_would():
 	grid._end_drag(_pointer_over(Vector2i(3, 4)))
 	await get_tree().process_frame
 
-	assert_eq(grid.items[0].get_meta("grid_pos"), Vector2i(3, 1),
+	assert_eq(grid.items[0].where(), Vector2i(3, 1),
 		"Dropped with the pointer on the last row it reaches, the spear's tip "
 		+ "is on that row and its corner three above it")
 
@@ -1388,3 +1388,51 @@ func test_carrying_nothing_does_nothing():
 	grid.carry_to(_pointer_over(Vector2i(2, 3)))
 
 	assert_false(grid.hover_preview.visible, "Nothing is in hand to mark")
+
+func test_a_moved_item_knows_where_it_moved_to():
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "mover"}), Vector2i(2, 3))
+	var visual: Control = grid.items[0]
+	grid.saves_positions = false
+
+	grid._start_drag(visual, _pointer_over(Vector2i(2, 3)))
+	grid._end_drag(_pointer_over(Vector2i(4, 3)))
+	await get_tree().process_frame
+
+	assert_eq(visual.where(), Vector2i(4, 3), "It stands on the square it landed on")
+	assert_eq(visual.item_data.position.to_vector2i(), Vector2i(4, 3),
+		"and the item it holds says the same, without being turned to say it")
+
+
+func test_a_moved_item_covers_the_squares_it_moved_to():
+	"""What a rack carries is worked out from this. Left stale, a rack would
+	pick up an item that is no longer standing on it, and leave behind one
+	that is."""
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "mover"}), Vector2i(2, 3))
+	var visual: Control = grid.items[0]
+	grid.saves_positions = false
+
+	grid._start_drag(visual, _pointer_over(Vector2i(2, 3)))
+	grid._end_drag(_pointer_over(Vector2i(4, 3)))
+	await get_tree().process_frame
+
+	assert_eq(visual.item_data.covered_squares(), [Vector2i(4, 3)] as Array[Vector2i],
+		"The squares it covers are where it is now")
+
+
+func test_a_turned_item_is_drawn_again_and_a_moved_one_is_not():
+	"""Where it stands is not drawn by the visual -- the grid puts the node
+	where it goes -- so a move on its own costs no redraw. A turn does."""
+	_load_default_containers()
+	grid.place_shop_item(_item({"id": "mover", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
+	var visual: Control = grid.items[0]
+
+	var drawn_before: Array = visual.get_children().map(func(n): return n.get_instance_id())
+	visual.now_holds(visual.item_data.placed_at(Vector2i(4, 3)))
+	assert_eq(visual.get_children().map(func(n): return n.get_instance_id()),
+		drawn_before, "Moved and not turned, nothing is drawn again")
+
+	visual.now_holds(visual.item_data.turned(1))
+	assert_eq(visual.item_shape, visual.item_data.turned_shape(),
+		"Turned, the squares it covers are the turned ones")

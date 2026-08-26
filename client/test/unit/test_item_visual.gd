@@ -449,3 +449,49 @@ func test_turned_artwork_still_fits_the_squares_it_covers():
 	var covers := Vector2(art.size.y * art.scale.y, art.size.x * art.scale.x)
 	assert_lte(covers.x, visual.size.x + 1.0, "It should not run past its squares")
 	assert_lte(covers.y, visual.size.y + 1.0, "nor past them downwards")
+
+
+# ============ What a visual holds ============
+
+func _a_visual(data) -> ItemVisual:
+	var visual := ItemVisual.new()
+	add_child_autofree(visual)
+	visual.setup(data, 45.0, 1.0)
+	return visual
+
+
+func test_a_visual_that_is_handed_a_different_item_draws_the_different_item():
+	"""now_holds() skips the redraw when the picture would be the same. Judged
+	on the facing alone, an item replaced by another facing the same way -- two
+	items combining into a third -- kept the picture of the one that is gone."""
+	var visual := _a_visual(TestHelpers.placed_item({"id": "before", "slug": "api_token"}))
+	var was: Array = visual.get_children().map(func(n): return n.get_instance_id())
+
+	visual.now_holds(TestHelpers.placed_item({"id": "after", "slug": "null_blade"}))
+
+	assert_eq(visual.item_data.id, "after", "It holds the new item")
+	assert_ne(visual.get_children().map(func(n): return n.get_instance_id()), was,
+		"and it is drawn again, because it is not the same picture")
+
+
+func test_a_visual_that_only_moves_is_not_drawn_again():
+	var visual := _a_visual(TestHelpers.placed_item({"id": "same", "position": [0, 0]}))
+	var was: Array = visual.get_children().map(func(n): return n.get_instance_id())
+
+	visual.now_holds(visual.item_data.placed_at(Vector2i(4, 3)))
+
+	assert_eq(visual.where(), Vector2i(4, 3), "It knows where it moved to")
+	assert_eq(visual.get_children().map(func(n): return n.get_instance_id()), was,
+		"and nothing was drawn again for it")
+
+
+func test_a_visual_that_turns_is_drawn_again():
+	var visual := _a_visual(TestHelpers.placed_item(
+		{"id": "same", "shape": [[0, 0], [1, 0]]}))
+	var was: Array = visual.get_children().map(func(n): return n.get_instance_id())
+
+	visual.now_holds(visual.item_data.turned(1))
+
+	assert_ne(visual.get_children().map(func(n): return n.get_instance_id()), was)
+	assert_eq(visual.item_shape, visual.item_data.turned_shape(),
+		"and it covers the squares it faces now")

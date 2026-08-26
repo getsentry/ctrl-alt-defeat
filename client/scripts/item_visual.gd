@@ -43,8 +43,9 @@ const TOOLTIP_WIDTH := 325.0
 ## start at TOOLTIP_SPOT and still fit.
 const TOOLTIP_EDGE := 12.0
 
-# Item data
-var item_data
+# Item data. An Item off the grid, a PlacedItem on it; where() is the one thing
+# that needs the difference and says so.
+var item_data: APITypes.Item
 var item_shape: Array = [[0, 0]]  # Array[Array[int]]: the [x, y] offsets it covers
 
 # Tooltip
@@ -62,7 +63,7 @@ var charge_pace: float = 1.0
 var _artwork: Control = null
 var _fire_tween: Tween = null
 
-func setup(data, size: float = 45.0, spacing: float = 1.0):
+func setup(data: APITypes.Item, size: float = 45.0, spacing: float = 1.0):
 	"""Initialize the visual from an APITypes.Item"""
 	item_data = data
 	cell_size = size
@@ -72,13 +73,30 @@ func setup(data, size: float = 45.0, spacing: float = 1.0):
 
 	_create_visual()
 
-func redraw_as(data) -> void:
+func redraw_as(data: APITypes.Item) -> void:
 	"""Draw this again for an item that has changed.
 
 	Turning one is a redraw: it covers different squares. The size it is drawn
 	at is already known here, so a caller does not have to carry it about.
 	"""
 	setup(data, cell_size, cell_spacing)
+
+
+func now_holds(data: APITypes.Item) -> void:
+	"""Hold this item instead, and draw it again unless it would look the same.	"""
+	var same_picture: bool = item_data != null \
+		and data.id == item_data.id \
+		and data.facing() == item_data.facing()
+	item_data = data
+	item_shape = data.turned_shape()
+	if not same_picture:
+		redraw_as(data)
+
+
+func where() -> Vector2i:
+	"""The square this item stands on."""
+	var placed: APITypes.PlacedItem = item_data
+	return Vector2i(placed.position.x, placed.position.y)
 
 
 ## How big a shape is drawn, in pixels.
@@ -377,16 +395,6 @@ func _notification(what):
 		_hide_tooltip()
 
 # Static helper function for creating shop item previews
-static func create_shop_preview(item_data: Dictionary, size: Vector2 = Vector2(60, 60)) -> Control:
-	"""Create a simplified visual for shop display"""
-	var ItemVisualClass = preload("res://scripts/item_visual.gd")
-	var preview = ItemVisualClass.new()
-	preview.show_border = false  # Cleaner look in shop
-	preview.enable_tooltip = false  # Shop items have their own hover behavior
-	preview.setup(item_data, size.x, 1)
-	return preview
-
-
 # ============ Firing ============
 
 ## How much bigger an item gets at the top of its swell. Half again: a blow is

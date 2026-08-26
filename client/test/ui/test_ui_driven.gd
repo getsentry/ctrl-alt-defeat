@@ -291,11 +291,11 @@ func test_shop_purchase_and_item_placement():
 		# Get the newly added item (should be the last one)
 		placed_item = game_ui.inventory_grid.items[-1]
 
-	if placed_item and placed_item.has_meta("grid_pos"):
-		var pos = placed_item.get_meta("grid_pos")
+	if placed_item and placed_item.item_data != null:
+		var pos = placed_item.where()
 		print("   - Item placed at grid position (%d,%d)" % [pos.x, pos.y])
 		if placed_item.has_meta("item_data"):
-			var data = placed_item.get_meta("item_data")
+			var data = placed_item.item_data
 			print("   - Placed item data: %s" % data)
 			if item_type != "":
 				assert_eq(data.item_type, item_type, "Placed item should match shop item type")
@@ -750,7 +750,7 @@ func test_item_drag_and_move_persistence():
 	# Verify item was placed
 	assert_gt(inventory_grid.items.size(), 0, "Should have item in inventory")
 	var placed_item = inventory_grid.items[0]
-	var placed_item_data = placed_item.get_meta("item_data")
+	var placed_item_data = placed_item.item_data
 	var item_id = placed_item_data.id
 	assert_ne(item_id, "", "Placed item should have ID")
 	print("   - Item placed with ID: %s" % item_id)
@@ -813,7 +813,7 @@ func test_item_drag_and_move_persistence():
 	await _wait_for_server()
 
 	# Verify item moved to new position
-	var final_pos = placed_item.get_meta("grid_pos")
+	var final_pos = placed_item.where()
 	print("   - Item final position: %s" % final_pos)
 
 	# The move should either succeed (item at new position) or fail (item at original position)

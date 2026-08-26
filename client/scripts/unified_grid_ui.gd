@@ -2129,7 +2129,7 @@ func combining_source(pointer := Vector2.INF) -> Dictionary:
 		return {"item": dragging_shop_data, "node": drag_preview}
 	if inventory_grid != null and inventory_grid.dragging_object != null:
 		var dragged = inventory_grid.dragging_object
-		return {"item": dragged.get_meta("item_data"), "node": dragged}
+		return {"item": dragged.item_data, "node": dragged}
 	if storage_bin != null and storage_bin.dragged() != null:
 		return {"item": storage_bin.dragged(), "node": storage_bin.dragged_visual()}
 	return item_under(
@@ -2152,7 +2152,7 @@ func item_under(pointer: Vector2) -> Dictionary:
 	if inventory_grid != null:
 		for visual in inventory_grid.items:
 			if is_instance_valid(visual) and visual.get_global_rect().has_point(pointer):
-				return {"item": visual.get_meta("item_data"), "node": visual}
+				return {"item": visual.item_data, "node": visual}
 
 	if storage_bin != null:
 		# The chest is asked rather than measured: what lies in it lies at
@@ -2196,7 +2196,7 @@ func items_on_screen() -> Array:
 	if inventory_grid != null:
 		for visual in inventory_grid.items:
 			if is_instance_valid(visual):
-				seen.append({"item": visual.get_meta("item_data"), "node": visual})
+				seen.append({"item": visual.item_data, "node": visual})
 
 	if storage_bin != null:
 		for item in GameStateManager.inventory_storage:
@@ -2513,7 +2513,7 @@ func _aura_square(item: APITypes.Item, pointer: Vector2) -> Vector2i:
 	# square it used to stand on, and it would draw its zone back there.
 	var visual = inventory_grid.item_visual(item.id)
 	if is_instance_valid(visual):
-		return visual.get_meta("grid_pos")
+		return visual.where()
 
 	# On a shelf or lying in the chest, so it is nowhere on the board.
 	return Vector2i(-1, -1)
@@ -2556,7 +2556,7 @@ func _standing_on() -> Callable:
 		var visual = inventory_grid.item_grid[square.y][square.x]
 		if visual == null or not is_instance_valid(visual):
 			return null
-		return visual.get_meta("item_data")
+		return visual.item_data
 
 
 ## How much brighter an item is drawn while an aura is acting on it. Slight:
@@ -2632,18 +2632,18 @@ func _took_effect(item_id: String) -> Array[String]:
 	# Something put into a zone: the projector is whoever owns that zone.
 	for visual in inventory_grid.items:
 		if visual != landed and _aura_reaches(visual).has(item_id):
-			set_going.append(visual.get_meta("item_data").id)
+			set_going.append(visual.item_data.id)
 	return set_going
 
 
 func _aura_reaches(visual: Control) -> Array[String]:
 	"""The items this one's zones are acting on, where it stands."""
-	var item: APITypes.Item = visual.get_meta("item_data")
+	var item: APITypes.Item = visual.item_data
 	var lit: Array[String] = []
 	if item.aura.is_empty():
 		return lit
 
-	var at: Vector2i = visual.get_meta("grid_pos")
+	var at: Vector2i = visual.where()
 	var standing := _standing_on()
 	lit.append_array(Aura.lit_by(Aura.markers(
 		_zone_at(item.turned_star(), at), standing, item.aura.get("star", []))))
