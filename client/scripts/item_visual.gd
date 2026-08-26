@@ -46,7 +46,7 @@ const TOOLTIP_EDGE := 12.0
 # Item data. An Item off the grid, a PlacedItem on it; where() is the one thing
 # that needs the difference and says so.
 var item_data: APITypes.Item
-var item_shape: Array = [[0, 0]]  # Array[Array[int]]: the [x, y] offsets it covers
+var item_shape: Array[Vector2i] = []
 
 # Tooltip
 var tooltip_panel: ItemTooltip = null
@@ -100,16 +100,13 @@ func where() -> Vector2i:
 
 
 ## How big a shape is drawn, in pixels.
-##
-## Static, and the only copy: the grid asks it to size the mark and the visual
-## asks it to size the artwork, and a mark that is not the size of the thing it
-## marks is the fault this whole corner of the code keeps producing.
-static func extent_of(item_shape: Array, cell: float, spacing: float) -> Vector2:
+static func extent_of(item_shape: Array[Vector2i], cell: float,
+		spacing: float) -> Vector2:
 	var max_x := 0
 	var max_y := 0
 	for offset in item_shape:
-		max_x = maxi(max_x, int(offset[0]))
-		max_y = maxi(max_y, int(offset[1]))
+		max_x = maxi(max_x, offset.x)
+		max_y = maxi(max_y, offset.y)
 	return Vector2(
 		(max_x + 1) * (cell + spacing) - spacing,
 		(max_y + 1) * (cell + spacing) - spacing)
@@ -139,10 +136,7 @@ func covers_point(point: Vector2) -> bool:
 	# inside the item's own drawing, and a point in it that answered "not the
 	# item" would be a one pixel line through the middle of an item that does
 	# nothing when it is clicked.
-	for offset in item_shape:
-		if square.x == int(offset[0]) and square.y == int(offset[1]):
-			return true
-	return false
+	return item_shape.has(square)
 
 
 func _is_container() -> bool:

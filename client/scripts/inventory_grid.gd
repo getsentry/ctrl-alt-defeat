@@ -893,7 +893,8 @@ func place_shop_item(item: APITypes.Item, grid_pos: Vector2i, facing: int = -1) 
 
 	return true
 
-func mark_square(item_shape: Array, grid_pos: Vector2i, allowed: bool) -> void:
+func mark_square(item_shape: Array[Vector2i], grid_pos: Vector2i,
+		allowed: bool) -> void:
 	"""Mark where something of this shape would land, and whether it can.
 
 	The one place that draws the mark. Whether the square is allowed is the
@@ -912,24 +913,20 @@ func mark_square(item_shape: Array, grid_pos: Vector2i, allowed: bool) -> void:
 		hover_preview.visible = false
 		return
 
-	# A shape reaches here as Vector2i from the server and as pairs from a
-	# caller that writes one out. Settle that once, here, so everything below
-	# is working with squares.
-	var squares := ItemPlaceholder.squares_in(item_shape)
 	hover_preview.visible = true
 	hover_preview.position = grid_to_pixel(grid_pos)
-	hover_preview.size = _shape_extent(squares)
+	hover_preview.size = _shape_extent(item_shape)
 
 	# The mark is asked for on every frame of a drag, and the answer is the
 	# same on nearly all of them. Drawing it throws away one Panel per square
 	# and builds another, sixty times a second, for a picture that has not
 	# changed. The patches move with the mark, so only its shape and its
 	# colour are worth watching.
-	if squares == _marked_squares and allowed == _marked_allowed:
+	if item_shape == _marked_squares and allowed == _marked_allowed:
 		return
-	_marked_squares = squares.duplicate()
+	_marked_squares = item_shape.duplicate()
 	_marked_allowed = allowed
-	_draw_mark(squares, allowed)
+	_draw_mark(item_shape, allowed)
 
 
 func _on_the_board(grid_pos: Vector2i) -> bool:

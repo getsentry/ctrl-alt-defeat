@@ -4,7 +4,7 @@ Tests for AI opponent generation with containers
 
 import pytest
 from battle_engine import BattleSimulator
-from containers import Container
+from containers import Container, PlacementValidator
 from items import sale_price
 from payout import WINS_TO_WIN_RUN
 from main import generate_ai_opponent
@@ -2932,3 +2932,83 @@ class TestAWonRunIsCountedOnTheAccount:
             "SELECT total_games_played FROM users WHERE id = $1",
             auth_client.user_id)
         assert (counted, played) == (0, 1), "played, and not counted as won"
+
+
+class TestARackIsBoughtFacingTheWayItWasCarried:
+
+    @staticmethod
+    def _a_rack_on_the_shelf(auth_client, wanted="patch_registry"):
+        auth_client.post("/session/start", json={"seed": SHOP_SEED})
+        auth_client.post(
+            "/test/shop",
+            json={"player_id": str(auth_client.user_id), "items": [wanted]},
+        )
+        shop = auth_client.get("/session").json()["current_shop"]
+        return next(item for item in shop if item and item["item_type"] == wanted)
+
+    def test_a_rack_bought_turned_stands_turned(self, auth_client):
+        rack = self._a_rack_on_the_shelf(auth_client)
+
+        bought = auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": rack["id"],
+                "target_position": [0, 0],
+                "rotation": 90,
+            },
+        )
+
+        assert bought.status_code == 200, bought.text
+        standing = bought.json()["server_containers"]
+        theirs = next(c for c in standing if c["id"] == rack["id"])
+        assert theirs["rotation"] == 90, "It stands the way it was carried"
+
+    def test_a_rack_bought_turned_offers_the_squares_it_turned_onto(
+        self, auth_client
+    ):
+        """The point of turning it. A Patch Registry upright at (0, 0) offers a
+        column; laid flat it offers a row, and an item may stand on that row."""
+        rack = self._a_rack_on_the_shelf(auth_client)
+        auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": rack["id"],
+                "target_position": [0, 0],
+                "rotation": 90,
+            },
+        )
+
+        board = PlacementValidator()
+        for container in auth_client.get("/session").json()["server_containers"]:
+            board.add_container(Container(**container))
+
+        assert (3, 0) in board.available_squares, "four squares across"
+        assert (0, 3) not in board.available_squares, "and not four down"
+
+    def test_a_rack_bought_unturned_is_unturned(self, auth_client):
+        rack = self._a_rack_on_the_shelf(auth_client)
+
+        bought = auth_client.post(
+            "/purchase/item",
+            json={"item_id": rack["id"], "target_position": [0, 0]},
+        )
+
+        standing = bought.json()["server_containers"]
+        theirs = next(c for c in standing if c["id"] == rack["id"])
+        assert theirs["rotation"] == 0, "Nothing asked for, nothing turned"
+
+    def test_a_rack_turned_off_the_board_is_refused(self, auth_client):
+        """Turned, it reaches four squares the other way, and the board's own
+        rule is what answers -- not a second opinion about what fits."""
+        rack = self._a_rack_on_the_shelf(auth_client)
+
+        bought = auth_client.post(
+            "/purchase/item",
+            json={
+                "item_id": rack["id"],
+                "target_position": [7, 0],
+                "rotation": 90,
+            },
+        )
+
+        assert bought.status_code == 400, bought.text

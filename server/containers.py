@@ -7,7 +7,7 @@ are not always rectangular, so a container has no width and no height.
 
 from typing import List, Optional, Set, Tuple
 
-from grid_system import ItemShape
+from grid_system import ItemShape, Rotation
 from items import Item, PlacedItem
 from utils import Position, Shape
 
@@ -37,11 +37,15 @@ class Container(PlacedItem):
 
     @classmethod
     def of(
-        cls, container_type: str, position: Position, container_id: str
+        cls,
+        container_type: str,
+        position: Position,
+        container_id: str,
+        rotation: Rotation = Rotation.NONE,
     ) -> "Container":
-        """Build a container of a type declared in containers.json"""
+        """Build a container of a type declared in containers.json."""
         item = Item.of(container_type, container_id)
-        return cls(**item.item_fields(), position=position)
+        return cls(**item.item_fields(), position=position, rotation=rotation)
 
 
 def starting_containers() -> List[Container]:

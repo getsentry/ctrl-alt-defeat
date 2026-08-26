@@ -1300,7 +1300,10 @@ async def purchase_item(
 
         # Add the container to the session's server_containers
         new_container = Container.of(
-            item.item_type, request.target_position, container_id=item.id
+            item.item_type,
+            request.target_position,
+            container_id=item.id,
+            rotation=request.rotation,
         )
 
         # Ask the validator the battle engine uses, rather than checking here.

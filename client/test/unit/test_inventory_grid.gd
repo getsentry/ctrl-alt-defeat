@@ -1012,7 +1012,7 @@ func test_moving_an_item_without_turning_it_is_a_change():
 
 func test_the_mark_is_drawn_above_the_containers():
 	_load_default_containers()
-	grid.mark_square([[0, 0]], Vector2i(2, 3), true)
+	grid.mark_square(APITypes.squares([[0, 0]]), Vector2i(2, 3), true)
 
 	assert_gt(grid.hover_preview.z_index, grid.containers[0].visual.z_index,
 		"A mark under a container's artwork is a mark nobody sees")
@@ -1436,3 +1436,57 @@ func test_a_turned_item_is_drawn_again_and_a_moved_one_is_not():
 	visual.now_holds(visual.item_data.turned(1))
 	assert_eq(visual.item_shape, visual.item_data.turned_shape(),
 		"Turned, the squares it covers are the turned ones")
+
+
+# ============ A rack that stands the way it was turned ============
+func _a_rack(facing: int, at := Vector2i(0, 0)) -> Resource:
+	# A Patch Registry: one wide and four tall, which is the case that matters.
+	return _container({
+		"id": "registry", "position": [at.x, at.y], "rotation": facing,
+		"shape": [[0, 0], [0, 1], [0, 2], [0, 3]]})
+
+
+func test_a_rack_stood_upright_offers_a_column():
+	grid.load_inventory_state(_state([], [_a_rack(0)]))
+
+	assert_true(grid.active_grid[3][0], "four squares down")
+	assert_false(grid.active_grid[0][3], "and not four across")
+
+
+func test_a_rack_stood_on_its_side_offers_a_row():
+	grid.load_inventory_state(_state([], [_a_rack(90)]))
+
+	assert_true(grid.active_grid[0][3], "four squares across")
+	assert_false(grid.active_grid[3][0], "and not four down")
+
+
+func test_an_item_may_stand_on_the_squares_a_turned_rack_offers():
+	"""The whole point of turning one. Upright it offers a column and an item
+	four across has nowhere to go; laid flat it offers the row."""
+	var wide := _item({"id": "wide", "shape": [[0, 0], [1, 0], [2, 0], [3, 0]]})
+
+	grid.load_inventory_state(_state([], [_a_rack(0)]))
+	assert_false(grid.can_place_item(wide, Vector2i(0, 0)),
+		"Nothing four across fits on a rack standing on end")
+
+	grid.load_inventory_state(_state([], [_a_rack(90)]))
+	assert_true(grid.can_place_item(wide, Vector2i(0, 0)),
+		"and it fits on the same rack laid flat")
+
+
+func test_a_turned_rack_is_drawn_the_way_it_stands():
+	grid.load_inventory_state(_state([], [_a_rack(90)]))
+	var drawn: Control = grid.containers[0].visual
+
+	assert_gt(drawn.size.x, drawn.size.y,
+		"Laid flat, it is drawn wider than it is tall")
+	assert_eq(drawn.item_shape, APITypes.turn(
+		APITypes.squares([[0, 0], [0, 1], [0, 2], [0, 3]]), 90),
+		"and it covers the squares it faces")
+
+
+func test_a_turned_rack_may_not_hang_off_the_board():
+	var over_the_edge := _a_rack(90, Vector2i(6, 0))
+
+	assert_false(grid.can_place_container(over_the_edge, Vector2i(6, 0)),
+		"Four across from column six runs off a nine wide board")
