@@ -219,6 +219,15 @@ if [ -n "$RAN" ] && [ -n "$FOUND" ] && [ "$RAN" -lt "$FOUND" ]; then
     TEST_EXIT_CODE=1
 fi
 
+# And a run that ran nothing at all. A filter that matches no test method
+# leaves GUT with nothing to do, and it says so and exits 0 -- so a mistyped
+# name reported a green suite that had not run a single test.
+if grep -q "Nothing was run" test_output.tmp; then
+    echo -e "${RED}No test ran. A run that tested nothing is not a pass;"
+    echo -e "-gunit_test_name matches a test method, not a file name.${NC}"
+    TEST_EXIT_CODE=1
+fi
+
 # Clean up temp file
 rm -f test_output.tmp
 

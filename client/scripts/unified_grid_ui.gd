@@ -2139,9 +2139,9 @@ func item_under(pointer: Vector2) -> Dictionary:
 			return {"item": slot.get_meta("item_data"), "node": slot.get_meta("art")}
 
 	if inventory_grid != null:
-		for visual in inventory_grid.items:
-			if is_instance_valid(visual) and visual.get_global_rect().has_point(pointer):
-				return {"item": visual.item_data, "node": visual}
+		var visual := inventory_grid.standing_under(pointer)
+		if visual != null:
+			return {"item": visual.item_data, "node": visual}
 
 	if storage_bin != null:
 		# The chest is asked rather than measured: what lies in it lies at
@@ -2538,14 +2538,8 @@ func _standing_on() -> Callable:
 	and the squares it came from read as empty while the player is deciding.
 	"""
 	return func(square: Vector2i):
-		if square.x < 0 or square.y < 0 \
-				or square.x >= inventory_grid.grid_width \
-				or square.y >= inventory_grid.grid_height:
-			return null
-		var visual = inventory_grid.item_grid[square.y][square.x]
-		if visual == null or not is_instance_valid(visual):
-			return null
-		return visual.item_data
+		var visual = inventory_grid.standing_on(square)
+		return visual.item_data if visual != null else null
 
 
 ## How much brighter an item is drawn while an aura is acting on it. Slight:

@@ -29,7 +29,7 @@ does not tell you" below.
 ```
 cd client && ./run_tests.sh --unit        # unit tests only, no server, ~20s
 cd client && ./run_tests.sh               # everything, starts a server, ~45s
-cd client && ./run_tests.sh test_api_types  # one test by name
+cd client && ./run_tests.sh reads_the_server_url  # tests whose METHOD name matches
 ```
 
 `test/ui/` and `test/smoke/` drive the real UI against a real server, which
@@ -60,6 +60,11 @@ all while it reported no failures.
 **A test file that will not parse** is not counted at all. The run simply has
 fewer tests in it: 862 instead of 904, and nothing said why. So the script
 count is checked against what is on disk.
+
+**A filter that matches nothing** leaves GUT with nothing to do. It says
+"Nothing was run" and exits 0, so a mistyped name reported a green suite that
+had run no test at all. The filter is `-gunit_test_name`, which matches a test
+*method* name -- passing a file name matches nothing.
 
 Risky is not always wrong -- seven tests call `pending()` on purpose, with a
 reason -- which is why the check is for the error, not for the count.

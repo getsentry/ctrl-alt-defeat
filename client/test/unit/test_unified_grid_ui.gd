@@ -52,10 +52,9 @@ func test_grid_dimensions():
 	assert_eq(ui.ROOM_HEIGHT, 7, "Room should be 7 cells tall")
 
 	# InventoryGrid owns the grid arrays
-	assert_eq(ui.inventory_grid.active_grid.size(), 7, "Active grid should have 7 rows")
-	assert_eq(ui.inventory_grid.item_grid.size(), 7, "Item grid should have 7 rows")
+	assert_eq(ui.inventory_grid.on_square.size(), 7, "The board should have 7 rows")
 
-	for row in ui.inventory_grid.active_grid:
+	for row in ui.inventory_grid.on_square:
 		assert_eq(row.size(), 9, "Each row should have 9 columns")
 
 func test_starting_containers_placed():
@@ -63,11 +62,11 @@ func test_starting_containers_placed():
 	await get_tree().create_timer(0.1).timeout  # Let placement happen
 
 	# InventoryGrid owns the grid that containers mark.
-	# UnifiedGridUI.active_grid is built but never written to.
+	# UnifiedGridUI holds no board of its own; the grid keeps the one record.
 	var container_count = 0
 	for y in range(ui.ROOM_HEIGHT):
 		for x in range(ui.ROOM_WIDTH):
-			if ui.inventory_grid.active_grid[y][x]:
+			if ui.inventory_grid.provides(Vector2i(x, y)):
 				container_count += 1
 
 	# Each 2x2 container = 4 cells, 3 containers = 12 cells
@@ -1997,6 +1996,34 @@ func test_hovering_an_item_draws_the_zone_it_reaches_into():
 	assert_true(drawn.any(func(one): return one["square"] == Vector2i(4, 4)))
 
 
+func test_pointing_into_the_corner_of_an_L_draws_the_zone_of_what_is_there():
+	"""The corner of an L is inside the L's rectangle and on none of the L.
+
+	An item standing in that corner is what the pointer is on, and its zone is
+	the one to draw. Measuring rectangles, the first item whose box held the
+	point answered -- so the L answered for a square it does not stand on, and
+	the player was shown the wrong item's reach.
+	"""
+	_rack_holding([
+		_an_aura_item({
+			"id": "ell", "position": [4, 3],
+			"shape": [[0, 0], [1, 0], [0, 1]], "star": [[0, -1]]}),
+		_an_aura_item({
+			"id": "guest", "position": [5, 4],
+			"shape": [[0, 0]], "star": [[0, 1]]}),
+	])
+	var grid = ui.inventory_grid
+	var middle := Vector2(grid.cell_size, grid.cell_size) / 2.0
+	var corner: Vector2 = grid.get_global_transform() \
+		* (grid.grid_to_pixel(Vector2i(5, 4)) + middle)
+
+	ui.refresh_aura(corner)
+
+	var drawn = ui.aura_overlay.showing()
+	assert_eq(drawn.size(), 1, "one square, which is all the guest reaches")
+	assert_eq(drawn[0]["square"], Vector2i(5, 5), "below the guest")
+
+
 func test_pointing_at_nothing_draws_no_zone():
 	_rack_holding([_an_aura_item()])
 
@@ -2325,10 +2352,10 @@ func test_a_rack_being_dragged_counts_as_something_in_hand():
 	var grid = ui.inventory_grid
 	var rack = grid.containers[0]
 
-	grid._start_container_drag(rack, _held_at(rack.visual))
+	grid._start_container_drag(rack, _held_at(rack))
 
 	assert_not_null(grid.carrying(), "The grid is carrying the rack")
-	assert_eq(grid.carrying(), rack.visual, "and it is the rack's own artwork")
+	assert_eq(grid.carrying(), rack, "and it is the rack's own artwork")
 	assert_true(ui.carrying_something(), "so the screen says something is held")
 
 
@@ -2339,7 +2366,7 @@ func test_a_rack_in_hand_is_offered_a_turn():
 	var grid = ui.inventory_grid
 	var rack = grid.containers[0]
 
-	grid._start_container_drag(rack, _held_at(rack.visual))
+	grid._start_container_drag(rack, _held_at(rack))
 	ui._process(0.0)
 
 	assert_true(ui.carrying_something(), "It is in hand")

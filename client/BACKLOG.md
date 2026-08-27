@@ -323,3 +323,31 @@ names -- it would find Vampirism in an item that only mentions it.
 Pull `ICON_PATH` out while doing this. `res://assets/icons/statuses/%s.png` is
 written in `battle_hud.gd` and again in `how_to_play.gd`, and this would be the
 third copy.
+
+## Items and racks: what is still kept apart
+
+The grid now keeps one record of what covers each square, lowest first, and a
+rack is simply the thing at the bottom of the stack. One press picks up
+whatever is on top, so a rack you can see is a rack you can pick up, and the
+`PlacedContainer` wrapper is gone -- a rack and an item are both an
+`ItemVisual` holding a `PlacedItem`.
+
+What is still doubled, in the order it should go:
+
+**The drag machinery.** `_start_container_drag`, `_end_container_drag`,
+`drop_container_at`, `_return_container`, `update_container_preview`,
+`can_place_container` and `dragging_container` each mirror an item version.
+The real difference is one thing: a rack carries what stands on it, which is
+`container_riders`. Fold the pair together and let the riders be empty for an
+item -- an item carries nothing, which is the same rule with nothing in it.
+
+**Two lists on the wire.** `InventoryState` sends `inventory_grid` and
+`server_containers` separately, and that is the root the rest grows from. The
+two models are already identical: `Container` subclasses `PlacedItem` and adds
+no field, and the client has no Container class at all. Its own docstring says
+it -- "what separates the two is which list a thing is in, not what it is."
+One list, with `is_container` saying which offer squares, and the client cannot
+drift back into two paths because there is only one list to walk.
+
+**Two move endpoints.** `move_item` and `move_container` on the server, for the
+same act. They join once the lists do.

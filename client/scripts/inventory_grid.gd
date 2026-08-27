@@ -5,19 +5,6 @@ class_name InventoryGrid
 # Used by UnifiedGridUI for the main game and BattleScreen for replays
 
 
-# A container on the grid: what the server says it is, and what is drawn for it.
-class PlacedContainer extends RefCounted:
-	var container: APITypes.PlacedItem
-	var visual: ItemVisual
-
-	func _init(server_container: APITypes.PlacedItem, drawn: ItemVisual):
-		container = server_container
-		visual = drawn
-
-	func position() -> Vector2i:
-		return Vector2i(container.position.x, container.position.y)
-
-
 # An item travelling with a container while it is dragged: the drawing, and
 # where it sits relative to the container carrying it. One thing rather than
 # two lists that have to be kept the same length and the same order.
@@ -74,13 +61,21 @@ var show_base_grid: bool = true
 
 # The grid, as rows of columns, indexed [y][x]. Godot has no nested typed
 # collections, so the element type is written here.
-var active_grid: Array = []  # Array[Array[bool]]: is this cell on a container?
-var item_grid: Array = []    # Array[Array[Control]]: the item here, or null
+## What covers each square, lowest first, indexed [y][x].
+##
+## A container is put down before anything sits on it, so it is under them in
+## the stack, and the top of a stack is the thing a player is pointing at. That
+## is the whole of the difference between a container and an item here: which
+## end of the stack it is at. Everything else asks this one record --
+## `provides()` for the squares on offer, `filling()` for the squares already
+## taken, `standing_on()` for what a press picks up -- so the two can no longer
+## be answered differently by being kept in different places.
+var on_square: Array = []    # Array[Array[Array[ItemVisual]]]
 var grid_cells: Array = []   # Array[Array[Panel]]: the cell's background panel
 
 # Stored objects
 var items: Array[Control] = []  # The item visuals on the grid
-var containers: Array[PlacedContainer] = []
+var containers: Array[ItemVisual] = []
 
 # Where an item can be dropped to sell it. The parent owns the chest and
 # hands it over; the grid only needs somewhere to test the pointer against.
@@ -99,7 +94,7 @@ var saves_positions: bool = true
 var dragging_object = null
 # A container being dragged, and the items riding on it. They travel together,
 # because that is what the move does.
-var dragging_container: PlacedContainer = null
+var dragging_container: ItemVisual = null
 var container_riders: Array[Rider] = []
 var drag_offset = Vector2.ZERO
 ## Which of the item's own squares the player has hold of.
@@ -186,20 +181,16 @@ func configure(width: int, height: int, size: float = 45.0, spacing: float = 1.0
 
 func _initialize_grids():
 	"""Initialize all grid arrays"""
-	active_grid.clear()
-	item_grid.clear()
+	on_square.clear()
 	grid_cells.clear()
 
 	for y in range(grid_height):
-		var active_row = []
-		var item_row = []
+		var square_row = []
 		var cell_row = []
 		for x in range(grid_width):
-			active_row.append(false)  # No server here initially
-			item_row.append(null)      # No item here initially
+			square_row.append([])      # Nothing covers this square yet
 			cell_row.append(null)      # No visual cell initially
-		active_grid.append(active_row)
-		item_grid.append(item_row)
+		on_square.append(square_row)
 		grid_cells.append(cell_row)
 
 func _setup_visual():
@@ -344,6 +335,78 @@ func square_for_corner(local_corner: Vector2) -> Vector2i:
 		roundi((local_corner.y - cell_spacing) / step))
 
 
+func covering(square: Vector2i) -> Array:
+	"""Everything that covers this square, lowest first. Empty off the board."""
+	if not _on_the_board(square):
+		return []
+	var stack: Array = []
+	for visual in on_square[square.y][square.x]:
+		if is_instance_valid(visual):
+			stack.append(visual)
+	return stack
+
+
+func standing_on(square: Vector2i) -> ItemVisual:
+	"""The thing on top of this square, or null.
+
+	What a player is pointing at, and so what a press picks up. On a square of
+	a rack with nothing on it that is the rack, and on a square with an item on
+	it that is the item -- one rule, and neither kind needs asking about
+	separately.
+
+	It answers the question a rectangle cannot: the empty corner of an L is
+	inside that item's box and on none of the item, and belongs to whatever
+	really stands there.
+	"""
+	var stack := covering(square)
+	return stack.back() if not stack.is_empty() else null
+
+
+func filling(square: Vector2i) -> ItemVisual:
+	"""The thing taking up this square, rather than offering it. Null if free."""
+	var stack := covering(square)
+	stack.reverse()
+	for visual in stack:
+		if not visual.item_data.is_container:
+			return visual
+	return null
+
+
+func provides(square: Vector2i) -> bool:
+	"""Whether a container offers this square for something to stand on."""
+	for visual in covering(square):
+		if visual.item_data.is_container:
+			return true
+	return false
+
+
+func _put_on(visual: ItemVisual, square: Vector2i) -> void:
+	"""Record that this thing covers this square, on top of what is there."""
+	if _on_the_board(square) and not on_square[square.y][square.x].has(visual):
+		on_square[square.y][square.x].append(visual)
+
+
+func _take_off(visual: ItemVisual, square: Vector2i) -> void:
+	"""Record that this thing no longer covers this square."""
+	if _on_the_board(square):
+		on_square[square.y][square.x].erase(visual)
+
+
+func standing_under(point: Vector2) -> ItemVisual:
+	"""The item under this point on the screen, or null.
+
+	Asked by everything that wants to know what the player is reaching for:
+	the press that picks something up, and the hover that decides whose aura
+	to draw. Both used to measure rectangles and got the same two answers
+	wrong -- a click in an L's corner reached the L, and a hover there drew the
+	L's aura instead of the aura of the item sitting in the corner.
+	"""
+	var local := get_global_transform().affine_inverse() * point
+	if local.x < 0 or local.y < 0:
+		return null
+	return standing_on(pixel_to_grid(local))
+
+
 func square_held_over(pointer: Vector2, held_by: Vector2i) -> Vector2i:
 	"""The square the corner of a held item is over, for a pointer here.
 
@@ -415,8 +478,9 @@ func _add_container(container: APITypes.PlacedItem):
 		var grid_x = square.x
 		var grid_y = square.y
 		if grid_x >= 0 and grid_x < grid_width and grid_y >= 0 and grid_y < grid_height:
-			# Mark as active for placement
-			active_grid[grid_y][grid_x] = true
+			# At the bottom of the square: it offers the square rather than
+			# filling it, and whatever is put down later sits on top of it.
+			_put_on(container_visual, square)
 
 			# Update visual. A container's own squares are drawn whether or
 			# not the empty grid behind them is.
@@ -430,7 +494,7 @@ func _add_container(container: APITypes.PlacedItem):
 				cell.add_theme_stylebox_override("panel", style)
 
 	add_child(container_visual)
-	var placed = PlacedContainer.new(container, container_visual)
+	var placed: ItemVisual = container_visual
 	containers.append(placed)
 
 	if not read_only:
@@ -459,8 +523,7 @@ func _add_item(item: APITypes.PlacedItem):
 	for offset in item.turned_shape():
 		var cell_x = x + offset[0]
 		var cell_y = y + offset[1]
-		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
-			item_grid[cell_y][cell_x] = item_visual
+		_put_on(item_visual, Vector2i(cell_x, cell_y))
 
 	# Connect input if not read-only
 	if not read_only:
@@ -480,7 +543,7 @@ func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	# Drawn again, because the squares it covers have changed.
 	carried.now_holds(turned)
 	if dragging_container != null:
-		dragging_container.container = turned
+		dragging_container.now_holds(turned)
 		var body := APITypes.Turned.new(was, posmod(quarters * 90, 360))
 		for rider in container_riders:
 			rider.turn_with(body, quarters)
@@ -512,12 +575,15 @@ func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	return true
 
 
-func _a_press_on(event: InputEvent, visual: ItemVisual) -> bool:
+func _a_press(event: InputEvent) -> bool:
+	"""The left button going down, on a grid that can be arranged at all."""
 	if read_only or not (event is InputEventMouseButton):
 		return false
-	if event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
-		return false
-	return visual.covers_point(event.position)
+	return event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+
+
+func _a_press_on(event: InputEvent, visual: ItemVisual) -> bool:
+	return _a_press(event) and visual.covers_point(event.position)
 
 
 func _a_release(event: InputEvent) -> bool:
@@ -526,13 +592,18 @@ func _a_release(event: InputEvent) -> bool:
 		and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed
 
 
-func _on_container_input(event: InputEvent, placed: PlacedContainer):
-	"""Pick a rack up where it was clicked, and put it down again"""
-	if _a_press_on(event, placed.visual):
-		_start_container_drag(placed,
-			placed.visual.get_global_transform() * event.position)
-	elif _a_release(event):
-		_end_container_drag()
+func _on_container_input(event: InputEvent, placed: ItemVisual):
+	"""A press that reached the rack first. The same press, either way.
+
+	Which node Godot hands an event to is decided by rectangles, so this and
+	`_on_item_input` are two doors into one room -- and they must not answer
+	differently, which is what they did for as long as they were two rules.
+	"""
+	if _a_release(event):
+		_let_go()
+		return
+	if _a_press(event):
+		_pick_up_at(placed.get_global_transform() * event.position)
 
 
 func can_place_container(container: APITypes.Item, grid_pos: Vector2i) -> bool:
@@ -547,9 +618,9 @@ func can_place_container(container: APITypes.Item, grid_pos: Vector2i) -> bool:
 
 	var taken: Dictionary[Vector2i, bool] = {}
 	for placed in containers:
-		if placed.container.id == container.id:
+		if placed.item_data.id == container.id:
 			continue  # It is no obstacle to itself.
-		for square in placed.container.covered_squares():
+		for square in placed.item_data.covered_squares():
 			taken[square] = true
 
 	for offset in container.turned_shape():
@@ -573,27 +644,27 @@ func _take_hold_of(visual: ItemVisual, body: Array[Vector2i],
 	visual.z_index = 10
 
 
-func _start_container_drag(placed: PlacedContainer, taken_at: Vector2) -> void:
+func _start_container_drag(placed: ItemVisual, taken_at: Vector2) -> void:
 	"""Pick a container up, and everything standing on it with it."""
 	if read_only or dragging_object:
 		return
 
 	dragging_container = placed
-	original_grid_pos = placed.position()
-	original_facing = placed.container.facing()
-	_take_hold_of(placed.visual, placed.container.turned_shape(), taken_at)
+	original_grid_pos = placed.where()
+	original_facing = placed.item_data.facing()
+	_take_hold_of(placed, placed.item_data.turned_shape(), taken_at)
 
 	# Whatever has a square on it travels with it, which is the same rule the
 	# server uses when it works out what the move carries.
 	var covered: Dictionary[Vector2i, bool] = {}
-	for square in placed.container.covered_squares():
+	for square in placed.item_data.covered_squares():
 		covered[square] = true
 
 	container_riders = []
 	for item_visual in items:
 		for square in item_visual.item_data.covered_squares():
 			if covered.has(square):
-				container_riders.append(Rider.new(item_visual, placed.position()))
+				container_riders.append(Rider.new(item_visual, placed.where()))
 				move_child(item_visual, get_child_count() - 1)
 				item_visual.z_index = 11
 				break
@@ -616,50 +687,73 @@ func drop_container_at(pointer: Vector2) -> void:
 	var placed := dragging_container
 	dragging_container = null
 	hide_hover_preview()
-	placed.visual.z_index = 0
+	placed.z_index = 0
 	for rider in container_riders:
 		rider.visual.z_index = 0
 
 	var grid_pos := square_held_over(pointer, grab_cell)
-	if not drop_changes_nothing(grid_pos, placed.container) \
-			and can_place_container(placed.container, grid_pos):
+	if not drop_changes_nothing(grid_pos, placed.item_data) \
+			and can_place_container(placed.item_data, grid_pos):
 		# The riders go with it, so which of them the move could not find room
 		# for is answered by which of these is missing afterwards.
 		var rider_ids: Array[String] = []
 		for rider in container_riders:
 			rider_ids.append(rider.id())
 		container_riders = []
-		container_dropped.emit(placed.container, grid_pos, rider_ids)
+		container_dropped.emit(placed.item_data, grid_pos, rider_ids)
 		return
 
 	# Nowhere it can stand, so it and its passengers go back where they were.
 	_return_container(placed)
 
 
-func _return_container(placed: PlacedContainer) -> void:
+func _return_container(placed: ItemVisual) -> void:
 	"""Put a container and its passengers back as they were picked up."""
-	var quarters := (original_facing - placed.container.facing()) / 90
+	var quarters := (original_facing - placed.item_data.facing()) / 90
 	if quarters != 0:
 		var body := APITypes.Turned.new(
-			placed.container.turned_shape(), posmod(quarters * 90, 360))
+			placed.item_data.turned_shape(), posmod(quarters * 90, 360))
 		for rider in container_riders:
 			rider.turn_with(body, quarters)
-		placed.container = placed.container.placed_at(
-			original_grid_pos, original_facing)
-		placed.visual.now_holds(placed.container)
+		placed.now_holds(placed.item_data.placed_at(
+			original_grid_pos, original_facing))
 
-	placed.visual.position = grid_to_pixel(original_grid_pos)
+	placed.position = grid_to_pixel(original_grid_pos)
 	for rider in container_riders:
-		rider.follow(placed.visual.position, cell_size + cell_spacing)
+		rider.follow(placed.position, cell_size + cell_spacing)
 	container_riders = []
 
 
 func _on_item_input(event: InputEvent, item_visual: ItemVisual):
-	"""Pick an item up where it was clicked, and put it down again"""
-	if _a_press_on(event, item_visual):
-		_start_drag(item_visual,
-			item_visual.get_global_transform() * event.position)
-	elif _a_release(event):
+	"""Pick up whatever was clicked on, and put a carried thing down."""
+	if _a_release(event):
+		_let_go()
+		return
+	if _a_press(event):
+		_pick_up_at(item_visual.get_global_transform() * event.position)
+
+
+func _pick_up_at(point: Vector2) -> void:
+	"""Pick up whatever is on top of the square under this point.
+
+	The one way in, for both kinds. A rack and an item are picked up by the
+	same press, told apart by the one thing that really differs between them:
+	a rack holds other things, so it carries them when it goes.
+	"""
+	var visual := standing_under(point)
+	if visual == null:
+		return
+	if visual.item_data.is_container:
+		_start_container_drag(visual, point)
+	else:
+		_start_drag(visual, point)
+
+
+func _let_go() -> void:
+	"""Put down whatever is in hand, of either kind."""
+	if dragging_container != null:
+		_end_container_drag()
+	elif dragging_object != null:
 		_end_drag()
 
 func _start_drag(item_visual: ItemVisual, taken_at: Vector2):
@@ -683,10 +777,7 @@ func _start_drag(item_visual: ItemVisual, taken_at: Vector2):
 
 	# The squares it stood on are free while it is in the air.
 	for offset in item_data.turned_shape():
-		var cell_x = original_grid_pos.x + offset[0]
-		var cell_y = original_grid_pos.y + offset[1]
-		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
-			item_grid[cell_y][cell_x] = null
+		_take_off(item_visual, original_grid_pos + Vector2i(offset[0], offset[1]))
 
 func _pointer_is_over_grid_zone(pointer: Vector2) -> bool:
 	"""Whether the pointer is over the grid this item would move to"""
@@ -827,10 +918,7 @@ func _place_item_at(item_visual: ItemVisual, grid_pos: Vector2i, facing := -1):
 		grid_pos, facing)
 	item_visual.now_holds(item_data)
 	for offset in item_data.turned_shape():
-		var cell_x = grid_pos.x + offset[0]
-		var cell_y = grid_pos.y + offset[1]
-		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
-			item_grid[cell_y][cell_x] = item_visual
+		_put_on(item_visual, grid_pos + Vector2i(offset[0], offset[1]))
 
 func can_place_item(item_data, grid_pos: Vector2i) -> bool:
 	"""Public method to check if item can be placed at position"""
@@ -856,9 +944,9 @@ func displaced_by(item_data, grid_pos: Vector2i) -> Array:
 	var in_the_way: Array[Control] = []
 	for offset in item_data.turned_shape():
 		var cell := Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1]))
-		if not _on_the_board(cell) or not active_grid[cell.y][cell.x]:
+		if not provides(cell):
 			return []
-		var sitting: Control = item_grid[cell.y][cell.x]
+		var sitting: Control = filling(cell)
 		if sitting == null or sitting == dragging_object:
 			continue
 		if not in_the_way.has(sitting):
@@ -895,12 +983,12 @@ func _can_place_item(item_data, grid_pos: Vector2i) -> bool:
 		if cell_x < 0 or cell_x >= grid_width or cell_y < 0 or cell_y >= grid_height:
 			return false
 
-		# Check if on active grid (server)
-		if not active_grid[cell_y][cell_x]:
+		var cell := Vector2i(cell_x, cell_y)
+		if not provides(cell):
 			return false
 
-		# Check if occupied by another item
-		if item_grid[cell_y][cell_x] != null and item_grid[cell_y][cell_x] != dragging_object:
+		var sitting := filling(cell)
+		if sitting != null and sitting != dragging_object:
 			return false
 
 	return true
@@ -1022,10 +1110,7 @@ func _remove_item(item_visual: ItemVisual):
 
 	# Clear from grid
 	for offset in item_data.turned_shape():
-		var cell_x = grid_pos.x + offset[0]
-		var cell_y = grid_pos.y + offset[1]
-		if cell_x >= 0 and cell_y >= 0 and cell_x < grid_width and cell_y < grid_height:
-			item_grid[cell_y][cell_x] = null
+		_take_off(item_visual, grid_pos + Vector2i(offset[0], offset[1]))
 
 	items.erase(item_visual)
 	item_visual.queue_free()
@@ -1041,7 +1126,7 @@ func carrying() -> ItemVisual:
 	if dragging_object != null:
 		return dragging_object
 	if dragging_container != null:
-		return dragging_container.visual
+		return dragging_container
 	return null
 
 
@@ -1060,7 +1145,7 @@ func carry_to(pointer: Vector2) -> void:
 	var local: Vector2 = get_global_transform().affine_inverse() * pointer
 
 	if dragging_container:
-		var visual = dragging_container.visual
+		var visual := dragging_container
 		visual.position = local + drag_offset
 		for rider in container_riders:
 			rider.follow(visual.position, cell_size + cell_spacing)
@@ -1078,7 +1163,7 @@ func update_container_preview(pointer: Vector2) -> void:
 	"""Mark where a held container would stand, for a pointer at this place"""
 	if not dragging_container:
 		return
-	var container := dragging_container.container
+	var container := dragging_container.item_data
 	var grid_pos := square_held_over(pointer, grab_cell)
 	mark_square(container.turned_shape(), grid_pos, can_place_container(container, grid_pos))
 
@@ -1125,7 +1210,7 @@ func clear_all():
 
 	# Remove all container visuals
 	for placed in containers:
-		placed.visual.queue_free()
+		placed.queue_free()
 	containers.clear()
 
 	# Reset hover preview
@@ -1151,7 +1236,7 @@ func get_inventory_state() -> Dictionary:
 		state.inventory_grid.append(item_visual.item_data.to_dict())
 
 	for placed in containers:
-		state.server_containers.append(placed.container.to_dict())
+		state.server_containers.append(placed.item_data.to_dict())
 
 	return state
 

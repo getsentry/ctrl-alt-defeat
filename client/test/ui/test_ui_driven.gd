@@ -217,8 +217,8 @@ func _find_first_empty_grid_cell(game_ui) -> Vector2:
 
 	# Find first empty position
 	for pos in container_positions:
-		# Check if this position is occupied in the item_grid
-		if inventory_grid.active_grid[pos.y][pos.x] and not inventory_grid.item_grid[pos.y][pos.x]:
+		# A square on a rack with nothing standing on it
+		if inventory_grid.provides(pos) and inventory_grid.filling(pos) == null:
 			print("   - Found empty cell at: %s" % pos)
 			return pos
 
@@ -269,7 +269,7 @@ func test_shop_purchase_and_item_placement():
 
 	print("   - Number of containers: %d" % game_ui.inventory_grid.containers.size())
 	for placed in game_ui.inventory_grid.containers:
-		print("     Container at pos %s" % placed.position())
+		print("     Container at pos %s" % placed.where())
 
 	assert_not_null(game_ui.server_room_container,
 		"Server room container should exist")
@@ -770,7 +770,7 @@ func test_item_drag_and_move_persistence():
 	for pos in container_positions:
 		if pos != Vector2i(initial_pos.x, initial_pos.y):
 			# Check if this position is on active grid and empty
-			if inventory_grid.active_grid[pos.y][pos.x] and not inventory_grid.item_grid[pos.y][pos.x]:
+			if inventory_grid.provides(pos) and inventory_grid.filling(pos) == null:
 				new_pos = pos
 				break
 
@@ -1285,12 +1285,12 @@ func test_a_rack_bought_turned_is_placed_turned():
 
 	var standing = null
 	for placed in game_ui.inventory_grid.containers:
-		if placed.container.item_type == "edge_node":
+		if placed.item_data.item_type == "edge_node":
 			standing = placed
 			break
 	assert_not_null(standing, "the rack is on the board")
 	if standing != null:
-		assert_eq(standing.container.facing(), 90,
+		assert_eq(standing.item_data.facing(), 90,
 			"and it stands the way it was carried")
 
 
