@@ -23,14 +23,24 @@ class PlacedContainer extends RefCounted:
 # two lists that have to be kept the same length and the same order.
 class Rider extends RefCounted:
 	var visual: ItemVisual
-	var offset: Vector2
+	## Where it sits on the rack, in the rack's own squares.
+	var square: Vector2i
 
-	func _init(item_visual: ItemVisual, container_at: Vector2):
+	func _init(item_visual: ItemVisual, rack_at: Vector2i):
 		visual = item_visual
-		offset = item_visual.position - container_at
+		square = item_visual.where() - rack_at
 
-	func follow(container_at: Vector2) -> void:
-		visual.position = container_at + offset
+	func follow(rack_at: Vector2, step: float) -> void:
+		visual.position = rack_at + Vector2(square) * step
+
+	## Go round with the rack. The square it sits on turns with the body, and
+	## the item turns by the same amount so it lies the same way on the tray.
+	func turn_with(body: APITypes.Turned, quarters: int) -> void:
+		var on_the_tray: Array[Vector2i] = []
+		for covered in visual.item_data.turned_shape():
+			on_the_tray.append(square + covered)
+		square = body.corner_of(on_the_tray)
+		visual.now_holds(visual.item_data.turned(quarters))
 
 	func id() -> String:
 		return visual.item_data.id
@@ -460,23 +470,20 @@ func _add_item(item: APITypes.PlacedItem):
 	items.append(item_visual)
 
 func turn_dragged(quarters: int, pointer: Vector2) -> bool:
-	"""Turn the item being dragged, and say whether there was one.
-
-	The pointer is told, not read. A turn that does not know where the hand is
-	cannot say where the item went, and a drag nobody could place is how the
-	mark came to be drawn a spear's length from the spear.
-
-	A container is not turned. Turning one would have to turn everything
-	standing on it about its anchor, which is a different thing from turning
-	an item and is not built.
-	"""
-	if not dragging_object:
+	"""Turn the item being dragged, and say whether there was one."""
+	var carried := carrying()
+	if carried == null:
 		return false
 
-	var was: Array[Vector2i] = dragging_object.item_data.turned_shape()
-	var turned: APITypes.PlacedItem = dragging_object.item_data.turned(quarters)
+	var was: Array[Vector2i] = carried.item_data.turned_shape()
+	var turned: APITypes.PlacedItem = carried.item_data.turned(quarters)
 	# Drawn again, because the squares it covers have changed.
-	dragging_object.now_holds(turned)
+	carried.now_holds(turned)
+	if dragging_container != null:
+		dragging_container.container = turned
+		var body := APITypes.Turned.new(was, posmod(quarters * 90, 360))
+		for rider in container_riders:
+			rider.turn_with(body, quarters)
 
 	# It swings about the square in hand rather than about its corner. Turned
 	# about the corner, a spear held by its tip throws itself a length across
@@ -491,12 +498,17 @@ func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	var moved := Vector2(grab_cell - swung) * step
 	grab_cell = swung
 	drag_offset += moved
-	dragging_object.position += moved
+	carried.position += moved
+	for rider in container_riders:
+		rider.follow(carried.position, step)
 
 	# And the mark, which is a different set of squares now and in a different
 	# place. Left to the next frame, a turn showed the shape the item had
 	# before it until the pointer moved.
-	update_drag_preview(pointer)
+	if dragging_container != null:
+		update_container_preview(pointer)
+	else:
+		update_drag_preview(pointer)
 	return true
 
 
@@ -568,6 +580,7 @@ func _start_container_drag(placed: PlacedContainer, taken_at: Vector2) -> void:
 
 	dragging_container = placed
 	original_grid_pos = placed.position()
+	original_facing = placed.container.facing()
 	_take_hold_of(placed.visual, placed.container.turned_shape(), taken_at)
 
 	# Whatever has a square on it travels with it, which is the same rule the
@@ -580,7 +593,7 @@ func _start_container_drag(placed: PlacedContainer, taken_at: Vector2) -> void:
 	for item_visual in items:
 		for square in item_visual.item_data.covered_squares():
 			if covered.has(square):
-				container_riders.append(Rider.new(item_visual, placed.visual.position))
+				container_riders.append(Rider.new(item_visual, placed.position()))
 				move_child(item_visual, get_child_count() - 1)
 				item_visual.z_index = 11
 				break
@@ -608,7 +621,8 @@ func drop_container_at(pointer: Vector2) -> void:
 		rider.visual.z_index = 0
 
 	var grid_pos := square_held_over(pointer, grab_cell)
-	if grid_pos != original_grid_pos and can_place_container(placed.container, grid_pos):
+	if not drop_changes_nothing(grid_pos, placed.container) \
+			and can_place_container(placed.container, grid_pos):
 		# The riders go with it, so which of them the move could not find room
 		# for is answered by which of these is missing afterwards.
 		var rider_ids: Array[String] = []
@@ -623,10 +637,20 @@ func drop_container_at(pointer: Vector2) -> void:
 
 
 func _return_container(placed: PlacedContainer) -> void:
-	"""Put a container and its passengers back where they were picked up"""
+	"""Put a container and its passengers back as they were picked up."""
+	var quarters := (original_facing - placed.container.facing()) / 90
+	if quarters != 0:
+		var body := APITypes.Turned.new(
+			placed.container.turned_shape(), posmod(quarters * 90, 360))
+		for rider in container_riders:
+			rider.turn_with(body, quarters)
+		placed.container = placed.container.placed_at(
+			original_grid_pos, original_facing)
+		placed.visual.now_holds(placed.container)
+
 	placed.visual.position = grid_to_pixel(original_grid_pos)
 	for rider in container_riders:
-		rider.follow(placed.visual.position)
+		rider.follow(placed.visual.position, cell_size + cell_spacing)
 	container_riders = []
 
 
@@ -1039,7 +1063,7 @@ func carry_to(pointer: Vector2) -> void:
 		var visual = dragging_container.visual
 		visual.position = local + drag_offset
 		for rider in container_riders:
-			rider.follow(visual.position)
+			rider.follow(visual.position, cell_size + cell_spacing)
 		update_container_preview(pointer)
 		return
 

@@ -5,6 +5,7 @@ extends GutTest
 
 var TestSessionManager = preload("res://test/integration/test_session_manager.gd")
 const APITypes = preload("res://scripts/api_types.gd")
+const ItemVisual = preload("res://scripts/item_visual.gd")
 
 func before_all():
 	# Verify server is in test mode - this is required for transaction isolation
@@ -1204,6 +1205,93 @@ func test_a_rack_that_combines_is_played_out_on_the_shop_screen():
 	assert_true(drawn, "the rack ends holding what the server made")
 	assert_null(shop.inventory_grid.item_visual("test0"),
 		"and the items it was made from are gone")
+
+
+func _stock_the_shelf(slugs: Array) -> void:
+	"""Put these on the shelf through the server's test hook.
+
+	The shop offers what the seed says it offers, so a test that wants a
+	particular rack on sale has to say so. TEST_MODE only.
+	"""
+	var http := HTTPRequest.new()
+	get_tree().root.add_child(http)
+
+	var base_url := OS.get_environment("BATTLE_SERVER_URL")
+	if base_url == "":
+		base_url = "http://localhost:8081"
+
+	http.request(base_url + "/test/shop", ["Content-Type: application/json"],
+		HTTPClient.METHOD_POST, JSON.stringify({
+			"player_id": BattleServerAPI.player_id, "items": slugs}))
+	var answer = await http.request_completed
+	http.queue_free()
+
+	# The hook answers with the whole session, so the screen can be told what
+	# is on the shelf now without rolling it again -- which start_session()
+	# would do, putting back whatever the seed says.
+	assert_eq(answer[1], 200, "the shelf was stocked")
+	if answer[1] != 200:
+		return
+	GameStateManager.update_from_session(APITypes.GameSession.new(
+		JSON.parse_string(answer[3].get_string_from_utf8())))
+
+
+func test_a_rack_bought_turned_is_placed_turned():
+	"""Turning a rack on the way out of the shop and having it land upright is
+	what a player sees when the purchase forgets to say which way it faces.
+	The item purchase has always sent it; the rack purchase was a second copy
+	that never learned.
+	"""
+	var main_menu = load("res://scenes/MainMenu.tscn").instantiate()
+	get_tree().root.add_child(main_menu)
+	get_tree().current_scene = main_menu
+	await get_tree().process_frame
+	main_menu.new_game_button.pressed.emit()
+	assert_true(await _wait_for_shop_ready(), "the shop opened")
+
+	var game_ui = get_tree().current_scene
+	# Edge Node: two squares across, so a turn is something you can see.
+	await _stock_the_shelf(["edge_node"])
+	game_ui._load_shop_from_state()
+	await get_tree().process_frame
+
+	var shelf = null
+	for slot in game_ui.shop_items:
+		if slot.get_meta("item_data").is_container:
+			shelf = slot
+			break
+	assert_not_null(shelf, "the shelf is offering a rack")
+	if shelf == null:
+		return
+
+	var rack = shelf.get_meta("item_data")
+	game_ui.dragging_shop_item = shelf
+	game_ui.dragging_shop_data = rack
+	game_ui.drag_preview = ItemVisual.new()
+	game_ui.add_child(game_ui.drag_preview)
+	game_ui.drag_preview.setup(rack, game_ui.inventory_grid.cell_size,
+		game_ui.inventory_grid.cell_spacing)
+
+	var grid = game_ui.inventory_grid
+	var drop_at: Vector2 = grid.global_position \
+		+ grid.grid_to_pixel(Vector2i(0, 5)) \
+		+ Vector2(grid.cell_size, grid.cell_size) / 2.0
+
+	game_ui.turn(1, drop_at)
+	assert_eq(game_ui.dragging_shop_data.facing(), 90, "carried on its end")
+
+	await game_ui._end_shop_drag(drop_at)
+	await _wait_for_server()
+
+	var standing = null
+	for placed in game_ui.inventory_grid.containers:
+		if placed.container.item_type == "edge_node":
+			standing = placed
+			break
+	assert_not_null(standing, "the rack is on the board")
+	if standing != null:
+		assert_eq(standing.container.facing(), 90,
+			"and it stands the way it was carried")
 
 
 func _stand_on_the_rack(items: Array) -> void:

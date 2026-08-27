@@ -2332,18 +2332,18 @@ func test_a_rack_being_dragged_counts_as_something_in_hand():
 	assert_true(ui.carrying_something(), "so the screen says something is held")
 
 
-func test_a_rack_in_hand_is_not_offered_a_turn_yet():
-	"""The one thing that treats a rack differently on purpose. Turning one
-	has to turn everything standing on it, which is not built here, so the
-	hint would be telling the player to press a key that does nothing."""
+func test_a_rack_in_hand_is_offered_a_turn():
+	"""It is an item that other items stand on, so it turns like anything
+	else and the hint says so."""
 	_rack_holding([])
 	var grid = ui.inventory_grid
 	var rack = grid.containers[0]
 
 	grid._start_container_drag(rack, _held_at(rack.visual))
+	ui._process(0.0)
 
 	assert_true(ui.carrying_something(), "It is in hand")
-	assert_false(ui.holding_something_turnable(), "but it cannot be turned")
+	assert_true(ui.rotate_hint.showing(), "and it says how to turn it")
 
 
 func test_an_item_in_hand_is_offered_a_turn():
@@ -2353,7 +2353,7 @@ func test_an_item_in_hand_is_offered_a_turn():
 
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
-	assert_true(ui.holding_something_turnable(), "An item turns")
+	assert_true(ui.carrying_something(), "An item turns")
 
 
 func test_nothing_in_hand_is_nothing_carried():
@@ -2361,4 +2361,60 @@ func test_nothing_in_hand_is_nothing_carried():
 
 	assert_null(ui.inventory_grid.carrying(), "Empty hands carry nothing")
 	assert_false(ui.carrying_something())
-	assert_false(ui.holding_something_turnable())
+
+
+# ============ Every purchase says which way it faces ============
+
+func test_every_purchase_onto_the_board_sends_a_facing():
+	"""There are three places that buy something onto the board, and the rack
+	one was a copy that never learned. A player turned a rack on the way out of
+	the shop and it landed upright, because the facing was never sent.
+
+	Read off the source rather than listed here, so a fourth place is covered
+	the day it is written. Buying into the chest is not one of them: nothing in
+	there faces anywhere.
+	"""
+	var path := ProjectSettings.globalize_path("res://").path_join(
+		"scripts/unified_grid_ui.gd")
+	var file := FileAccess.open(path, FileAccess.READ)
+	assert_not_null(file, "Should be able to read unified_grid_ui.gd")
+	if file == null:
+		return
+	var source := file.get_as_text()
+	file.close()
+
+	var forgetful: Array[String] = []
+	for arguments in _arguments_to(source, "purchase_item("):
+		if "\"storage\"" in arguments:
+			continue  # the chest, where nothing faces anywhere
+		if not "facing()" in arguments:
+			forgetful.append(arguments.strip_edges().replace("\n", " "))
+
+	assert_eq(forgetful, [] as Array[String],
+		("A purchase that puts something on the board and does not say which "
+		+ "way it faces will land it upright however the player turned it: %s")
+			% [forgetful])
+
+
+func _arguments_to(source: String, call: String) -> Array[String]:
+	"""What was passed to each call of this, matching brackets as it goes.
+
+	Not a regular expression: an argument list holds brackets of its own --
+	facing() is the very one being looked for -- and a pattern that stops at
+	the first closing bracket stops in the middle of it.
+	"""
+	var found: Array[String] = []
+	var at := source.find(call)
+	while at != -1:
+		var open := at + call.length()
+		var depth := 1
+		var here := open
+		while here < source.length() and depth > 0:
+			if source[here] == "(":
+				depth += 1
+			elif source[here] == ")":
+				depth -= 1
+			here += 1
+		found.append(source.substr(open, here - open - 1))
+		at = source.find(call, here)
+	return found

@@ -168,3 +168,83 @@ fails until something reads it back.
 It is six of `BattleResult`'s eleven fields, which is a real thing worth
 naming: the racks that fought, the opponent and what kind of opponent they
 were are not kept. Give it a model and the hand-built dict goes with it.
+
+## Hovering a merged item shows one of its ingredients' auras
+
+Put an item down where it combines with another, hover the result, and the
+aura drawn is one of the items that went into it rather than the item that is
+there now.
+
+The rack redraws from what the server answers with, and the combining is
+played out on the shop screen -- the rack that fought, then each combining,
+then the rack as it is now (GDD 5.3). Somewhere in that the zone is being
+drawn from an item that no longer exists, and the ids are the likely culprit:
+`_aura_square()` looks a visual up by id, and a combined item has an id of its
+own that neither ingredient had.
+
+## A click on an aura should reach whatever is underneath it
+
+An aura is drawn in squares the item does not cover -- the empty corner of an
+L, the reach of a spear -- and a click there does nothing at all today.
+
+That is deliberate, and it was the fix for a worse bug: `covers_point()` used
+to answer `_has_point()` with false, which let the click fall through to the
+container under the item, so aiming at an aura picked up the whole rack. The
+note in `item_visual.gd` says "a gap inside an item's box belongs to nothing
+and does nothing."
+
+What it should do is reach **what is actually under the pointer** -- an item
+standing on that square, or the rack if there is none -- rather than either
+picking up the item projecting the aura or doing nothing. The board already
+knows: `item_grid[y][x]` says which item holds a square and `active_grid`
+says which rack made it usable. So this is a matter of asking the board what
+is there rather than letting Godot's own hit-testing decide, which is what
+gets it wrong.
+
+The aura markers themselves are already `MOUSE_FILTER_IGNORE`, so they are not
+what swallows the click.
+
+## Switching one item for another feels clunky
+
+Measured against the running server: a placement round trip is **10-14ms**.
+The server is not what anyone is waiting for.
+
+Swapping is the case that feels worst, and it is not one round trip. Putting an
+item down where another stands runs `make_way_for()`, which:
+
+1. sends **one `move_item` per displaced item**, awaited one after another,
+2. sends **another call** for the item being placed,
+3. calls `load_inventory_state()`, which is `clear_all()` -- every item visual
+   on the board freed and built again from nothing,
+4. then throws the displaced into the chest and puts the biggest in hand.
+
+So the cheapest swap is two sequential round trips and a full rebuild of the
+board. Each trip is ~11ms of server plus Godot's own HTTP overhead and up to a
+frame of waiting for the answer to land, and the rebuild is on top.
+
+Three fixes, and the first two carry no risk of the client and the server
+disagreeing:
+
+**Redraw the difference, not the board.** `load_inventory_state` frees and
+rebuilds every visual, however little changed. It could keep the ones whose
+item is unchanged, move the ones that moved, and only create or free the
+difference. Pure client work, no protocol change, and it is the part that is
+actually slow.
+
+**Ask once.** "Put this here, and put whatever is in the way in the chest" is
+one thing the player did and N+1 calls to the server. One endpoint would make
+it one round trip, and would also make the whole swap atomic -- today a refusal
+half way through leaves some items already moved, which `make_way_for` has to
+undo by redrawing whatever the last answer held.
+
+**Then be optimistic, if it is still worth it.** The client already has every
+rule needed to predict the answer -- `_can_place_item` mirrors the server's
+`can_hold`, and the two are held together by fixtures. So it could place at
+once and correct when the answer comes.
+
+The risk is worth naming: optimism makes a client/server disagreement
+invisible. Today a divergence shows up immediately as a refused move. Drawn
+optimistically it would show up as a flicker, or not at all. Four such
+disagreements were found and fixed in one week, so if this is done, the
+reconciliation must compare what was predicted against what came back and say
+so loudly when they differ, rather than quietly taking the server's answer.

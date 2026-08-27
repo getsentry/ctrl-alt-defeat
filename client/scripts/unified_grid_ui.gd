@@ -265,7 +265,7 @@ func _on_container_dropped(
 ):
 	"""Called when a container is dropped somewhere it can stand"""
 	var response = await BattleServerAPI.move_item(
-		container_data.id, [grid_pos.x, grid_pos.y])
+		container_data.id, [grid_pos.x, grid_pos.y], container_data.facing())
 	if response == null:
 		print("The server refused to move the container")
 		_reload_board()
@@ -416,18 +416,6 @@ func carrying_something() -> bool:
 		or dragging_shop_data != null \
 		or (inventory_grid != null and inventory_grid.carrying() != null) \
 		or (storage_bin != null and storage_bin.dragged() != null)
-
-
-func holding_something_turnable() -> bool:
-	"""Whether the thing in hand can be turned, which a rack cannot be yet.
-
-	The only line in this file that treats a rack differently on purpose.
-	Turning one has to turn everything standing on it, which is built on the
-	server and not here; when it is, this collapses into carrying_something()
-	and the difference goes with it. See docs/rotation_model.md.
-	"""
-	return carrying_something() \
-		and (inventory_grid == null or inventory_grid.dragging_container == null)
 
 
 func turn(quarters: int, pointer := Vector2.INF) -> bool:
@@ -1618,7 +1606,8 @@ func _end_shop_drag(drop_position: Vector2):
 			if item_id:
 				print("Purchasing container %s at position [%d, %d]" % [item_id, grid_pos.x, grid_pos.y])
 				var response = await BattleServerAPI.purchase_item(
-					item_id, [grid_pos.x, grid_pos.y])
+					item_id, [grid_pos.x, grid_pos.y],
+					dragging_shop_data.facing())
 				# Check if purchase was actually successful
 				if response != null:
 					# Add the container to our grid
@@ -2067,7 +2056,7 @@ func _process(_delta: float) -> void:
 	refresh_combining()
 	refresh_aura()
 	if rotate_hint != null:
-		rotate_hint.carrying(holding_something_turnable())
+		rotate_hint.carrying(carrying_something())
 	if sell_lure != null:
 		sell_lure.pointing_at_it(get_global_mouse_position())
 

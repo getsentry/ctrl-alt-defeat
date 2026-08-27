@@ -57,6 +57,34 @@ class ItemShape:
     # `^` as covered, and every shape comes from there.
     anchors: Tuple[Position, ...] = ()
 
+    def where(self, square: Position, rotation: Rotation) -> Position:
+        """Where one square of this shape ends up when the whole shape turns.
+
+        The client has the same thing in APITypes.Turned.where(), and the two
+        have to agree: it is what carries an item round when the rack under it
+        turns, on both sides.
+        """
+        if rotation == Rotation.NONE or not self.squares:
+            return square
+        spun = [_turn(covered, rotation) for covered in self.squares]
+        min_x = min(x for x, _ in spun)
+        min_y = min(y for _, y in spun)
+        x, y = _turn(square, rotation)
+        return (x - min_x, y - min_y)
+
+    def corner_of(
+        self, squares_on_it: Iterable[Position], rotation: Rotation
+    ) -> Position:
+        """Where a thing sitting on this shape ends up: the corner of the
+        squares it lands on.
+
+        The client has the same thing in APITypes.Turned.corner_of(), and
+        `server/tests/fixtures/carried_round.json` holds both to the same
+        answers.
+        """
+        landed = [self.where(square, rotation) for square in squares_on_it]
+        return (min(x for x, _ in landed), min(y for _, y in landed))
+
     def rotate(self, rotation: Rotation) -> "ItemShape":
         """Return a rotated version of the shape"""
         if rotation == Rotation.NONE:

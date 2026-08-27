@@ -488,13 +488,42 @@ class InventoryGrid:
                 return container
         return None
 
-    def move_container(self, container_id: str, position: Position) -> List[PlacedItem]:
+    @staticmethod
+    def _carried_by(
+        item: PlacedItem, was: Container, now: Container, quarters: int
+    ) -> PlacedItem:
+        """Where an item ends up when the rack under it moves and turns."""
+        moved_by = (now.position[0] - was.position[0], now.position[1] - was.position[1])
+        if quarters % 4 == 0:
+            return item.placed_at(
+                (item.position[0] + moved_by[0], item.position[1] + moved_by[1]),
+                item.rotation,
+            )
+
+        # The rack as it stands now, which is the body the squares are
+        # expressed against.
+        turn = Rotation((quarters * 90) % 360)
+        tray = was._turned()
+        on_the_tray = [
+            (x - was.position[0], y - was.position[1])
+            for x, y in item.covered_squares()
+        ]
+        corner = tray.corner_of(on_the_tray, turn)
+        anchor = (corner[0] + now.position[0], corner[1] + now.position[1])
+        facing = Rotation((item.rotation.value + quarters * 90) % 360)
+        return item.placed_at(anchor, facing)
+
+    def move_container(
+        self,
+        container_id: str,
+        position: Position,
+        rotation: Optional[Rotation] = None,
+    ) -> List[PlacedItem]:
         """Move a container, and everything resting on it, to a new anchor.
 
-        Every item with a square on the container travels with it, shifted by
-        the same amount. An item that cannot stand where it lands is taken off
-        the grid and returned, for the caller to put in storage; see
-        docs/moving_containers.md.
+        Every item with a square on the container travels with it. An item that
+        cannot stand where it lands is taken off the grid and returned, for the
+        caller to put in storage; see docs/moving_containers.md.
 
         The container itself is all or nothing. If it would leave the grid or
         land on another container, nothing moves at all.
@@ -503,11 +532,14 @@ class InventoryGrid:
         if container is None:
             raise ItemNotFoundError(f"No container with id {container_id}")
 
+        facing = container.rotation if rotation is None else rotation
+        quarters = (facing.value - container.rotation.value) // 90
+
         # model_copy rather than placed_at, which would hand back a PlacedItem
         # and quietly take the container out of the list of containers.
-        moved = container.model_copy(update={"position": position})
-        dx = position[0] - container.position[0]
-        dy = position[1] - container.position[1]
+        moved = container.model_copy(
+            update={"position": position, "rotation": facing}
+        )
 
         others = [c for c in self.containers if c.id != container_id]
         self._check_container_fits(moved, others)
@@ -528,9 +560,7 @@ class InventoryGrid:
         self.items = stayed
         displaced: List[PlacedItem] = []
         for item in travellers:
-            shifted = item.placed_at(
-                (item.position[0] + dx, item.position[1] + dy), item.rotation
-            )
+            shifted = self._carried_by(item, container, moved, quarters)
             squares = set(shifted.covered_squares())
             if self.can_hold(shifted.covered_squares()) and not (
                 squares & taken_squares
@@ -678,7 +708,12 @@ class InventoryManager:
                 self.grid.place_item(item, from_location)
             raise
 
-    def move_container(self, container_id: str, position: Position) -> List[Item]:
+    def move_container(
+        self,
+        container_id: str,
+        position: Position,
+        rotation: Optional[Rotation] = None,
+    ) -> List[Item]:
         """Move a container and everything resting on it.
 
         Returns the items that could not stand where they landed, which have
@@ -686,7 +721,7 @@ class InventoryManager:
         which items moved without it, rather than having to work that out by
         comparing two lists of storage.
         """
-        displaced = self.grid.move_container(container_id, position)
+        displaced = self.grid.move_container(container_id, position, rotation)
         stored = [item.stored() for item in displaced]
         for item in stored:
             self.storage.add_item(item)

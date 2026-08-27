@@ -43,6 +43,15 @@ class Turned extends RefCounted:
 			return square
 		return APITypes._spin([square], _rotation)[0] - _corner
 
+	## Where a thing sitting on this body ends up: the corner of the squares it
+	## lands on.
+	## The server works it out the same way, in InventoryManager._carried_by.
+	func corner_of(squares_on_it: Array[Vector2i]) -> Vector2i:
+		var landed: Array[Vector2i] = []
+		for square in squares_on_it:
+			landed.append(where(square))
+		return APITypes._corner(landed)
+
 
 # The top left of a set of squares, which is what everything is settled against.
 static func _corner(squares: Array[Vector2i]) -> Vector2i:

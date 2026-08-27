@@ -1498,7 +1498,9 @@ async def move_item(
     # A container is an item, so it is moved through this endpoint too. It
     # carries whatever rests on it; see docs/moving_containers.md.
     if manager.grid.find_container(request.item_id) is not None:
-        return await _move_container(session, manager, request.item_id, to_loc)
+        return await _move_container(
+            session, manager, request.item_id, to_loc, request.rotation
+        )
 
     # Find the item and its current location
     item_found = None
@@ -1579,7 +1581,11 @@ async def move_item(
 
 
 async def _move_container(
-    session, manager: InventoryManager, container_id: str, to_loc
+    session,
+    manager: InventoryManager,
+    container_id: str,
+    to_loc,
+    rotation: Rotation = Rotation.NONE,
 ) -> MoveItemResponse:
     """Move a container and everything resting on it.
 
@@ -1595,7 +1601,7 @@ async def _move_container(
         )
 
     try:
-        manager.move_container(container_id, to_position(to_loc))
+        manager.move_container(container_id, to_position(to_loc), rotation)
     except InvalidPlacementError as e:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
 

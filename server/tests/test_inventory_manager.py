@@ -1207,3 +1207,163 @@ class TestWhichItemsGoTogether:
             "lump_of_coal",
             "plasma_edge",
         ]
+
+
+class TestARackTurnsWithEverythingOnIt:
+    """A rack is an item that other items stand on, and that is the only
+    difference. Turned, it and its passengers go round as one rigid body: the
+    square of the rack each item sits on turns with the rack, and the item
+    turns by the same amount so it lies the same way on the tray.
+
+    Nothing sitting wholly on a rack can fall off it that way -- a turn maps
+    the rack's squares onto themselves -- so what gets displaced is what
+    straddled two racks, or what collides with something that stayed put.
+    """
+
+    def _a_rack_holding(self, manager, rack_type="network_cache"):
+        """A rack two wide and three tall at the origin, with a 1x1 on it."""
+        manager.grid.containers = [Container.of(rack_type, (0, 0), "rack")]
+        manager.grid.items = []
+        return manager
+
+    def test_a_rack_turned_covers_the_squares_it_turned_onto(self):
+        manager = InventoryManager()
+        self._a_rack_holding(manager)
+
+        manager.move_container("rack", (0, 0), Rotation.CLOCKWISE_90)
+
+        rack = manager.grid.find_container("rack")
+        assert rack.rotation == Rotation.CLOCKWISE_90
+        covered = set(rack.covered_squares())
+        assert (2, 0) in covered, "three squares across, turned"
+        assert (0, 2) not in covered, "and not three down"
+
+    def test_an_item_on_a_turned_rack_goes_round_with_it(self):
+        manager = InventoryManager()
+        self._a_rack_holding(manager)
+        # A 1x1 in the far corner of a 2x3 rack.
+        manager.grid.items = [Item.of("api_token", "riding").placed_at((1, 2))]
+
+        displaced = manager.move_container("rack", (0, 0), Rotation.CLOCKWISE_90)
+
+        assert displaced == [], "It was wholly on the rack, so it cannot fall off"
+        riding = manager.grid.items[0]
+        rack = manager.grid.find_container("rack")
+        assert set(riding.covered_squares()) <= set(
+            rack.covered_squares()
+        ), "and it is still on the rack"
+
+    def test_an_item_on_a_turned_rack_faces_the_way_the_rack_turned(self):
+        manager = InventoryManager()
+        self._a_rack_holding(manager)
+        upright = Item.of("null_blade", "blade").placed_at((0, 0))
+        manager.grid.items = [upright]
+
+        manager.move_container("rack", (0, 0), Rotation.CLOCKWISE_90)
+
+        blade = manager.grid.items[0]
+        assert blade.rotation == Rotation.CLOCKWISE_90, "It turned with the tray"
+
+    def test_everything_on_a_rack_stays_on_it_however_it_turns(self):
+        """The property worth having. Fill a rack and turn it every way; what
+        was on it is still on it, and nothing is displaced."""
+        for turn in (
+            Rotation.CLOCKWISE_90,
+            Rotation.CLOCKWISE_180,
+            Rotation.CLOCKWISE_270,
+        ):
+            manager = InventoryManager()
+            self._a_rack_holding(manager)
+            manager.grid.items = [
+                Item.of("api_token", f"chip{x}{y}").placed_at((x, y))
+                for x in range(2)
+                for y in range(3)
+            ]
+
+            displaced = manager.move_container("rack", (0, 0), turn)
+
+            assert displaced == [], f"nothing falls off, turned {turn.value}"
+            rack = set(manager.grid.find_container("rack").covered_squares())
+            assert len(manager.grid.items) == 6, f"all six still there, {turn.value}"
+            for item in manager.grid.items:
+                assert set(item.covered_squares()) <= rack, (
+                    f"{item.id} is off the rack, turned {turn.value}"
+                )
+
+    def test_a_rack_moved_and_not_turned_is_unchanged_in_facing(self):
+        manager = InventoryManager()
+        self._a_rack_holding(manager)
+        manager.grid.items = [Item.of("api_token", "riding").placed_at((0, 0))]
+
+        manager.move_container("rack", (3, 0))
+
+        assert manager.grid.find_container("rack").rotation == Rotation.NONE
+        assert manager.grid.items[0].position == (3, 0), "carried, not turned"
+
+
+class TestWhereAPassengerLands:
+    """`server/tests/fixtures/carried_round.json` is what this side makes of a
+    rack turning under an item, and the client is held to the same answers.
+
+    They disagreed once. The client mapped the item's corner square through the
+    turn, which is right for a single square and wrong for anything longer:
+    the corner of a turned body is not the turned corner. A two-square item on
+    a two-by-two rack came out one square off, and at the edge of the board
+    that put it outside the rack it was riding.
+
+    Regenerate with `python tools/dump_carried_round.py` after a change that is
+    meant, and the client goes red until it agrees -- which is the point.
+    """
+
+    @staticmethod
+    def _written_down():
+        import json
+        from pathlib import Path
+
+        path = Path(__file__).parent / "fixtures" / "carried_round.json"
+        return json.loads(path.read_text())
+
+    def test_the_server_still_gives_these_answers(self):
+        from grid_system import ItemShape, Rotation
+
+        for case in self._written_down():
+            tray = ItemShape(squares=[tuple(s) for s in case["tray"]])
+            sits_on = tuple(case["sits_on"])
+            covers = [
+                (sits_on[0] + dx, sits_on[1] + dy) for dx, dy in case["rider"]
+            ]
+            for facing, expected in case["lands_on"].items():
+                landed = tray.corner_of(covers, Rotation(int(facing)))
+                assert list(landed) == expected, (
+                    f"{case['name']} turned {facing}: "
+                    f"{landed} where the file says {expected}. "
+                    "Run `python tools/dump_carried_round.py` if that is meant."
+                )
+
+    def test_a_passenger_never_leaves_the_tray_it_rides(self):
+        """The property the numbers are there to keep. A turn maps a tray's
+        squares onto themselves, so nothing sitting wholly on one can fall off
+        it -- and an answer that puts a rider off the tray is wrong however
+        plausible it looks."""
+        from grid_system import ItemShape, Rotation
+
+        for case in self._written_down():
+            squares = [tuple(s) for s in case["tray"]]
+            tray = ItemShape(squares=squares)
+            sits_on = tuple(case["sits_on"])
+            rider = [tuple(s) for s in case["rider"]]
+            covers = [(sits_on[0] + dx, sits_on[1] + dy) for dx, dy in rider]
+            assert set(covers) <= set(squares), f"{case['name']} starts off the tray"
+
+            for facing in case["lands_on"]:
+                turn = Rotation(int(facing))
+                corner = tray.corner_of(covers, turn)
+                turned_tray = set(tray.rotate(turn).squares)
+                turned_rider = ItemShape(squares=rider).rotate(turn).squares
+                landed = {
+                    (corner[0] + dx, corner[1] + dy) for dx, dy in turned_rider
+                }
+                assert landed <= turned_tray, (
+                    f"{case['name']} turned {facing} lands on {sorted(landed)}, "
+                    f"and the tray is {sorted(turned_tray)}"
+                )

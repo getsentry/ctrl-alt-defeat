@@ -1490,3 +1490,237 @@ func test_a_turned_rack_may_not_hang_off_the_board():
 
 	assert_false(grid.can_place_container(over_the_edge, Vector2i(6, 0)),
 		"Four across from column six runs off a nine wide board")
+
+
+# ============ Turning a rack in hand ============
+#
+# A rack is an item that other items stand on, and that is the only difference.
+# It turns the same way, about the square the player has hold of, and whatever
+# is standing on it goes round with it.
+
+func _a_rack_and_a_rider() -> Array:
+	# A rack two wide and three tall, with a single square standing on it.
+	grid.load_inventory_state(_state(
+		[_item({"id": "riding", "position": [1, 2]})],
+		[_container({"id": "rack", "position": [0, 0],
+			"shape": [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2]]})]))
+	return [grid.containers[0], grid.items[0]]
+
+
+func test_a_rack_in_hand_turns():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	assert_eq(rack.container.facing(), 90, "A quarter turn clockwise")
+	assert_eq(rack.visual.item_data.facing(), 90, "and the artwork says so too")
+
+
+func test_a_rack_that_turns_takes_its_passengers_round_with_it():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+	var was: Vector2i = grid.container_riders[0].square
+
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	var now: Vector2i = grid.container_riders[0].square
+	assert_ne(now, was, "The square it sits on moved with the tray")
+	assert_true(rack.container.turned_shape().has(now),
+		"and it is still a square the rack has")
+
+
+func test_a_passenger_turns_by_as_much_as_the_rack_did():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	var rider: Control = held[1]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	assert_eq(rider.item_data.facing(), 90,
+		"It lies the same way on the tray as it did before")
+
+
+func test_a_passenger_is_drawn_where_it_sits_after_a_turn():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	var rider: Control = held[1]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	var step: float = grid.cell_size + grid.cell_spacing
+	assert_eq(rider.position,
+		rack.visual.position + Vector2(grid.container_riders[0].square) * step,
+		"The artwork follows the square it sits on")
+
+
+func test_a_rack_turned_all_the_way_round_is_back_where_it_started():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+	var was: Vector2i = grid.container_riders[0].square
+	var drawn: Vector2 = rack.visual.position
+
+	for quarter in range(4):
+		grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	assert_eq(rack.container.facing(), 0, "Four quarters is none")
+	assert_eq(grid.container_riders[0].square, was, "and its passenger is back")
+	assert_eq(rack.visual.position, drawn, "and so is the rack")
+
+
+# ============ Putting a turned rack down ============
+#
+# A rack turned where it stands covers other squares, so it is a change like
+# any other and the server has to hear about it. Told nothing, the client held
+# a board with the rack and everything on it facing a way the server had never
+# agreed to -- and the next thing that loaded from either of them threw the
+# other's away, which looked like every item on the board vanishing.
+
+func test_turning_a_rack_where_it_stands_is_a_change_worth_telling():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	watch_signals(grid)
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	# Held by the square it was picked up on, and that square is somewhere else
+	# on the rack now, so the pointer has to be where it would put the rack's
+	# corner back on the square it came from.
+	grid.drop_container_at(_pointer_over(Vector2i(0, 0) + grid.grab_cell))
+
+	assert_signal_emitted(grid, "container_dropped",
+		"The same square facing another way is still a move")
+
+
+func test_putting_a_rack_back_unturned_is_nothing_to_tell():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	watch_signals(grid)
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+
+	grid.drop_container_at(_pointer_over(Vector2i(0, 0)))
+
+	assert_signal_not_emitted(grid, "container_dropped",
+		"Same square, same way round, nothing happened")
+
+
+func test_a_refused_drop_puts_a_turned_rack_back_the_way_it_was():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	# Off the board, so there is nowhere for it to stand.
+	grid.drop_container_at(grid.get_global_transform() * Vector2(-900, -900))
+	await get_tree().process_frame
+
+	assert_eq(rack.container.facing(), 0, "The rack is the way it was")
+	assert_eq(rack.visual.item_data.facing(), 0, "and so is its artwork")
+
+
+func test_a_refused_drop_puts_the_passengers_back_too():
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	var rider: Control = held[1]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	grid.drop_container_at(grid.get_global_transform() * Vector2(-900, -900))
+	await get_tree().process_frame
+
+	assert_eq(rider.item_data.facing(), 0,
+		"What was standing on it is the way it was as well")
+
+
+func test_a_refused_drop_leaves_a_board_the_server_would_recognise():
+	"""The fault behind the fault. What the client saves is what it sends, and
+	a board nobody agreed to is one the server will overwrite -- or worse,
+	accept."""
+	var held: Array = _a_rack_and_a_rider()
+	var rack = held[0]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	grid.drop_container_at(grid.get_global_transform() * Vector2(-900, -900))
+	await get_tree().process_frame
+	var state: Dictionary = grid.get_inventory_state()
+
+	assert_eq(state["inventory_grid"][0]["rotation"], 0,
+		"The item is facing the way the server has it")
+	assert_eq(state["server_containers"][0]["rotation"], 0,
+		"and so is the rack")
+
+
+# ============ A passenger wider than a square ============
+#
+# The tests above all rode a single square, which is the one shape that cannot
+# show this: a turn maps a lone square to a lone square, so mapping the item's
+# corner and mapping the whole item agree. Anything longer than that settles
+# against a different one of its own squares once it has turned, and an item
+# placed from its old corner is drawn a square off the rack -- off the board
+# entirely, at the edge.
+
+func _a_rack_and_a_long_rider() -> Array:
+	# A square rack, and a two-square item standing in its left column.
+	grid.load_inventory_state(_state(
+		[_item({"id": "riding", "position": [0, 0], "shape": [[0, 0], [0, 1]]})],
+		[_container({"id": "rack", "position": [0, 0],
+			"shape": [[0, 0], [1, 0], [0, 1], [1, 1]]})]))
+	return [grid.containers[0], grid.items[0]]
+
+
+func test_a_long_passenger_stays_on_a_square_rack_that_turns():
+	var held: Array = _a_rack_and_a_long_rider()
+	var rack = held[0]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	var rider: InventoryGridScript.Rider = grid.container_riders[0]
+	var on_the_rack := {}
+	for square in rack.container.turned_shape():
+		on_the_rack[square] = true
+	for covered in rider.visual.item_data.turned_shape():
+		assert_true(on_the_rack.has(rider.square + covered),
+			"%s is off the rack" % [rider.square + covered])
+
+
+func test_a_long_passenger_stays_on_a_rack_however_far_it_turns():
+	for quarters in range(1, 4):
+		var held: Array = _a_rack_and_a_long_rider()
+		var rack = held[0]
+		grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+		for turn in range(quarters):
+			grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+		var rider: InventoryGridScript.Rider = grid.container_riders[0]
+		var on_the_rack := {}
+		for square in rack.container.turned_shape():
+			on_the_rack[square] = true
+		for covered in rider.visual.item_data.turned_shape():
+			assert_true(on_the_rack.has(rider.square + covered),
+				"turned %d, %s is off the rack" % [quarters, rider.square + covered])
+
+		grid.drop_container_at(grid.get_global_transform() * Vector2(-900, -900))
+		await get_tree().process_frame
+
+
+func test_a_long_passenger_is_drawn_inside_the_rack_it_rides():
+	var held: Array = _a_rack_and_a_long_rider()
+	var rack = held[0]
+	var rider: Control = held[1]
+	grid._start_container_drag(rack, _pointer_over(Vector2i(0, 0)))
+
+	grid.turn_dragged(1, _pointer_over(Vector2i(0, 0)))
+
+	var step: float = grid.cell_size + grid.cell_spacing
+	var tray := Rect2(rack.visual.position,
+		grid._shape_extent(rack.container.turned_shape()))
+	var drawn := Rect2(rider.position, grid._shape_extent(rider.item_data.turned_shape()))
+	assert_true(tray.grow(1.0).encloses(drawn),
+		"The artwork is drawn on the rack at %s, not at %s" % [tray, drawn])

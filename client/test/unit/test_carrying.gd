@@ -317,3 +317,77 @@ func test_every_way_of_carrying_something_is_swept():
 		+ "them. A way nobody sweeps is a way the mark can drift away from "
 		+ "the artwork without anything noticing: %s")
 			% [ui.WAYS_TO_CARRY.size(), swept, ui.WAYS_TO_CARRY])
+
+
+# ============ Where a passenger lands ============
+#
+# Both sides carry an item round with a turning rack, and they have to give
+# the same answer. They did not: this side mapped the item's corner square
+# through the turn, which is right for a single square and wrong for anything
+# longer, because the corner of a turned body is not the turned corner. A
+# two-square item on a two-by-two rack came out one square off, and at the edge
+# of the board that put it outside the rack it was riding.
+#
+# So the answers are written down once and both sides are held to them, the
+# same way the direction of a turn is.
+#
+#     server/tests/fixtures/carried_round.json   what the server makes of it
+#     tools/dump_carried_round.py                what writes it down
+
+const CARRIED_ROUND_PATH := "../server/tests/fixtures/carried_round.json"
+
+
+func _carried_round() -> Array:
+	var path := ProjectSettings.globalize_path("res://").path_join(CARRIED_ROUND_PATH)
+	var file := FileAccess.open(path, FileAccess.READ)
+	assert_not_null(file, "Should be able to read %s" % CARRIED_ROUND_PATH)
+	if file == null:
+		return []
+	var written = JSON.parse_string(file.get_as_text())
+	file.close()
+	assert_true(written is Array and written.size() > 0,
+		"%s should hold a list of cases" % CARRIED_ROUND_PATH)
+	return written if written is Array else []
+
+
+func test_this_side_lands_a_passenger_where_the_server_does():
+	for case in _carried_round():
+		var tray := APITypes.squares(case["tray"])
+		var sits_on := APITypes.squares([case["sits_on"]])[0]
+		var covers: Array[Vector2i] = []
+		for offset in APITypes.squares(case["rider"]):
+			covers.append(sits_on + offset)
+
+		for facing in case["lands_on"]:
+			var body := APITypes.Turned.new(tray, int(facing))
+			var landed := body.corner_of(covers)
+			var expected := APITypes.squares([case["lands_on"][facing]])[0]
+
+			assert_eq(landed, expected,
+				("%s turned %s: this side says %s and the file says %s. "
+				+ "Run `python tools/dump_carried_round.py` if that is meant.")
+					% [case["name"], facing, landed, expected])
+
+
+func test_a_passenger_never_leaves_the_tray_it_rides():
+	"""The property the numbers are there to keep. A turn maps a tray's squares
+	onto themselves, so nothing sitting wholly on one can fall off it."""
+	for case in _carried_round():
+		var tray := APITypes.squares(case["tray"])
+		var rider := APITypes.squares(case["rider"])
+		var sits_on := APITypes.squares([case["sits_on"]])[0]
+		var covers: Array[Vector2i] = []
+		for offset in rider:
+			covers.append(sits_on + offset)
+
+		for facing in case["lands_on"]:
+			var turn := int(facing)
+			var corner := APITypes.Turned.new(tray, turn).corner_of(covers)
+			var turned_tray := {}
+			for square in APITypes.turn(tray, turn):
+				turned_tray[square] = true
+
+			for offset in APITypes.turn(rider, turn):
+				assert_true(turned_tray.has(corner + offset),
+					"%s turned %s puts %s off the tray"
+						% [case["name"], facing, corner + offset])
