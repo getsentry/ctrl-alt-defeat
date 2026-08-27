@@ -1,5 +1,5 @@
 {
-  "why": "Items from Backpack Battles that this game will never have. Each one exists to put another class's items in the shop, and those classes are not being made, so there is nothing to build.\n\nNothing loads this file. It sits beside data/items/ rather than in it, because ConfigLoader globs data/items/*.json and an item in here must not reach the catalogue. It is kept rather than deleted for two reasons: research/item_grids/import_missing_items.py reads it so a later scrape does not add them back, and each one has effects besides the class unlock -- Wolf Badge's Battle Rage, Flame Badge's Heat -- so one could be brought back as a different item without being reconstructed from the wiki.",
+  "why": "Items from Backpack Battles that this game will never have. Each one exists to put another class's items in the shop, and those classes are not being made, so there is nothing to build.\n\nNothing loads this file. It sits beside data/items/ rather than in it, because ConfigLoader globs data/items/*.json and an item in here must not reach the catalogue. It is kept rather than deleted because each one has effects besides the class unlock -- Wolf Badge's Battle Rage, Flame Badge's Heat -- so one could be brought back as a different item without being reconstructed from the wiki.",
   "items": {
     "cog_badge": {
       "name": "Cog Badge",

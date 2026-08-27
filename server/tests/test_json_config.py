@@ -597,22 +597,21 @@ class TestEveryItemIsOneASentaurCanReach:
 
     @staticmethod
     def _wiki():
-        """The scrape, or a skip. It is not committed, so a fresh clone has no
-        way to check this and should say so rather than pass."""
-        import json
+        """Every wiki page, read from the committed corpus.
+
+        This used to read a scrape that was never committed, so it skipped on
+        every clone but the one machine that had run the scraper. The corpus
+        under `research/wiki_pages/` carries the same `class` and `subclass`,
+        so the check now runs everywhere.
+        """
+        import sys
         from pathlib import Path
 
-        scrape = (
-            Path(__file__).parent.parent.parent
-            / "research"
-            / "item_grids"
-            / "all_item_grids.json"
-        )
-        if not scrape.exists():
-            pytest.skip(
-                "research/item_grids/all_item_grids.json is not in this checkout"
-            )
-        return json.loads(scrape.read_text())
+        root = Path(__file__).resolve().parents[2]
+        sys.path.insert(0, str(root / "research"))
+        from parse_wiki import parse
+
+        return parse()
 
     def test_no_item_comes_from_a_class_we_do_not_have(self):
         wiki = self._wiki()

@@ -283,3 +283,43 @@ three racks a run begins with are already decided.
 Document the preset in the Game Design Document before building it: what it
 holds is a balance decision, and section 6.3 is where the shape of a run is
 set out.
+
+## An item says it grants Regeneration and never says what that is
+
+The item card names a status and stops there. "Start of battle: Gain 2
+Regeneration" tells a player who already knows what Regeneration is nothing
+they did not know, and tells everyone else nothing at all. The source game
+answers the question on the card itself: under the item's own lines it puts one
+block per status the item can grant -- icon, name in the status's colour, and
+what a single stack does. Garlic carries three of them and is a long card, and
+still reads better than a short card that withholds the answer.
+
+**The words are already written and already fetched.** `/catalogue/statuses`
+returns ten rules from `describe.every_rule()`, each with `status`, `shown`,
+`kind`, `each`, `one`, `many` and `detail`, and `game_state_manager.gd` asks
+for them once a run. The line the screenshots show is `each` -- what one stack
+is worth. `one`, `many` and `detail` describe a stack that exists on a fighter,
+so they belong to the chip, not to an item in a shop.
+
+**The card is already drawn, too, in the wrong place.** `status_tooltip.gd`
+with `scenes/StatusTooltip.tscn` says exactly this, and only `battle_hud.gd`
+raises it, for the chips beside a fighter. So this is not new drawing; it is
+the same block, without the count row and without the total row, hanging off
+`item_tooltip.gd`.
+
+**What is missing is knowing which statuses an item can grant.** Nothing walks
+the effects. It is a walk worth doing rather than a new field to add, because
+the names are already in the tree: every `buff_name` and `debuff_name` inside
+`triggers`. Counted across the whole catalogue, the statuses items name and the
+statuses the server describes are the same ten, with no spare on either side --
+so the walk cannot turn up a name that has no words to show, and no described
+status is unreachable.
+
+An unbuilt item is the exception and should show nothing rather than a guess.
+Drain Vial's "gain 3 Vampirism" sits in an `unbuilt` line as prose, with no
+`buff_name` anywhere, and prose is not something to pattern match against ten
+names -- it would find Vampirism in an item that only mentions it.
+
+Pull `ICON_PATH` out while doing this. `res://assets/icons/statuses/%s.png` is
+written in `battle_hud.gd` and again in `how_to_play.gd`, and this would be the
+third copy.

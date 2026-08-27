@@ -454,3 +454,45 @@ class TestTheFootprintsWrittenDown:
             assert len(set(squares)) == len(squares), f"{entry['example']} repeats a square"
             assert min(x for x, _ in squares) == 0, f"{entry['example']} is off its own corner"
             assert min(y for _, y in squares) == 0, f"{entry['example']} is off its own corner"
+
+
+class TestTheImportedItemsDocIsCurrent:
+    """`docs/imported_items.md` says how much of the catalogue is still to
+    build. It is generated from `server/data/items/*.json`, so it drifts every
+    time an item is finished -- and it drifted a long way, because the script
+    that writes it lived in a folder that was never committed.
+
+    Run `python tools/write_import_doc.py` when this goes red.
+    """
+
+    def _the_doc(self) -> str:
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[2]
+        return (root / "docs" / "imported_items.md").read_text()
+
+    def test_it_counts_what_the_catalogue_actually_holds(self):
+        import re
+        import sys
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[2]
+        sys.path.insert(0, str(root))
+        from tools.write_import_doc import unfinished
+
+        said = re.search(r"^(\d+) of them carry work", self._the_doc(), re.M)
+        assert said, "the doc should say how many items are unfinished"
+        assert int(said.group(1)) == len(unfinished()), (
+            f"the doc says {said.group(1)} items are unfinished and the "
+            f"catalogue has {len(unfinished())}. "
+            "Run `python tools/write_import_doc.py`."
+        )
+
+    def test_it_names_the_script_that_writes_it(self):
+        """A generated file whose generator nobody can find is one that goes
+        stale unnoticed. That is exactly what happened here."""
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[2]
+        assert "tools/write_import_doc.py" in self._the_doc()
+        assert (root / "tools" / "write_import_doc.py").exists()

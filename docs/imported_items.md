@@ -3,7 +3,7 @@
 Every item whose numbers come from a Backpack Battles item a Sentaur can reach.
 101 of them carry work that is not done, listed here by category.
 
-This file is generated. Run `research/item_grids/write_import_doc.py` rather
+This file is generated. Run `tools/write_import_doc.py` rather
 than editing it, so the counts cannot drift from
 `server/data/items/*.json`, which is the record.
 
@@ -41,11 +41,9 @@ work. They sit in `server/data/unavailable_items.json`, which nothing loads:
 
 That file sits beside `data/items/` rather than in it, because `ConfigLoader`
 globs `data/items/*.json` and an item in there would be offered. Keeping them
-rather than deleting them does two jobs:
-`research/item_grids/import_missing_items.py` reads the file, so a later scrape
-does not add them back; and each has effects besides the class unlock -- Wolf
-Badge's Battle Rage, Flame Badge's Heat -- so one could return as a different
-item without being rebuilt from the wiki.
+rather than deleting them says what was set aside and why, and each has effects
+besides the class unlock -- Wolf Badge's Battle Rage, Flame Badge's Heat -- so
+one could return as a different item without being rebuilt from the wiki.
 
 Because none of them is loaded, no map in the catalogue holds a `%`, and
 `grid_system.py` needs no character for the charge route Cog Badge sends around
@@ -70,7 +68,7 @@ back as unbuilt rather than marked unavailable.
   fifth: its source Piercing Arrow is a Hunter item, so it is held back with a
   `needs` line rather than deleted, because subclasses are meant to arrive.
 
-Both are still scraped, under `research/item_grids/`.
+Both are in the committed wiki corpus, under `research/wiki_pages/`.
 
 ## Categories
 
