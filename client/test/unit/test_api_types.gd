@@ -707,9 +707,12 @@ func test_a_turned_zone_never_lands_on_its_own_item():
 				"a zone square landed on the item at %d degrees" % rotation)
 
 
-func test_an_anchored_zone_stays_above_the_anchor():
-	# The same four answers the server gives for this map.
-	var expected = {0: [[0, -1]], 90: [[1, -1]], 180: [], 270: [[0, -1]]}
+func test_an_anchored_zone_stays_above_the_item():
+	# The same four answers the server gives for this map. One star at every
+	# rotation, always directly above: turned half round the anchor is the
+	# lower of the two squares, and the aura goes past the upper one rather
+	# than stopping inside the item. See docs/item_grid_model.md section 5.
+	var expected = {0: [[0, -1]], 90: [[1, -1]], 180: [[0, -1]], 270: [[0, -1]]}
 	for rotation in expected:
 		var placed = APITypes.PlacedItem.new(
 			_potion({"position": [0, 0], "rotation": rotation}))

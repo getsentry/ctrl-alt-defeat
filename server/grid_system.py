@@ -14,6 +14,24 @@ class Rotation(Enum):
     CLOCKWISE_270 = 270
 
 
+def _clear_of(covered: Set[Position], square: Position) -> Position:
+    """Straight up from this square to the first one the item does not cover.
+
+    An anchor's aura is above the ITEM, not above the anchor. Turned half
+    round, a potion's anchor is the lower of its two cells, and an aura that
+    stopped at the cell above it would stop inside the potion -- leaving it
+    with no star at all, where the game gives it one directly above. See
+    docs/item_grid_model.md section 5.
+
+    Two anchors that clear the item into the same square make one aura, which
+    is what keeps Bag of Stones at one star on end and two laid flat.
+    """
+    x, y = square
+    while (x, y) in covered:
+        y -= 1
+    return (x, y)
+
+
 def _turn(square: Position, rotation: Rotation) -> Position:
     """One square, a quarter turn clockwise at a time.
 
@@ -93,7 +111,12 @@ class ItemShape:
         # An anchor's square is already in `star` for the way the item faces
         # now. Take it out before turning, or it turns with the item and the
         # anchor projects a second one, leaving the item with two.
-        was_projected = {(x, y - 1) for x, y in self.anchors} - set(self.squares)
+        #
+        # By the same rule that put it there: the aura clears the item, so the
+        # square to take out is the one it cleared to, not the one above the
+        # anchor. Those are the same square only while the anchor is on top.
+        mine = set(self.squares)
+        was_projected = {_clear_of(mine, square) for square in self.anchors}
 
         squares = [_turn(square, rotation) for square in self.squares]
         star = [_turn(square, rotation) for square in set(self.star) - was_projected]
@@ -116,10 +139,11 @@ class ItemShape:
             anchors = shift(anchors)
 
         # An anchor points up in world space, so its square is worked out after
-        # the turn rather than turned with the rest. It is dropped where it
-        # lands on the item itself; another item in the way does not stop it.
+        # the turn rather than turned with the rest. It goes past the item's
+        # own cells to the first square clear of them; another item in the way
+        # does not stop it.
         covered = set(squares)
-        projected = {(x, y - 1) for x, y in anchors} - covered
+        projected = {_clear_of(covered, square) for square in anchors}
         star = sorted(set(star) - covered | projected)
 
         return ItemShape(
@@ -134,9 +158,9 @@ class ItemShape:
 # What each character in an item's map means. See docs/item_grid_model.md.
 FOOTPRINT = "#"  # a square the item covers
 ANCHOR = "^"  # covered, and projects its aura straight up in world
-# space however the item is turned. The projection is
-# dropped only where it lands on this item's own
-# squares; another item in the way does not stop it.
+# space however the item is turned, past the item's own
+# squares to the first one clear of them; another item
+# in the way does not stop it.
 STAR = "*"  # the star aura the item reaches into
 DIAMOND = "+"  # the diamond aura, a second and separate zone
 EMPTY = "."

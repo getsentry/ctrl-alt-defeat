@@ -248,3 +248,38 @@ optimistically it would show up as a flicker, or not at all. Four such
 disagreements were found and fixed in one week, so if this is done, the
 reconciliation must compare what was predicted against what came back and say
 so loudly when they differ, rather than quietly taking the server's answer.
+
+## A potion that has been drunk still looks like a potion
+
+Potions are one shot: drunk once and done for the battle. Nothing on the
+battle screen says so, so a player watching cannot tell which of their potions
+are spent and which are still to come.
+
+Grey it out for now -- `ItemVisual` already tints with `modulate`, which is how
+a container is drawn at CONTAINER_ALPHA. Different artwork for a spent one
+would be better and can come later.
+
+What says it happened: the battle log carries the action, and the item is named
+by its uid, so the screen already knows which one went. There are 12 potion-
+shaped items (11 potions and Packet Bag); `icontype: potion` is what marks
+them, and the one-shot rule is theirs rather than every consumable's.
+
+## A new run starts with an empty rack
+
+A player's first shop phase begins with three racks and nothing on them. In
+the source game each class starts with a loadout, so the first battle is
+something to arrange rather than something to survive.
+
+The wiki calls these **starting class presets** and says every one of them has
+at least one Leather Bag in it (`research/wiki_pages/Leather_Bag.wikitext`).
+The presets themselves are not on the pages we scraped, so they need looking
+up before this can be written down.
+
+There is one class here, `Sentaur`, and the panel says so from a constant --
+so a preset is one list, not a table, until a second class exists. It belongs
+next to `starting_containers()` in `server/containers.py`, which is where the
+three racks a run begins with are already decided.
+
+Document the preset in the Game Design Document before building it: what it
+holds is a balance decision, and section 6.3 is where the shape of a run is
+set out.

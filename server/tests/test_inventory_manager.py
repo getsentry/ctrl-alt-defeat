@@ -1367,3 +1367,72 @@ class TestWhereAPassengerLands:
                     f"{case['name']} turned {facing} lands on {sorted(landed)}, "
                     f"and the tray is {sorted(turned_tray)}"
                 )
+
+
+class TestAnAnchorUnderATurningRack:
+    """An anchor points straight up in world space however its item is turned
+    (`^` in a map, grid_system.ANCHOR). A rack turning underneath is a turn
+    like any other, so the rule has to survive it.
+
+    Emergency Hotfix is the shape for it: a star, an anchor and a footprint in
+    one column, so where the star lands says which way the item is really
+    facing.
+    """
+
+    def _a_potion_on_a_rack(self, turn):
+        from containers import Container
+        from grid_system import Rotation
+        from items import Item
+
+        manager = InventoryManager()
+        manager.grid.containers = [Container.of("network_cache", (2, 2), "rack")]
+        manager.grid.items = [
+            Item.of("emergency_hotfix", "potion").placed_at((2, 3))
+        ]
+        manager.move_container("rack", (2, 2), turn)
+        return manager.grid.items[0]
+
+    def test_the_anchor_still_points_up_when_the_rack_turns(self):
+        from grid_system import Rotation
+
+        for turn in Rotation:
+            potion = self._a_potion_on_a_rack(turn)
+            covered = set(potion.covered_squares())
+            star = set(potion.zone_squares()["star"])
+            above = {(x, y - 1) for x, y in covered} - covered
+
+            assert star, f"the rack turned {turn.value} and the star vanished"
+            assert star & above, (
+                f"rack turned {turn.value}: the star is at {sorted(star)} and "
+                f"the squares above the item are {sorted(above)}"
+            )
+
+    def test_a_potion_upside_down_still_has_its_star_above_it(self):
+        """The case the rule was never checked against, and the one it got
+        wrong. Turned half round the anchor is the lower of the potion's two
+        squares, so an aura that stopped at the square above it would stop
+        inside the potion -- leaving it with no star at all. The wiki: the star
+        "will always be placed above the Potion, rather than rotating along
+        with the item"."""
+        from grid_system import Rotation
+
+        potion = self._a_potion_on_a_rack(Rotation.CLOCKWISE_180)
+        covered = set(potion.covered_squares())
+        star = potion.zone_squares()["star"]
+
+        assert len(star) == 1, "one star, as at every other rotation"
+        assert star[0] not in covered, "and it is clear of the potion"
+        assert star[0][1] == min(y for _, y in covered) - 1, (
+            "directly above it"
+        )
+
+    def test_the_item_faces_the_way_the_rack_turned_it(self):
+        from grid_system import Rotation
+
+        for turn in (
+            Rotation.NONE,
+            Rotation.CLOCKWISE_90,
+            Rotation.CLOCKWISE_180,
+            Rotation.CLOCKWISE_270,
+        ):
+            assert self._a_potion_on_a_rack(turn).rotation == turn

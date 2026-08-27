@@ -206,12 +206,18 @@ class TestTurningAnItemTurnsItsAura:
         assert sorted(potion.rotate(Rotation.CLOCKWISE_90).star) == [(1, -1)]
         assert sorted(potion.rotate(Rotation.CLOCKWISE_270).star) == [(0, -1)]
 
-    def test_an_anchor_pointing_into_the_item_reaches_nothing(self):
-        """Upside down, the anchor's square is under the item's other square, so
-        the projection is dropped and the item has no aura at all. The wiki
-        never draws this orientation, which is the same fact."""
+    def test_an_anchor_upside_down_reaches_past_the_item(self):
+        """Turned half round the anchor is under the item's other square, so an
+        aura that stopped one above it would stop inside the item. It goes past
+        to the first square clear of it: the aura is above the ITEM, not above
+        the anchor.
+
+        This was the one rotation the rule was never checked against, and the
+        one it got wrong. The wiki does not draw it, but it says it: a potion's
+        star "will always be placed above the Potion, rather than rotating
+        along with the item"."""
         potion = parse_map(["*", "^", "#"], "potion")
-        assert potion.rotate(Rotation.CLOCKWISE_180).star == ()
+        assert sorted(potion.rotate(Rotation.CLOCKWISE_180).star) == [(0, -1)]
 
     def test_an_anchor_does_not_project_twice(self):
         """The square an anchor projects into is drawn on the map, so it is in
@@ -560,16 +566,14 @@ class TestWhatAnAuraReaches:
         assert reach([above[0], (*above[1], Rotation.NONE)])[self.POTION]["star"] == [
             self.ONE
         ]
-        # Turned upside down it has no aura at all, so it reaches nothing.
-        assert (
-            reach(
-                [
-                    (self.POTION, potion, (4, 4), Rotation.CLOCKWISE_180),
-                    (self.ONE, one, (4, 3), Rotation.NONE),
-                ]
-            )[self.POTION]["star"]
-            == []
-        )
+        # Turned upside down the star is still above the potion, so it reaches
+        # the same item. The aura is above the ITEM, not above the anchor.
+        assert reach(
+            [
+                (self.POTION, potion, (4, 4), Rotation.CLOCKWISE_180),
+                (self.ONE, one, (4, 3), Rotation.NONE),
+            ]
+        )[self.POTION]["star"] == [self.ONE]
 
 
 class TestTheCatalogueAgreesWithTheDesign:
@@ -653,3 +657,78 @@ class TestAnAnchorIsStillPartOfTheItem:
         assert not validator.validate_item_placement((1, 2), one), "the other square"
         # The zone is not the item, so an item may stand where an aura reaches.
         assert validator.validate_item_placement((1, 0), one), "the star square"
+
+
+class TestTheTwoItemsWhoseAuraDoesNotTurn:
+    """Every anchored item in the catalogue, at every rotation.
+
+    Twelve items carry a `^`. Eleven are potions with one anchor and the same
+    map, and the twelfth is Packet Bag -- Bag of Stones -- with two. The wiki
+    says the rule for both in the same words: the star is above the ITEM,
+    "regardless of the orientation".
+
+    Packet Bag is what proves it is a rule rather than a quirk. It gives the
+    same answer at 0 and 180, and so does a potion -- and a potion only does
+    since the aura started clearing the item rather than stopping at it.
+    """
+
+    def _every_anchored_item(self):
+        from config_loader import config_loader
+
+        for slug, spec in config_loader.items.items():
+            if spec.shape.anchors:
+                yield slug, spec
+
+    def test_the_catalogue_has_the_two_shapes_and_no_others(self):
+        """If a third shape appears, the table below stops covering it."""
+        shapes = {
+            (len(spec.shape.squares), len(spec.shape.anchors))
+            for _, spec in self._every_anchored_item()
+        }
+        assert shapes == {(2, 1), (2, 2)}, (
+            f"a new anchored shape is in the catalogue: {shapes}"
+        )
+
+    def test_a_potion_has_one_star_above_it_at_every_rotation(self):
+        for slug, spec in self._every_anchored_item():
+            if len(spec.shape.anchors) != 1:
+                continue
+            for turn in Rotation:
+                turned = spec.shape.rotate(turn)
+                covered = set(turned.squares)
+                assert len(turned.star) == 1, (
+                    f"{slug} turned {turn.value} has {len(turned.star)} stars"
+                )
+                star = turned.star[0]
+                assert star not in covered, f"{slug} turned {turn.value}: on itself"
+                assert star[1] == min(y for _, y in covered) - 1, (
+                    f"{slug} turned {turn.value}: {star} is not above the item"
+                )
+
+    def test_packet_bag_has_two_stars_laid_flat_and_one_on_end(self):
+        for slug, spec in self._every_anchored_item():
+            if len(spec.shape.anchors) != 2:
+                continue
+            for turn in Rotation:
+                turned = spec.shape.rotate(turn)
+                covered = set(turned.squares)
+                flat = max(x for x, _ in covered) > max(y for _, y in covered)
+                assert len(turned.star) == (2 if flat else 1), (
+                    f"{slug} turned {turn.value} "
+                    f"({'flat' if flat else 'on end'}) has {len(turned.star)}"
+                )
+                for star in turned.star:
+                    assert star not in covered
+                    assert star[1] == min(y for _, y in covered) - 1
+
+    def test_half_a_turn_reaches_what_no_turn_reaches(self):
+        """The case the rule was checked against neither: 0 and 180 cover the
+        same squares, so they must reach the same ones."""
+        for slug, spec in self._every_anchored_item():
+            upright = spec.shape.rotate(Rotation.NONE)
+            over = spec.shape.rotate(Rotation.CLOCKWISE_180)
+            assert sorted(upright.squares) == sorted(over.squares), slug
+            assert sorted(upright.star) == sorted(over.star), (
+                f"{slug} reaches {sorted(over.star)} half turned "
+                f"and {sorted(upright.star)} upright"
+            )

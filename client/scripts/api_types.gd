@@ -134,11 +134,15 @@ static func turn_zone(
 	# The square an anchor points into is drawn on the map, so it is in the zone
 	# already for the way the item faces now. Take it out before turning, or the
 	# item ends up with the old square and the new one.
+	# By the same rule that put it there: the aura clears the item, so the
+	# square to take out is the one it cleared to, not the one above the
+	# anchor. Those are the same square only while the anchor is on top.
+	var mine := {}
+	for square in shape:
+		mine[square] = true
 	var was_projected := {}
 	for anchor in anchors:
-		var above := anchor + Vector2i.UP
-		if not shape.has(above):
-			was_projected[above] = true
+		was_projected[_clear_of(mine, anchor)] = true
 
 	var reached := {}
 	for square in zone:
@@ -146,9 +150,11 @@ static func turn_zone(
 			reached[body.where(square)] = true
 
 	# An anchor points up on the grid however the item is turned, so its square
-	# is worked out after the turn rather than turned with the rest.
+	# is worked out after the turn rather than turned with the rest. It goes
+	# past the item's own squares to the first one clear of them: the aura is
+	# above the ITEM, not above the anchor.
 	for anchor in anchors:
-		reached[body.where(anchor) + Vector2i.UP] = true
+		reached[_clear_of(covered, body.where(anchor))] = true
 
 	var settled: Array[Vector2i] = []
 	for square in reached:
@@ -156,6 +162,14 @@ static func turn_zone(
 			settled.append(square)
 	settled.sort()
 	return settled
+
+
+# Straight up from this square to the first one the item does not cover.
+static func _clear_of(covered: Dictionary, square: Vector2i) -> Vector2i:
+	var above := square
+	while covered.has(above):
+		above += Vector2i.UP
+	return above
 
 
 # The turn itself, without settling anything against a corner.
