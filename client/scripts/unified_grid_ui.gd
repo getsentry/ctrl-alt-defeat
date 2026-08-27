@@ -118,7 +118,7 @@ func _on_item_stored(item_data: APITypes.PlacedItem):
 
 func put_on_grid(item: APITypes.Item, grid_pos: Vector2i) -> bool:
 	"""Move an item out of the chest onto a square of the grid."""
-	if not inventory_grid.can_place_item(item, grid_pos):
+	if not inventory_grid.can_stand(item, grid_pos):
 		# Something is already there. If it can be moved out of the way, the
 		# drop is a swap rather than a refusal -- the same as one square of
 		# the grid to another.
@@ -369,7 +369,7 @@ func follow_pointer(pointer: Vector2) -> void:
 	# answers to where a carried item is meant one of them was wrong.
 	var grid_pos := square_carried_to(held_item, pointer)
 	inventory_grid.mark_square(
-		body, grid_pos, inventory_grid.can_place_item(held_item, grid_pos))
+		body, grid_pos, inventory_grid.can_stand(held_item, grid_pos))
 
 
 func square_carried_to(item: APITypes.Item, pointer: Vector2) -> Vector2i:
@@ -1598,7 +1598,7 @@ func _end_shop_drag(drop_position: Vector2):
 	if is_container:
 		# Containers need special handling - they can only go in the main grid area
 		# They also define their own active area, not fit within existing containers
-		if _can_place_container(dragging_shop_data, grid_pos):
+		if inventory_grid.can_stand(dragging_shop_data, grid_pos):
 			print("Placing container at position [%d, %d]" % [grid_pos.x, grid_pos.y])
 
 			# Tell the server about the container purchase
@@ -1619,7 +1619,7 @@ func _end_shop_drag(drop_position: Vector2):
 			print("Cannot place container at this position")
 	else:
 		# Regular item placement
-		if inventory_grid.can_place_item(dragging_shop_data, grid_pos):
+		if inventory_grid.can_stand(dragging_shop_data, grid_pos):
 			# Place the item in the grid immediately (optimistic update)
 			if inventory_grid.place_shop_item(dragging_shop_data, grid_pos):
 				print("Placed item at position [%d, %d]" % [grid_pos.x, grid_pos.y])
@@ -1729,17 +1729,6 @@ func _container_squares(container_data: APITypes.Item, grid_pos: Vector2i) -> Ar
 		squares.append(Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1])))
 	return squares
 
-func _can_place_container(container_data: APITypes.Item, grid_pos: Vector2i) -> bool:
-	"""Whether a rack may stand here. The grid's own rule, not a second one.
-
-	This was the same walk written out again against ROOM_WIDTH and
-	ROOM_HEIGHT rather than against the grid's own size, and without the rule
-	that a rack is no obstacle to itself. Two opinions about what fits is the
-	shape that let a container be sold hanging off the edge of the board and
-	then refused by the engine at every battle after.
-	"""
-	return inventory_grid.can_place_container(container_data, grid_pos)
-
 func _add_container_from_purchase(response: APITypes.PurchaseResponse, grid_pos: Vector2i):
 	"""Add a purchased container to the inventory grid"""
 	# The server sends every container the player owns, so this replaces the set.
@@ -1768,7 +1757,7 @@ func _show_container_preview(container_data: APITypes.Item, grid_pos: Vector2i):
 		inventory_grid.hide_hover_preview()
 		return
 
-	var allowed := _can_place_container(container_data, grid_pos)
+	var allowed := inventory_grid.can_stand(container_data, grid_pos)
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.3, 0.6, 1.0, 0.3) if allowed \
 		else InventoryGrid.MARK_REFUSED_FILL
@@ -2116,8 +2105,8 @@ func combining_source(pointer := Vector2.INF) -> Dictionary:
 		return {"item": held_item, "node": held_visual}
 	if dragging_shop_data != null and is_instance_valid(drag_preview):
 		return {"item": dragging_shop_data, "node": drag_preview}
-	if inventory_grid != null and inventory_grid.dragging_object != null:
-		var dragged = inventory_grid.dragging_object
+	if inventory_grid != null and inventory_grid.dragging != null:
+		var dragged = inventory_grid.dragging
 		return {"item": dragged.item_data, "node": dragged}
 	if storage_bin != null and storage_bin.dragged() != null:
 		return {"item": storage_bin.dragged(), "node": storage_bin.dragged_visual()}
@@ -2490,7 +2479,7 @@ func _aura_square(item: APITypes.Item, pointer: Vector2) -> Vector2i:
 		# The square the item itself would land on. A zone drawn around the
 		# pointer rather than around the item reaches out of the wrong place
 		# for anything more than one square across.
-		if inventory_grid.dragging_object != null:
+		if inventory_grid.dragging != null:
 			# Dragged off the grid, so it is held by the square it was picked
 			# up on rather than by the middle of its artwork.
 			return inventory_grid.square_held_over(

@@ -636,7 +636,7 @@ func test_inventory_persistence_across_battle():
 		# hold a container or something with nowhere to stand.
 		var shop_item = game_ui.shop_items[i]
 		var item_data = shop_item.get_meta("item_data")
-		if item_data.is_container or not game_ui.inventory_grid.can_place_item(
+		if item_data.is_container or not game_ui.inventory_grid.can_stand(
 				item_data, Vector2i(target_pos)):
 			print("   - Slot %d has nowhere to go, skipping" % i)
 			continue
@@ -1081,7 +1081,7 @@ func _first_non_container_shop_item(game_ui, fitting_at := Vector2i(-1, -1)):
 		var data = shop_item.get_meta("item_data")
 		if data.is_container:
 			continue
-		if fitting_at.x >= 0 and not game_ui.inventory_grid.can_place_item(data, fitting_at):
+		if fitting_at.x >= 0 and not game_ui.inventory_grid.can_stand(data, fitting_at):
 			continue
 		return shop_item
 	return null

@@ -147,28 +147,28 @@ func test_an_item_may_only_go_on_a_container():
 	# inventory rule.
 	_load_default_containers()
 
-	assert_true(grid.can_place_item(_item(), Vector2i(2, 3)), "A container cell should accept an item")
-	assert_true(grid.can_place_item(_item(), Vector2i(5, 4)), "Any container cell should accept an item")
-	assert_false(grid.can_place_item(_item(), Vector2i(0, 0)), "Bare floor should not accept an item")
-	assert_false(grid.can_place_item(_item(), Vector2i(4, 6)), "Bare floor below a container is still bare")
+	assert_true(grid.can_stand(_item(), Vector2i(2, 3)), "A container cell should accept an item")
+	assert_true(grid.can_stand(_item(), Vector2i(5, 4)), "Any container cell should accept an item")
+	assert_false(grid.can_stand(_item(), Vector2i(0, 0)), "Bare floor should not accept an item")
+	assert_false(grid.can_stand(_item(), Vector2i(4, 6)), "Bare floor below a container is still bare")
 
 
 func test_an_item_cannot_go_outside_the_grid():
 	_load_default_containers()
 
-	assert_false(grid.can_place_item(_item(), Vector2i(-1, 3)), "Left of the grid is not placeable")
-	assert_false(grid.can_place_item(_item(), Vector2i(3, -1)), "Above the grid is not placeable")
-	assert_false(grid.can_place_item(_item(), Vector2i(WIDTH, 3)), "Right of the grid is not placeable")
-	assert_false(grid.can_place_item(_item(), Vector2i(3, HEIGHT)), "Below the grid is not placeable")
+	assert_false(grid.can_stand(_item(), Vector2i(-1, 3)), "Left of the grid is not placeable")
+	assert_false(grid.can_stand(_item(), Vector2i(3, -1)), "Above the grid is not placeable")
+	assert_false(grid.can_stand(_item(), Vector2i(WIDTH, 3)), "Right of the grid is not placeable")
+	assert_false(grid.can_stand(_item(), Vector2i(3, HEIGHT)), "Below the grid is not placeable")
 
 
 func test_a_multi_square_item_needs_every_square_on_a_container():
 	_load_default_containers()
 	var wide = _item({"shape": [[0, 0], [1, 0]]})
 
-	assert_true(grid.can_place_item(wide, Vector2i(2, 3)),
+	assert_true(grid.can_stand(wide, Vector2i(2, 3)),
 		"Both squares sit on container A, so it fits")
-	assert_false(grid.can_place_item(wide, Vector2i(7, 3)),
+	assert_false(grid.can_stand(wide, Vector2i(7, 3)),
 		"The second square would land on bare floor past container C, so it does not fit")
 
 
@@ -178,7 +178,7 @@ func test_an_item_may_straddle_two_touching_containers():
 	_load_default_containers()
 	var wide = _item({"shape": [[0, 0], [1, 0]]})
 
-	assert_true(grid.can_place_item(wide, Vector2i(3, 3)),
+	assert_true(grid.can_stand(wide, Vector2i(3, 3)),
 		"Touching containers form one usable surface")
 
 
@@ -186,7 +186,7 @@ func test_a_multi_square_item_cannot_hang_off_the_edge():
 	grid.load_inventory_state(_state([], [_container({"position": [7, 3]})]))
 	var wide = _item({"shape": [[0, 0], [1, 0]]})
 
-	assert_false(grid.can_place_item(wide, Vector2i(8, 3)),
+	assert_false(grid.can_stand(wide, Vector2i(8, 3)),
 		"The second square would be outside the grid")
 
 
@@ -194,9 +194,9 @@ func test_items_cannot_overlap():
 	_load_default_containers()
 	grid.place_shop_item(_item({"id": "first"}), Vector2i(2, 3))
 
-	assert_false(grid.can_place_item(_item({"id": "second"}), Vector2i(2, 3)),
+	assert_false(grid.can_stand(_item({"id": "second"}), Vector2i(2, 3)),
 		"An occupied cell should not accept a second item")
-	assert_true(grid.can_place_item(_item({"id": "second"}), Vector2i(3, 3)),
+	assert_true(grid.can_stand(_item({"id": "second"}), Vector2i(3, 3)),
 		"A free cell on the same container should still accept an item")
 
 
@@ -547,7 +547,7 @@ func test_pressing_on_the_item_picks_it_up():
 
 	grid._on_item_input(_press_at(Vector2(10, 10)), visual)
 
-	assert_eq(grid.dragging_object, visual, "the square it stands on is the item")
+	assert_eq(grid.dragging, visual, "the square it stands on is the item")
 
 
 func test_pressing_the_empty_corner_of_an_L_picks_up_the_rack():
@@ -566,8 +566,8 @@ func test_pressing_the_empty_corner_of_an_L_picks_up_the_rack():
 
 	grid._on_item_input(_press_at(gap), visual)
 
-	assert_null(grid.dragging_object, "the L is not what was aimed at")
-	assert_not_null(grid.dragging_container, "the rack the player can see there")
+	assert_true(grid.carrying_a_rack(), "the rack the player can see there")
+	assert_ne(grid.dragging, visual, "and not the L, which is not on that square")
 
 
 func test_pressing_the_corner_of_an_L_picks_up_what_stands_there():
@@ -588,7 +588,7 @@ func test_pressing_the_corner_of_an_L_picks_up_what_stands_there():
 
 	grid._on_item_input(_press_at(Vector2(step + 5, step + 5)), ell)
 
-	assert_eq(grid.dragging_object, guest, "the item standing in the corner")
+	assert_eq(grid.dragging, guest, "the item standing in the corner")
 
 
 func test_every_square_answers_with_whatever_the_grid_says_is_on_it():
@@ -649,7 +649,7 @@ func test_a_refused_drop_puts_the_turn_back_as_well_as_the_item():
 	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
 
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
-	assert_true(grid.turn_dragged(1, _held_at(grid.dragging_object)), "setup: the drag turned it")
+	assert_true(grid.turn_dragged(1, _held_at(grid.dragging)), "setup: the drag turned it")
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -666,7 +666,7 @@ func test_a_refused_drop_leaves_the_squares_it_really_covers_taken():
 	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
 
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
-	grid.turn_dragged(1, _held_at(grid.dragging_object))
+	grid.turn_dragged(1, _held_at(grid.dragging))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -680,7 +680,7 @@ func test_a_refused_drop_draws_the_item_the_way_it_put_it_back():
 	grid.place_shop_item(_tall_item("turner"), Vector2i(2, 3))
 
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
-	grid.turn_dragged(1, _held_at(grid.dragging_object))
+	grid.turn_dragged(1, _held_at(grid.dragging))
 	grid._end_drag()
 	await get_tree().process_frame
 
@@ -788,7 +788,7 @@ func test_a_container_may_stand_on_empty_floor():
 	_load_default_containers()
 	var moving = grid.containers[0].item_data
 
-	assert_true(grid.can_place_container(moving, Vector2i(0, 0)),
+	assert_true(grid.can_stand(moving, Vector2i(0, 0)),
 		"Bare floor is exactly where a container goes")
 
 
@@ -796,7 +796,7 @@ func test_a_container_may_not_stand_on_another():
 	_load_default_containers()
 	var moving = grid.containers[0].item_data
 
-	assert_false(grid.can_place_container(moving, Vector2i(4, 3)),
+	assert_false(grid.can_stand(moving, Vector2i(4, 3)),
 		"Container B is already there")
 
 
@@ -806,13 +806,13 @@ func test_a_container_is_no_obstacle_to_itself():
 	_load_default_containers()
 	var moving = grid.containers[0].item_data
 
-	assert_true(grid.can_place_container(moving, Vector2i(2, 3)),
+	assert_true(grid.can_stand(moving, Vector2i(2, 3)),
 		"Where it already stands is somewhere it can stand")
 
 	# A shifts onto B if it moves right, so the one-square shift is C's, which
 	# has nothing to its right but the edge.
 	var rightmost = grid.containers[2].item_data
-	assert_true(grid.can_place_container(rightmost, Vector2i(7, 3)),
+	assert_true(grid.can_stand(rightmost, Vector2i(7, 3)),
 		"It can shift by one onto squares that are its own")
 
 
@@ -820,9 +820,9 @@ func test_a_container_may_not_hang_off_the_grid():
 	_load_default_containers()
 	var moving = grid.containers[0].item_data
 
-	assert_false(grid.can_place_container(moving, Vector2i(8, 3)),
+	assert_false(grid.can_stand(moving, Vector2i(8, 3)),
 		"A 2x2 at the last column would hang off the right")
-	assert_false(grid.can_place_container(moving, Vector2i(2, 6)),
+	assert_false(grid.can_stand(moving, Vector2i(2, 6)),
 		"and at the last row it would hang off the bottom")
 
 
@@ -890,7 +890,7 @@ func test_a_read_only_grid_does_not_pick_containers_up():
 
 	grid._start_container_drag(grid.containers[0], _held_at(grid.containers[0]))
 
-	assert_null(grid.dragging_container, "A read-only board holds still")
+	assert_null(grid.dragging, "A read-only board holds still")
 
 
 func test_an_item_that_has_been_moved_knows_where_it_is():
@@ -931,7 +931,7 @@ func test_turning_a_dragged_item_changes_the_squares_it_covers():
 	grid.place_shop_item(_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
-	grid.turn_dragged(1, _held_at(grid.dragging_object))
+	grid.turn_dragged(1, _held_at(grid.dragging))
 
 	var item_data = grid.items[0].item_data
 	assert_eq(item_data.facing(), 90, "A quarter turn clockwise")
@@ -945,7 +945,7 @@ func test_turning_the_other_way_goes_the_other_way():
 	grid.place_shop_item(_item({"id": "wide", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
-	grid.turn_dragged(-1, _held_at(grid.dragging_object))
+	grid.turn_dragged(-1, _held_at(grid.dragging))
 
 	assert_eq(grid.items[0].item_data.facing(), 270,
 		"Anticlockwise from square on is three quarters round")
@@ -957,7 +957,7 @@ func test_four_turns_bring_a_dragged_item_back():
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
 	for i in 4:
-		grid.turn_dragged(1, _held_at(grid.dragging_object))
+		grid.turn_dragged(1, _held_at(grid.dragging))
 
 	assert_eq(grid.items[0].item_data.facing(), 0, "Back where it started")
 
@@ -967,7 +967,7 @@ func test_turning_nothing_is_harmless():
 	# and nothing for the pointer to turn.
 	_load_default_containers()
 	grid.turn_dragged(1, grid.global_position + Vector2(10, 10))
-	assert_null(grid.dragging_object, "Still nothing in hand")
+	assert_null(grid.dragging, "Still nothing in hand")
 
 
 func test_a_turned_item_is_placed_where_it_fits_turned():
@@ -977,9 +977,9 @@ func test_a_turned_item_is_placed_where_it_fits_turned():
 	_load_default_containers()
 	var wide = _item({"id": "wide", "shape": [[0, 0], [1, 0]]})
 
-	assert_false(grid.can_place_item(wide.placed_at(Vector2i(7, 3), 0), Vector2i(7, 3)),
+	assert_false(grid.can_stand(wide.placed_at(Vector2i(7, 3), 0), Vector2i(7, 3)),
 		"Lying flat its right half is past the last container")
-	assert_true(grid.can_place_item(wide.placed_at(Vector2i(7, 3), 90), Vector2i(7, 3)),
+	assert_true(grid.can_stand(wide.placed_at(Vector2i(7, 3), 90), Vector2i(7, 3)),
 		"Stood on end it fits down the last column")
 
 
@@ -1043,7 +1043,7 @@ func test_turning_an_item_in_place_is_a_change():
 	grid.place_shop_item(_item({"id": "turned", "shape": [[0, 0], [1, 0]]}), Vector2i(2, 3))
 	grid._start_drag(grid.items[0], _held_at(grid.items[0]))
 
-	grid.turn_dragged(1, _held_at(grid.dragging_object))
+	grid.turn_dragged(1, _held_at(grid.dragging))
 
 	var item_data = grid.items[0].item_data
 	assert_false(grid.drop_changes_nothing(Vector2i(2, 3), item_data),
@@ -1122,12 +1122,12 @@ func test_redrawing_the_board_lets_go_of_whatever_was_being_dragged():
 	}))
 	var held_visual: Control = grid.item_visual("held")
 	grid._start_drag(held_visual, _held_at(held_visual))
-	assert_not_null(grid.dragging_object, "Setup: something is being dragged")
+	assert_not_null(grid.dragging, "Setup: something is being dragged")
 
 	grid.load_inventory_state(APITypes.InventoryState.new(
 		{"inventory_grid": [], "server_containers": []}))
 
-	assert_null(grid.dragging_object, "the drag is over, because the item is gone")
+	assert_null(grid.dragging, "the drag is over, because the item is gone")
 
 
 # ============ Carrying a long item ============
@@ -1240,7 +1240,7 @@ func test_a_turn_keeps_hold_of_the_square_in_hand():
 	var spear := _put_down(_spear())
 	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
 
-	grid.turn_dragged(1, _held_at(grid.dragging_object))
+	grid.turn_dragged(1, _held_at(grid.dragging))
 
 	assert_eq(grid.grab_cell, Vector2i(0, 0),
 		"The tip of a spear turned clockwise is its left end, and the hand "
@@ -1252,7 +1252,7 @@ func test_a_turn_swings_the_item_about_the_hand_and_not_about_its_corner():
 	grid._start_drag(spear, _pointer_over(Vector2i(2, 3)))
 	var was: Vector2 = spear.position
 
-	grid.turn_dragged(1, _held_at(grid.dragging_object))
+	grid.turn_dragged(1, _held_at(grid.dragging))
 
 	assert_eq(spear.position, was + Vector2(0, 3 * (grid.cell_size + grid.cell_spacing)),
 		"Held by its fourth square and turned so that square is its first, "
@@ -1266,7 +1266,7 @@ func test_a_turn_moves_the_artwork_and_the_hold_together():
 	var pointer := _pointer_over(Vector2i(2, 3))
 	grid._start_drag(spear, pointer)
 
-	grid.turn_dragged(1, _held_at(grid.dragging_object))
+	grid.turn_dragged(1, _held_at(grid.dragging))
 
 	var local: Vector2 = grid.get_global_transform().affine_inverse() * pointer
 	assert_eq(spear.position, local + grid.drag_offset,
@@ -1297,7 +1297,7 @@ func test_four_turns_bring_the_item_back_where_it_started():
 	var held: Vector2i = grid.grab_cell
 
 	for quarter in range(4):
-		grid.turn_dragged(1, _held_at(grid.dragging_object))
+		grid.turn_dragged(1, _held_at(grid.dragging))
 
 	assert_eq(grid.grab_cell, held, "Still held by the same square")
 	assert_eq(spear.position, was, "and back where it was drawn")
@@ -1377,7 +1377,7 @@ func _mark_covers_the_item() -> String:
 	"""Empty when the mark is drawn exactly over the artwork, or what is wrong"""
 	if not grid.hover_preview.visible:
 		return "the mark is not drawn at all"
-	var drawn := Rect2(grid.dragging_object.position, grid.dragging_object.size)
+	var drawn := Rect2(grid.dragging.position, grid.dragging.size)
 	var marked := Rect2(grid.hover_preview.position, grid.hover_preview.size)
 	if not drawn.position.is_equal_approx(marked.position):
 		return "the item is at %s and the mark at %s" % [drawn.position, marked.position]
@@ -1523,11 +1523,11 @@ func test_an_item_may_stand_on_the_squares_a_turned_rack_offers():
 	var wide := _item({"id": "wide", "shape": [[0, 0], [1, 0], [2, 0], [3, 0]]})
 
 	grid.load_inventory_state(_state([], [_a_rack(0)]))
-	assert_false(grid.can_place_item(wide, Vector2i(0, 0)),
+	assert_false(grid.can_stand(wide, Vector2i(0, 0)),
 		"Nothing four across fits on a rack standing on end")
 
 	grid.load_inventory_state(_state([], [_a_rack(90)]))
-	assert_true(grid.can_place_item(wide, Vector2i(0, 0)),
+	assert_true(grid.can_stand(wide, Vector2i(0, 0)),
 		"and it fits on the same rack laid flat")
 
 
@@ -1545,7 +1545,7 @@ func test_a_turned_rack_is_drawn_the_way_it_stands():
 func test_a_turned_rack_may_not_hang_off_the_board():
 	var over_the_edge := _a_rack(90, Vector2i(6, 0))
 
-	assert_false(grid.can_place_container(over_the_edge, Vector2i(6, 0)),
+	assert_false(grid.can_stand(over_the_edge, Vector2i(6, 0)),
 		"Four across from column six runs off a nine wide board")
 
 

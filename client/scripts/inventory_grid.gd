@@ -91,10 +91,11 @@ var grid_zone: InventoryGrid = null
 var saves_positions: bool = true
 
 # Drag and drop state
-var dragging_object = null
+## Whatever is in hand, of either kind. One thing, so nothing has to ask which
+## of two variables to look in -- which is how the two kinds drifted apart.
+var dragging: ItemVisual = null
 # A container being dragged, and the items riding on it. They travel together,
 # because that is what the move does.
-var dragging_container: ItemVisual = null
 var container_riders: Array[Rider] = []
 var drag_offset = Vector2.ZERO
 ## Which of the item's own squares the player has hold of.
@@ -392,6 +393,24 @@ func _take_off(visual: ItemVisual, square: Vector2i) -> void:
 		on_square[square.y][square.x].erase(visual)
 
 
+func carrying_a_rack() -> bool:
+	"""Whether what is in hand is a rack."""
+	return dragging != null and dragging.item_data.is_container
+
+
+func _lift(visual: ItemVisual) -> void:
+	"""Take an item off the board."""
+	var at := visual.where()
+	for offset in visual.item_data.turned_shape():
+		_take_off(visual, at + Vector2i(offset[0], offset[1]))
+
+
+func _land(visual: ItemVisual, at: Vector2i) -> void:
+	"""Put an item back on the board with its corner on this square."""
+	for offset in visual.item_data.turned_shape():
+		_put_on(visual, at + Vector2i(offset[0], offset[1]))
+
+
 func standing_under(point: Vector2) -> ItemVisual:
 	"""The item under this point on the screen, or null.
 
@@ -542,8 +561,8 @@ func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	var turned: APITypes.PlacedItem = carried.item_data.turned(quarters)
 	# Drawn again, because the squares it covers have changed.
 	carried.now_holds(turned)
-	if dragging_container != null:
-		dragging_container.now_holds(turned)
+	if carrying_a_rack():
+		dragging.now_holds(turned)
 		var body := APITypes.Turned.new(was, posmod(quarters * 90, 360))
 		for rider in container_riders:
 			rider.turn_with(body, quarters)
@@ -568,7 +587,7 @@ func turn_dragged(quarters: int, pointer: Vector2) -> bool:
 	# And the mark, which is a different set of squares now and in a different
 	# place. Left to the next frame, a turn showed the shape the item had
 	# before it until the pointer moved.
-	if dragging_container != null:
+	if carrying_a_rack():
 		update_container_preview(pointer)
 	else:
 		update_drag_preview(pointer)
@@ -606,31 +625,25 @@ func _on_container_input(event: InputEvent, placed: ItemVisual):
 		_pick_up_at(placed.get_global_transform() * event.position)
 
 
-func can_place_container(container: APITypes.Item, grid_pos: Vector2i) -> bool:
-	"""Whether a container may stand with its anchor on this square.
-
-	A container needs squares that are free, where an item needs squares that a
-	container has made usable. That is why this is not _can_place_item: the two
-	ask opposite questions of the same board.
-	"""
+func can_stand(thing: APITypes.Item, grid_pos: Vector2i) -> bool:
+	"""Whether this item may stand with its corner on this square."""
 	if grid_pos.x < 0 or grid_pos.y < 0:
 		return false
 
-	var taken: Dictionary[Vector2i, bool] = {}
-	for placed in containers:
-		if placed.item_data.id == container.id:
-			continue  # It is no obstacle to itself.
-		for square in placed.item_data.covered_squares():
-			taken[square] = true
-
-	for offset in container.turned_shape():
+	for offset in thing.turned_shape():
 		var square := Vector2i(grid_pos.x + int(offset[0]), grid_pos.y + int(offset[1]))
-		if square.x < 0 or square.x >= grid_width:
+		if not _on_the_board(square):
 			return false
-		if square.y < 0 or square.y >= grid_height:
-			return false
-		if taken.has(square):
-			return false
+		if thing.is_container:
+			for other in covering(square):
+				if other.item_data.is_container and other.item_data.id != thing.id:
+					return false
+		else:
+			if not provides(square):
+				return false
+			var sitting := filling(square)
+			if sitting != null and sitting.item_data.id != thing.id:
+				return false
 	return true
 
 
@@ -646,10 +659,10 @@ func _take_hold_of(visual: ItemVisual, body: Array[Vector2i],
 
 func _start_container_drag(placed: ItemVisual, taken_at: Vector2) -> void:
 	"""Pick a container up, and everything standing on it with it."""
-	if read_only or dragging_object:
+	if read_only or dragging != null:
 		return
 
-	dragging_container = placed
+	dragging = placed
 	original_grid_pos = placed.where()
 	original_facing = placed.item_data.facing()
 	_take_hold_of(placed, placed.item_data.turned_shape(), taken_at)
@@ -669,6 +682,10 @@ func _start_container_drag(placed: ItemVisual, taken_at: Vector2) -> void:
 				item_visual.z_index = 11
 				break
 
+	_lift(placed)
+	for rider in container_riders:
+		_lift(rider.visual)
+
 
 func _end_container_drag() -> void:
 	"""Put a dragged container down where the pointer is"""
@@ -681,11 +698,11 @@ func drop_container_at(pointer: Vector2) -> void:
 	Takes the pointer rather than reading it, so where a container lands can be
 	asked about without a mouse.
 	"""
-	if not dragging_container:
+	if not carrying_a_rack():
 		return
 
-	var placed := dragging_container
-	dragging_container = null
+	var placed := dragging
+	dragging = null
 	hide_hover_preview()
 	placed.z_index = 0
 	for rider in container_riders:
@@ -693,7 +710,7 @@ func drop_container_at(pointer: Vector2) -> void:
 
 	var grid_pos := square_held_over(pointer, grab_cell)
 	if not drop_changes_nothing(grid_pos, placed.item_data) \
-			and can_place_container(placed.item_data, grid_pos):
+			and can_stand(placed.item_data, grid_pos):
 		# The riders go with it, so which of them the move could not find room
 		# for is answered by which of these is missing afterwards.
 		var rider_ids: Array[String] = []
@@ -719,8 +736,10 @@ func _return_container(placed: ItemVisual) -> void:
 			original_grid_pos, original_facing))
 
 	placed.position = grid_to_pixel(original_grid_pos)
+	_land(placed, original_grid_pos)
 	for rider in container_riders:
 		rider.follow(placed.position, cell_size + cell_spacing)
+		_land(rider.visual, rider.visual.where())
 	container_riders = []
 
 
@@ -751,9 +770,9 @@ func _pick_up_at(point: Vector2) -> void:
 
 func _let_go() -> void:
 	"""Put down whatever is in hand, of either kind."""
-	if dragging_container != null:
+	if carrying_a_rack():
 		_end_container_drag()
-	elif dragging_object != null:
+	elif dragging != null:
 		_end_drag()
 
 func _start_drag(item_visual: ItemVisual, taken_at: Vector2):
@@ -768,16 +787,14 @@ func _start_drag(item_visual: ItemVisual, taken_at: Vector2):
 		return
 
 	var item_data: APITypes.PlacedItem = item_visual.item_data
-	dragging_object = item_visual
+	dragging = item_visual
 	drag_started.emit(item_data)
 	original_position = item_visual.position
 	original_grid_pos = item_visual.where()
 	original_facing = item_data.facing()
 	_take_hold_of(item_visual, item_data.turned_shape(), taken_at)
 
-	# The squares it stood on are free while it is in the air.
-	for offset in item_data.turned_shape():
-		_take_off(item_visual, original_grid_pos + Vector2i(offset[0], offset[1]))
+	_lift(item_visual)
 
 func _pointer_is_over_grid_zone(pointer: Vector2) -> bool:
 	"""Whether the pointer is over the grid this item would move to"""
@@ -801,7 +818,7 @@ func _end_drag(dropped_at := Vector2.INF):
 	if dropped_at == Vector2.INF:
 		dropped_at = get_global_mouse_position()
 
-	if not dragging_object:
+	if dragging == null or carrying_a_rack():
 		return
 	if grid_zone:
 		grid_zone.hide_hover_preview()
@@ -810,9 +827,9 @@ func _end_drag(dropped_at := Vector2.INF):
 	# are the same thing in a real drag, and only the first can be placed by a
 	# test -- which is what the drop point is for.
 	var grid_pos = square_held_over(dropped_at, grab_cell)
-	var item_data: APITypes.PlacedItem = dragging_object.item_data
-	var temp_object = dragging_object
-	dragging_object = null
+	var item_data: APITypes.PlacedItem = dragging.item_data
+	var temp_object = dragging
+	dragging = null
 	# Through the guarded one: a drag can outlive the preview -- teardown frees
 	# it while the drag is still on -- and assigning to a freed object is an
 	# error printed on every run, which is how a run nobody reads is made.
@@ -852,14 +869,14 @@ func _end_drag(dropped_at := Vector2.INF):
 	# so it is drawn and not sent. Its squares are not places, and sending one
 	# would read as a square on the main grid.
 	if not saves_positions:
-		if _can_place_item(item_data, grid_pos):
+		if can_stand(item_data, grid_pos):
 			_place_item_at(temp_object, grid_pos)
 		else:
 			_place_item_at(temp_object, original_grid_pos, original_facing)
 		return
 
 	# Check if the new position is valid
-	if _can_place_item(item_data, grid_pos):
+	if can_stand(item_data, grid_pos):
 		var item_id = item_data.id
 
 		# Call API to move item
@@ -920,9 +937,7 @@ func _place_item_at(item_visual: ItemVisual, grid_pos: Vector2i, facing := -1):
 	for offset in item_data.turned_shape():
 		_put_on(item_visual, grid_pos + Vector2i(offset[0], offset[1]))
 
-func can_place_item(item_data, grid_pos: Vector2i) -> bool:
-	"""Public method to check if item can be placed at position"""
-	return _can_place_item(item_data, grid_pos)
+
 
 
 func displaced_by(item_data, grid_pos: Vector2i) -> Array:
@@ -947,7 +962,7 @@ func displaced_by(item_data, grid_pos: Vector2i) -> Array:
 		if not provides(cell):
 			return []
 		var sitting: Control = filling(cell)
-		if sitting == null or sitting == dragging_object:
+		if sitting == null or sitting == dragging:
 			continue
 		if not in_the_way.has(sitting):
 			in_the_way.append(sitting)
@@ -969,33 +984,9 @@ func _squares_under(item_visual: ItemVisual) -> int:
 	"""How much of the board an item covers"""
 	return item_visual.item_data.turned_shape().size()
 
-func _can_place_item(item_data, grid_pos: Vector2i) -> bool:
-	"""Check if item can be placed at position"""
-	if grid_pos.x < 0 or grid_pos.y < 0:
-		return false
-
-	# Check each cell in the item's shape
-	for offset in item_data.turned_shape():
-		var cell_x = grid_pos.x + offset[0]
-		var cell_y = grid_pos.y + offset[1]
-
-		# Check bounds
-		if cell_x < 0 or cell_x >= grid_width or cell_y < 0 or cell_y >= grid_height:
-			return false
-
-		var cell := Vector2i(cell_x, cell_y)
-		if not provides(cell):
-			return false
-
-		var sitting := filling(cell)
-		if sitting != null and sitting != dragging_object:
-			return false
-
-	return true
-
 func place_shop_item(item: APITypes.Item, grid_pos: Vector2i, facing: int = -1) -> bool:
 	"""Place a shop item at the given position, facing the way it is asked to"""
-	if not can_place_item(item, grid_pos):
+	if not can_stand(item, grid_pos):
 		return false
 
 	var placed = item.placed_at(
@@ -1096,7 +1087,7 @@ func _draw_mark(squares: Array[Vector2i], allowed: bool) -> void:
 
 func show_hover_preview_for_shop(item_data: APITypes.Item, grid_pos: Vector2i):
 	"""Show hover preview for a shop item being dragged"""
-	mark_square(item_data.turned_shape(), grid_pos, can_place_item(item_data, grid_pos))
+	mark_square(item_data.turned_shape(), grid_pos, can_stand(item_data, grid_pos))
 
 func hide_hover_preview():
 	"""Hide the hover preview"""
@@ -1123,11 +1114,7 @@ func _process(_delta):
 
 func carrying() -> ItemVisual:
 	"""The artwork of whatever is in hand"""
-	if dragging_object != null:
-		return dragging_object
-	if dragging_container != null:
-		return dragging_container
-	return null
+	return dragging
 
 
 func carry_to(pointer: Vector2) -> void:
@@ -1144,16 +1131,16 @@ func carry_to(pointer: Vector2) -> void:
 	"""
 	var local: Vector2 = get_global_transform().affine_inverse() * pointer
 
-	if dragging_container:
-		var visual := dragging_container
+	if carrying_a_rack():
+		var visual := dragging
 		visual.position = local + drag_offset
 		for rider in container_riders:
 			rider.follow(visual.position, cell_size + cell_spacing)
 		update_container_preview(pointer)
 		return
 
-	if dragging_object:
-		dragging_object.position = local + drag_offset
+	if dragging != null:
+		dragging.position = local + drag_offset
 		if not hover_preview or not is_instance_valid(hover_preview):
 			return
 		update_drag_preview(pointer)
@@ -1161,11 +1148,11 @@ func carry_to(pointer: Vector2) -> void:
 
 func update_container_preview(pointer: Vector2) -> void:
 	"""Mark where a held container would stand, for a pointer at this place"""
-	if not dragging_container:
+	if not carrying_a_rack():
 		return
-	var container := dragging_container.item_data
+	var container := dragging.item_data
 	var grid_pos := square_held_over(pointer, grab_cell)
-	mark_square(container.turned_shape(), grid_pos, can_place_container(container, grid_pos))
+	mark_square(container.turned_shape(), grid_pos, can_stand(container, grid_pos))
 
 
 func update_drag_preview(pointer: Vector2) -> void:
@@ -1174,10 +1161,10 @@ func update_drag_preview(pointer: Vector2) -> void:
 	Takes the pointer rather than reading it, so what it decides can be asked
 	about without a mouse.
 	"""
-	if not dragging_object or not hover_preview or not is_instance_valid(hover_preview):
+	if dragging == null or not hover_preview or not is_instance_valid(hover_preview):
 		return
 
-	var item_data: APITypes.PlacedItem = dragging_object.item_data
+	var item_data: APITypes.PlacedItem = dragging.item_data
 
 	# Held over the grid it would move to, so that grid shows where it would
 	# land. Ours would be marking a square of its own, which is not where the
@@ -1190,7 +1177,7 @@ func update_drag_preview(pointer: Vector2) -> void:
 		grid_zone.hide_hover_preview()
 
 	var grid_pos := square_held_over(pointer, grab_cell)
-	mark_square(item_data.turned_shape(), grid_pos, _can_place_item(item_data, grid_pos))
+	mark_square(item_data.turned_shape(), grid_pos, can_stand(item_data, grid_pos))
 
 func clear_all():
 	"""Clear all items and containers"""
@@ -1200,8 +1187,7 @@ func clear_all():
 	# under the player's hand more often than it looks: a move the server
 	# refuses, a container that displaces something, and the merge that plays
 	# as the shop opens.
-	dragging_object = null
-	dragging_container = null
+	dragging = null
 
 	# Remove all item visuals
 	for item_visual in items:

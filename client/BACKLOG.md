@@ -334,12 +334,23 @@ whatever is on top, so a rack you can see is a rack you can pick up, and the
 
 What is still doubled, in the order it should go:
 
-**The drag machinery.** `_start_container_drag`, `_end_container_drag`,
-`drop_container_at`, `_return_container`, `update_container_preview`,
-`can_place_container` and `dragging_container` each mirror an item version.
-The real difference is one thing: a rack carries what stands on it, which is
-`container_riders`. Fold the pair together and let the riders be empty for an
-item -- an item carries nothing, which is the same rule with nothing in it.
+**The drop.** `_start_container_drag`, `drop_container_at` and
+`_return_container` still mirror `_start_drag` and `_end_drag`.
+
+There is no reason left for them to be two. A rack should be sellable and
+storable exactly as an item is -- it is bought from the same shop for the same
+gold, so it can go back the same way -- which means the sell zone and the
+chest are not an item's exits, they are any thing's. The state underneath is
+already one `dragging`, and where a thing may stand is already one
+`can_stand()`, which is where the one real difference lives: a rack may not
+stand on another rack.
+
+So fold the drop into one, and the two things that stay kind-specific are
+small and named: `container_riders`, which is empty for an item because an
+item carries nothing, and which message the server is sent.
+
+Selling and storing a rack is its own piece of work -- what happens to what
+was standing on it -- and can land before or after the fold.
 
 **Two lists on the wire.** `InventoryState` sends `inventory_grid` and
 `server_containers` separately, and that is the root the rest grows from. The

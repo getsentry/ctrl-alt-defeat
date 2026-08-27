@@ -263,9 +263,9 @@ func test_an_item_dragged_on_the_grid_is_marked_where_it_is_drawn():
 				grid.carry_to(pointer)
 				var what := "%s held by %s, %d turns in, dragged on the rack" \
 					% [entry["example"], held, quarter + 1]
-				_the_mark_is_over(grid.dragging_object, grid.hover_preview, what)
+				_the_mark_is_over(grid.dragging, grid.hover_preview, what)
 				_the_pointer_is_on_the_square_in_hand(
-					grid.dragging_object, grid.grab_cell, pointer, what)
+					grid.dragging, grid.grab_cell, pointer, what)
 			grid._end_drag(grid.global_position - Vector2(500, 500))
 			await get_tree().process_frame
 

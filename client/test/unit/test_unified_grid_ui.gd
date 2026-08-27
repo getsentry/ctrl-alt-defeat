@@ -201,7 +201,7 @@ func test_drag_and_drop_initialization():
 	assert_null(ui.dragging_shop_item, "Should not be dragging a shop item initially")
 	assert_null(ui.dragging_shop_data, "Nothing should be dragged from the shop")
 
-	assert_null(ui.inventory_grid.dragging_object, "Should not be dragging initially")
+	assert_null(ui.inventory_grid.dragging, "Should not be dragging initially")
 	assert_eq(ui.inventory_grid.drag_offset, Vector2.ZERO, "Drag offset should be zero")
 	assert_false(ui.inventory_grid.valid_placement, "Placement should not be valid initially")
 
@@ -290,22 +290,22 @@ func test_inventory_state_save_and_load():
 	assert_eq(saved_state["inventory_grid"][0]["id"], "item1", "Should keep the item that was loaded")
 
 func test_grid_coordinate_validation():
-	# Placement is validated by _can_place_container().
+	# Placement is validated by the grid's own can_stand().
 	var container = TestHelpers.item({"is_container": true,
 		"shape": [[0, 0], [1, 0], [0, 1], [1, 1]], "rotation": 0})
 
-	assert_false(ui._can_place_container(container, Vector2i(-1, 0)),
+	assert_false(ui.inventory_grid.can_stand(container, Vector2i(-1, 0)),
 		"Should reject negative X coordinate")
-	assert_false(ui._can_place_container(container, Vector2i(0, -1)),
+	assert_false(ui.inventory_grid.can_stand(container, Vector2i(0, -1)),
 		"Should reject negative Y coordinate")
-	assert_false(ui._can_place_container(container, Vector2i(ui.ROOM_WIDTH, 0)),
+	assert_false(ui.inventory_grid.can_stand(container, Vector2i(ui.ROOM_WIDTH, 0)),
 		"Should reject X beyond grid width")
-	assert_false(ui._can_place_container(container, Vector2i(0, ui.ROOM_HEIGHT)),
+	assert_false(ui.inventory_grid.can_stand(container, Vector2i(0, ui.ROOM_HEIGHT)),
 		"Should reject Y beyond grid height")
-	assert_false(ui._can_place_container(container, Vector2i(ui.ROOM_WIDTH - 1, 0)),
+	assert_false(ui.inventory_grid.can_stand(container, Vector2i(ui.ROOM_WIDTH - 1, 0)),
 		"Should reject a container that would hang off the right edge")
 
-	assert_true(ui._can_place_container(container, Vector2i(0, 0)),
+	assert_true(ui.inventory_grid.can_stand(container, Vector2i(0, 0)),
 		"Should accept an empty in-bounds position")
 
 func test_a_container_covers_only_the_squares_of_its_shape():
