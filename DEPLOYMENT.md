@@ -1,104 +1,77 @@
-# Northflank Deployment Guide
+# Deployment (Google Cloud)
 
-## Prerequisites
-- Northflank account with a project created
-- Git repository connected to Northflank
+Everything runs in the GCP project `hackweek-ctrl-alt-defeat`, in the Hackweek
+folder, region `us-central1`.
 
-## Deployment Steps
+| Part | Where | URL |
+|------|-------|-----|
+| Server | Cloud Run `ctrl-alt-defeat-server` | https://ctrl-alt-defeat-server-206662247903.us-central1.run.app |
+| Client | Cloud Run `ctrl-alt-defeat-client` | https://ctrl-alt-defeat-client-206662247903.us-central1.run.app |
+| Database | Cloud SQL `ctrl-alt-defeat-db`, Postgres 17, database `ctrl_alt_defeat`, user `app` | socket only |
+| Images | Artifact Registry `us-central1-docker.pkg.dev/hackweek-ctrl-alt-defeat/ctrl-alt-defeat` | |
+| Backups | Cloud SQL daily backups, plus `gs://hackweek-ctrl-alt-defeat-backups` | |
 
-### 1. Push Code to Repository
+Secrets live in Secret Manager and reach the server as environment variables:
+`database-url` → `DATABASE_URL`, `jwt-secret-key` → `JWT_SECRET_KEY`,
+`stats-token` → `STATS_TOKEN`.
+
+The server runs `alembic upgrade head` when it starts, so a deploy applies its
+own migrations.
+
+## Deploying
+
+Build from a clean export of a commit, not from the working tree. An untracked
+migration in the tree would get uploaded and run against the real database.
+
 ```bash
-git add .
-git commit -m "Add Northflank deployment configuration"
-git push origin main
+P=hackweek-ctrl-alt-defeat
+REG=us-central1-docker.pkg.dev/${P}/ctrl-alt-defeat
+SHA=$(git rev-parse --short HEAD)
+BUILD=$(mktemp -d)
+git archive HEAD server client | tar -x -C "$BUILD"
+# gcloud falls back to .gitignore, which drops the tracked export_presets.cfg.
+echo .gcloudignore > "$BUILD/client/.gcloudignore"
 ```
 
-### 2. Create PostgreSQL Database Addon (Optional - for when ready)
-1. In Northflank dashboard: **Create new → Addon**
-2. Select **PostgreSQL**
-3. Choose version: **16** (latest stable)
-4. Select plan based on your needs
-5. Northflank will provide the `DATABASE_URL` automatically
+Server:
 
-### 3. Create Combined Service
-1. In Northflank dashboard: **Create new → Service**
-2. Select **Combined service**
-3. Connect your Git repository and branch
-4. Build settings:
-   - **Build type**: Dockerfile
-   - **Dockerfile path**: `server/Dockerfile` (or `server/Dockerfile.production` for optimized build)
-   - **Build context**: `server`
-
-### 4. Configure Environment Variables
-Add these in the service's Environment Variables section:
-- `TEST_MODE`: `false` (for production)
-- `DATABASE_URL`: (auto-populated if using Northflank PostgreSQL addon)
-- Optional:
-  - `DB_HOST`: Custom database host if not using addon
-  - `DB_NAME`: Custom database name if not using addon
-
-### 5. Networking Configuration
-- Port **8000** should be auto-detected from Dockerfile
-- You can set a custom subdomain for your service
-
-### 6. Deploy
-Click **Create service** - Northflank will:
-1. Build your Docker image
-2. Deploy the container
-3. Set up health checks
-4. Enable CI/CD (auto-deploy on git push)
-
-## Local Testing
-
-### Test with Docker Compose
 ```bash
-# Start services
+cd "$BUILD/server" && cp Dockerfile.production Dockerfile
+gcloud builds submit --tag ${REG}/server:${SHA} --project ${P} .
+gcloud run deploy ctrl-alt-defeat-server --image ${REG}/server:${SHA} \
+  --region us-central1 --project ${P}
+```
+
+Client (the API URL is written into the export at build time):
+
+```bash
+cd "$BUILD/client"
+cat > cloudbuild.yaml <<EOF
+steps:
+- name: gcr.io/cloud-builders/docker
+  args: ["build", "--build-arg", "API_URL=https://ctrl-alt-defeat-server-206662247903.us-central1.run.app", "-t", "${REG}/client:${SHA}", "."]
+images: ["${REG}/client:${SHA}"]
+options:
+  machineType: E2_HIGHCPU_8
+EOF
+gcloud builds submit --config cloudbuild.yaml --project ${P} .
+gcloud run deploy ctrl-alt-defeat-client --image ${REG}/client:${SHA} \
+  --region us-central1 --project ${P}
+```
+
+Use `${P}`, not `$P`, before a colon: zsh reads `$P:u` as "uppercase $P".
+
+## Connecting to the database
+
+```bash
+cloud-sql-proxy --gcloud-auth --port 55432 hackweek-ctrl-alt-defeat:us-central1:ctrl-alt-defeat-db
+psql -h 127.0.0.1 -p 55432 -U app -d ctrl_alt_defeat
+```
+
+The password is the one in the `database-url` secret.
+
+## Local testing
+
+```bash
 docker-compose up --build
-
-# Stop services
-docker-compose down
-
-# Clean up (including volumes)
-docker-compose down -v
 ```
-
-### Test production Dockerfile
-```bash
-cd server
-docker build -f Dockerfile.production -t autobattler-prod .
-docker run -p 8000:8000 -e TEST_MODE=false autobattler-prod
-```
-
-## Health Checks
-The service includes health checks at:
-- `/docs` - FastAPI documentation (used by health check)
-- Custom endpoints can be added in `main.py`
-
-## Monitoring
-- Check logs in Northflank dashboard
-- Monitor health status
-- Set up alerts for failures
-
-## Troubleshooting
-
-### Database Connection Issues
-1. Verify `DATABASE_URL` is set correctly
-2. Check PostgreSQL addon is running
-3. Review connection logs
-
-### Build Failures
-1. Check Dockerfile syntax
-2. Verify all required files are not in `.dockerignore`
-3. Check build logs in Northflank
-
-### Runtime Errors
-1. Check environment variables are set
-2. Review application logs
-3. Verify port 8000 is exposed
-
-## Production Recommendations
-1. Use `Dockerfile.production` for smaller image size
-2. Set up staging environment first
-3. Configure auto-scaling based on load
-4. Set up database backups
-5. Monitor application metrics
