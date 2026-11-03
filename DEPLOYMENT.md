@@ -5,8 +5,8 @@ folder, region `us-central1`.
 
 | Part | Where | URL |
 |------|-------|-----|
-| Server | Cloud Run `ctrl-alt-defeat-server` | https://ctrl-alt-defeat-server-206662247903.us-central1.run.app |
-| Client | Cloud Run `ctrl-alt-defeat-client` | https://ctrl-alt-defeat-client-206662247903.us-central1.run.app |
+| Client | Cloud Run `ctrl-alt-defeat-client` | https://ctrl-alt-defeat.sentry.gg |
+| Server | Cloud Run `ctrl-alt-defeat-server` | https://ctrl-alt-defeat-backend.sentry.gg |
 | Database | Cloud SQL `ctrl-alt-defeat-db`, Postgres 17, database `ctrl_alt_defeat`, user `app` | socket only |
 | Images | Artifact Registry `us-central1-docker.pkg.dev/hackweek-ctrl-alt-defeat/ctrl-alt-defeat` | |
 | Backups | Cloud SQL daily backups, plus `gs://hackweek-ctrl-alt-defeat-backups` | |
@@ -17,6 +17,22 @@ Secrets live in Secret Manager and reach the server as environment variables:
 
 The server runs `alembic upgrade head` when it starts, so a deploy applies its
 own migrations.
+
+## Domains
+
+Both `sentry.gg` names are A records to `136.82.30.205`, a global external load
+balancer (`ctrl-alt-defeat-https`) that routes by host to the two services and
+redirects HTTP to HTTPS. The certificate is Google-managed
+(`ctrl-alt-defeat-cert-2`). The records live in `getsentry/ops`, in
+`terragrunt/regions/multi-tenant/dns/zones-misc/sentry-gg/control/local.hcl`,
+and are applied with TACOS.
+
+The client talks to the server's `run.app` URL rather than its `sentry.gg`
+name, so either can change without the other. Each service also still answers
+on its `run.app` URL:
+
+- https://ctrl-alt-defeat-server-206662247903.us-central1.run.app
+- https://ctrl-alt-defeat-client-206662247903.us-central1.run.app
 
 ## Deploying
 
