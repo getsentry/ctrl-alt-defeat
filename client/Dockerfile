@@ -46,7 +46,7 @@ RUN echo "Files created by export:" && \
     ls -la /app/web-build/
 
 # Stage 2: Serve with Nginx
-FROM nginx:alpine
+FROM nginx:1.31.10-alpine
 
 # Install gettext for envsubst (environment variable substitution)
 RUN apk add --no-cache gettext
